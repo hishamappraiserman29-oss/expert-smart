@@ -40,7 +40,7 @@ services:
     runtime: docker
     dockerfilePath: deploy/Dockerfile.ollama
     dockerContext: .
-    plan: pro-plus          # llama3:8b needs ≥ 8GB RAM
+    plan: pro plus          # llama3:8b needs ≥ 8GB RAM
     region: frankfurt
     disk:
       name: ollama-models

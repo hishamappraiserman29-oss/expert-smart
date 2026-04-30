@@ -534,7 +534,7 @@
         </div>
         <div class="field-group">
             <label>تاريخ التقييم (DD/MM/YYYY)</label>
-            <input type="text" class="input-box" id="val-date" placeholder="مثال: 25/04/2026" style="text-align:center;">
+            <input type="text" class="input-box" id="val-date" placeholder="dd/mm/yyyy" style="text-align:center;">
         </div>
         <div class="field-group">
             <label>المساحة الإجمالية (م²)</label>
@@ -542,7 +542,7 @@
         </div>
         <div class="field-group">
             <label>سعر المتر المربع (اختياري)</label>
-            <input type="number" class="input-box" id="price-per-meter" placeholder="يُحسب تلقائياً إذا تُرك فارغاً" min="0">
+            <input type="number" class="input-box" id="price-per-meter" placeholder="يُحسب تلقائياً من بيانات السوق إذا تُرك فارغاً" min="0">
         </div>
     </div>
 
@@ -1152,7 +1152,7 @@
                 alert("خطأ من السيرفر: " + (result.message || JSON.stringify(result)));
             }
         } catch (error) {
-            alert("فشل الاتصال بالمحرك المحلي. تأكد من تشغيل bridge_api.py\n\n" + error);
+            alert("فشل الاتصال بخادم التقييم. تأكد أن الخادم يعمل محلياً ثم أعد المحاولة.\n\nتفاصيل تقنية: " + error);
         } finally {
             btn.innerHTML = 'تحليل وإصدار التقرير <i class="fas fa-magic"></i>';
             btn.disabled = false;
@@ -1374,7 +1374,7 @@ async function runFraudCheck() {
             ${data.warning_message ? `<div style="font-size:0.75rem;color:#fbbf24;white-space:pre-line;border-top:1px solid rgba(251,191,36,0.15);padding-top:8px;">${data.warning_message}</div>` : ''}
             <div style="font-size:0.78rem;color:#d1d5db;margin-top:8px;font-style:italic;">${data.recommendation}</div>
         </div>`;
-    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم — تأكد أن الخادم يعمل محلياً</div>`; }
 }
 
 async function runGeoCheck() {
@@ -1411,7 +1411,7 @@ async function runGeoCheck() {
                     background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;">${data.report_text}</pre>
             </details>
         </div>`;
-    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم — تأكد أن الخادم يعمل محلياً</div>`; }
 }
 
 async function runDemoCheck() {
@@ -1448,7 +1448,7 @@ async function runDemoCheck() {
                     background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;">${data.advisory_text}</pre>
             </details>
         </div>`;
-    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم — تأكد أن الخادم يعمل محلياً</div>`; }
 }
 
 /* ══════════════════════════════════════════════════════════════════

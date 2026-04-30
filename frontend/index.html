@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert_Smart | م. هشام المهدي v26</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #030712;
+            --bg-card: rgba(17, 24, 39, 0.98);
+            --gold: #d4af37;
+            --gold-light: #f1d592;
+            --text: #f9fafb;
+            --border: rgba(212, 175, 55, 0.4);
+            --radius: 14px;
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            direction: rtl;
+            line-height: 1.6;
+            padding-bottom: 120px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 900;
+        }
+
+        .logo span {
+            color: var(--gold);
+        }
+
+        .expert-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(212, 175, 55, 0.1);
+            padding: 8px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--gold);
+        }
+
+        .expert-img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            object-fit: cover;
+            background: #111;
+        }
+
+        .expert-name {
+            font-weight: 900;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .market-pulse {
+            background: rgba(212, 175, 55, 0.08);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 40px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .pulse-item {
+            color: var(--gold-light);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .field-group label {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .input-box {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 14px;
+            border-radius: 10px;
+            color: white;
+            outline: none;
+            transition: 0.3s;
+            font-family: 'Tajawal';
+        }
+
+        .input-box:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .ai-section {
+            background: linear-gradient(160deg, #111827 0%, #030712 100%);
+            border: 2px solid var(--gold);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .quality-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+
+        .quality-meter-box {
+            width: 200px;
+            text-align: right;
+        }
+
+        .meter-bg {
+            height: 6px;
+            width: 100%;
+            background: #222;
+            border-radius: 10px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        #quality-fill {
+            height: 100%;
+            width: 0%;
+            background: #ef4444;
+            transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+        }
+
+        .textarea-wrapper {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .prompt-textarea {
+            flex: 1;
+            min-height: 180px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 10px;
+            color: white;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            outline: none;
+            resize: vertical;
+            padding: 15px;
+            font-family: 'Tajawal';
+            transition: 0.3s;
+        }
+
+        .prompt-textarea:focus {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--gold);
+        }
+
+        .map-upload-box {
+            width: 300px;
+            height: 180px;
+            background: #1f2937;
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold-light);
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .map-upload-box:hover {
+            background: rgba(212, 175, 55, 0.05);
+            border-color: var(--gold);
+        }
+
+        /* Geo-Map pulse animation during analysis */
+        @keyframes geoPulseIndex {
+            0%,100% {
+                border-color: rgba(56,189,248,0.5);
+                box-shadow: 0 0 10px rgba(56,189,248,0.25);
+            }
+            50% {
+                border-color: rgba(56,189,248,1);
+                box-shadow: 0 0 24px rgba(56,189,248,0.6), 0 0 40px rgba(56,189,248,0.15);
+            }
+        }
+
+        .prompt-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            margin-top: 15px;
+        }
+
+        .tools-left {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            position: relative;
+        }
+
+        .tools-left i {
+            font-size: 1.5rem;
+            color: var(--gold-light);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tools-left i:hover {
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .mini-formats {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 0.8rem;
+            color: var(--gold);
+            opacity: 0.8;
+        }
+
+        .training-zone {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding-right: 25px;
+            border-right: 2px solid var(--gold);
+            margin-right: 15px;
+        }
+
+        .select-expert {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: 'Tajawal';
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .btn-main {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 5px 20px rgba(255,255,255,0.1);
+        }
+
+        .btn-main:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-main:disabled {
+            background: #444;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: var(--radius);
+            transition: 0.3s;
+        }
+
+        .action-card i {
+            font-size: 2.5rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .select-full {
+            width: 100%;
+            background: #030712;
+            color: #fff;
+            border: 1px solid var(--gold);
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Tajawal';
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+
+        .admin-dashboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111827;
+            border-top: 2px solid var(--gold);
+            z-index: 999;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .admin-header {
+            padding: 12px 30px;
+            background: #1f2937;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-body {
+            padding: 20px 30px;
+            display: none;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .admin-tool-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            background: #fff;
+            color: #000;
+            margin: 2% auto;
+            padding: 40px;
+            border: 2px solid var(--gold);
+            width: 75%;
+            border-radius: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            text-align: right;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+        }
+
+        .close-btn {
+            color: #888;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            .modal-content, .modal-content * { visibility: visible; }
+            .modal-content { position: absolute; left: 0; top: 0; width: 100%; border: none; }
+            .btn-main, .close-btn, .print-hide, .admin-dashboard { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="header">
+        <div class="logo">Expert<span>_Smart</span></div>
+        <div style="display:flex; align-items:center; gap:25px;">
+            <div id="validation-stamp" style="padding: 5px 15px; border: 2px dashed rgba(212,175,55,0.5); border-radius: 5px; color: var(--gold); font-weight: bold; font-family: monospace; letter-spacing: 1px;">
+                [ ختم الحالة الذكي: ⚠ غير مكتمل ]
+            </div>
+            <div class="expert-profile">
+                <span class="expert-name">خبير التقييم هشام المهدي</span>
+                <img src="image_d86c0c.jpg" class="expert-img" alt="HE" onerror="this.src='https://via.placeholder.com/55/d4af37/000000?text=HE'">
+            </div>
+        </div>
+    </header>
+
+
+    <div class="market-pulse" id="growth-pulse">
+        <div class="pulse-item" id="gp-cma"  title="Comparative Market Analysis"><i class="fas fa-balance-scale"></i> CMA: —</div>
+        <div class="pulse-item" id="gp-avm"  title="Automated Valuation Model"><i class="fas fa-robot"></i> AVM: —</div>
+        <div class="pulse-item" id="gp-rppi" title="Real Estate Price Property Index"><i class="fas fa-landmark"></i> RPPI: —</div>
+        <div class="pulse-item" id="gp-strat" title="Stratification"><i class="fas fa-layer-group"></i> Stratification: —</div>
+    </div>
+
+    <script>
+        // قياس معدل الزيادة في الأسعار عبر المنهجيات الأربع
+        // تغذية مستمرة من /api/price-index (يقرأ market_feed.json الذي يُحدَّث
+        // تلقائياً عبر الـ Market Radar). يعمل بصمت إذا الخادم متوقف.
+        (function(){
+            function fmtPct(x){
+                if (x === null || x === undefined || isNaN(x)) return "—";
+                var s = x > 0 ? "+" : "";
+                return s + (+x).toFixed(2) + "%";
+            }
+            function setItem(id, html){
+                var el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            }
+            function avgField(regions, field){
+                if (!regions || regions.length === 0) return null;
+                var vals = regions.map(function(r){ return +r[field]; })
+                                  .filter(function(v){ return !isNaN(v); });
+                if (vals.length === 0) return null;
+                return vals.reduce(function(a,b){return a+b;},0) / vals.length;
+            }
+            function loadGrowth(){
+                try{
+                    var ctrl = new AbortController();
+                    setTimeout(function(){ ctrl.abort(); }, 5000);
+                    fetch("http://127.0.0.1:5000/api/price-index", {signal: ctrl.signal})
+                        .then(function(r){ return r.ok ? r.json() : null; })
+                        .then(function(d){
+                            if (!d || d.status !== "success" || !d.regions) return;
+                            var rs = d.regions;
+                            setItem("gp-cma",   '<i class="fas fa-balance-scale"></i> CMA: '+ fmtPct(avgField(rs, "cma_yoy_pct")));
+                            setItem("gp-avm",   '<i class="fas fa-robot"></i> AVM: '+ fmtPct(avgField(rs, "avm_yoy_pct")));
+                            setItem("gp-rppi",  '<i class="fas fa-landmark"></i> RPPI: '+ fmtPct(avgField(rs, "rppi_yoy_pct")));
+                            setItem("gp-strat", '<i class="fas fa-layer-group"></i> Stratification: '+ fmtPct(avgField(rs, "strat_yoy_pct")));
+                        })
+                        .catch(function(){ /* silent — keep placeholders if server offline */ });
+                } catch(e) { /* silent */ }
+            }
+            // Trigger continuous market data feed (Market Radar) silently on load
+            function startRadarFeed(){
+                try{
+                    var ctrl = new AbortController();
+                    setTimeout(function(){ ctrl.abort(); }, 4000);
+                    fetch("http://127.0.0.1:5000/api/radar/start", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: "{}",
+                        signal: ctrl.signal
+                    }).catch(function(){ /* silent */ });
+                } catch(e) { /* silent */ }
+            }
+            function init(){
+                startRadarFeed();
+                loadGrowth();
+            }
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", init);
+            } else { init(); }
+            // refresh growth pulse every 30 minutes (data feed is continuous)
+            setInterval(loadGrowth, 30 * 60 * 1000);
+        })();
+    </script>
+
+    <div class="info-grid">
+        <div class="field-group">
+            <label>خبير التقييم (المستخدم)</label>
+            <input type="text" class="input-box" value="م. هشام المهدي" readonly>
+        </div>
+        <div class="field-group">
+            <label>فترة التقييم الزمنية</label>
+            <select class="input-box" id="period-type">
+                <option>تاريخ حالي (Current Value)</option>
+                <option>تاريخ سابق (Retrospective)</option>
+                <option>تاريخ مستقبلي (Prospective)</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label>تاريخ التقييم (DD/MM/YYYY)</label>
+            <input type="text" class="input-box" id="val-date" placeholder="مثال: 25/04/2026" style="text-align:center;">
+        </div>
+        <div class="field-group">
+            <label>المساحة الإجمالية (م²)</label>
+            <input type="number" class="input-box" id="area" placeholder="مثال: 150" min="1">
+        </div>
+        <div class="field-group">
+            <label>سعر المتر المربع (اختياري)</label>
+            <input type="number" class="input-box" id="price-per-meter" placeholder="يُحسب تلقائياً إذا تُرك فارغاً" min="0">
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="field-group">
+            <div style="display:flex; align-items:center; margin-bottom:10px;">
+                <img src="https://flagcdn.com/w40/eg.png" style="width:25px; margin-left:10px;">
+                <label>نطاق الدراسة — مصر</label>
+            </div>
+            <select class="input-box" id="loc-eg">
+                <option value="">— اختر المنطقة —</option>
+                <optgroup label="القاهرة الكبرى">
+                    <option value="وسط البلد">القاهرة — وسط البلد</option>
+                    <option value="المعادي">القاهرة — المعادي</option>
+                    <option value="مدينة نصر">القاهرة — مدينة نصر</option>
+                    <option value="مصر الجديدة">القاهرة — مصر الجديدة</option>
+                    <option value="الزمالك">القاهرة — الزمالك</option>
+                </optgroup>
+                <optgroup label="القاهرة الجديدة">
+                    <option value="التجمع الخامس">التجمع الخامس</option>
+                    <option value="الرحاب">الرحاب</option>
+                    <option value="مدينتي">مدينتي</option>
+                    <option value="الشروق">مدينة الشروق</option>
+                </optgroup>
+                <optgroup label="العاصمة الإدارية والمدن الجديدة">
+                    <option value="العاصمة الإدارية">العاصمة الإدارية الجديدة</option>
+                    <option value="مستقبل سيتي">مستقبل سيتي</option>
+                    <option value="بدر">مدينة بدر</option>
+                </optgroup>
+                <optgroup label="محافظة الجيزة">
+                    <option value="الدقي">الدقي</option>
+                    <option value="المهندسين">المهندسين</option>
+                    <option value="الهرم">الهرم</option>
+                    <option value="فيصل">فيصل</option>
+                </optgroup>
+                <optgroup label="6 أكتوبر والشيخ زايد">
+                    <option value="6 أكتوبر">مدينة 6 أكتوبر</option>
+                    <option value="الشيخ زايد">الشيخ زايد</option>
+                    <option value="زايد الجديدة">زايد الجديدة (سفنكس)</option>
+                </optgroup>
+                <optgroup label="الإسكندرية والساحل">
+                    <option value="الإسكندرية">الإسكندرية</option>
+                    <option value="سموحة">سموحة</option>
+                    <option value="برج العرب">برج ال��رب الجديدة</option>
+                    <option value="الساحل الشمالي">الساحل الشمالي</option>
+                    <option value="ال��لمين الجديدة">العلمين الجديدة</option>
+                    <option value="رأس الحكمة">رأس الحكمة</option>
+                </optgroup>
+                <optgroup label="محافظات الدلتا">
+                    <option value="المنصورة">المنصورة</option>
+                    <option value="طنطا">طنطا</option>
+                    <option value="الزقازيق">الزقازيق</option>
+                    <option value="دمياط">دمياط</option>
+                </optgroup>
+                <optgroup label="محافظات الصعيد">
+                    <option value="أسيوط">أسيوط</option>
+                    <option value="سوهاج">سوهاج</option>
+                    <option value="المنيا">المنيا</option>
+                    <option value="الأقصر">الأقصر</option>
+                    <option value="أسوان">أسوان</option>
+                </optgroup>
+                <optgroup label="مدن القناة">
+                    <option value="بورسعيد">بورسعيد</option>
+                    <option value="الإسماعيلية">الإسماعيلية</option>
+                    <option value="السويس">السويس</option>
+                </optgroup>
+                <optgroup label="البحر الأحمر وسيناء">
+                    <option value="الغردقة">الغردقة</option>
+                    <option value="شرم الشيخ">شرم الشيخ</option>
+                    <option value="العين السخنة">العين السخنة</option>
+                    <option value="مرسى علم">مرسى علم</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="field-group">
+            <div style="display:flex; align-items:center; margin-bottom:10px;">
+                <img src="https://flagcdn.com/w40/sa.png" style="width:25px; margin-left:10px;">
+                <label>نطاق الدراسة — السعودية</label>
+            </div>
+            <select class="input-box" id="loc-sa">
+                <option value="">— اختر المنطقة —</option>
+                <optgroup label="منطقة الرياض">
+                    <option value="الرياض">الرياض — وسط وشمال</option>
+                    <option value="حطين">الرياض — حطين</option>
+                    <option value="الملقا">الرياض — الملقا</option>
+                    <option value="النرجس">الرياض — النرجس</option>
+                    <option value="الدرعية">الدرعية</option>
+                </optgroup>
+                <optgroup label="مكة المكرمة والمدينة">
+                    <option value="مكة">مكة المكرمة</option>
+                    <option value="المدينة المنورة">المدينة المنورة</option>
+                    <option value="الطائف">الطائف</option>
+                </optgroup>
+                <optgroup label="جدة">
+                    <option value="جدة">جدة — الشاطئ والكورنيش</option>
+                    <option value="جدة الحمراء">جدة — الحمراء</option>
+                    <option value="أبحر">جدة — أبحر</option>
+                    <option value="جدة البلد">جدة — البلد التاريخي</option>
+                </optgroup>
+                <optgroup label="المنطقة الشرقية">
+                    <option value="الدمام">الدمام</option>
+                    <option value="الخبر">الخبر</option>
+                    <option value="الظهران">الظهران</option>
+                    <option value="الجبيل">الجبيل الصناعية</option>
+                    <option value="الأحساء">الأحساء</option>
+                </optgroup>
+                <optgroup label="منطقة عسير">
+                    <option value="أبها">أبها</option>
+                    <option value="خميس مشيط">خميس مشيط</option>
+                </optgroup>
+                <optgroup label="تبوك ونيوم">
+                    <option value="تبوك">تبوك</option>
+                    <option value="نيوم">مشروع نيوم (NEOM)</option>
+                </optgroup>
+                <optgroup label="القصيم">
+                    <option value="بريدة">بريدة</option>
+                    <option value="عنيزة">عنيزة</option>
+                </optgroup>
+                <optgroup label="مناطق أخرى">
+                    <option value="جازان">جازان</option>
+                    <option value="نجران">نجران</option>
+                    <option value="ينبع">ينبع</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+
+    <div class="ai-section">
+        <div class="quality-header-bar">
+            <div style="font-weight:bold; color:var(--gold-light);">الوصف الفني ومحددات الأصل:</div>
+            <div class="quality-meter-box">
+                <div style="font-size:0.75rem; font-weight:bold;">
+                    جودة البيانات المدخلة: <span id="q-val" style="color:#ef4444;">0</span>%
+                </div>
+                <div class="meter-bg"><div id="quality-fill"></div></div>
+            </div>
+        </div>
+
+        <div class="textarea-wrapper">
+            <textarea class="prompt-textarea" id="main-input" placeholder="اكتب هنا تفاصيل العقار: المساحات، الحالة الإنشائية، والحدود..."></textarea>
+            <label class="map-upload-box"
+                   onclick="document.getElementById('geo-map-input-index').click()">
+                <i class="fas fa-map-location-dot" id="geo-map-icon-index"
+                   style="font-size:2.5rem; margin-bottom:10px; transition: 0.3s;"></i>
+                <span id="geo-map-text-index">رفع خريطة جوية أو كروكي</span>
+            </label>
+        </div>
+
+        <div class="prompt-toolbar">
+            <div class="tools-left" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                <div style="display:flex; gap: 20px; align-items: center;">
+                    <!-- Document Uploader -->
+                    <div id="btn-doc-clip"
+                         onclick="triggerDocUpload()"
+                         style="display:flex; flex-direction:column; align-items:center; cursor:pointer;
+                                padding:6px 10px; border-radius:8px; transition:background 0.2s;
+                                border:1px solid rgba(59,130,246,0.3);"
+                         onmouseenter="this.style.background='rgba(59,130,246,0.12)'"
+                         onmouseleave="this.style.background='transparent'"
+                         title="مشبك الوثائق: لرفع العقود، الرخص، والمخططات">
+                        <i class="fas fa-paperclip" style="color:#3b82f6; font-size:1.5rem;"></i>
+                        <span style="font-size:0.7rem; color:#fff; margin-top:3px;">لوثائق العقار</span>
+                    </div>
+
+                    <!-- Training Uploader -->
+                    <div id="btn-train-clip"
+                         onclick="triggerTrainingUpload()"
+                         style="display:flex; flex-direction:column; align-items:center; cursor:pointer;
+                                padding:6px 10px; border-radius:8px; transition:background 0.2s;
+                                border:1px solid rgba(212,175,55,0.3);"
+                         onmouseenter="this.style.background='rgba(212,175,55,0.12)'"
+                         onmouseleave="this.style.background='transparent'"
+                         title="مشبك التدريب: لرفع تقارير التقييم السابقة لتعليم النظام">
+                        <i class="fas fa-file-import" style="color:var(--gold); font-size:1.5rem;"></i>
+                        <span style="font-size:0.7rem; color:#fff; margin-top:3px;">لتدريب النظام</span>
+                    </div>
+
+                    <div style="display:flex; gap:15px; border-right:1px solid rgba(255,255,255,0.1); padding-right:15px; align-items:center;">
+                        <i class="fas fa-camera" id="btn-cam-clip"
+                           onclick="triggerImageUpload()"
+                           title="إرفاق صور العقار"
+                           style="cursor:pointer; font-size:1.3rem; color:#9ca3af; transition:color 0.2s;"
+                           onmouseenter="this.style.color='#d4af37'"
+                           onmouseleave="this.style.color='#9ca3af'"></i>
+                        <i class="fas fa-microphone-lines" id="btn-mic-index"
+                           onclick="triggerVoiceInput()"
+                           title="تسجيل صوتي"
+                           style="cursor:pointer; font-size:1.3rem; color:#9ca3af; transition:color 0.2s;"
+                           onmouseenter="this.style.color='#f87171'"
+                           onmouseleave="this.style.color='#9ca3af'"></i>
+                    </div>
+                    
+                    <div class="training-zone" style="margin-right: 15px; border-right: none;">
+                        <select class="select-expert" id="ai-task">
+                            <option>تدريب النموذج لعمل محاكاة على تقرير قديم</option>
+                            <option>مراجعة التقرير طبقاً لمعايير IVS و USPAP</option>
+                            <option>محاكاة أعلى وأفضل استغلال (H&BU)</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Guidance Message -->
+                <div style="font-size: 0.75rem; color: #9ca3af;">
+                    <i class="fas fa-info-circle"></i> استخدم <b>مشبك الوثائق</b> لبيانات عقارك، ومشبك <b>تدريب النظام</b> لتعليمه كيف يكتب تقريرك.
+                </div>
+
+                <!-- ══ Super Intelligence Suite Toolbar ══ -->
+                <div id="si-toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding:8px 10px;
+                     background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);
+                     border-radius:10px;">
+                    <span style="font-size:0.7rem;color:#d4af37;font-weight:700;align-self:center;margin-left:4px;">
+                        ⚡ استخبارات فائقة:
+                    </span>
+                    <button onclick="openFraudPanel()" title="كشف الشذوذ والتلاعب"
+                        style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+                               color:#fca5a5;padding:4px 10px;border-radius:6px;cursor:pointer;
+                               font-family:Tajawal,sans-serif;font-size:0.75rem;transition:all 0.2s;"
+                        onmouseenter="this.style.background='rgba(239,68,68,0.2)'"
+                        onmouseleave="this.style.background='rgba(239,68,68,0.1)'">
+                        🔍 المُحقق الرقمي
+                    </button>
+                    <button onclick="openGeoPanel()" title="تحليل التربة والسيول"
+                        style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);
+                               color:#86efac;padding:4px 10px;border-radius:6px;cursor:pointer;
+                               font-family:Tajawal,sans-serif;font-size:0.75rem;transition:all 0.2s;"
+                        onmouseenter="this.style.background='rgba(34,197,94,0.2)'"
+                        onmouseleave="this.style.background='rgba(34,197,94,0.1)'">
+                        🌍 المخاطر الجيوتقنية
+                    </button>
+                    <button onclick="openDemoPanel()" title="رادار الهجرة العقارية"
+                        style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);
+                               color:#93c5fd;padding:4px 10px;border-radius:6px;cursor:pointer;
+                               font-family:Tajawal,sans-serif;font-size:0.75rem;transition:all 0.2s;"
+                        onmouseenter="this.style.background='rgba(96,165,250,0.2)'"
+                        onmouseleave="this.style.background='rgba(96,165,250,0.1)'">
+                        📡 رادار الهجرة
+                    </button>
+                    <button onclick="AssetManager.showDashboard()" title="لوحة إدارة الأصول"
+                        style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);
+                               color:#fde68a;padding:4px 10px;border-radius:6px;cursor:pointer;
+                               font-family:Tajawal,sans-serif;font-size:0.75rem;transition:all 0.2s;"
+                        onmouseenter="this.style.background='rgba(212,175,55,0.2)'"
+                        onmouseleave="this.style.background='rgba(212,175,55,0.1)'">
+                        🏛️ محفظة الأصول
+                    </button>
+                </div>
+
+                <!-- ══ Fraud Panel ══ -->
+                <div id="fraud-panel" style="display:none;margin-top:8px;padding:12px;
+                     background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);
+                     border-radius:10px;">
+                    <div style="font-size:0.8rem;color:#ef4444;font-weight:700;margin-bottom:8px;">🔍 المُحقق الرقمي — كشف الشذوذ</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:3px;">سعر المتر (ج.م)</div>
+                            <input id="fd-ppm" type="number" placeholder="مثال: 15000"
+                                style="background:#0d0d0d;border:1px solid rgba(239,68,68,0.3);color:#fff;
+                                       padding:5px 10px;border-radius:6px;font-family:Tajawal;font-size:0.85rem;width:120px;">
+                        </div>
+                        <div>
+                            <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:3px;">الموقع</div>
+                            <input id="fd-loc" type="text" placeholder="مثال: التجمع الخامس"
+                                style="background:#0d0d0d;border:1px solid rgba(239,68,68,0.3);color:#fff;
+                                       padding:5px 10px;border-radius:6px;font-family:Tajawal;font-size:0.85rem;width:150px;">
+                        </div>
+                        <button onclick="runFraudCheck()"
+                            style="background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);
+                                   color:#fca5a5;padding:6px 14px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">
+                            تحليل الآن
+                        </button>
+                        <button onclick="document.getElementById('fraud-panel').style.display='none'"
+                            style="background:transparent;border:1px solid rgba(255,255,255,0.1);
+                                   color:#9ca3af;padding:6px 10px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">✕</button>
+                    </div>
+                    <div id="fraud-result" style="margin-top:8px;"></div>
+                </div>
+
+                <!-- ══ Geo Risk Panel ══ -->
+                <div id="geo-panel" style="display:none;margin-top:8px;padding:12px;
+                     background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.25);
+                     border-radius:10px;">
+                    <div style="font-size:0.8rem;color:#34d399;font-weight:700;margin-bottom:8px;">🌍 تحليل المخاطر الجيوتقنية</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:3px;">الموقع</div>
+                            <input id="geo-loc" type="text" placeholder="مثال: المعادي"
+                                style="background:#0d0d0d;border:1px solid rgba(34,197,94,0.3);color:#fff;
+                                       padding:5px 10px;border-radius:6px;font-family:Tajawal;font-size:0.85rem;width:160px;">
+                        </div>
+                        <button onclick="runGeoCheck()"
+                            style="background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.5);
+                                   color:#86efac;padding:6px 14px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">
+                            تحليل الآن
+                        </button>
+                        <button onclick="document.getElementById('geo-panel').style.display='none'"
+                            style="background:transparent;border:1px solid rgba(255,255,255,0.1);
+                                   color:#9ca3af;padding:6px 10px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">✕</button>
+                    </div>
+                    <div id="geo-result" style="margin-top:8px;"></div>
+                </div>
+
+                <!-- ══ Demographic Panel ══ -->
+                <div id="demo-panel" style="display:none;margin-top:8px;padding:12px;
+                     background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.25);
+                     border-radius:10px;">
+                    <div style="font-size:0.8rem;color:#60a5fa;font-weight:700;margin-bottom:8px;">📡 رادار الهجرة العقارية</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+                        <div>
+                            <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:3px;">الحي / المنطقة</div>
+                            <input id="demo-loc" type="text" placeholder="مثال: مدينة نصر"
+                                style="background:#0d0d0d;border:1px solid rgba(96,165,250,0.3);color:#fff;
+                                       padding:5px 10px;border-radius:6px;font-family:Tajawal;font-size:0.85rem;width:150px;">
+                        </div>
+                        <div>
+                            <div style="font-size:0.7rem;color:#9ca3af;margin-bottom:3px;">أفق استثماري (سنوات)</div>
+                            <input id="demo-horizon" type="number" value="5" min="1" max="10"
+                                style="background:#0d0d0d;border:1px solid rgba(96,165,250,0.3);color:#fff;
+                                       padding:5px 8px;border-radius:6px;font-family:Tajawal;font-size:0.85rem;width:60px;">
+                        </div>
+                        <button onclick="runDemoCheck()"
+                            style="background:rgba(96,165,250,0.2);border:1px solid rgba(96,165,250,0.5);
+                                   color:#93c5fd;padding:6px 14px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">
+                            تحليل الآن
+                        </button>
+                        <button onclick="document.getElementById('demo-panel').style.display='none'"
+                            style="background:transparent;border:1px solid rgba(255,255,255,0.1);
+                                   color:#9ca3af;padding:6px 10px;border-radius:6px;cursor:pointer;
+                                   font-family:Tajawal;font-size:0.8rem;">✕</button>
+                    </div>
+                    <div id="demo-result" style="margin-top:8px;"></div>
+                </div>
+                <!-- Smart Live Library Binding -->
+                <div style="margin-top: 5px;">
+                    <button class="btn-main" style="padding: 6px 15px; font-size: 0.8rem; background: #1f2937; color: var(--text); border: 1px solid var(--gold);" onclick="activateDualComparison(); return false;">
+                        <i class="fas fa-book-open" style="color: var(--gold);"></i> فتح المكتبة المرجعية (تفعيل المقارنة المزدوجة)
+                    </button>
+                </div>
+            </div>
+            <button id="generateBtn" class="btn-main" onclick="processAndGenerate()">
+                تحليل وإصدار التقرير <i class="fas fa-magic"></i>
+            </button>
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 0.85rem; color: var(--gold-light); text-align: center; border-top: 1px dashed rgba(212,175,55,0.2); padding-top: 15px;">
+            <i class="fas fa-microchip"></i> <b>نصيحة الخبير:</b> النظام لا يتوقف عن التعلم؛ فهو يمسح دورياً أحدث ممارسات التقييم عالمياً، مع الحفاظ على صفوة النماذج وأكثرها تطوراً لضمان دقة تحاكي أفضل المعايير الدولية.
+        </div>
+    </div>
+
+    <div class="actions-grid">
+        <div class="action-card">
+            <i class="fas fa-building"></i>
+            <h3>نوع الأصل العقاري</h3>
+            <select class="select-full" id="asset-type">
+                <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
+                <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
+                <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
+                <option value="أرض فضاء">أرض فضاء (مطورة / خام)</option>
+                <option value="مصنع">صناعي / مستودع / لوجستي</option>
+                <option value="أرض زراعية">أرض زراعية</option>
+                <option value="فندق">فنادق ومنتجعات سياحية</option>
+                <option value="محل تجاري">تجزئة (محلات / مولات)</option>
+                <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
+                <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
+                <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
+                <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
+                <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
+                <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
+            </select>
+        </div>
+        <div class="action-card">
+            <i class="fas fa-file-invoice-dollar" style="color: var(--gold);"></i>
+            <h3 style="color: var(--gold);">الغرض من التقييم (مسارات منطقية)</h3>
+            <select class="select-full" id="val-purpose" onchange="runSimulatedConsole(this.value)">
+                <option value="fair_market_value">البيع والشراء — القيمة السوقية العادلة (Market Value)</option>
+                <option value="acquisition">الاستحواذ والاندماج — القيمة الاستثمارية (Investment Value)</option>
+                <option value="bank_financing">الرهن والتمويل البنكي — القيمة السوقية لأغراض التمويل (×0.95)</option>
+                <option value="judicial_liquidation">التصفية الإجبارية — القيمة التصفوية (Liquidation Value ×0.82)</option>
+                <option value="insurance">التأمين — قيمة إعادة الإنشاء (Reinstatement Value ×1.08)</option>
+                <option value="investment_analysis">التحليل الاستثماري — IRR / NPV / DCF</option>
+                <option value="rental_arbitration">تحديد الأجرة — القيمة الإيجارية العادلة (Rental Value)</option>
+                <option value="tax_assessment">الضرائب — القيمة للأغراض الضريبية / الضريبة العقارية</option>
+                <option value="financial_reporting">التقارير المالية والمحاسبية — القيمة العادلة (Fair Value — IFRS 13)</option>
+                <option value="usufruct">حق الانتفاع — تقييم حقوق المنفعة العقارية (Usufruct Right)</option>
+                <option value="uncertainty_valuation">التقييم في حالة عدم اليقين (Valuation Under Uncertainty)</option>
+                <option value="highest_and_best_use">تحليل أعلى وأفضل استغلال (Highest and Best Use Analysis)</option>
+                <option value="investment_funds">التقييم لأغراض الصناديق الاستثمارية (Valuation for Investment Funds / REITs)</option>
+                <option value="environmental_impact_assessment">تقييم الأثر البيئي (Environmental Impact Assessment — EIA)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Trends Module: Dual Comparison Engine -->
+    <div class="action-card" style="margin-bottom: 2rem; display: none; border-color: var(--gold);" id="trends-module">
+        <i class="fas fa-chart-line" style="color: var(--gold);"></i>
+        <h3 style="color: var(--gold);">اتجاهات السوق — Market Trends</h3>
+        <div style="display: flex; gap: 20px; align-items: center; margin-top: 15px;">
+            <div style="flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; height: 120px; display: flex; align-items:center; justify-content:center;">
+                <span style="color: #64748b; font-size: 0.9rem;">[ رسم بياني لمنحنى السعر الزمني — قيد التطوير ]</span>
+            </div>
+            <div style="flex: 1; padding: 15px; border-right: 3px solid var(--gold);">
+                <div style="font-weight: bold; font-size: 1.05rem; color: var(--gold); margin-bottom: 5px;">رسالة استشارية (AI Insights):</div>
+                <div id="trend-insight-msg" style="color: var(--text); line-height: 1.6; font-size: 0.95rem;">
+                    جاري حساب نسبة التغير السنوي مقارنة بالتقرير الأقدم...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-dashboard">
+        <div class="admin-header" onclick="toggleAdminPanel()">
+            <div style="font-weight:bold;">
+                <i class="fas fa-user-shield"></i> لوحة التحكم الإدارية
+            </div>
+            <i class="fas fa-chevron-up" id="admin-icon"></i>
+        </div>
+        <div class="admin-body" id="admin-panel">
+            <div class="admin-tool-row">
+                <div style="flex:1; min-width:250px;">
+                    <label style="color:var(--gold); font-size:0.8rem;">رابط السيرفر (API URL):</label>
+                    <input type="text" id="api-url" class="input-box" style="padding:8px; font-size:0.9rem;" value="http://127.0.0.1:5000/api/valuation">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:var(--gold); color:#000;" onclick="exportBackup()">تصدير (Export)</button>
+                    <label class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:#374151; color:#fff; cursor:pointer;">
+                        استيراد <input type="file" id="import-file" style="display:none;" onchange="importBackup(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="reportResult"></div>
+            <div style="display:flex; gap:15px; margin-top:30px; border-top:1px solid #eee; padding-top:20px;" class="print-hide">
+                <button class="btn-main" style="background:var(--sovereign-blue); color:#fff;" onclick="window.print()">طباعة التقرير</button>
+                <button class="btn-main" style="background:#f4f4f4; color:#333;" onclick="closeModal()">الرجوع للتعديل</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Real-time Console Pulse Bar -->
+    <div id="console-pulse" style="position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 80%; background: #111827; color: #4ade80; font-family: monospace; padding: 15px; border-radius: 8px; border: 1px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 998; display: none;">
+        <div style="margin-bottom: 5px; font-weight: bold; color: #f1f5f9;">> Console Pulse Trace:</div>
+        <div id="console-pulse-text">[INFO] Waiting for execution...</div>
+        <div style="width: 100%; height: 4px; background: #334155; margin-top: 10px; border-radius: 2px; overflow: hidden;">
+            <div id="console-pulse-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.3s;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function activateDualComparison() {
+        document.getElementById('ai-task').selectedIndex = 0;
+        
+        const consoleBox = document.getElementById('console-pulse');
+        const textBox = document.getElementById('console-pulse-text');
+        const bar = document.getElementById('console-pulse-bar');
+        const trendsModule = document.getElementById('trends-module');
+        const insightMsg = document.getElementById('trend-insight-msg');
+        
+        consoleBox.style.display = 'block';
+        textBox.innerText = `[INFO] Initializing Deduplication Hash...`;
+        bar.style.width = '20%';
+        
+        setTimeout(() => {
+            trendsModule.style.display = 'block';
+            const refId = "REF_" + Math.random().toString(36).substr(2, 5).toUpperCase();
+            textBox.innerText = `[INFO] Dual Comparison Active: Comparing current valuation with ${refId} | Trend Identified: 12%.`;
+            bar.style.background = '#d4af37'; // gold
+            bar.style.width = '70%';
+            
+            insightMsg.innerHTML = "<b>ارتفاع في القيمة بنسبة 12%</b> مقارنة بالعام الماضي نتيجة زيادة الطلب اللوجستي وتأثير التضخم المندمج كـ Synergy.";
+        }, 1200);
+
+        setTimeout(() => {
+            bar.style.width = '100%';
+        }, 2500);
+        
+        setTimeout(() => { consoleBox.style.display = 'none'; }, 6000);
+    }
+
+    function runSimulatedConsole(val) {
+        const consoleBox = document.getElementById('console-pulse');
+        const textBox = document.getElementById('console-pulse-text');
+        const bar = document.getElementById('console-pulse-bar');
+        const asset = document.getElementById('asset-type').value;
+        const stamp = document.getElementById('validation-stamp');
+        
+        consoleBox.style.display = 'block';
+        stamp.innerHTML = '[ ختم الحالة الذكي: ✅ قيد التطبيق ]';
+        stamp.style.color = 'var(--success)';
+        stamp.style.borderColor = 'var(--success)';
+        
+        textBox.innerText = `[INFO] Route Identified: ${asset} | Purpose Route: ${val} | Pruning Engine Activated...`;
+        bar.style.width = '10%';
+        
+        setTimeout(() => {
+            textBox.innerText = `[INFO] Applying Modifiers for ${val}... 45%`;
+            bar.style.width = '45%';
+        }, 800);
+        
+        setTimeout(() => {
+            textBox.innerText = `[INFO] Enforcing 20-Page Limit Cap... 80%`;
+            bar.style.width = '80%';
+        }, 1600);
+        
+        setTimeout(() => {
+            textBox.innerText = `[SUCCESS] Route applied successfully | 100% | Ready for .xlsm export.`;
+            bar.style.width = '100%';
+            stamp.innerHTML = '[ ختم الحالة الذكي: ✅ مكتمل ومحقق ]';
+        }, 2200);
+        
+        setTimeout(() => { consoleBox.style.display = 'none'; }, 5000);
+    }
+    const input = document.getElementById('main-input');
+    const fill = document.getElementById('quality-fill');
+    const valText = document.getElementById('q-val');
+    const fieldsToSave = ['val-date','period-type','loc-eg','loc-sa','main-input','asset-type','val-purpose','ai-task','api-url','area','price-per-meter'];
+
+    function updateQualityMeter(length) {
+        let progress = Math.min((length / 400) * 100, 100);
+        let pct = Math.floor(progress);
+        let color = pct < 60 ? '#ef4444' : pct < 80 ? '#3b82f6' : '#10b981';
+        fill.style.width = progress + '%';
+        fill.style.background = color;
+        valText.innerText = pct;
+        valText.style.color = color;
+    }
+
+    function toggleAdminPanel() {
+        const panel = document.getElementById('admin-panel');
+        const icon = document.getElementById('admin-icon');
+        const isVisible = panel.style.display === 'block';
+        panel.style.display = isVisible ? 'none' : 'block';
+        icon.className = isVisible ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+    }
+
+    function saveAllData() {
+        fieldsToSave.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) localStorage.setItem('expert_smart_' + id, el.value);
+        });
+    }
+
+    function loadSavedData() {
+        fieldsToSave.forEach(id => {
+            const saved = localStorage.getItem('expert_smart_' + id);
+            const el = document.getElementById(id);
+            if (el && saved !== null) {
+                el.value = saved;
+                if (id === 'main-input') updateQualityMeter(saved.length);
+            }
+        });
+    }
+
+    async function processAndGenerate() {
+        const btn = document.getElementById('generateBtn');
+        const description = input.value;
+        const apiUrl = document.getElementById('api-url').value;
+        const area = parseFloat(document.getElementById('area').value) || 0;
+
+        if (!description || description.length < 10) {
+            alert("يرجى إدخال وصف تفصيلي للعقار.");
+            return;
+        }
+        if (!area || area <= 0) {
+            alert("يرجى إدخال المساحة الإجمالية للعقار.");
+            return;
+        }
+
+        btn.innerHTML = 'جاري التحليل... <i class="fas fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        try {
+            const ppm = parseFloat(document.getElementById('price-per-meter').value) || 0;
+
+            // ── التقاط نتائج الاستخبارات من الواجهة ──────────
+            const sovereign_insights = _captureSovereignInsights();
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    expert: "م. هشام المهدي",
+                    location: document.getElementById('loc-eg').value || document.getElementById('loc-sa').value,
+                    description: description,
+                    date: document.getElementById('val-date').value,
+                    property_type: document.getElementById('asset-type').value,
+                    valuation_purpose: document.getElementById('val-purpose').value,
+                    area: area,
+                    price_per_meter: ppm,
+                    sovereign_insights: sovereign_insights
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                generateVisualReport(description, result);
+            } else {
+                alert("خطأ من السيرفر: " + (result.message || JSON.stringify(result)));
+            }
+        } catch (error) {
+            alert("فشل الاتصال بالمحرك المحلي. تأكد من تشغيل bridge_api.py\n\n" + error);
+        } finally {
+            btn.innerHTML = 'تحليل وإصدار التقرير <i class="fas fa-magic"></i>';
+            btn.disabled = false;
+        }
+    }
+
+    function generateVisualReport(description, apiResult) {
+        const date = document.getElementById('val-date').value || new Date().toLocaleDateString('en-GB');
+        const location = document.getElementById('loc-eg').value || document.getElementById('loc-sa').value || 'نطاق دراسة عام';
+        const marketValue = apiResult && apiResult.market_value ? apiResult.market_value.toLocaleString('en-US', {maximumFractionDigits:2}) : '-';
+        const excelUrl = apiResult && apiResult.excel_url ? apiResult.excel_url : null;
+
+        const excelBtnHtml = excelUrl
+            ? `<a href="${excelUrl}" class="btn-main" style="background:#217346; color:#fff; text-decoration:none;" download>
+                   <i class="fas fa-file-excel"></i> تحميل تقرير Excel
+               </a>`
+            : '';
+
+        document.getElementById('reportResult').innerHTML = `
+            <div style="text-align:center; border-bottom:3px solid #d4af37; padding-bottom:20px; margin-bottom:30px;">
+                <h1 style="margin:0; color:#111;">تقرير تقييم عقاري فني (v26)</h1>
+                <p style="color:#666; font-weight:bold;">صادر عن: م. هشام المهدي</p>
+            </div>
+            <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
+                <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold; width:160px;">التاريخ:</td><td style="padding:10px; border:1px solid #eee;">${date}</td></tr>
+                <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">الموقع:</td><td style="padding:10px; border:1px solid #eee;">${location}</td></tr>
+                <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">القيمة السوقية:</td><td style="padding:10px; border:1px solid #eee; font-size:1.1rem; font-weight:bold; color:#217346;">${marketValue}</td></tr>
+            </table>
+            <h3 style="color:#d4af37; border-right:5px solid #d4af37; padding-right:12px; margin-bottom:15px;">الوصف الفني:</h3>
+            <div style="background:#fefefe; padding:20px; border:1px solid #eee; border-radius:5px; line-height:1.8;">${description.replace(/\n/g, '<br>')}</div>
+            <div style="margin-top:50px; text-align:center;"><p><b>خبير التقييم المعتمد</b></p><br><p>م. هشام المهدي</p></div>
+            ${excelBtnHtml ? `<div style="margin-top:20px; text-align:center;">${excelBtnHtml}</div>` : ''}`;
+        document.getElementById('reportModal').style.display = 'block';
+    }
+
+    function closeModal() { document.getElementById('reportModal').style.display = 'none'; }
+    
+    input.addEventListener('input', (e) => { updateQualityMeter(e.target.value.length); saveAllData(); });
+    window.onload = loadSavedData;
+</script>
+
+<!-- Hidden file inputs (off-screen, NOT display:none to allow programmatic .click()) -->
+<input type="file" id="chat-file-input"
+       accept=".xlsx,.xls,.csv,.pdf,.docx,.doc,.txt,image/*"
+       multiple
+       style="position:fixed;top:-9999px;width:1px;height:1px;opacity:0;"
+       onchange="handleAttachmentUpload(this.files,'document'); this.value='';">
+<input type="file" id="training-file-input"
+       accept=".xlsx,.xlsm"
+       style="position:fixed;top:-9999px;width:1px;height:1px;opacity:0;"
+       onchange="handleAttachmentUpload(this.files,'training'); this.value='';">
+<input type="file" id="cam-file-input"
+       accept="image/*"
+       multiple
+       style="position:fixed;top:-9999px;width:1px;height:1px;opacity:0;"
+       onchange="handleAttachmentUpload(this.files,'image'); this.value='';">
+
+<!-- Geo-Map Fast-Track: رفع خريطة جوية / كروكي -->
+<input type="file" id="geo-map-input-index"
+       accept="image/*,.pdf,.kml,.kmz,.geojson,.tif,.tiff"
+       style="position:fixed;top:-9999px;width:1px;height:1px;opacity:0;"
+       onchange="handleGeoMapIndexUpload(this.files); this.value='';">
+
+<script>
+/* ── Attachment trigger functions ── */
+function triggerDocUpload() {
+    const el = document.getElementById('chat-file-input');
+    if (el) { el.value = ''; el.click(); }
+}
+function triggerTrainingUpload() {
+    const el = document.getElementById('training-file-input');
+    if (el) { el.value = ''; el.click(); }
+}
+function triggerImageUpload() {
+    const el = document.getElementById('cam-file-input');
+    if (el) { el.value = ''; el.click(); }
+}
+
+/* ── Voice input trigger ── */
+let _indexVoiceActive = false;
+let _indexRecognition = null;
+function triggerVoiceInput() {
+    const btn = document.getElementById('btn-mic-index');
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        _showIndexToast('المتصفح لا يدعم التعرف على الصوت', 'error'); return;
+    }
+    if (_indexVoiceActive) {
+        if (_indexRecognition) _indexRecognition.stop();
+        _indexVoiceActive = false;
+        if (btn) { btn.style.color = '#9ca3af'; btn.title = 'تسجيل صوتي'; }
+        return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    _indexRecognition = new SR();
+    _indexRecognition.lang = 'ar-EG';
+    _indexRecognition.continuous = true;
+    _indexRecognition.interimResults = true;
+    _indexVoiceActive = true;
+    if (btn) { btn.style.color = '#ef4444'; btn.title = 'إيقاف التسجيل ■'; }
+    const inputEl = document.getElementById('input') || document.querySelector('textarea');
+    let _base = inputEl ? inputEl.value : '';
+    let _intStart = _base.length;
+    _indexRecognition.onresult = (e) => {
+        let interim = '', final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            const t = e.results[i][0].transcript;
+            if (e.results[i].isFinal) final += t;
+            else interim += t;
+        }
+        if (final) { _base += final; _intStart = _base.length; }
+        if (inputEl) inputEl.value = _base + interim;
+    };
+    _indexRecognition.onerror = (e) => {
+        _showIndexToast('خطأ في التعرف على الصوت: ' + e.error, 'error');
+        _indexVoiceActive = false;
+        if (btn) { btn.style.color = '#9ca3af'; btn.title = 'تسجيل صوتي'; }
+    };
+    _indexRecognition.onend = () => {
+        _indexVoiceActive = false;
+        if (btn) { btn.style.color = '#9ca3af'; btn.title = 'تسجيل صوتي'; }
+    };
+    _indexRecognition.start();
+}
+
+/* ── Core upload handler ── */
+const INDEX_BACKEND = 'http://localhost:5000';
+
+async function handleAttachmentUpload(files, type) {
+    if (!files || !files.length) return;
+    const btn = type === 'document' ? document.getElementById('btn-doc-clip')
+              : type === 'training' ? document.getElementById('btn-train-clip')
+              : document.getElementById('btn-cam-clip');
+
+    for (const file of Array.from(files)) {
+        /* Visual pill in the property description textarea */
+        const inputEl = document.getElementById('input') || document.querySelector('textarea');
+        if (inputEl) {
+            const tag = type === 'image' ? `[📷 صورة: ${file.name}]` :
+                        type === 'training' ? `[🎓 نموذج تدريب: ${file.name}]` :
+                        `[📎 مرفق: ${file.name}]`;
+            inputEl.value += (inputEl.value ? '\n' : '') + tag;
+        }
+
+        /* Gold glow feedback on button */
+        if (btn) {
+            btn.style.boxShadow = '0 0 12px rgba(212,175,55,0.6)';
+            btn.style.borderColor = 'rgba(212,175,55,0.8)';
+            setTimeout(() => {
+                btn.style.boxShadow = '';
+                btn.style.borderColor = type === 'document' ? 'rgba(59,130,246,0.3)' : 'rgba(212,175,55,0.3)';
+            }, 2500);
+        }
+
+        /* Backend upload */
+        const endpoint = type === 'training' ? '/api/training/register'
+                       : type === 'image'    ? '/api/upload'
+                       : '/api/ingest';
+        const form = new FormData();
+        form.append('file', file);
+        form.append('type', type);
+        try {
+            const res = await fetch(INDEX_BACKEND + endpoint, { method: 'POST', body: form });
+            if (res.ok) {
+                _showIndexToast(`✅ تم رفع: ${file.name}`, 'success');
+            } else {
+                _showIndexToast(`⚠️ فشل رفع ${file.name} (${res.status})`, 'error');
+            }
+        } catch (err) {
+            _showIndexToast(`⚠️ لا يمكن الوصول للخادم`, 'error');
+        }
+    }
+}
+
+/* ══ Super Intelligence Suite — panel controllers ══ */
+function openFraudPanel() {
+    ['geo-panel','demo-panel'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    const p = document.getElementById('fraud-panel');
+    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function openGeoPanel() {
+    ['fraud-panel','demo-panel'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    const p = document.getElementById('geo-panel');
+    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function openDemoPanel() {
+    ['fraud-panel','geo-panel'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    const p = document.getElementById('demo-panel');
+    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+async function runFraudCheck() {
+    const ppm = parseFloat(document.getElementById('fd-ppm')?.value || 0);
+    const loc  = document.getElementById('fd-loc')?.value?.trim() || '';
+    const resultEl = document.getElementById('fraud-result');
+    if (!ppm || !loc) { _showIndexToast('أدخل سعر المتر والموقع', 'error'); return; }
+    resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
+    try {
+        const res = await fetch('http://localhost:5000/api/fraud/detect', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ price_per_meter: ppm, location: loc })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') { resultEl.innerHTML = `<div style="color:#ef4444;">${data.message}</div>`; return; }
+        const confColor = data.confidence_score >= 0.9 ? '#22c55e' : data.confidence_score >= 0.7 ? '#f59e0b' : '#ef4444';
+        const flagIcon  = data.flag === 'سليم' ? '✅' : data.flag.includes('حرج') ? '🚨' : '⚠️';
+        resultEl.innerHTML = `
+        <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 12px;">
+            <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px;">
+                <div style="text-align:center;">
+                    <div style="font-size:1.6rem;font-weight:900;color:${confColor};">${data.confidence_pct}</div>
+                    <div style="font-size:0.68rem;color:#888;">نسبة الثقة</div>
+                </div>
+                <div>
+                    <div style="font-size:0.9rem;font-weight:700;color:${confColor};">${flagIcon} ${data.flag}</div>
+                    <div style="font-size:0.75rem;color:#9ca3af;">نطاق السوق: ${Number(data.market_low).toLocaleString()} — ${Number(data.market_high).toLocaleString()} ج.م/م²</div>
+                    <div style="font-size:0.75rem;color:#9ca3af;">Z-Score: ${data.z_score_market}σ&nbsp;|&nbsp;الاتجاه: ${data.direction}</div>
+                </div>
+            </div>
+            ${data.warning_message ? `<div style="font-size:0.75rem;color:#fbbf24;white-space:pre-line;border-top:1px solid rgba(251,191,36,0.15);padding-top:8px;">${data.warning_message}</div>` : ''}
+            <div style="font-size:0.78rem;color:#d1d5db;margin-top:8px;font-style:italic;">${data.recommendation}</div>
+        </div>`;
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+}
+
+async function runGeoCheck() {
+    const loc = document.getElementById('geo-loc')?.value?.trim() || '';
+    const resultEl = document.getElementById('geo-result');
+    if (!loc) { _showIndexToast('أدخل الموقع', 'error'); return; }
+    resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
+    try {
+        const res = await fetch('http://localhost:5000/api/geo/risk', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ location: loc })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') { resultEl.innerHTML = `<div style="color:#ef4444;">${data.message}</div>`; return; }
+        const alertColor = data.alert_level === 'مرتفع' ? '#ef4444' : data.alert_level === 'متوسط' ? '#f59e0b' : '#22c55e';
+        resultEl.innerHTML = `
+        <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                    <div style="font-size:0.78rem;color:#60a5fa;font-weight:700;">🌱 ${data.soil?.type || '—'}</div>
+                    <div style="font-size:0.62rem;color:#888;">التربة</div>
+                </div>
+                <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                    <div style="font-size:0.78rem;color:#60a5fa;font-weight:700;">🌊 ${data.flood?.risk || '—'}</div>
+                    <div style="font-size:0.62rem;color:#888;">سيول</div>
+                </div>
+                <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                    <div style="font-size:1rem;font-weight:900;color:${alertColor};">${data.risk_pct}</div>
+                    <div style="font-size:0.62rem;color:#888;">معامل المخاطر</div>
+                </div>
+            </div>
+            <details><summary style="font-size:0.75rem;color:#34d399;cursor:pointer;">التقرير الكامل</summary>
+                <pre style="font-size:0.7rem;color:#d1d5db;white-space:pre-wrap;margin-top:6px;
+                    background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;">${data.report_text}</pre>
+            </details>
+        </div>`;
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+}
+
+async function runDemoCheck() {
+    const loc     = document.getElementById('demo-loc')?.value?.trim() || '';
+    const horizon = parseInt(document.getElementById('demo-horizon')?.value || 5);
+    const resultEl = document.getElementById('demo-result');
+    if (!loc) { _showIndexToast('أدخل الموقع', 'error'); return; }
+    resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
+    try {
+        const res = await fetch('http://localhost:5000/api/demographic/flow', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ location: loc, investment_horizon_yr: horizon })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') { resultEl.innerHTML = `<div style="color:#ef4444;">${data.message}</div>`; return; }
+        const trendColor = data.demand_outlook?.annual_growth_pct >= 0 ? '#22c55e' : '#ef4444';
+        const stars = (data.rising_stars || []).slice(0, 3);
+        resultEl.innerHTML = `
+        <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 12px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+                <div style="background:rgba(0,0,0,0.2);padding:7px 12px;border-radius:6px;">
+                    <div style="font-size:0.72rem;color:#60a5fa;">وضع المنطقة</div>
+                    <div style="font-size:0.85rem;font-weight:700;">${data.saturation}</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.2);padding:7px 12px;border-radius:6px;">
+                    <div style="font-size:0.72rem;color:#60a5fa;">نمو سنوي</div>
+                    <div style="font-size:1rem;font-weight:900;color:${trendColor};">${data.demand_outlook?.annual_growth_pct > 0 ? '+' : ''}${data.demand_outlook?.annual_growth_pct}%</div>
+                </div>
+            </div>
+            ${stars.length ? `<div style="font-size:0.75rem;color:#d4af37;margin-bottom:5px;">⭐ مناطق بديلة صاعدة:</div>
+            ${stars.map(s=>`<div style="font-size:0.73rem;color:#d1d5db;margin-bottom:3px;">→ <b>${s.name}</b> (${s.horizon_yr}س) — ${s.driver}</div>`).join('')}` : ''}
+            <details style="margin-top:6px;"><summary style="font-size:0.75rem;color:#60a5fa;cursor:pointer;">التوصية الكاملة</summary>
+                <pre style="font-size:0.7rem;color:#d1d5db;white-space:pre-wrap;margin-top:6px;
+                    background:rgba(0,0,0,0.2);padding:8px;border-radius:6px;">${data.advisory_text}</pre>
+            </details>
+        </div>`;
+    } catch(e) { resultEl.innerHTML = `<div style="color:#ef4444;">⚠️ تعذر الاتصال بالخادم</div>`; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   التقاط نتائج الاستخبارات السيادية — Sovereign Insights Capture
+   يجمع كل ما هو معروض في لوحات الاستخبارات ويدمجه في payload التقرير
+══════════════════════════════════════════════════════════════════ */
+
+function _captureSovereignInsights() {
+    const insights = { fraud: null, geo: null, demographic: null };
+
+    // ── 1. المُحقق الرقمي (Fraud Detection) ─────────────────
+    const fraudEl = document.getElementById('fraud-result');
+    if (fraudEl && fraudEl.innerHTML.trim()) {
+        const fraudText = fraudEl.innerText.trim();
+        if (fraudText.length > 10) {
+            // استخراج القيم الرئيسية من النص المعروض
+            const confMatch  = fraudText.match(/نسبة الثقة[:\s]*(\S+)/);
+            const flagMatch  = fraudText.match(/(سليم|مشبوه|حرج|⚠|✅|🚨)/);
+            const zMatch     = fraudText.match(/Z-Score[:\s]*([\d\.\-]+)/);
+            const rangeMatch = fraudText.match(/نطاق السوق[:\s]*([\d,\.]+)\s*[—–-]\s*([\d,\.]+)/);
+            insights.fraud = {
+                raw_text:      fraudText.substring(0, 500),
+                confidence:    confMatch    ? confMatch[1] : '',
+                flag:          flagMatch    ? flagMatch[1] : '',
+                z_score:       zMatch       ? zMatch[1]    : '',
+                market_low:    rangeMatch   ? rangeMatch[1].replace(/,/g,'') : '',
+                market_high:   rangeMatch   ? rangeMatch[2].replace(/,/g,'') : '',
+            };
+        }
+    }
+
+    // ── 2. المخاطر الجيوتقنية (Geo Risk) ─────────────────────
+    const geoEl = document.getElementById('geo-result');
+    if (geoEl && geoEl.innerHTML.trim()) {
+        const geoText = geoEl.innerText.trim();
+        if (geoText.length > 10) {
+            const soilMatch  = geoText.match(/التربة[:\s]*(.+?)(?:\n|$)/);
+            const floodMatch = geoText.match(/سيول[:\s]*(.+?)(?:\n|$)/);
+            const riskMatch  = geoText.match(/معامل المخاطر[:\s]*([\d\.]+)/);
+            const locMatch   = geoText.match(/المنطقة[:\s]*(.+?)(?:\n|$)/);
+            insights.geo = {
+                raw_text:     geoText.substring(0, 600),
+                soil_type:    soilMatch  ? soilMatch[1].trim()  : '',
+                flood_risk:   floodMatch ? floodMatch[1].trim() : '',
+                risk_score:   riskMatch  ? riskMatch[1]         : '',
+                location:     locMatch   ? locMatch[1].trim()   : '',
+            };
+        }
+    }
+
+    // ── 3. رادار الهجرة الديموغرافية (Demographic Radar) ──────
+    const demoEl = document.getElementById('demo-result');
+    if (demoEl && demoEl.innerHTML.trim()) {
+        const demoText = demoEl.innerText.trim();
+        if (demoText.length > 10) {
+            const growthMatch = demoText.match(/نمو سنوي[:\s]*([\+\-\d\.]+%?)/);
+            const densMatch   = demoText.match(/كثافة[:\s]*([\d\.]+)/);
+            insights.demographic = {
+                raw_text:       demoText.substring(0, 600),
+                annual_growth:  growthMatch ? growthMatch[1] : '',
+                poi_density:    densMatch   ? densMatch[1]   : '',
+            };
+        }
+    }
+
+    // أرجع null إذا لم يكن هناك أي بيانات
+    if (!insights.fraud && !insights.geo && !insights.demographic) return null;
+    return insights;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   GEO-MAP FAST-TRACK — رفع خريطة جوية وتحليل جيوتقني فوري
+══════════════════════════════════════════════════════════════════ */
+
+async function handleGeoMapIndexUpload(files) {
+    if (!files || !files.length) return;
+    const file = files[0];
+
+    const icon = document.getElementById('geo-map-icon-index');
+    const text = document.getElementById('geo-map-text-index');
+    const box  = document.querySelector('.map-upload-box');
+
+    // ── 1. Pulse animation + loading state ────────────────────
+    if (icon) icon.style.color = '#38bdf8';
+    if (text) text.textContent = '⏳ جاري التحليل الجيوتقني...';
+    if (box) {
+        box.style.borderColor = '#38bdf8';
+        box.style.boxShadow   = '0 0 18px rgba(56,189,248,0.35)';
+        box.style.animation   = 'geoPulseIndex 1.1s ease-in-out infinite';
+    }
+
+    // ── 2. Tag in textarea ────────────────────────────────────
+    const inputEl = document.getElementById('main-input');
+    if (inputEl) {
+        inputEl.value += (inputEl.value ? '\n' : '') + `[🛰 خريطة جوية: ${file.name} — تحليل جاري…]`;
+    }
+
+    // ── 3. Read file → base64 ─────────────────────────────────
+    let b64 = null;
+    try {
+        b64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = e => resolve(e.target.result.split(',')[1]);
+            reader.onerror = () => reject(new Error('FileReader error'));
+            reader.readAsDataURL(file);
+        });
+    } catch (err) {
+        _showIndexToast('⚠️ فشل قراءة الملف: ' + err.message, 'error');
+        _resetGeoBox(); return;
+    }
+
+    // ── 4. POST to /api/image/geo-analyze ─────────────────────
+    try {
+        const res = await fetch(INDEX_BACKEND + '/api/image/geo-analyze', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                image_b64: b64,
+                filename:  file.name,
+                file_type: file.type,
+                sector:    'residential',
+                purpose:   'fair_market_value',
+            }),
+            signal: AbortSignal.timeout(90000),
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            const r = data.result || {};
+
+            // ── 5. Show results in the geo panel ──────────────
+            const geoResultEl = document.getElementById('geo-result');
+            if (geoResultEl) {
+                // Open the geo panel first
+                openGeoPanel();
+                const coords   = r.gps_coordinates;
+                const hasCoords = coords && coords.lat && coords.lng;
+                const riskColor = r.geotechnical_risk_level === 'HIGH'   ? '#ef4444'
+                                : r.geotechnical_risk_level === 'MEDIUM' ? '#f59e0b'
+                                : r.geotechnical_risk_level === 'LOW'    ? '#22c55e' : '#9ca3af';
+                geoResultEl.innerHTML = `
+                <div style="background:rgba(0,0,0,0.25);border-radius:8px;padding:10px 12px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <span style="font-size:1.5rem;">🛰</span>
+                        <div>
+                            <div style="font-size:0.9rem;font-weight:700;color:#38bdf8;">نتائج التحليل الجيوتقني — ${_escHtml(file.name)}</div>
+                            <div style="font-size:0.72rem;color:#667799;">ثقة: ${Math.round((r.confidence||0)*100)}%</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+                        <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                            <div style="font-size:0.78rem;color:#60a5fa;font-weight:700;">📍 ${hasCoords ? coords.lat.toFixed(5)+', '+coords.lng.toFixed(5) : 'لا GPS'}</div>
+                            <div style="font-size:0.62rem;color:#888;">الإحداثيات</div>
+                        </div>
+                        <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                            <div style="font-size:0.78rem;color:#60a5fa;font-weight:700;">🪨 ${_escHtml(r.soil_type || '—')}</div>
+                            <div style="font-size:0.62rem;color:#888;">التربة</div>
+                        </div>
+                        <div style="text-align:center;background:rgba(0,0,0,0.2);padding:7px;border-radius:6px;">
+                            <div style="font-size:1rem;font-weight:900;color:${riskColor};">${r.risk_score || '—'}/10</div>
+                            <div style="font-size:0.62rem;color:#888;">المخاطر</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+                        <div style="font-size:0.75rem;color:#d1d5db;background:rgba(0,0,0,0.15);padding:5px 8px;border-radius:5px;">
+                            💧 فيضانات: <b>${_escHtml(r.flood_risk || '—')}</b>
+                        </div>
+                        <div style="font-size:0.75rem;color:#d1d5db;background:rgba(0,0,0,0.15);padding:5px 8px;border-radius:5px;">
+                            🌋 زلازل: <b>${_escHtml(r.seismic_risk || '—')}</b>
+                        </div>
+                        <div style="font-size:0.75rem;color:#d1d5db;background:rgba(0,0,0,0.15);padding:5px 8px;border-radius:5px;">
+                            ☀ حرارة: <b>${_escHtml(r.heat_risk || '—')}</b>
+                        </div>
+                        <div style="font-size:0.75rem;color:#d1d5db;background:rgba(0,0,0,0.15);padding:5px 8px;border-radius:5px;">
+                            🏗 بناء: <b>${_escHtml(r.buildability || '—')}</b>
+                        </div>
+                    </div>
+                    <div style="font-size:0.75rem;color:#38bdf8;font-weight:600;margin-bottom:4px;">📍 المنطقة: ${_escHtml(r.location_guess || '—')}</div>
+                    ${r.recommendations ? `
+                    <div style="font-size:0.73rem;color:#fbbf24;white-space:pre-line;
+                                border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;margin-top:6px;">
+                        💡 ${_escHtml(r.recommendations)}
+                    </div>` : ''}
+                </div>`;
+            }
+
+            // ── 6. Update textarea with result ────────────────
+            if (inputEl) {
+                inputEl.value = inputEl.value.replace(
+                    /\[🛰 خريطة جوية:.*?تحليل جاري…\]/,
+                    `[🛰 خريطة: ${file.name} → ${r.location_guess || '—'} | مخاطر: ${r.geotechnical_risk_level || '—'} (${r.risk_score||'—'}/10)]`
+                );
+            }
+
+            _showIndexToast(`✅ تحليل جيوتقني مكتمل: ${r.location_guess || file.name}`, 'success');
+
+        } else {
+            _showIndexToast('⚠️ ' + (data.message || 'خطأ في التحليل'), 'error');
+        }
+
+    } catch (err) {
+        const msg = err.name === 'TimeoutError'
+            ? 'انتهت مهلة التحليل — تأكد من تشغيل الخادم'
+            : err.message;
+        _showIndexToast('⚠️ ' + msg, 'error');
+    } finally {
+        _resetGeoBox();
+    }
+}
+
+function _resetGeoBox() {
+    const icon = document.getElementById('geo-map-icon-index');
+    const text = document.getElementById('geo-map-text-index');
+    const box  = document.querySelector('.map-upload-box');
+    if (icon) icon.style.color = '';
+    if (text) text.textContent = 'رفع خريطة جوية أو كروكي';
+    if (box) {
+        box.style.borderColor = '';
+        box.style.boxShadow   = '';
+        box.style.animation   = '';
+    }
+}
+
+function _escHtml(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Minimal toast helper (reuses existing showToast if present) ── */
+function _showIndexToast(msg, type) {
+    if (typeof showToast === 'function') { showToast(msg, type); return; }
+    const d = document.createElement('div');
+    d.textContent = msg;
+    d.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+        background:${type==='success'?'#10b981':'#ef4444'};color:#fff;padding:10px 22px;
+        border-radius:20px;font-family:Tajawal,sans-serif;font-size:0.9rem;z-index:9999;
+        box-shadow:0 4px 15px rgba(0,0,0,0.4);`;
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Render.com deployment blueprint
+# Apply with:  render blueprint launch deploy/render.yaml
+#   (or import via the Render dashboard → "New from Blueprint")
+# ─────────────────────────────────────────────────────────────────────────
+services:
+  # ── PropTech Flask app ─────────────────────────────────────────────────
+  - type: web
+    name: expert-smart-api
+    runtime: docker
+    dockerfilePath: deploy/Dockerfile.flask
+    dockerContext: .
+    plan: starter           # upgrade to standard/pro for production traffic
+    region: frankfurt       # closest to MENA users
+    healthCheckPath: /api/advisor/health
+    autoDeploy: true
+    envVars:
+      - key: WSGI
+        value: gunicorn
+      - key: PORT
+        value: "5000"
+      - key: OLLAMA_HOST
+        fromService:
+          type: pserv
+          name: expert-smart-ollama
+          property: hostport
+      - key: QDRANT_URL
+        fromService:
+          type: pserv
+          name: expert-smart-qdrant
+          property: hostport
+      - key: OPENAI_API_KEY
+        sync: false         # set manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  # ── Ollama (private background service) ───────────────────────────────
+  - type: pserv
+    name: expert-smart-ollama
+    runtime: docker
+    dockerfilePath: deploy/Dockerfile.ollama
+    dockerContext: .
+    plan: pro-plus          # llama3:8b needs ≥ 8GB RAM
+    region: frankfurt
+    disk:
+      name: ollama-models
+      mountPath: /root/.ollama
+      sizeGB: 12
+    envVars:
+      - key: OLLAMA_MODEL
+        value: llama3:8b
+      - key: ALIAS_AS
+        value: qwen2.5:7b
+      - key: OLLAMA_HOST
+        value: 0.0.0.0:11434
+      - key: OLLAMA_KEEP_ALIVE
+        value: 24h
+
+  # ── Qdrant vector DB (private background service) ─────────────────────
+  - type: pserv
+    name: expert-smart-qdrant
+    runtime: image
+    image:
+      url: docker.io/qdrant/qdrant:v1.10.1
+    plan: starter
+    region: frankfurt
+    disk:
+      name: qdrant-data
+      mountPath: /qdrant/storage
+      sizeGB: 5

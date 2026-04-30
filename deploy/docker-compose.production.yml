@@ -1,0 +1,65 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Production overrides — combine with the base compose file:
+#   docker compose -f deploy/docker-compose.yml \
+#                  -f deploy/docker-compose.production.yml up -d
+# ─────────────────────────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+  flask:
+    # Replace waitress with gunicorn for production
+    command: >
+      gunicorn
+      -k gthread
+      -w 4
+      --threads 8
+      --timeout 180
+      --bind 0.0.0.0:5000
+      --access-logfile -
+      --error-logfile -
+      core_engine.bridge_api:app
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/api/advisor/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  ollama:
+    deploy:
+      resources:
+        limits:
+          memory: 12G    # llama3:8b needs ~8 GB resident; 12 GB headroom
+        reservations:
+          memory: 8G
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_KEEP_ALIVE=24h
+      - OLLAMA_NUM_PARALLEL=2
+      - OLLAMA_MAX_LOADED_MODELS=1
+
+  # Optional: nginx reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: expert-smart-nginx
+    restart: unless-stopped
+    depends_on:
+      - flask
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    networks:
+      - es-net
+
+volumes:
+  certbot_certs:

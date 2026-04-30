@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "kind": "tool-registry-draft",
+    "status": "DRAFT — NOT EXECUTABLE",
+    "purpose": "Future source-of-truth shape for an eventual tool_registry.json. This file is documentation only. It is not loaded by any runtime, has no JSON Schema validation yet, and contains no auth, model, or chain bindings.",
+    "snapshot_date": "2026-04-26",
+    "based_on": "docs/TOOL_MANIFEST.md",
+    "do_not": [
+      "Do not import this file from any Python module.",
+      "Do not rename it to tool_registry.json without an explicit decision per docs/ai/integration-plan.md → Phase 1 entry criteria.",
+      "Do not add fields beyond the documented shape until a runtime is chosen.",
+      "Do not include the deferred /api/image/geo-analyze endpoint."
+    ],
+    "field_legend": {
+      "name": "snake_case stable identifier; intended as future tool_id",
+      "route": "HTTP path on the Flask server",
+      "method": "HTTP verb",
+      "input_shape_summary": "human-readable summary of expected payload — NOT JSON Schema",
+      "output_shape_summary": "human-readable summary of response top-level fields — NOT JSON Schema",
+      "idempotent": "yes / no / partial — whether identical input always yields identical logical result",
+      "writes_file": "yes / no / conditional — whether the call writes to outputs/ on success",
+      "ready": "ready / partial / not_ready — suitability for a future orchestration wrapper"
+    }
+  },
+
+  "tools": [
+    {
+      "name": "advisor_health",
+      "route": "/api/advisor/health",
+      "method": "GET",
+      "input_shape_summary": "none",
+      "output_shape_summary": "{ status, rag_ready, message }",
+      "idempotent": "yes",
+      "writes_file": "no",
+      "ready": "ready",
+      "notes": "First call may take 30–90 s on cold start (embedding model lazy-load). rag_ready=true does not imply non-empty corpus."
+    },
+    {
+      "name": "price_index",
+      "route": "/api/price-index",
+      "method": "GET",
+      "input_shape_summary": "optional query: region_filter, property_type_filter, base_period",
+      "output_shape_summary": "{ status, summary{ n_records, n_regions, avg_yoy_pct, highest_region, lowest_region }, regions[] }",
+      "idempotent": "yes",
+      "writes_file": "no",
+      "ready": "ready",
+      "notes": "Reads core_engine/data/market_feed.json (currently 1,731 records post-densification)."
+    },
+    {
+      "name": "valuation",
+      "route": "/api/valuation",
+      "method": "POST",
+      "input_shape_summary": "{ location, property_type, valuation_purpose, area, price_per_meter? } and optional advanced fields",
+      "output_shape_summary": "{ status, market_value, avm{ applied, confidence, n_records, avm_ppm, ... }, excel_url, purpose_report_url }",
+      "idempotent": "no",
+      "writes_file": "yes",
+      "ready": "ready",
+      "notes": "Writes one .xlsm and one .docx to outputs/ on every successful call (unique report ID). AVM auto-injection occurs when price_per_meter is omitted and purpose ∈ {fair_market_value, bank_financing, tax_assessment, acquisition}. A future wrapper MUST default to a server-side dry_run before being exposed to autonomous agents (see integration-plan.md → Phase 3)."
+    },
+    {
+      "name": "hbu_analyze",
+      "route": "/api/hbu/analyze",
+      "method": "POST",
+      "input_shape_summary": "{ plot_area_sqm, discount_rate_pct, horizon_years, alternative_uses[] }",
+      "output_shape_summary": "{ status, recommended_use, recommended_npv, recommendation_note, scenarios_evaluated[], comparison_table[] }",
+      "idempotent": "yes",
+      "writes_file": "conditional",
+      "ready": "ready",
+      "notes": "Pure financial-engine call. The default response does not include a generated file; an optional Word report can be requested via a flag, which a wrapper MUST keep disabled by default."
+    },
+    {
+      "name": "reit_nav",
+      "route": "/api/reit/nav",
+      "method": "POST",
+      "input_shape_summary": "{ fund_name, units_outstanding, assets[], liabilities{...}, export_excel? }",
+      "output_shape_summary": "{ status, result{ gross_asset_value, total_liabilities, nav, nav_per_unit, weighted_cap_rate_pct, ltv_pct, gearing_ratio_pct, health_label }, excel_url? }",
+      "idempotent": "yes",
+      "writes_file": "conditional",
+      "ready": "ready",
+      "notes": "Deterministic — TESTED_BASELINES.md → Baseline 5 documents ±0.01% tolerance on identical inputs. Excel export is opt-in via export_excel=true; a wrapper MUST omit this flag in the default call."
+    },
+    {
+      "name": "eia_assess",
+      "route": "/api/eia/assess",
+      "method": "POST",
+      "input_shape_summary": "{ project_name, location, project_type, impacts[], market_value, ... }",
+      "output_shape_summary": "{ status, category, result{ classification{ category_label, composite_score }, impact_assessment{ n_critical, avg_impact_score }, investment_linkage{ erf, market_value, adjusted_market_value, value_at_risk } }, word_url, excel_url }",
+      "idempotent": "yes",
+      "writes_file": "yes",
+      "ready": "ready",
+      "notes": "Always writes a Word report and an Excel summary on success. Same dry_run requirement as valuation before autonomous use."
+    },
+    {
+      "name": "image_analyze",
+      "route": "/api/image/analyze",
+      "method": "POST",
+      "input_shape_summary": "multipart/form-data with file=@<image>",
+      "output_shape_summary": "{ status, tag, has_gps, gps_lat?, gps_lng?, saved_as }",
+      "idempotent": "partial",
+      "writes_file": "yes",
+      "ready": "partial",
+      "notes": "Same image yields same tag/has_gps, but each upload is saved under a uniquely-named file. GPS extraction code path is unverified (see DEFERRED_ITEMS.md → D1). A wrapper MUST treat gps_lat / gps_lng as best-effort until D1 is closed, and MUST NOT be enabled before Phase 3 entry criteria are met."
+    }
+  ],
+
+  "excluded_endpoints": [
+    {
+      "route": "/api/image/geo-analyze",
+      "reason": "Not implemented (DEFERRED_ITEMS.md → D2). 9 of 14 expected response fields have no traceable contract. Cannot be wrapped until restored or redesigned."
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+# ─────────────────────────────────────────────────────────────────────────
+#  Expert_Smart — Docker build context exclusions (REPO-ROOT FILE)
+#
+#  Why this file lives here, not in deploy/:
+#  Docker reads .dockerignore only at the build-context root. Compose sets
+#  context: .. (the repo root) for the Flask service, so this is the path
+#  Docker actually checks. The file in deploy/ is preserved as historical
+#  documentation only.
+#
+#  Source of truth for the heavy-path exclusions: April 26, 2026 audit
+#  (build context was 1.16 GB; ~1.07 GB of that is non-runtime data).
+# ─────────────────────────────────────────────────────────────────────────
+
+# ─── Standard housekeeping (mirrored from deploy/.dockerignore) ─────────
+.git
+.gitignore
+.vscode
+.idea
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+.env
+.env.local
+*.log
+*.bak
+*.swp
+.DS_Store
+node_modules/
+build/
+dist/
+tests/
+
+# ─── Generated artifacts (regenerated inside the container) ─────────────
+outputs/
+core_engine/outputs/
+*.docx
+*.pdf
+
+# ─── RAG / vector store data (mounted as Docker volumes in production) ──
+core_engine/data/embeddings/
+core_engine/data/qdrant_local/
+expert_smart_system/vector_db/
+expert_smart_system/vector_db_new/
+
+# ─── Heavy non-runtime paths (the audit's primary culprits) ─────────────
+# LLM adapter weights — runtime uses Ollama, not local adapters
+expert_smart_system/models/
+expert_smart_system/extracted_docs/
+expert_smart_system/expert_model_final.zip
+
+# Historical operator-side fixtures — Flask routes accept payloads via HTTP,
+# they do not read inputs/raw_docs/ at runtime
+core_engine/inputs/
+
+# Embedded venv — must never go into a container
+core_engine/banking_expert/venv/
+
+# ─── Legacy spreadsheet templates and samples (active ones are .xlsx/.xlsm) ──
+*.xls
+EXAMPLE.xls
+
+# ─── Excel template carve-out ────────────────────────────────────────────
+# Excluding *.xlsx and *.xlsm wholesale would also drop the active
+# valuation/REIT/EIA report templates that bridge_api.py opens. Exclude
+# everything except the exact template files referenced by the code.
+*.xlsx
+*.xlsm
+!core_engine/templates/template.xlsx
+!core_engine/templates/template.xlsm
+!templates/template.xlsx
+!templates/template.xlsm

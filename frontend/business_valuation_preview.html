@@ -1,0 +1,73 @@
+<!-- Business Valuation Form Preview -->
+<div class="form-container glass-panel premium-card">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <i class="fa-solid fa-file-invoice-dollar text-accent" style="font-size: 3.5rem; margin-bottom: 1rem;"></i>
+        <h2 style="font-size: 2rem;">نموذج تقييم الأعمال</h2>
+        <p>Business Valuation Request Form</p>
+    </div>
+
+    <form id="business-valuation-form">
+        <div class="form-grid">
+            <div class="input-group full-width">
+                <label for="biz-name">اسم الشركة / المنشأة</label>
+                <input type="text" id="biz-name" placeholder="مثال: شركة الهادي للتجارة والمقاولات" required>
+            </div>
+            <div class="input-group">
+                <label for="biz-sector">القطاع الصناعي</label>
+                <select id="biz-sector">
+                    <option value="retail">التجزئة والتجارة</option>
+                    <option value="tech">التكنولوجيا والبرمجيات</option>
+                    <option value="industrial">التصنيع والخدمات اللوجستية</option>
+                    <option value="service">الخدمات المهنية</option>
+                    <option value="other">قطاعات أخرى</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="biz-revenue">الإيرادات السنوية التقديرية (درهم)</label>
+                <input type="number" id="biz-revenue" placeholder="0.00" required>
+            </div>
+            <div class="input-group">
+                <label for="biz-employees">عدد الموظفين الحالي</label>
+                <input type="number" id="biz-employees" placeholder="مثال: 50">
+            </div>
+            <div class="input-group">
+                <label for="biz-purpose">الغرض من التقييم</label>
+                <select id="biz-purpose">
+                    <option value="sale">بيع / استحواذ</option>
+                    <option value="financing">تمويل بنكي</option>
+                    <option value="legal">نزاع قانوني / ورثة</option>
+                    <option value="internal">تقييم داخلي للنمو</option>
+                </select>
+            </div>
+            <div class="input-group full-width">
+                <label for="biz-notes">وصف موجز لطبيعة العمل</label>
+                <textarea id="biz-notes" rows="4" placeholder="يرجى كتابة لمحة عن نشاط الشركة الأساسي..."></textarea>
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 2rem; padding: 1.5rem; background: rgba(203, 161, 83, 0.05); border: 1px dashed var(--primary); border-radius: 8px; text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                <i class="fa-solid fa-shield-halved"></i> سيتم مراجعة طلبك من قبل خبراء التقييم المعتمدين لدينا وفق
+                معايير IVS.
+            </p>
+            <button type="submit" class="btn btn-primary btn-large btn-block shadow-gold">
+                إرسال طلب عرض سعر تقييم الأعمال
+            </button>
+        </div>
+    </form>
+
+    <button class="btn btn-secondary btn-block" style="margin-top: 1rem;" onclick="navigateTo('appraisal-hub')">
+        <i class="fa-solid fa-arrow-right"></i> العودة لقائمة خدمات التقييم
+    </button>
+</div>
+
+<style>
+    .shadow-gold {
+        box-shadow: 0 0 15px rgba(203, 161, 83, 0.4);
+    }
+
+    .shadow-gold:hover {
+        box-shadow: 0 0 25px rgba(203, 161, 83, 0.6);
+    }
+</style>

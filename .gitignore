@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# Environment / IDE
+.env
+.env.*
+.vscode/
+.idea/
+
+# Docker / local runtime data
+core_engine/outputs/
+reports/
+shared_data/
+expert_smart_system/vector_db/
+expert_smart_system/vector_db_new/
+core_engine/banking_expert/venv/
+
+# Large local inputs / artifacts
+core_engine/inputs/
+*.log
+*.bak
+*.swp
+
+# Office temp files
+~$*
+
+# Big sample/binary docs you likely don't want in git
+*.pdf
+*.docx
+*.xlsx
+*.xls
+*.xlsm
+!templates/
+!templates/template.xlsm
+!templates/template.xlsx
+!core_engine/templates/
+!core_engine/templates/template.xlsx
+!core_engine/templates/template.xlsm
+# Local / heavy artifacts
+core_engine/voice_inputs/
+expert_smart_system/extracted_docs/
+expert_smart_system/models/
+expert_smart_system/expert_model_final.zip
+expert_smart_system/.claude/settings.local.json
+# Generated / local runtime artifacts
+core_engine/outputslogs/
+core_engine/outputsreports/
+core_engine/uploads/
+core_engine/out.txt
+
+# Secrets
+core_engine/service_account.json
+# Local / generated / backup artifacts
+.claude/settings.local.json
+core_engine/inputs_case_json/
+core_engine/market_radar.db
+core_engine/data/market_feed.backup_*.json

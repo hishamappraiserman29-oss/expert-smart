@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير تقييم عقاري - معايير EFSA</title>
+    <style>
+        body { font-family: 'Tajawal', sans-serif; padding: 40px; color: #333; }
+        .header { border-bottom: 3px solid #1E3A8A; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; color: #1E3A8A; }
+        .efsa-badge { background: #D4AF37; color: #fff; padding: 5px 15px; border-radius: 5px; font-weight: bold; }
+        .report-title { text-align: center; color: #1E3A8A; margin-bottom: 40px; }
+        .section { margin-bottom: 30px; }
+        .section-title { border-right: 5px solid #D4AF37; padding-right: 15px; margin-bottom: 15px; color: #1E3A8A; font-weight: bold; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table td { padding: 10px; border: 1px solid #eee; }
+        .label { font-weight: bold; background: #f9f9f9; width: 30%; }
+        .footer { margin-top: 100px; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px; }
+        .seal { text-align: left; }
+        .seal-placeholder { width: 150px; height: 150px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #ccc; margin-left: auto; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Expert_Smart | Appraisal</div>
+        <div class="efsa-badge">معايير EFSA - الرقابة المالية المصرية</div>
+    </div>
+
+    <div class="report-title">
+        <h1>تقرير تقييم عقاري رسمي</h1>
+        <p>الرقم المرجعي: {{report_id}}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">بيانات العميل والأصل</div>
+        <table class="data-table">
+            <tr><td class="label">اسم العميل:</td><td>{{client_name}}</td></tr>
+            <tr><td class="label">نوع العقار:</td><td>{{property_type}}</td></tr>
+            <tr><td class="label">الموقع:</td><td>{{location}}</td></tr>
+            <tr><td class="label">المساحة:</td><td>{{area}} م٢</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">القيمة السوقية</div>
+        <div style="font-size: 2rem; color: #1E3A8A; text-align: center; margin: 20px 0;">
+            {{final_value}} EGP
+        </div>
+        <p style="text-align: center; color: #666;">تم التقييم وفقاً للمعايير المصرية للتقييم العقاري (EFSA)</p>
+    </div>
+
+    <div class="footer">
+        <div class="expert-info">
+            <p><strong>الخبير المعتمد:</strong> هشام المهدي</p>
+            <p>رقم القيد لدى الهيئة: #EFSA-12345</p>
+        </div>
+        <div class="seal">
+            <div class="seal-placeholder">ختم الخبير</div>
+            <p style="text-align: left; margin-top: 10px;">{{timestamp}}</p>
+        </div>
+    </div>
+</body>
+</html>

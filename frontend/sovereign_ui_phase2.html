@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXPERT_SMART — الواجهة السيادية الموحدة v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- مكتبات معالجة الملفات -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════════
+   TOKENS & RESET
+═══════════════════════════════════════════════════════════ */
+:root {
+  --navy:       #030812; --navy-1: #050d1a; --navy-2: #071222;
+  --gold:       #FFD700; --gold-deep: #C9A800; --gold-bright: #FFE44D;
+  --gold-a05:   rgba(255,215,0,.05);  --gold-a10: rgba(255,215,0,.10);
+  --gold-a15:   rgba(255,215,0,.15);  --gold-a20: rgba(255,215,0,.20);
+  --gold-a30:   rgba(255,215,0,.30);  --gold-a50: rgba(255,215,0,.50);
+  --w02: rgba(255,255,255,.02); --w04: rgba(255,255,255,.04);
+  --w06: rgba(255,255,255,.06); --w08: rgba(255,255,255,.08);
+  --w12: rgba(255,255,255,.12);
+  --text:    #EEF2FF; --text-2: #94A3C4; --text-3: #4A5A78;
+  --green:   #4ADE80; --green-a15: rgba(74,222,128,.15);
+  --amber:   #F59E0B; --amber-a15: rgba(245,158,11,.15);
+  --purple:  #A78BFA; --purple-a15: rgba(167,139,250,.15);
+  --blue:    #60A5FA; --blue-a15: rgba(96,165,250,.15);
+  --red:     #EF4444; --red-a15: rgba(239,68,68,.15);
+  --f-ar: 'Tajawal',sans-serif; --f-en: 'Montserrat',sans-serif;
+  --r-sm: 8px; --r-md: 14px; --r-lg: 20px;
+  --ease: cubic-bezier(.16,1,.3,1); --tf: .18s; --tm: .28s;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { height:100%; }
+body {
+  min-height:100vh; background:var(--navy); color:var(--text);
+  font-family:var(--f-ar); line-height:1.6;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+h1,h2,h3,h4,h5 { font-family:var(--f-ar); font-weight:800; line-height:1.3; }
+button,input,select,textarea { font-family:var(--f-ar); color:var(--text); }
+button { cursor:pointer; border:none; background:none; outline:none; }
+input,select,textarea { outline:none; }
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--gold-a20); border-radius:4px; }
+option { background:#0A1528; color:var(--text); }
+:focus-visible { outline:2px solid var(--gold-a50); outline-offset:2px; }
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════════ */
+@keyframes goldFlow   { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+@keyframes pulseGold  { 0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,.5)} 50%{box-shadow:0 0 0 6px rgba(255,215,0,0)} }
+@keyframes pulseGreen { 0%,100%{box-shadow:0 0 0 0 rgba(74,222,128,.5)} 50%{box-shadow:0 0 0 6px rgba(74,222,128,0)} }
+@keyframes shimmer    { 0%,100%{opacity:.45} 50%{opacity:1} }
+@keyframes fadeUp     { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn     { from{opacity:0} to{opacity:1} }
+@keyframes gridReveal { from{opacity:0;transform:scale(.97) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes scanBar    { 0%{transform:translateY(-100%)} 100%{transform:translateY(350%)} }
+@keyframes floatBg    { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.02)} }
+@keyframes popIn      { 0%{opacity:0;transform:scale(.84)} 80%{transform:scale(1.04)} 100%{opacity:1;transform:scale(1)} }
+/* دوران الحلقة الذهبية */
+@keyframes spinRing   { to{transform:rotate(360deg)} }
+@keyframes spinRing2  { to{transform:rotate(-360deg)} }
+@keyframes pulseCore  { 0%,100%{opacity:.6;transform:scale(.9)} 50%{opacity:1;transform:scale(1.05)} }
+@keyframes progressW  { from{width:0} to{width:var(--target-w,100%)} }
+@keyframes toastIn    { from{opacity:0;transform:translateY(14px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes toastOut   { to{opacity:0;transform:translateY(8px) scale(.95)} }
+@keyframes blinkDot   { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+/* ═══════════════════════════════════════════════════════════
+   COSMIC BACKGROUND
+═══════════════════════════════════════════════════════════ */
+.cosmic-bg {
+  position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden;
+}
+.cosmic-bg::before {
+  content:''; position:absolute; top:-20%; left:50%; transform:translateX(-50%);
+  width:900px; height:500px;
+  background:radial-gradient(ellipse at center, rgba(255,215,0,.055) 0%, rgba(255,215,0,.02) 40%, transparent 70%);
+  animation:floatBg 12s ease-in-out infinite;
+}
+.cosmic-bg::after {
+  content:''; position:absolute; bottom:-15%; right:-10%;
+  width:600px; height:600px;
+  background:radial-gradient(ellipse at center, rgba(96,165,250,.04) 0%, transparent 65%);
+}
+.cosmic-dots {
+  position:absolute; inset:0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%,rgba(255,255,255,.18) 0%,transparent 100%),
+    radial-gradient(1px 1px at 72% 35%,rgba(255,255,255,.12) 0%,transparent 100%),
+    radial-gradient(1px 1px at 40% 60%,rgba(255,215,0,.15) 0%,transparent 100%),
+    radial-gradient(1px 1px at 85% 75%,rgba(255,255,255,.10) 0%,transparent 100%),
+    radial-gradient(2px 2px at 60% 10%,rgba(255,215,0,.12) 0%,transparent 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE SHELL
+═══════════════════════════════════════════════════════════ */
+.page-wrapper {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; min-height:100vh;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════════ */
+.sovereign-header {
+  position:sticky; top:0; z-index:200; height:70px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:0 24px;
+  background:linear-gradient(180deg,rgba(4,9,20,.98) 0%,rgba(3,8,18,.95) 100%);
+  border-bottom:1px solid var(--gold-a20);
+  backdrop-filter:blur(24px) saturate(1.5);
+  overflow:hidden;
+}
+.sovereign-header::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold) 25%,#FFF9C4 50%,var(--gold) 75%,transparent);
+  background-size:250% 100%; animation:goldFlow 5s ease infinite;
+}
+.header-brand { display:flex; align-items:center; gap:12px; flex-shrink:0; text-decoration:none; }
+.brand-emblem {
+  width:44px; height:44px; border-radius:var(--r-md); flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold-a15),var(--gold-a05));
+  border:1px solid var(--gold-a30);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.15rem; color:var(--gold);
+  box-shadow:0 0 20px rgba(255,215,0,.12),inset 0 1px 0 rgba(255,215,0,.10);
+}
+.brand-name { display:block; font-family:var(--f-en); font-size:.80rem; font-weight:900; letter-spacing:2.5px; color:#fff; text-transform:uppercase; }
+.brand-name strong { color:var(--gold); }
+.brand-tagline { display:block; font-size:.60rem; color:var(--text-2); font-weight:500; margin-top:1px; }
+.header-sep { width:1px; height:30px; background:linear-gradient(to bottom,transparent,var(--gold-a20),transparent); flex-shrink:0; }
+.header-center { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; min-width:0; }
+.flags-row { display:flex; align-items:center; gap:10px; font-size:1.25rem; }
+.flag-divider { width:1px; height:14px; background:var(--gold-a20); }
+.header-title { font-family:var(--f-en); font-size:.76rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:#fff; white-space:nowrap; }
+.header-title .ht-accent { color:var(--gold); }
+.header-standards { font-size:.58rem; color:var(--text-3); letter-spacing:1.5px; }
+.header-standards span { color:var(--text-2); font-weight:700; }
+.header-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.status-badge {
+  display:inline-flex; align-items:center; gap:6px; padding:4px 12px;
+  border-radius:20px; background:var(--green-a15); border:1px solid rgba(74,222,128,.25);
+  font-size:.62rem; font-family:var(--f-en); font-weight:800; color:var(--green); white-space:nowrap;
+}
+.status-badge-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulseGreen 2.2s ease infinite; }
+.user-chip {
+  display:flex; align-items:center; gap:8px; padding:5px 12px;
+  background:var(--w04); border:1px solid var(--gold-a15); border-radius:var(--r-md);
+  cursor:pointer; transition:all var(--tf) var(--ease);
+}
+.user-chip:hover { background:var(--gold-a10); border-color:var(--gold-a30); }
+.user-avatar {
+  width:28px; height:28px; border-radius:7px;
+  background:linear-gradient(135deg,var(--gold-deep),var(--gold));
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--f-en); font-size:.70rem; font-weight:900; color:var(--navy); flex-shrink:0;
+}
+.user-name  { display:block; font-size:.64rem; font-weight:800; color:var(--text); }
+.user-role-lbl { display:block; font-size:.55rem; color:var(--text-2); font-weight:500; }
+.login-btn {
+  display:flex; align-items:center; gap:6px; padding:6px 14px; border-radius:var(--r-sm);
+  background:var(--gold-a10); border:1px solid var(--gold-a20); color:var(--gold);
+  font-size:.67rem; font-weight:800; transition:all var(--tf) var(--ease); white-space:nowrap;
+}
+.login-btn:hover { background:var(--gold-a20); border-color:var(--gold-a50); box-shadow:0 0 16px rgba(255,215,0,.12); }
+.login-btn.active { background:var(--green-a15); border-color:rgba(74,222,128,.35); color:var(--green); }
+
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT STRIP
+═══════════════════════════════════════════════════════════ */
+.context-strip {
+  display:flex; align-items:center; gap:8px; padding:0 24px; height:36px;
+  background:rgba(3,8,18,.75); border-bottom:1px solid rgba(255,255,255,.04);
+  overflow-x:auto; flex-shrink:0; scrollbar-width:none;
+}
+.context-strip::-webkit-scrollbar { display:none; }
+.ctx-label { font-size:.56rem; font-family:var(--f-en); font-weight:800; color:var(--text-3); letter-spacing:1.5px; text-transform:uppercase; flex-shrink:0; }
+.ctx-pill {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 10px;
+  border-radius:20px; background:var(--w04); border:1px solid rgba(255,255,255,.06);
+  font-size:.57rem; font-weight:600; color:var(--text-2); white-space:nowrap; flex-shrink:0; transition:all var(--tf);
+}
+.ctx-pill.active { background:var(--gold-a10); border-color:var(--gold-a30); color:var(--gold); }
+.ctx-pill i { font-size:.54rem; opacity:.7; }
+.ctx-divider { width:3px; height:3px; border-radius:50%; background:var(--w12); flex-shrink:0; }
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN AREA + GRID
+═══════════════════════════════════════════════════════════ */
+.scroll-area { flex:1; overflow-y:auto; min-height:0; }
+.main-area { padding:16px 24px 0; display:flex; flex-direction:column; gap:14px; }
+.grid-header { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.grid-header-line { flex:1; height:1px; background:linear-gradient(to left,transparent,var(--gold-a20),transparent); }
+.grid-header-line.right-line { background:linear-gradient(to right,transparent,var(--gold-a20),transparent); }
+.grid-header-title { font-size:.62rem; font-weight:800; color:var(--text-3); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; }
+.grid-header-title::before,.grid-header-title::after { content:'◆'; color:var(--gold); font-size:.50rem; opacity:.6; margin:0 6px; }
+.sovereign-grid {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+  animation:gridReveal .55s var(--ease) .15s both;
+}
+
+/* ── CARD BASE ── */
+.s-card {
+  position:relative; border-radius:var(--r-md); padding:14px 14px 22px;
+  display:flex; flex-direction:column; gap:10px; overflow:hidden; min-height:148px;
+  background:linear-gradient(145deg,rgba(9,21,40,.90),rgba(6,14,28,.95),rgba(4,10,22,.98));
+  border:1px solid rgba(255,215,0,.12);
+  backdrop-filter:blur(24px) saturate(1.6);
+  box-shadow:0 4px 24px rgba(0,0,0,.30),0 1px 0 rgba(255,215,0,.05) inset;
+  transition:border-color var(--tm) var(--ease),transform var(--tm) var(--ease),box-shadow var(--tm) var(--ease);
+}
+.s-card::before {
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(135deg,rgba(255,215,0,.03) 0%,transparent 55%,rgba(255,215,0,.015) 100%);
+  pointer-events:none;
+}
+.s-card::after {
+  content:''; position:absolute; top:0; left:15%; right:15%; height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,215,0,.25),transparent);
+}
+.s-card:hover { border-color:rgba(255,215,0,.28); transform:translateY(-2px); box-shadow:0 10px 40px rgba(0,0,0,.40),0 0 20px rgba(255,215,0,.06); }
+.s-card:focus-within { border-color:rgba(255,215,0,.40); box-shadow:0 8px 32px rgba(0,0,0,.35),0 0 0 2px var(--gold-a10); }
+.s-card.card-active { border-color:rgba(255,215,0,.38) !important; box-shadow:0 0 0 1px var(--gold-a15),0 8px 32px rgba(255,215,0,.06) !important; }
+.card-status-dot {
+  position:absolute; top:12px; left:12px; width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.12); transition:all .4s;
+}
+.card-status-dot.active { background:var(--green); border-color:rgba(74,222,128,.4); animation:pulseGreen 2s infinite; }
+.card-scan-fx { position:absolute; inset:0; overflow:hidden; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .3s; }
+.card-scan-fx::after { content:''; position:absolute; left:0; right:0; height:40px; background:linear-gradient(to bottom,transparent,rgba(255,215,0,.04),transparent); animation:scanBar 3s ease-in-out infinite; }
+.s-card:hover .card-scan-fx { opacity:1; }
+.card-head { display:flex; align-items:flex-start; gap:10px; }
+.card-icon {
+  width:34px; height:34px; border-radius:var(--r-sm); flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold-a15),var(--gold-a05));
+  border:1px solid var(--gold-a20); display:flex; align-items:center; justify-content:center;
+  font-size:.85rem; color:var(--gold); transition:all var(--tm) var(--ease);
+}
+.card-head-text { flex:1; min-width:0; }
+.card-title { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:.72rem; font-weight:800; color:var(--text); line-height:1.3; }
+.badge-optional { display:inline-flex; align-items:center; padding:1px 7px; border-radius:10px; font-size:.52rem; font-weight:800; background:var(--purple-a15); border:1px solid rgba(167,139,250,.28); color:var(--purple); letter-spacing:.5px; white-space:nowrap; }
+.card-subtitle { display:block; font-size:.58rem; font-weight:500; color:var(--text-2); margin-top:2px; }
+.card-number { position:absolute; bottom:10px; left:12px; font-family:var(--f-en); font-size:.55rem; font-weight:900; color:var(--text-3); letter-spacing:1px; opacity:.5; }
+.card-body { display:flex; flex-direction:column; gap:7px; flex:1; }
+
+/* ── PER-CARD COLORS ── */
+#card-sim   { border-color:rgba(167,139,250,.14); } #card-sim   .card-icon { background:linear-gradient(135deg,var(--purple-a15),rgba(167,139,250,.04)); border-color:rgba(167,139,250,.22); color:var(--purple); }
+#card-data  { border-color:rgba(96,165,250,.12);  } #card-data  .card-icon { background:linear-gradient(135deg,var(--blue-a15),rgba(96,165,250,.04));   border-color:rgba(96,165,250,.22);   color:var(--blue);   }
+#card-asset { border-color:rgba(245,158,11,.12);  } #card-asset .card-icon { background:linear-gradient(135deg,var(--amber-a15),rgba(245,158,11,.04));  border-color:rgba(245,158,11,.22);  color:var(--amber);  }
+#card-timeline { border-color:rgba(74,222,128,.10); } #card-timeline .card-icon { background:linear-gradient(135deg,var(--green-a15),rgba(74,222,128,.04)); border-color:rgba(74,222,128,.20); color:var(--green); }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:5px; padding:12px 10px; border:1.5px dashed rgba(255,215,0,.22); border-radius:var(--r-sm);
+  background:var(--gold-a05); text-align:center; cursor:pointer; transition:all var(--tm) var(--ease);
+  overflow:hidden; min-height:70px;
+}
+.upload-zone:hover,.upload-zone:focus-within { border-color:rgba(255,215,0,.50); background:rgba(255,215,0,.04); }
+.upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; z-index:2; }
+.upload-icon { font-size:1.30rem; color:rgba(255,215,0,.35); transition:color var(--tm),transform var(--tm); line-height:1; }
+.upload-zone:hover .upload-icon { color:rgba(255,215,0,.70); transform:translateY(-2px); }
+.upload-label { font-size:.60rem; color:var(--text-2); line-height:1.5; }
+.upload-label strong { display:block; font-size:.64rem; color:var(--text); font-weight:800; margin-bottom:1px; }
+.upload-formats { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+.fmt-tag { font-size:.50rem; padding:1px 5px; border-radius:4px; background:var(--w04); border:1px solid rgba(255,255,255,.06); color:var(--text-3); font-family:var(--f-en); font-weight:700; letter-spacing:.5px; }
+.upload-zone.compact { min-height:60px; padding:9px 8px; }
+.upload-zone.compact .upload-icon { font-size:1.10rem; }
+
+/* ── FILE PREVIEW BADGE ── */
+.file-preview {
+  display:none; flex-direction:column; gap:5px;
+  background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.06);
+  border-radius:var(--r-sm); padding:8px 10px;
+  animation:popIn .3s var(--ease);
+}
+.file-preview.visible { display:flex; }
+.fp-header { display:flex; align-items:center; gap:6px; }
+.fp-icon { width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:.7rem; flex-shrink:0; }
+.fp-icon.pdf   { background:rgba(239,68,68,.15);   border:1px solid rgba(239,68,68,.25);   color:var(--red);   }
+.fp-icon.word  { background:rgba(96,165,250,.15);  border:1px solid rgba(96,165,250,.25);  color:var(--blue);  }
+.fp-icon.excel { background:rgba(74,222,128,.15);  border:1px solid rgba(74,222,128,.25);  color:var(--green); }
+.fp-icon.other { background:var(--w06);           border:1px solid var(--w08);            color:var(--text-2); }
+.fp-name  { font-size:.63rem; font-weight:800; color:var(--text); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.fp-size  { font-size:.56rem; color:var(--text-3); font-family:var(--f-en); flex-shrink:0; }
+.fp-pages { font-size:.56rem; color:var(--text-3); margin-top:1px; }
+.fp-text-preview {
+  font-size:.57rem; color:var(--text-2); line-height:1.55; max-height:52px; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  border-top:1px solid rgba(255,255,255,.04); padding-top:5px; margin-top:2px;
+}
+.fp-clear {
+  display:flex; align-items:center; gap:4px; font-size:.58rem; color:var(--text-3);
+  padding:3px 0; cursor:pointer; transition:color var(--tf); background:none; border:none;
+  font-family:var(--f-ar);
+}
+.fp-clear:hover { color:var(--red); }
+
+/* ── CONTROLS ── */
+.s-select {
+  width:100%; padding:8px 12px; padding-left:30px;
+  background:var(--w04); border:1px solid rgba(255,255,255,.07); border-radius:var(--r-sm);
+  font-size:.65rem; font-weight:600; color:var(--text); appearance:none; cursor:pointer; transition:all var(--tf) var(--ease);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,215,0,0.45)'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:10px center;
+}
+.s-select:focus { border-color:rgba(255,215,0,.42); background-color:var(--gold-a05); box-shadow:0 0 0 2px var(--gold-a10); }
+.s-input {
+  width:100%; padding:7px 11px; background:var(--w04);
+  border:1px solid rgba(255,255,255,.07); border-radius:var(--r-sm);
+  font-size:.63rem; color:var(--text); transition:all var(--tf) var(--ease);
+}
+.s-input::placeholder { color:var(--text-3); font-weight:400; }
+.s-input:focus { border-color:rgba(255,215,0,.40); background:var(--gold-a05); box-shadow:0 0 0 2px var(--gold-a10); }
+.select-hint { display:flex; align-items:flex-start; gap:5px; font-size:.57rem; color:var(--text-3); line-height:1.5; padding:3px 4px; }
+.select-hint i { font-size:.54rem; color:#A88700; margin-top:2px; flex-shrink:0; }
+.action-btn { display:flex; align-items:center; justify-content:center; gap:6px; padding:7px 12px; border-radius:var(--r-sm); font-size:.63rem; font-weight:800; transition:all var(--tf) var(--ease); width:100%; letter-spacing:.3px; }
+.btn-gold { background:linear-gradient(135deg,var(--gold-a15),var(--gold-a10)); border:1px solid var(--gold-a30); color:var(--gold); }
+.btn-gold:hover { background:linear-gradient(135deg,rgba(255,215,0,.26),var(--gold-a15)); border-color:var(--gold-a50); box-shadow:0 0 18px rgba(255,215,0,.14); }
+.btn-ghost { background:var(--w04); border:1px solid rgba(255,255,255,.07); color:var(--text-2); }
+.btn-ghost:hover { background:var(--w08); border-color:var(--w12); color:var(--text); }
+.btn-danger { background:var(--red-a15); border:1px solid rgba(239,68,68,.28); color:var(--red); }
+
+/* ── MARKET SOURCES ── */
+.market-sources-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; }
+.source-item { display:flex; align-items:center; gap:5px; padding:5px 8px; border-radius:var(--r-sm); background:var(--w02); border:1px solid rgba(255,255,255,.05); font-size:.57rem; color:var(--text-2); transition:all var(--tf); }
+.source-item:hover { border-color:var(--gold-a20); background:var(--gold-a05); color:var(--text); }
+.source-item.done { border-color:rgba(74,222,128,.22); background:var(--green-a15); }
+.source-dot { width:6px; height:6px; border-radius:50%; background:var(--text-3); flex-shrink:0; transition:background .3s; }
+.source-item.done .source-dot { background:var(--green); }
+.source-name { font-family:var(--f-en); font-size:.56rem; font-weight:700; }
+
+/* ═══════════════════════════════════════════════════════════
+   PROMPT ENGINE
+═══════════════════════════════════════════════════════════ */
+.prompt-section { padding:10px 24px 14px; flex-shrink:0; background:rgba(3,8,18,.85); border-top:1px solid var(--gold-a10); }
+.prompt-outer {
+  position:relative; border-radius:var(--r-lg); padding:1.5px;
+  background:linear-gradient(135deg,var(--gold-a20),var(--gold-a05) 40%,var(--gold-a20));
+  background-size:250% 250%; animation:goldFlow 6s ease infinite; transition:box-shadow .4s;
+}
+.prompt-outer:focus-within {
+  box-shadow:0 0 40px rgba(255,215,0,.15),0 0 80px rgba(255,215,0,.07),0 4px 24px rgba(0,0,0,.40);
+  background:linear-gradient(135deg,var(--gold-a50),rgba(255,215,0,.18) 40%,var(--gold-a50));
+}
+.prompt-inner {
+  display:flex; align-items:flex-end; gap:9px; padding:10px 12px;
+  background:linear-gradient(145deg,rgba(8,18,36,.98),rgba(5,13,26,.99));
+  border-radius:calc(var(--r-lg) - 1.5px); position:relative;
+}
+.prompt-action-btn {
+  flex-shrink:0; width:34px; height:34px; border-radius:9px; background:var(--w04);
+  border:1px solid rgba(255,255,255,.07); color:var(--text-2); font-size:.78rem;
+  display:flex; align-items:center; justify-content:center; transition:all var(--tf) var(--ease);
+}
+.prompt-action-btn:hover,.prompt-action-btn.active { background:var(--gold-a10); border-color:var(--gold-a20); color:var(--gold); }
+.prompt-textarea {
+  flex:1; min-height:36px; max-height:130px; background:transparent; border:none; resize:none;
+  font-size:.75rem; font-weight:500; line-height:1.65; color:var(--text); padding:6px 4px;
+  overflow-y:auto; scrollbar-width:none;
+}
+.prompt-textarea::placeholder { color:rgba(74,90,120,.70); font-size:.70rem; font-weight:400; }
+.prompt-right-group { display:flex; align-items:flex-end; gap:6px; flex-shrink:0; }
+.send-button {
+  width:40px; height:40px; border-radius:10px;
+  background:linear-gradient(135deg,var(--gold-deep),var(--gold));
+  color:var(--navy); font-size:.88rem;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:all var(--tf) var(--ease);
+  box-shadow:0 2px 16px rgba(255,215,0,.28);
+}
+.send-button:hover { background:linear-gradient(135deg,var(--gold),var(--gold-bright)); box-shadow:0 4px 24px rgba(255,215,0,.45); transform:scale(1.06); }
+.send-button:disabled { opacity:.4; transform:none; cursor:not-allowed; }
+.prompt-footer { display:flex; justify-content:space-between; align-items:center; padding:6px 4px 0; }
+.prompt-security { display:flex; align-items:center; gap:5px; font-size:.54rem; color:var(--text-3); letter-spacing:.5px; }
+.prompt-security i { color:rgba(74,222,128,.45); font-size:.56rem; }
+.prompt-context-label { font-size:.54rem; color:rgba(255,215,0,.35); font-family:var(--f-en); letter-spacing:.5px; }
+
+/* ═══════════════════════════════════════════════════════════
+   GOLD SPINNER OVERLAY
+═══════════════════════════════════════════════════════════ */
+.spinner-overlay {
+  position:fixed; inset:0; z-index:900; display:none;
+  align-items:center; justify-content:center; flex-direction:column; gap:20px;
+  background:rgba(2,6,14,.88); backdrop-filter:blur(12px) saturate(1.2);
+}
+.spinner-overlay.visible { display:flex; animation:fadeIn .25s ease; }
+
+.spinner-stage { position:relative; width:96px; height:96px; }
+
+/* الحلقات الدوارة */
+.spin-ring {
+  position:absolute; border-radius:50%;
+  border-style:solid; border-color:transparent;
+}
+.spin-ring-1 {
+  inset:0; border-width:2.5px;
+  border-top-color:var(--gold);
+  border-right-color:rgba(255,215,0,.4);
+  animation:spinRing 1.2s linear infinite;
+}
+.spin-ring-2 {
+  inset:10px; border-width:2px;
+  border-bottom-color:rgba(255,215,0,.7);
+  border-left-color:rgba(255,215,0,.2);
+  animation:spinRing2 1.8s linear infinite;
+}
+.spin-ring-3 {
+  inset:20px; border-width:1.5px;
+  border-top-color:rgba(255,215,0,.5);
+  border-right-color:transparent;
+  animation:spinRing 2.6s linear infinite;
+}
+/* النواة */
+.spin-core {
+  position:absolute; inset:30px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,215,0,.2),rgba(255,215,0,.05));
+  border:1px solid rgba(255,215,0,.25);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.90rem; color:var(--gold);
+  animation:pulseCore 1.8s ease-in-out infinite;
+}
+/* الهالة الخارجية */
+.spin-glow {
+  position:absolute; inset:-12px; border-radius:50%;
+  background:radial-gradient(circle,rgba(255,215,0,.10),transparent 70%);
+  animation:pulseCore 1.8s ease-in-out infinite;
+}
+
+/* نص ومراحل التحميل */
+.spinner-text { text-align:center; }
+.spinner-title { font-size:.85rem; font-weight:800; color:var(--text); margin-bottom:5px; }
+.spinner-sub   { font-size:.65rem; color:var(--text-2); }
+.spinner-steps { display:flex; flex-direction:column; gap:5px; min-width:240px; margin-top:8px; }
+.spin-step {
+  display:flex; align-items:center; gap:9px; padding:7px 12px;
+  background:var(--w04); border:1px solid rgba(255,255,255,.06); border-radius:var(--r-sm);
+  font-size:.62rem; color:var(--text-3); transition:all .4s;
+}
+.spin-step.active  { background:var(--gold-a10); border-color:var(--gold-a20); color:var(--text); }
+.spin-step.done    { background:var(--green-a15); border-color:rgba(74,222,128,.22); color:var(--green); }
+.spin-step-dot { width:6px; height:6px; border-radius:50%; background:var(--text-3); flex-shrink:0; transition:all .4s; }
+.spin-step.active .spin-step-dot { background:var(--gold); animation:blinkDot 1s infinite; }
+.spin-step.done   .spin-step-dot { background:var(--green); }
+
+/* شريط التقدم */
+.spinner-progress-bar { width:240px; height:3px; background:var(--w06); border-radius:4px; overflow:hidden; margin-top:4px; }
+.spinner-progress-fill { height:100%; background:linear-gradient(90deg,var(--gold-deep),var(--gold)); border-radius:4px; width:0; transition:width .5s var(--ease); }
+
+/* ═══════════════════════════════════════════════════════════
+   RBAC / LOGIN MODAL
+═══════════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position:fixed; inset:0; z-index:800; display:none;
+  align-items:center; justify-content:center;
+  background:rgba(2,6,14,.85); backdrop-filter:blur(10px);
+}
+.modal-backdrop.visible { display:flex; animation:fadeIn .2s ease; }
+
+.modal-box {
+  width:min(460px,92vw); border-radius:20px; overflow:hidden;
+  background:linear-gradient(145deg,#060e1c,#040b18);
+  border:1px solid var(--gold-a20);
+  box-shadow:0 24px 64px rgba(0,0,0,.65),0 0 0 1px var(--gold-a10);
+  animation:popIn .35s var(--ease);
+}
+
+/* رأس المودال */
+.modal-head {
+  position:relative; padding:24px 24px 16px; text-align:center;
+  border-bottom:1px solid rgba(255,255,255,.06); overflow:hidden;
+}
+.modal-head::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold) 25%,#FFF9C4 50%,var(--gold) 75%,transparent);
+  background-size:250% 100%; animation:goldFlow 4s ease infinite;
+}
+.modal-emblem {
+  width:52px; height:52px; border-radius:14px; margin:0 auto 12px;
+  background:linear-gradient(135deg,var(--gold-a15),var(--gold-a05));
+  border:1px solid var(--gold-a30);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.35rem; color:var(--gold);
+  box-shadow:0 0 24px rgba(255,215,0,.14);
+}
+.modal-title { font-size:1.05rem; font-weight:900; margin-bottom:3px; }
+.modal-sub   { font-size:.63rem; color:var(--text-2); }
+
+/* جسم المودال */
+.modal-body { padding:20px 24px 24px; display:flex; flex-direction:column; gap:14px; }
+
+/* خطأ */
+.modal-error {
+  display:none; align-items:center; gap:7px; padding:8px 12px;
+  background:var(--red-a15); border:1px solid rgba(239,68,68,.28); border-radius:var(--r-sm);
+  font-size:.64rem; color:var(--red);
+}
+.modal-error.visible { display:flex; animation:popIn .25s var(--ease); }
+
+/* ── مجموعة الأدوار ── */
+.rbac-section-label { font-size:.60rem; font-weight:800; color:var(--text-3); letter-spacing:1px; text-transform:uppercase; font-family:var(--f-en); margin-bottom:-6px; }
+.rbac-roles { display:flex; flex-wrap:wrap; gap:6px; }
+.rbac-chip {
+  padding:5px 12px; border-radius:20px; font-size:.62rem; font-weight:800;
+  background:var(--w04); border:1px solid rgba(255,255,255,.08); color:var(--text-2);
+  cursor:pointer; transition:all var(--tf) var(--ease);
+}
+.rbac-chip:hover    { border-color:var(--gold-a20); color:var(--text); }
+.rbac-chip.selected { background:var(--gold-a10); border-color:var(--gold-a30); color:var(--gold); }
+
+/* ── صف الدخول ── */
+.modal-field { display:flex; flex-direction:column; gap:5px; }
+.modal-label { font-size:.60rem; font-weight:700; color:var(--text-2); }
+.modal-input {
+  width:100%; padding:9px 12px;
+  background:var(--w04); border:1px solid rgba(255,255,255,.08); border-radius:var(--r-sm);
+  font-size:.70rem; color:var(--text); transition:all .25s;
+}
+.modal-input:focus { border-color:rgba(255,215,0,.38); box-shadow:0 0 0 2px var(--gold-a10); }
+
+/* ── زر تسجيل الدخول ── */
+.modal-submit {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; padding:11px; border-radius:var(--r-sm);
+  background:linear-gradient(135deg,var(--gold-a15),var(--gold-a10));
+  border:1px solid var(--gold-a30); color:var(--gold);
+  font-size:.75rem; font-weight:900; letter-spacing:.5px;
+  transition:all var(--tf) var(--ease);
+}
+.modal-submit:hover { background:rgba(255,215,0,.22); border-color:var(--gold-a50); box-shadow:0 0 20px rgba(255,215,0,.14); }
+
+/* زر الإغلاق */
+.modal-close-btn {
+  position:absolute; top:14px; left:14px;
+  background:var(--w04); border:1px solid rgba(255,255,255,.08);
+  color:var(--text-2); border-radius:7px; padding:4px 9px;
+  font-size:.68rem; transition:all var(--tf);
+}
+.modal-close-btn:hover { background:var(--red-a15); color:var(--red); border-color:rgba(239,68,68,.3); }
+
+/* بادج الدور الحالي في الهيدر */
+.role-badge {
+  display:inline-flex; align-items:center; gap:5px; padding:3px 9px;
+  border-radius:20px; font-size:.58rem; font-weight:800;
+  background:var(--gold-a10); border:1px solid var(--gold-a20); color:var(--gold);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTEXT PREVIEW PANEL
+═══════════════════════════════════════════════════════════ */
+.ctx-preview-panel {
+  margin:0 24px 8px;
+  background:rgba(4,10,20,.95); border:1px solid rgba(255,255,255,.06);
+  border-radius:var(--r-md); padding:12px 14px; display:none;
+  flex-direction:column; gap:8px;
+  animation:fadeUp .3s var(--ease);
+}
+.ctx-preview-panel.visible { display:flex; }
+.ctx-preview-header { display:flex; align-items:center; justify-content:space-between; }
+.ctx-preview-title { font-size:.62rem; font-weight:800; color:var(--text-2); letter-spacing:1px; text-transform:uppercase; font-family:var(--f-en); }
+.ctx-preview-close { background:none; border:none; color:var(--text-3); font-size:.70rem; cursor:pointer; padding:2px 6px; border-radius:5px; transition:color var(--tf); }
+.ctx-preview-close:hover { color:var(--red); }
+.ctx-fields { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.ctx-field { background:var(--w04); border:1px solid rgba(255,255,255,.06); border-radius:var(--r-sm); padding:6px 9px; }
+.ctx-field-label { font-size:.52rem; color:var(--text-3); font-family:var(--f-en); letter-spacing:.8px; text-transform:uppercase; margin-bottom:2px; }
+.ctx-field-value { font-size:.63rem; font-weight:800; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ctx-field-value.empty { color:var(--text-3); font-weight:400; }
+.ctx-text-block { background:var(--w04); border:1px solid rgba(255,255,255,.06); border-radius:var(--r-sm); padding:8px 10px; }
+.ctx-text-label { font-size:.52rem; color:var(--text-3); font-family:var(--f-en); letter-spacing:.8px; text-transform:uppercase; margin-bottom:4px; }
+.ctx-text-content { font-size:.60rem; color:var(--text-2); line-height:1.55; max-height:60px; overflow-y:auto; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════════════════════ */
+.toast-stack {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column-reverse; gap:6px; z-index:1000; pointer-events:none;
+  min-width:280px;
+}
+.toast {
+  display:flex; align-items:center; gap:9px; padding:9px 16px;
+  border-radius:10px; font-size:.68rem; font-weight:700;
+  background:rgba(5,13,26,.98); backdrop-filter:blur(14px);
+  box-shadow:0 6px 24px rgba(0,0,0,.45); white-space:nowrap;
+  pointer-events:auto; animation:toastIn .3s var(--ease) both;
+}
+.toast.success { border:1px solid rgba(74,222,128,.30);  color:var(--green); }
+.toast.info    { border:1px solid var(--gold-a30);        color:var(--gold);  }
+.toast.warn    { border:1px solid rgba(245,158,11,.30);   color:var(--amber); }
+.toast.error   { border:1px solid rgba(239,68,68,.30);    color:var(--red);   }
+.toast.closing { animation:toastOut .3s var(--ease) forwards; }
+.toast i { font-size:.70rem; flex-shrink:0; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  .sovereign-grid{grid-template-columns:repeat(2,1fr);}
+  .header-center{display:none;}
+  .ctx-fields{grid-template-columns:repeat(2,1fr);}
+  .main-area{padding:12px 16px 0;}
+  .context-strip{padding:0 16px;}
+  .prompt-section{padding:8px 16px 12px;}
+  .ctx-preview-panel{margin:0 16px 8px;}
+}
+@media(max-width:600px){
+  .sovereign-grid{grid-template-columns:1fr;}
+  .user-info{display:none;} .status-badge{display:none;} .header-sep{display:none;} .context-strip{display:none;}
+  .main-area{padding:10px 12px 0;}
+  .prompt-section{padding:8px 12px 10px;}
+  .ctx-preview-panel{margin:0 12px 6px;}
+  .ctx-fields{grid-template-columns:1fr 1fr;}
+}
+
+/* entry anims */
+.sovereign-header{animation:fadeUp .4s var(--ease) both;}
+.context-strip{animation:fadeUp .5s var(--ease) .05s both;}
+.sovereign-grid{animation:gridReveal .55s var(--ease) .15s both;}
+.prompt-section{animation:fadeUp .5s var(--ease) .25s both;}
+</style>
+</head>
+<body>
+
+<!-- خلفية كونية -->
+<div class="cosmic-bg" aria-hidden="true"><div class="cosmic-dots"></div></div>
+
+<!-- ══ طبقة التحميل الذهبية ══ -->
+<div class="spinner-overlay" id="spinnerOverlay" role="status" aria-live="assertive" aria-label="جارٍ المعالجة">
+  <div class="spinner-stage">
+    <div class="spin-glow"></div>
+    <div class="spin-ring spin-ring-1"></div>
+    <div class="spin-ring spin-ring-2"></div>
+    <div class="spin-ring spin-ring-3"></div>
+    <div class="spin-core"><i class="fas fa-landmark"></i></div>
+  </div>
+  <div class="spinner-text">
+    <div class="spinner-title" id="spinTitle">جارٍ التحليل المؤسسي</div>
+    <div class="spinner-sub"  id="spinSub">يُرجى الانتظار…</div>
+  </div>
+  <div class="spinner-steps" id="spinSteps">
+    <div class="spin-step" id="sstep-1"><span class="spin-step-dot"></span>قراءة ملفات العقار</div>
+    <div class="spin-step" id="sstep-2"><span class="spin-step-dot"></span>تجميع السياق المؤسسي</div>
+    <div class="spin-step" id="sstep-3"><span class="spin-step-dot"></span>تطبيق معيار IVS / TAQEEM / FRA</div>
+    <div class="spin-step" id="sstep-4"><span class="spin-step-dot"></span>إنتاج التحليل</div>
+  </div>
+  <div class="spinner-progress-bar">
+    <div class="spinner-progress-fill" id="spinProgress"></div>
+  </div>
+</div>
+
+<!-- ══ مودال تسجيل الدخول RBAC ══ -->
+<div class="modal-backdrop" id="authModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <div class="modal-head">
+      <button class="modal-close-btn" onclick="RBAC.closeModal()" aria-label="إغلاق"><i class="fas fa-times"></i></button>
+      <div class="modal-emblem" aria-hidden="true"><i class="fas fa-shield-alt"></i></div>
+      <h2 class="modal-title" id="modalTitle">بوابة المصادقة السيادية</h2>
+      <p class="modal-sub">نظام التحكم في الصلاحيات (RBAC) · محاكاة مؤسسية</p>
+    </div>
+    <div class="modal-body">
+      <!-- رسالة الخطأ -->
+      <div class="modal-error" id="authError">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="authErrorMsg">يُرجى ملء جميع الحقول</span>
+      </div>
+      <!-- اختيار الدور -->
+      <div>
+        <p class="rbac-section-label">Role / الدور الوظيفي</p>
+        <div class="rbac-roles" id="rbacRoles">
+          <span class="rbac-chip selected" data-role="valuer"           onclick="RBAC.pickRole(this)">مقيّم عقاري</span>
+          <span class="rbac-chip"          data-role="bank-auditor"      onclick="RBAC.pickRole(this)">مراجع بنكي</span>
+          <span class="rbac-chip"          data-role="fund-manager"      onclick="RBAC.pickRole(this)">مدير صندوق</span>
+          <span class="rbac-chip"          data-role="tax-expert"        onclick="RBAC.pickRole(this)">خبير ضريبي</span>
+          <span class="rbac-chip"          data-role="appraiser"         onclick="RBAC.pickRole(this)">خبير مساحي</span>
+          <span class="rbac-chip"          data-role="investor"          onclick="RBAC.pickRole(this)">مستثمر</span>
+          <span class="rbac-chip"          data-role="insurance-expert"  onclick="RBAC.pickRole(this)">خبير تأمين</span>
+          <span class="rbac-chip"          data-role="general-user"      onclick="RBAC.pickRole(this)">مستخدم عام</span>
+        </div>
+      </div>
+      <!-- الاسم -->
+      <div class="modal-field">
+        <label class="modal-label" for="authName">اسم الخبير / المستخدم</label>
+        <input class="modal-input" id="authName" type="text" placeholder="الاسم الكامل" value="هشام المهدي" autocomplete="name">
+      </div>
+      <!-- كلمة المرور -->
+      <div class="modal-field">
+        <label class="modal-label" for="authPass">كلمة المرور <span style="color:var(--text-3);font-weight:400">(أي قيمة — محاكاة)</span></label>
+        <input class="modal-input" id="authPass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <!-- تسجيل الدخول -->
+      <button class="modal-submit" onclick="RBAC.login()">
+        <i class="fas fa-sign-in-alt"></i> دخول آمن
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ الإشعارات ══ -->
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<!-- ══ غلاف الصفحة ══ -->
+<div class="page-wrapper">
+
+  <!-- ═══ الرأسية ═══ -->
+  <header class="sovereign-header">
+    <a class="header-brand" href="#" aria-label="الرئيسية">
+      <div class="brand-emblem" aria-hidden="true"><i class="fas fa-landmark"></i></div>
+      <div>
+        <span class="brand-name">EXPERT<strong>_SMART</strong></span>
+        <span class="brand-tagline">الواجهة السيادية الموحدة</span>
+      </div>
+    </a>
+    <div class="header-sep" aria-hidden="true"></div>
+    <div class="header-center">
+      <div class="flags-row" aria-label="مصر والمملكة العربية السعودية">
+        <span>🇪🇬</span><div class="flag-divider" aria-hidden="true"></div><span>🇸🇦</span>
+      </div>
+      <p class="header-title"><span class="ht-accent">EXPERT_SMART</span>: Regional Valuation Platform</p>
+      <p class="header-standards"><span>IVS 2022</span> · <span>FRA مصر</span> · <span>TAQEEM السعودية</span></p>
+    </div>
+    <div class="header-sep" aria-hidden="true"></div>
+    <div class="header-actions">
+      <div class="status-badge"><span class="status-badge-dot" aria-hidden="true"></span>ONLINE</div>
+      <button class="login-btn" id="loginBtn" onclick="RBAC.openModal()">
+        <i class="fas fa-shield-alt" aria-hidden="true"></i>
+        <span id="loginBtnLabel">تسجيل الدخول</span>
+      </button>
+      <div class="user-chip" id="userChip" onclick="RBAC.openModal()" role="button" tabindex="0" aria-label="الملف الشخصي">
+        <div class="user-avatar" id="userAvatar" aria-hidden="true">H</div>
+        <div>
+          <span class="user-name" id="userName">هشام المهدي</span>
+          <span class="user-role-lbl" id="userRoleLbl">مقيّم عقاري</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ شريط السياق ═══ -->
+  <div class="context-strip" id="contextStrip">
+    <span class="ctx-label">CTX</span>
+    <div class="ctx-pill active" id="ctx-region"><i class="fas fa-globe"></i> <span id="ctx-region-v">SA · TAQEEM</span></div>
+    <span class="ctx-divider" aria-hidden="true"></span>
+    <div class="ctx-pill" id="ctx-role"><i class="fas fa-user-tie"></i> <span id="ctx-role-v">الدور: غير محدد</span></div>
+    <span class="ctx-divider" aria-hidden="true"></span>
+    <div class="ctx-pill" id="ctx-asset"><i class="fas fa-building"></i> <span id="ctx-asset-v">الأصل: غير محدد</span></div>
+    <span class="ctx-divider" aria-hidden="true"></span>
+    <div class="ctx-pill" id="ctx-timeline"><i class="fas fa-calendar-alt"></i> <span id="ctx-timeline-v">الإطار: غير محدد</span></div>
+    <span class="ctx-divider" aria-hidden="true"></span>
+    <div class="ctx-pill" id="ctx-files"><i class="fas fa-paperclip"></i> <span id="ctx-files-v">ملفات: 0</span></div>
+  </div>
+
+  <!-- ═══ لوحة السياق الكاملة ═══ -->
+  <div class="ctx-preview-panel" id="ctxPanel">
+    <div class="ctx-preview-header">
+      <span class="ctx-preview-title">Context Aggregator — السياق المُجمَّع</span>
+      <button class="ctx-preview-close" onclick="CtxPanel.hide()" aria-label="إغلاق">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="ctx-fields" id="ctxFields">
+      <!-- تتولد ديناميكياً -->
+    </div>
+    <div class="ctx-text-block" id="ctxTextBlock" style="display:none">
+      <div class="ctx-text-label">Extracted Text — النص المستخرج</div>
+      <div class="ctx-text-content" id="ctxTextContent">—</div>
+    </div>
+  </div>
+
+  <!-- ═══ المحتوى الرئيسي ═══ -->
+  <div class="scroll-area">
+    <main class="main-area">
+
+      <div class="grid-header" aria-hidden="true">
+        <div class="grid-header-line"></div>
+        <h2 class="grid-header-title">الشبكة السيادية — محاور الإدخال المؤسسي</h2>
+        <div class="grid-header-line right-line"></div>
+      </div>
+
+      <section class="sovereign-grid" aria-label="محاور الإدخال">
+
+        <!-- ── 1: محاكاة تقرير ── -->
+        <article class="s-card" id="card-sim">
+          <span class="card-status-dot" id="dot-sim" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-magic"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title"><span class="badge-optional">اختياري</span>محاكاة تقرير</h3>
+              <span class="card-subtitle">تعليم النظام أسلوب الخبير</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <label class="upload-zone compact" id="zone-sim" for="file-sim">
+              <input type="file" id="file-sim" accept=".pdf,.docx,.doc,.xlsx,.xls" multiple>
+              <i class="fas fa-cloud-upload-alt upload-icon"></i>
+              <span class="upload-label">
+                <strong>ارفع نماذج تقاريرك</strong>PDF · Word · Excel
+              </span>
+              <div class="upload-formats">
+                <span class="fmt-tag">PDF</span><span class="fmt-tag">DOCX</span><span class="fmt-tag">XLSX</span>
+              </div>
+            </label>
+            <div class="file-preview" id="fp-sim">
+              <div class="fp-header">
+                <div class="fp-icon" id="fp-sim-icon"><i class="fas fa-file"></i></div>
+                <span class="fp-name" id="fp-sim-name">—</span>
+                <span class="fp-size" id="fp-sim-size"></span>
+              </div>
+              <p class="fp-pages" id="fp-sim-pages"></p>
+              <p class="fp-text-preview" id="fp-sim-text"></p>
+              <button class="fp-clear" onclick="Files.clear('sim')"><i class="fas fa-trash-alt"></i> حذف وإعادة الرفع</button>
+            </div>
+            <button class="action-btn btn-ghost" id="btn-default-sim" onclick="Files.useDefault()">
+              <i class="fas fa-check-circle"></i> استخدام النموذج الافتراضي
+            </button>
+          </div>
+          <span class="card-number" aria-hidden="true">01</span>
+        </article>
+
+        <!-- ── 2: مدخلات بيانات العقار ── -->
+        <article class="s-card" id="card-data">
+          <span class="card-status-dot" id="dot-data" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-file-import"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title">مدخلات بيانات العقار</h3>
+              <span class="card-subtitle">ملفات الأصل الرئيسية للتحليل</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <label class="upload-zone" id="zone-data" for="file-data">
+              <input type="file" id="file-data" accept=".pdf,.docx,.doc,.xlsx,.xls,.json,.jpg,.jpeg,.png,.jfif" multiple>
+              <i class="fas fa-folder-open upload-icon"></i>
+              <span class="upload-label">
+                <strong>ملفات العقار الرئيسية</strong>Excel · PDF · Word · صور · JSON
+              </span>
+              <div class="upload-formats">
+                <span class="fmt-tag">XLS</span><span class="fmt-tag">PDF</span><span class="fmt-tag">IMG</span><span class="fmt-tag">JSON</span>
+              </div>
+            </label>
+            <div class="file-preview" id="fp-data">
+              <div class="fp-header">
+                <div class="fp-icon" id="fp-data-icon"><i class="fas fa-file"></i></div>
+                <span class="fp-name" id="fp-data-name">—</span>
+                <span class="fp-size" id="fp-data-size"></span>
+              </div>
+              <p class="fp-pages" id="fp-data-pages"></p>
+              <p class="fp-text-preview" id="fp-data-text"></p>
+              <button class="fp-clear" onclick="Files.clear('data')"><i class="fas fa-trash-alt"></i> حذف وإعادة الرفع</button>
+            </div>
+          </div>
+          <span class="card-number" aria-hidden="true">02</span>
+        </article>
+
+        <!-- ── 3: الدور الوظيفي ── -->
+        <article class="s-card" id="card-role">
+          <span class="card-status-dot" id="dot-role" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title">الدور الوظيفي</h3>
+              <span class="card-subtitle">صلاحيات المستخدم المؤسسي</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <select class="s-select" id="sel-role" aria-label="الدور الوظيفي">
+              <option value="" disabled selected>— اختر الدور الوظيفي —</option>
+              <optgroup label="القطاع البنكي والمالي">
+                <option value="bank-auditor">مراجع بنكي — Bank Auditor</option>
+                <option value="fund-manager">مدير صندوق — Fund Manager</option>
+              </optgroup>
+              <optgroup label="الخبراء المتخصصون">
+                <option value="tax-expert">خبير ضريبي — Tax Expert</option>
+                <option value="valuer">مقيّم عقاري — Valuer</option>
+                <option value="appraiser">خبير مساحي — Appraiser</option>
+                <option value="insurance-expert">خبير تأمين — Insurance Expert</option>
+              </optgroup>
+              <optgroup label="المستثمرون والعموم">
+                <option value="investor">مستثمر — Investor</option>
+                <option value="general-user">مستخدم عام — General User</option>
+              </optgroup>
+            </select>
+            <div class="select-hint" id="role-hint"><i class="fas fa-info-circle"></i><span id="role-hint-text">يحدد الدور نطاق الصلاحيات ومحاور التقرير المُولَّد</span></div>
+          </div>
+          <span class="card-number" aria-hidden="true">03</span>
+        </article>
+
+        <!-- ── 4: نوع الأصل ── -->
+        <article class="s-card" id="card-asset">
+          <span class="card-status-dot" id="dot-asset" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-landmark"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title">نوع الأصل</h3>
+              <span class="card-subtitle">تصنيف الأصول المعقدة — IVS</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <select class="s-select" id="sel-asset" aria-label="نوع الأصل">
+              <option value="" disabled selected>— نوع الأصل —</option>
+              <optgroup label="الأصول الخاصة">
+                <option value="heritage">تراثي / تاريخي — Historical/Heritage</option>
+                <option value="agricultural">زراعي — Agricultural</option>
+                <option value="extractive">صناعات استخراجية — Extractive Industries</option>
+              </optgroup>
+              <optgroup label="الأصول التطويرية">
+                <option value="underconstruction">تحت الإنشاء — Under-Construction</option>
+                <option value="intangible">مرتبط بأصول غير ملموسة — Intangible-Linked</option>
+              </optgroup>
+              <optgroup label="الأصول القياسية">
+                <option value="partial">حقوق جزئية — Partial Rights</option>
+                <option value="traditional">تقليدي (سكني/تجاري) — Traditional</option>
+              </optgroup>
+            </select>
+            <div class="select-hint" id="asset-hint"><i class="fas fa-book-open"></i><span id="asset-hint-text">يُحدد المنهجية المطبقة وفق IVS 105 · 210 · 410</span></div>
+          </div>
+          <span class="card-number" aria-hidden="true">04</span>
+        </article>
+
+        <!-- ── 5: تاريخ التقييم ── -->
+        <article class="s-card" id="card-timeline">
+          <span class="card-status-dot" id="dot-timeline" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title">تاريخ التقييم</h3>
+              <span class="card-subtitle">الإطار الزمني للتقدير</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <select class="s-select" id="sel-timeline" aria-label="تاريخ التقييم">
+              <option value="" disabled selected>— الإطار الزمني —</option>
+              <option value="current">حالي — Current</option>
+              <option value="retrospective">سابق / رجعي — Retrospective</option>
+              <option value="prospective">لاحق / مستقبلي — Prospective</option>
+            </select>
+            <input type="date" class="s-input" id="valuation-date" aria-label="تاريخ التقييم المحدد" style="display:none">
+            <div class="select-hint" id="timeline-hint"><i class="fas fa-info-circle"></i><span id="timeline-hint-text">التقييم الرجعي يستلزم أدلة سوق تاريخية موثقة</span></div>
+          </div>
+          <span class="card-number" aria-hidden="true">05</span>
+        </article>
+
+        <!-- ── 6: البيانات الميدانية ── -->
+        <article class="s-card" id="card-market">
+          <span class="card-status-dot" id="dot-market" aria-hidden="true"></span>
+          <div class="card-scan-fx" aria-hidden="true"></div>
+          <div class="card-head">
+            <div class="card-icon"><i class="fas fa-satellite-dish"></i></div>
+            <div class="card-head-text">
+              <h3 class="card-title">البيانات الميدانية</h3>
+              <span class="card-subtitle">المقارنات · مسح السوق الآلي</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <input type="text" class="s-input" id="broker-note" placeholder="ملاحظة وسيط أو مصدر ميداني..." aria-label="ملاحظة وسيط">
+            <div class="market-sources-grid" id="sourcesGrid">
+              <div class="source-item" id="src-aqarmap"><span class="source-dot"></span><span class="source-name">AqarMap</span><span>🇪🇬</span></div>
+              <div class="source-item" id="src-pf"><span class="source-dot"></span><span class="source-name">PropertyFinder</span><span>🇸🇦</span></div>
+              <div class="source-item" id="src-easy"><span class="source-dot"></span><span class="source-name">Easy.com</span><span>🇪🇬</span></div>
+              <div class="source-item" id="src-aqarksa"><span class="source-dot"></span><span class="source-name">Aqar KSA</span><span>🇸🇦</span></div>
+            </div>
+            <button class="action-btn btn-gold" id="sweepBtn" onclick="Market.sweep()">
+              <i class="fas fa-broadcast-tower"></i> تشغيل مسح السوق
+            </button>
+          </div>
+          <span class="card-number" aria-hidden="true">06</span>
+        </article>
+
+      </section>
+    </main>
+  </div>
+
+  <!-- ═══ محرك الإدخال الذهبي ═══ -->
+  <section class="prompt-section">
+    <div class="prompt-outer" id="promptOuter">
+      <div class="prompt-inner">
+        <button class="prompt-action-btn" id="btnCtxPreview" title="عرض السياق المُجمَّع" onclick="CtxPanel.toggle()">
+          <i class="fas fa-layer-group"></i>
+        </button>
+        <button class="prompt-action-btn" id="btnAttach" title="إرفاق ملف" onclick="document.getElementById('file-data').click()">
+          <i class="fas fa-paperclip"></i>
+        </button>
+        <textarea
+          class="prompt-textarea" id="mainPrompt" rows="1"
+          placeholder="اكتب استفساركم هنا — السياق يُضاف تلقائياً من الشبكة السيادية…"
+          onkeydown="UI.handleKey(event)" oninput="UI.autoResize(this)"
+          aria-label="مربع الإدخال الرئيسي"
+        ></textarea>
+        <div class="prompt-right-group">
+          <button class="prompt-action-btn" id="btnAnalyze" title="تحليل السياق الكامل" onclick="Analyze.run()">
+            <i class="fas fa-chart-area"></i>
+          </button>
+          <button class="send-button" id="sendBtn" onclick="Analyze.run()" title="تحليل — Enter">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="prompt-footer">
+      <span class="prompt-security">
+        <i class="fas fa-lock"></i>
+        IVS 2022 · FRA · TAQEEM · بيانات مشفرة
+      </span>
+      <span class="prompt-context-label" id="ctxHint" aria-live="polite">Context: —</span>
+    </div>
+  </section>
+
+</div><!-- /page-wrapper -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT — PHASE 2 LOGIC
+═══════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ──────────────────────────────────────────────
+   PDF.js worker
+────────────────────────────────────────────── */
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ──────────────────────────────────────────────
+   1. CENTRAL STATE
+────────────────────────────────────────────── */
+const STATE = {
+  auth:     { loggedIn: false, name: 'هشام المهدي', role: 'valuer' },
+  sim:      { file: null, text: '', pageCount: 0, useDefault: true },
+  data:     { files: [], text: '', pageCount: 0 },
+  role:     '',
+  asset:    '',
+  timeline: '',
+  date:     '',
+  market:   { note: '', swept: false, results: {} },
+};
+
+/* ──────────────────────────────────────────────
+   2. METADATA TABLES
+────────────────────────────────────────────── */
+const ROLE_META = {
+  'bank-auditor':    { ar: 'مراجع بنكي',     hint: 'تدقيق LTV · Basel III · تصنيف المخاطر البنكية · تحليل الضمانات' },
+  'fund-manager':    { ar: 'مدير صندوق',      hint: 'تحليل IRR · NAV · استراتيجية المحفظة · توزيع الأصول' },
+  'tax-expert':      { ar: 'خبير ضريبي',      hint: 'قيمة التقييم الضريبي · ضريبة الأرباح الرأسمالية · VAT العقاري' },
+  'valuer':          { ar: 'مقيّم عقاري',     hint: 'منهجيات IVS الكاملة · DRC · DCF · مقارنة السوق' },
+  'appraiser':       { ar: 'خبير مساحي',      hint: 'مسح الحدود · مساحة البناء · تحليل GIS' },
+  'investor':        { ar: 'مستثمر',          hint: 'تحليل الجدوى · العائد على الاستثمار · مؤشرات السوق' },
+  'insurance-expert':{ ar: 'خبير تأمين',      hint: 'قيمة الإحلال · الاستهلاك · تحليل المخاطر التأمينية' },
+  'general-user':    { ar: 'مستخدم عام',      hint: 'اطلاع عام · استفسارات مبدئية · تقارير مختصرة' },
+};
+
+const ASSET_META = {
+  'heritage':         { ar: 'تراثي / تاريخي',         std: 'IVS 105 · Heritage Assets' },
+  'agricultural':     { ar: 'زراعي',                   std: 'IVS 210 · Agri Valuation' },
+  'extractive':       { ar: 'صناعات استخراجية',        std: 'IVS 210 · Extractive Industries' },
+  'underconstruction':{ ar: 'تحت الإنشاء',             std: 'IVS 410 · Development Properties' },
+  'intangible':       { ar: 'مرتبط بأصول غير ملموسة', std: 'IVS 210 · Business & Intangibles' },
+  'partial':          { ar: 'حقوق جزئية',              std: 'IVS 105 · Partial Interests' },
+  'traditional':      { ar: 'تقليدي',                  std: 'IVS 105 · Residential/Commercial' },
+};
+
+const TIMELINE_META = {
+  'current':       { ar: 'حالي',           hint: 'تقييم يوم التقرير وفق أسعار السوق الجارية' },
+  'retrospective': { ar: 'سابق / رجعي',    hint: 'يستلزم أدلة سوق تاريخية موثقة في تاريخ محدد' },
+  'prospective':   { ar: 'لاحق / مستقبلي', hint: 'تحليل الاتجاهات والتنبؤات المعتمدة وفق IVS' },
+};
+
+/* ──────────────────────────────────────────────
+   3. TOAST NOTIFICATIONS
+────────────────────────────────────────────── */
+const Toast = {
+  _icons: { success:'fa-check-circle', info:'fa-info-circle', warn:'fa-exclamation-triangle', error:'fa-times-circle' },
+  show(msg, type = 'info', dur = 3400) {
+    const stack = document.getElementById('toastStack');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fas ${this._icons[type]}"></i>${msg}`;
+    stack.prepend(el);
+    setTimeout(() => {
+      el.classList.add('closing');
+      el.addEventListener('animationend', () => el.remove(), { once: true });
+    }, dur);
+  }
+};
+
+/* ──────────────────────────────────────────────
+   4. FILE PROCESSOR — PDF / DOCX / XLSX
+────────────────────────────────────────────── */
+const FileProcessor = {
+  /* لتحديد الأيقونة */
+  _typeInfo(name) {
+    const ext = name.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext))              return { cls:'pdf',   icon:'fa-file-pdf',    label:'PDF' };
+    if (['doc','docx'].includes(ext))       return { cls:'word',  icon:'fa-file-word',   label:'Word' };
+    if (['xls','xlsx','csv'].includes(ext)) return { cls:'excel', icon:'fa-file-excel',  label:'Excel' };
+    return { cls:'other', icon:'fa-file', label:ext.toUpperCase() };
+  },
+
+  _fmtSize(bytes) {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1048576)    return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1048576).toFixed(1) + ' MB';
+  },
+
+  /* ── قراءة PDF ── */
+  async _readPDF(file) {
+    if (typeof pdfjsLib === 'undefined') return { text: '[PDF.js غير محمّل]', pages: 0 };
+    const ab   = await file.arrayBuffer();
+    const pdf  = await pdfjsLib.getDocument({ data: ab }).promise;
+    let text = '';
+    const maxPages = Math.min(pdf.numPages, 8); // أول 8 صفحات
+    for (let i = 1; i <= maxPages; i++) {
+      const page    = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(s => s.str).join(' ') + '\n';
+    }
+    return { text: text.trim().slice(0, 1800), pages: pdf.numPages };
+  },
+
+  /* ── قراءة DOCX ── */
+  async _readDOCX(file) {
+    if (typeof mammoth === 'undefined') return { text: '[Mammoth.js غير محمّل]', pages: 0 };
+    const ab     = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: ab });
+    const text   = result.value.trim().slice(0, 1800);
+    return { text, pages: 0 };
+  },
+
+  /* ── قراءة XLSX / Excel ── */
+  async _readXLSX(file) {
+    if (typeof XLSX === 'undefined') return { text: '[SheetJS غير محمّل]', pages: 0 };
+    const ab = await file.arrayBuffer();
+    const wb = XLSX.read(ab, { type: 'array' });
+    let text = '';
+    wb.SheetNames.slice(0, 3).forEach(name => {
+      const ws    = wb.Sheets[name];
+      const rows  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      text += `[ورقة: ${name}]\n`;
+      rows.slice(0, 30).forEach(row => { text += row.join(' | ') + '\n'; });
+    });
+    return { text: text.trim().slice(0, 1800), pages: wb.SheetNames.length };
+  },
+
+  /* ── نقطة الدخول الرئيسية ── */
+  async process(file) {
+    const ext  = file.name.split('.').pop().toLowerCase();
+    if (ext === 'pdf')                    return this._readPDF(file);
+    if (['doc','docx'].includes(ext))     return this._readDOCX(file);
+    if (['xls','xlsx','csv'].includes(ext)) return this._readXLSX(file);
+    /* صور / JSON — نعيد البيانات الأساسية فقط */
+    if (['jpg','jpeg','png','jfif'].includes(ext))
+      return { text: '[صورة — سيُعالَج بـ GPT-4o Vision]', pages: 0 };
+    if (ext === 'json') {
+      const t = await file.text();
+      return { text: t.slice(0, 1800), pages: 0 };
+    }
+    return { text: '', pages: 0 };
+  },
+
+  /* ── تحديث واجهة بادج الملف ── */
+  renderPreview(slot, file, result) {
+    const info = this._typeInfo(file.name);
+    const fpEl    = document.getElementById(`fp-${slot}`);
+    const iconEl  = document.getElementById(`fp-${slot}-icon`);
+    const nameEl  = document.getElementById(`fp-${slot}-name`);
+    const sizeEl  = document.getElementById(`fp-${slot}-size`);
+    const pagesEl = document.getElementById(`fp-${slot}-pages`);
+    const textEl  = document.getElementById(`fp-${slot}-text`);
+    const zoneEl  = document.getElementById(`zone-${slot}`);
+
+    iconEl.className = `fp-icon ${info.cls}`;
+    iconEl.innerHTML = `<i class="fas ${info.icon}"></i>`;
+    nameEl.textContent = file.name;
+    sizeEl.textContent = this._fmtSize(file.size);
+    pagesEl.textContent = result.pages > 0
+      ? `${result.pages} ${slot === 'data' && info.label === 'Excel' ? 'ورقة' : 'صفحة'}`
+      : '';
+    textEl.textContent = result.text || '—';
+
+    fpEl.classList.add('visible');
+    if (zoneEl) zoneEl.style.display = 'none';
+  },
+};
+
+/* ──────────────────────────────────────────────
+   5. FILES MODULE
+────────────────────────────────────────────── */
+const Files = {
+  async handle(slot, input) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
+    const file = files[0]; // نأخذ أول ملف كمعاينة
+    Toast.show(`جارٍ قراءة: ${file.name}`, 'info', 2000);
+    Spinner.show(['قراءة الملف', 'استخراج النص', 'معالجة البيانات'], 'قراءة الملف');
+
+    try {
+      const result = await FileProcessor.process(file);
+      Spinner.hide();
+
+      if (slot === 'sim') {
+        STATE.sim = { file, text: result.text, pageCount: result.pages, useDefault: false };
+        document.getElementById('btn-default-sim').style.display = 'none';
+      } else {
+        STATE.data = { files, text: result.text, pageCount: result.pages };
+      }
+
+      FileProcessor.renderPreview(slot, file, result);
+      Ctx.activateDot(slot);
+      Ctx.updateStrip();
+      CtxPanel.refresh();
+      Toast.show(`تم استخراج النص من: ${file.name}`, 'success');
+    } catch (err) {
+      Spinner.hide();
+      Toast.show('خطأ في قراءة الملف — تأكد من صيغته', 'error');
+      console.error(err);
+    }
+  },
+
+  clear(slot) {
+    if (slot === 'sim') {
+      STATE.sim = { file: null, text: '', pageCount: 0, useDefault: true };
+      document.getElementById('file-sim').value = '';
+      document.getElementById('btn-default-sim').style.display = '';
+    } else {
+      STATE.data = { files: [], text: '', pageCount: 0 };
+      document.getElementById('file-data').value = '';
+    }
+    document.getElementById(`fp-${slot}`).classList.remove('visible');
+    const zoneEl = document.getElementById(`zone-${slot}`);
+    if (zoneEl) zoneEl.style.display = '';
+    Ctx.deactivateDot(slot);
+    Ctx.updateStrip();
+    CtxPanel.refresh();
+    Toast.show('تم مسح الملف', 'warn');
+  },
+
+  useDefault() {
+    STATE.sim.useDefault = true;
+    STATE.sim.file       = null;
+    STATE.sim.text       = '';
+    Toast.show('سيُستخدم النموذج الافتراضي السيادي', 'info');
+  },
+};
+
+/* ──────────────────────────────────────────────
+   6. CONTEXT MODULE
+────────────────────────────────────────────── */
+const Ctx = {
+  activateDot(id) {
+    const dot  = document.getElementById(`dot-${id}`);
+    const card = document.getElementById(`card-${id}`);
+    dot?.classList.add('active');
+    card?.classList.add('card-active');
+  },
+  deactivateDot(id) {
+    document.getElementById(`dot-${id}`)?.classList.remove('active');
+    document.getElementById(`card-${id}`)?.classList.remove('card-active');
+  },
+  updateStrip() {
+    /* ملفات */
+    const fc = (STATE.data.files.length || (STATE.sim.file ? 1 : 0));
+    const fv = document.getElementById('ctx-files-v');
+    const fp = document.getElementById('ctx-files');
+    fv.textContent = `ملفات: ${fc}`;
+    fp.classList.toggle('active', fc > 0);
+
+    /* دور */
+    const rv = document.getElementById('ctx-role-v');
+    const rp = document.getElementById('ctx-role');
+    rv.textContent = STATE.role ? ROLE_META[STATE.role]?.ar : 'الدور: غير محدد';
+    rp.classList.toggle('active', !!STATE.role);
+
+    /* أصل */
+    const av = document.getElementById('ctx-asset-v');
+    const ap = document.getElementById('ctx-asset');
+    av.textContent = STATE.asset ? ASSET_META[STATE.asset]?.ar : 'الأصل: غير محدد';
+    ap.classList.toggle('active', !!STATE.asset);
+
+    /* إطار زمني */
+    const tv = document.getElementById('ctx-timeline-v');
+    const tp = document.getElementById('ctx-timeline');
+    tv.textContent = STATE.timeline ? TIMELINE_META[STATE.timeline]?.ar : 'الإطار: غير محدد';
+    tp.classList.toggle('active', !!STATE.timeline);
+
+    /* تلميح الصندوق */
+    const parts = [];
+    if (STATE.role)     parts.push(ROLE_META[STATE.role]?.ar);
+    if (STATE.asset)    parts.push(ASSET_META[STATE.asset]?.ar);
+    if (STATE.timeline) parts.push(TIMELINE_META[STATE.timeline]?.ar);
+    document.getElementById('ctxHint').textContent =
+      parts.length ? `Context: ${parts.join(' · ')}` : 'Context: —';
+  }
+};
+
+/* ──────────────────────────────────────────────
+   7. CONTEXT AGGREGATOR
+────────────────────────────────────────────── */
+const ContextAggregator = {
+  /* يُنتج كائن سياق منظّم يُرسَل مع الطلب */
+  build(userPrompt = '') {
+    return {
+      /* هوية المستخدم */
+      user: {
+        name:    STATE.auth.name,
+        role:    STATE.role || STATE.auth.role,
+        roleAr:  ROLE_META[STATE.role || STATE.auth.role]?.ar || '—',
+        loggedIn: STATE.auth.loggedIn,
+      },
+      /* الأصل وزمن التقييم */
+      asset: {
+        type:    STATE.asset,
+        typeAr:  ASSET_META[STATE.asset]?.ar || '—',
+        standard:ASSET_META[STATE.asset]?.std || '—',
+      },
+      timeline: {
+        type:  STATE.timeline,
+        typeAr:TIMELINE_META[STATE.timeline]?.ar || '—',
+        date:  STATE.date || null,
+      },
+      /* الملفات */
+      files: {
+        simUseDefault: STATE.sim.useDefault,
+        simFileName:   STATE.sim.file?.name || null,
+        simText:       STATE.sim.text.slice(0, 800),
+        dataFiles:     STATE.data.files.map(f => f.name),
+        dataText:      STATE.data.text.slice(0, 800),
+        pageCount:     STATE.data.pageCount,
+      },
+      /* السوق */
+      market: {
+        brokerNote: STATE.market.note,
+        swept:      STATE.market.swept,
+        results:    STATE.market.results,
+      },
+      /* طلب المستخدم */
+      userPrompt,
+      /* الطابع الزمني */
+      timestamp: new Date().toISOString(),
+    };
+  },
+
+  /* يبني نص الطلب النهائي الذي يُرسَل للنموذج */
+  buildPromptString(userPrompt) {
+    const ctx = this.build(userPrompt);
+    return [
+      `[سياق مؤسسي مُجمَّع — EXPERT_SMART]`,
+      `المعيار: ${ctx.user.roleAr} · نوع الأصل: ${ctx.asset.typeAr} (${ctx.asset.standard})`,
+      `الإطار الزمني: ${ctx.timeline.typeAr}${ctx.timeline.date ? ' — ' + ctx.timeline.date : ''}`,
+      ctx.files.dataText ? `[نص مستخرج من ملفات العقار]:\n${ctx.files.dataText}` : '',
+      ctx.files.simText  ? `[نموذج الخبير المرجعي]:\n${ctx.files.simText}` : '[نموذج: سيادي افتراضي]',
+      ctx.market.brokerNote ? `[ملاحظة وسيط]: ${ctx.market.brokerNote}` : '',
+      `\n[طلب المستخدم]: ${userPrompt}`,
+    ].filter(Boolean).join('\n');
+  },
+};
+
+/* ──────────────────────────────────────────────
+   8. CONTEXT PREVIEW PANEL
+────────────────────────────────────────────── */
+const CtxPanel = {
+  _visible: false,
+  toggle() { this._visible ? this.hide() : this.show(); },
+  show() {
+    this._visible = true;
+    this.refresh();
+    document.getElementById('ctxPanel').classList.add('visible');
+    document.getElementById('btnCtxPreview').classList.add('active');
+  },
+  hide() {
+    this._visible = false;
+    document.getElementById('ctxPanel').classList.remove('visible');
+    document.getElementById('btnCtxPreview').classList.remove('active');
+  },
+  refresh() {
+    if (!this._visible) return;
+    const ctx = ContextAggregator.build();
+    const fields = [
+      { label:'User',     value: ctx.user.name },
+      { label:'Role',     value: ctx.user.roleAr },
+      { label:'Asset',    value: ctx.asset.typeAr },
+      { label:'Standard', value: ctx.asset.standard },
+      { label:'Timeline', value: ctx.timeline.typeAr },
+      { label:'Date',     value: ctx.timeline.date || '—' },
+      { label:'SIM File', value: ctx.files.simFileName || (ctx.files.simUseDefault ? 'افتراضي' : '—') },
+      { label:'Data Files', value: ctx.files.dataFiles.join(', ') || '—' },
+      { label:'Market',   value: ctx.market.swept ? `${Object.values(ctx.market.results).reduce((a,b)=>a+b,0)} نتيجة` : 'غير مُجرى' },
+    ];
+    const container = document.getElementById('ctxFields');
+    container.innerHTML = fields.map(f => `
+      <div class="ctx-field">
+        <div class="ctx-field-label">${f.label}</div>
+        <div class="ctx-field-value ${f.value === '—' ? 'empty' : ''}">${f.value}</div>
+      </div>`).join('');
+
+    const hasText = ctx.files.dataText || ctx.files.simText;
+    const tb = document.getElementById('ctxTextBlock');
+    const tc = document.getElementById('ctxTextContent');
+    if (hasText) {
+      tb.style.display = 'block';
+      tc.textContent = (ctx.files.dataText || ctx.files.simText).slice(0, 400) + '…';
+    } else {
+      tb.style.display = 'none';
+    }
+  },
+};
+
+/* ──────────────────────────────────────────────
+   9. GOLD SPINNER
+────────────────────────────────────────────── */
+const Spinner = {
+  _timer: null,
+  show(steps = [], title = 'جارٍ التحليل المؤسسي', sub = 'يُرجى الانتظار…') {
+    document.getElementById('spinTitle').textContent = title;
+    document.getElementById('spinSub').textContent   = sub;
+    document.getElementById('spinProgress').style.width = '0';
+    /* بناء خطوات ديناميكية */
+    const container = document.getElementById('spinSteps');
+    container.innerHTML = steps.map((s, i) =>
+      `<div class="spin-step" id="sstep-dyn-${i}">
+         <span class="spin-step-dot"></span>${s}
+       </div>`).join('');
+    document.getElementById('spinnerOverlay').classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    /* تقدم تدريجي */
+    if (steps.length) this._runSteps(steps);
+  },
+  _runSteps(steps) {
+    let i = 0;
+    const prog = document.getElementById('spinProgress');
+    const next = () => {
+      if (i < steps.length) {
+        document.getElementById(`sstep-dyn-${i}`)?.classList.add('active');
+        if (i > 0) document.getElementById(`sstep-dyn-${i-1}`)?.classList.replace('active','done');
+        prog.style.width = `${Math.round(((i+1)/steps.length)*85)}%`;
+        i++;
+        this._timer = setTimeout(next, 600 + Math.random()*400);
+      }
+    };
+    next();
+  },
+  hide() {
+    clearTimeout(this._timer);
+    const prog = document.getElementById('spinProgress');
+    prog.style.width = '100%';
+    /* تأخير صغير لإظهار 100% */
+    setTimeout(() => {
+      document.getElementById('spinnerOverlay').classList.remove('visible');
+      document.body.style.overflow = '';
+      /* تعيين كل الخطوات "منجزة" */
+      document.querySelectorAll('[id^="sstep-dyn-"]').forEach(el => {
+        el.classList.remove('active');
+        el.classList.add('done');
+      });
+    }, 350);
+  },
+};
+
+/* ──────────────────────────────────────────────
+   10. MARKET SWEEP
+────────────────────────────────────────────── */
+const Market = {
+  sweep() {
+    const sources = [
+      { id:'aqarmap', delay:800  },
+      { id:'pf',      delay:1500 },
+      { id:'easy',    delay:2000 },
+      { id:'aqarksa', delay:2700 },
+    ];
+    document.getElementById('sweepBtn').disabled = true;
+    document.getElementById('sweepBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ المسح…';
+    Toast.show('بدأ مسح السوق الآلي', 'info');
+    STATE.market.results = {};
+    sources.forEach(({ id, delay }) => {
+      setTimeout(() => {
+        const count = Math.floor(Math.random() * 18) + 4;
+        STATE.market.results[id] = count;
+        const el = document.getElementById(`src-${id}`);
+        if (el) {
+          el.classList.add('done');
+          const dotEl = el.querySelector('.source-dot');
+          if (dotEl) dotEl.style.background = 'var(--green)';
+        }
+        if (Object.keys(STATE.market.results).length === sources.length) {
+          STATE.market.swept = true;
+          const total = Object.values(STATE.market.results).reduce((a,b)=>a+b,0);
+          document.getElementById('sweepBtn').disabled = false;
+          document.getElementById('sweepBtn').innerHTML = `<i class="fas fa-check-circle"></i> ${total} نتيجة ميدانية`;
+          Ctx.activateDot('market');
+          CtxPanel.refresh();
+          Toast.show(`اكتمل المسح — ${total} مقارنة ميدانية`, 'success');
+        }
+      }, delay);
+    });
+  },
+};
+
+/* ──────────────────────────────────────────────
+   11. RBAC / LOGIN
+────────────────────────────────────────────── */
+const RBAC = {
+  _role: 'valuer',
+  openModal() {
+    document.getElementById('authModal').classList.add('visible');
+    document.getElementById('authError').classList.remove('visible');
+  },
+  closeModal() {
+    document.getElementById('authModal').classList.remove('visible');
+  },
+  pickRole(el) {
+    document.querySelectorAll('.rbac-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    this._role = el.dataset.role;
+  },
+  login() {
+    const name = document.getElementById('authName').value.trim();
+    const pass = document.getElementById('authPass').value.trim();
+    const errEl = document.getElementById('authError');
+    const errMsg= document.getElementById('authErrorMsg');
+    if (!name) { errMsg.textContent = 'يُرجى إدخال الاسم'; errEl.classList.add('visible'); return; }
+    if (!pass) { errMsg.textContent = 'يُرجى إدخال كلمة المرور'; errEl.classList.add('visible'); return; }
+    errEl.classList.remove('visible');
+
+    STATE.auth = { loggedIn: true, name, role: this._role };
+    const roleAr = ROLE_META[this._role]?.ar || this._role;
+    const init   = name.trim().charAt(0).toUpperCase();
+
+    /* تحديث الهيدر */
+    document.getElementById('userAvatar').textContent = init;
+    document.getElementById('userName').textContent   = name;
+    document.getElementById('userRoleLbl').textContent = roleAr;
+    const btn = document.getElementById('loginBtn');
+    btn.classList.add('active');
+    btn.innerHTML = `<i class="fas fa-check-circle"></i> <span>${name}</span>`;
+
+    /* مزامنة قائمة الدور */
+    const selRole = document.getElementById('sel-role');
+    selRole.value = this._role;
+    STATE.role = this._role;
+    document.getElementById('role-hint-text').textContent = ROLE_META[this._role]?.hint || '';
+    Ctx.activateDot('role');
+    Ctx.updateStrip();
+
+    this.closeModal();
+    Toast.show(`مرحباً ${name} · ${roleAr}`, 'success');
+    CtxPanel.refresh();
+  },
+};
+
+/* ──────────────────────────────────────────────
+   12. ANALYZE — MAIN ACTION
+────────────────────────────────────────────── */
+const Analyze = {
+  run() {
+    const prompt = document.getElementById('mainPrompt').value.trim();
+    if (!prompt && !STATE.data.text && !STATE.sim.text) {
+      Toast.show('يُرجى كتابة استفسار أو رفع ملفات أولاً', 'warn');
+      return;
+    }
+
+    const steps = [
+      'قراءة ملفات العقار',
+      'تجميع السياق المؤسسي',
+      `تطبيق معيار ${STATE.role ? ROLE_META[STATE.role]?.ar : 'IVS 2022'}`,
+      'بناء محتوى الطلب',
+      'إنتاج التحليل',
+    ];
+
+    Spinner.show(steps, 'جارٍ التحليل المؤسسي', `المعيار: ${ASSET_META[STATE.asset]?.std || 'IVS 2022'}`);
+
+    /* بناء نص السياق الكامل */
+    const fullPrompt = ContextAggregator.buildPromptString(prompt);
+    console.log('[EXPERT_SMART] Context Payload:\n', fullPrompt);
+    console.log('[EXPERT_SMART] Context Object:\n', JSON.stringify(ContextAggregator.build(prompt), null, 2));
+
+    /* محاكاة وقت الاستجابة ثم إخفاء السبينر */
+    setTimeout(() => {
+      Spinner.hide();
+      Toast.show('اكتمل التحليل — السياق جاهز للإرسال للنموذج', 'success');
+      CtxPanel.show();
+    }, 3800);
+  },
+};
+
+/* ──────────────────────────────────────────────
+   13. DROPDOWN HANDLERS
+────────────────────────────────────────────── */
+document.getElementById('sel-role').addEventListener('change', e => {
+  STATE.role = e.target.value;
+  const meta = ROLE_META[STATE.role];
+  document.getElementById('role-hint-text').textContent = meta?.hint || '';
+  Ctx.activateDot('role');
+  Ctx.updateStrip();
+  CtxPanel.refresh();
+  Toast.show(`الدور: ${meta?.ar || STATE.role}`, 'info', 2200);
+});
+
+document.getElementById('sel-asset').addEventListener('change', e => {
+  STATE.asset = e.target.value;
+  const meta = ASSET_META[STATE.asset];
+  document.getElementById('asset-hint-text').textContent = `${meta?.std || ''} — ${meta?.ar || ''}`;
+  Ctx.activateDot('asset');
+  Ctx.updateStrip();
+  CtxPanel.refresh();
+  Toast.show(`الأصل: ${meta?.ar || STATE.asset}`, 'info', 2200);
+});
+
+document.getElementById('sel-timeline').addEventListener('change', e => {
+  STATE.timeline = e.target.value;
+  const meta = TIMELINE_META[STATE.timeline];
+  document.getElementById('timeline-hint-text').textContent = meta?.hint || '';
+  const dateEl = document.getElementById('valuation-date');
+  dateEl.style.display = (STATE.timeline !== 'current') ? 'block' : 'none';
+  Ctx.activateDot('timeline');
+  Ctx.updateStrip();
+  CtxPanel.refresh();
+});
+
+document.getElementById('valuation-date').addEventListener('change', e => {
+  STATE.date = e.target.value;
+  CtxPanel.refresh();
+});
+
+document.getElementById('broker-note').addEventListener('input', e => {
+  STATE.market.note = e.target.value;
+  if (e.target.value.length > 2) Ctx.activateDot('market');
+  else if (!STATE.market.swept)  Ctx.deactivateDot('market');
+  CtxPanel.refresh();
+});
+
+/* ──────────────────────────────────────────────
+   14. FILE INPUT LISTENERS
+────────────────────────────────────────────── */
+document.getElementById('file-sim').addEventListener('change', function() {
+  Files.handle('sim', this);
+});
+document.getElementById('file-data').addEventListener('change', function() {
+  Files.handle('data', this);
+});
+
+/* ──────────────────────────────────────────────
+   15. UI HELPERS
+────────────────────────────────────────────── */
+const UI = {
+  handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Analyze.run(); }
+  },
+  autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  },
+};
+
+/* ──────────────────────────────────────────────
+   16. DRAG-AND-DROP
+────────────────────────────────────────────── */
+['sim','data'].forEach(slot => {
+  const zone = document.getElementById(`zone-${slot}`);
+  if (!zone) return;
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'rgba(255,215,0,.6)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor = ''; });
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.style.borderColor = '';
+    const input = document.getElementById(`file-${slot}`);
+    if (e.dataTransfer.files.length) {
+      /* نقل الملفات إلى الـ input */
+      const dt = new DataTransfer();
+      Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+      input.files = dt.files;
+      Files.handle(slot, input);
+    }
+  });
+});
+
+/* ──────────────────────────────────────────────
+   17. INIT
+────────────────────────────────────────────── */
+(function init() {
+  Toast.show('الواجهة السيادية جاهزة · IVS 2022 · Phase 2', 'success', 3000);
+  Ctx.updateStrip();
+})();
+</script>
+</body>
+</html>

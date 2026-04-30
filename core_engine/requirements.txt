@@ -1,0 +1,37 @@
+# Google APIs
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# OpenAI (Vision, Whisper, Embeddings)
+openai
+
+# Data & Math
+pandas
+numpy
+scipy
+pykrige
+openpyxl
+xlsxwriter
+statsmodels
+prophet
+geopandas
+shapely
+
+# Document processing
+python-docx
+PyMuPDF
+PyPDF2
+
+# Backend / Bridge API
+flask
+flask-cors
+
+# AI / Vector Search (AI Agent Brain)
+sentence-transformers
+qdrant-client
+
+# Utilities
+python-dotenv
+watchdog
+requests

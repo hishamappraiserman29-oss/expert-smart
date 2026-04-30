@@ -1,0 +1,324 @@
+{
+    "name": "Intelligent Real Estate Valuation Workflow",
+    "nodes": [
+        {
+            "parameters": {
+                "content": "## 1. Multi-Channel Input\n[Ingestion Layer]",
+                "height": 400,
+                "width": 300,
+                "color": 4
+            },
+            "name": "Sticky Note 1",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                0,
+                200
+            ],
+            "id": "sticky-note-1"
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "valuation",
+                "options": {}
+            },
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                50,
+                300
+            ],
+            "id": "webhook-trigger"
+        },
+        {
+            "parameters": {},
+            "name": "Manual Chat Trigger",
+            "type": "n8n-nodes-base.manualTrigger",
+            "typeVersion": 1,
+            "position": [
+                50,
+                500
+            ],
+            "id": "manual-trigger"
+        },
+        {
+            "parameters": {
+                "content": "## 2. Sensory Processing\n[Sensors & Normalization]",
+                "height": 500,
+                "width": 300,
+                "color": 4
+            },
+            "name": "Sticky Note 2",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                500,
+                150
+            ],
+            "id": "sticky-note-2"
+        },
+        {
+            "parameters": {
+                "dataType": "binary",
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "mimeType",
+                            "operator": "regex",
+                            "value": "audio/.*"
+                        },
+                        {
+                            "field": "mimeType",
+                            "operator": "regex",
+                            "value": "application/pdf|image/.*"
+                        }
+                    ]
+                }
+            },
+            "name": "Router (Switch)",
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 1,
+            "position": [
+                550,
+                400
+            ],
+            "id": "router-sensors"
+        },
+        {
+            "parameters": {
+                "resource": "audio",
+                "operation": "transcribe",
+                "binaryPropertyName": "data"
+            },
+            "name": "Whisper (Audio)",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1,
+            "position": [
+                600,
+                250
+            ],
+            "id": "whisper-node",
+            "credentials": {
+                "openAiApi": {
+                    "id": "YOUR_OPENAI_CREDENTIAL_ID",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "model": "gpt-4-vision-preview",
+                "prompt": "Extract all text and visual data from this image/document for real estate valuation.",
+                "binaryPropertyName": "data"
+            },
+            "name": "Vision/OCR Node",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1,
+            "position": [
+                600,
+                400
+            ],
+            "id": "vision-node",
+            "credentials": {
+                "openAiApi": {
+                    "id": "YOUR_OPENAI_CREDENTIAL_ID",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "content": "## 3. Valuation Hub\n[The Brain]",
+                "height": 300,
+                "width": 300,
+                "color": 6
+            },
+            "name": "Sticky Note 3",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1000,
+                350
+            ],
+            "id": "sticky-note-3"
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "options": {
+                    "systemMessage": "### ROLE:\nYou are an expert RICS Chartered Surveyor and Senior Financial Analyst specializing in the [Saudi Arabia / Egypt] real estate market. Your objective is to transform unstructured inputs (Voice Transcripts, OCR from PDFs, or Text Messages) into a professional, structured valuation dataset.\n\n### TASK:\n1. Analyze the input to extract core property details.\n2. Apply the four valuation dimensions (Market, Cost, DCF, and Residual).\n3. Use your internal market intelligence to provide an independent AI benchmark.\n\n### VALUATION METHODS & ESTIMATION PROTOCOL:\n1. **Market Approach:** Identify location and area to estimate the value based on comparable sales.\n2. **Income Approach (DCF):** - Extract NOI, Cap Rate, and Growth. \n   - If missing, ESTIMATE based on 2026 market standards: Discount Rate (10-14%), Growth (3-5%), and Projection Years (5-10).\n3. **Residual Method (For Development Land):**\n   - Estimate Gross Development Value (GDV), Construction Costs, and Developer Profit (target ~20%) if not explicitly provided.\n4. **AI MARKET INTELLIGENCE (Generative Benchmark):**\n   - Provide an independent value estimate based purely on your internal training data regarding specific neighborhood trends, infrastructure projects, and economic sentiment in [Location].\n   - Justify this value in the \"ai_benchmark_reasoning\" field in Arabic.\n\n### OPERATIONAL RULES:\n- **Gap Filling:** If a numerical value is not provided, estimate it and append an asterisk (*) to the key in the \"estimated_fields\" list.\n- **Number Formatting:** Convert words to integers (e.g., \"Two Million\" -> 2000000). Remove currency symbols and units.\n- **Date Formatting:** Use DD/MM/YYYY.\n- **Language:** Maintain Arabic for location names and reasoning descriptions, but use English for keys and numerical data.\n\n### OUTPUT SCHEMA (STRICT JSON ONLY):\n{\n  \"timestamp\": \"DD/MM/YYYY\",\n  \"source_client\": \"String\",\n  \"property_type\": \"String\",\n  \"location_zone\": \"String (Arabic)\",\n  \"area_sqm\": Number,\n  \"valuation_data\": {\n    \"market_approach_value\": Number,\n    \"cost_approach_value\": Number,\n    \"income_dcf_data\": {\n       \"noi_annual\": Number,\n       \"cap_rate_percent\": Number,\n       \"discount_rate_percent\": Number,\n       \"growth_rate_percent\": Number,\n       \"exit_yield_percent\": Number,\n       \"projection_years\": Number\n    },\n    \"residual_data\": {\n       \"gdv\": Number,\n       \"dev_cost\": Number,\n       \"dev_profit_percent\": Number,\n       \"residual_land_value\": Number\n    }\n  },\n  \"ai_generative_benchmark\": {\n    \"ai_suggested_value\": Number,\n    \"ai_benchmark_reasoning\": \"String (Arabic)\"\n  },\n  \"final_reconciled_value\": Number,\n  \"ai_notes\": \"String (Arabic)\",\n  \"estimated_fields\": [\"List\", \"of\", \"estimated\", \"keys\"]\n}",
+                    "responseFormat": "json_object"
+                }
+            },
+            "name": "OpenAI Node",
+            "type": "n8n-nodes-base.openAi",
+            "typeVersion": 1,
+            "position": [
+                1050,
+                400
+            ],
+            "id": "openai-node",
+            "credentials": {
+                "openAiApi": {
+                    "id": "YOUR_OPENAI_CREDENTIAL_ID",
+                    "name": "OpenAI account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "content": "## 4. Math Engine\n[Logic Layer]",
+                "height": 300,
+                "width": 300,
+                "color": 1
+            },
+            "name": "Sticky Note 4",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                1500,
+                350
+            ],
+            "id": "sticky-note-4"
+        },
+        {
+            "parameters": {
+                "jsCode": "const aiData = items[0].json;\nconst noi = parseFloat(aiData.valuation_data.income_dcf_data.noi_annual) || 0;\nconst discountRate = parseFloat(aiData.valuation_data.income_dcf_data.discount_rate_percent) / 100 || 0.12;\nconst growthRate = parseFloat(aiData.valuation_data.income_dcf_data.growth_rate_percent) / 100 || 0.03;\nconst exitYield = parseFloat(aiData.valuation_data.income_dcf_data.exit_yield_percent) / 100 || 0.08;\nconst years = parseInt(aiData.valuation_data.income_dcf_data.projection_years) || 5;\n\nlet totalNPV = 0;\nlet runningNoi = noi;\nfor (let t = 1; t <= years; t++) {\n    runningNoi *= (1 + growthRate);\n    totalNPV += runningNoi / Math.pow((1 + discountRate), t);\n}\nconst terminalValue = (runningNoi * (1 + growthRate)) / exitYield;\nconst finalDCF = totalNPV + (terminalValue / Math.pow((1 + discountRate), years));\n\nreturn [{ json: { ...aiData, calculated_dcf_final: Math.round(finalDCF), calculation_status: \"Validated\" } }];"
+            },
+            "name": "JS Engine",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1550,
+                400
+            ],
+            "id": "js-engine"
+        },
+        {
+            "parameters": {
+                "content": "## 5. Master Database\n[Archive Layer]",
+                "height": 300,
+                "width": 300,
+                "color": 3
+            },
+            "name": "Sticky Note 5",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                2000,
+                350
+            ],
+            "id": "sticky-note-5"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "sheetId": "YOUR_GOOGLE_SHEET_ID",
+                "range": "A:V",
+                "options": {}
+            },
+            "name": "Google Sheets",
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4,
+            "position": [
+                2050,
+                400
+            ],
+            "id": "google-sheets",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+                    "name": "Google Sheets account"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Router (Switch)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Manual Chat Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Router (Switch)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Router (Switch)": {
+            "main": [
+                [
+                    {
+                        "node": "Whisper (Audio)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Vision/OCR Node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Whisper (Audio)": {
+            "main": [
+                [
+                    {
+                        "node": "OpenAI Node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Vision/OCR Node": {
+            "main": [
+                [
+                    {
+                        "node": "OpenAI Node",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Node": {
+            "main": [
+                [
+                    {
+                        "node": "JS Engine",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "JS Engine": {
+            "main": [
+                [
+                    {
+                        "node": "Google Sheets",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

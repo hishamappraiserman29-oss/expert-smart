@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ALHADY Pillars Preview</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #cba153;
+            --background-dark: #0a0a0b;
+            --surface-dark: #121214;
+            --text-color: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent-color: #f6d365;
+        }
+
+        body {
+            background: var(--background-dark);
+            color: var(--text-color);
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .page-header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        .visual-quick-links {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: rgba(203, 161, 83, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin: 0 auto 1.5rem;
+            transition: all 0.5s;
+        }
+
+        .premium-service-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 50px rgba(203, 161, 83, 0.2);
+            border-color: var(--primary) !important;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .premium-service-card:hover .icon-wrapper {
+            background: var(--primary);
+            color: white;
+            transform: rotate(360deg);
+        }
+
+        .advisory-pillar {
+            border-color: rgba(26, 35, 126, 0.2) !important;
+        }
+
+        .advisory-pillar .icon-wrapper {
+            color: #1a237e;
+            background: rgba(26, 35, 126, 0.1);
+        }
+
+        .advisory-pillar:hover {
+            box-shadow: 0 20px 50px rgba(26, 35, 126, 0.3) !important;
+            border-color: #1a237e !important;
+        }
+
+        .advisory-pillar:hover .icon-wrapper {
+            background: #1a237e;
+            color: white;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        p {
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        .highlight-gold {
+            color: var(--accent-color);
+            font-weight: 900;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>الهادي <span class="highlight-gold">للتقييم والمزادات</span> والاستشارات</h1>
+            <p>كيف يمكن لمنصة الهادي مساعدتك اليوم؟</p>
+        </div>
+
+        <div class="visual-quick-links">
+            <!-- Pillar 1: Asset Appraisal -->
+            <div class="glass-panel premium-service-card">
+                <div class="icon-wrapper"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <h3>تقييم الأصول</h3>
+                <p>خدمات التقييم العقاري وتثمين الأصول المعتمدة للأراضي والعقارات والأعمال.</p>
+            </div>
+
+            <!-- Pillar 2: Technical Inspection -->
+            <div class="glass-panel premium-service-card">
+                <div class="icon-wrapper"><i class="fa-solid fa-microscope"></i></div>
+                <h3>الفحص الفني</h3>
+                <p>الفحص الفني ومطابقة المواصفات الدولية DIN/ASTM للخردة والمعدات الثقيلة.</p>
+            </div>
+
+            <!-- Pillar 3: Advisory Services -->
+            <div class="glass-panel premium-service-card advisory-pillar">
+                <div class="icon-wrapper"><i class="fa-solid fa-handshake-angle"></i></div>
+                <h3>الاستشارات الفنية</h3>
+                <p>دراسات الجدوى الفنية والقانونية والاستشارات الاستثمارية وإعادة هيكلة الأصول.</p>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXPERT_SMART — الواجهة السيادية الموحدة v2</title>
+<meta name="theme-color" content="#030812">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════
+   EXPERT_SMART — SOVEREIGN INSTITUTIONAL PLATFORM v2
+   مصر 🇪🇬 · المملكة العربية السعودية 🇸🇦
+   IVS 2022 · FRA · TAQEEM
+═══════════════════════════════════════════════════════════ */
+:root {
+  --navy:        #030812;
+  --navy-card:   #060e1c;
+  --navy-mid:    #091525;
+  --navy-deep:   #020609;
+  --navy-glass:  rgba(6,14,28,0.85);
+  --gold:        #FFD700;
+  --gold-dim:    rgba(255,215,0,0.15);
+  --gold-glow:   rgba(255,215,0,0.10);
+  --gold-deep:   #c9a800;
+  --gold-border: rgba(255,215,0,0.28);
+  --surface:     rgba(255,255,255,0.022);
+  --border:      rgba(255,215,0,0.18);
+  --border-soft: rgba(255,255,255,0.055);
+  --text:        #eef2ff;
+  --text-muted:  #7a8baa;
+  --text-dim:    #3a4a5e;
+  --green:       #4ade80;
+  --green-dim:   rgba(74,222,128,0.12);
+  --amber:       #f59e0b;
+  --red:         #ef4444;
+  --blue:        #60a5fa;
+  --purple:      #a78bfa;
+  --font-ar:     'Tajawal', sans-serif;
+  --font-en:     'Montserrat', sans-serif;
+  --ease:        cubic-bezier(0.16,1,0.3,1);
+  --t:           0.22s;
+  --radius:      14px;
+  --header-h:    64px;
+  --ctx-h:       34px;
+  --pred-h:      34px;
+  --prompt-h:    96px;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--navy);
+  color: var(--text);
+  font-family: var(--font-ar);
+  line-height: 1.65;
+  height: 100vh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4,h5 { font-family:var(--font-ar); font-weight:800; line-height:1.3; }
+a { text-decoration:none; color:inherit; }
+button { font-family:var(--font-ar); cursor:pointer; border:none; outline:none; }
+input,select,textarea { font-family:var(--font-ar); color:var(--text); outline:none; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,215,0,0.18); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(255,215,0,0.35); }
+option { background:#0a1528; color:var(--text); }
+
+/* ── انيميشن ── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes pulse    { 0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,0.45)} 50%{box-shadow:0 0 0 6px rgba(255,215,0,0)} }
+@keyframes goldFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes gridIn   { from{opacity:0;transform:scale(0.97) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes shimmer  { 0%,100%{opacity:0.5} 50%{opacity:1} }
+@keyframes scanLine { 0%{top:-20%} 100%{top:120%} }
+@keyframes spin     { to{transform:rotate(360deg)} }
+@keyframes popIn    { 0%{opacity:0;transform:scale(0.85)} 80%{transform:scale(1.04)} 100%{opacity:1;transform:scale(1)} }
+
+/* ══════════════════════════════════════════════
+   هيكل التطبيق
+══════════════════════════════════════════════ */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background:
+    radial-gradient(ellipse 90% 45% at 50% -5%, rgba(255,215,0,0.055) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 30% at 10% 80%, rgba(96,165,250,0.03) 0%, transparent 60%),
+    var(--navy);
+}
+
+/* ══════════════════════════════════════════════
+   الرأسية السيادية
+══════════════════════════════════════════════ */
+.sovereign-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  height: var(--header-h);
+  padding: 0 18px;
+  background: linear-gradient(180deg, #040b18 0%, #030812 100%);
+  border-bottom: 1px solid rgba(255,215,0,0.20);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 300;
+}
+.sovereign-header::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 25%, #fff9c4 50%, var(--gold) 75%, transparent);
+  background-size:200% 100%;
+  animation: goldFlow 5s ease infinite;
+}
+
+.header-left { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+.brand-wrap { display:flex; align-items:center; gap:9px; }
+.brand-icon {
+  width:38px; height:38px;
+  background: linear-gradient(135deg, #1a1000, #3d2b00);
+  border: 1px solid rgba(255,215,0,0.38);
+  border-radius: 10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; color:var(--gold);
+  box-shadow: 0 0 14px rgba(255,215,0,0.14), inset 0 1px 0 rgba(255,215,0,0.08);
+  flex-shrink:0;
+}
+.brand-text { line-height:1.2; }
+.brand-name {
+  font-family:var(--font-en); font-size:0.75rem; font-weight:900;
+  letter-spacing:2px; color:#fff; text-transform:uppercase; display:block;
+}
+.brand-name span { color:var(--gold); }
+.brand-sub { font-size:0.58rem; color:var(--text-muted); display:block; }
+
+.header-divider {
+  width:1px; height:32px;
+  background: linear-gradient(to bottom, transparent, rgba(255,215,0,0.2), transparent);
+  flex-shrink:0;
+}
+
+.header-center { flex:1; text-align:center; }
+.hc-flags { font-size:1.15rem; letter-spacing:5px; display:block; margin-bottom:1px; }
+.hc-title {
+  font-family:var(--font-en); font-size:0.72rem; font-weight:900;
+  color:#fff; letter-spacing:2px; text-transform:uppercase; display:block;
+}
+.hc-title .t-gold { color:var(--gold); }
+.hc-sub {
+  font-size:0.56rem; color:var(--text-muted); display:block;
+  margin-top:1px; font-family:var(--font-ar); letter-spacing:0.8px;
+}
+
+.header-right { display:flex; align-items:center; gap:7px; flex-shrink:0; }
+
+/* الوضع الإقليمي */
+.region-toggle {
+  display:flex; gap:3px;
+  background:rgba(255,255,255,0.03); border:1px solid var(--border-soft);
+  border-radius:8px; padding:3px;
+}
+.region-btn {
+  padding:3px 9px; border-radius:5px; font-size:0.62rem; font-weight:700;
+  font-family:var(--font-en); color:var(--text-muted); background:transparent;
+  transition:all var(--t); white-space:nowrap;
+}
+.region-btn.active {
+  background:var(--gold-dim); color:var(--gold);
+  border:1px solid var(--gold-border);
+}
+
+.status-pill {
+  display:inline-flex; align-items:center; gap:5px;
+  background:var(--green-dim); border:1px solid rgba(74,222,128,0.25);
+  border-radius:20px; padding:3px 9px;
+  font-size:0.64rem; font-family:var(--font-en); font-weight:700;
+  color:var(--green); white-space:nowrap;
+}
+.status-dot { width:5px; height:5px; background:var(--green); border-radius:50%; animation:pulse 2s infinite; }
+
+.auth-btn {
+  display:flex; align-items:center; gap:5px;
+  background:rgba(255,215,0,0.06); border:1px solid rgba(255,215,0,0.20);
+  color:var(--gold); border-radius:8px; padding:5px 11px;
+  font-size:0.67rem; font-weight:700; transition:all var(--t); white-space:nowrap;
+}
+.auth-btn:hover { background:rgba(255,215,0,0.12); border-color:rgba(255,215,0,0.4); }
+.auth-btn.logged { background:rgba(74,222,128,0.08); border-color:rgba(74,222,128,0.25); color:var(--green); }
+
+.expert-pill {
+  display:flex; align-items:center; gap:7px;
+  background:rgba(255,255,255,0.025); border:1px solid var(--border);
+  border-radius:10px; padding:4px 9px; cursor:pointer; transition:all var(--t);
+}
+.expert-pill:hover { background:rgba(255,215,0,0.06); border-color:rgba(255,215,0,0.3); }
+.expert-avatar {
+  width:26px; height:26px; border-radius:7px;
+  background:linear-gradient(135deg, #c9a800, #FFD700);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.68rem; font-weight:900; color:#030812;
+  font-family:var(--font-en); flex-shrink:0;
+}
+.expert-info { line-height:1.25; }
+.expert-name { font-size:0.66rem; font-weight:700; color:var(--text); display:block; }
+.expert-role { font-size:0.56rem; color:var(--text-muted); display:block; }
+
+/* ══════════════════════════════════════════════
+   شريط السياق
+══════════════════════════════════════════════ */
+.context-bar {
+  display:flex; align-items:center; gap:5px;
+  height:var(--ctx-h); padding:0 14px; overflow-x:auto; flex-shrink:0;
+  background:rgba(3,8,18,0.7); border-bottom:1px solid rgba(255,255,255,0.045);
+  scrollbar-width:none;
+}
+.context-bar::-webkit-scrollbar { display:none; }
+.ctx-label { font-size:0.58rem; color:var(--text-dim); font-weight:700; letter-spacing:1px; flex-shrink:0; font-family:var(--font-en); }
+.ctx-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+  border-radius:20px; padding:2px 9px;
+  font-size:0.59rem; color:var(--text-muted);
+  white-space:nowrap; flex-shrink:0; transition:all 0.3s;
+}
+.ctx-chip.active {
+  background:rgba(255,215,0,0.10); border-color:rgba(255,215,0,0.28);
+  color:var(--gold);
+}
+.ctx-chip i { font-size:0.58rem; }
+
+/* ══════════════════════════════════════════════
+   شريط التنبؤ
+══════════════════════════════════════════════ */
+.predictive-strip {
+  display:flex; align-items:center; gap:10px;
+  height:var(--pred-h); padding:0 14px; overflow-x:auto;
+  background:linear-gradient(90deg, rgba(96,165,250,0.04) 0%, rgba(167,139,250,0.03) 100%);
+  border-bottom:1px solid rgba(96,165,250,0.10);
+  flex-shrink:0; transition:height 0.3s, opacity 0.3s;
+  scrollbar-width:none;
+}
+.predictive-strip::-webkit-scrollbar { display:none; }
+.predictive-strip.hidden { height:0; opacity:0; overflow:hidden; }
+.pred-label {
+  font-size:0.59rem; font-weight:800; color:var(--blue);
+  text-transform:uppercase; letter-spacing:1px; flex-shrink:0;
+  font-family:var(--font-en);
+}
+.pred-chips { display:flex; gap:5px; }
+.pred-chip {
+  font-size:0.58rem; padding:2px 8px;
+  border-radius:12px; white-space:nowrap; flex-shrink:0;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+  color:var(--text-muted);
+}
+.pred-chip.up   { background:rgba(74,222,128,0.10); border-color:rgba(74,222,128,0.22); color:var(--green); }
+.pred-chip.down { background:rgba(239,68,68,0.10);  border-color:rgba(239,68,68,0.22);  color:var(--red);   }
+.pred-chip.warn { background:rgba(245,158,11,0.10); border-color:rgba(245,158,11,0.22); color:var(--amber); }
+
+/* ══════════════════════════════════════════════
+   المحتوى الرئيسي
+══════════════════════════════════════════════ */
+.main-content {
+  flex:1; overflow:hidden; display:flex;
+  flex-direction:column; min-height:0;
+  padding:10px 14px 0;
+  gap:10px;
+}
+
+/* ══════════════════════════════════════════════
+   الشبكة السيادية 3×2
+══════════════════════════════════════════════ */
+.grid-section { flex-shrink:0; }
+
+.grid-section-title {
+  font-size:0.6rem; font-weight:800; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:2px;
+  font-family:var(--font-en); margin-bottom:7px;
+  display:flex; align-items:center; gap:7px;
+}
+.grid-section-title::before,
+.grid-section-title::after {
+  content:''; flex:1; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,215,0,0.15), transparent);
+}
+
+.sovereign-grid {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px;
+  animation: gridIn 0.5s var(--ease) both;
+}
+
+/* ── بطاقة الشبكة ── */
+.grid-card {
+  background: linear-gradient(145deg, rgba(9,21,37,0.92), rgba(6,14,28,0.97));
+  border: 1px solid rgba(255,215,0,0.13);
+  border-radius: var(--radius);
+  padding: 11px 12px;
+  display: flex; flex-direction:column; gap:8px;
+  transition: all 0.3s var(--ease);
+  position: relative; overflow:hidden;
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  cursor: default;
+  min-height: 130px;
+}
+.grid-card::before {
+  content:'';
+  position:absolute; inset:0; border-radius:var(--radius);
+  background:linear-gradient(135deg, rgba(255,215,0,0.03) 0%, transparent 60%);
+  pointer-events:none;
+}
+.grid-card::after {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,215,0,0.22), transparent);
+}
+.grid-card:hover {
+  border-color: rgba(255,215,0,0.28);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,215,0,0.08);
+}
+.grid-card.active {
+  border-color: rgba(255,215,0,0.42);
+  box-shadow: 0 0 0 1px rgba(255,215,0,0.15), 0 6px 30px rgba(255,215,0,0.06);
+}
+
+/* رأس البطاقة */
+.gc-head {
+  display:flex; align-items:center; gap:8px;
+}
+.gc-icon {
+  width:30px; height:30px; border-radius:8px; flex-shrink:0;
+  background:linear-gradient(135deg, rgba(255,215,0,0.10), rgba(255,215,0,0.04));
+  border:1px solid rgba(255,215,0,0.18);
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.8rem; color:var(--gold);
+}
+.gc-titles { flex:1; line-height:1.2; min-width:0; }
+.gc-label {
+  font-size:0.7rem; font-weight:800; color:var(--text);
+  display:flex; align-items:center; gap:5px; flex-wrap:wrap;
+}
+.gc-sub { font-size:0.57rem; color:var(--text-muted); display:block; }
+.gc-optional-badge {
+  font-size:0.52rem; padding:1px 5px; border-radius:8px;
+  background:rgba(167,139,250,0.15); border:1px solid rgba(167,139,250,0.3);
+  color:var(--purple); font-weight:700; letter-spacing:0.3px;
+}
+.gc-status-dot {
+  width:7px; height:7px; border-radius:50%; flex-shrink:0;
+  background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.12);
+  transition:all 0.3s;
+}
+.gc-status-dot.active { background:var(--green); border-color:rgba(74,222,128,0.4); animation:pulse 2s infinite; }
+
+/* جسم البطاقة */
+.gc-body { display:flex; flex-direction:column; gap:5px; flex:1; }
+
+/* منطقة الرفع */
+.gc-upload-zone {
+  position:relative; border:1px dashed rgba(255,215,0,0.22);
+  border-radius:9px; padding:10px 8px; text-align:center;
+  cursor:pointer; transition:all 0.25s; background:rgba(255,215,0,0.02);
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+}
+.gc-upload-zone:hover { border-color:rgba(255,215,0,0.45); background:rgba(255,215,0,0.05); }
+.gc-upload-zone input[type="file"] {
+  position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.gc-upload-icon { font-size:1.1rem; color:rgba(255,215,0,0.4); }
+.gc-upload-label { font-size:0.6rem; color:var(--text-muted); line-height:1.4; }
+.gc-upload-label strong { color:var(--text); font-weight:700; }
+
+/* حقل الاختيار */
+.gc-select {
+  width:100%; padding:6px 10px;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px; font-size:0.66rem; color:var(--text);
+  transition:all 0.25s; appearance:none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,215,0,0.4)'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:8px center;
+  padding-left:24px;
+}
+.gc-select:focus { border-color:rgba(255,215,0,0.35); background:rgba(255,215,0,0.03); }
+
+/* حقل الإدخال */
+.gc-input {
+  width:100%; padding:6px 10px;
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px; font-size:0.64rem; color:var(--text);
+  transition:all 0.25s;
+}
+.gc-input:focus { border-color:rgba(255,215,0,0.35); background:rgba(255,215,0,0.03); }
+.gc-input::placeholder { color:var(--text-dim); }
+
+/* بادج الملف */
+.gc-file-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(74,222,128,0.10); border:1px solid rgba(74,222,128,0.25);
+  border-radius:8px; padding:3px 9px;
+  font-size:0.6rem; color:var(--green); font-weight:700;
+  animation: popIn 0.3s var(--ease);
+}
+
+/* صف الأزرار */
+.gc-btn-row { display:flex; gap:4px; }
+.gc-btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:4px;
+  border-radius:7px; padding:5px 10px; font-size:0.62rem; font-weight:700;
+  transition:all var(--t);
+}
+.gc-btn-gold {
+  background:linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,215,0,0.10));
+  border:1px solid rgba(255,215,0,0.30); color:var(--gold);
+}
+.gc-btn-gold:hover { background:rgba(255,215,0,0.22); border-color:rgba(255,215,0,0.5); }
+.gc-btn-ghost {
+  background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+  color:var(--text-muted);
+}
+.gc-btn-ghost:hover { background:rgba(255,255,255,0.06); color:var(--text); }
+
+/* معلومة الدور */
+.role-desc-box {
+  font-size:0.6rem; color:var(--text-muted); line-height:1.5;
+  padding:4px 6px; border-radius:6px;
+  background:rgba(255,215,0,0.04); border:1px solid rgba(255,215,0,0.09);
+  display:none;
+}
+
+/* مؤشرات المسح */
+.sweeper-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.sweeper-row {
+  display:flex; align-items:center; gap:5px;
+  background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06);
+  border-radius:7px; padding:4px 7px; font-size:0.58rem;
+  transition:all 0.3s;
+}
+.sweeper-row.scanning { border-color:rgba(255,215,0,0.25); background:rgba(255,215,0,0.04); }
+.sweeper-row.done     { border-color:rgba(74,222,128,0.25); background:rgba(74,222,128,0.05); }
+.sweeper-dot {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+  background:var(--text-dim); transition:all 0.3s;
+}
+.sweeper-dot.scanning { background:var(--amber); animation:pulse 1s infinite; }
+.sweeper-dot.done     { background:var(--green); }
+.target-tag { color:var(--text-muted); font-size:0.58rem; }
+
+/* ══════════════════════════════════════════════
+   منطقة الدردشة
+══════════════════════════════════════════════ */
+.chat-area {
+  flex:1; overflow-y:auto; min-height:0;
+  display:flex; flex-direction:column; gap:10px;
+  padding-bottom:4px;
+}
+.chat-empty {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:10px;
+  opacity:0.4; padding:20px;
+  animation: fadeIn 0.8s ease;
+}
+.chat-empty-icon { font-size:2rem; color:var(--gold); animation:shimmer 3s ease infinite; }
+.chat-empty-text { font-size:0.72rem; color:var(--text-muted); text-align:center; line-height:1.7; }
+
+/* رسائل الدردشة */
+.chat-msg {
+  display:flex; gap:9px; animation:fadeUp 0.3s var(--ease);
+  max-width:88%;
+}
+.chat-msg.user-msg  { margin-right:auto; flex-direction:row-reverse; }
+.chat-msg.ai-msg    { margin-left:auto; }
+.msg-avatar {
+  width:28px; height:28px; border-radius:8px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.7rem; font-weight:900;
+}
+.user-msg .msg-avatar {
+  background:linear-gradient(135deg, #c9a800, #FFD700); color:#030812;
+  font-family:var(--font-en);
+}
+.ai-msg .msg-avatar {
+  background:linear-gradient(135deg, #1e3a5f, #0f2040);
+  border:1px solid rgba(96,165,250,0.3); color:var(--blue);
+}
+.msg-bubble {
+  padding:8px 12px; border-radius:var(--radius); max-width:100%;
+  font-size:0.7rem; line-height:1.7;
+}
+.user-msg .msg-bubble {
+  background:rgba(255,215,0,0.10); border:1px solid rgba(255,215,0,0.18);
+  border-radius:14px 14px 4px 14px; color:var(--text);
+}
+.ai-msg .msg-bubble {
+  background:rgba(9,21,37,0.90); border:1px solid rgba(96,165,250,0.14);
+  border-radius:14px 14px 14px 4px; color:var(--text);
+}
+.msg-meta { font-size:0.55rem; color:var(--text-dim); margin-top:4px; }
+.ai-msg .msg-meta { text-align:right; }
+.user-msg .msg-meta { text-align:left; }
+
+/* مؤشر الكتابة */
+.typing-bubble {
+  display:inline-flex; gap:4px; align-items:center;
+  padding:8px 14px;
+}
+.typing-bubble span {
+  width:5px; height:5px; border-radius:50%;
+  background:var(--blue); opacity:0.5;
+  animation:shimmer 1.2s ease infinite;
+}
+.typing-bubble span:nth-child(2) { animation-delay:0.2s; }
+.typing-bubble span:nth-child(3) { animation-delay:0.4s; }
+
+/* ══════════════════════════════════════════════
+   محرك الإدخال (Prompt Engine)
+══════════════════════════════════════════════ */
+.prompt-engine {
+  flex-shrink:0; padding:6px 14px 8px;
+  background:rgba(3,8,18,0.9);
+  border-top:1px solid rgba(255,215,0,0.12);
+}
+
+/* لوحة المرفقات */
+.attach-panel {
+  display:none; margin-bottom:6px;
+  background:rgba(6,14,28,0.98); border:1px solid rgba(255,215,0,0.16);
+  border-radius:var(--radius); padding:10px;
+  animation: fadeUp 0.25s var(--ease);
+}
+.attach-panel.open { display:block; }
+.attach-hdr {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:8px;
+  font-size:0.65rem; font-weight:800; color:var(--text);
+}
+.attach-close {
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08);
+  color:var(--text-muted); border-radius:6px; padding:3px 7px;
+  font-size:0.65rem; transition:all var(--t);
+}
+.attach-close:hover { background:rgba(239,68,68,0.1); color:var(--red); }
+.attach-opts { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+.attach-opt {
+  position:relative; padding:8px 8px;
+  background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.06);
+  border-radius:9px; display:flex; align-items:center; gap:8px;
+  cursor:pointer; transition:all var(--t);
+}
+.attach-opt:hover { border-color:rgba(255,215,0,0.25); background:rgba(255,215,0,0.05); }
+.attach-opt input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.attach-opt i { font-size:1rem; color:var(--gold); flex-shrink:0; }
+.attach-opt-title { font-size:0.62rem; font-weight:700; color:var(--text); }
+.attach-opt-sub   { font-size:0.55rem; color:var(--text-muted); }
+
+/* الصندوق الذهبي الرئيسي */
+.prompt-glass {
+  display:flex; align-items:flex-end; gap:7px;
+  background:linear-gradient(145deg, rgba(9,21,37,0.96), rgba(6,14,28,0.98));
+  border:1.5px solid rgba(255,215,0,0.22);
+  border-radius: 14px;
+  padding:8px 10px;
+  transition:all 0.3s;
+  box-shadow: 0 0 0 0 rgba(255,215,0,0);
+}
+.prompt-glass:focus-within {
+  border-color:rgba(255,215,0,0.60);
+  box-shadow: 0 0 24px rgba(255,215,0,0.10), 0 0 0 1px rgba(255,215,0,0.12);
+}
+.prompt-icon-btn {
+  width:30px; height:30px; border-radius:8px; flex-shrink:0;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+  color:var(--text-muted); font-size:0.75rem; display:flex;
+  align-items:center; justify-content:center; transition:all var(--t);
+}
+.prompt-icon-btn:hover { background:rgba(255,215,0,0.10); color:var(--gold); border-color:rgba(255,215,0,0.25); }
+.prompt-icon-btn.active { background:rgba(255,215,0,0.15); color:var(--gold); border-color:rgba(255,215,0,0.4); }
+.prompt-icon-btn.recording { background:rgba(239,68,68,0.15); color:var(--red); border-color:rgba(239,68,68,0.35); animation:pulse 1s infinite; }
+
+.prompt-textarea {
+  flex:1; background:transparent; border:none; resize:none;
+  font-size:0.72rem; color:var(--text); line-height:1.6;
+  min-height:30px; max-height:130px; padding:4px 2px;
+}
+.prompt-textarea::placeholder { color:var(--text-dim); }
+
+.prompt-right { display:flex; align-items:flex-end; gap:5px; flex-shrink:0; }
+
+.send-btn {
+  width:36px; height:36px; border-radius:10px;
+  background:linear-gradient(135deg, #c9a800, #FFD700);
+  color:#030812; font-size:0.82rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:all var(--t); box-shadow:0 2px 12px rgba(255,215,0,0.25);
+}
+.send-btn:hover { background:linear-gradient(135deg, #FFD700, #fff0a0); transform:scale(1.05); }
+.send-btn:disabled { opacity:0.4; transform:none; }
+
+.prompt-footer {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:4px 4px 0; font-size:0.55rem; color:var(--text-dim);
+  font-family:var(--font-en);
+}
+.prompt-guard { display:flex; align-items:center; gap:4px; }
+.prompt-guard i { color:rgba(74,222,128,0.5); }
+.prompt-context-hint { color:rgba(255,215,0,0.4); }
+
+/* ══════════════════════════════════════════════
+   مودال RBAC
+══════════════════════════════════════════════ */
+.modal-backdrop {
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(2,6,9,0.85); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  animation: fadeIn 0.2s ease;
+}
+.modal-backdrop.hidden { display:none; }
+.modal-box {
+  background:linear-gradient(145deg, #060e1c, #040b18);
+  border:1px solid rgba(255,215,0,0.22); border-radius:18px;
+  padding:26px; width:min(420px, 92vw); position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,215,0,0.08);
+  animation: popIn 0.35s var(--ease);
+}
+.modal-close {
+  position:absolute; top:14px; left:14px;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+  color:var(--text-muted); border-radius:8px; padding:4px 9px;
+  font-size:0.7rem; transition:all var(--t);
+}
+.modal-close:hover { background:rgba(239,68,68,0.12); color:var(--red); }
+.modal-icon {
+  width:48px; height:48px; border-radius:12px; margin:0 auto 14px;
+  background:linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,215,0,0.06));
+  border:1px solid rgba(255,215,0,0.28);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; color:var(--gold);
+}
+.modal-title { text-align:center; font-size:1rem; font-weight:900; margin-bottom:3px; }
+.modal-sub   { text-align:center; font-size:0.63rem; color:var(--text-muted); margin-bottom:16px; }
+.modal-label { display:block; font-size:0.62rem; color:var(--text-muted); font-weight:700; margin-bottom:5px; }
+.modal-input {
+  width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.09);
+  border-radius:8px; padding:8px 11px; font-size:0.7rem; color:var(--text);
+  margin-bottom:10px; transition:all 0.25s;
+}
+.modal-input:focus { border-color:rgba(255,215,0,0.35); }
+.rbac-roles {
+  display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px;
+}
+.rbac-role-chip {
+  padding:4px 10px; border-radius:20px; font-size:0.62rem; font-weight:700;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  color:var(--text-muted); cursor:pointer; transition:all var(--t);
+}
+.rbac-role-chip:hover  { border-color:rgba(255,215,0,0.25); color:var(--text); }
+.rbac-role-chip.selected { background:rgba(255,215,0,0.12); border-color:rgba(255,215,0,0.35); color:var(--gold); }
+.modal-btn-full {
+  width:100%; padding:10px; border-radius:10px;
+  background:linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,215,0,0.10));
+  border:1px solid rgba(255,215,0,0.32); color:var(--gold);
+  font-size:0.75rem; font-weight:800;
+  transition:all var(--t); margin-top:4px;
+}
+.modal-btn-full:hover { background:rgba(255,215,0,0.22); border-color:rgba(255,215,0,0.5); }
+
+/* ══════════════════════════════════════════════
+   نظام الإشعارات (Toast)
+══════════════════════════════════════════════ */
+.toast-container {
+  position:fixed; bottom:110px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; gap:6px; z-index:2000;
+  pointer-events:none;
+}
+.toast {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 16px; border-radius:10px;
+  font-size:0.68rem; font-weight:700;
+  background:rgba(6,14,28,0.98); backdrop-filter:blur(12px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  animation: fadeUp 0.35s var(--ease) both;
+  white-space:nowrap;
+}
+.toast.success { border:1px solid rgba(74,222,128,0.3);  color:var(--green); }
+.toast.info    { border:1px solid rgba(255,215,0,0.3);   color:var(--gold); }
+.toast.warn    { border:1px solid rgba(245,158,11,0.3);  color:var(--amber); }
+.toast.error   { border:1px solid rgba(239,68,68,0.3);   color:var(--red); }
+
+/* ══════════════════════════════════════════════
+   مستجيب — Responsive
+══════════════════════════════════════════════ */
+@media (max-width:900px) {
+  .sovereign-grid { grid-template-columns:repeat(2,1fr); }
+  .header-center  { display:none; }
+  .region-toggle  { display:none; }
+}
+@media (max-width:600px) {
+  .sovereign-grid { grid-template-columns:1fr; }
+  .expert-info    { display:none; }
+  .brand-sub      { display:none; }
+  .attach-opts    { grid-template-columns:1fr; }
+  .main-content   { padding:8px 8px 0; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ── الرأسية السيادية ── -->
+  <header class="sovereign-header">
+    <div class="header-left">
+      <div class="brand-wrap">
+        <div class="brand-icon"><i class="fas fa-landmark"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">EXPERT<span>_SMART</span></span>
+          <span class="brand-sub">الواجهة السيادية الموحدة</span>
+        </div>
+      </div>
+      <div class="header-divider"></div>
+      <div class="region-toggle">
+        <button class="region-btn" id="btn-eg" onclick="setRegion('EG')">🇪🇬 مصر</button>
+        <button class="region-btn active" id="btn-sa" onclick="setRegion('SA')">🇸🇦 السعودية</button>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <span class="hc-flags">🇪🇬 &nbsp;&nbsp; 🇸🇦</span>
+      <span class="hc-title"><span class="t-gold">EXPERT_SMART</span>: Regional Valuation Platform</span>
+      <span class="hc-sub">IVS 2022 · FRA مصر · TAQEEM السعودية · الواجهة المؤسسية السيادية</span>
+    </div>
+
+    <div class="header-right">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        ONLINE
+      </div>
+      <button class="auth-btn" id="authBtn" onclick="RBAC.openModal()">
+        <i class="fas fa-shield-alt"></i>
+        <span id="authLabel">تسجيل الدخول</span>
+      </button>
+      <div class="expert-pill" onclick="RBAC.openModal()">
+        <div class="expert-avatar" id="expertInitial">H</div>
+        <div class="expert-info">
+          <span class="expert-name" id="expertName">هشام المهدي</span>
+          <span class="expert-role" id="expertRoleLabel">خبير تقييم عقاري</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── شريط السياق الديناميكي ── -->
+  <div class="context-bar" id="contextBar">
+    <span class="ctx-label">CTX</span>
+    <span class="ctx-chip" id="ctx-region"><i class="fas fa-globe"></i> <span id="ctx-region-txt">SA · TAQEEM</span></span>
+    <span class="ctx-chip" id="ctx-role"><i class="fas fa-user-tie"></i> <span id="ctx-role-txt">الدور غير محدد</span></span>
+    <span class="ctx-chip" id="ctx-asset"><i class="fas fa-building"></i> <span id="ctx-asset-txt">الأصل غير محدد</span></span>
+    <span class="ctx-chip" id="ctx-timeline"><i class="fas fa-calendar-alt"></i> <span id="ctx-timeline-txt">التاريخ غير محدد</span></span>
+    <span class="ctx-chip" id="ctx-sim"><i class="fas fa-magic"></i> <span id="ctx-sim-txt">نموذج: افتراضي</span></span>
+    <span class="ctx-chip" id="ctx-data"><i class="fas fa-database"></i> <span id="ctx-data-txt">بيانات: غير مُحمّلة</span></span>
+    <span class="ctx-chip" id="ctx-market"><i class="fas fa-chart-line"></i> <span id="ctx-market-txt">سوق: فارغ</span></span>
+  </div>
+
+  <!-- ── شريط التحليل التنبؤي ── -->
+  <div class="predictive-strip" id="predictiveStrip">
+    <span class="pred-label"><i class="fas fa-chart-area"></i> Predictive</span>
+    <div class="pred-chips" id="predChips">
+      <span class="pred-chip up" id="pred-inflation">تضخم المنطقة: +8.2%</span>
+      <span class="pred-chip up" id="pred-growth">نمو السوق (12m): +11.4%</span>
+      <span class="pred-chip warn" id="pred-risk">مخاطر: متوسطة</span>
+      <span class="pred-chip" id="pred-rec">توصية: الاحتفاظ</span>
+      <span class="pred-chip up" id="pred-cap">معدل الرسملة: 7.8%</span>
+      <span class="pred-chip" id="pred-yield">العائد الإيجاري: 5.4%</span>
+    </div>
+  </div>
+
+  <!-- ── المحتوى الرئيسي ── -->
+  <div class="main-content">
+
+    <!-- ══ الشبكة السيادية 3×2 ══ -->
+    <div class="grid-section">
+      <div class="grid-section-title">◆ الشبكة السيادية — محاور الإدخال المؤسسي ◆</div>
+
+      <div class="sovereign-grid" id="sovereignGrid">
+
+        <!-- ── 1: محاكاة التقرير (اختياري) ── -->
+        <div class="grid-card" id="card-sim">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-magic"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">
+                <span class="gc-optional-badge">اختياري</span>
+                محاكاة تقرير
+              </span>
+              <span class="gc-sub">تعليم النظام أسلوب الخبير</span>
+            </div>
+            <span class="gc-status-dot" id="sim-dot"></span>
+          </div>
+          <div class="gc-body">
+            <div class="gc-upload-zone" id="simDropZone">
+              <input type="file" id="simFile" accept=".pdf,.docx,.doc,.xlsx,.xls" multiple onchange="Grid.onSimFile(this)">
+              <i class="fas fa-cloud-upload-alt gc-upload-icon"></i>
+              <span class="gc-upload-label"><strong>ارفع نماذج تقاريرك</strong><br>PDF · Word · Excel</span>
+            </div>
+            <div id="simFileBadge" style="display:none">
+              <span class="gc-file-badge"><i class="fas fa-check-circle"></i> <span id="simFileName">—</span></span>
+            </div>
+            <div class="gc-btn-row">
+              <button class="gc-btn gc-btn-ghost" style="flex:1;font-size:0.6rem" onclick="Grid.clearSim()">
+                <i class="fas fa-undo"></i> استخدام النموذج الافتراضي
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 2: مدخلات بيانات العقار ── -->
+        <div class="grid-card" id="card-data">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-file-import"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">مدخلات بيانات العقار</span>
+              <span class="gc-sub">ملفات الأصل الرئيسية</span>
+            </div>
+            <span class="gc-status-dot" id="data-dot"></span>
+          </div>
+          <div class="gc-body">
+            <div class="gc-upload-zone" id="dataDropZone">
+              <input type="file" id="dataFile" accept=".pdf,.docx,.doc,.xlsx,.xls,.json,.jpg,.jpeg,.png,.jfif" multiple onchange="Grid.onDataFile(this)">
+              <i class="fas fa-folder-open gc-upload-icon"></i>
+              <span class="gc-upload-label"><strong>ملفات العقار</strong><br>Excel · PDF · Word · صور</span>
+            </div>
+            <div id="dataFileBadge" style="display:none">
+              <span class="gc-file-badge"><i class="fas fa-check-circle"></i> <span id="dataFileName">—</span></span>
+            </div>
+            <div class="gc-btn-row">
+              <button class="gc-btn gc-btn-gold" style="flex:1;font-size:0.6rem" onclick="Grid.processDataFiles()">
+                <i class="fas fa-cogs"></i> معالجة الملفات
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 3: الدور الوظيفي ── -->
+        <div class="grid-card" id="card-role">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">الدور الوظيفي</span>
+              <span class="gc-sub">صلاحيات المستخدم المؤسسي</span>
+            </div>
+            <span class="gc-status-dot" id="role-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-role" onchange="Grid.onRoleChange(this.value)">
+              <option value="">— اختر الدور الوظيفي —</option>
+              <option value="bank-auditor">مراجع بنكي — Bank Auditor</option>
+              <option value="fund-manager">مدير صندوق — Fund Manager</option>
+              <option value="tax-expert">خبير ضريبي — Tax Expert</option>
+              <option value="valuer">مقيّم عقاري — Valuer</option>
+              <option value="appraiser">خبير مساحي — Appraiser</option>
+              <option value="investor">مستثمر — Investor</option>
+              <option value="insurance-expert">خبير تأمين — Insurance Expert</option>
+              <option value="general-user">مستخدم عام — General User</option>
+            </select>
+            <div class="role-desc-box" id="roleDesc"></div>
+          </div>
+        </div>
+
+        <!-- ── 4: نوع الأصل ── -->
+        <div class="grid-card" id="card-asset">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-landmark"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">نوع الأصل</span>
+              <span class="gc-sub">تصنيف الأصول المعقدة</span>
+            </div>
+            <span class="gc-status-dot" id="asset-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-asset" onchange="Grid.onAssetChange(this.value)">
+              <option value="">— نوع الأصل —</option>
+              <option value="heritage">تراثي / تاريخي — Historical/Heritage</option>
+              <option value="agricultural">زراعي — Agricultural</option>
+              <option value="extractive">صناعات استخراجية — Extractive Industries</option>
+              <option value="underconstruction">تحت الإنشاء — Under-Construction</option>
+              <option value="intangible">مرتبط بأصول غير ملموسة — Intangible-Linked</option>
+              <option value="partial">حقوق جزئية — Partial Rights</option>
+              <option value="traditional">تقليدي — Traditional</option>
+            </select>
+            <div class="role-desc-box" id="assetDesc"></div>
+          </div>
+        </div>
+
+        <!-- ── 5: تاريخ التقييم ── -->
+        <div class="grid-card" id="card-timeline">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">تاريخ التقييم</span>
+              <span class="gc-sub">الإطار الزمني للتقدير</span>
+            </div>
+            <span class="gc-status-dot" id="timeline-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-timeline" onchange="Grid.onTimelineChange(this.value)">
+              <option value="">— الإطار الزمني —</option>
+              <option value="current">حالي — Current</option>
+              <option value="retrospective">سابق / رجعي — Retrospective</option>
+              <option value="prospective">لاحق / مستقبلي — Prospective</option>
+            </select>
+            <input type="date" class="gc-input" id="timelineDate" style="display:none"
+              onchange="Grid.onDateChange(this.value)">
+            <div class="role-desc-box" id="timelineDesc"></div>
+          </div>
+        </div>
+
+        <!-- ── 6: البيانات الميدانية والمقارنات ── -->
+        <div class="grid-card" id="card-market">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-satellite-dish"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">البيانات الميدانية</span>
+              <span class="gc-sub">المقارنات ومسح السوق الآلي</span>
+            </div>
+            <span class="gc-status-dot" id="market-dot"></span>
+          </div>
+          <div class="gc-body">
+            <input type="text" class="gc-input" id="brokerNote"
+              placeholder="ملاحظة وسيط أو مصدر ميداني..."
+              oninput="Grid.onBrokerNote(this.value)">
+            <div class="sweeper-grid" id="sweeperGrid">
+              <div class="sweeper-row" id="sw-aqarmap">
+                <span class="sweeper-dot" id="dot-aqarmap"></span>
+                <span class="target-tag">AqarMap 🇪🇬</span>
+              </div>
+              <div class="sweeper-row" id="sw-pf">
+                <span class="sweeper-dot" id="dot-pf"></span>
+                <span class="target-tag">PropertyFinder 🇸🇦</span>
+              </div>
+              <div class="sweeper-row" id="sw-easy">
+                <span class="sweeper-dot" id="dot-easy"></span>
+                <span class="target-tag">Easy.com 🇪🇬</span>
+              </div>
+              <div class="sweeper-row" id="sw-aqarksa">
+                <span class="sweeper-dot" id="dot-aqarksa"></span>
+                <span class="target-tag">Aqar KSA 🇸🇦</span>
+              </div>
+            </div>
+            <button class="gc-btn gc-btn-gold" style="width:100%;margin-top:2px" onclick="Grid.runMarketSweep()" id="sweepBtn">
+              <i class="fas fa-radar"></i> تشغيل مسح السوق
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /sovereign-grid -->
+    </div><!-- /grid-section -->
+
+    <!-- ══ منطقة الدردشة ══ -->
+    <div class="chat-area" id="chatArea">
+      <div class="chat-empty" id="chatEmpty">
+        <i class="fas fa-gem chat-empty-icon"></i>
+        <div class="chat-empty-text">
+          أكمل إعدادات الشبكة السيادية أعلاه<br>
+          ثم اكتب استفساركم في صندوق الإدخال الذهبي
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- ══ محرك الإدخال الديناميكي ══ -->
+  <div class="prompt-engine" id="promptEngine">
+    <!-- لوحة المرفقات -->
+    <div class="attach-panel" id="attachPanel">
+      <div class="attach-hdr">
+        <span><i class="fas fa-paperclip" style="color:var(--gold);margin-left:6px"></i> إرفاق ملف</span>
+        <button class="attach-close" onclick="UI.closeAttach()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="attach-opts">
+        <div class="attach-opt">
+          <input type="file" accept=".xlsx,.xls,.csv" onchange="UI.onAttachFile(this,'excel')">
+          <i class="fas fa-table"></i>
+          <div><div class="attach-opt-title">Excel / CSV</div><div class="attach-opt-sub">بيانات AVM · محفظة عقارية</div></div>
+        </div>
+        <div class="attach-opt">
+          <input type="file" accept=".pdf,.docx,.doc" onchange="UI.onAttachFile(this,'report')">
+          <i class="fas fa-file-word"></i>
+          <div><div class="attach-opt-title">PDF / Word</div><div class="attach-opt-sub">تقارير · محاضر معاينة</div></div>
+        </div>
+        <div class="attach-opt">
+          <input type="file" accept=".jpg,.jpeg,.png,.jfif" onchange="UI.onAttachFile(this,'image')">
+          <i class="fas fa-camera"></i>
+          <div><div class="attach-opt-title">صور الموقع</div><div class="attach-opt-sub">تحليل رؤية GPT-4o</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الصندوق الذهبي -->
+    <div class="prompt-glass" id="promptGlass">
+      <button class="prompt-icon-btn" id="attachToggle" title="إرفاق ملف" onclick="UI.toggleAttach()">
+        <i class="fas fa-paperclip"></i>
+      </button>
+      <button class="prompt-icon-btn" id="micToggle" title="إدخال صوتي" onclick="UI.toggleMic()">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <textarea
+        class="prompt-textarea"
+        id="promptInput"
+        rows="1"
+        placeholder="اكتب استفسارك — السياق الكامل يُضاف تلقائياً من الشبكة السيادية..."
+        onkeydown="UI.onPromptKey(event)"
+        oninput="UI.autoResize(this)"
+      ></textarea>
+      <div class="prompt-right">
+        <button class="prompt-icon-btn" id="predToggle" title="التحليل التنبؤي" onclick="UI.togglePredictive()">
+          <i class="fas fa-chart-area"></i>
+        </button>
+        <button class="send-btn" onclick="Chat.send()" id="sendBtn" title="إرسال">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+    <div class="prompt-footer">
+      <span class="prompt-guard"><i class="fas fa-lock"></i> IVS 2022 · FRA · TAQEEM · بيانات مشفرة</span>
+      <span class="prompt-context-hint" id="contextHint">السياق: —</span>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══ نافذة المصادقة RBAC ══ -->
+<div class="modal-backdrop hidden" id="authModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="RBAC.closeModal()"><i class="fas fa-times"></i></button>
+    <div class="modal-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="modal-title">بوابة المصادقة السيادية</div>
+    <div class="modal-sub">نظام التحكم في الصلاحيات (RBAC) · محاكاة مؤسسية</div>
+    <span class="modal-label">اختر الصلاحية:</span>
+    <div class="rbac-roles" id="rbacRoles">
+      <span class="rbac-role-chip selected" data-role="valuer"          onclick="RBAC.selectRole(this)">مقيّم</span>
+      <span class="rbac-role-chip" data-role="bank-auditor"             onclick="RBAC.selectRole(this)">مراجع بنكي</span>
+      <span class="rbac-role-chip" data-role="fund-manager"             onclick="RBAC.selectRole(this)">مدير صندوق</span>
+      <span class="rbac-role-chip" data-role="tax-expert"               onclick="RBAC.selectRole(this)">خبير ضريبي</span>
+      <span class="rbac-role-chip" data-role="investor"                 onclick="RBAC.selectRole(this)">مستثمر</span>
+      <span class="rbac-role-chip" data-role="appraiser"                onclick="RBAC.selectRole(this)">خبير مساحي</span>
+      <span class="rbac-role-chip" data-role="insurance-expert"         onclick="RBAC.selectRole(this)">خبير تأمين</span>
+      <span class="rbac-role-chip" data-role="general-user"             onclick="RBAC.selectRole(this)">مستخدم عام</span>
+    </div>
+    <span class="modal-label">اسم الخبير:</span>
+    <input type="text" class="modal-input" id="authName" value="هشام المهدي" placeholder="الاسم الكامل">
+    <span class="modal-label">كلمة المرور (تجريبي: أي كلمة):</span>
+    <input type="password" class="modal-input" id="authPass" placeholder="••••••••">
+    <button class="modal-btn-full" onclick="RBAC.login()">
+      <i class="fas fa-sign-in-alt" style="margin-left:6px"></i> دخول آمن
+    </button>
+  </div>
+</div>
+
+<!-- الإشعارات -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     JavaScript — المنطق المؤسسي الكامل
+══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ════════════════════════════════════════
+   0. ثوابت التكوين — Config
+════════════════════════════════════════ */
+const API_BASE = 'http://localhost:5000';
+
+/* ════════════════════════════════════════
+   1. حالة التطبيق المركزية — App State
+   (مصمم للانتقال لاحقاً إلى PostgreSQL)
+════════════════════════════════════════ */
+const STATE = {
+  region:   'SA',           // EG | SA
+  sim:      { files:[], useDefault:true, style:null },
+  data:     { files:[], processed:false },
+  role:     null,
+  asset:    null,
+  timeline: null,
+  date:     null,
+  market:   { brokerNote:'', sweepDone:false, listings:[], sources:[] },
+  auth:     { loggedIn:false, name:'هشام المهدي', role:'valuer' },
+  predictive: true,
+  attachedFiles: [],
+  /* Predictive Analytics Engine — placeholder for real ML model */
+  analytics: {
+    inflation: 8.2,
+    marketGrowth: 11.4,
+    riskLevel: 'medium',
+    capRate: 7.8,
+    rentalYield: 5.4,
+    recommendation: 'hold'
+  }
+};
+
+/* ════════════════════════════════════════
+   2. بيانات الأدوار الوظيفية
+════════════════════════════════════════ */
+const ROLE_META = {
+  'bank-auditor':     { ar:'مراجع بنكي',      en:'Bank Auditor',      desc:'تدقيق LTV · Basel III · تصنيف المخاطر البنكية · تحليل الضمانات',         permissions:['ltv','risk','collateral'] },
+  'fund-manager':     { ar:'مدير صندوق',       en:'Fund Manager',       desc:'تحليل IRR · NAV · استراتيجية المحفظة · توزيع الأصول',                   permissions:['irr','nav','portfolio'] },
+  'tax-expert':       { ar:'خبير ضريبي',       en:'Tax Expert',         desc:'قيمة التقييم الضريبي · ضريبة الأرباح الرأسمالية · VAT العقاري',         permissions:['tax','capital-gains'] },
+  'valuer':           { ar:'مقيّم عقاري',      en:'Valuer',             desc:'منهجيات IVS الكاملة · DRC · DCF · مقارنة السوق',                        permissions:['full','ivs','dcf'] },
+  'appraiser':        { ar:'خبير مساحي',       en:'Appraiser',          desc:'مسح الحدود · مساحة البناء · تحليل GIS',                                 permissions:['gis','survey'] },
+  'investor':         { ar:'مستثمر',           en:'Investor',           desc:'تحليل الجدوى · العائد على الاستثمار · مؤشرات السوق',                    permissions:['roi','feasibility'] },
+  'insurance-expert': { ar:'خبير تأمين',       en:'Insurance Expert',   desc:'قيمة الإحلال · الاستهلاك · تحليل المخاطر التأمينية',                    permissions:['replacement','depreciation'] },
+  'general-user':     { ar:'مستخدم عام',       en:'General User',       desc:'اطلاع عام · استفسارات مبدئية · تقارير مختصرة',                          permissions:['read-only'] }
+};
+
+const ASSET_META = {
+  'heritage':         { ar:'تراثي / تاريخي',          standard:'IVS 105 · Heritage Assets',           desc:'يتطلب تقييماً خاصاً وفق معايير التراث والموروث الحضاري' },
+  'agricultural':     { ar:'زراعي',                    standard:'IVS 210 · Agri Valuation',            desc:'نسبة الإنتاج · قيمة المحاصيل · تحليل التربة' },
+  'extractive':       { ar:'صناعات استخراجية',         standard:'IVS 210 · Extractive Industries',     desc:'احتياطيات الموارد · تدفق الإنتاج · مخاطر البيئة' },
+  'underconstruction':{ ar:'تحت الإنشاء',              standard:'IVS 410 · Development Properties',    desc:'قيمة النسبة المكتملة · تحليل التدفق النقدي التطويري' },
+  'intangible':       { ar:'مرتبط بأصول غير ملموسة',  standard:'IVS 210 · Business & Intangibles',    desc:'حقوق الملكية الفكرية · العلامة التجارية · العائد المدمج' },
+  'partial':          { ar:'حقوق جزئية',               standard:'IVS 105 · Partial Interests',          desc:'حقوق الانتفاع · الإيجار طويل الأجل · الحقوق المقيدة' },
+  'traditional':      { ar:'تقليدي',                   standard:'IVS 105 · Residential/Commercial',    desc:'سكني · تجاري · صناعي — المنهجيات القياسية الكاملة' }
+};
+
+const TIMELINE_META = {
+  'current':       { ar:'حالي',                desc:'تقييم يوم التقرير وفق أسعار السوق الجارية' },
+  'retrospective': { ar:'سابق / رجعي',         desc:'تقييم بتاريخ ماضٍ محدد — يستلزم أدلة سوق تاريخية موثقة' },
+  'prospective':   { ar:'لاحق / مستقبلي',      desc:'تقييم تاريخ مستقبلي — تحليل الاتجاهات والتنبؤات المعتمدة' }
+};
+
+const REGION_META = {
+  'SA': { currency:'SAR', standard:'TAQEEM', label:'المملكة العربية السعودية', flag:'🇸🇦' },
+  'EG': { currency:'EGP', standard:'FRA/CBE', label:'مصر',                     flag:'🇪🇬' }
+};
+
+/* ════════════════════════════════════════
+   3. وحدة الشبكة السيادية — Grid Module
+════════════════════════════════════════ */
+const Grid = {
+  onSimFile(input) {
+    if (!input.files.length) return;
+    const name = Array.from(input.files).map(f=>f.name).join(', ');
+    STATE.sim.files = Array.from(input.files);
+    STATE.sim.useDefault = false;
+    document.getElementById('simFileName').textContent = name.length > 40 ? name.slice(0,40)+'…' : name;
+    document.getElementById('simFileBadge').style.display = 'block';
+    document.getElementById('simDropZone').style.display  = 'none';
+    this._activate('sim', `نموذج: ${input.files.length} ملف`);
+    document.getElementById('ctx-sim-txt').textContent = `نموذج: ${input.files.length} ملف`;
+    document.getElementById('ctx-sim').classList.add('active');
+    Toast.show('تم تحميل نموذج الخبير بنجاح', 'success');
+  },
+  clearSim() {
+    STATE.sim = { files:[], useDefault:true, style:null };
+    document.getElementById('simFileBadge').style.display = 'none';
+    document.getElementById('simDropZone').style.display  = 'flex';
+    document.getElementById('simFile').value = '';
+    this._deactivate('sim');
+    document.getElementById('ctx-sim-txt').textContent = 'نموذج: افتراضي';
+    document.getElementById('ctx-sim').classList.remove('active');
+    Toast.show('تم الرجوع للنموذج الافتراضي السيادي', 'info');
+  },
+  onDataFile(input) {
+    if (!input.files.length) return;
+    const files = Array.from(input.files);
+    STATE.data.files = files;
+    STATE.data.processed = false;
+    const name = files.map(f=>f.name).join(', ');
+    document.getElementById('dataFileName').textContent = name.length > 40 ? name.slice(0,40)+'…' : name;
+    document.getElementById('dataFileBadge').style.display = 'block';
+    document.getElementById('dataDropZone').style.display  = 'none';
+    this._activate('data', `${files.length} ملف`);
+    document.getElementById('ctx-data-txt').textContent = `${files.length} ملف مُحمّل`;
+    document.getElementById('ctx-data').classList.add('active');
+    Toast.show(`تم تحميل ${files.length} ملف — جاهز للمعالجة`, 'success');
+  },
+  processDataFiles() {
+    if (!STATE.data.files.length) { Toast.show('لم يتم تحميل أي ملفات بعد', 'warn'); return; }
+    Toast.show('جاري معالجة الملفات عبر محرك AVM...', 'info');
+    setTimeout(()=>{ STATE.data.processed = true; Toast.show('اكتملت المعالجة — البيانات جاهزة', 'success'); }, 1800);
+  },
+  onRoleChange(val) {
+    STATE.role = val || null;
+    const meta = ROLE_META[val];
+    const descEl = document.getElementById('roleDesc');
+    if (meta) {
+      descEl.textContent = meta.desc;
+      descEl.style.display = 'block';
+      this._activate('role', meta.ar);
+      document.getElementById('ctx-role-txt').textContent = meta.ar;
+      document.getElementById('ctx-role').classList.add('active');
+      document.getElementById('sel-role').value = val;
+      document.getElementById('expertRoleLabel').textContent = meta.ar;
+      Predictive.updateForRole(val);
+      UI.updateContextHint();
+      Toast.show(`الدور: ${meta.ar} · ${meta.en}`, 'info');
+    } else {
+      descEl.style.display = 'none';
+      this._deactivate('role');
+      document.getElementById('ctx-role-txt').textContent = 'الدور غير محدد';
+      document.getElementById('ctx-role').classList.remove('active');
+    }
+  },
+  onAssetChange(val) {
+    STATE.asset = val || null;
+    const meta = ASSET_META[val];
+    const descEl = document.getElementById('assetDesc');
+    if (meta) {
+      descEl.innerHTML = `<strong style="color:var(--gold);font-size:0.58rem">${meta.standard}</strong><br>${meta.desc}`;
+      descEl.style.display = 'block';
+      this._activate('asset', meta.ar);
+      document.getElementById('ctx-asset-txt').textContent = meta.ar;
+      document.getElementById('ctx-asset').classList.add('active');
+      Predictive.updateForAsset(val);
+      UI.updateContextHint();
+      Toast.show(`الأصل: ${meta.ar} · ${meta.standard}`, 'info');
+    } else {
+      descEl.style.display = 'none';
+      this._deactivate('asset');
+      document.getElementById('ctx-asset-txt').textContent = 'الأصل غير محدد';
+      document.getElementById('ctx-asset').classList.remove('active');
+    }
+  },
+  onTimelineChange(val) {
+    STATE.timeline = val || null;
+    const meta = TIMELINE_META[val];
+    const dateEl = document.getElementById('timelineDate');
+    const descEl = document.getElementById('timelineDesc');
+    if (meta) {
+      descEl.textContent = meta.desc;
+      descEl.style.display = 'block';
+      dateEl.style.display = (val === 'retrospective' || val === 'prospective') ? 'block' : 'none';
+      this._activate('timeline', meta.ar);
+      document.getElementById('ctx-timeline-txt').textContent = meta.ar;
+      document.getElementById('ctx-timeline').classList.add('active');
+      UI.updateContextHint();
+    } else {
+      descEl.style.display = 'none';
+      dateEl.style.display = 'none';
+      this._deactivate('timeline');
+      document.getElementById('ctx-timeline-txt').textContent = 'التاريخ غير محدد';
+      document.getElementById('ctx-timeline').classList.remove('active');
+    }
+  },
+  onDateChange(val) {
+    STATE.date = val;
+    if (val) {
+      document.getElementById('ctx-timeline-txt').textContent = `${TIMELINE_META[STATE.timeline]?.ar || ''} · ${val}`;
+    }
+  },
+  onBrokerNote(val) {
+    STATE.market.brokerNote = val;
+    if (val.length > 3) {
+      document.getElementById('ctx-market-txt').textContent = 'ملاحظة وسيط: مُدخلة';
+      document.getElementById('ctx-market').classList.add('active');
+      this._activate('market', 'ملاحظة وسيط');
+    } else {
+      if (!STATE.market.sweepDone) {
+        document.getElementById('ctx-market').classList.remove('active');
+        this._deactivate('market');
+      }
+    }
+    UI.updateContextHint();
+  },
+  async runMarketSweep() {
+    const sources = [
+      { id:'aqarmap',  label:'AqarMap 🇪🇬',        delay:900  },
+      { id:'pf',       label:'PropertyFinder 🇸🇦',  delay:1600 },
+      { id:'easy',     label:'Easy.com 🇪🇬',        delay:2200 },
+      { id:'aqarksa',  label:'Aqar KSA 🇸🇦',        delay:3000 }
+    ];
+    document.getElementById('sweepBtn').disabled = true;
+    document.getElementById('sweepBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> جارٍ المسح...';
+    Toast.show('بدأ مسح السوق الآلي...', 'info');
+    sources.forEach(src => {
+      const dot = document.getElementById('dot-'+src.id);
+      const row = document.getElementById('sw-'+src.id);
+      dot.className = 'sweeper-dot scanning';
+      row.className  = 'sweeper-row scanning';
+      setTimeout(()=>{
+        dot.className = 'sweeper-dot done';
+        row.className  = 'sweeper-row done';
+        const count = Math.floor(Math.random()*18)+5;
+        row.querySelector('.target-tag').textContent = `${src.label} · ${count} نتيجة`;
+        STATE.market.sources.push({ source:src.label, count });
+        if (STATE.market.sources.length === sources.length) {
+          STATE.market.sweepDone = true;
+          const total = STATE.market.sources.reduce((a,b)=>a+b.count,0);
+          document.getElementById('ctx-market-txt').textContent = `${total} مقارنة ميدانية`;
+          document.getElementById('ctx-market').classList.add('active');
+          this._activate('market', `${total} مقارنة`);
+          document.getElementById('sweepBtn').disabled = false;
+          document.getElementById('sweepBtn').innerHTML = '<i class="fas fa-check-circle"></i> اكتمل المسح';
+          Toast.show(`اكتمل مسح السوق — ${total} نتيجة ميدانية`, 'success');
+          UI.updateContextHint();
+        }
+      }, src.delay);
+    });
+  },
+  _activate(id, label) {
+    document.getElementById(`${id}-dot`)?.classList.add('active');
+    document.getElementById(`card-${id}`)?.classList.add('active');
+  },
+  _deactivate(id) {
+    document.getElementById(`${id}-dot`)?.classList.remove('active');
+    document.getElementById(`card-${id}`)?.classList.remove('active');
+  }
+};
+
+/* ════════════════════════════════════════
+   4. محرك التحليل التنبؤي
+════════════════════════════════════════ */
+const Predictive = {
+  updateForRole(role) {
+    const a = STATE.analytics;
+    if (role === 'bank-auditor')  { a.riskLevel = 'high';   this._refresh(); }
+    if (role === 'fund-manager')  { a.riskLevel = 'low';    a.capRate = 8.5; this._refresh(); }
+    if (role === 'tax-expert')    { a.recommendation = 'review'; this._refresh(); }
+    if (role === 'investor')      { a.recommendation = 'buy'; a.rentalYield = 6.1; this._refresh(); }
+  },
+  updateForAsset(asset) {
+    const a = STATE.analytics;
+    if (asset === 'underconstruction') { a.marketGrowth = 15.2; a.riskLevel = 'high'; }
+    if (asset === 'heritage')          { a.capRate = 4.2; a.recommendation = 'hold'; }
+    if (asset === 'agricultural')      { a.rentalYield = 3.8; }
+    if (asset === 'traditional')       { a.marketGrowth = 11.4; }
+    this._refresh();
+  },
+  _refresh() {
+    const a = STATE.analytics;
+    const riskMap = { low:'منخفضة', medium:'متوسطة', high:'مرتفعة' };
+    const recMap  = { hold:'الاحتفاظ', buy:'الشراء', sell:'البيع', review:'مراجعة قانونية' };
+    const riskClass = { low:'up', medium:'warn', high:'down' };
+    const recClass  = { hold:'', buy:'up', sell:'down', review:'warn' };
+    const setChip = (id, text, cls) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      el.className = `pred-chip ${cls}`;
+    };
+    setChip('pred-inflation', `تضخم المنطقة: +${a.inflation}%`, 'up');
+    setChip('pred-growth',    `نمو السوق (12m): +${a.marketGrowth}%`, a.marketGrowth>10?'up':'warn');
+    setChip('pred-risk',      `مخاطر: ${riskMap[a.riskLevel]}`, riskClass[a.riskLevel]);
+    setChip('pred-cap',       `معدل الرسملة: ${a.capRate}%`, 'up');
+    setChip('pred-yield',     `العائد الإيجاري: ${a.rentalYield}%`, a.rentalYield>5?'up':'warn');
+    setChip('pred-rec',       `توصية: ${recMap[a.recommendation]}`, recClass[a.recommendation]);
+  }
+};
+
+/* ════════════════════════════════════════
+   5. وحدة المصادقة RBAC
+════════════════════════════════════════ */
+const RBAC = {
+  _selectedRole: 'valuer',
+  openModal() {
+    document.getElementById('authModal').classList.remove('hidden');
+  },
+  closeModal() {
+    document.getElementById('authModal').classList.add('hidden');
+  },
+  selectRole(el) {
+    document.querySelectorAll('.rbac-role-chip').forEach(c=>c.classList.remove('selected'));
+    el.classList.add('selected');
+    this._selectedRole = el.dataset.role;
+  },
+  login() {
+    const name = document.getElementById('authName').value.trim();
+    const pass = document.getElementById('authPass').value.trim();
+    if (!name) { Toast.show('الرجاء إدخال الاسم', 'warn'); return; }
+    if (!pass) { Toast.show('الرجاء إدخال كلمة المرور', 'warn'); return; }
+    STATE.auth = { loggedIn:true, name, role:this._selectedRole };
+    const roleAr = ROLE_META[this._selectedRole]?.ar || this._selectedRole;
+    document.getElementById('expertName').textContent = name;
+    document.getElementById('expertRoleLabel').textContent = roleAr;
+    document.getElementById('expertInitial').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('authLabel').textContent = 'خروج';
+    document.getElementById('authBtn').classList.add('logged');
+    document.getElementById('authBtn').innerHTML = `<i class="fas fa-check-circle"></i> <span>${name}</span>`;
+    /* تزامن اختيار الدور في الشبكة */
+    document.getElementById('sel-role').value = this._selectedRole;
+    Grid.onRoleChange(this._selectedRole);
+    this.closeModal();
+    Toast.show(`مرحباً ${name} · ${roleAr}`, 'success');
+  }
+};
+
+/* ════════════════════════════════════════
+   6. واجهة المستخدم العامة — UI
+════════════════════════════════════════ */
+const UI = {
+  toggleAttach() {
+    const panel = document.getElementById('attachPanel');
+    const btn   = document.getElementById('attachToggle');
+    const open  = panel.classList.toggle('open');
+    btn.classList.toggle('active', open);
+  },
+  closeAttach() {
+    document.getElementById('attachPanel').classList.remove('open');
+    document.getElementById('attachToggle').classList.remove('active');
+  },
+  onAttachFile(input, type) {
+    if (!input.files.length) return;
+    const f = input.files[0];
+    STATE.attachedFiles.push({ file:f, type });
+    Toast.show(`مُرفق: ${f.name}`, 'success');
+    this.closeAttach();
+    const ta = document.getElementById('promptInput');
+    if (!ta.value.includes('[مرفق]')) ta.value += ` [مرفق: ${f.name}]`;
+    this.autoResize(ta);
+  },
+  toggleMic() {
+    const btn = document.getElementById('micToggle');
+    btn.classList.toggle('recording');
+    if (btn.classList.contains('recording')) {
+      Toast.show('تسجيل صوتي — Whisper AI جاهز', 'info');
+    } else {
+      Toast.show('توقف التسجيل', 'warn');
+    }
+  },
+  togglePredictive() {
+    const strip = document.getElementById('predictiveStrip');
+    const btn   = document.getElementById('predToggle');
+    const hidden = strip.classList.toggle('hidden');
+    btn.classList.toggle('active', !hidden);
+    STATE.predictive = !hidden;
+  },
+  autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  },
+  onPromptKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      Chat.send();
+    }
+  },
+  updateContextHint() {
+    const parts = [];
+    if (STATE.role)     parts.push(ROLE_META[STATE.role]?.ar);
+    if (STATE.asset)    parts.push(ASSET_META[STATE.asset]?.ar);
+    if (STATE.timeline) parts.push(TIMELINE_META[STATE.timeline]?.ar);
+    if (STATE.market.sweepDone) parts.push('بيانات السوق');
+    const hint = document.getElementById('contextHint');
+    hint.textContent = parts.length ? `السياق: ${parts.join(' · ')}` : 'السياق: —';
+  }
+};
+
+/* ════════════════════════════════════════
+   7. محرك الدردشة — Chat Engine
+════════════════════════════════════════ */
+const Chat = {
+  _messages: [],
+  send() {
+    const ta  = document.getElementById('promptInput');
+    const raw = ta.value.trim();
+    if (!raw) { Toast.show('اكتب استفساراً أولاً', 'warn'); return; }
+
+    /* إخفاء رسالة الترحيب */
+    document.getElementById('chatEmpty').style.display = 'none';
+
+    /* بناء رسالة المستخدم */
+    const userMsg = this._buildPrompt(raw);
+    this._messages.push({ role:'user', content:userMsg });
+    this._appendMsg('user', raw);
+
+    ta.value = '';
+    ta.style.height = 'auto';
+    STATE.attachedFiles = [];
+
+    /* رسالة الكتابة */
+    const typingId = this._appendTyping();
+
+    /* محاكاة استجابة AI */
+    setTimeout(()=>{
+      this._removeTyping(typingId);
+      const response = this._generateMockResponse(raw);
+      this._messages.push({ role:'assistant', content:response });
+      this._appendMsg('ai', response);
+    }, 1200 + Math.random()*800);
+  },
+
+  _buildPrompt(raw) {
+    const region  = REGION_META[STATE.region];
+    const role    = STATE.role    ? ROLE_META[STATE.role]?.ar    : 'غير محدد';
+    const asset   = STATE.asset   ? ASSET_META[STATE.asset]?.ar  : 'غير محدد';
+    const tl      = STATE.timeline? TIMELINE_META[STATE.timeline]?.ar : 'غير محدد';
+    const market  = STATE.market.sweepDone ? `${STATE.market.sources.reduce((a,b)=>a+b.count,0)} مقارنة ميدانية` : 'لا توجد بيانات';
+    return `[السياق: المنطقة=${region.label}, المعيار=${region.standard}, الدور=${role}, الأصل=${asset}, الإطار=${tl}, السوق=${market}]\n\n${raw}`;
+  },
+
+  _generateMockResponse(q) {
+    const region = REGION_META[STATE.region];
+    const role   = STATE.role ? ROLE_META[STATE.role]?.ar : null;
+    const asset  = STATE.asset? ASSET_META[STATE.asset]?.ar : null;
+
+    if (q.includes('تقرير') || q.includes('report')) {
+      return `بناءً على الإعدادات المحددة، سيتم إعداد تقرير التقييم وفق معيار **${region.standard}** ${region.flag}.\n\n` +
+             (role  ? `• الدور المحدد: **${role}** — سيُركّز التقرير على المتطلبات المؤسسية لهذا الدور.\n` : '') +
+             (asset ? `• نوع الأصل: **${asset}** — سيُطبَّق المنهج المناسب.\n` : '') +
+             `\nيمكنني إعداد التقرير الكامل عند توفير ملفات العقار في الخانة رقم 2 من الشبكة السيادية.`;
+    }
+    if (q.includes('قيم') || q.includes('سعر') || q.includes('value')) {
+      return `لإجراء التقييم وفق **IVS 2022** بمعيار **${region.standard}**:\n\n` +
+             `1. منهجية المقارنة السوقية (Market Approach)\n` +
+             `2. منهجية الدخل — DCF / الرسملة المباشرة\n` +
+             `3. منهجية التكلفة — DRC\n\n` +
+             `**التوفيق النهائي:** 50% · 30% · 20% وفق معيار IVS 105.\n\n` +
+             (STATE.market.sweepDone ? `تم رصد **${STATE.market.sources.reduce((a,b)=>a+b.count,0)} مقارنة ميدانية** من المسح الآلي.` : 'الرجاء تشغيل مسح السوق في البطاقة السادسة للحصول على مقارنات ميدانية.');
+    }
+    return `تلقيت استفساركم. المنصة تعمل وفق معيار **${region.standard}** ${region.flag}.\n\n` +
+           `لديّ كامل السياق المؤسسي من الشبكة السيادية. يُرجى تحديد طلبكم بدقة أكبر لإنتاج تحليل مخصص.\n\n` +
+           `**الخيارات المتاحة:** تقرير تقييم كامل · تحليل مقارن · مراجعة قانونية · تحليل محفظة.`;
+  },
+
+  _appendMsg(who, text) {
+    const area = document.getElementById('chatArea');
+    const now  = new Date().toLocaleTimeString('ar-SA', {hour:'2-digit',minute:'2-digit'});
+    const icon = who==='user' ? STATE.auth.name.charAt(0).toUpperCase() : '⚡';
+    const div  = document.createElement('div');
+    div.className = `chat-msg ${who}-msg`;
+    div.innerHTML = `
+      <div class="msg-avatar">${icon}</div>
+      <div>
+        <div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>
+        <div class="msg-meta">${now}</div>
+      </div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    return div;
+  },
+
+  _appendTyping() {
+    const area = document.getElementById('chatArea');
+    const id   = 'typing_' + Date.now();
+    const div  = document.createElement('div');
+    div.className = 'chat-msg ai-msg'; div.id = id;
+    div.innerHTML = `<div class="msg-avatar">⚡</div><div class="msg-bubble"><div class="typing-bubble"><span></span><span></span><span></span></div></div>`;
+    area.appendChild(div);
+    area.scrollTop = area.scrollHeight;
+    return id;
+  },
+
+  _removeTyping(id) {
+    document.getElementById(id)?.remove();
+  }
+};
+
+/* ════════════════════════════════════════
+   8. نظام الإشعارات — Toast
+════════════════════════════════════════ */
+const Toast = {
+  show(msg, type='info', dur=3200) {
+    const container = document.getElementById('toastContainer');
+    const icons = { success:'fa-check-circle', info:'fa-info-circle', warn:'fa-exclamation-triangle', error:'fa-times-circle' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;
+    container.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transition='opacity 0.4s'; setTimeout(()=>el.remove(),400); }, dur);
+  }
+};
+
+/* ════════════════════════════════════════
+   9. تغيير الإقليم — Region Switch
+════════════════════════════════════════ */
+function setRegion(code) {
+  STATE.region = code;
+  document.getElementById('btn-eg').classList.toggle('active', code==='EG');
+  document.getElementById('btn-sa').classList.toggle('active', code==='SA');
+  const meta = REGION_META[code];
+  document.getElementById('ctx-region-txt').textContent = `${code} · ${meta.standard}`;
+  /* تحديث التنبؤ وفق الإقليم */
+  if (code === 'EG') { STATE.analytics.inflation = 26.5; STATE.analytics.marketGrowth = 18.3; }
+  else               { STATE.analytics.inflation =  8.2; STATE.analytics.marketGrowth = 11.4; }
+  Predictive._refresh();
+  /* اتصال بـ Flask API */
+  fetch(`${API_BASE}/api/session/update`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ region:code, currency:meta.currency, standard:meta.standard })
+  }).catch(()=>{});
+  Toast.show(`الإقليم: ${meta.label} ${meta.flag} · ${meta.standard}`, 'info');
+}
+
+/* ════════════════════════════════════════
+   10. التهيئة — Init
+════════════════════════════════════════ */
+(function init() {
+  Predictive._refresh();
+  /* مسح السوق عند التحميل (محاكاة) */
+  setTimeout(()=> Toast.show('المنصة السيادية جاهزة · IVS 2022', 'success'), 600);
+})();
+</script>
+</body>
+</html>

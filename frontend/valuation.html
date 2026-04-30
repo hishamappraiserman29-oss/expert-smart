@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert_Smart — تقييم عقاري ذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js for client-side PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Marked.js for Markdown rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --gold:   #d4af37;
+            --gold-2: #b8962e;
+            --navy:   #1a1f2e;
+            --bg:     #0f1117;
+            --card:   rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.08);
+            --gold-border: rgba(212,175,55,0.3);
+            --red:    #ef4444;
+            --green:  #4ade80;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, var(--navy), var(--bg));
+            border-bottom: 1px solid var(--gold-border);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header .logo { font-size: 1.4rem; font-weight: 800; color: #fff; }
+        .header .logo span { color: var(--gold); }
+        .header-right { display: flex; align-items: center; gap: 1rem; }
+        .header .badge {
+            background: rgba(212,175,55,0.15);
+            border: 1px solid rgba(212,175,55,0.4);
+            color: var(--gold);
+            padding: 0.3rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+        }
+        .btn-api-key {
+            background: rgba(212,175,55,0.08);
+            border: 1px dashed rgba(212,175,55,0.5);
+            color: var(--gold);
+            padding: 0.3rem 0.9rem;
+            border-radius: 50px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-api-key:hover { background: rgba(212,175,55,0.18); }
+        .api-status-dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #555;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        .api-status-dot.active { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 440px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        /* ── Form Panel ── */
+        .form-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .form-panel h2 {
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--gold-border);
+        }
+
+        .input-group { margin-bottom: 1.2rem; }
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 0.4rem;
+        }
+        .input-group input,
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            color: #fff;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+            resize: vertical;
+        }
+        .input-group input:focus,
+        .input-group select:focus,
+        .input-group textarea:focus { border-color: var(--gold); }
+        .input-group select option { background: #1a1f2e; }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, var(--gold), var(--gold-2));
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+        }
+        .btn-submit:hover { opacity: 0.9; }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-dummy {
+            width: 100%;
+            padding: 0.6rem;
+            background: transparent;
+            border: 1px dashed rgba(212,175,55,0.4);
+            border-radius: 8px;
+            color: var(--gold);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-dummy:hover { background: rgba(212,175,55,0.08); }
+
+        /* ── AI Section Divider ── */
+        .ai-divider {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin: 1.5rem 0 1.2rem;
+            color: #555;
+            font-size: 0.8rem;
+        }
+        .ai-divider::before, .ai-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(212,175,55,0.25), transparent);
+        }
+        .ai-divider-label {
+            background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--gold);
+            padding: 0.25rem 0.9rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ── Role Chips ── */
+        .role-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+        .role-chip {
+            padding: 0.35rem 0.9rem;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: #aaa;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .role-chip:hover { border-color: rgba(212,175,55,0.5); color: var(--gold); }
+        .role-chip.active {
+            background: rgba(212,175,55,0.15);
+            border-color: rgba(212,175,55,0.6);
+            color: var(--gold);
+        }
+
+        /* ── File Drop Zone ── */
+        .file-drop-zone {
+            border: 2px dashed rgba(212,175,55,0.25);
+            border-radius: 10px;
+            padding: 1.2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1.2rem;
+            position: relative;
+        }
+        .file-drop-zone:hover, .file-drop-zone.dragging {
+            border-color: rgba(212,175,55,0.6);
+            background: rgba(212,175,55,0.05);
+        }
+        .file-drop-zone input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer;
+            width: 100%; height: 100%;
+        }
+        .file-drop-zone .drop-icon { font-size: 1.6rem; color: rgba(212,175,55,0.5); margin-bottom: 0.4rem; }
+        .file-drop-zone .drop-text { font-size: 0.82rem; color: #777; }
+        .file-drop-zone .drop-text strong { color: var(--gold); }
+        .file-attached-badge {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(74,222,128,0.1);
+            border: 1px solid rgba(74,222,128,0.3);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.82rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+        .file-attached-badge.show { display: flex; }
+        .btn-remove-file {
+            background: none; border: none; color: #888;
+            cursor: pointer; font-size: 0.85rem; margin-right: auto;
+        }
+
+        /* ── AI Submit Button ── */
+        .btn-ai-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: linear-gradient(135deg, rgba(212,175,55,0.2), rgba(212,175,55,0.08));
+            border: 1px solid rgba(212,175,55,0.5);
+            border-radius: 10px;
+            color: var(--gold);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-ai-submit:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(212,175,55,0.32), rgba(212,175,55,0.15));
+            box-shadow: 0 0 18px rgba(212,175,55,0.15);
+        }
+        .btn-ai-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Report Panel (right) ── */
+        .report-panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            color: #555;
+            text-align: center;
+            gap: 1rem;
+        }
+        .placeholder i { font-size: 3rem; }
+
+        /* ── Valuation Report Content ── */
+        #report-output { display: none; }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--gold-border);
+            margin-bottom: 1.5rem;
+        }
+        .report-header h1 { font-size: 1.3rem; color: #fff; }
+        .report-header .meta { font-size: 0.82rem; color: #888; margin-top: 0.4rem; }
+        .report-id {
+            background: rgba(212,175,55,0.15);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--gold);
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+        }
+        .info-item .info-label { font-size: 0.78rem; color: #888; margin-bottom: 0.2rem; }
+        .info-item .info-value { font-size: 0.95rem; color: #fff; font-weight: 600; }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin: 1.5rem 0 1rem;
+            padding-right: 0.75rem;
+            border-right: 3px solid var(--gold);
+        }
+
+        .methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .method-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .method-card .method-name { font-size: 0.8rem; color: #aaa; margin-bottom: 0.5rem; }
+        .method-card .method-value { font-size: 1.1rem; font-weight: 700; color: var(--green); }
+        .method-card .method-weight { font-size: 0.75rem; color: #666; margin-top: 0.3rem; }
+
+        .final-value-box {
+            background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.05));
+            border: 2px solid rgba(212,175,55,0.4);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+        .final-value-box .label { font-size: 0.9rem; color: #aaa; margin-bottom: 0.5rem; }
+        .final-value-box .value { font-size: 2.2rem; font-weight: 800; color: var(--gold); }
+        .final-value-box .currency { font-size: 1rem; color: #888; margin-top: 0.3rem; }
+
+        .comparables-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin-top: 0.5rem; }
+        .comparables-table th {
+            background: rgba(212,175,55,0.1);
+            color: var(--gold);
+            padding: 0.6rem 0.8rem;
+            text-align: right;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .comparables-table td {
+            padding: 0.6rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #ccc;
+        }
+        .comparables-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+        .hbu-box {
+            background: rgba(255,255,255,0.03);
+            border-right: 3px solid var(--green);
+            padding: 1rem 1.2rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.88rem;
+            color: #bbb;
+            line-height: 1.8;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        .btn-print {
+            padding: 0.7rem 1.2rem;
+            background: rgba(212,175,55,0.15);
+            border: 1px solid rgba(212,175,55,0.4);
+            color: var(--gold);
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-print:hover { background: rgba(212,175,55,0.25); }
+        .btn-new {
+            padding: 0.7rem 1.2rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: #aaa;
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .btn-excel {
+            padding: 0.7rem 1.2rem;
+            background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1));
+            border: 1px solid rgba(34,197,94,0.5);
+            color: var(--green);
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .btn-excel:hover { background: linear-gradient(135deg, rgba(34,197,94,0.3), rgba(34,197,94,0.15)); }
+        .btn-excel:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── Loading Spinner (valuation) ── */
+        .spinner {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+            color: var(--gold);
+        }
+        .spinner i { font-size: 2rem; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── AI Analysis Output Section ── */
+        #ai-output-section { display: none; }
+
+        .ai-output-wrap {
+            margin-top: 2rem;
+            border-top: 1px solid var(--gold-border);
+            padding-top: 1.5rem;
+        }
+        .ai-output-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.2rem;
+        }
+        .ai-output-header .ai-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, rgba(212,175,55,0.25), rgba(212,175,55,0.1));
+            border: 1px solid rgba(212,175,55,0.4);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold); font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .ai-output-header .ai-title { font-size: 1rem; font-weight: 700; color: #fff; }
+        .ai-output-header .ai-role-tag {
+            margin-right: auto;
+            background: rgba(212,175,55,0.12);
+            border: 1px solid rgba(212,175,55,0.3);
+            color: var(--gold);
+            padding: 0.2rem 0.7rem;
+            border-radius: 50px;
+            font-size: 0.78rem;
+        }
+
+        /* AI Loading Spinner */
+        .ai-spinner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 2.5rem;
+            color: var(--gold);
+            flex-direction: column;
+        }
+        .ai-spinner.show { display: flex; }
+        .ai-spinner-ring {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 3px solid rgba(212,175,55,0.15);
+            border-top-color: var(--gold);
+            animation: spin 0.9s linear infinite;
+        }
+        .ai-spinner-text { font-size: 0.9rem; color: #888; }
+
+        /* AI Markdown Content */
+        .ai-content-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(212,175,55,0.15);
+            border-radius: 12px;
+            padding: 1.5rem 1.8rem;
+            font-size: 0.92rem;
+            line-height: 1.9;
+            color: #d0d0d0;
+        }
+        .ai-content-box h1, .ai-content-box h2, .ai-content-box h3 {
+            color: var(--gold);
+            margin: 1.2rem 0 0.6rem;
+            font-weight: 700;
+        }
+        .ai-content-box h1 { font-size: 1.2rem; }
+        .ai-content-box h2 { font-size: 1.05rem; border-bottom: 1px solid var(--gold-border); padding-bottom: 0.4rem; }
+        .ai-content-box h3 { font-size: 0.95rem; color: #c5a045; }
+        .ai-content-box p { margin-bottom: 0.9rem; }
+        .ai-content-box ul, .ai-content-box ol {
+            margin: 0.7rem 0 0.7rem 1.5rem;
+            padding: 0;
+        }
+        .ai-content-box li { margin-bottom: 0.4rem; }
+        .ai-content-box strong { color: #fff; font-weight: 700; }
+        .ai-content-box em { color: #c5a045; font-style: italic; }
+        .ai-content-box table {
+            width: 100%; border-collapse: collapse;
+            margin: 1rem 0; font-size: 0.88rem;
+        }
+        .ai-content-box th {
+            background: rgba(212,175,55,0.12);
+            color: var(--gold); padding: 0.5rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.08); text-align: right;
+        }
+        .ai-content-box td {
+            padding: 0.5rem 0.8rem;
+            border: 1px solid rgba(255,255,255,0.06); color: #ccc;
+        }
+        .ai-content-box tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+        .ai-content-box code {
+            background: rgba(255,255,255,0.08);
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--green);
+            font-family: monospace;
+        }
+        .ai-content-box pre {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 0.8rem 0;
+        }
+        .ai-content-box blockquote {
+            border-right: 3px solid var(--gold);
+            padding: 0.5rem 1rem;
+            margin: 0.8rem 0;
+            background: rgba(212,175,55,0.05);
+            border-radius: 0 8px 8px 0;
+            color: #aaa;
+        }
+        .ai-content-box hr {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 1.2rem 0;
+        }
+
+        /* AI Action buttons */
+        .ai-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn-ai-action {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: #aaa;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 0.4rem;
+            transition: all 0.2s;
+        }
+        .btn-ai-action:hover { border-color: rgba(212,175,55,0.4); color: var(--gold); }
+
+        /* ── API Key Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(6px);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: #131722;
+            border: 1px solid rgba(212,175,55,0.35);
+            border-radius: 18px;
+            padding: 2rem 2.2rem;
+            width: 90%;
+            max-width: 480px;
+            position: relative;
+        }
+        .modal-box h3 {
+            font-size: 1.15rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+        .modal-box p { font-size: 0.85rem; color: #888; margin-bottom: 1.5rem; line-height: 1.6; }
+        .modal-box .input-group { margin-bottom: 1.2rem; }
+        .modal-close {
+            position: absolute; top: 1rem; left: 1rem;
+            background: none; border: none; color: #666;
+            cursor: pointer; font-size: 1.1rem;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: #aaa; }
+        .modal-actions { display: flex; gap: 0.8rem; }
+        .btn-modal-save {
+            flex: 1;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, var(--gold), var(--gold-2));
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-modal-cancel {
+            padding: 0.8rem 1.4rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: #888;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .modal-hint {
+            font-size: 0.78rem;
+            color: #555;
+            margin-top: 0.8rem;
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .key-preview {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(74,222,128,0.08);
+            border: 1px solid rgba(74,222,128,0.25);
+            border-radius: 8px;
+            padding: 0.5rem 0.8rem;
+            font-size: 0.82rem;
+            color: var(--green);
+            margin-bottom: 1rem;
+        }
+        .key-preview.show { display: flex; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed;
+            bottom: 2rem; left: 50%; transform: translateX(-50%);
+            background: rgba(20, 25, 40, 0.95);
+            border: 1px solid rgba(212,175,55,0.4);
+            color: var(--gold);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+
+        /* ── Print Styles ── */
+        @media print {
+            body { background: #fff; color: #000; }
+            .header, .form-panel, .actions, .ai-actions, .modal-overlay, .toast { display: none; }
+            .report-panel { border: none; padding: 0; }
+            #report-output { display: block !important; }
+            .method-card { border: 1px solid #ccc; }
+            .final-value-box { border: 2px solid #d4af37; }
+        }
+
+        @media (max-width: 960px) {
+            .container { grid-template-columns: 1fr; }
+            .methods-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ──────────────────────────────────────── HEADER ── -->
+<div class="header">
+    <div class="logo">Expert<span>_Smart</span></div>
+    <div class="header-right">
+        <button class="btn-api-key" onclick="openApiModal()">
+            <span class="api-status-dot" id="api-dot"></span>
+            <i class="fa-solid fa-key"></i> مفتاح Gemini API
+        </button>
+        <div class="badge"><i class="fa-solid fa-shield-halved"></i> IVS · EFSA · TAQEEM</div>
+    </div>
+</div>
+
+<!-- ──────────────────────────────────────── MAIN ── -->
+<div class="container">
+
+    <!-- ── Left Panel: Form + AI Section ── -->
+    <div class="form-panel">
+        <h2><i class="fa-solid fa-file-invoice"></i> بيانات التقييم</h2>
+
+        <button class="btn-dummy" onclick="fillDummyData()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> تعبئة ببيانات تجريبية (Demo)
+        </button>
+
+        <form id="valuation-form">
+            <div class="input-group">
+                <label>اسم العميل / المالك</label>
+                <input type="text" id="client_name" placeholder="مثال: أحمد محمد السيد">
+            </div>
+            <div class="input-group">
+                <label>نوع العقار</label>
+                <select id="property_type">
+                    <option value="شقة سكنية">شقة سكنية</option>
+                    <option value="فيلا سكنية">فيلا سكنية</option>
+                    <option value="أرض فضاء">أرض فضاء</option>
+                    <option value="عقار تجاري">عقار تجاري</option>
+                    <option value="مبنى إداري">مبنى إداري</option>
+                    <option value="مصنع">مصنع / مستودع</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>الموقع / المنطقة</label>
+                <input type="text" id="location" placeholder="مثال: المعادي، القاهرة">
+            </div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>المساحة (م²)</label>
+                    <input type="number" id="area" placeholder="150" min="1">
+                </div>
+                <div class="input-group">
+                    <label>عمر المبنى (سنة)</label>
+                    <input type="number" id="building_age" placeholder="10" min="0">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>سعر المتر السوقي (EGP)</label>
+                    <input type="number" id="price_per_meter" placeholder="18000" min="1">
+                </div>
+                <div class="input-group">
+                    <label>إيجار المتر السنوي (EGP)</label>
+                    <input type="number" id="rent_per_sqm" placeholder="350" min="1">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>معدل الرسملة Cap Rate (%)</label>
+                <input type="number" id="cap_rate_pct" placeholder="8" min="1" max="30" step="0.5">
+            </div>
+            <button type="submit" class="btn-submit" id="submit-btn">
+                <i class="fa-solid fa-calculator"></i> احسب القيمة وأصدر التقرير
+            </button>
+        </form>
+
+        <!-- ── AI Gemini Analysis Section ── -->
+        <div class="ai-divider">
+            <div class="ai-divider-label">
+                <i class="fa-solid fa-brain"></i> تحليل الذكاء الاصطناعي — Gemini
+            </div>
+        </div>
+
+        <!-- Role Selection -->
+        <div class="input-group">
+            <label><i class="fa-solid fa-user-tie"></i> الدور الوظيفي</label>
+            <div class="role-chips" id="role-chips">
+                <button type="button" class="role-chip active" data-role="خبير تقييم عقاري">خبير تقييم</button>
+                <button type="button" class="role-chip" data-role="مدقق مصرفي">مدقق مصرفي</button>
+                <button type="button" class="role-chip" data-role="مدير صندوق استثماري">مدير صندوق</button>
+                <button type="button" class="role-chip" data-role="مسؤول ضريبي حكومي">مسؤول ضريبي</button>
+            </div>
+        </div>
+
+        <!-- Market Context -->
+        <div class="input-group">
+            <label><i class="fa-solid fa-globe"></i> السياق الجغرافي / المعايير</label>
+            <select id="market-context">
+                <option value="egypt">مصر — معايير EFSA / FRA و IVS</option>
+                <option value="ksa">المملكة العربية السعودية — معايير TAQEEM و IVS</option>
+                <option value="auto">اكتشاف تلقائي من الموقع</option>
+            </select>
+        </div>
+
+        <!-- File Upload -->
+        <div class="file-drop-zone" id="file-drop-zone"
+             ondragover="event.preventDefault(); this.classList.add('dragging')"
+             ondragleave="this.classList.remove('dragging')"
+             ondrop="handleFileDrop(event)">
+            <input type="file" id="file-input" accept=".pdf,.txt,.csv,.docx"
+                   onchange="handleFileSelect(event)">
+            <div class="drop-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+            <div class="drop-text">اسحب وأفلت ملف التقرير أو <strong>اضغط للاختيار</strong><br>
+                <small>PDF · TXT · CSV · DOCX</small></div>
+        </div>
+
+        <div class="file-attached-badge" id="file-badge">
+            <i class="fa-solid fa-paperclip"></i>
+            <span id="file-badge-name"></span>
+            <button type="button" class="btn-remove-file" onclick="removeFile()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- User Message -->
+        <div class="input-group">
+            <label><i class="fa-solid fa-comment-dots"></i> سؤالك / طلب التحليل</label>
+            <textarea id="ai-user-message" rows="4"
+                placeholder="مثال: قيّم هذا العقار بناءً على المعطيات أعلاه، وأشر إلى مخاطر الائتمان وفق بازل III..."></textarea>
+        </div>
+
+        <!-- AI Submit -->
+        <button class="btn-ai-submit" id="ai-submit-btn" onclick="runGeminiAnalysis()">
+            <i class="fa-solid fa-microchip"></i>
+            ابدأ التحليل
+        </button>
+    </div>
+
+    <!-- ── Right Panel: Report + AI Output ── -->
+    <div class="report-panel" id="report-panel">
+        <div class="placeholder" id="placeholder">
+            <i class="fa-regular fa-file-lines"></i>
+            <p>أدخل بيانات العقار واضغط <strong>"احسب القيمة"</strong><br>أو اطرح سؤالاً على <strong>محرك Gemini</strong></p>
+        </div>
+
+        <div class="spinner" id="spinner">
+            <i class="fa-solid fa-circle-notch"></i>
+            <p style="margin-top: 1rem; color: #aaa;">جاري الحساب وإعداد التقرير...</p>
+        </div>
+
+        <!-- Valuation Report -->
+        <div id="report-output"></div>
+
+        <!-- AI Analysis Output -->
+        <div id="ai-output-section">
+            <div class="ai-output-wrap">
+                <div class="ai-output-header">
+                    <div class="ai-icon"><i class="fa-solid fa-brain"></i></div>
+                    <div class="ai-title">تحليل محرك Gemini</div>
+                    <div class="ai-role-tag" id="ai-role-display"></div>
+                </div>
+
+                <!-- Loading -->
+                <div class="ai-spinner" id="ai-spinner">
+                    <div class="ai-spinner-ring"></div>
+                    <div class="ai-spinner-text">جاري التحليل...</div>
+                </div>
+
+                <!-- Result -->
+                <div class="ai-content-box" id="ai-content-box" style="display:none;"></div>
+
+                <!-- AI Actions -->
+                <div class="ai-actions" id="ai-actions" style="display:none;">
+                    <button class="btn-ai-action" onclick="copyAIResult()">
+                        <i class="fa-solid fa-copy"></i> نسخ النص
+                    </button>
+                    <button class="btn-ai-action" onclick="printAIResult()">
+                        <i class="fa-solid fa-print"></i> طباعة
+                    </button>
+                    <button class="btn-ai-action" onclick="clearAIResult()">
+                        <i class="fa-solid fa-rotate-left"></i> تحليل جديد
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<!-- ──────────────────────────────────────── API KEY MODAL ── -->
+<div class="modal-overlay" id="api-modal">
+    <div class="modal-box">
+        <button class="modal-close" onclick="closeApiModal()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <h3><i class="fa-solid fa-key"></i> إعداد مفتاح Gemini API</h3>
+        <p>أدخل مفتاح Google Gemini API الخاص بك. يُحفظ محلياً في المتصفح فقط ولا يُرسل لأي خادم خارجي.</p>
+
+        <div class="key-preview" id="key-preview">
+            <i class="fa-solid fa-circle-check"></i>
+            <span id="key-preview-text"></span>
+        </div>
+
+        <div class="input-group">
+            <label>مفتاح API</label>
+            <input type="password" id="api-key-input" placeholder="AIzaSy...">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-modal-save" onclick="saveApiKey()">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ المفتاح
+            </button>
+            <button class="btn-modal-cancel" onclick="closeApiModal()">إلغاء</button>
+        </div>
+        <div class="modal-hint">
+            <i class="fa-solid fa-circle-info"></i>
+            احصل على مفتاح مجاني من Google AI Studio
+        </div>
+    </div>
+</div>
+
+<!-- ──────────────────────────────────────── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ────────────────────────────────────────────────────────────────
+//  CONFIGURATION
+// ────────────────────────────────────────────────────────────────
+const API       = 'http://localhost:5000';      // Flask bridge
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+// API key: empty placeholder — user provides via modal
+let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
+
+// PDF.js worker
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// Marked.js renderer options (safe HTML in AI output)
+if (window.marked) {
+    marked.setOptions({ breaks: true, gfm: true });
+}
+
+// State
+let lastPayload      = null;
+let lastAIResult     = '';
+let currentRole      = 'خبير تقييم عقاري';
+let attachedFile     = null;
+let attachedFileText = '';
+
+// ────────────────────────────────────────────────────────────────
+//  THE SOVEREIGN PROTOCOL — SYSTEM INSTRUCTION
+// ────────────────────────────────────────────────────────────────
+function buildSystemInstruction(role, market) {
+    const marketGuide = {
+        egypt: `
+- السوق: جمهورية مصر العربية.
+- المعايير الإلزامية: IVS (International Valuation Standards) + معايير هيئة الرقابة المالية (FRA/EFSA).
+- ضرورة الإشارة إلى: معامل التعديل الزمني لمؤشر الجهاز المركزي للتعبئة العامة والإحصاء، وتحديثات هيئة المجتمعات العمرانية.
+- العملة الأساسية: الجنيه المصري (EGP)، مع الإشارة إلى سعر صرف الدولار عند الحاجة.
+- النطاق الجغرافي: التوسعات العمرانية (مدينة المستقبل، العلمين، القاهرة الجديدة) والمناطق الكلاسيكية (المعادي، الزمالك، مدينة نصر).`,
+
+        ksa: `
+- السوق: المملكة العربية السعودية.
+- المعايير الإلزامية: IVS + معايير الهيئة السعودية للمثمنين المعتمدين (تقييم / TAQEEM) + متطلبات ساما (SAMA).
+- ضرورة الإشارة إلى: مؤشر وزارة العدل للصفقات العقارية، وتعميمات مؤسسة النقد العربي السعودي.
+- العملة الأساسية: الريال السعودي (SAR).
+- النطاق الجغرافي: الرياض، جدة، الدمام، مشاريع نيوم والقدية.`,
+
+        auto: `
+- اكتشف السوق من الموقع المذكور في البيانات. إذا كان موقعاً مصرياً طبّق معايير FRA/EFSA/IVS؛ وإن كان سعودياً طبّق معايير TAQEEM/SAMA/IVS.`
+    };
+
+    const roleGuide = {
+        'خبير تقييم عقاري': `
+- تركّز على: تحليل السوق المقارن، وأساليب التقييم الثلاثة (السوق / التكلفة / الدخل)، وتبرير الأوزان وفق IVS 105.
+- أصدر حكماً واضحاً على القيمة السوقية العادلة مع نطاق ثقة (±X%).
+- أشر إلى مؤشرات السوق المحلي وتوجهات السيولة.`,
+
+        'مدقق مصرفي': `
+- تركّز على: نسبة القرض إلى القيمة (LTV)، والاشتراطات الاحترازية لاتفاقية بازل III/IV.
+- صنّف درجة المخاطرة: منخفضة / متوسطة / عالية مع إشارة صريحة لعوامل التراجع (Collateral Decay).
+- حدّد قيمة التصفية القسرية (Forced Sale Value) إلى جانب القيمة السوقية.
+- أبرز التحديات التنظيمية للضمانات العقارية وفق اشتراطات البنك المركزي المعني.`,
+
+        'مدير صندوق استثماري': `
+- تركّز على: صافي قيمة الأصل (NAV)، ومضاعف العائد على رأس المال (MOIC)، ومعدل العائد الداخلي (IRR).
+- قيّم الأصل وفق IFRS 13 (المستويات 1/2/3 للقيمة العادلة).
+- احسب العائد النقدي على النقدي (Cash-on-Cash) وعائد التوزيعات (Dividend Yield).
+- أشر إلى جاهزية الأصل للتداول في صناديق الاستثمار العقاري المدرجة (REITs).`,
+
+        'مسؤول ضريبي حكومي': `
+- تركّز على: القيمة التقييمية لأغراض الضريبة العقارية، وتحقيق معايير IAAO (COD < 15%، PRD بين 0.98 و1.03).
+- قارن نسبة التقييم إلى البيع (ASR) للعقار مع متوسط السوق المحلي.
+- اقترح قيمة ضريبية عادلة تتوافق مع مبدأ الانتظام الأفقي والعمودي.
+- أشر إلى آلية الطعن والاعتراض المتاحة للمالك وفق اللوائح المعمول بها.`
+    };
+
+    return `أنت "المثمن العقاري السيادي" — نظام ذكاء اصطناعي متخصص في التقييم العقاري المهني بأعلى المعايير الدولية لمنطقة الشرق الأوسط.
+
+## هويتك المهنية
+- تعمل كمثمن عقاري معتمد من الدرجة الأولى بخبرة تفوق 20 عاماً في السوقين المصري والسعودي.
+- ملزم بالتزام صارم بمعايير IVS الصادرة عن المجلس الدولي للتقييم (IVSC).
+- ردودك باللغة العربية الفصحى المتخصصة مع مصطلحات مهنية دقيقة.
+- لا تُصدر تقييمات لأصول غير عقارية (أسهم، عملات، سلع).
+
+## السياق الجغرافي والتنظيمي
+${marketGuide[market] || marketGuide.auto}
+
+## دورك الوظيفي في هذا التحليل: ${role}
+${roleGuide[role] || roleGuide['خبير تقييم عقاري']}
+
+## قواعد الإخراج الإلزامية
+1. افتح تقريرك بملخص تنفيذي لا يتجاوز 3 أسطر.
+2. نظّم الرد بعناوين واضحة (##) وقوائم منظمة.
+3. استخدم **تنسيق عريض** لأي قيمة رقمية جوهرية.
+4. أختم بـ "ملاحظة مهنية" تُشير إلى حدود التحليل والمخاطر الجوهرية.
+5. لا تنسخ البيانات المدخلة بلا تحليل — كل سطر يجب أن يُضيف قيمة مهنية.
+6. إذا كانت البيانات غير كافية لإصدار رأي، وضّح ما يلزم من معلومات إضافية.`;
+}
+
+// ────────────────────────────────────────────────────────────────
+//  GEMINI API BRIDGE — Exponential Backoff
+// ────────────────────────────────────────────────────────────────
+async function callGeminiAPI(userPrompt, systemInstruction) {
+    if (!geminiApiKey) {
+        openApiModal();
+        throw new Error('مفتاح API غير موجود — أدخله أولاً');
+    }
+
+    const body = {
+        system_instruction: {
+            parts: [{ text: systemInstruction }]
+        },
+        contents: [
+            { role: 'user', parts: [{ text: userPrompt }] }
+        ],
+        generationConfig: {
+            temperature:     0.4,
+            topK:            40,
+            topP:            0.9,
+            maxOutputTokens: 4096
+        },
+        safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+        ]
+    };
+
+    const MAX_RETRIES  = 4;
+    const BASE_DELAY   = 800;   // ms
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const res = await fetch(`${GEMINI_URL}?key=${geminiApiKey}`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body)
+            });
+
+            // Retryable status codes: 429 (rate limit), 500, 502, 503
+            if ([429, 500, 502, 503].includes(res.status)) {
+                if (attempt === MAX_RETRIES) throw new Error(`API Error ${res.status} بعد ${MAX_RETRIES} محاولات`);
+                const delay = BASE_DELAY * Math.pow(2, attempt) + Math.random() * 300;
+                console.warn(`Gemini ${res.status} — retry ${attempt + 1} in ${Math.round(delay)}ms`);
+                await new Promise(r => setTimeout(r, delay));
+                continue;
+            }
+
+            if (!res.ok) {
+                const errBody = await res.json().catch(() => ({}));
+                const msg = errBody?.error?.message || `HTTP ${res.status}`;
+                throw new Error(msg);
+            }
+
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('الاستجابة فارغة — حاول مجدداً');
+            return text;
+
+        } catch (err) {
+            // Non-retryable network error or final attempt
+            if (attempt === MAX_RETRIES || err.message.includes('API Error')) throw err;
+            // Network-level error: retry with backoff
+            const delay = BASE_DELAY * Math.pow(2, attempt) + Math.random() * 300;
+            console.warn(`Network error — retry ${attempt + 1} in ${Math.round(delay)}ms`, err.message);
+            await new Promise(r => setTimeout(r, delay));
+        }
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+//  CONTEXT ASSEMBLY
+// ────────────────────────────────────────────────────────────────
+function assembleGeminiContext() {
+    const parts = [];
+
+    // 1. Date + role + market
+    const market   = document.getElementById('market-context').value;
+    const today    = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+    parts.push(`## تاريخ التحليل\n${today}`);
+    parts.push(`## الدور الوظيفي\n${currentRole}`);
+
+    // 2. Valuation form data
+    const propType  = document.getElementById('property_type').value;
+    const location  = document.getElementById('location').value;
+    const area      = document.getElementById('area').value;
+    const age       = document.getElementById('building_age').value;
+    const ppm       = document.getElementById('price_per_meter').value;
+    const rent      = document.getElementById('rent_per_sqm').value;
+    const capRate   = document.getElementById('cap_rate_pct').value;
+    const client    = document.getElementById('client_name').value;
+
+    if (location || area || propType) {
+        parts.push(`## بيانات العقار\n- نوع الأصل: **${propType}**\n- الموقع: **${location || 'غير محدد'}**\n- المساحة: **${area || '—'} م²**\n- عمر المبنى: **${age || '—'} سنة**\n- سعر المتر السوقي: **${Number(ppm || 0).toLocaleString()} ${market === 'ksa' ? 'ريال' : 'جنيه'}/م²**\n- الإيجار السنوي للمتر: **${Number(rent || 0).toLocaleString()} ${market === 'ksa' ? 'ريال' : 'جنيه'}/م²**\n- معدل الرسملة: **${capRate || '—'}%**\n- اسم العميل: ${client || 'غير مُفصح عنه'}`);
+    }
+
+    // 3. Attached file content
+    if (attachedFileText) {
+        const preview = attachedFileText.length > 6000
+            ? attachedFileText.slice(0, 6000) + '\n... [الملف مقتطع — 6000 حرف أولى]'
+            : attachedFileText;
+        parts.push(`## محتوى الملف المرفق (${attachedFile?.name || 'ملف'})\n\`\`\`\n${preview}\n\`\`\``);
+    }
+
+    // 4. User question
+    const userMsg = document.getElementById('ai-user-message').value.trim();
+    if (userMsg) {
+        parts.push(`## طلب التحليل\n${userMsg}`);
+    } else {
+        parts.push(`## طلب التحليل\nقدّم تحليلاً شاملاً للأصل العقاري المذكور بما يتناسب مع دور "${currentRole}"، مع الالتزام بالمعايير الدولية المعمول بها في هذا السياق.`);
+    }
+
+    return parts.join('\n\n---\n\n');
+}
+
+// ────────────────────────────────────────────────────────────────
+//  FILE EXTRACTION
+// ────────────────────────────────────────────────────────────────
+async function extractFileContent(file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    if (ext === 'pdf') {
+        return await extractPdfText(file);
+    } else if (['txt', 'csv', 'json'].includes(ext)) {
+        return await file.text();
+    } else if (ext === 'docx') {
+        // DOCX is a zip — extract raw XML text (best effort without mammoth.js)
+        const txt = await file.text().catch(() => '');
+        // Strip XML tags for a rough plain text
+        return txt.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 8000);
+    } else {
+        return `[ملف: ${file.name} — النوع: ${file.type} — الحجم: ${(file.size / 1024).toFixed(1)} KB]\nاستخدام البيانات الوصفية فقط لعدم دعم هذا النوع مباشرةً في المتصفح.`;
+    }
+}
+
+async function extractPdfText(file) {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = '';
+        const maxPages = Math.min(pdf.numPages, 20); // limit to first 20 pages
+        for (let i = 1; i <= maxPages; i++) {
+            const page    = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map(item => item.str).join(' ') + '\n';
+        }
+        if (pdf.numPages > 20) text += `\n... [محدود بـ 20 صفحة من ${pdf.numPages}]`;
+        return text.trim() || '[ملف PDF فارغ من النصوص القابلة للاستخراج]';
+    } catch (err) {
+        return `[تعذّر استخراج نص PDF: ${err.message}]`;
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+//  FILE UI HANDLERS
+// ────────────────────────────────────────────────────────────────
+async function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) await attachFile(file);
+}
+
+async function handleFileDrop(event) {
+    event.preventDefault();
+    document.getElementById('file-drop-zone').classList.remove('dragging');
+    const file = event.dataTransfer.files[0];
+    if (file) await attachFile(file);
+}
+
+async function attachFile(file) {
+    const MAX_MB = 10;
+    if (file.size > MAX_MB * 1024 * 1024) {
+        showToast(`حجم الملف يتجاوز ${MAX_MB} MB`);
+        return;
+    }
+    attachedFile = file;
+    showToast('جاري قراءة الملف...');
+    try {
+        attachedFileText = await extractFileContent(file);
+    } catch (err) {
+        attachedFileText = `[خطأ في القراءة: ${err.message}]`;
+    }
+
+    const badge = document.getElementById('file-badge');
+    document.getElementById('file-badge-name').textContent = file.name;
+    badge.classList.add('show');
+    showToast(`تم إرفاق: ${file.name}`);
+}
+
+function removeFile() {
+    attachedFile     = null;
+    attachedFileText = '';
+    document.getElementById('file-input').value = '';
+    document.getElementById('file-badge').classList.remove('show');
+    showToast('تم إزالة الملف المرفق');
+}
+
+// ────────────────────────────────────────────────────────────────
+//  ROLE CHIPS
+// ────────────────────────────────────────────────────────────────
+document.getElementById('role-chips').addEventListener('click', e => {
+    const chip = e.target.closest('.role-chip');
+    if (!chip) return;
+    document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentRole = chip.dataset.role;
+});
+
+// ────────────────────────────────────────────────────────────────
+//  GEMINI ANALYSIS RUNNER
+// ────────────────────────────────────────────────────────────────
+async function runGeminiAnalysis() {
+    if (!geminiApiKey) { openApiModal(); return; }
+
+    const btn = document.getElementById('ai-submit-btn');
+    const aiSection = document.getElementById('ai-output-section');
+    const aiSpinner = document.getElementById('ai-spinner');
+    const aiContent = document.getElementById('ai-content-box');
+    const aiActions = document.getElementById('ai-actions');
+
+    // ── UI: loading state ──
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري التحليل...';
+
+    document.getElementById('placeholder').style.display = 'none';
+    aiSection.style.display = 'block';
+    aiSpinner.classList.add('show');
+    aiContent.style.display = 'none';
+    aiActions.style.display = 'none';
+
+    document.getElementById('ai-role-display').textContent = currentRole;
+
+    // Scroll to output
+    document.getElementById('report-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    try {
+        const market    = document.getElementById('market-context').value;
+        const systemInst = buildSystemInstruction(currentRole, market);
+        const context   = assembleGeminiContext();
+
+        const result = await callGeminiAPI(context, systemInst);
+        lastAIResult = result;
+
+        // ── Render Markdown ──
+        aiContent.innerHTML = marked.parse(result);
+        aiContent.style.display = 'block';
+        aiActions.style.display = 'flex';
+
+    } catch (err) {
+        aiContent.innerHTML = `<div style="color:#ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> خطأ: ${escapeHtml(err.message)}</div>`;
+        aiContent.style.display = 'block';
+    } finally {
+        aiSpinner.classList.remove('show');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-microchip"></i> ابدأ التحليل';
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+//  AI ACTION BUTTONS
+// ────────────────────────────────────────────────────────────────
+function copyAIResult() {
+    if (!lastAIResult) return;
+    navigator.clipboard.writeText(lastAIResult)
+        .then(() => showToast('تم نسخ النص ✓'))
+        .catch(() => showToast('تعذّر النسخ — حاول يدوياً'));
+}
+
+function printAIResult() {
+    window.print();
+}
+
+function clearAIResult() {
+    lastAIResult = '';
+    document.getElementById('ai-output-section').style.display = 'none';
+    document.getElementById('placeholder').style.display = 'flex';
+    document.getElementById('ai-content-box').innerHTML   = '';
+    document.getElementById('ai-user-message').value      = '';
+}
+
+// ────────────────────────────────────────────────────────────────
+//  API KEY MODAL
+// ────────────────────────────────────────────────────────────────
+function openApiModal() {
+    const modal = document.getElementById('api-modal');
+    const input = document.getElementById('api-key-input');
+    const preview = document.getElementById('key-preview');
+    const previewText = document.getElementById('key-preview-text');
+
+    if (geminiApiKey) {
+        previewText.textContent = `المفتاح الحالي: ${geminiApiKey.slice(0, 8)}...${geminiApiKey.slice(-4)}`;
+        preview.classList.add('show');
+        input.placeholder = 'اتركه فارغاً لإبقاء المفتاح الحالي';
+    } else {
+        preview.classList.remove('show');
+        input.placeholder = 'AIzaSy...';
+    }
+    modal.classList.add('show');
+    setTimeout(() => input.focus(), 100);
+}
+
+function closeApiModal() {
+    document.getElementById('api-modal').classList.remove('show');
+    document.getElementById('api-key-input').value = '';
+}
+
+function saveApiKey() {
+    const val = document.getElementById('api-key-input').value.trim();
+    if (val) {
+        if (!val.startsWith('AIza') || val.length < 20) {
+            showToast('المفتاح يبدو غير صحيح — تأكد من تنسيق AIzaSy...');
+            return;
+        }
+        geminiApiKey = val;
+        localStorage.setItem('gemini_api_key', val);
+        showToast('تم حفظ مفتاح API ✓');
+    } else if (!geminiApiKey) {
+        showToast('لم يتم إدخال مفتاح');
+        return;
+    }
+    updateApiDot();
+    closeApiModal();
+}
+
+function updateApiDot() {
+    const dot = document.getElementById('api-dot');
+    dot.classList.toggle('active', !!geminiApiKey);
+}
+
+// Keyboard close for modal
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeApiModal();
+});
+document.getElementById('api-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('api-modal')) closeApiModal();
+});
+
+// ────────────────────────────────────────────────────────────────
+//  TOAST
+// ────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ────────────────────────────────────────────────────────────────
+//  VALUATION FORM (original logic preserved)
+// ────────────────────────────────────────────────────────────────
+function fillDummyData() {
+    document.getElementById('client_name').value     = 'أحمد محمد السيد';
+    document.getElementById('property_type').value   = 'شقة سكنية';
+    document.getElementById('location').value        = 'المعادي، القاهرة';
+    document.getElementById('area').value            = '150';
+    document.getElementById('building_age').value    = '12';
+    document.getElementById('price_per_meter').value = '18000';
+    document.getElementById('rent_per_sqm').value    = '350';
+    document.getElementById('cap_rate_pct').value    = '8';
+    document.getElementById('ai-user-message').value =
+        'قيّم هذا العقار السكني بموضوعية وفق معايير EFSA/IVS، مع تحديد نطاق القيمة (min/max) ومعامل الثقة.';
+    showToast('تم تعبئة بيانات تجريبية ✓');
+}
+
+document.getElementById('valuation-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const area = parseFloat(document.getElementById('area').value);
+    if (!area || area <= 0) { showToast('برجاء إدخال المساحة'); return; }
+
+    const payload = {
+        client_name:     document.getElementById('client_name').value,
+        property_type:   document.getElementById('property_type').value,
+        location:        document.getElementById('location').value,
+        area,
+        building_age:    parseInt(document.getElementById('building_age').value)    || 5,
+        price_per_meter: parseFloat(document.getElementById('price_per_meter').value) || 10000,
+        rent_per_sqm:    parseFloat(document.getElementById('rent_per_sqm').value)   || 400,
+        cap_rate:        (parseFloat(document.getElementById('cap_rate_pct').value)  || 8) / 100,
+    };
+    lastPayload = payload;
+
+    document.getElementById('placeholder').style.display    = 'none';
+    document.getElementById('report-output').style.display  = 'none';
+    document.getElementById('ai-output-section').style.display = 'none';
+    document.getElementById('spinner').style.display        = 'block';
+    document.getElementById('submit-btn').disabled          = true;
+
+    try {
+        const res = await fetch(`${API}/api/valuation`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Server error');
+        }
+        const data = await res.json();
+        renderReport(data);
+    } catch (err) {
+        document.getElementById('spinner').style.display = 'none';
+        const ph = document.getElementById('placeholder');
+        ph.style.display = 'flex';
+        ph.innerHTML = `
+            <i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i>
+            <p style="color:#ef4444">خطأ: ${escapeHtml(err.message)}<br>
+            <small style="color:#888">تأكد من تشغيل bridge_api.py على المنفذ 5000</small></p>`;
+    } finally {
+        document.getElementById('submit-btn').disabled = false;
+    }
+});
+
+function renderReport(d) {
+    document.getElementById('spinner').style.display = 'none';
+
+    const compsRows = (d.market?.comparables || []).map(c => `
+        <tr>
+            <td>${c.name || '-'}</td>
+            <td>${c.location || '-'}</td>
+            <td>${Number(c.base_price).toLocaleString()}</td>
+            <td>${Number(c.adj_price).toLocaleString()}</td>
+        </tr>`).join('');
+
+    document.getElementById('report-output').innerHTML = `
+        <div class="report-header">
+            <div>
+                <h1>تقرير تقييم عقاري احترافي</h1>
+                <div class="meta">
+                    <i class="fa-regular fa-clock"></i> ${d.timestamp || ''} &nbsp;|&nbsp;
+                    <i class="fa-solid fa-user"></i> ${d.client_name || 'غير محدد'}
+                </div>
+            </div>
+            <div class="report-id">${d.report_id || ''}</div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">نوع العقار</div>
+                <div class="info-value">${d.property_type || ''}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">الموقع</div>
+                <div class="info-value">${d.location || ''}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">المساحة</div>
+                <div class="info-value">${Number(d.area).toLocaleString()} م²</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">عمر المبنى</div>
+                <div class="info-value">${d.cost?.building_age || '—'} سنة</div>
+            </div>
+        </div>
+
+        <div class="section-title">نتائج أساليب التقييم الثلاثة (IVS)</div>
+        <div class="methods-grid">
+            <div class="method-card">
+                <div class="method-name"><i class="fa-solid fa-chart-bar"></i> أسلوب السوق</div>
+                <div class="method-value">${d.market?.value_fmt || '—'}</div>
+                <div class="method-weight">الوزن: 50%</div>
+            </div>
+            <div class="method-card">
+                <div class="method-name"><i class="fa-solid fa-hammer"></i> أسلوب التكلفة</div>
+                <div class="method-value">${d.cost?.value_fmt || '—'}</div>
+                <div class="method-weight">الوزن: 30%</div>
+            </div>
+            <div class="method-card">
+                <div class="method-name"><i class="fa-solid fa-coins"></i> أسلوب الدخل</div>
+                <div class="method-value">${d.income?.value_fmt || '—'}</div>
+                <div class="method-weight">الوزن: 20%</div>
+            </div>
+        </div>
+
+        <div class="final-value-box">
+            <div class="label">القيمة السوقية العادلة النهائية</div>
+            <div class="value">${d.reconciled_fmt || '—'}</div>
+            <div class="currency">جنيه مصري (EGP) — معايير EFSA / IVS</div>
+        </div>
+
+        <div class="section-title">تفاصيل أسلوب التكلفة</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">إجمالي تكلفة البناء</div>
+                <div class="info-value">${d.cost?.gross_building_cost_fmt || '—'} EGP</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">الإهلاك المتراكم</div>
+                <div class="info-value">${d.cost?.depreciation_fmt || '—'} EGP</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">مسطح البناء</div>
+                <div class="info-value">${Number(d.cost?.building_area || 0).toLocaleString()} م²</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">صافي الدخل التشغيلي (NOI)</div>
+                <div class="info-value">${d.income?.noi_fmt || '—'} EGP/سنة</div>
+            </div>
+        </div>
+
+        <div class="section-title">مصفوفة المقارنات السوقية</div>
+        <table class="comparables-table">
+            <thead>
+                <tr>
+                    <th>العقار</th>
+                    <th>الموقع</th>
+                    <th>السعر الأساسي (EGP/م²)</th>
+                    <th>السعر المعدل (EGP/م²)</th>
+                </tr>
+            </thead>
+            <tbody>${compsRows || '<tr><td colspan="4" style="text-align:center;color:#666">لا توجد مقارنات</td></tr>'}</tbody>
+        </table>
+
+        <div class="section-title">أقصى وأفضل استخدام (HBU)</div>
+        <div class="hbu-box">${d.hbu_text || '—'}</div>
+
+        <div class="actions">
+            <button class="btn-excel" id="excel-btn" onclick="downloadExcel()">
+                <i class="fa-solid fa-file-excel"></i> تحميل التقرير الكامل (Excel)
+            </button>
+            <button class="btn-excel" id="invest-btn"
+                onclick="downloadInvestmentReport()"
+                style="background:linear-gradient(135deg,rgba(212,175,55,0.25),rgba(212,175,55,0.1));border-color:rgba(212,175,55,0.6);color:var(--gold);">
+                <i class="fa-solid fa-chart-line"></i> تحميل التقرير الاستثماري (DCF)
+            </button>
+            <button class="btn-excel" id="gemini-followup-btn"
+                onclick="geminiFollowUp()"
+                style="background:linear-gradient(135deg,rgba(100,120,255,0.2),rgba(100,120,255,0.08));border-color:rgba(100,120,255,0.5);color:#a5b4fc;">
+                <i class="fa-solid fa-brain"></i> تحليل Gemini للتقرير
+            </button>
+            <button class="btn-print" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> طباعة
+            </button>
+            <button class="btn-new" onclick="resetForm()">
+                <i class="fa-solid fa-plus"></i> تقييم جديد
+            </button>
+        </div>`;
+
+    document.getElementById('report-output').style.display = 'block';
+}
+
+// Quick "Analyse this valuation with Gemini" button
+function geminiFollowUp() {
+    if (!lastPayload) return;
+    const existing = document.getElementById('ai-user-message').value.trim();
+    if (!existing) {
+        document.getElementById('ai-user-message').value =
+            'بناءً على نتائج التقييم أعلاه، قدّم تحليلاً نقدياً شاملاً للقيمة النهائية: هل هي معقولة؟ ما مستوى المخاطرة؟ وما التوصيات المهنية للمشتري والبنك والمستثمر؟';
+    }
+    document.getElementById('form-panel')?.scrollIntoView({ behavior: 'smooth' });
+    runGeminiAnalysis();
+}
+
+function resetForm() {
+    document.getElementById('report-output').style.display       = 'none';
+    document.getElementById('ai-output-section').style.display   = 'none';
+    const ph = document.getElementById('placeholder');
+    ph.style.display = 'flex';
+    ph.innerHTML = `
+        <i class="fa-regular fa-file-lines"></i>
+        <p>أدخل بيانات العقار واضغط <strong>"احسب القيمة"</strong><br>أو اطرح سؤالاً على <strong>محرك Gemini</strong></p>`;
+    lastPayload  = null;
+    lastAIResult = '';
+}
+
+// ── Download Excel ──
+async function downloadExcel() {
+    if (!lastPayload) { showToast('برجاء حساب القيمة أولاً'); return; }
+    const btn = document.getElementById('excel-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إنشاء الملف...';
+    try {
+        const res = await fetch(`${API}/api/generate-report`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(lastPayload)
+        });
+        if (!res.ok) throw new Error((await res.json()).error || 'Server error');
+        const blob = await res.blob();
+        const a = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(blob),
+            download: `تقرير_تقييم_${new Date().toISOString().slice(0,10)}.xlsx`
+        });
+        a.click(); URL.revokeObjectURL(a.href);
+    } catch (err) { showToast('خطأ: ' + err.message); }
+    finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-file-excel"></i> تحميل التقرير الكامل (Excel)';
+    }
+}
+
+// ── Download Investment (DCF) Report ──
+async function downloadInvestmentReport() {
+    if (!lastPayload) { showToast('برجاء حساب القيمة أولاً'); return; }
+    const btn = document.getElementById('invest-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> جاري إنشاء التقرير الاستثماري...';
+    try {
+        const res = await fetch(`${API}/api/investment-report`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(lastPayload)
+        });
+        if (!res.ok) throw new Error((await res.json()).error || 'Server error');
+        const blob = await res.blob();
+        const a = Object.assign(document.createElement('a'), {
+            href: URL.createObjectURL(blob),
+            download: `تقرير_استثماري_${new Date().toISOString().slice(0,10)}.xlsx`
+        });
+        a.click(); URL.revokeObjectURL(a.href);
+    } catch (err) { showToast('خطأ: ' + err.message); }
+    finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-chart-line"></i> تحميل التقرير الاستثماري (DCF)';
+    }
+}
+
+// ────────────────────────────────────────────────────────────────
+//  UTILITIES
+// ────────────────────────────────────────────────────────────────
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ── Init ──
+updateApiDot();
+</script>
+
+</body>
+</html>

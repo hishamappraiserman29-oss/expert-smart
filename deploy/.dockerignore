@@ -1,0 +1,35 @@
+# Skip noise in the Docker build context (faster builds + smaller images)
+.git
+.gitignore
+.vscode
+.idea
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.coverage
+.env
+.env.local
+*.log
+*.bak
+*.swp
+.DS_Store
+
+# Project-specific (not needed inside the image)
+outputs/
+*.xlsx
+*.xlsm
+*.docx
+*.pdf
+node_modules/
+build/
+dist/
+
+# Existing prior reports — these get regenerated inside the container
+core_engine/outputs/
+core_engine/data/embeddings/
+core_engine/data/qdrant_local/
+
+# Tests
+tests/

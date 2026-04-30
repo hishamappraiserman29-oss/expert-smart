@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expert Dashboard Preview | ALHADY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background: #0a0a0b;
+            color: #e0e0e0;
+            font-family: 'Tajawal', sans-serif;
+            padding: 20px;
+        }
+
+        .preview-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #121214;
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .page-view {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            position: static !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preview-container">
+        <section id="expert-dashboard" class="page-view dashboard-view">
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1>لوحة تحكم الخبير: هشام المهدي</h1>
+                    <p>الهادي للتقييم والمزادات والخدمات الاستشارية</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+                </div>
+            </header>
+
+            <div class="dashboard-tabs">
+                <button class="tab-btn" onclick="showTab('tab-appraisals', this)">طلبات التقييم</button>
+                <button class="tab-btn active" onclick="showTab('tab-advisory', this)">طلبات الاستشارات</button>
+                <button class="tab-btn" onclick="showTab('tab-financing', this)">طلبات التمويل</button>
+                <button class="tab-btn" onclick="showTab('tab-auctions', this)">إدارة المزادات</button>
+                <button class="tab-btn" onclick="showTab('tab-analytics', this)">التحليلات</button>
+            </div>
+
+            <div class="tab-content-container">
+                <!-- Tab: Advisory (The requested table) -->
+                <div id="tab-advisory" class="tab-panel active">
+                    <div class="panel-header">
+                        <h2>إدارة طلبات الاستشارات</h2>
+                        <p>متابعة عقود الاستشارات الفنية والقانونية المبرمة مع العملاء.</p>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم العقد</th>
+                                    <th>اسم العميل</th>
+                                    <th>نوع الاستشارة</th>
+                                    <th>تاريخ التقديم</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="advisory-requests-table">
+                                <tr>
+                                    <td>#ADV-7712</td>
+                                    <td>مؤسسة النور العقارية</td>
+                                    <td>دراسة جدوى استثمارية</td>
+                                    <td>٢٠٢٦/٠٣/٠٥</td>
+                                    <td><span class="badge success">نشط</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-eye"></i> عرض
+                                                العقد</button>
+                                            <button class="btn btn-success btn-sm whatsapp-btn"
+                                                onclick="openWhatsAppChat('201000000000', 'مؤسسة النور')"
+                                                style="background: #25D366; border-color: #25D366; color: #fff;"><i
+                                                    class="fa-brands fa-whatsapp"></i> تواصل</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ADV-7715</td>
+                                    <td>مجموعة المهند الدولية</td>
+                                    <td>إعادة هيكلة أصول</td>
+                                    <td>٢٠٢٦/٠٣/٠٦</td>
+                                    <td><span class="badge warning">انتظار المراجعة</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="btn btn-primary btn-sm"><i
+                                                    class="fa-solid fa-file-contract"></i> مراجعة العقد</button>
+                                            <button class="btn btn-success btn-sm whatsapp-btn"
+                                                onclick="openWhatsAppChat('201000000000', 'مجموعة المهند')"
+                                                style="background: #25D366; border-color: #25D366; color: #fff;"><i
+                                                    class="fa-brands fa-whatsapp"></i> تواصل</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>#ADV-7718</td>
+                                    <td>شركة الخليج للتطوير</td>
+                                    <td>استشارات قانونية فنية</td>
+                                    <td>٢٠٢٦/٠٣/٠٦</td>
+                                    <td><span class="badge warning">انتظار المراجعة</span></td>
+                                    <td>
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <button class="btn btn-primary btn-sm"><i
+                                                    class="fa-solid fa-file-contract"></i> مراجعة العقد</button>
+                                            <button class="btn btn-success btn-sm whatsapp-btn"
+                                                onclick="openWhatsAppChat('201000000000', 'شركة الخليج')"
+                                                style="background: #25D366; border-color: #25D366; color: #fff;"><i
+                                                    class="fa-brands fa-whatsapp"></i> تواصل</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Other tabs hidden for this quick preview -->
+                <div id="tab-appraisals" class="tab-panel">
+                    <div class="panel-header">
+                        <h2>طلبات التقييم</h2>
+                        <p>اطلع على الطلبات في index.html الرئيسي.</p>
+                    </div>
+                </div>
+                <div id="tab-financing" class="tab-panel">
+                    <div class="panel-header">
+                        <h2>طلبات التمويل</h2>
+                        <p>اطلع على الطلبات في index.html الرئيسي.</p>
+                    </div>
+                </div>
+                <div id="tab-auctions" class="tab-panel">
+                    <div class="panel-header">
+                        <h2>إدارة المزادات</h2>
+                        <p>اطلع على الطلبات في index.html الرئيسي.</p>
+                    </div>
+                </div>
+                <div id="tab-analytics" class="tab-panel">
+                    <div class="panel-header">
+                        <h2>التحليلات</h2>
+                        <p>اطلع على الرسوم البيانية في index.html الرئيسي.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function openWhatsAppChat(clientPhone, clientName) {
+            const branding = '[منصة الهادي للتقييم والمزادات والخدمات الاستشارية]\n';
+            const message = `${branding}أهلاً بك سيد ${clientName}، معك الخبير هشام المهدي بخصوص طلبك على المنصة.`;
+            const encodedMsg = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${clientPhone}?text=${encodedMsg}`;
+            window.open(whatsappUrl, '_blank');
+        }
+    </script>
+</body>
+
+</html>

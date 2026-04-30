@@ -1,0 +1,4086 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expert_Smart | المنصة المؤسسية السيادية</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Montserrat:wght@600&display=swap" rel="stylesheet">
+
+<!-- PDF text extraction -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- Excel/XLSX parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Markdown rendering -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<!-- Leaflet (interactive map — OpenStreetMap) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+:root {
+    --navy-deep:    #030812;
+    --gold-radiant: #FFD700;
+    --glass:        rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 215, 0, 0.15);
+}
+body {
+    font-family: 'Tajawal', sans-serif;
+    background-color: var(--navy-deep);
+    color: #e2e8f0;
+    background: radial-gradient(circle at 50% 50%, #0a192f 0%, #030812 100%);
+}
+.sovereign-card {
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    transition: all 0.4s ease;
+}
+.sovereign-card:hover { border-color: var(--gold-radiant); transform: translateY(-5px); }
+.gold-text { color: var(--gold-radiant); }
+
+/* ── File upload area ── */
+.file-zone {
+    border: 2px dashed rgba(255,215,0,0.25);
+    border-radius: 10px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.file-zone:hover, .file-zone.drag-over {
+    border-color: rgba(255,215,0,0.7);
+    background: rgba(255,215,0,0.04);
+}
+.file-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0;
+    cursor: pointer; width: 100%; height: 100%;
+}
+
+/* ── Loading spinner ── */
+.spin { animation: rotation 0.85s linear infinite; display: inline-block; }
+@keyframes rotation { to { transform: rotate(360deg); } }
+
+/* ── AI response Markdown styles ── */
+#responseText h1, #responseText h2, #responseText h3 {
+    color: var(--gold-radiant);
+    font-weight: 700;
+    margin: 1.1rem 0 0.5rem;
+}
+#responseText h1 { font-size: 1.25rem; border-bottom: 1px solid rgba(255,215,0,0.2); padding-bottom: 0.4rem; }
+#responseText h2 { font-size: 1.1rem; }
+#responseText h3 { font-size: 1rem; color: #e2c97e; }
+#responseText p  { margin-bottom: 0.85rem; line-height: 1.9; }
+#responseText ul, #responseText ol {
+    margin: 0.6rem 0 0.6rem 1.5rem; padding: 0;
+}
+#responseText li { margin-bottom: 0.35rem; }
+#responseText strong { color: #fff; font-weight: 700; }
+#responseText em { color: #e2c97e; font-style: italic; }
+#responseText table {
+    width: 100%; border-collapse: collapse;
+    margin: 1rem 0; font-size: 0.88rem;
+}
+#responseText th {
+    background: rgba(255,215,0,0.12); color: var(--gold-radiant);
+    padding: 0.5rem 0.8rem; border: 1px solid rgba(255,255,255,0.07);
+    text-align: right;
+}
+#responseText td {
+    padding: 0.5rem 0.8rem; border: 1px solid rgba(255,255,255,0.06);
+    color: #ccc;
+}
+#responseText tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+#responseText code {
+    background: rgba(255,255,255,0.08); padding: 0.15rem 0.4rem;
+    border-radius: 4px; font-family: monospace; color: #4ade80;
+}
+#responseText pre {
+    background: rgba(0,0,0,0.4); border-radius: 8px;
+    padding: 1rem; overflow-x: auto; margin: 0.8rem 0;
+}
+#responseText blockquote {
+    border-right: 3px solid var(--gold-radiant);
+    padding: 0.5rem 1rem; margin: 0.8rem 0;
+    background: rgba(255,215,0,0.04); border-radius: 0 8px 8px 0;
+    color: #aaa;
+}
+#responseText hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 1.2rem 0; }
+
+/* ── Action buttons row ── */
+.action-row { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 1rem; }
+.btn-action {
+    padding: 0.45rem 1rem; border-radius: 8px;
+    border: 1px solid rgba(255,215,0,0.3);
+    background: rgba(255,215,0,0.07);
+    color: var(--gold-radiant); font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.btn-action:hover { background: rgba(255,215,0,0.18); }
+
+/* ── API key modal ── */
+.modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+    z-index: 999; align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal-box {
+    background: #0d1629; border: 1px solid rgba(255,215,0,0.35);
+    border-radius: 18px; padding: 2rem 2.2rem;
+    width: 90%; max-width: 460px; position: relative;
+}
+.modal-box h3 { color: var(--gold-radiant); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+.modal-box p  { font-size: 0.85rem; color: #888; margin-bottom: 1.2rem; line-height: 1.6; }
+.modal-input {
+    width: 100%; padding: 0.7rem 1rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px; color: #fff;
+    font-family: 'Tajawal', sans-serif; font-size: 0.95rem; outline: none;
+}
+.modal-input:focus { border-color: var(--gold-radiant); }
+
+/* ── Progress bar for file reading ── */
+.progress-bar-wrap {
+    height: 3px; background: rgba(255,255,255,0.06);
+    border-radius: 3px; margin-top: 6px; overflow: hidden;
+    display: none;
+}
+.progress-bar-wrap.show { display: block; }
+.progress-bar-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, #FFD700, #b8962e);
+    transition: width 0.3s;
+}
+
+/* ── Status badge ── */
+.status-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.75rem; padding: 0.2rem 0.6rem;
+    border-radius: 50px; margin-top: 0.4rem;
+}
+.status-badge.ok   { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+.status-badge.err  { background: rgba(239,68,68,0.1);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.status-badge.info { background: rgba(255,215,0,0.08); color: #FFD700; border: 1px solid rgba(255,215,0,0.25); }
+
+/* ════════════════════════════════════════
+   CHAT ADVISOR WIDGET
+════════════════════════════════════════ */
+#advisorSection {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+}
+.chat-wrap {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 20px;
+    overflow: hidden;
+}
+.chat-header {
+    background: linear-gradient(135deg, #0a1628, #0d1f3c);
+    border-bottom: 1px solid rgba(255,215,0,0.15);
+    padding: 1rem 1.4rem;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.chat-header h3 { color: #FFD700; font-weight: 700; font-size: 1rem; margin: 0; }
+.chat-header .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #555; transition: background 0.3s;
+}
+.chat-header .status-dot.live { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+#chatMessages {
+    height: 380px;
+    overflow-y: auto;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    scroll-behavior: smooth;
+}
+#chatMessages::-webkit-scrollbar { width: 4px; }
+#chatMessages::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.25); border-radius: 4px; }
+.chat-msg {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    line-height: 1.75;
+    font-size: 0.9rem;
+    animation: fadeIn 0.25s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: none; } }
+.chat-msg.user {
+    align-self: flex-start;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.22);
+    color: #ffe9a0;
+    border-radius: 14px 14px 4px 14px;
+}
+.chat-msg.bot {
+    align-self: flex-end;
+    background: rgba(30,60,100,0.55);
+    border: 1px solid rgba(100,150,255,0.2);
+    color: #d0e4ff;
+    border-radius: 14px 14px 14px 4px;
+}
+.chat-msg.bot .msg-meta {
+    margin-top: 0.55rem;
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    font-size: 0.74rem; color: #668;
+}
+.chat-msg.bot .meta-pill {
+    padding: 0.15rem 0.55rem; border-radius: 50px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.chat-msg.bot .meta-pill.conf-high  { color: #4ade80; border-color: rgba(74,222,128,0.3); }
+.chat-msg.bot .meta-pill.conf-mid   { color: #FFD700; border-color: rgba(255,215,0,0.3); }
+.chat-msg.bot .meta-pill.conf-low   { color: #f87171; border-color: rgba(248,113,113,0.3); }
+.chat-msg.typing { color: #667799; font-style: italic; background: rgba(20,40,70,0.5); }
+.chat-footer {
+    padding: 0.85rem 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(5,15,30,0.8);
+}
+.chat-input-row {
+    display: flex; gap: 0.6rem; align-items: flex-end;
+}
+#advisorInput {
+    flex: 1;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 12px;
+    color: #e2e8f0;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.6rem 0.9rem;
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 120px;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+}
+#advisorInput:focus { border-color: rgba(255,215,0,0.55); }
+#advisorSend {
+    background: linear-gradient(135deg, #FFD700, #b8962e);
+    border: none; border-radius: 12px;
+    color: #000; font-weight: 700;
+    padding: 0.6rem 1.1rem;
+    cursor: pointer; font-size: 1rem;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+    font-family: 'Tajawal', sans-serif;
+}
+#advisorSend:disabled { opacity: 0.45; cursor: not-allowed; }
+.chat-options {
+    display: flex; align-items: center; gap: 1rem;
+    margin-top: 0.6rem; font-size: 0.78rem; color: #667799;
+    flex-wrap: wrap;
+}
+.chat-options label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.chat-options input[type="checkbox"] { accent-color: #FFD700; cursor: pointer; }
+.chat-quick-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.quick-btn {
+    padding: 0.3rem 0.75rem;
+    border-radius: 50px;
+    border: 1px solid rgba(255,215,0,0.2);
+    background: rgba(255,215,0,0.05);
+    color: #b8962e; font-size: 0.77rem;
+    cursor: pointer; font-family: 'Tajawal', sans-serif;
+    transition: all 0.2s; white-space: nowrap;
+}
+.quick-btn:hover { background: rgba(255,215,0,0.14); color: #FFD700; }
+.sources-list {
+    margin-top: 0.4rem;
+    font-size: 0.74rem; color: #4a6080;
+}
+.sources-list span { margin-left: 0.5rem; }
+
+/* ════════════════════════════════════════
+   LOGIC GATE & INPUT CLIPS
+════════════════════════════════════════ */
+
+/* ── Input clips ── */
+.clips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+    max-width: 1100px;
+    margin: 0 auto 1.5rem;
+    padding: 0 1.5rem;
+}
+@media (max-width: 640px) { .clips-grid { grid-template-columns: 1fr; } }
+
+.clip-card {
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: border-color 0.2s;
+}
+.clip-card:focus-within { border-color: rgba(255,215,0,0.4); }
+
+.clip-header {
+    padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.clip-header .clip-icon { font-size: 1.1rem; }
+.clip-header .clip-title { font-weight: 700; font-size: 0.88rem; }
+.clip-header .clip-hint  { font-size: 0.72rem; color: #556677; margin-right: auto; }
+
+.clip-body { padding: 0.8rem; }
+
+.clip-drop {
+    border: 1.5px dashed rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    text-align: center;
+}
+.clip-drop:hover, .clip-drop.drag-over {
+    border-color: rgba(255,215,0,0.5);
+    background: rgba(255,215,0,0.04);
+}
+.clip-drop input[type="file"] {
+    position: absolute; inset: 0; opacity: 0;
+    cursor: pointer; width: 100%; height: 100%;
+}
+.clip-drop .drop-label {
+    font-size: 0.8rem; pointer-events: none;
+}
+.clip-loaded {
+    display: none;
+    align-items: center; gap: 0.5rem;
+    margin-top: 0.55rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 7px;
+    background: rgba(74,222,128,0.07);
+    border: 1px solid rgba(74,222,128,0.2);
+}
+.clip-loaded.show { display: flex; }
+.clip-loaded .fn  { font-size: 0.75rem; color: #4ade80; flex: 1; min-width: 0;
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.clip-loaded .clr { background: none; border: none; color: #f87171;
+                    cursor: pointer; font-size: 0.8rem; flex-shrink: 0; }
+
+/* ── Training Card — Gold Glow State ── */
+.clip-card.training-linked {
+    border-color: rgba(212,175,55,0.65) !important;
+    box-shadow: 0 0 18px rgba(212,175,55,0.35), 0 0 40px rgba(212,175,55,0.12);
+    transition: box-shadow 0.5s ease, border-color 0.4s ease;
+}
+.clip-card.training-linked .clip-header {
+    background: rgba(212,175,55,0.12) !important;
+}
+.training-upload-btn {
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    width: 100%; padding: 0.6rem 0.8rem; margin-top: 0.5rem;
+    background: linear-gradient(135deg, rgba(212,175,55,0.18) 0%, rgba(212,175,55,0.08) 100%);
+    border: 1.5px solid rgba(212,175,55,0.5);
+    border-radius: 9px;
+    color: #D4AF37;
+    font-size: 0.82rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.03em;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+.training-upload-btn:hover {
+    background: linear-gradient(135deg, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0.14) 100%);
+    border-color: #D4AF37;
+    box-shadow: 0 0 10px rgba(212,175,55,0.3);
+}
+.training-upload-btn input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+}
+.clip-loaded.training-success {
+    background: rgba(212,175,55,0.1);
+    border-color: rgba(212,175,55,0.5);
+}
+.clip-loaded.training-success .fn { color: #D4AF37; }
+
+/* ══════════════════════════════════════
+   INPUT TOOLBAR (5 action buttons)
+══════════════════════════════════════ */
+.input-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0.7rem 0 0.9rem;
+    padding: 0.55rem 0.8rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,215,0,0.12);
+    border-radius: 14px;
+    flex-wrap: wrap;
+}
+.itb-btn {
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.18rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 11px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: #8899aa;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.72rem; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.22s;
+    white-space: nowrap;
+}
+.itb-btn .itb-ico { font-size: 1.15rem; line-height: 1; }
+.itb-btn:hover {
+    border-color: rgba(212,175,55,0.45);
+    background: rgba(212,175,55,0.07);
+    color: #D4AF37;
+    box-shadow: 0 0 8px rgba(212,175,55,0.2);
+}
+.itb-btn.glowing {
+    border-color: rgba(212,175,55,0.7) !important;
+    background: rgba(212,175,55,0.12) !important;
+    color: #D4AF37 !important;
+    box-shadow: 0 0 14px rgba(212,175,55,0.4), 0 0 30px rgba(212,175,55,0.12) !important;
+}
+.itb-badge {
+    position: absolute; top: -6px; left: -6px;
+    width: 18px; height: 18px;
+    background: #16a34a;
+    border-radius: 50%;
+    border: 2px solid #0D0D0D;
+    font-size: 0.6rem;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.4);
+    transition: opacity 0.3s, transform 0.3s;
+}
+.itb-btn.glowing .itb-badge { opacity: 1; transform: scale(1); }
+
+/* Mic pulsing animation when recording */
+@keyframes micPulse {
+    0%,100% { box-shadow: 0 0 6px rgba(248,113,113,0.4); }
+    50%      { box-shadow: 0 0 20px rgba(248,113,113,0.8), 0 0 40px rgba(248,113,113,0.2); }
+}
+.itb-btn.mic-active {
+    border-color: rgba(248,113,113,0.7) !important;
+    background: rgba(248,113,113,0.1) !important;
+    color: #f87171 !important;
+    animation: micPulse 1s infinite;
+}
+
+/* ══════════════════════════════════════
+   MAP MODAL
+══════════════════════════════════════ */
+.map-modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 9500;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+}
+.map-modal-overlay.open { display: flex; }
+.map-modal-box {
+    background: #0f1923;
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 20px;
+    overflow: hidden;
+    width: min(92vw, 780px);
+    max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 40px rgba(212,175,55,0.15);
+}
+.map-modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.2rem;
+    background: linear-gradient(135deg,rgba(212,175,55,0.15),rgba(212,175,55,0.05));
+    border-bottom: 1px solid rgba(212,175,55,0.2);
+}
+.map-modal-head h3 { color: #D4AF37; font-size: 1rem; font-weight: 800; margin: 0; }
+.map-modal-close {
+    background: none; border: none; color: #f87171;
+    font-size: 1.3rem; cursor: pointer; line-height: 1;
+}
+#mapContainer { flex: 1; min-height: 380px; }
+.map-modal-foot {
+    padding: 0.8rem 1.2rem;
+    background: rgba(0,0,0,0.4);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;
+}
+#mapCoords {
+    flex: 1; font-size: 0.8rem; color: #8899aa;
+    font-family: monospace; min-width: 160px;
+}
+#mapLocName { flex: 2; font-size: 0.82rem; color: #D4AF37; font-weight: 600; }
+.map-confirm-btn {
+    padding: 0.5rem 1.2rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg,#D4AF37,#b8962e);
+    border: none; color: #000; font-weight: 700;
+    font-family: 'Tajawal',sans-serif; font-size: 0.85rem;
+    cursor: pointer;
+}
+.map-confirm-btn:hover { opacity: 0.88; }
+
+/* ── Logic Gate ── */
+.logic-gate {
+    max-width: 960px;
+    margin: 0 auto 1.4rem;
+    padding: 0 1.5rem;
+}
+.gate-panel {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,215,0,0.15);
+    border-radius: 18px;
+    overflow: hidden;
+}
+.gate-section-head {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.75rem;
+    color: #667799;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 0.5rem;
+}
+.gate-section-head strong { color: #aabbc8; }
+
+/* Icon button grid */
+.icon-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+.icon-btn {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: all 0.18s;
+    min-width: 72px;
+    font-family: 'Tajawal', sans-serif;
+}
+.icon-btn:hover {
+    border-color: rgba(255,215,0,0.35);
+    background: rgba(255,215,0,0.06);
+}
+.icon-btn.active {
+    border-color: var(--gold-radiant);
+    background: rgba(255,215,0,0.12);
+    box-shadow: 0 0 12px rgba(255,215,0,0.12);
+}
+.icon-btn .ib-ico  { font-size: 1.4rem; line-height: 1; }
+.icon-btn .ib-lbl  { font-size: 0.72rem; color: #aab; text-align: center; white-space: nowrap; }
+.icon-btn.active .ib-lbl { color: #FFD700; font-weight: 700; }
+
+/* Route display bar */
+.route-bar {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.7rem 1.1rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.25);
+    font-size: 0.8rem;
+}
+.route-bar .route-label { color: #667799; }
+.route-crumb {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 50px;
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.25);
+    color: #FFD700; font-size: 0.76rem;
+}
+.route-crumb.style-crumb {
+    background: rgba(74,222,128,0.1);
+    border-color: rgba(74,222,128,0.3);
+    color: #4ade80;
+}
+.route-crumb.default-badge {
+    background: rgba(100,100,100,0.1);
+    border-color: rgba(100,100,100,0.25);
+    color: #667799;
+}
+#routeResetBtn {
+    margin-right: auto;
+    background: none; border: none;
+    color: #445; font-size: 0.74rem;
+    cursor: pointer; font-family: 'Tajawal', sans-serif;
+    text-decoration: underline;
+}
+#routeResetBtn:hover { color: #f87171; }
+
+/* ── Config row ── */
+.config-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    max-width: 960px;
+    margin: 0 auto 1rem;
+    padding: 0 1.5rem;
+}
+@media (max-width: 640px) { .config-row { grid-template-columns: 1fr; } }
+.config-card {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 0.75rem 0.9rem;
+}
+.config-card label {
+    display: block;
+    font-size: 0.75rem; color: #667799;
+    margin-bottom: 0.35rem;
+}
+.config-card select {
+    width: 100%;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    color: #ccd;
+    padding: 0.45rem 0.6rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+}
+.config-card select:focus { border-color: rgba(255,215,0,0.4); }
+
+/* ════════════════════════════════════════
+   GEO-MAP FAST-TRACK
+════════════════════════════════════════ */
+@keyframes geoAnalysisPulse {
+    0%,100% {
+        border-color: rgba(56,189,248,0.5);
+        box-shadow: 0 0 8px rgba(56,189,248,0.3);
+        color: #38bdf8;
+    }
+    50% {
+        border-color: rgba(56,189,248,1);
+        box-shadow: 0 0 22px rgba(56,189,248,0.7), 0 0 40px rgba(56,189,248,0.2);
+        color: #7dd3fc;
+    }
+}
+.itb-btn.geo-analyzing {
+    animation: geoAnalysisPulse 1.1s ease-in-out infinite !important;
+    background: rgba(56,189,248,0.08) !important;
+}
+.geo-chat-card {
+    background: linear-gradient(135deg, rgba(12,30,55,0.9), rgba(8,25,48,0.9));
+    border: 1px solid rgba(56,189,248,0.35);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    font-size: 0.86rem;
+    animation: fadeIn 0.3s ease;
+}
+.geo-chat-card .geo-card-title {
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+    display: flex; align-items: center; gap: 0.5rem;
+}
+.geo-chat-card .geo-field {
+    display: flex; justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    line-height: 1.5;
+}
+.geo-chat-card .geo-field:last-child { border-bottom: none; }
+.geo-chat-card .geo-key   { color: #667799; font-size: 0.78rem; }
+.geo-chat-card .geo-val   { color: #cde; font-size: 0.82rem; font-weight: 600; text-align: left; direction: ltr; }
+.geo-chat-card .risk-HIGH   { color: #f87171; }
+.geo-chat-card .risk-MEDIUM { color: #fbbf24; }
+.geo-chat-card .risk-LOW    { color: #4ade80; }
+.geo-chat-card .risk-UNKNOWN{ color: #667799; }
+.geo-analyzing-card {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.2);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    color: #38bdf8;
+    font-size: 0.84rem;
+    display: flex; align-items: center; gap: 0.7rem;
+    animation: fadeIn 0.25s ease;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ FLOATING HELP BUTTON ══════════════ -->
+<button onclick="openHelpModal()" id="helpFab"
+    title="دليل الاستخدام"
+    style="position:fixed;bottom:1.8rem;left:1.8rem;z-index:9000;
+           width:52px;height:52px;border-radius:50%;
+           background:linear-gradient(135deg,#1a3a6e,#0d1f3c);
+           border:2px solid rgba(255,215,0,0.55);
+           color:#FFD700;font-size:1.3rem;font-weight:900;
+           cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.5);
+           display:flex;align-items:center;justify-content:center;
+           transition:transform 0.2s;">?</button>
+
+<!-- ══════════════ HELP MODAL ══════════════ -->
+<div class="modal-backdrop" id="helpModal" style="z-index:10000;">
+<div class="modal-box" style="max-width:680px;max-height:85vh;overflow-y:auto;">
+    <button onclick="closeHelpModal()"
+        style="position:absolute;top:1rem;left:1rem;background:none;border:none;color:#666;cursor:pointer;font-size:1.2rem;">✕</button>
+    <h3 style="font-size:1.3rem;margin-bottom:0.3rem;">📘 دليل Expert_Smart v37</h3>
+    <p style="color:#667799;font-size:0.8rem;margin-bottom:1.4rem;">
+        النظام يجمع بين قوة Gemini AI وتقنية الرصد الآلي اللحظي لنبض السوق لضمان دقة تحاكي الواقع لحظة بلحظة
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:1.1rem;">
+
+        <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#FFD700;font-weight:700;margin-bottom:0.5rem;">📂 رفع الملفات — مسار مزدوج</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li><strong style="color:#e2e8f0;">نموذج المحاكاة</strong> — ارفع تقريراً مرجعياً (PDF/Excel) ليتعلّم النظام أسلوبه</li>
+                <li><strong style="color:#e2e8f0;">بيانات العقار</strong> — ارفع البيانات الخام (عقد، رخصة، مخطط، إحصاءات)</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(74,222,128,0.04);border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#4ade80;font-weight:700;margin-bottom:0.5rem;">⚙ بوابة المسار الذكي (Logic Gate)</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li>اختر <strong>نوع الأصل</strong> (سكني / تجاري / صناعي / زراعي / فندقي / تجزئة / صحي / تعليمي)</li>
+                <li>اختر <strong>الغرض</strong> (قيمة سوقية / تمويل بنكي / استحواذ / استثماري / تحكيم / تأميني / قضائي)</li>
+                <li>يتكيف التقرير الإكسيل تلقائياً بـ 20 شيتاً يُحذف غير المناسب منها وفق المسار</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(100,150,255,0.04);border:1px solid rgba(100,150,255,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#93c5fd;font-weight:700;margin-bottom:0.5rem;">🤖 المستشار العقاري الذكي (RAG)</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li>يعمل بتقنية RAG على قاعدة بيانات السوق المصري المحلية + البحث على الإنترنت</li>
+                <li>اسأله عن أسعار أي منطقة، تأثير الأحداث الجيوسياسية، أفضل فرص الاستثمار</li>
+                <li>✅ يعمل بدون مفتاح API — يستخدم نموذج Qdrant + SentenceTransformer المحلي</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(192,132,252,0.04);border:1px solid rgba(192,132,252,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#c084fc;font-weight:700;margin-bottom:0.5rem;">📚 محرك المحاكاة وضبط الأسلوب</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li>ارفع تقريراً مرجعياً → يُحلَّل أسلوبه ومنهجيته → يُحفظ في المكتبة كـ Profile</li>
+                <li>فعِّل Profile → تُحقَن بصمة الأسلوب في كل استفسار تالٍ لـ Gemini</li>
+                <li>المكتبة تُصفِّي المكررات وتحتفظ بالنماذج المميزة فقط</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#f87171;font-weight:700;margin-bottom:0.5rem;">🛰 رادار السوق الآلي (v37)</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li>يرصد Aqarmap + Bayut + OLX تلقائياً كل 30 دقيقة</li>
+                <li>يُحوِّل النصوص العقارية غير المنظَّمة (واتساب/مواقع) إلى جداول بيانات منظَّمة</li>
+                <li>يُغذِّي خريطة مناطق الأسعار (Heatmap) وتقارير IAAO بيانات حية</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(255,150,0,0.04);border:1px solid rgba(255,150,0,0.2);border-radius:12px;padding:1rem;">
+            <div style="color:#fb923c;font-weight:700;margin-bottom:0.5rem;">📊 معايير IAAO للمسار الضريبي</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li><strong>ASR</strong> (0.95–1.05): نسبة التقييم إلى البيع — إشارة مرور خضراء/صفراء/حمراء</li>
+                <li><strong>COD</strong> (&lt;15%): معامل التشتت — العدالة الأفقية بين الممتلكات</li>
+                <li><strong>PRD</strong> (0.98–1.03): مؤشر التفاوت السعري — العدالة الرأسية</li>
+                <li>يُدمَج تلقائياً في تقرير الإكسيل عند اختيار مسار "مسؤول ضريبي"</li>
+            </ul>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:1rem;">
+            <div style="color:#e2e8f0;font-weight:700;margin-bottom:0.5rem;">🔑 مفتاح Gemini API</div>
+            <ul style="color:#aab;font-size:0.83rem;line-height:1.9;margin:0;padding-right:1.2rem;">
+                <li>احصل على مفتاحك من <code style="color:#4ade80;">ai.google.dev</code> (مجاناً)</li>
+                <li>اضغط زر 🔑 في الرأس أو فعِّله من هنا</li>
+                <li>يُحفظ في المتصفح محلياً فقط — لا يُرسَل لأي خادم خارجي</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <button onclick="closeHelpModal()"
+        style="width:100%;margin-top:1.4rem;padding:0.8rem;
+               background:linear-gradient(135deg,#FFD700,#b8962e);
+               border:none;border-radius:10px;color:#000;
+               font-family:'Tajawal',sans-serif;font-weight:700;
+               font-size:0.95rem;cursor:pointer;">
+        ✅ فهمت — ابدأ الاستخدام
+    </button>
+</div>
+</div>
+
+<!-- ══════════════ RADAR STATUS BAR ══════════════ -->
+<div id="radarBar" style="
+    max-width:960px; margin:0 auto; padding:0 1.5rem;
+    display:none;">
+<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.25);
+            border-radius:14px;padding:0.65rem 1.1rem;
+            display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.6rem;">
+    <div style="display:flex;align-items:center;gap:0.6rem;">
+        <span id="radarDot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;"></span>
+        <span style="color:#fb923c;font-size:0.8rem;font-weight:700;">🛰 رادار السوق</span>
+        <span id="radarStatusTxt" style="color:#667799;font-size:0.78rem;">غير نشط</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+        <span id="radarCount" style="font-size:0.75rem;color:#aab;"></span>
+        <button onclick="startRadar()"  id="radarStartBtn"
+            style="padding:0.3rem 0.8rem;border-radius:20px;font-size:0.76rem;
+                   background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.35);
+                   color:#f87171;cursor:pointer;font-family:'Tajawal',sans-serif;">▶ تشغيل</button>
+        <button onclick="stopRadar()"   id="radarStopBtn" style="display:none;
+            padding:0.3rem 0.8rem;border-radius:20px;font-size:0.76rem;
+            background:rgba(100,100,100,0.12);border:1px solid rgba(255,255,255,0.1);
+            color:#667799;cursor:pointer;font-family:'Tajawal',sans-serif;">■ إيقاف</button>
+        <button onclick="openIAAOPanel()" id="iaaoBtn"
+            style="padding:0.3rem 0.8rem;border-radius:20px;font-size:0.76rem;
+                   background:rgba(255,150,0,0.1);border:1px solid rgba(255,150,0,0.3);
+                   color:#fb923c;cursor:pointer;font-family:'Tajawal',sans-serif;">📊 IAAO</button>
+        <button onclick="openPriceIntelPanel()" id="priceIntelBtn"
+            style="padding:0.3rem 0.8rem;border-radius:20px;font-size:0.76rem;
+                   background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);
+                   color:#D4AF37;cursor:pointer;font-family:'Tajawal',sans-serif;">📡 رصد الأسعار</button>
+    </div>
+</div>
+</div>
+
+<!-- ══════════════ IAAO PANEL ══════════════ -->
+<div id="iaaoPanel" style="
+    display:none; max-width:960px; margin:0.8rem auto 0;
+    padding:0 1.5rem;">
+<div style="background:rgba(255,150,0,0.04);border:1px solid rgba(255,150,0,0.25);
+            border-radius:16px;padding:1.2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h3 style="color:#fb923c;font-size:0.95rem;font-weight:700;margin:0;">
+            📊 تقييم مطابقة معايير IAAO
+        </h3>
+        <button onclick="closeIAAOPanel()"
+            style="background:none;border:none;color:#667799;cursor:pointer;font-size:0.85rem;">✕ إغلاق</button>
+    </div>
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1rem;">
+        <input type="number" id="iaaoAssessed" placeholder="القيمة المُقدَّرة/م² (مثال: 25000)"
+            style="flex:1;min-width:180px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);
+                   border-radius:8px;color:#ccc;padding:0.5rem 0.7rem;font-size:0.82rem;
+                   font-family:'Tajawal',sans-serif;outline:none;">
+        <select id="iaaySector"
+            style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);
+                   border-radius:8px;color:#ccc;padding:0.5rem;font-size:0.82rem;
+                   font-family:'Tajawal',sans-serif;">
+            <option value="residential">سكني</option>
+            <option value="commercial">تجاري</option>
+            <option value="agricultural">زراعي</option>
+            <option value="industrial">صناعي</option>
+        </select>
+        <button onclick="runIAAO()"
+            style="padding:0.5rem 1.1rem;border-radius:8px;background:rgba(255,150,0,0.18);
+                   border:1px solid rgba(255,150,0,0.4);color:#fb923c;
+                   font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;font-weight:700;">
+            ⚡ احسب IAAO
+        </button>
+    </div>
+    <div id="iaaoResult" style="font-size:0.83rem;"></div>
+</div>
+</div>
+
+<!-- ══════════════ PRICE INTELLIGENCE PANEL ══════════════ -->
+<div id="priceIntelPanel" style="
+    display:none; max-width:960px; margin:0.8rem auto 0;
+    padding:0 1.5rem;">
+<div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.3);
+            border-radius:16px;padding:1.2rem;">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h3 style="color:#D4AF37;font-size:0.95rem;font-weight:700;margin:0;">
+            📡 بروتوكول الرصد اللحظي للأسعار — Price Intelligence
+        </h3>
+        <button onclick="closePriceIntelPanel()"
+            style="background:none;border:none;color:#667799;cursor:pointer;font-size:0.85rem;">✕ إغلاق</button>
+    </div>
+
+    <!-- Search controls -->
+    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:0.8rem;">
+        <input id="piLocation" type="text" placeholder="المنطقة (مثال: التجمع الخامس)"
+            style="flex:2;min-width:160px;background:rgba(0,0,0,0.3);
+                   border:1px solid rgba(212,175,55,0.25);border-radius:8px;
+                   color:#e2e8f0;padding:0.5rem 0.7rem;font-size:0.82rem;
+                   font-family:'Tajawal',sans-serif;outline:none;">
+        <select id="piMarket"
+            style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.25);
+                   border-radius:8px;color:#ccc;padding:0.5rem;font-size:0.82rem;
+                   font-family:'Tajawal',sans-serif;">
+            <option value="egypt">🇪🇬 مصر</option>
+            <option value="ksa">🇸🇦 السعودية</option>
+        </select>
+        <select id="piAsset"
+            style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.25);
+                   border-radius:8px;color:#ccc;padding:0.5rem;font-size:0.82rem;
+                   font-family:'Tajawal',sans-serif;">
+            <option value="شقة">شقة</option>
+            <option value="فيلا">فيلا</option>
+            <option value="أرض">أرض</option>
+            <option value="مكتب">مكتب</option>
+            <option value="محل">محل</option>
+            <option value="مستودع">مستودع</option>
+        </select>
+        <button onclick="runPriceIntelligence()"
+            style="padding:0.5rem 1.2rem;border-radius:8px;
+                   background:linear-gradient(135deg,rgba(212,175,55,0.22),rgba(212,175,55,0.1));
+                   border:1px solid rgba(212,175,55,0.5);color:#D4AF37;
+                   font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;font-weight:700;">
+            🔍 رصد الأسعار
+        </button>
+        <button onclick="fetchTrendOnly()"
+            style="padding:0.5rem 0.9rem;border-radius:8px;
+                   background:rgba(100,150,255,0.1);
+                   border:1px solid rgba(100,150,255,0.3);color:#93c5fd;
+                   font-family:'Tajawal',sans-serif;font-size:0.82rem;cursor:pointer;">
+            📈 اتجاه فقط
+        </button>
+    </div>
+
+    <!-- Loading indicator -->
+    <div id="piLoading" style="display:none;text-align:center;padding:0.8rem;
+         color:#D4AF37;font-size:0.82rem;">⏳ جاري الرصد والتحليل...</div>
+
+    <!-- Results area -->
+    <div id="piResult" style="font-size:0.82rem;"></div>
+</div>
+</div>
+
+<!-- ══════════════ GUIDANCE BANNER ══════════════ -->
+<div style="max-width:960px;margin:1rem auto 0;padding:0 1.5rem;">
+<div style="background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(255,150,0,0.04));
+            border:1px solid rgba(255,215,0,0.18);border-radius:14px;
+            padding:0.75rem 1.2rem;display:flex;align-items:center;gap:0.8rem;">
+    <span style="font-size:1.3rem;flex-shrink:0;">🛰</span>
+    <p style="color:#b8962e;font-size:0.8rem;line-height:1.7;margin:0;">
+        النظام يجمع بين قوة Gemini AI وتقنية الرصد الآلي اللحظي لنبض السوق
+        لضمان دقة تحاكي الواقع لحظة بلحظة
+        <span style="color:#667799;margin-right:0.5rem;">—</span>
+        <button onclick="openHelpModal()"
+            style="background:none;border:none;color:#FFD700;cursor:pointer;
+                   font-family:'Tajawal',sans-serif;font-size:0.8rem;
+                   text-decoration:underline;">اضغط هنا لدليل الاستخدام الكامل</button>
+    </p>
+</div>
+</div>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<header class="text-center p-10">
+    <h1 class="text-5xl font-black mb-2" style="color:#FFD700">EXPERT_SMART</h1>
+    <p class="text-xl text-gray-400">المنصة الإقليمية الموحدة لخبراء التقييم (مصر 🇪🇬 &amp; السعودية 🇸🇦)</p>
+    <div style="margin-top:1rem;">
+        <button onclick="openKeyModal()"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm"
+            style="border:1px dashed rgba(255,215,0,0.5);color:#FFD700;background:rgba(255,215,0,0.06);cursor:pointer;">
+            🔑 <span id="keyBtnLabel">إعداد مفتاح Gemini API</span>
+            <span id="keyDot" style="width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;"></span>
+        </button>
+    </div>
+</header>
+
+<!-- ══════════════ INPUT CLIPS ══════════════ -->
+<div class="clips-grid">
+
+    <!-- Clip 1: Simulation file -->
+    <div class="clip-card" style="background:rgba(255,215,0,0.015);">
+        <div class="clip-header" style="background:rgba(255,215,0,0.05);">
+            <span class="clip-icon">📋</span>
+            <span class="clip-title gold-text">نموذج محاكاة</span>
+            <span class="clip-hint">PDF · Excel · DOCX · TXT</span>
+        </div>
+        <div class="clip-body">
+            <div class="clip-drop" id="simZone"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="handleDrop(event,'sim')">
+                <input type="file" id="fileSim" accept=".pdf,.xlsx,.xls,.csv,.txt,.docx"
+                       onchange="handleFile(event,'sim')">
+                <div class="drop-label" style="color:#667799;">
+                    <span style="font-size:1.6rem;display:block;margin-bottom:0.25rem;">📂</span>
+                    اسحب نموذج التقرير هنا
+                </div>
+            </div>
+            <div class="clip-loaded" id="simLoaded">
+                <span class="fn" id="simFn">—</span>
+                <button class="clr" onclick="clearClip('sim')">✕</button>
+            </div>
+            <div class="progress-bar-wrap" id="simProgress">
+                <div class="progress-bar-fill" id="simProgressFill"></div>
+            </div>
+            <div id="simStatus"></div>
+        </div>
+    </div>
+
+    <!-- Clip 2: Property data file -->
+    <div class="clip-card" style="background:rgba(74,222,128,0.012);">
+        <div class="clip-header" style="background:rgba(74,222,128,0.04);">
+            <span class="clip-icon">📊</span>
+            <span class="clip-title" style="color:#4ade80;">بيانات العقار</span>
+            <span class="clip-hint">PDF · Excel · DOCX · CSV</span>
+        </div>
+        <div class="clip-body">
+            <div class="clip-drop" id="dataZone"
+                 ondragover="event.preventDefault();this.classList.add('drag-over')"
+                 ondragleave="this.classList.remove('drag-over')"
+                 ondrop="handleDrop(event,'data')">
+                <input type="file" id="fileData" accept=".pdf,.xlsx,.xls,.csv,.txt,.docx"
+                       onchange="handleFile(event,'data')">
+                <div class="drop-label" style="color:#667799;">
+                    <span style="font-size:1.6rem;display:block;margin-bottom:0.25rem;">⬆</span>
+                    ارفع بيانات العقار
+                </div>
+            </div>
+            <div class="clip-loaded" id="dataLoaded">
+                <span class="fn" id="dataFn">—</span>
+                <button class="clr" onclick="clearClip('data')">✕</button>
+            </div>
+            <div class="progress-bar-wrap" id="dataProgress">
+                <div class="progress-bar-fill" id="dataProgressFill"></div>
+            </div>
+            <div id="dataStatus"></div>
+        </div>
+    </div>
+
+
+    <!-- Clip 3: Training / Master Template -->
+    <div class="clip-card" id="trainingCard" style="background:rgba(212,175,55,0.015);">
+        <div class="clip-header" style="background:rgba(212,175,55,0.06);">
+            <span class="clip-icon">🎓</span>
+            <span class="clip-title" style="color:#D4AF37;">نموذج التدريب / المحاكاة</span>
+            <span class="clip-hint">xlsx · xlsm</span>
+        </div>
+        <div class="clip-body">
+            <p style="font-size:0.74rem;color:#8899aa;margin:0 0 0.55rem;line-height:1.55;">
+                ارفع النموذج المرجعي للمهندس هشام المهدي ليتعلم الذكاء الاصطناعي
+                هيكل المعادلات والتنسيقات ويُحاكيها في كل تقرير.
+            </p>
+
+            <!-- Gold upload button (full-width, file input hidden inside) -->
+            <label class="training-upload-btn" id="trainingUploadLabel" title="رفع النموذج المرجعي .xlsx / .xlsm">
+                <span>📂</span>
+                <span>رفع النموذج المرجعي</span>
+                <input type="file" id="fileTraining" accept=".xlsx,.xlsm"
+                       onchange="handleTrainingUpload(this.files[0])">
+            </label>
+
+            <!-- Success indicator (hidden until upload) -->
+            <div class="clip-loaded training-success" id="trainingLoaded">
+                <span class="fn" id="trainingFn">—</span>
+                <button class="clr" onclick="clearTrainingClip()" title="إلغاء الربط">✕</button>
+            </div>
+
+            <!-- Status line -->
+            <div id="trainingStatus" style="margin-top:0.45rem;"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ LOGIC GATE ══════════════ -->
+<div class="logic-gate">
+    <div class="gate-panel">
+
+        <!-- Sector row -->
+        <div class="gate-section-head">
+            <strong>🏢 نوع الأصل</strong>
+            <span>اختر القطاع ليتكيف نظام التقييم تلقائياً</span>
+        </div>
+        <div class="icon-row" id="sectorRow">
+            <button class="icon-btn active" data-sector="residential" onclick="setSector(this)">
+                <span class="ib-ico">🏠</span><span class="ib-lbl">سكني</span>
+            </button>
+            <button class="icon-btn" data-sector="commercial" onclick="setSector(this)">
+                <span class="ib-ico">🏬</span><span class="ib-lbl">تجاري</span>
+            </button>
+            <button class="icon-btn" data-sector="industrial" onclick="setSector(this)">
+                <span class="ib-ico">🏭</span><span class="ib-lbl">صناعي</span>
+            </button>
+            <button class="icon-btn" data-sector="agricultural" onclick="setSector(this)">
+                <span class="ib-ico">🌾</span><span class="ib-lbl">زراعي</span>
+            </button>
+            <button class="icon-btn" data-sector="hospitality" onclick="setSector(this)">
+                <span class="ib-ico">🏨</span><span class="ib-lbl">فندقي</span>
+            </button>
+            <button class="icon-btn" data-sector="retail" onclick="setSector(this)">
+                <span class="ib-ico">🛍️</span><span class="ib-lbl">تجزئة</span>
+            </button>
+            <button class="icon-btn" data-sector="healthcare" onclick="setSector(this)">
+                <span class="ib-ico">🏥</span><span class="ib-lbl">صحي</span>
+            </button>
+            <button class="icon-btn" data-sector="educational" onclick="setSector(this)">
+                <span class="ib-ico">🏫</span><span class="ib-lbl">تعليمي</span>
+            </button>
+        </div>
+
+        <!-- Purpose row -->
+        <div class="gate-section-head">
+            <strong>⚙ الغرض من التقييم</strong>
+            <span>يحدد المنهجية والأوراق النهائية</span>
+        </div>
+        <div class="icon-row" id="purposeRow">
+            <button class="icon-btn active" data-purpose="fair_market_value" onclick="setPurpose(this)">
+                <span class="ib-ico">⚖️</span><span class="ib-lbl">قيمة سوقية</span>
+            </button>
+            <button class="icon-btn" data-purpose="bank_financing" onclick="setPurpose(this)">
+                <span class="ib-ico">🏦</span><span class="ib-lbl">تمويل بنكي</span>
+            </button>
+            <button class="icon-btn" data-purpose="acquisition" onclick="setPurpose(this)">
+                <span class="ib-ico">🤝</span><span class="ib-lbl">استحواذ</span>
+            </button>
+            <button class="icon-btn" data-purpose="investment_analysis" onclick="setPurpose(this)">
+                <span class="ib-ico">📈</span><span class="ib-lbl">استثماري</span>
+            </button>
+            <button class="icon-btn" data-purpose="rental_arbitration" onclick="setPurpose(this)">
+                <span class="ib-ico">📝</span><span class="ib-lbl">تحكيم إيجاري</span>
+            </button>
+            <button class="icon-btn" data-purpose="insurance" onclick="setPurpose(this)">
+                <span class="ib-ico">🛡️</span><span class="ib-lbl">تأميني</span>
+            </button>
+            <button class="icon-btn" data-purpose="judicial_liquidation" onclick="setPurpose(this)">
+                <span class="ib-ico">🔨</span><span class="ib-lbl">قضائي</span>
+            </button>
+            <button class="icon-btn" data-purpose="tax_assessment" onclick="setPurpose(this)">
+                <span class="ib-ico">🏛</span><span class="ib-lbl">ضريبي</span>
+            </button>
+            <button class="icon-btn" data-purpose="financial_reporting" onclick="setPurpose(this)">
+                <span class="ib-ico">📊</span><span class="ib-lbl">IFRS 13</span>
+            </button>
+        </div>
+
+        <!-- Active route bar -->
+        <div class="route-bar">
+            <span class="route-label">المسار النشط:</span>
+            <span class="route-crumb" id="crumbSector">🏠 سكني</span>
+            <span style="color:#445;">›</span>
+            <span class="route-crumb" id="crumbPurpose">⚖️ قيمة سوقية</span>
+            <span class="route-crumb style-crumb" id="crumbStyle" style="display:none;">✨ —</span>
+            <span class="route-crumb default-badge" id="crumbDefault">افتراضي</span>
+            <button id="routeResetBtn" onclick="resetRoute()">↺ إعادة تعيين</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══════════════ CONFIG ROW ══════════════ -->
+<div class="config-row">
+    <div class="config-card">
+        <label>👤 الدور الوظيفي</label>
+        <select id="role">
+            <option value="BankAuditor">مدقق بنكي — Basel III / LTV</option>
+            <option value="Valuer">خبير تقييم — IVS / EFSA / TAQEEM</option>
+            <option value="Appraiser">مثمن عقاري — تقييم شامل</option>
+            <option value="Investor">مستثمر — IRR / NAV / DCF</option>
+            <option value="TaxOfficial">مسؤول ضريبي — IAAO / ASR</option>
+        </select>
+    </div>
+    <div class="config-card">
+        <label>🌍 السوق والمعايير</label>
+        <select id="market">
+            <option value="egypt">مصر — EFSA / FRA / IVS</option>
+            <option value="ksa">السعودية — TAQEEM / SAMA / IVS</option>
+            <option value="auto">اكتشاف تلقائي من البيانات</option>
+        </select>
+    </div>
+    <div class="config-card">
+        <label>📅 أفق التقييم</label>
+        <select id="date">
+            <option value="current">حالي — قيمة سوقية عادلة</option>
+            <option value="retrospective">سابق — تقييم رجعي</option>
+            <option value="prospective">لاحق — تقييم استشرافي</option>
+        </select>
+    </div>
+</div>
+<!-- hidden inputs synced by logic gate icon buttons -->
+<input type="hidden" id="asset"   value="residential">
+<input type="hidden" id="purpose" value="fair_market_value">
+
+<!-- ══════════════ HIDDEN FILE INPUTS (toolbar) ══════════════ -->
+<!--
+  These three inputs are the SINGLE canonical triggers for the toolbar.
+  Each has its own id so programmatic .click() is unambiguous and
+  never blocked by a parent <label> context.
+-->
+<input type="file" id="trainingInput"
+       accept=".xlsx,.xlsm"
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;"
+       tabindex="-1" aria-hidden="true"
+       onchange="handleTrainingUpload(this.files[0]); this.value='';">
+
+<input type="file" id="docInput"
+       accept=".pdf,.xlsx,.xls,.xlsm,.csv,.txt,.docx,.doc,.pptx,.json,.rtf,.odt"
+       multiple
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;"
+       tabindex="-1" aria-hidden="true"
+       onchange="handleDocUpload(this.files); this.value='';">
+
+<input type="file" id="imageInput"
+       accept="image/*"
+       multiple
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;"
+       tabindex="-1" aria-hidden="true"
+       onchange="handleImageUpload(this.files); this.value='';">
+
+<!-- ── Geo-Map Fast-Track (dedicated, single-file aerial/sketch) ── -->
+<input type="file" id="geo-map-input"
+       accept="image/*,.pdf,.kml,.kmz,.geojson,.tif,.tiff"
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;"
+       tabindex="-1" aria-hidden="true"
+       onchange="handleGeoMapUpload(this.files); this.value='';">
+<!-- ══════════════════════════════════════════════════════ -->
+
+<!-- ══════════════ MAP MODAL ══════════════ -->
+<div class="map-modal-overlay" id="mapModalOverlay">
+    <div class="map-modal-box">
+        <div class="map-modal-head">
+            <h3>🗺 تحديد الموقع الجغرافي للأصل</h3>
+            <button class="map-modal-close" onclick="closeMapModal()" title="إغلاق">✕</button>
+        </div>
+        <div id="mapContainer"></div>
+        <div class="map-modal-foot">
+            <span id="mapCoords">انقر على الخريطة لتحديد الموقع</span>
+            <span id="mapLocName"></span>
+            <button class="map-confirm-btn" onclick="confirmLocation()">📌 تأكيد الموقع</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ PROMPT & SUBMIT ══════════════ -->
+<div class="max-w-4xl mx-auto p-6">
+    <textarea id="userInput"
+        class="w-full p-6 rounded-3xl h-36 outline-none"
+        style="background:rgba(0,0,0,0.45);border:2px solid rgba(255,215,0,0.2);color:#e2e8f0;font-family:'Tajawal',sans-serif;font-size:1rem;resize:vertical;transition:border-color 0.2s;"
+        onfocus="this.style.borderColor='rgba(255,215,0,0.6)'"
+        onblur="this.style.borderColor='rgba(255,215,0,0.2)'"
+        placeholder="أدخل استفسارك هنا... مثال: قيّم هذا الأصل وحدد نطاق القيمة ومستوى المخاطرة"></textarea>
+
+    <!-- ══════════════ INPUT TOOLBAR ══════════════ -->
+    <div class="input-toolbar" id="inputToolbar">
+
+        <!-- 1. Training model -->
+        <button class="itb-btn" id="itbTraining"
+                title="رفع النموذج المرجعي .xlsx/.xlsm"
+                onclick="triggerTrainingUpload()">
+            <span class="itb-ico">🎓</span>
+            <span>تدريب النموذج</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- 2. Documents -->
+        <button class="itb-btn" id="itbDocs"
+                title="إرفاق وثائق العقار (PDF/Excel/Word/CSV)"
+                onclick="triggerDocUpload()">
+            <span class="itb-ico">📄</span>
+            <span>وثائق العقار</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- 3. Images -->
+        <button class="itb-btn" id="itbImages"
+                title="إرفاق صور العقار"
+                onclick="triggerImageUpload('photos')">
+            <span class="itb-ico">📷</span>
+            <span>الصور</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- 3b. Geo Map / Aerial — Fast-Track -->
+        <button class="itb-btn" id="itbGeoMap"
+                title="رفع خريطة جوية أو كروكي — يطلق محرك تحليل التربة والمخاطر الجيوتقنية فوراً"
+                onclick="triggerImageUpload('geo_map')">
+            <span class="itb-ico">🛰</span>
+            <span>خريطة جوية</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- 4. Map -->
+        <button class="itb-btn" id="itbMap" title="تحديد الموقع الجغرافي على الخريطة"
+                onclick="openMapInterface()">
+            <span class="itb-ico">🗺</span>
+            <span>الخريطة</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- 5. Microphone -->
+        <button class="itb-btn" id="itbMic" title="إملاء الوصف الفني صوتياً"
+                onclick="startVoiceCommand()">
+            <span class="itb-ico">🎤</span>
+            <span>ميكروفون</span>
+            <span class="itb-badge">✓</span>
+        </button>
+
+        <!-- Attached count summary (updated dynamically) -->
+        <span id="toolbarSummary"
+              style="margin-right:auto;font-size:0.72rem;color:#556677;font-family:'Tajawal',sans-serif;"></span>
+    </div>
+
+    <button id="sendBtn" onclick="runAnalysis()"
+        class="w-full mt-4 font-bold py-4 rounded-2xl text-xl transition-all"
+        style="background:linear-gradient(135deg,#FFD700,#b8962e);color:#000;">
+        ⚡ تحليل بواسطة AI
+    </button>
+
+    <!-- AI Response -->
+    <div id="aiResponse" class="mt-10 p-6 rounded-2xl hidden"
+         style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.3);">
+
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="gold-text font-bold text-lg flex items-center gap-2">
+                🧠 نتائج التحليل السيادي
+            </h2>
+            <span id="roleTag"
+                style="font-size:0.75rem;padding:0.2rem 0.8rem;border-radius:50px;
+                       background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);
+                       color:#FFD700;"></span>
+        </div>
+
+        <div id="responseText" class="leading-relaxed"></div>
+
+        <div class="action-row" id="actionRow" style="display:none;">
+            <button class="btn-action" onclick="copyResult()">📋 نسخ النص</button>
+            <button class="btn-action" onclick="window.print()">🖨️ طباعة</button>
+            <button class="btn-action" onclick="clearResult()">🔄 تحليل جديد</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ RAG ADVISOR CHAT ══════════════ -->
+<section id="advisorSection">
+
+    <!-- Section title -->
+    <div style="text-align:center; margin-bottom:1.2rem;">
+        <h2 style="color:#FFD700; font-size:1.4rem; font-weight:800; margin-bottom:0.3rem;">
+            🤖  المستشار العقاري الذكي
+        </h2>
+        <p style="color:#667799; font-size:0.85rem;">
+            يعمل بتقنية RAG  ·  Qdrant + Macro KB + بحث الإنترنت  ·  محلي وخاص
+        </p>
+    </div>
+
+    <div class="chat-wrap">
+
+        <!-- Chat header -->
+        <div class="chat-header">
+            <h3>💬  استشارة عقارية مباشرة</h3>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+                <span id="advisorStatus" style="font-size:0.75rem; color:#667799;">جارٍ الاتصال...</span>
+                <div class="status-dot" id="advisorDot"></div>
+            </div>
+        </div>
+
+        <!-- Messages area -->
+        <div id="chatMessages">
+            <!-- Welcome message -->
+            <div class="chat-msg bot">
+                مرحباً! أنا مستشارك العقاري الذكي 🏠<br>
+                يمكنني مساعدتك في:
+                <ul style="margin: 0.5rem 0 0 1.2rem; color: #8aaecc;">
+                    <li>أسعار السوق في أي منطقة مصرية</li>
+                    <li>توقعات الاستثمار العقاري 2025</li>
+                    <li>تأثير الأحداث الجيوسياسية على العقارات</li>
+                    <li>مقارنة القطاعات والمناطق</li>
+                </ul>
+                <div class="msg-meta">
+                    <span class="meta-pill">Expert Smart RAG Engine</span>
+                    <span class="meta-pill">بيانات محدّثة 2025</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer: input + options -->
+        <div class="chat-footer">
+
+            <!-- Quick question buttons -->
+            <div class="chat-quick-btns" style="margin-bottom:0.65rem;">
+                <button class="quick-btn" onclick="quickAsk('ما أفضل مناطق الاستثمار في مصر 2025؟')">📍 أفضل مناطق الاستثمار</button>
+                <button class="quick-btn" onclick="quickAsk('ما تأثير حرب غزة والبحر الأحمر على العقارات؟')">🌍 التأثير الجيوسياسي</button>
+                <button class="quick-btn" onclick="quickAsk('ما هو متوسط سعر متر رأس الحكمة؟')">💰 أسعار رأس الحكمة</button>
+                <button class="quick-btn" onclick="quickAsk('هل العاصمة الإدارية استثمار جيد؟')">🏛 العاصمة الإدارية</button>
+            </div>
+
+            <!-- Input row -->
+            <div class="chat-input-row">
+                <textarea id="advisorInput" rows="1"
+                    placeholder="اكتب سؤالك العقاري هنا..."
+                    onkeydown="advisorKeydown(event)"
+                    oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+                <button id="advisorSend" onclick="sendAdvisor()">إرسال ✈</button>
+            </div>
+
+            <!-- Options row -->
+            <div class="chat-options">
+                <label>
+                    <input type="checkbox" id="useWeb">
+                    🌐 بحث في الإنترنت (DuckDuckGo)
+                </label>
+                <label>
+                    <input type="text" id="advisorLocation" placeholder="المنطقة (اختياري)"
+                        style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                               border-radius:6px;color:#ccc;padding:0.2rem 0.5rem;font-size:0.78rem;
+                               font-family:'Tajawal',sans-serif;width:140px;outline:none;">
+                </label>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════ TRAINING ENGINE + SMART LIBRARY ══════════════ -->
+<section id="tunerLibSection" style="max-width:1100px;margin:0 auto 3rem;padding:0 1.5rem;">
+
+    <!-- Section title -->
+    <div style="text-align:center;margin-bottom:1.5rem;">
+        <h2 style="color:#FFD700;font-size:1.4rem;font-weight:800;margin-bottom:0.3rem;">
+            🧬  محرك التعلم والتدريب المتخصص
+        </h2>
+        <p style="color:#667799;font-size:0.85rem;">
+            Context-Tuning · محاكاة Fine-Tuning · المكتبة المرجعية الذكية
+        </p>
+    </div>
+
+    <!-- Two-column grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;" id="tlGrid">
+
+        <!-- ══ LEFT: Training Clip (مشبك التدريب) ══ -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,215,0,0.2);
+                    border-radius:18px;overflow:hidden;">
+
+            <div style="background:linear-gradient(135deg,#0d1f0d,#0a1f1a);padding:1rem 1.4rem;
+                        border-bottom:1px solid rgba(0,200,100,0.15);
+                        display:flex;align-items:center;justify-content:space-between;">
+                <h3 style="color:#4ade80;font-weight:700;font-size:1rem;margin:0;">
+                    📎  مشبك التدريب
+                </h3>
+                <span style="font-size:0.75rem;color:#667799;">تحليل الأسلوب + محاكاة Fine-Tuning</span>
+            </div>
+
+            <div style="padding:1.2rem;">
+                <!-- Upload zone -->
+                <div id="tunerZone" class="file-zone" style="border-color:rgba(74,222,128,0.3);"
+                     ondragover="event.preventDefault();this.classList.add('drag-over')"
+                     ondragleave="this.classList.remove('drag-over')"
+                     ondrop="handleTunerDrop(event)">
+                    <input type="file" id="tunerFile" accept=".pdf,.xlsx,.xls,.txt,.docx"
+                           onchange="handleTunerFile(event)">
+                    <div style="padding:0.8rem;text-align:center;pointer-events:none;">
+                        <div style="font-size:1.8rem;margin-bottom:0.3rem;">📂</div>
+                        <div style="color:#4ade80;font-size:0.85rem;font-weight:600;">
+                            ارفع وثيقة مرجعية
+                        </div>
+                        <div style="color:#667799;font-size:0.75rem;margin-top:0.2rem;">
+                            PDF · Excel · Word · TXT
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-bar-wrap" id="tunerProgress" style="margin-top:6px;">
+                    <div class="progress-bar-fill" id="tunerProgressFill"
+                         style="background:linear-gradient(90deg,#4ade80,#16a34a);"></div>
+                </div>
+
+                <!-- Analysis result -->
+                <div id="tunerResult" style="display:none;margin-top:1rem;">
+                    <div id="tunerCard" style="background:rgba(74,222,128,0.06);
+                         border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:1rem;">
+                        <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.7rem;">
+                            <span style="font-size:1.1rem;">🧬</span>
+                            <strong id="tunerDocName" style="color:#4ade80;font-size:0.9rem;"></strong>
+                        </div>
+                        <div id="tunerMeta" style="font-size:0.8rem;color:#aac;line-height:1.9;"></div>
+                        <div id="tunerPreview" style="margin-top:0.8rem;font-size:0.78rem;
+                             color:#778899;background:rgba(0,0,0,0.3);border-radius:8px;
+                             padding:0.7rem;max-height:100px;overflow:hidden;
+                             border:1px solid rgba(255,255,255,0.05);font-family:monospace;
+                             direction:ltr;text-align:left;"></div>
+                        <div style="display:flex;gap:0.5rem;margin-top:0.8rem;flex-wrap:wrap;">
+                            <button id="tunerActivateBtn" onclick="activateTuner()"
+                                style="flex:1;padding:0.5rem;border-radius:8px;font-size:0.82rem;
+                                       background:linear-gradient(135deg,#4ade80,#16a34a);
+                                       border:none;color:#000;font-weight:700;cursor:pointer;
+                                       font-family:'Tajawal',sans-serif;">
+                                ⚡ تفعيل هذا الأسلوب
+                            </button>
+                            <button onclick="addTunerToLibrary()"
+                                style="padding:0.5rem 0.8rem;border-radius:8px;font-size:0.82rem;
+                                       background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);
+                                       color:#FFD700;cursor:pointer;font-family:'Tajawal',sans-serif;">
+                                📚 حفظ في المكتبة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active style banner -->
+                <div id="activeStyleBanner" style="display:none;margin-top:0.8rem;">
+                    <div style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);
+                                border-radius:10px;padding:0.6rem 0.9rem;
+                                display:flex;align-items:center;justify-content:space-between;">
+                        <span style="color:#4ade80;font-size:0.82rem;">
+                            ✅ الأسلوب النشط: <strong id="activeStyleName"></strong>
+                        </span>
+                        <button onclick="clearActiveStyle()"
+                            style="background:none;border:none;color:#f87171;cursor:pointer;font-size:0.78rem;">
+                            ✕ إلغاء
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Saved profiles list -->
+                <div style="margin-top:1rem;">
+                    <div style="font-size:0.78rem;color:#667799;margin-bottom:0.5rem;">
+                        🗂 أساليب محفوظة:
+                    </div>
+                    <div id="profilesList" style="max-height:140px;overflow-y:auto;">
+                        <div style="color:#445;font-size:0.75rem;text-align:center;padding:0.5rem;">
+                            جارٍ التحميل...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ RIGHT: Smart Library (المكتبة المرجعية) ══ -->
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,215,0,0.2);
+                    border-radius:18px;overflow:hidden;">
+
+            <div style="background:linear-gradient(135deg,#0d1629,#1a0d29);padding:1rem 1.4rem;
+                        border-bottom:1px solid rgba(150,100,255,0.15);
+                        display:flex;align-items:center;justify-content:space-between;">
+                <h3 style="color:#c084fc;font-weight:700;font-size:1rem;margin:0;">
+                    📚  المكتبة المرجعية الذكية
+                </h3>
+                <button onclick="triggerLibScan()" id="scanBtn"
+                    style="padding:0.3rem 0.8rem;border-radius:20px;font-size:0.75rem;
+                           background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.3);
+                           color:#c084fc;cursor:pointer;font-family:'Tajawal',sans-serif;">
+                    🔄 مسح الآن
+                </button>
+            </div>
+
+            <div style="padding:1rem;">
+
+                <!-- Stats bar -->
+                <div id="libStats" style="display:flex;gap:0.7rem;flex-wrap:wrap;
+                                          margin-bottom:0.9rem;font-size:0.75rem;">
+                    <span class="meta-pill" style="color:#c084fc;border-color:rgba(192,132,252,0.3);"
+                          id="libTotal">جارٍ التحميل...</span>
+                </div>
+
+                <!-- Search row -->
+                <div style="display:flex;gap:0.5rem;margin-bottom:0.8rem;">
+                    <input type="text" id="libSearch"
+                        placeholder="ابحث في المكتبة..."
+                        oninput="libSearchDebounce()"
+                        style="flex:1;background:rgba(255,255,255,0.05);
+                               border:1px solid rgba(255,255,255,0.1);border-radius:8px;
+                               color:#ccc;padding:0.45rem 0.7rem;font-size:0.82rem;
+                               font-family:'Tajawal',sans-serif;outline:none;">
+                    <select id="libSectorFilter" onchange="loadLibrary()"
+                        style="background:rgba(20,10,40,0.8);border:1px solid rgba(255,255,255,0.1);
+                               border-radius:8px;color:#aaa;padding:0.45rem;font-size:0.78rem;
+                               font-family:'Tajawal',sans-serif;">
+                        <option value="">كل القطاعات</option>
+                        <option value="residential">سكني</option>
+                        <option value="commercial">تجاري</option>
+                        <option value="industrial">صناعي</option>
+                        <option value="hospitality">فندقي</option>
+                        <option value="all">عام</option>
+                    </select>
+                </div>
+
+                <!-- Library grid -->
+                <div id="libGrid" style="max-height:300px;overflow-y:auto;
+                                          display:flex;flex-direction:column;gap:0.5rem;">
+                    <div style="color:#445;font-size:0.78rem;text-align:center;padding:1rem;">
+                        جارٍ تحميل المكتبة...
+                    </div>
+                </div>
+
+                <!-- Add to library manually -->
+                <div style="margin-top:0.9rem;padding-top:0.9rem;
+                            border-top:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:0.75rem;color:#667799;margin-bottom:0.4rem;">
+                        إضافة الملف الحالي إلى المكتبة:
+                    </div>
+                    <div style="display:flex;gap:0.5rem;">
+                        <select id="libDocType"
+                            style="flex:1;background:rgba(20,10,40,0.8);
+                                   border:1px solid rgba(255,255,255,0.1);
+                                   border-radius:8px;color:#aaa;padding:0.4rem;
+                                   font-size:0.78rem;font-family:'Tajawal',sans-serif;">
+                            <option value="valuation_report">تقرير تقييم</option>
+                            <option value="standard">معيار دولي</option>
+                            <option value="circular">تعميم تنظيمي</option>
+                            <option value="statistics">بيانات إحصائية</option>
+                            <option value="general">عام</option>
+                        </select>
+                        <button onclick="saveCurrentToLibrary()"
+                            style="padding:0.4rem 0.8rem;border-radius:8px;font-size:0.78rem;
+                                   background:rgba(192,132,252,0.12);
+                                   border:1px solid rgba(192,132,252,0.3);
+                                   color:#c084fc;cursor:pointer;font-family:'Tajawal',sans-serif;">
+                            ➕ حفظ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- end tlGrid -->
+</section>
+
+<!-- ══════════════ API KEY MODAL ══════════════ -->
+<div class="modal-backdrop" id="keyModal">
+    <div class="modal-box">
+        <button onclick="closeKeyModal()"
+            style="position:absolute;top:1rem;left:1rem;background:none;border:none;color:#666;cursor:pointer;font-size:1.1rem;">✕</button>
+        <h3>🔑 إعداد مفتاح Gemini API</h3>
+        <p>أدخل مفتاحك من Google AI Studio. يُحفظ محلياً في المتصفح فقط ولا يُرسل لأي خادم.</p>
+
+        <div id="existingKeyPreview" style="display:none;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.3);border-radius:8px;padding:0.5rem 0.8rem;margin-bottom:1rem;color:#4ade80;font-size:0.82rem;"></div>
+
+        <input type="password" id="keyInput" class="modal-input" placeholder="AIzaSy...">
+        <div style="font-size:0.75rem;color:#555;margin-top:0.5rem;">
+            💡 اتركه فارغاً لاستخدام المفتاح الحالي المحفوظ
+        </div>
+
+        <div style="display:flex;gap:0.8rem;margin-top:1.2rem;">
+            <button onclick="saveKey()"
+                style="flex:1;padding:0.8rem;background:linear-gradient(135deg,#FFD700,#b8962e);border:none;border-radius:8px;color:#000;font-family:'Tajawal',sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;">
+                💾 حفظ المفتاح
+            </button>
+            <button onclick="closeKeyModal()"
+                style="padding:0.8rem 1.4rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#888;font-family:'Tajawal',sans-serif;cursor:pointer;">
+                إلغاء
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT — THE BRAIN
+══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────
+//  CONFIGURATION
+// ─────────────────────────────────────────────────────────
+// ── Backend URL — المسار الموحّد للخادم ────────────────
+// عند الاستضافة عبر Flask: '' (مسار نسبي)
+// عند التطوير من file://: 'http://127.0.0.1:5000'
+const _BACKEND = (location.protocol === 'file:')
+    ? 'http://127.0.0.1:5000'
+    : '';   // نسبي — نفس الخادم
+
+const GEMINI_URL  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const apiKey = "";   // ← placeholder — paste your key here OR use the modal
+
+let _apiKey = apiKey || localStorage.getItem('gemini_api_key') || '';
+
+// PDF.js worker path
+if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// Marked options
+if (window.marked) {
+    marked.setOptions({ breaks: true, gfm: true });
+}
+
+// ─────────────────────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────────────────────
+const state = {
+    simText:          '',   // extracted text from Module 1 (simulation file)
+    dataText:         '',   // extracted text from Module 2 (data file)
+    simName:          '',
+    dataName:         '',
+    trainingName:     '',   // master template filename (Module 3)
+    trainingText:     '',   // extracted sheet-structure text from master template
+    hasTrainingModel: false,
+    // Toolbar attachments
+    docFiles:         [],   // [{name, text}] — وثائق العقار
+    imageFiles:       [],   // [{name, dataUrl}] — صور العقار
+    mapLocation:      null, // {lat, lng, label} — موقع الخريطة
+    lastResult:       ''
+};
+
+// ─────────────────────────────────────────────────────────
+//  THE SOVEREIGN PROTOCOL — SYSTEM INSTRUCTION
+// ─────────────────────────────────────────────────────────
+function buildSystemPrompt(role, market) {
+    const marketCtx = {
+        egypt: `
+السوق: جمهورية مصر العربية.
+المعايير الإلزامية: IVS (International Valuation Standards) + معايير هيئة الرقابة المالية المصرية (FRA/EFSA).
+العملة: الجنيه المصري (EGP).
+المرجعية: مؤشرات الجهاز المركزي للتعبئة العامة والإحصاء، وهيئة المجتمعات العمرانية الجديدة.`,
+
+        ksa: `
+السوق: المملكة العربية السعودية.
+المعايير الإلزامية: IVS + معايير الهيئة السعودية للمثمنين المعتمدين (TAQEEM) + اشتراطات ساما (SAMA).
+العملة: الريال السعودي (SAR).
+المرجعية: مؤشر وزارة العدل للصفقات العقارية، تعميمات مؤسسة النقد العربي السعودي.`,
+
+        auto: `
+اكتشف السوق من البيانات المُقدَّمة. إذا ذُكرت مناطق مصرية طبّق معايير FRA/EFSA/IVS؛ وإن كانت سعودية طبّق معايير TAQEEM/SAMA/IVS.`
+    };
+
+    const roleCtx = {
+        BankAuditor: `
+تركّز على: نسبة LTV ومتطلبات بازل III/IV، قيمة التصفية القسرية (FSV)، تصنيف درجة المخاطر (منخفضة/متوسطة/عالية)، نسبة تراجع الضمان (Collateral Decay).
+أبرز: الالتزامات التنظيمية وأي مخاطر ائتمانية مؤثرة.`,
+
+        Valuer: `
+تركّز على: تطبيق أساليب التقييم الثلاثة (السوق IVS-105 / التكلفة DRC / الدخل Cap Rate)، تبرير الأوزان، نطاق الثقة (±X%).
+أصدر حكماً على القيمة السوقية العادلة (Fair Market Value) مع تحليل الحساسية.`,
+
+        Appraiser: `
+تركّز على: التحليل الشامل للأصل العقاري، HBU (Highest & Best Use)، مصفوفة المقارنات السوقية مع التعديلات، خاتمة بالقيمة المستنتجة.`,
+
+        Investor: `
+تركّز على: IRR، NPV، MOIC، Cash-on-Cash، عائد التوزيعات، صافي قيمة الأصل (NAV)، IFRS 13 المستويات 1/2/3، جاهزية الأصل لصناديق REITs.`,
+
+        TaxOfficial: `
+تركّز على: القيمة الضريبية، معايير IAAO (COD < 15%، PRD 0.98-1.03)، نسبة التقييم إلى البيع (ASR)، مبدأ الانتظام الأفقي والعمودي، آلية الطعن المتاحة.`
+    };
+
+    return `أنت "المثمن العقاري السيادي" — نظام ذكاء اصطناعي متخصص بأعلى مستوى في التقييم العقاري المهني لمنطقة الشرق الأوسط.
+
+## هويتك
+- مثمن عقاري معتمد بخبرة تفوق 20 عاماً في السوقين المصري والسعودي.
+- ملتزم التزاماً صارماً بمعايير IVS الصادرة عن IVSC.
+- ردودك دائماً بالعربية الفصحى المتخصصة مع مصطلحات مهنية دقيقة.
+- لا تُقيّم أصولاً غير عقارية.
+
+## السياق الجغرافي والتنظيمي
+${marketCtx[market] || marketCtx.auto}
+
+## دورك في هذا التحليل: ${role}
+${roleCtx[role] || roleCtx.Valuer}
+
+## قواعد الإخراج الإلزامية
+1. ابدأ بملخص تنفيذي (3 أسطر كحد أقصى).
+2. نظّم الرد بعناوين (##) وقوائم واضحة.
+3. استخدم **تنسيق عريض** لكل قيمة رقمية جوهرية.
+4. أختم بـ "ملاحظة مهنية" تُشير إلى حدود التحليل والمخاطر الجوهرية.
+5. إذا كانت البيانات غير كافية وضّح بالضبط ما تحتاجه.
+
+## بروتوكول الرصد اللحظي للأسعار — Price Intelligence
+عندما تتلقى بيانات من قسم "## نتائج رصد الأسعار" في السياق:
+- **سعر الطلب (Asking Price)**: القيمة المُعلَنة في الإعلانات — تعامل معها كسقف التفاوض.
+- **سعر التنفيذ (Execution Price)**: سعر الطلب مطروحاً منه معامل التفاوض (5–10%) — استخدمه قيمة مرجعية للتقييم.
+- **معامل التفاوض**: مرتبط بحجم الصفقة والمنطقة — الصفقات الكبيرة وبعض المناطق الساخنة تنخفض إلى 5%.
+- عند الإجابة على أسئلة السوق: قدّم الرقم + المصدر + التاريخ + ربطه بالإشارات الاقتصادية (فائدة / صرف / مواد بناء).
+- مثال صيغة الرد: "شهدت منطقة النرجس متوسط سعر **38,000 ج.م/م²** وفق رصد [aqarmap] بتاريخ [DATE]، مع هامش تفاوضي تقديري 7.5% يُخفِّض سعر التنفيذ إلى حدود **35,150 ج.م/م²**."
+- إذا لم تتوفر بيانات رصد في السياق: أشر صراحةً إلى غياب البيانات الآنية واستخدم الأرقام المعيارية كمرجع استرشادي فقط.`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  CONTEXT ASSEMBLY — Master Query Builder
+// ─────────────────────────────────────────────────────────
+function assembleContext() {
+    const role    = document.getElementById('role').value;
+    const asset   = document.getElementById('asset').value;
+    const date    = document.getElementById('date').value;
+    const market  = document.getElementById('market').value;
+    const purpose = document.getElementById('purpose').value;
+    const userQ   = document.getElementById('userInput').value.trim();
+
+    const today = new Date().toLocaleDateString('ar-EG', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const parts = [];
+
+    // 1. Meta context
+    parts.push(`## معلومات الجلسة
+- التاريخ: **${today}**
+- الدور الوظيفي: **${roleName(role)}**
+- نوع الأصل: **${assetName(asset)}**
+- الغرض من التقييم: **${purposeName(purpose)}**
+- أفق التقييم: **${dateName(date)}**
+- السوق: **${marketName(market)}**`);
+
+    // 2. Simulation file (Module 1)
+    if (state.simText) {
+        const preview = state.simText.length > 5000
+            ? state.simText.slice(0, 5000) + '\n... [مقتطع — أول 5000 حرف]'
+            : state.simText;
+        parts.push(`## نموذج المحاكاة (${state.simName || 'ملف 1'})\n\`\`\`\n${preview}\n\`\`\``);
+    }
+
+    // 3. Data file (Module 2)
+    if (state.dataText) {
+        const preview = state.dataText.length > 5000
+            ? state.dataText.slice(0, 5000) + '\n... [مقتطع — أول 5000 حرف]'
+            : state.dataText;
+        parts.push(`## بيانات العقار (${state.dataName || 'ملف 2'})\n\`\`\`\n${preview}\n\`\`\``);
+    }
+
+    // 4. Master Training Template (Module 3)
+    if (state.hasTrainingModel && state.trainingText) {
+        const preview = state.trainingText.length > 6000
+            ? state.trainingText.slice(0, 6000) + '\n... [مقتطع — أول 6000 حرف]'
+            : state.trainingText;
+        parts.push(
+`## نموذج التدريب المرجعي — hasTrainingModel: true
+- **اسم الملف:** ${state.trainingName}
+- **رُفع بواسطة:** المهندس هشام المهدي
+- **التعليمات:** يجب أن يتبع التقرير المُولَّد هيكل المعادلات والتنسيقات الواردة في هذا النموذج بدقة.
+\`\`\`
+${preview}
+\`\`\``
+        );
+    }
+
+    // 5. Attached documents (toolbar — وثائق العقار)
+    if (state.docFiles.length) {
+        for (const doc of state.docFiles) {
+            const preview = doc.text.length > 4000
+                ? doc.text.slice(0, 4000) + '\n... [مقتطع]'
+                : doc.text;
+            parts.push(`## وثيقة مرفقة: ${doc.name}\n\`\`\`\n${preview}\n\`\`\``);
+        }
+    }
+
+    // 6. Images (toolbar — صور العقار)
+    if (state.imageFiles.length) {
+        const names = state.imageFiles.map(f => f.name).join('، ');
+        parts.push(`## صور العقار المرفقة (${state.imageFiles.length})\nأسماء الملفات: ${names}\nملاحظة: الصور متاحة للمعاينة البصرية — أشر إليها في تحليلك عند الحاجة.`);
+    }
+
+    // 7. Map location (toolbar — الخريطة)
+    if (state.mapLocation) {
+        parts.push(`## الموقع الجغرافي للأصل (محدد من الخريطة)\n- **العنوان:** ${state.mapLocation.label || 'غير محدد'}\n- **الإحداثيات:** خط العرض ${state.mapLocation.lat.toFixed(6)}، خط الطول ${state.mapLocation.lng.toFixed(6)}`);
+    }
+
+    // 8. User prompt
+    if (userQ) {
+        parts.push(`## طلب التحليل\n${userQ}`);
+    } else {
+        const tmNote = state.hasTrainingModel
+            ? ` — اتبع هيكل نموذج التدريب المرفق (${state.trainingName}) في بناء التقرير.`
+            : '';
+        parts.push(`## طلب التحليل\nقدّم تحليلاً شاملاً للأصل العقاري وفق دور "${roleName(role)}" ومعايير السوق المحدد.${tmNote}`);
+    }
+
+    return parts.join('\n\n---\n\n');
+}
+
+// Helper label maps
+function roleName(v)    { return { BankAuditor:'مدقق بنكي', Valuer:'خبير تقييم', Appraiser:'مثمن عقاري', Investor:'مستثمر', TaxOfficial:'مسؤول ضريبي' }[v] || v; }
+function assetName(v)   { return { residential:'سكني', commercial:'تجاري', land:'أرض فضاء', historical:'تاريخي', agricultural:'زراعي', under_construction:'تحت الإنشاء', industrial:'صناعي', hospitality:'فندقي', retail:'تجزئة', healthcare:'صحي', educational:'تعليمي' }[v] || v; }
+function dateName(v)    { return { current:'حالي', retrospective:'رجعي', prospective:'استشرافي' }[v] || v; }
+function marketName(v)  { return { egypt:'مصر — EFSA/IVS', ksa:'السعودية — TAQEEM/IVS', auto:'اكتشاف تلقائي' }[v] || v; }
+function purposeName(v) { return { fair_market_value:'القيمة السوقية العادلة', bank_financing:'تمويل بنكي', acquisition:'استحواذ', investment_analysis:'تحليل استثماري', rental_arbitration:'تحكيم إيجاري', insurance:'تأميني', judicial_liquidation:'قضائي / تصفية' }[v] || v; }
+
+// ─────────────────────────────────────────────────────────
+//  GEMINI API CALL — Exponential Backoff
+// ─────────────────────────────────────────────────────────
+async function callGeminiAPI(userPrompt, systemInstruction) {
+    if (!_apiKey) {
+        openKeyModal();
+        throw new Error('مفتاح API غير موجود — أدخله أولاً من زر الإعداد');
+    }
+
+    const body = {
+        system_instruction: {
+            parts: [{ text: systemInstruction }]
+        },
+        contents: [
+            { role: 'user', parts: [{ text: userPrompt }] }
+        ],
+        generationConfig: {
+            temperature:     0.35,
+            topK:            40,
+            topP:            0.9,
+            maxOutputTokens: 4096
+        },
+        safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+        ]
+    };
+
+    const MAX_RETRIES = 4;
+    const BASE_DELAY  = 800;
+
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const res = await fetch(`${GEMINI_URL}?key=${_apiKey}`, {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(body)
+            });
+
+            // Retryable
+            if ([429, 500, 502, 503].includes(res.status)) {
+                if (attempt === MAX_RETRIES) throw new Error(`Gemini Error ${res.status} بعد ${MAX_RETRIES} محاولات`);
+                const delay = BASE_DELAY * Math.pow(2, attempt) + Math.random() * 400;
+                console.warn(`Gemini ${res.status} — retry ${attempt + 1} after ${Math.round(delay)}ms`);
+                await sleep(delay);
+                continue;
+            }
+
+            if (!res.ok) {
+                const errJson = await res.json().catch(() => ({}));
+                throw new Error(errJson?.error?.message || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) throw new Error('الاستجابة فارغة — حاول مجدداً');
+            return text;
+
+        } catch (err) {
+            if (attempt === MAX_RETRIES || err.message.startsWith('Gemini Error') || err.message.startsWith('HTTP')) throw err;
+            const delay = BASE_DELAY * Math.pow(2, attempt) + Math.random() * 400;
+            console.warn(`Network error retry ${attempt + 1} after ${Math.round(delay)}ms`, err.message);
+            await sleep(delay);
+        }
+    }
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ─────────────────────────────────────────────────────────
+//  MAIN ANALYSIS RUNNER
+// ─────────────────────────────────────────────────────────
+async function runAnalysis() {
+    if (!_apiKey) { openKeyModal(); return; }
+
+    const btn = document.getElementById('sendBtn');
+    const responseDiv  = document.getElementById('aiResponse');
+    const responseText = document.getElementById('responseText');
+    const actionRow    = document.getElementById('actionRow');
+    const roleTag      = document.getElementById('roleTag');
+
+    // ── Loading state ──
+    btn.disabled  = true;
+    btn.innerHTML = '<span class="spin">⟳</span> جاري التحليل...';
+
+    responseDiv.classList.remove('hidden');
+    actionRow.style.display = 'none';
+    responseText.innerHTML  = `
+        <div style="display:flex;align-items:center;gap:1rem;padding:2rem;justify-content:center;flex-direction:column;">
+            <div style="width:48px;height:48px;border-radius:50%;border:3px solid rgba(255,215,0,0.15);border-top-color:#FFD700;animation:rotation 0.9s linear infinite;"></div>
+            <div style="color:#888;font-size:0.9rem;">جاري التحليل بواسطة Gemini 1.5 Flash...</div>
+        </div>`;
+
+    // Set role tag
+    roleTag.textContent = roleName(document.getElementById('role').value);
+
+    try {
+        const market  = document.getElementById('market').value;
+        const role    = document.getElementById('role').value;
+        const sysInst = buildSystemPrompt(role, market);
+        const context = assembleContext();
+
+        const result = await callGeminiAPI(context, sysInst);
+        state.lastResult = result;
+
+        // ── Render Markdown ──
+        responseText.innerHTML = marked.parse(result);
+        actionRow.style.display = 'flex';
+
+    } catch (err) {
+        responseText.innerHTML = `
+            <div style="color:#ef4444;padding:1rem;background:rgba(239,68,68,0.08);border-radius:8px;border:1px solid rgba(239,68,68,0.3);">
+                ⚠️ خطأ: ${escHtml(err.message)}
+            </div>`;
+    } finally {
+        btn.disabled  = false;
+        btn.innerHTML = '⚡ تحليل بواسطة AI';
+        responseDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+//  FILE EXTRACTION ENGINE
+// ─────────────────────────────────────────────────────────
+async function handleFile(event, module) {
+    const file = event.target.files[0];
+    if (file) await processFile(file, module);
+}
+
+async function handleDrop(event, module) {
+    event.preventDefault();
+    const zone = document.getElementById(module === 'sim' ? 'simZone' : 'dataZone');
+    zone.classList.remove('drag-over');
+    const file = event.dataTransfer.files[0];
+    if (file) await processFile(file, module);
+}
+
+async function processFile(file, module) {
+    const MAX_MB = 15;
+    if (file.size > MAX_MB * 1024 * 1024) {
+        setStatus(module, `حجم الملف يتجاوز ${MAX_MB} MB`, 'err');
+        return;
+    }
+
+    const progressWrap = document.getElementById(module + 'Progress');
+    const progressFill = document.getElementById(module + 'ProgressFill');
+
+    progressWrap.classList.add('show');
+    progressFill.style.width = '20%';
+    setStatus(module, 'جاري القراءة...', 'info');
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    let text = '';
+
+    try {
+        if (ext === 'pdf') {
+            text = await extractPDF(file, prog => {
+                progressFill.style.width = (20 + prog * 0.8) + '%';
+            });
+        } else if (['xlsx', 'xls'].includes(ext)) {
+            progressFill.style.width = '60%';
+            text = await extractExcel(file);
+        } else if (['csv', 'txt', 'docx', 'json'].includes(ext)) {
+            progressFill.style.width = '60%';
+            text = await extractText(file, ext);
+        } else {
+            text = `[ملف: ${file.name} | النوع: ${file.type} | الحجم: ${(file.size/1024).toFixed(1)} KB]\nنوع الملف غير مدعوم للاستخراج النصي.`;
+        }
+
+        progressFill.style.width = '100%';
+
+        if (module === 'sim') {
+            state.simText = text;
+            state.simName = file.name;
+        } else {
+            state.dataText = text;
+            state.dataName = file.name;
+        }
+
+        const words = text.split(/\s+/).filter(Boolean).length;
+        setStatus(module, `✔ ${file.name} (${words.toLocaleString()} كلمة)`, 'ok');
+
+        // Show clip-loaded indicator
+        const loaded = document.getElementById(module + 'Loaded');
+        const fnEl   = document.getElementById(module + 'Fn');
+        if (loaded && fnEl) { fnEl.textContent = file.name; loaded.classList.add('show'); }
+
+        setTimeout(() => { progressWrap.classList.remove('show'); progressFill.style.width = '0%'; }, 1200);
+
+    } catch (err) {
+        setStatus(module, `خطأ: ${err.message}`, 'err');
+        progressWrap.classList.remove('show');
+    }
+}
+
+// PDF extraction using PDF.js — reads via FileReader (ArrayBuffer)
+async function extractPDF(file, onProgress) {
+    const buf = await readFileAsArrayBuffer(file);
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const maxPages = Math.min(pdf.numPages, 30);
+    let text = '';
+    for (let i = 1; i <= maxPages; i++) {
+        const page    = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(t => t.str).join(' ') + '\n';
+        if (onProgress) onProgress((i / maxPages) * 100);
+    }
+    if (pdf.numPages > 30) text += `\n[محدود بـ 30 صفحة من ${pdf.numPages} صفحة]`;
+    return text.trim() || '[PDF فارغ من النصوص القابلة للاستخراج]';
+}
+
+// Excel extraction using SheetJS — reads via FileReader (ArrayBuffer)
+async function extractExcel(file) {
+    const buf  = await readFileAsArrayBuffer(file);
+    const wb   = XLSX.read(buf, { type: 'array' });
+    const parts = [];
+    for (const sheetName of wb.SheetNames) {
+        const ws   = wb.Sheets[sheetName];
+        const csv  = XLSX.utils.sheet_to_csv(ws, { skipHidden: true });
+        if (csv.trim()) {
+            parts.push(`### ورقة: ${sheetName}\n${csv}`);
+        }
+    }
+    return parts.join('\n\n') || '[الملف فارغ]';
+}
+
+// Plain text / CSV / DOCX — uses FileReader for broad browser compatibility
+async function extractText(file, ext) {
+    const raw = await readFileAsText(file);   // FileReader-based helper
+    if (ext === 'docx') {
+        // Strip XML tags (best-effort without mammoth.js)
+        return raw.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ').slice(0, 12000);
+    }
+    return raw;
+}
+
+// FileReader wrapper — returns a Promise<string>
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('FileReader: فشل قراءة الملف'));
+        reader.readAsText(file, 'UTF-8');
+    });
+}
+
+// FileReader wrapper — returns a Promise<ArrayBuffer> (used by PDF.js & SheetJS)
+function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result);
+        reader.onerror = () => reject(new Error('FileReader: فشل قراءة الملف كـ ArrayBuffer'));
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// ─────────────────────────────────────────────────────────
+//  LOGIC GATE — Sector & Purpose
+// ─────────────────────────────────────────────────────────
+const _sectorLabels = {
+    residential:'🏠 سكني', commercial:'🏬 تجاري', industrial:'🏭 صناعي',
+    agricultural:'🌾 زراعي', hospitality:'🏨 فندقي', retail:'🛍️ تجزئة',
+    healthcare:'🏥 صحي', educational:'🏫 تعليمي'
+};
+const _purposeLabels = {
+    fair_market_value:'⚖️ قيمة سوقية', bank_financing:'🏦 تمويل بنكي',
+    acquisition:'🤝 استحواذ', investment_analysis:'📈 استثماري',
+    rental_arbitration:'📝 إيجاري', insurance:'🛡️ تأميني',
+    judicial_liquidation:'🔨 قضائي',
+    tax_assessment:'🏛 ضريبي', financial_reporting:'📊 IFRS 13'
+};
+
+function setSector(btn) {
+    document.querySelectorAll('#sectorRow .icon-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sector = btn.dataset.sector;
+    document.getElementById('asset').value = sector;
+    document.getElementById('crumbSector').textContent = _sectorLabels[sector] || sector;
+    document.getElementById('crumbDefault').style.display = 'none';
+}
+
+function setPurpose(btn) {
+    document.querySelectorAll('#purposeRow .icon-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const purpose = btn.dataset.purpose;
+    document.getElementById('purpose').value = purpose;
+    document.getElementById('crumbPurpose').textContent = _purposeLabels[purpose] || purpose;
+    document.getElementById('crumbDefault').style.display = 'none';
+}
+
+function resetRoute() {
+    document.querySelectorAll('#sectorRow .icon-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.sector === 'residential'));
+    document.querySelectorAll('#purposeRow .icon-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.purpose === 'fair_market_value'));
+    document.getElementById('asset').value   = 'residential';
+    document.getElementById('purpose').value = 'fair_market_value';
+    document.getElementById('crumbSector').textContent  = '🏠 سكني';
+    document.getElementById('crumbPurpose').textContent = '⚖️ قيمة سوقية';
+    document.getElementById('crumbStyle').style.display = 'none';
+    document.getElementById('crumbDefault').style.display = '';
+}
+
+function clearClip(module) {
+    const loaded = document.getElementById(module + 'Loaded');
+    if (loaded) loaded.classList.remove('show');
+    if (module === 'sim') { state.simText = ''; state.simName = ''; }
+    else { state.dataText = ''; state.dataName = ''; }
+    setStatus(module, '', 'info');
+}
+
+// ─────────────────────────────────────────────────────────
+//  TRAINING CLIP — Master Template (Module 3)
+// ─────────────────────────────────────────────────────────
+async function handleTrainingUpload(file) {
+    if (!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xlsm'].includes(ext)) {
+        _setTrainingStatus('⚠ يُقبل فقط ملفات .xlsx أو .xlsm', 'err');
+        return;
+    }
+
+    _setTrainingStatus('جاري تحليل هيكل النموذج...', 'info');
+
+    try {
+        // Extract structure text via SheetJS (same as existing extractExcel)
+        const text = await extractExcel(file);
+
+        // Persist to state
+        state.trainingName     = file.name;
+        state.trainingText     = text;
+        state.hasTrainingModel = true;
+
+        // Notify backend — fire-and-forget (non-blocking)
+        fetch('/api/training/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename:   file.name,
+                sheet_text: text.slice(0, 8000),   // first 8k chars for backend indexing
+                uploaded_by: 'هشام المهدي'
+            })
+        }).catch(() => {});   // backend optional — UI works even if endpoint absent
+
+        // Apply gold glow to card
+        const card = document.getElementById('trainingCard');
+        if (card) card.classList.add('training-linked');
+
+        // Show loaded indicator with success styling
+        const loaded = document.getElementById('trainingLoaded');
+        const fnEl   = document.getElementById('trainingFn');
+        if (loaded && fnEl) {
+            fnEl.textContent = file.name;
+            loaded.classList.add('show');
+        }
+
+        _setTrainingStatus('[ تم الربط بنجاح مع نموذج المهندس هشام ✅ ]', 'ok');
+
+        // Glow the toolbar Training button too
+        _toolbarGlow('itbTraining');
+
+    } catch (err) {
+        _setTrainingStatus(`خطأ في قراءة الملف: ${err.message}`, 'err');
+    }
+}
+
+function clearTrainingClip() {
+    state.trainingName     = '';
+    state.trainingText     = '';
+    state.hasTrainingModel = false;
+
+    const card   = document.getElementById('trainingCard');
+    const loaded = document.getElementById('trainingLoaded');
+
+    if (card)   card.classList.remove('training-linked');
+    if (loaded) loaded.classList.remove('show');
+    // Reset BOTH inputs so re-upload of the same file fires onchange again
+    ['fileTraining', 'trainingInput'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    _setTrainingStatus('', 'info');
+    _toolbarClear('itbTraining');
+}
+
+function _setTrainingStatus(msg, type) {
+    const el = document.getElementById('trainingStatus');
+    if (!el) return;
+    el.innerHTML = msg
+        ? `<span class="status-badge ${type}" style="font-size:0.75rem;white-space:normal;">${msg}</span>`
+        : '';
+}
+
+// Status badge helper
+function setStatus(module, msg, type) {
+    const el = document.getElementById(module + 'Status');
+    el.innerHTML = `<span class="status-badge ${type}">${msg}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOOLBAR HELPERS
+// ═══════════════════════════════════════════════════════════
+
+// Glow + badge a toolbar button and refresh the summary line
+function _toolbarGlow(btnId) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('glowing');
+    _updateToolbarSummary();
+}
+function _toolbarClear(btnId) {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.remove('glowing');
+    _updateToolbarSummary();
+}
+function _updateToolbarSummary() {
+    const parts = [];
+    if (state.hasTrainingModel)      parts.push('نموذج تدريب ✅');
+    if (state.docFiles.length)       parts.push(`${state.docFiles.length} وثيقة ✅`);
+    if (state.imageFiles.length)     parts.push(`${state.imageFiles.length} صورة ✅`);
+    if (state.mapLocation)           parts.push('موقع ✅');
+    const el = document.getElementById('toolbarSummary');
+    if (el) el.textContent = parts.join(' · ');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  (2) DOCUMENTS UPLOAD — handleDocUpload
+//  يقرأ الوثائق محلياً + يرسلها للخادم عبر /api/ingest
+// ═══════════════════════════════════════════════════════════
+async function handleDocUpload(files) {
+    if (!files || !files.length) return;
+    showToast(`📄 جاري قراءة ${files.length} وثيقة...`);
+    state.docFiles = [];
+
+    for (const file of Array.from(files)) {
+        try {
+            const ext = file.name.split('.').pop().toLowerCase();
+            let text = '';
+            if (ext === 'pdf') {
+                text = await extractPDF(file, () => {});
+            } else if (['xlsx','xls','xlsm'].includes(ext)) {
+                text = await extractExcel(file);
+            } else {
+                text = await extractText(file, ext);
+            }
+            state.docFiles.push({ name: file.name, text });
+
+            // ── POST to /api/ingest (server-side backup) ──────────
+            _ingestFileToServer(file).catch(() => {});   // fire-and-forget
+
+        } catch (e) {
+            state.docFiles.push({ name: file.name, text: `[خطأ في القراءة: ${e.message}]` });
+        }
+    }
+    _toolbarGlow('itbDocs');
+    showToast(`✅ تم إرفاق ${state.docFiles.length} وثيقة بنجاح`);
+
+    // ── إضافة بطاقة في شاشة الدردشة ─────────────────────
+    _addChatBadge(
+        `📄 تم إرفاق ${state.docFiles.length} وثيقة`,
+        state.docFiles.map(d => d.name).join(' · '),
+        'doc'
+    );
+}
+
+/**
+ * يرفع الملف للخادم عبر /api/ingest (multipart/form-data)
+ * لا يُعطّل العمل — fire-and-forget
+ */
+async function _ingestFileToServer(file) {
+    try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('type', 'document');
+        const r = await fetch(_BACKEND + '/api/ingest', {
+            method: 'POST',
+            body:   fd,
+            signal: AbortSignal.timeout(30000),
+        });
+        const d = await r.json();
+        if (d.status === 'success') {
+            console.log(`[ingest] ✓ ${file.name} → ${d.saved_as}`);
+        }
+    } catch (e) {
+        console.warn(`[ingest] ✗ ${file.name}: ${e.message}`);
+    }
+}
+
+/**
+ * يضيف بطاقة حالة مصغّرة في منطقة المحادثة
+ * @param {string} title   العنوان الرئيسي
+ * @param {string} detail  تفاصيل إضافية
+ * @param {string} type    'doc' | 'img' | 'geo' | 'fraud'
+ */
+function _addChatBadge(title, detail, type) {
+    const chatBox = document.getElementById('chatMessages');
+    if (!chatBox) return;
+
+    const colors = {
+        doc:   { bg: 'rgba(255,215,0,0.06)', border: 'rgba(255,215,0,0.25)', color: '#D4AF37', icon: '📄' },
+        img:   { bg: 'rgba(56,189,248,0.06)', border: 'rgba(56,189,248,0.25)', color: '#38bdf8', icon: '📷' },
+        geo:   { bg: 'rgba(56,189,248,0.06)', border: 'rgba(56,189,248,0.25)', color: '#38bdf8', icon: '🛰' },
+        fraud: { bg: 'rgba(248,113,113,0.06)', border: 'rgba(248,113,113,0.25)', color: '#f87171', icon: '🔍' },
+        intel: { bg: 'rgba(74,222,128,0.06)', border: 'rgba(74,222,128,0.25)', color: '#4ade80', icon: '🧠' },
+    };
+    const c = colors[type] || colors.doc;
+
+    const div = document.createElement('div');
+    div.className = 'chat-msg bot';
+    div.innerHTML = `<div style="background:${c.bg};border:1px solid ${c.border};
+        border-radius:12px;padding:0.6rem 0.9rem;display:flex;align-items:center;gap:0.6rem;
+        animation:fadeIn 0.25s ease;">
+        <span style="font-size:1.2rem;">${c.icon}</span>
+        <div>
+            <div style="color:${c.color};font-weight:700;font-size:0.82rem;">${escHtml(title)}</div>
+            ${detail ? `<div style="color:#667799;font-size:0.74rem;margin-top:0.15rem;">${escHtml(detail)}</div>` : ''}
+        </div>
+    </div>`;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  حزمة الاستخبارات — Auto-triggered Intelligence Suite
+//  يُستدعى تلقائياً بعد الرفع أو عند طلب التحليل
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * المُحقق الرقمي — يكشف عن شذوذ الأسعار بناءً على Z-Score
+ * @param {number} ppm    سعر المتر المدخل
+ * @param {string} loc    الموقع
+ * @param {string} ptype  نوع العقار
+ */
+async function runFraudCheck(ppm, loc, ptype) {
+    if (!ppm || ppm <= 0) return;
+    try {
+        const r = await fetch(_BACKEND + '/api/fraud/detect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                price_per_meter: ppm,
+                location: loc || '',
+                property_type: ptype || '',
+            }),
+            signal: AbortSignal.timeout(10000),
+        });
+        const d = await r.json();
+        if (d.status === 'success' && d.risk_level) {
+            const riskColors = {
+                HIGH:    '#f87171',
+                MEDIUM:  '#fbbf24',
+                LOW:     '#4ade80',
+            };
+            const riskColor = riskColors[d.risk_level] || '#667799';
+            const label     = d.risk_level === 'HIGH' ? '⚠ تحذير عالٍ'
+                            : d.risk_level === 'MEDIUM' ? '⚠ تحذير متوسط'
+                            : '✅ طبيعي';
+            _addChatBadge(
+                `🔍 المُحقق الرقمي: ${label} — Z-Score: ${(d.z_score||0).toFixed(2)}`,
+                d.detail || `نسبة الثقة: ${Math.round((d.confidence||0)*100)}% | ${d.recommendation || ''}`,
+                'fraud'
+            );
+        }
+    } catch { /* silent */ }
+}
+
+/**
+ * رادار الهجرة العقارية — POI density + urban sprawl prediction
+ * @param {string} loc       الموقع
+ * @param {number} lat/lng   إحداثيات
+ */
+async function runDemographicRadar(loc, lat, lng) {
+    if (!loc && !lat) return;
+    try {
+        const r = await fetch(_BACKEND + '/api/demographic/flow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location: loc, lat, lng, investment_horizon_yr: 5 }),
+            signal: AbortSignal.timeout(15000),
+        });
+        const d = await r.json();
+        if (d.status === 'success') {
+            const direction = d.sprawl_direction || d.flow_direction || '';
+            const growth    = d.growth_forecast  || '';
+            const poi_score = d.poi_density_score || 0;
+            _addChatBadge(
+                `🏗 رادار الهجرة العقارية: ${direction}`,
+                `كثافة POI: ${poi_score}/10 | ${growth}`,
+                'intel'
+            );
+        }
+    } catch { /* silent */ }
+}
+
+/**
+ * الاستحقاق القانوني — تحذيرات مخاطر لمسار التمويل البنكي
+ * @param {string} purpose   مسار التقييم
+ * @param {object} geoData   نتائج التحليل الجيوتقني
+ */
+function addBankFinancingWarnings(purpose, geoData) {
+    if (purpose !== 'bank_financing' || !geoData) return;
+    const warnings = [];
+    if (geoData.flood_risk && geoData.flood_risk.includes('مرتفع')) {
+        warnings.push('⚠ العقار يقع في منطقة معرضة للسيول — خطر على الضمان البنكي');
+    }
+    if (geoData.seismic_risk && geoData.seismic_risk.includes('متوسط')) {
+        warnings.push('⚠ نشاط زلزالي متوسط — يُنصح بالتأمين الشامل');
+    }
+    if ((geoData.risk_score || 0) >= 6) {
+        warnings.push(`⚠ درجة مخاطر جيوتقنية مرتفعة (${geoData.risk_score}/10) — قد يرفض البنك الضمان`);
+    }
+    if (warnings.length > 0) {
+        _addChatBadge(
+            `🏦 تحذيرات التمويل البنكي (${warnings.length})`,
+            warnings.join(' | '),
+            'fraud'
+        );
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  (3) IMAGE UPLOAD — handleImageUpload
+//  يُرفق الصور محلياً + يرسلها للتصنيف عبر /api/image/analyze
+// ═══════════════════════════════════════════════════════════
+async function handleImageUpload(files) {
+    if (!files || !files.length) return;
+    state.imageFiles = [];
+    const reads = Array.from(files).map(file => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = e => resolve({ name: file.name, dataUrl: e.target.result, file });
+        reader.onerror = () => resolve({ name: file.name, dataUrl: null, file });
+        reader.readAsDataURL(file);
+    }));
+    state.imageFiles = await Promise.all(reads);
+
+    // ── POST each image to /api/image/analyze for auto-tagging ──
+    const tags = [];
+    for (const img of state.imageFiles) {
+        if (!img.file) continue;
+        try {
+            const fd = new FormData();
+            fd.append('file', img.file);
+            const r = await fetch(_BACKEND + '/api/image/analyze', {
+                method: 'POST', body: fd,
+                signal: AbortSignal.timeout(15000),
+            });
+            const d = await r.json();
+            if (d.status === 'success') {
+                img.tag      = d.tag;
+                img.order    = d.report_order;
+                img.has_gps  = d.has_gps;
+                tags.push(`${d.tag}${d.has_gps ? ' 📍' : ''}`);
+            }
+        } catch { /* silent */ }
+    }
+
+    // sort by report order
+    state.imageFiles.sort((a,b) => (a.order ?? 99) - (b.order ?? 99));
+    _toolbarGlow('itbImages');
+    const tagSummary = tags.length ? ' — [' + tags.join(', ') + ']' : '';
+    showToast(`✅ تم إرفاق ${state.imageFiles.length} صورة${tagSummary}`);
+
+    // ── بطاقة في شاشة الدردشة ──
+    _addChatBadge(
+        `📷 تم إرفاق ${state.imageFiles.length} صورة — تصنيف ذكي`,
+        tags.length ? `التصنيفات: ${tags.join(' · ')}` : state.imageFiles.map(f=>f.name).join(' · '),
+        'img'
+    );
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GEO-MAP FAST-TRACK — handleGeoMapUpload
+//  مسار سريع للخرائط الجوية والكروكيات الجيوتقنية
+// ═══════════════════════════════════════════════════════════
+const GEO_ANALYZE_URL = _BACKEND + '/api/image/geo-analyze';
+
+async function handleGeoMapUpload(files) {
+    if (!files || !files.length) return;
+    const file = files[0];  // single aerial image / sketch
+
+    const btn = document.getElementById('itbGeoMap');
+
+    // ── 1. Start pulse animation ─────────────────────────
+    btn.classList.add('geo-analyzing');
+    _toolbarGlow('itbGeoMap');
+
+    // ── 2. Insert "analyzing" placeholder card in chat ───
+    const chatBox   = document.getElementById('chatMessages');
+    const pendingId = 'geoPending_' + Date.now();
+    const pending   = _insertGeoPendingCard(chatBox, pendingId, file.name);
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+
+    // ── 3. Read file as base64 ────────────────────────────
+    let b64 = null;
+    try {
+        b64 = await _fileToBase64(file);
+    } catch (err) {
+        _replaceGeoPendingCard(pendingId, _geoErrorCard('فشل في قراءة الملف: ' + err.message));
+        btn.classList.remove('geo-analyzing');
+        return;
+    }
+
+    // ── 4. POST to /api/image/analyze ────────────────────
+    try {
+        const resp = await fetch(GEO_ANALYZE_URL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                image_b64: b64,
+                filename:  file.name,
+                file_type: file.type,
+                sector:    document.getElementById('asset')?.value || 'residential',
+                purpose:   document.getElementById('purpose')?.value || 'fair_market_value',
+            }),
+            signal:  AbortSignal.timeout(90000),
+        });
+        const data = await resp.json();
+
+        if (data.status === 'success') {
+            _replaceGeoPendingCard(pendingId, _buildGeoResultCard(data.result, file.name));
+
+            // ── 5. Auto-inject hidden prompt into chat advisor ──
+            const autoQ = `تم رفع الخريطة الجوية "${file.name}". ابدأ فوراً في استخراج إحداثيات GPS وتحليل المخاطر الجيوتقنية (التربة، السيول، الزلازل) لهذا الموقع.`;
+            _autoSendToAdvisor(autoQ, data.result);
+        } else {
+            _replaceGeoPendingCard(pendingId, _geoErrorCard(data.message || 'خطأ في التحليل'));
+        }
+    } catch (err) {
+        const msg = err.name === 'TimeoutError'
+            ? 'انتهت مهلة التحليل (90 ثانية) — تأكد من تشغيل الخادم'
+            : (err.message.includes('fetch') ? 'تعذّر الاتصال بالخادم على المنفذ 5000' : err.message);
+        _replaceGeoPendingCard(pendingId, _geoErrorCard(msg));
+    } finally {
+        btn.classList.remove('geo-analyzing');
+    }
+}
+
+// ── helper: convert File to base64 ─────────────────────
+function _fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result.split(',')[1]);  // strip data URL prefix
+        reader.onerror = e => reject(new Error('FileReader error'));
+        reader.readAsDataURL(file);
+    });
+}
+
+// ── helper: pending card ──────────────────────────────
+function _insertGeoPendingCard(chatBox, pendingId, filename) {
+    if (!chatBox) return null;
+    const div = document.createElement('div');
+    div.id = pendingId;
+    div.className = 'chat-msg bot';
+    div.innerHTML = `
+        <div class="geo-analyzing-card">
+            <span class="spin">🛰</span>
+            <div>
+                <div style="font-weight:700;margin-bottom:0.2rem;">[تحليل مكاني وجيوتقني جارٍ...]</div>
+                <div style="font-size:0.75rem;color:#4a7090;">📂 ${escHtml(filename)} — جارٍ استخراج الإحداثيات وتحليل التربة والمخاطر</div>
+            </div>
+        </div>`;
+    chatBox.appendChild(div);
+    return div;
+}
+
+// ── helper: replace pending card with result ──────────
+function _replaceGeoPendingCard(pendingId, html) {
+    const el = document.getElementById(pendingId);
+    if (el) el.outerHTML = html;
+    const chatBox = document.getElementById('chatMessages');
+    if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// ── helper: build result card ─────────────────────────
+function _buildGeoResultCard(r, filename) {
+    const riskClass = 'risk-' + (r.geotechnical_risk_level || 'UNKNOWN').toUpperCase().replace(/\s+/g,'_');
+    const coords    = r.gps_coordinates || {};
+    const hasCoords = coords.lat && coords.lng;
+
+    const rows = [
+        ['📍 الإحداثيات', hasCoords
+            ? `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`
+            : (r.coordinates_note || 'لا توجد بيانات GPS في الصورة')],
+        ['🗺 المنطقة المُكتشفة', r.location_guess || '—'],
+        ['🪨 نوع التربة المُقدَّر', r.soil_type || '—'],
+        ['💧 خطر الفيضانات', r.flood_risk || '—'],
+        ['🌋 خطر الزلازل', r.seismic_risk || '—'],
+        ['☀ خطر الحرارة / الجفاف', r.heat_risk || '—'],
+        ['⚠ المخاطر الجيوتقنية', r.geotechnical_summary || '—'],
+        ['📐 مساحة مُقدَّرة (م²)', r.estimated_area_sqm ? r.estimated_area_sqm.toLocaleString() : '—'],
+        ['🏗 قابلية البناء', r.buildability || '—'],
+        ['📊 درجة المخاطر الإجمالية', r.risk_score ? `${r.risk_score}/10` : '—'],
+    ].map(([k, v]) => `
+        <div class="geo-field">
+            <span class="geo-key">${k}</span>
+            <span class="geo-val">${escHtml(String(v))}</span>
+        </div>`).join('');
+
+    return `<div class="chat-msg bot">
+        <div class="geo-chat-card">
+            <div class="geo-card-title">
+                🛰 نتائج التحليل المكاني والجيوتقني
+                <span style="font-size:0.72rem;color:#4a7090;font-weight:400;">— ${escHtml(filename)}</span>
+            </div>
+            <div style="display:inline-flex;align-items:center;gap:0.4rem;
+                        padding:0.2rem 0.7rem;border-radius:50px;margin-bottom:0.7rem;
+                        background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);">
+                <span style="font-size:0.75rem;color:#8899aa;">مستوى المخاطر:</span>
+                <strong class="${riskClass}" style="font-size:0.82rem;">
+                    ${escHtml(r.geotechnical_risk_level || 'غير محدد')}
+                </strong>
+            </div>
+            ${rows}
+            ${r.recommendations ? `
+            <div style="margin-top:0.7rem;padding:0.6rem;background:rgba(56,189,248,0.05);
+                        border-radius:8px;border-right:3px solid rgba(56,189,248,0.4);">
+                <div style="color:#38bdf8;font-size:0.75rem;font-weight:700;margin-bottom:0.3rem;">💡 التوصيات</div>
+                <div style="color:#aabcc8;font-size:0.78rem;line-height:1.75;">${escHtml(r.recommendations)}</div>
+            </div>` : ''}
+        </div>
+        <div class="msg-meta">
+            <span class="meta-pill">geo_risk_engine v1</span>
+            <span class="meta-pill">ExifGPS</span>
+            ${r.confidence ? `<span class="meta-pill conf-${r.confidence>=0.7?'high':r.confidence>=0.4?'mid':'low'}">ثقة ${Math.round(r.confidence*100)}%</span>` : ''}
+        </div>
+    </div>`;
+}
+
+// ── helper: error card ────────────────────────────────
+function _geoErrorCard(msg) {
+    return `<div class="chat-msg bot">
+        <div class="geo-analyzing-card" style="border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.04);">
+            <span>⚠</span>
+            <div>
+                <div style="color:#f87171;font-weight:700;">فشل التحليل الجيوتقني</div>
+                <div style="font-size:0.75rem;color:#667799;">${escHtml(msg)}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ── helper: auto-send to RAG advisor ──────────────────
+async function _autoSendToAdvisor(question, geoResult) {
+    // Only fire if advisor chat is mounted
+    if (typeof sendAdvisor !== 'function') return;
+    const inp = document.getElementById('advisorInput');
+    if (!inp) return;
+    // Build enriched question
+    const coords = geoResult?.gps_coordinates;
+    const loc    = geoResult?.location_guess || '';
+    const risk   = geoResult?.geotechnical_risk_level || '';
+    inp.value = question
+        + (loc   ? `\nالموقع المُكتشف: ${loc}` : '')
+        + (risk  ? `\nمستوى المخاطر: ${risk}` : '')
+        + (coords ? `\nالإحداثيات: ${coords.lat?.toFixed(5)}, ${coords.lng?.toFixed(5)}` : '');
+    // Trigger send after a brief visual pause
+    setTimeout(() => sendAdvisor(), 600);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  (4) MAP INTERFACE — openMapInterface / closeMapModal
+// ═══════════════════════════════════════════════════════════
+let _leafletMap = null;
+let _leafletMarker = null;
+let _pendingLatLng = null;
+
+function openMapInterface() {
+    document.getElementById('mapModalOverlay').classList.add('open');
+    // Initialise Leaflet only once
+    if (!_leafletMap) {
+        setTimeout(() => {
+            _leafletMap = L.map('mapContainer').setView([30.0444, 31.2357], 10); // Cairo default
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(_leafletMap);
+
+            _leafletMap.on('click', async function(e) {
+                const { lat, lng } = e.latlng;
+                _pendingLatLng = { lat, lng };
+
+                if (_leafletMarker) _leafletMarker.remove();
+                _leafletMarker = L.marker([lat, lng]).addTo(_leafletMap)
+                    .bindPopup('📌 الموقع المحدد').openPopup();
+
+                document.getElementById('mapCoords').textContent =
+                    `خط العرض: ${lat.toFixed(6)} | خط الطول: ${lng.toFixed(6)}`;
+
+                // Reverse geocode via Nominatim (OSM)
+                document.getElementById('mapLocName').textContent = 'جاري البحث...';
+                try {
+                    const r = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=ar`,
+                        { headers: { 'Accept-Language': 'ar' } }
+                    );
+                    const d = await r.json();
+                    const label = d.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    document.getElementById('mapLocName').textContent = label;
+                    _pendingLatLng.label = label;
+                } catch {
+                    document.getElementById('mapLocName').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                }
+            });
+        }, 120); // slight delay to let modal render before Leaflet init
+    } else {
+        // Refresh map size when modal re-opens
+        setTimeout(() => _leafletMap.invalidateSize(), 120);
+    }
+}
+
+function closeMapModal() {
+    document.getElementById('mapModalOverlay').classList.remove('open');
+}
+
+function confirmLocation() {
+    if (!_pendingLatLng) { showToast('انقر على الخريطة أولاً لتحديد الموقع'); return; }
+    state.mapLocation = { ..._pendingLatLng };
+
+    // Inject location into the main textarea as a context line
+    const ta = document.getElementById('userInput');
+    const locLine = `\n📍 الموقع الجغرافي للأصل: ${state.mapLocation.label || ''} (${state.mapLocation.lat.toFixed(5)}, ${state.mapLocation.lng.toFixed(5)})`;
+    if (!ta.value.includes('📍 الموقع الجغرافي')) {
+        ta.value = ta.value.trimEnd() + locLine;
+    }
+
+    _toolbarGlow('itbMap');
+    closeMapModal();
+    showToast('✅ تم تحديد الموقع وإضافته للسياق');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FILE TRIGGER FUNCTIONS
+//  Named wrappers so onclick="triggerX()" is unambiguous and never
+//  blocked by a parent <label> context or inline-script CSP guards.
+// ═══════════════════════════════════════════════════════════
+function triggerTrainingUpload() {
+    const el = document.getElementById('trainingInput');
+    if (el) { el.value = ''; el.click(); }
+}
+function triggerDocUpload() {
+    const el = document.getElementById('docInput');
+    if (el) { el.value = ''; el.click(); }
+}
+/**
+ * triggerImageUpload(type)
+ *  type = 'photos'  → regular property photos (imageInput)
+ *  type = 'geo_map' → aerial / sketch Fast-Track (geo-map-input)
+ */
+function triggerImageUpload(type) {
+    if (type === 'geo_map') {
+        const el = document.getElementById('geo-map-input');
+        if (el) { el.value = ''; el.click(); }
+    } else {
+        const el = document.getElementById('imageInput');
+        if (el) { el.value = ''; el.click(); }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  (5) VOICE COMMAND — startVoiceCommand (Web Speech API)
+// ═══════════════════════════════════════════════════════════
+let _recognition  = null;
+let _voiceActive  = false;
+let _voiceTimer   = null;   // auto-stop after 60 s silence guard
+
+// Human-readable error messages for Arabic UX
+const _VOICE_ERRORS = {
+    'not-allowed':     'تم رفض إذن الميكروفون — افتح إعدادات المتصفح وأذِن للموقع باستخدام الميكروفون.',
+    'no-speech':       'لم يُكتشف أي صوت — تأكد من عمل الميكروفون وتحدث بوضوح.',
+    'audio-capture':   'لا يوجد ميكروفون — تحقق من توصيل الجهاز.',
+    'network':         'خطأ في الشبكة أثناء التعرف على الصوت — تحقق من الاتصال.',
+    'aborted':         'تم إيقاف التسجيل.',
+    'service-not-allowed': 'خدمة التعرف على الصوت غير مصرّح بها في هذا المتصفح.',
+};
+
+function startVoiceCommand() {
+    const micBtn = document.getElementById('itbMic');
+
+    // ── Toggle: stop if already recording ──────────────────
+    if (_voiceActive) {
+        if (_recognition) _recognition.stop();
+        return;
+    }
+
+    // ── Browser support check ───────────────────────────────
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        showToast('⚠ متصفحك لا يدعم التعرف على الصوت — استخدم Google Chrome أو Microsoft Edge');
+        return;
+    }
+
+    // ── HTTPS / localhost guard (Speech API requires secure context) ──
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost'
+        && location.hostname !== '127.0.0.1') {
+        showToast('⚠ التعرف على الصوت يتطلب HTTPS أو localhost');
+        return;
+    }
+
+    // ── Setup ───────────────────────────────────────────────
+    _recognition = new SpeechRecognition();
+    _recognition.lang             = 'ar-EG';
+    _recognition.interimResults   = true;
+    _recognition.continuous       = true;
+    _recognition.maxAlternatives  = 1;
+
+    const ta           = document.getElementById('userInput');
+    let   interimStart = ta.value.length;   // cursor: where interim text begins
+
+    // ── Activate UI ─────────────────────────────────────────
+    _voiceActive = true;
+    _setMicUI(micBtn, true);
+    showToast('🎤 التسجيل الصوتي نشط — تحدث الآن... (اضغط مرة ثانية للإيقاف)');
+
+    // Auto-stop guard: 60 s max recording (avoids silent hang)
+    _voiceTimer = setTimeout(() => {
+        if (_recognition) _recognition.stop();
+    }, 60_000);
+
+    // ── onresult: live transcript ────────────────────────────
+    _recognition.onresult = function(event) {
+        let interim = '';
+        let finals  = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const t = event.results[i][0].transcript;
+            if (event.results[i].isFinal) finals += t + ' ';
+            else                          interim += t;
+        }
+        // Overwrite the "interim zone" in textarea live
+        ta.value = ta.value.slice(0, interimStart) + finals + interim;
+        // Advance cursor only after confirmed finals
+        if (finals) interimStart = ta.value.length - interim.length;
+        _resizeTextarea(ta);
+    };
+
+    // ── onerror ──────────────────────────────────────────────
+    _recognition.onerror = function(evt) {
+        const msg = _VOICE_ERRORS[evt.error]
+            || `خطأ في التسجيل الصوتي: ${evt.error}`;
+        showToast('⚠ ' + msg);
+        _stopVoice(micBtn);
+    };
+
+    // ── onend (fires on stop() or browser auto-stop) ─────────
+    _recognition.onend = function() {
+        _stopVoice(micBtn);
+    };
+
+    _recognition.start();
+}
+
+function _stopVoice(micBtn) {
+    clearTimeout(_voiceTimer);
+    _voiceActive = false;
+    // micBtn may be null if called before DOM ready — guard it
+    const btn = micBtn || document.getElementById('itbMic');
+    _setMicUI(btn, false);
+    if (!_voiceActive) showToast('✅ انتهى التسجيل الصوتي');
+}
+
+function _setMicUI(btn, active) {
+    if (!btn) return;
+    const lbl = btn.querySelector('span:not(.itb-ico):not(.itb-badge)');
+    if (active) {
+        btn.classList.add('mic-active');
+        if (lbl) lbl.textContent = 'إيقاف ■';
+    } else {
+        btn.classList.remove('mic-active');
+        if (lbl) lbl.textContent = 'ميكروفون';
+    }
+}
+
+function _resizeTextarea(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(ta.scrollHeight, 300) + 'px';
+}
+
+// Refresh toolbar summary on page load
+document.addEventListener('DOMContentLoaded', _updateToolbarSummary);
+
+// ─────────────────────────────────────────────────────────
+//  API KEY MODAL
+// ─────────────────────────────────────────────────────────
+function openKeyModal() {
+    const modal   = document.getElementById('keyModal');
+    const preview = document.getElementById('existingKeyPreview');
+    if (_apiKey) {
+        preview.style.display = 'block';
+        preview.textContent   = `✔ المفتاح الحالي: ${_apiKey.slice(0,8)}...${_apiKey.slice(-4)}`;
+        document.getElementById('keyInput').placeholder = 'اتركه فارغاً لإبقاء المفتاح الحالي';
+    } else {
+        preview.style.display = 'none';
+        document.getElementById('keyInput').placeholder = 'AIzaSy...';
+    }
+    modal.classList.add('open');
+    setTimeout(() => document.getElementById('keyInput').focus(), 100);
+}
+
+function closeKeyModal() {
+    document.getElementById('keyModal').classList.remove('open');
+    document.getElementById('keyInput').value = '';
+}
+
+function saveKey() {
+    const val = document.getElementById('keyInput').value.trim();
+    if (val) {
+        if (!val.startsWith('AIza') || val.length < 20) {
+            alert('المفتاح يبدو غير صحيح. تأكد من تنسيق AIzaSy...');
+            return;
+        }
+        _apiKey = val;
+        localStorage.setItem('gemini_api_key', val);
+    } else if (!_apiKey) {
+        alert('لم يتم إدخال مفتاح');
+        return;
+    }
+    updateKeyDot();
+    closeKeyModal();
+}
+
+function updateKeyDot() {
+    const dot   = document.getElementById('keyDot');
+    const label = document.getElementById('keyBtnLabel');
+    if (_apiKey) {
+        dot.style.background   = '#4ade80';
+        dot.style.boxShadow    = '0 0 6px #4ade80';
+        label.textContent      = 'مفتاح API محفوظ';
+    } else {
+        dot.style.background   = '#555';
+        dot.style.boxShadow    = 'none';
+        label.textContent      = 'إعداد مفتاح Gemini API';
+    }
+}
+
+// Close modal on backdrop click / Escape
+document.getElementById('keyModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('keyModal')) closeKeyModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeKeyModal(); });
+
+// ─────────────────────────────────────────────────────────
+//  ACTION BUTTONS
+// ─────────────────────────────────────────────────────────
+function copyResult() {
+    if (!state.lastResult) return;
+    navigator.clipboard.writeText(state.lastResult)
+        .then(() => flashBtn('copyResult', '✔ تم النسخ'))
+        .catch(() => alert('تعذّر النسخ — حاول يدوياً'));
+}
+
+function flashBtn(fn, label) {
+    // Simple inline feedback without full btn reference
+    const btns = document.querySelectorAll('.btn-action');
+    btns.forEach(b => { if (b.textContent.includes('نسخ')) { b.textContent = label; setTimeout(() => b.textContent = '📋 نسخ النص', 1800); } });
+}
+
+function clearResult() {
+    state.lastResult = '';
+    document.getElementById('aiResponse').classList.add('hidden');
+    document.getElementById('responseText').innerHTML = '';
+    document.getElementById('userInput').value = '';
+    document.getElementById('userInput').focus();
+}
+
+// ─────────────────────────────────────────────────────────
+//  UTILITIES
+// ─────────────────────────────────────────────────────────
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════════════
+//  RAG ADVISOR — المستشار العقاري الذكي
+// ═══════════════════════════════════════════════════════
+const ADVISOR_URL        = _BACKEND + '/api/advisor';
+const ADVISOR_HEALTH_URL = _BACKEND + '/api/advisor/health';
+
+let _advisorBusy = false;
+
+// ── Health check on load ─────────────────────────────
+async function checkAdvisorHealth() {
+    try {
+        const r = await fetch(ADVISOR_HEALTH_URL, { signal: AbortSignal.timeout(4000) });
+        const j = await r.json();
+        const dot  = document.getElementById('advisorDot');
+        const span = document.getElementById('advisorStatus');
+        if (j.rag_ready) {
+            dot.classList.add('live');
+            span.textContent = 'متصل — RAG جاهز';
+            span.style.color = '#4ade80';
+        } else {
+            span.textContent = 'متصل — RAG محدود';
+            span.style.color = '#FFD700';
+        }
+    } catch {
+        const span = document.getElementById('advisorStatus');
+        span.textContent = 'الخادم غير متصل';
+        span.style.color = '#f87171';
+    }
+}
+checkAdvisorHealth();
+
+// ── Append a message bubble ─────────────────────────
+function appendMsg(role, html, meta = null) {
+    const box = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${role}`;
+    div.innerHTML = html;
+    if (meta) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'msg-meta';
+
+        // confidence pill
+        if (meta.confidence !== undefined) {
+            const conf = Math.round(meta.confidence * 100);
+            const cls  = conf >= 70 ? 'conf-high' : conf >= 40 ? 'conf-mid' : 'conf-low';
+            const pill = document.createElement('span');
+            pill.className = `meta-pill ${cls}`;
+            pill.textContent = `ثقة ${conf}%`;
+            metaDiv.appendChild(pill);
+        }
+
+        // mode pill
+        if (meta.mode) {
+            const pill = document.createElement('span');
+            pill.className = 'meta-pill';
+            pill.textContent = meta.mode;
+            metaDiv.appendChild(pill);
+        }
+
+        // docs used
+        if (meta.docs_used) {
+            const pill = document.createElement('span');
+            pill.className = 'meta-pill';
+            pill.textContent = `${meta.docs_used} وثيقة`;
+            metaDiv.appendChild(pill);
+        }
+
+        // web hits
+        if (meta.web_hits) {
+            const pill = document.createElement('span');
+            pill.className = 'meta-pill';
+            pill.textContent = `${meta.web_hits} نتيجة ويب`;
+            metaDiv.appendChild(pill);
+        }
+
+        // elapsed
+        if (meta.elapsed_s) {
+            const pill = document.createElement('span');
+            pill.className = 'meta-pill';
+            pill.textContent = `${meta.elapsed_s}s`;
+            metaDiv.appendChild(pill);
+        }
+
+        div.appendChild(metaDiv);
+
+        // sources list
+        if (meta.sources && meta.sources.length > 0) {
+            const srcDiv = document.createElement('div');
+            srcDiv.className = 'sources-list';
+            srcDiv.innerHTML = '📎 المصادر: ' + meta.sources.slice(0, 4).map(s => `<span>${escHtml(s)}</span>`).join('');
+            div.appendChild(srcDiv);
+        }
+    }
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+}
+
+// ── Typing indicator ────────────────────────────────
+function showTyping() {
+    return appendMsg('bot typing', '<span class="spin">⏳</span>  جارٍ التحليل...');
+}
+
+// ── Quick question buttons ───────────────────────────
+function quickAsk(q) {
+    document.getElementById('advisorInput').value = q;
+    sendAdvisor();
+}
+
+// ── Enter key shortcut ──────────────────────────────
+function advisorKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAdvisor();
+    }
+}
+
+// ── Main send function ──────────────────────────────
+async function sendAdvisor() {
+    if (_advisorBusy) return;
+    const inp      = document.getElementById('advisorInput');
+    const question = inp.value.trim();
+    if (!question) return;
+
+    const useWeb   = document.getElementById('useWeb').checked;
+    const location = document.getElementById('advisorLocation').value.trim();
+
+    // Show user bubble
+    appendMsg('user', escHtml(question));
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    // Lock UI
+    _advisorBusy = true;
+    document.getElementById('advisorSend').disabled = true;
+    const typingBubble = showTyping();
+
+    try {
+        const resp = await fetch(ADVISOR_URL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                question,
+                location,
+                property_type: '',
+                use_web:       useWeb,
+            }),
+            signal: AbortSignal.timeout(90000),   // 90s for slow LLM
+        });
+
+        const data = await resp.json();
+
+        // Remove typing indicator
+        typingBubble.remove();
+
+        if (data.status === 'success') {
+            // Render answer as HTML (safe since it comes from our own server)
+            const answerHtml = window.marked
+                ? marked.parse(data.answer || '')
+                : escHtml(data.answer || '');
+
+            appendMsg('bot', answerHtml, {
+                confidence: data.confidence,
+                mode:       data.mode,
+                docs_used:  data.docs_used,
+                web_hits:   data.web_hits,
+                elapsed_s:  data.elapsed_s,
+                sources:    data.sources,
+            });
+        } else {
+            appendMsg('bot', `<span style="color:#f87171;">⚠ خطأ: ${escHtml(data.message || 'تعذّر الحصول على إجابة')}</span>`);
+        }
+    } catch (err) {
+        typingBubble.remove();
+        if (err.name === 'TimeoutError') {
+            appendMsg('bot', '<span style="color:#f87171;">⏱ انتهت مهلة الانتظار — النموذج يعمل ببطء. حاول مجدداً.</span>');
+        } else if (err.message.includes('fetch')) {
+            appendMsg('bot', '<span style="color:#f87171;">🔌 تعذّر الاتصال بالخادم — تأكد من تشغيل bridge_api.py على المنفذ 5000.</span>');
+        } else {
+            appendMsg('bot', `<span style="color:#f87171;">⚠ ${escHtml(err.message)}</span>`);
+        }
+    } finally {
+        _advisorBusy = false;
+        document.getElementById('advisorSend').disabled = false;
+        document.getElementById('advisorInput').focus();
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  CONTEXT-TUNING ENGINE — مشبك التدريب
+// ═══════════════════════════════════════════════════════
+const TUNE_URL    = _BACKEND + '/api/tune/analyze';
+const TUNE_LIST   = _BACKEND + '/api/tune/profiles';
+const TUNE_DEL    = _BACKEND + '/api/tune/profiles/';
+const LIB_URL     = _BACKEND + '/api/library';
+const LIB_SCAN    = _BACKEND + '/api/library/scan';
+const LIB_ADD     = _BACKEND + '/api/library/add';
+
+const tunerState = {
+    currentText:    '',
+    currentFile:    '',
+    currentProfile: null,
+    activeProfileId: localStorage.getItem('active_style_id') || '',
+    activeProfileName: localStorage.getItem('active_style_name') || '',
+};
+
+// ── Tuner: file drop / change ──────────────────────────────────
+function handleTunerDrop(e) {
+    e.preventDefault();
+    document.getElementById('tunerZone').classList.remove('drag-over');
+    const file = e.dataTransfer?.files?.[0];
+    if (file) processTunerFile(file);
+}
+
+function handleTunerFile(e) {
+    const file = e.target.files?.[0];
+    if (file) processTunerFile(file);
+}
+
+async function processTunerFile(file) {
+    const prog     = document.getElementById('tunerProgress');
+    const progFill = document.getElementById('tunerProgressFill');
+    prog.classList.add('show');
+    progFill.style.width = '15%';
+
+    tunerState.currentFile = file.name;
+
+    try {
+        // Extract text using the existing extraction helpers
+        let text = '';
+        if (file.name.endsWith('.pdf')) {
+            text = await extractPdfText(file, 'tunerProgressFill');
+        } else if (file.name.match(/\.(xlsx|xls)$/i)) {
+            text = await extractExcelText(file);
+        } else {
+            text = await file.text();
+        }
+        tunerState.currentText = text;
+        progFill.style.width = '50%';
+
+        // Send to backend for style analysis
+        await analyzeTunerText(text, file.name);
+
+        progFill.style.width = '100%';
+        setTimeout(() => prog.classList.remove('show'), 600);
+    } catch (err) {
+        prog.classList.remove('show');
+        alert('خطأ في قراءة الملف: ' + err.message);
+    }
+}
+
+async function analyzeTunerText(text, filename) {
+    try {
+        const resp = await fetch(TUNE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ text, filename }),
+            signal:  AbortSignal.timeout(60000),
+        });
+        const data = await resp.json();
+
+        if (data.status === 'success') {
+            tunerState.currentProfile = data;
+            showTunerResult(data);
+            loadProfiles();   // refresh saved profiles
+        } else {
+            alert('تعذّر تحليل الوثيقة: ' + (data.message || ''));
+        }
+    } catch (err) {
+        if (err.name === 'TimeoutError') {
+            alert('انتهت مهلة التحليل — تأكد من تشغيل الخادم');
+        } else {
+            alert('خطأ في التحليل: ' + err.message);
+        }
+    }
+}
+
+function showTunerResult(data) {
+    document.getElementById('tunerResult').style.display = 'block';
+    document.getElementById('tunerDocName').textContent  = data.name || tunerState.currentFile;
+
+    const methodsHtml = (data.methods || []).length
+        ? data.methods.map(m => `<span class="meta-pill" style="color:#4ade80;border-color:rgba(74,222,128,0.3);">${escHtml(m)}</span>`).join(' ')
+        : '<span style="color:#445;">غير محدد</span>';
+
+    const stdHtml = (data.standards || []).length
+        ? data.standards.map(s => `<span class="meta-pill" style="color:#FFD700;border-color:rgba(255,215,0,0.3);">${escHtml(s)}</span>`).join(' ')
+        : '<span style="color:#445;">—</span>';
+
+    const confColor = data.confidence >= 0.7 ? '#4ade80' : data.confidence >= 0.4 ? '#FFD700' : '#f87171';
+
+    document.getElementById('tunerMeta').innerHTML = `
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.5rem;">
+            ${methodsHtml} ${stdHtml}
+        </div>
+        <div>
+            نوع الوثيقة: <strong style="color:#ccc;">${escHtml(data.doc_type||'')}</strong>
+            &nbsp;|&nbsp; اللغة: <strong style="color:#ccc;">${escHtml(data.language||'')}</strong>
+            &nbsp;|&nbsp; الأقسام: <strong style="color:#ccc;">${data.section_count||0}</strong>
+            &nbsp;|&nbsp; ثقة التحليل: <strong style="color:${confColor};">${Math.round((data.confidence||0)*100)}%</strong>
+        </div>`;
+
+    document.getElementById('tunerPreview').textContent = data.injection_preview || '';
+    document.getElementById('tunerActivateBtn').dataset.profileId = data.profile_id;
+}
+
+function activateTuner() {
+    const p = tunerState.currentProfile;
+    if (!p) return;
+    tunerState.activeProfileId   = p.profile_id;
+    tunerState.activeProfileName = p.name;
+    localStorage.setItem('active_style_id',   p.profile_id);
+    localStorage.setItem('active_style_name', p.name);
+    updateActiveStyleBanner();
+    showToast('✅ تم تفعيل الأسلوب: ' + p.name);
+}
+
+function activateProfileFromList(profileId, profileName) {
+    tunerState.activeProfileId   = profileId;
+    tunerState.activeProfileName = profileName;
+    localStorage.setItem('active_style_id',   profileId);
+    localStorage.setItem('active_style_name', profileName);
+    updateActiveStyleBanner();
+    showToast('✅ تم تفعيل الأسلوب: ' + profileName);
+}
+
+function clearActiveStyle() {
+    tunerState.activeProfileId   = '';
+    tunerState.activeProfileName = '';
+    localStorage.removeItem('active_style_id');
+    localStorage.removeItem('active_style_name');
+    updateActiveStyleBanner();
+    showToast('🔄 تم إلغاء تفعيل الأسلوب');
+}
+
+function updateActiveStyleBanner() {
+    const banner = document.getElementById('activeStyleBanner');
+    const nameEl = document.getElementById('activeStyleName');
+    if (tunerState.activeProfileId) {
+        banner.style.display = 'block';
+        nameEl.textContent   = tunerState.activeProfileName || tunerState.activeProfileId;
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+// ── Load saved profiles ────────────────────────────────
+async function loadProfiles() {
+    try {
+        const resp = await fetch(TUNE_LIST, { signal: AbortSignal.timeout(5000) });
+        const data = await resp.json();
+        const list = document.getElementById('profilesList');
+
+        if (!data.profiles || data.profiles.length === 0) {
+            list.innerHTML = '<div style="color:#445;font-size:0.75rem;text-align:center;padding:0.5rem;">لا توجد أساليب محفوظة</div>';
+            return;
+        }
+
+        list.innerHTML = data.profiles.map(p => {
+            const isActive = p.id === tunerState.activeProfileId;
+            const badge = isActive
+                ? '<span style="color:#4ade80;font-size:0.7rem;">● نشط</span>'
+                : '';
+            const methods = (p.methods || []).slice(0,2).join(' · ');
+            const conf    = Math.round((p.confidence||0) * 100);
+            return `<div style="display:flex;align-items:center;justify-content:space-between;
+                                padding:0.45rem 0.6rem;border-radius:8px;cursor:pointer;
+                                background:${isActive ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.02)'};
+                                border:1px solid ${isActive ? 'rgba(74,222,128,0.25)' : 'rgba(255,255,255,0.05)'};
+                                margin-bottom:0.3rem;"
+                        onclick="activateProfileFromList('${escHtml(p.id)}','${escHtml(p.name)}')">
+                <div>
+                    <div style="color:#ccd;font-size:0.8rem;font-weight:600;">${escHtml(p.name)} ${badge}</div>
+                    <div style="color:#556;font-size:0.72rem;">${escHtml(methods)} · ثقة ${conf}%</div>
+                </div>
+                <button onclick="event.stopPropagation();deleteProfile('${escHtml(p.id)}')"
+                    style="background:none;border:none;color:#f87171;cursor:pointer;font-size:0.75rem;padding:0.2rem 0.4rem;">
+                    ✕
+                </button>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        document.getElementById('profilesList').innerHTML =
+            '<div style="color:#556;font-size:0.75rem;text-align:center;padding:0.4rem;">الخادم غير متصل</div>';
+    }
+}
+
+async function deleteProfile(profileId) {
+    if (!confirm('حذف هذا الأسلوب؟')) return;
+    try {
+        await fetch(TUNE_DEL + profileId, { method: 'DELETE' });
+        if (tunerState.activeProfileId === profileId) clearActiveStyle();
+        loadProfiles();
+        showToast('🗑 تم حذف الأسلوب');
+    } catch (err) { alert('فشل الحذف'); }
+}
+
+function addTunerToLibrary() {
+    if (!tunerState.currentText || !tunerState.currentProfile) return;
+    saveTextToLibrary(
+        tunerState.currentProfile.name || tunerState.currentFile,
+        tunerState.currentText,
+        tunerState.currentFile,
+        'all',
+        'valuation_report'
+    );
+}
+
+// ═══════════════════════════════════════════════════════
+//  SMART LIBRARY — المكتبة المرجعية
+// ═══════════════════════════════════════════════════════
+let _libSearchTimer = null;
+
+function libSearchDebounce() {
+    clearTimeout(_libSearchTimer);
+    _libSearchTimer = setTimeout(loadLibrary, 400);
+}
+
+async function loadLibrary() {
+    const q      = encodeURIComponent(document.getElementById('libSearch')?.value || '');
+    const sector = encodeURIComponent(document.getElementById('libSectorFilter')?.value || '');
+    const url    = `${LIB_URL}?q=${q}&sector=${sector}&limit=30`;
+
+    try {
+        const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+        const data = await resp.json();
+
+        // Update stats
+        const stats   = data.stats || {};
+        const total   = stats.total || 0;
+        const manual  = stats.manual || 0;
+        document.getElementById('libTotal').textContent =
+            `${total} وثيقة (${manual} يدوي)`;
+
+        // Render library grid
+        const grid = document.getElementById('libGrid');
+        const recs = data.records || [];
+
+        if (recs.length === 0) {
+            grid.innerHTML = '<div style="color:#445;font-size:0.78rem;text-align:center;padding:1rem;">لا توجد وثائق — انقر "مسح الآن" لتحديث المكتبة</div>';
+            return;
+        }
+
+        grid.innerHTML = recs.map(r => {
+            const typeColor = {
+                valuation_report: '#FFD700',
+                standard:         '#4ade80',
+                circular:         '#60a5fa',
+                statistics:       '#c084fc',
+                general:          '#888',
+            }[r.doc_type] || '#888';
+
+            const countryFlag = { EG:'🇪🇬', SA:'🇸🇦', INT:'🌐', manual:'📎' }[r.country] || '📄';
+            const qual = r.quality_score || 0;
+            const qualBar = '█'.repeat(Math.round(qual/2)) + '░'.repeat(5 - Math.round(qual/2));
+
+            return `<div style="display:flex;align-items:flex-start;gap:0.6rem;
+                                padding:0.6rem;border-radius:10px;cursor:pointer;
+                                background:rgba(255,255,255,0.02);
+                                border:1px solid rgba(255,255,255,0.05);
+                                transition:border-color 0.2s;"
+                        onmouseover="this.style.borderColor='rgba(192,132,252,0.35)'"
+                        onmouseout="this.style.borderColor='rgba(255,255,255,0.05)'"
+                        onclick="selectLibRecord('${escHtml(r.id)}','${escHtml(r.title)}')">
+                <div style="font-size:1.2rem;flex-shrink:0;">${countryFlag}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="color:#ccd;font-size:0.82rem;font-weight:600;
+                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${escHtml(r.title)}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;flex-wrap:wrap;">
+                        <span style="color:${typeColor};font-size:0.7rem;
+                                     padding:0.1rem 0.4rem;border-radius:4px;
+                                     background:rgba(255,255,255,0.04);">
+                            ${escHtml(r.doc_type||'')}
+                        </span>
+                        <span style="color:#4a5568;font-size:0.68rem;font-family:monospace;">
+                            ${qualBar}
+                        </span>
+                        <span style="color:#445;font-size:0.68rem;">${escHtml(r.added_at||'')}</span>
+                    </div>
+                </div>
+                <button onclick="event.stopPropagation();deleteLibRecord('${escHtml(r.id)}')"
+                    style="background:none;border:none;color:#f87171;cursor:pointer;
+                           font-size:0.7rem;flex-shrink:0;padding:0.1rem 0.3rem;">✕</button>
+            </div>`;
+        }).join('');
+
+    } catch (err) {
+        document.getElementById('libGrid').innerHTML =
+            '<div style="color:#556;font-size:0.78rem;text-align:center;padding:0.8rem;">الخادم غير متصل</div>';
+    }
+}
+
+function selectLibRecord(recordId, title) {
+    // تحميل الوثيقة وربطها بمحرك التدريب
+    showToast(`📎 تم تحديد: ${title}`);
+    // إذا كانت لها ملف محلي — يمكن تحليلها مباشرة
+    loadRecordForTuning(recordId, title);
+}
+
+async function loadRecordForTuning(recordId, title) {
+    try {
+        const resp = await fetch(`${LIB_URL}/${recordId}`, { signal: AbortSignal.timeout(5000) });
+        const data = await resp.json();
+        if (data.status !== 'success') return;
+
+        const rec = data.record;
+        if (rec.file_path && rec.summary) {
+            // لدينا محتوى نصي محلي — حلّله مباشرة
+            tunerState.currentFile = rec.title;
+            tunerState.currentText = rec.summary;
+            await analyzeTunerText(rec.summary, rec.title);
+            showToast(`🔗 تم ربط "${title}" بمحرك التدريب`);
+        } else if (rec.url) {
+            showToast(`🌐 الوثيقة متاحة على: ${rec.source_name}`);
+        }
+    } catch (err) { /* silent */ }
+}
+
+async function triggerLibScan() {
+    const btn = document.getElementById('scanBtn');
+    btn.textContent = '⏳ جارٍ المسح...';
+    btn.disabled = true;
+    try {
+        const resp = await fetch(LIB_SCAN, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(75000),
+        });
+        const data = await resp.json();
+        showToast(`✅ المسح اكتمل: +${data.added||0} جديد | ${data.skipped||0} مكرر | المجموع: ${data.total||0}`);
+        loadLibrary();
+    } catch (err) {
+        showToast('⚠ تعذّر المسح — ' + err.message);
+    } finally {
+        btn.textContent = '🔄 مسح الآن';
+        btn.disabled = false;
+    }
+}
+
+async function saveTextToLibrary(title, text, filename, sector, docType) {
+    try {
+        const resp = await fetch(LIB_ADD, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, text, filename, sector, doc_type: docType }),
+            signal: AbortSignal.timeout(10000),
+        });
+        const data = await resp.json();
+        if (data.status === 'added') {
+            showToast('📚 تمت الإضافة إلى المكتبة');
+            loadLibrary();
+        } else if (data.status === 'duplicate') {
+            showToast('⚠ الوثيقة موجودة مسبقاً في المكتبة');
+        } else {
+            showToast('⚠ ' + (data.message || 'خطأ في الإضافة'));
+        }
+    } catch (err) { showToast('⚠ ' + err.message); }
+}
+
+function saveCurrentToLibrary() {
+    const text = tunerState.currentText || state.simText || state.dataText;
+    if (!text || text.length < 50) {
+        showToast('⚠ لا يوجد محتوى نصي محمّل للحفظ');
+        return;
+    }
+    const title   = tunerState.currentFile || state.simName || state.dataName || 'وثيقة بدون عنوان';
+    const docType = document.getElementById('libDocType')?.value || 'general';
+    saveTextToLibrary(title, text, title, 'all', docType);
+}
+
+async function deleteLibRecord(recordId) {
+    if (!confirm('حذف هذه الوثيقة من المكتبة؟')) return;
+    try {
+        await fetch(`${LIB_URL}/${recordId}`, { method: 'DELETE' });
+        loadLibrary();
+        showToast('🗑 تم حذف الوثيقة');
+    } catch (err) { alert('فشل الحذف'); }
+}
+
+// ── Toast helper ─────────────────────────────────────
+function showToast(msg) {
+    let toast = document.getElementById('_globalToast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = '_globalToast';
+        toast.style.cssText = `
+            position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);
+            background:rgba(10,20,40,0.95);border:1px solid rgba(255,215,0,0.4);
+            color:#FFD700;padding:0.6rem 1.4rem;border-radius:50px;
+            font-family:'Tajawal',sans-serif;font-size:0.88rem;
+            z-index:9999;pointer-events:none;transition:opacity 0.3s;
+            box-shadow:0 4px 20px rgba(0,0,0,0.5);`;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+// ── Override runAnalysis to inject active style ──────
+const _originalRunAnalysis = typeof runAnalysis === 'function' ? runAnalysis : null;
+
+// Intercept: when active style is set, prepend style injection to user prompt
+// This wraps the Gemini prompt builder to inject style context
+function _getStyleInjection() {
+    if (!tunerState.activeProfileId) return '';
+    const name = tunerState.activeProfileName || tunerState.activeProfileId;
+    return `\n\n[الأسلوب المُفعَّل: "${name}" — يرجى الالتزام بأسلوب هذه الوثيقة في ردّك]\n`;
+}
+
+// Patch: inject style into userInput before it's sent to Gemini
+document.addEventListener('DOMContentLoaded', () => {
+    const origBtn = document.getElementById('sendBtn');
+    if (origBtn && !origBtn._stylePatched) {
+        origBtn._stylePatched = true;
+        origBtn.addEventListener('click', () => {
+            const injection = _getStyleInjection();
+            if (injection) {
+                const inp = document.getElementById('userInput');
+                if (inp && !inp.value.includes('[الأسلوب المُفعَّل')) {
+                    inp.value = inp.value + injection;
+                }
+            }
+        }, true);   // capture phase — runs before onclick
+    }
+});
+
+// ── Init: load profiles + library on page load ───────
+(async function initTunerLibrary() {
+    updateActiveStyleBanner();
+    await Promise.all([loadProfiles(), loadLibrary()]);
+})();
+
+// ── Init ──
+updateKeyDot();
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  v37 — Help Modal
+// ══════════════════════════════════════════════════════════════════════════════
+function openHelpModal()  { document.getElementById('helpModal').classList.add('open'); }
+function closeHelpModal() { document.getElementById('helpModal').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  v37 — Market Radar Controls
+// ══════════════════════════════════════════════════════════════════════════════
+// _BACKEND is now defined at top of CONFIGURATION section
+
+async function checkRadarStatus() {
+    try {
+        const res = await fetch(`${_BACKEND}/api/radar/status`, { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) return;
+        const data = await res.json();
+        const radar = data.radar || {};
+        const stats = radar.db_stats || {};
+        // Show bar
+        document.getElementById('radarBar').style.display = 'block';
+        const dot  = document.getElementById('radarDot');
+        const txt  = document.getElementById('radarStatusTxt');
+        const cnt  = document.getElementById('radarCount');
+        const startBtn = document.getElementById('radarStartBtn');
+        const stopBtn  = document.getElementById('radarStopBtn');
+        if (radar.running) {
+            dot.style.background  = '#f87171';
+            dot.style.boxShadow   = '0 0 6px #f87171';
+            txt.textContent       = `نشط — دورة #${radar.cycle}`;
+            startBtn.style.display = 'none';
+            stopBtn.style.display  = '';
+        } else {
+            dot.style.background  = '#555';
+            dot.style.boxShadow   = 'none';
+            txt.textContent       = 'غير نشط';
+            startBtn.style.display = '';
+            stopBtn.style.display  = 'none';
+        }
+        cnt.textContent = stats.total ? `📦 ${stats.total.toLocaleString()} سجل` : '';
+    } catch (_) { /* backend offline — hide radar bar */ }
+}
+
+async function startRadar() {
+    try {
+        const res = await fetch(`${_BACKEND}/api/radar/start`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({interval_seconds:1800, enable_web:true})
+        });
+        const d = await res.json();
+        showToast(d.status === 'success' ? '🛰 رادار السوق يعمل الآن' : '⚠️ ' + (d.message||d.status));
+        setTimeout(checkRadarStatus, 600);
+    } catch (e) { showToast('⚠️ الخادم غير متاح — تأكد من تشغيل bridge_api.py'); }
+}
+
+async function stopRadar() {
+    try {
+        await fetch(`${_BACKEND}/api/radar/stop`, {method:'POST'});
+        showToast('🛑 الرادار أوقف');
+        setTimeout(checkRadarStatus, 600);
+    } catch (_) {}
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  v37 — IAAO Panel
+// ══════════════════════════════════════════════════════════════════════════════
+function openIAAOPanel()  { document.getElementById('iaaoPanel').style.display = 'block'; }
+function closeIAAOPanel() { document.getElementById('iaaoPanel').style.display = 'none'; }
+
+async function runIAAO() {
+    const assessedPpm = parseFloat(document.getElementById('iaaoAssessed').value);
+    const sector      = document.getElementById('iaaySector').value;
+    const resultEl    = document.getElementById('iaaoResult');
+    if (!assessedPpm || isNaN(assessedPpm)) {
+        resultEl.innerHTML = '<span style="color:#f87171;">أدخل القيمة المُقدَّرة للمتر أولاً</span>';
+        return;
+    }
+    resultEl.innerHTML = '<span style="color:#667799;">⟳ جارٍ الحساب...</span>';
+    try {
+        // Fetch radar data as comparables
+        const dataRes = await fetch(`${_BACKEND}/api/radar/data?limit=50&asset_type=شقة`, {signal: AbortSignal.timeout(6000)});
+        let comparables = [];
+        if (dataRes.ok) {
+            const d = await dataRes.json();
+            comparables = (d.records || []).map(r => ({price: r.ppm ? r.ppm * (r.area||100) : 0, area: r.area || 100, location: r.location})).filter(c => c.price > 0);
+        }
+        if (comparables.length < 3) {
+            resultEl.innerHTML = '<span style="color:#f87171;">⚠️ بيانات غير كافية — ابدأ رادار السوق أولاً لتجميع مقارنات</span>';
+            return;
+        }
+        const res = await fetch(`${_BACKEND}/api/iaao`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({comparables, assessed_ppm: assessedPpm, sector, location: ''})
+        });
+        const d = await res.json();
+        renderIAAOResult(d.report || d);
+    } catch (e) {
+        resultEl.innerHTML = `<span style="color:#f87171;">خطأ: ${escHtml(e.message)}</span>`;
+    }
+}
+
+function renderIAAOResult(report) {
+    const el = document.getElementById('iaaoResult');
+    if (!report || report.status !== 'success') {
+        el.innerHTML = `<span style="color:#f87171;">${escHtml(report?.message || 'خطأ في الحساب')}</span>`;
+        return;
+    }
+    const lightColor = {green:'#4ade80', yellow:'#fbbf24', red:'#f87171', grey:'#667799'};
+    const m = report.metrics || {};
+    let rows = '';
+    for (const [key, metric] of Object.entries(m)) {
+        const lc  = lightColor[metric.traffic_light] || '#667799';
+        const val = typeof metric.value === 'number' ? metric.value.toFixed(metric.unit === '%' ? 1 : 4) : '—';
+        rows += `
+        <tr>
+            <td style="padding:0.4rem 0.6rem;color:#aab;font-weight:700;">${metric.metric || key.toUpperCase()}</td>
+            <td style="padding:0.4rem 0.6rem;color:#e2e8f0;">${val}${metric.unit||''}</td>
+            <td style="padding:0.4rem 0.6rem;color:#667799;font-size:0.75rem;">${metric.benchmark||'—'}</td>
+            <td style="padding:0.4rem 0.6rem;">
+                <span style="color:${lc};font-size:0.85rem;">${metric.traffic_emoji||''}</span>
+            </td>
+            <td style="padding:0.4rem 0.6rem;color:#99aacc;font-size:0.75rem;">${escHtml(metric.label||'')}</td>
+        </tr>`;
+    }
+    const overallLc = lightColor[report.overall_light] || '#667799';
+    const recs = (report.recommendations||[]).map(r => `<li>${escHtml(r)}</li>`).join('');
+    el.innerHTML = `
+    <div style="margin-bottom:0.8rem;padding:0.6rem 0.9rem;border-radius:10px;
+                background:rgba(255,255,255,0.03);border:1px solid ${overallLc}44;
+                color:${overallLc};font-size:0.85rem;font-weight:700;">
+        ${escHtml(report.overall_ar||'')}
+        <span style="color:#667799;font-weight:400;font-size:0.75rem;margin-right:0.5rem;">
+            (${report.count||0} مقارنة — ${escHtml(report.sector||'')})
+        </span>
+    </div>
+    <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+        <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.07);">
+                <th style="padding:0.35rem 0.6rem;color:#FFD700;text-align:right;">المقياس</th>
+                <th style="padding:0.35rem 0.6rem;color:#FFD700;text-align:right;">القيمة</th>
+                <th style="padding:0.35rem 0.6rem;color:#667799;text-align:right;font-size:0.72rem;">المعيار</th>
+                <th style="padding:0.35rem 0.6rem;text-align:center;">إشارة</th>
+                <th style="padding:0.35rem 0.6rem;color:#667799;text-align:right;font-size:0.72rem;">التفسير</th>
+            </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+    </table>
+    </div>
+    ${recs ? `<div style="margin-top:0.8rem;border-top:1px solid rgba(255,255,255,0.06);padding-top:0.7rem;">
+        <div style="color:#aab;font-size:0.76rem;margin-bottom:0.4rem;">📋 التوصيات:</div>
+        <ul style="color:#99aacc;font-size:0.77rem;line-height:1.8;padding-right:1.2rem;margin:0;">${recs}</ul>
+    </div>` : ''}`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  Price Intelligence Panel
+// ══════════════════════════════════════════════════════════════════════════════
+
+function openPriceIntelPanel()  {
+    document.getElementById('priceIntelPanel').style.display = 'block';
+    // Pre-fill location from map if available
+    if (state.mapLocation && state.mapLocation.label) {
+        document.getElementById('piLocation').value = state.mapLocation.label.split('،')[0].trim();
+    }
+    // Pre-fill market from logic gate
+    const mkt = document.getElementById('market').value;
+    if (mkt === 'ksa') document.getElementById('piMarket').value = 'ksa';
+}
+function closePriceIntelPanel() {
+    document.getElementById('priceIntelPanel').style.display = 'none';
+}
+
+async function runPriceIntelligence() {
+    const location  = document.getElementById('piLocation').value.trim();
+    const market    = document.getElementById('piMarket').value;
+    const assetType = document.getElementById('piAsset').value;
+    const loadEl    = document.getElementById('piLoading');
+    const resultEl  = document.getElementById('piResult');
+
+    if (!location) {
+        resultEl.innerHTML = '<span style="color:#f87171;">أدخل اسم المنطقة أولاً</span>';
+        return;
+    }
+
+    loadEl.style.display = 'block';
+    resultEl.innerHTML   = '';
+
+    try {
+        const res = await fetch(`${_BACKEND}/api/price/intelligence`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ location, market, asset_type: assetType, max_items: 20 }),
+            signal:  AbortSignal.timeout(45_000),
+        });
+        const data = await res.json();
+        loadEl.style.display = 'none';
+        _renderPriceIntelResult(data, location);
+
+        // Inject price summary into assembleContext for Gemini
+        if (data.summary && data.summary.count > 0) {
+            _injectPriceContext(data);
+        }
+    } catch (e) {
+        loadEl.style.display = 'none';
+        resultEl.innerHTML = `<span style="color:#f87171;">خطأ في الاتصال بالخادم: ${escHtml(e.message)}</span>`;
+    }
+}
+
+async function fetchTrendOnly() {
+    const market   = document.getElementById('piMarket').value;
+    const location = document.getElementById('piLocation').value.trim();
+    const loadEl   = document.getElementById('piLoading');
+    const resultEl = document.getElementById('piResult');
+
+    loadEl.style.display = 'block';
+    resultEl.innerHTML   = '';
+
+    try {
+        const params = new URLSearchParams({ market });
+        if (location) params.set('location', location);
+        const res  = await fetch(`${_BACKEND}/api/price/trend?${params}`,
+                                 { signal: AbortSignal.timeout(20_000) });
+        const data = await res.json();
+        loadEl.style.display = 'none';
+        _renderTrendSignals(data.trends || [], resultEl);
+    } catch (e) {
+        loadEl.style.display = 'none';
+        resultEl.innerHTML = `<span style="color:#f87171;">خطأ: ${escHtml(e.message)}</span>`;
+    }
+}
+
+function _renderPriceIntelResult(data, location) {
+    const resultEl = document.getElementById('piResult');
+    if (data.status !== 'success') {
+        resultEl.innerHTML = `<span style="color:#f87171;">${escHtml(data.message||'خطأ')}</span>`;
+        return;
+    }
+    const s   = data.summary || {};
+    const cur = s.currency || 'EGP';
+    const fmt = v => v ? Number(v).toLocaleString('ar-EG') : '—';
+
+    // ── Summary KPI cards ──────────────────────────────────────────────
+    const kpiHtml = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.6rem;margin-bottom:0.9rem;">
+        ${_piKpi('متوسط سعر المتر (طلب)', fmt(s.avg_ppm_asking), cur + '/م²', '#D4AF37')}
+        ${_piKpi('وسيط PPM', fmt(s.median_ppm_asking), cur + '/م²', '#FFD700')}
+        ${_piKpi('نطاق الأسعار', `${fmt(s.min_ppm)} — ${fmt(s.max_ppm)}`, cur + '/م²', '#93c5fd')}
+        ${_piKpi('معامل التفاوض', (s.avg_neg_pct||7.5).toFixed(1) + '%', 'هامش 5–10%', '#4ade80')}
+        ${_piKpi('حجم العينة', s.count || 0, 'إعلان مرصود', '#fb923c')}
+        ${_piKpi('آخر تحديث', (s.as_of||'').split(' ')[0] || '—', '', '#667799')}
+    </div>`;
+
+    // ── Price table (first 10 records) ─────────────────────────────────
+    const rows = (data.excel_table || []).slice(0, 10);
+    let tblHtml = '';
+    if (rows.length) {
+        tblHtml = `
+        <div style="overflow-x:auto;margin-bottom:0.9rem;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.77rem;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(212,175,55,0.25);">
+                    ${['#','الموقع','المساحة م²','سعر الطلب','سعر التنفيذ','PPM طلب','تفاوض%','المصدر','التاريخ']
+                      .map(h=>`<th style="padding:0.35rem 0.5rem;color:#D4AF37;text-align:right;white-space:nowrap;">${h}</th>`)
+                      .join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${rows.map(r => `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:0.3rem 0.5rem;color:#667799;">${escHtml(String(r['#']||''))}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#e2e8f0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(r['الموقع']||'')}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#aab;">${r['المساحة (م²)']||'—'}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#4ade80;">${r['سعر الطلب'] ? Number(r['سعر الطلب']).toLocaleString('ar-EG') : '—'}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#fbbf24;">${r['سعر التنفيذ المتوقع'] ? Number(r['سعر التنفيذ المتوقع']).toLocaleString('ar-EG') : '—'}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#D4AF37;font-weight:700;">${r['سعر المتر — طلب'] ? Number(r['سعر المتر — طلب']).toLocaleString('ar-EG') : '—'}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#93c5fd;">${r['معامل التفاوض %']||'—'}%</td>
+                    <td style="padding:0.3rem 0.5rem;color:#667799;">${escHtml(r['المصدر']||'')}</td>
+                    <td style="padding:0.3rem 0.5rem;color:#445;font-size:0.7rem;">${escHtml(r['تاريخ الرصد']||'')}</td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+        </div>`;
+    }
+
+    // ── Trend signals ──────────────────────────────────────────────────
+    let trendHtml = '';
+    const trendEl = document.createElement('div');
+    _renderTrendSignals(data.trends || [], trendEl);
+    trendHtml = trendEl.outerHTML;
+
+    // ── Analysis text (collapsible) ────────────────────────────────────
+    const analysisId = 'piAnalysis_' + Date.now();
+    const analysisHtml = data.analysis_text ? `
+    <details style="margin-top:0.7rem;">
+        <summary style="cursor:pointer;color:#D4AF37;font-size:0.82rem;font-weight:700;
+                        padding:0.4rem 0;border-top:1px solid rgba(212,175,55,0.15);">
+            📋 التقرير التحليلي الكامل (خبير فئة A)
+        </summary>
+        <pre id="${analysisId}" style="margin-top:0.6rem;padding:0.8rem;
+              background:rgba(0,0,0,0.3);border-radius:10px;font-family:'Tajawal',sans-serif;
+              font-size:0.77rem;color:#aab;white-space:pre-wrap;direction:rtl;
+              text-align:right;max-height:320px;overflow-y:auto;line-height:1.8;">${escHtml(data.analysis_text)}</pre>
+        <button onclick="navigator.clipboard.writeText(document.getElementById('${analysisId}').textContent)"
+            style="margin-top:0.4rem;padding:0.3rem 0.8rem;border-radius:7px;
+                   background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);
+                   color:#D4AF37;font-size:0.75rem;cursor:pointer;font-family:'Tajawal',sans-serif;">
+            📋 نسخ التقرير
+        </button>
+    </details>` : '';
+
+    resultEl.innerHTML = kpiHtml + tblHtml + trendHtml + analysisHtml;
+}
+
+function _piKpi(label, value, unit, color) {
+    return `<div style="background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);
+                        border-radius:10px;padding:0.6rem 0.8rem;">
+        <div style="font-size:0.7rem;color:#667799;margin-bottom:0.2rem;">${label}</div>
+        <div style="font-size:1rem;font-weight:800;color:${color};line-height:1.2;">${value}</div>
+        ${unit ? `<div style="font-size:0.67rem;color:#445;margin-top:0.1rem;">${unit}</div>` : ''}
+    </div>`;
+}
+
+function _renderTrendSignals(trends, container) {
+    if (!trends || !trends.length) {
+        container.innerHTML = '<div style="color:#445;font-size:0.78rem;padding:0.5rem;">لا توجد إشارات اتجاه متاحة في الوقت الحالي.</div>';
+        return;
+    }
+    const catLabel = { interest: 'أسعار الفائدة', materials: 'مواد البناء', fx: 'سعر الصرف', realestate: 'السوق العقاري' };
+    const impactColor = { positive: '#4ade80', negative: '#f87171', neutral: '#667799' };
+    const impactArrow = { positive: '↑', negative: '↓', neutral: '→' };
+
+    container.innerHTML = `
+    <div style="margin-top:0.5rem;">
+        <div style="font-size:0.78rem;color:#D4AF37;font-weight:700;margin-bottom:0.5rem;">📈 الإشارات الاقتصادية المؤثرة</div>
+        ${trends.slice(0,6).map(t => `
+        <div style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.4rem;
+                    padding:0.45rem 0.6rem;background:rgba(255,255,255,0.02);
+                    border-radius:8px;border-right:3px solid ${impactColor[t.impact]||'#667799'};">
+            <span style="color:${impactColor[t.impact]||'#667799'};font-size:0.9rem;flex-shrink:0;">
+                ${impactArrow[t.impact]||'→'}
+            </span>
+            <div style="flex:1;">
+                <div style="font-size:0.75rem;color:#9aabb8;line-height:1.5;">${escHtml(t.headline||'')}</div>
+                <div style="font-size:0.68rem;color:#445;margin-top:0.15rem;">
+                    ${catLabel[t.category]||t.category}
+                    ${t.impact_pct ? ` · تأثير تقديري: <strong style="color:${impactColor[t.impact]}">${t.impact_pct>0?'+':''}${t.impact_pct}% على PPM</strong>` : ''}
+                    · ${escHtml(t.date||'')}
+                </div>
+            </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// Inject price intelligence data into assembleContext for Gemini
+function _injectPriceContext(data) {
+    const s   = data.summary || {};
+    const cur = s.currency || 'EGP';
+    const fmt = v => v ? Number(v).toLocaleString() : '—';
+
+    const priceBlock = `
+## نتائج رصد الأسعار — Price Intelligence (${data.query_location})
+- **نوع الأصل:** ${data.query_asset} | **السوق:** ${data.query_market === 'ksa' ? 'السعودية' : 'مصر'}
+- **متوسط سعر الطلب/م²:** ${fmt(s.avg_ppm_asking)} ${cur}
+- **وسيط PPM:** ${fmt(s.median_ppm_asking)} ${cur}
+- **نطاق السوق:** ${fmt(s.min_ppm)} — ${fmt(s.max_ppm)} ${cur}/م²
+- **سعر التنفيذ المتوقع (بعد تفاوض ${s.avg_neg_pct||7.5}%):** ${fmt(s.avg_execution_price)} ${cur}
+- **حجم العينة:** ${s.count || 0} إعلان | **آخر تحديث:** ${s.as_of || ''}
+- **المصادر:** ${(s.sources||[]).join('، ')}`;
+
+    // Append to the userInput textarea (as supplemental data block)
+    const ta = document.getElementById('userInput');
+    if (ta && !ta.value.includes('## نتائج رصد الأسعار')) {
+        ta.value = ta.value.trimEnd() + '\n\n' + priceBlock.trim();
+        ta.style.height = 'auto';
+        ta.style.height = Math.min(ta.scrollHeight, 400) + 'px';
+    }
+    showToast(`✅ تم حقن بيانات الرصد في السياق — ${s.count} سجل من ${data.query_location}`);
+}
+
+// Check radar status on page load
+document.addEventListener('DOMContentLoaded', () => {
+    checkRadarStatus();
+    // Refresh radar status every 60s
+    setInterval(checkRadarStatus, 60_000);
+});
+</script>
+
+</body>
+</html>

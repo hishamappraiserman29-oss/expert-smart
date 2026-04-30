@@ -1,0 +1,146 @@
+{
+    "name": "Automated Real Estate RAG System",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {"field": "cronExpression", "expression": "0 0 * * *"}
+                    ]
+                }
+            },
+            "name": "Schedule Trigger (Daily)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "position": [ 0, 200 ],
+            "typeVersion": 1,
+            "id": "schedule-trigger"
+        },
+        {
+            "parameters": {
+                "url": "https://api.property-listings.com/daily",
+                "method": "GET"
+            },
+            "name": "Step 1: HTTP Request Node",
+            "type": "n8n-nodes-base.httpRequest",
+            "position": [ 200, 200 ],
+            "typeVersion": 1,
+            "id": "http-request-node"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Step 2: Extract location, price, area, condition, date\nconst cleaned = items.map(item => {\n  return { json: { \n    location: item.json.loc,\n    price: parseFloat(item.json.prc),\n    area: parseFloat(item.json.size),\n    condition: item.json.status,\n    date: item.json.listed_date\n  }};\n});\nreturn cleaned;"
+            },
+            "name": "Step 2: Data Cleaning Node",
+            "type": "n8n-nodes-base.code",
+            "position": [ 400, 200 ],
+            "typeVersion": 2,
+            "id": "data-cleaning-node"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Step 3: Calculate price_per_m2\nconst processed = items.map(item => {\n  const area = item.json.area || 1;\n  item.json.price_per_m2 = item.json.price / area;\n  return item;\n});\nreturn processed;"
+            },
+            "name": "Step 3: Data Processing Node",
+            "type": "n8n-nodes-base.code",
+            "position": [ 600, 200 ],
+            "typeVersion": 2,
+            "id": "data-processing-node"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Step 4: Duplicate Detection using location + price + area\nconst seen = new Set();\nconst unique = [];\nfor (const item of items) {\n  const key = `${item.json.location}_${item.json.price}_${item.json.area}`;\n  if (!seen.has(key)) {\n    seen.add(key);\n    unique.push(item);\n  }\n}\nreturn unique;"
+            },
+            "name": "Step 4: Duplicate Detection Node",
+            "type": "n8n-nodes-base.code",
+            "position": [ 800, 200 ],
+            "typeVersion": 2,
+            "id": "duplicate-detection-node"
+        },
+        {
+            "parameters": {
+                "operation": "insert",
+                "table": "cleaned_properties"
+            },
+            "name": "Step 5: Storage Node",
+            "type": "n8n-nodes-base.postgres",
+            "position": [ 1000, 200 ],
+            "typeVersion": 1,
+            "id": "storage-node"
+        },
+        {
+            "parameters": {
+                "operation": "embed",
+                "model": "text-embedding-3-small"
+            },
+            "name": "Step 6: Embedding Node",
+            "type": "n8n-nodes-base.openAi",
+            "position": [ 1200, 200 ],
+            "typeVersion": 1,
+            "id": "embedding-node"
+        },
+        {
+            "parameters": {
+                "operation": "upsert",
+                "collection": "real_estate"
+            },
+            "name": "Step 7: Vector Database Node",
+            "type": "n8n-nodes-base.qdrant",
+            "position": [ 1400, 200 ],
+            "typeVersion": 1,
+            "id": "vector-db-node"
+        },
+        {
+            "parameters": {},
+            "name": "Webhook (User Request)",
+            "type": "n8n-nodes-base.webhook",
+            "position": [ 1400, 400 ],
+            "typeVersion": 1,
+            "id": "user-request-webhook"
+        },
+        {
+            "parameters": {
+                "operation": "search",
+                "collection": "real_estate",
+                "limit": 20
+            },
+            "name": "Step 8: Retrieval Node",
+            "type": "n8n-nodes-base.qdrant",
+            "position": [ 1600, 400 ],
+            "typeVersion": 1,
+            "id": "retrieval-node"
+        },
+        {
+            "parameters": {
+                "jsCode": "// Step 9: Calculate average price, median, trend\nconst prices = items.map(item => item.json.price).sort((a,b) => a-b);\nconst avg = prices.reduce((a,b) => a+b, 0) / prices.length;\nconst median = prices[Math.floor(prices.length / 2)];\nreturn [{ json: { average_price: avg, median: median, trend: 'stable', context_items: items } }];"
+            },
+            "name": "Step 9: Context Builder Node",
+            "type": "n8n-nodes-base.code",
+            "position": [ 1800, 400 ],
+            "typeVersion": 2,
+            "id": "context-builder-node"
+        },
+        {
+            "parameters": {
+                "model": "gpt-4o",
+                "prompt": "Evaluate the real estate query based on the following context. {{ $json.context_items }}"
+            },
+            "name": "Step 10: AI Model Node",
+            "type": "n8n-nodes-base.openAi",
+            "position": [ 2000, 400 ],
+            "typeVersion": 1,
+            "id": "ai-model-node"
+        }
+    ],
+    "connections": {
+        "Schedule Trigger (Daily)": { "main": [ [ { "node": "Step 1: HTTP Request Node", "type": "main", "index": 0 } ] ] },
+        "Step 1: HTTP Request Node": { "main": [ [ { "node": "Step 2: Data Cleaning Node", "type": "main", "index": 0 } ] ] },
+        "Step 2: Data Cleaning Node": { "main": [ [ { "node": "Step 3: Data Processing Node", "type": "main", "index": 0 } ] ] },
+        "Step 3: Data Processing Node": { "main": [ [ { "node": "Step 4: Duplicate Detection Node", "type": "main", "index": 0 } ] ] },
+        "Step 4: Duplicate Detection Node": { "main": [ [ { "node": "Step 5: Storage Node", "type": "main", "index": 0 } ] ] },
+        "Step 5: Storage Node": { "main": [ [ { "node": "Step 6: Embedding Node", "type": "main", "index": 0 } ] ] },
+        "Step 6: Embedding Node": { "main": [ [ { "node": "Step 7: Vector Database Node", "type": "main", "index": 0 } ] ] },
+        "Webhook (User Request)": { "main": [ [ { "node": "Step 8: Retrieval Node", "type": "main", "index": 0 } ] ] },
+        "Step 8: Retrieval Node": { "main": [ [ { "node": "Step 9: Context Builder Node", "type": "main", "index": 0 } ] ] },
+        "Step 9: Context Builder Node": { "main": [ [ { "node": "Step 10: AI Model Node", "type": "main", "index": 0 } ] ] }
+    }
+}

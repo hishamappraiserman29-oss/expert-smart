@@ -1,0 +1,57 @@
+# ──────────────────────────────────────────────────────────────────────────
+# Expert_Smart Flask app container
+# Base: Python 3.11 slim (smaller, faster CI builds)
+# ──────────────────────────────────────────────────────────────────────────
+FROM python:3.11-slim AS base
+
+ENV PYTHONUTF8=1 \
+    PYTHONIOENCODING=utf-8:replace \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# System deps for python-docx, openpyxl, xlsxwriter, sentence-transformers
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        curl \
+        ca-certificates \
+        fonts-noto-cjk fonts-noto-core \
+        libxml2 libxslt1.1 libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install deploy-time deps first (better layer caching)
+COPY deploy/requirements-deploy.txt /tmp/requirements-deploy.txt
+RUN pip install --upgrade pip \
+ && pip install -r /tmp/requirements-deploy.txt
+
+# Then project deps
+COPY core_engine/requirements.txt /tmp/requirements.txt
+RUN pip install -r /tmp/requirements.txt || true
+# `|| true` because some heavy deps (Prophet, statsmodels) may fail on slim;
+# the app gracefully degrades when optional ML libs are absent.
+
+# Copy the project (read-only — deploy stack does NOT modify core_engine)
+COPY core_engine /app/core_engine
+COPY frontend    /app/frontend
+COPY expert_smart_system /app/expert_smart_system
+COPY templates /app/templates
+COPY deploy/entrypoint.sh /entrypoint.sh
+COPY deploy/scripts/healthcheck.sh /healthcheck.sh
+RUN chmod +x /entrypoint.sh /healthcheck.sh
+
+ENV PYTHONPATH=/app:/app/core_engine \
+    OLLAMA_HOST=http://ollama:11434 \
+    OUTPUTS_DIR=/app/outputs \
+    PORT=5000
+
+RUN mkdir -p /app/outputs /app/core_engine/data
+
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD /healthcheck.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

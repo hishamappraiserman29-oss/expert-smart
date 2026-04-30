@@ -1,0 +1,24 @@
+# Deployment-only dependencies — supplements project requirements.txt
+# These fix the missing packages the audit identified.
+
+# 1) Ollama Python client — fixes the silently-failing import in
+#    core_engine/rag_advisor.py:466.
+ollama>=0.3.0,<1.0.0
+
+# 2) Production WSGI server (alternative to waitress).
+gunicorn>=21.2.0,<22.0.0
+# 2b) Local-Docker WSGI server (entrypoint.sh defaults to waitress when WSGI env unset).
+waitress>=3.0.0,<4.0.0
+
+# 3) HTTP client used internally by ollama-python and useful for healthchecks.
+httpx>=0.27.0,<1.0.0
+
+# 4) Python-docx (already in core requirements but pinned here in case the
+#    base requirements.txt fails on slim images).
+python-docx>=1.1.0
+
+# 5) xlsxwriter — used by the new asset_type_excel and reit_nav_engine modules.
+xlsxwriter>=3.2.0
+
+# 6) Flask CORS headers (in case missing).
+flask-cors>=4.0.0

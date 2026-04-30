@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير تقييم عقاري - معايير TAQEEM</title>
+    <style>
+        body { font-family: 'Tajawal', sans-serif; padding: 40px; color: #333; }
+        .header { border-bottom: 3px solid #10B981; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 24px; font-weight: bold; color: #10B981; }
+        .taqeem-badge { background: #10B981; color: #fff; padding: 5px 15px; border-radius: 5px; font-weight: bold; }
+        .report-title { text-align: center; color: #064E3B; margin-bottom: 40px; }
+        .section { margin-bottom: 30px; }
+        .section-title { border-right: 5px solid #10B981; padding-right: 15px; margin-bottom: 15px; color: #064E3B; font-weight: bold; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table td { padding: 10px; border: 1px solid #eee; }
+        .label { font-weight: bold; background: #f9f9f9; width: 30%; }
+        .footer { margin-top: 100px; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 20px; }
+        .seal { text-align: left; }
+        .seal-placeholder { width: 150px; height: 150px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #ccc; margin-left: auto; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Expert_Smart | Appraisal</div>
+        <div class="taqeem-badge">معايير الهيئة السعودية للمقيمين (TAQEEM)</div>
+    </div>
+
+    <div class="report-title">
+        <h1>تقرير تقييم عقاري رسمي (المملكة العربية السعودية)</h1>
+        <p>الرقم المرجعي: {{report_id}}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">بيانات العميل والأصل</div>
+        <table class="data-table">
+            <tr><td class="label">اسم العميل:</td><td>{{client_name}}</td></tr>
+            <tr><td class="label">نوع العقار:</td><td>{{property_type}}</td></tr>
+            <tr><td class="label">الموقع:</td><td>{{location}}</td></tr>
+            <tr><td class="label">المساحة:</td><td>{{area}} م٢</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">القيمة السوقية</div>
+        <div style="font-size: 2rem; color: #10B981; text-align: center; margin: 20px 0;">
+            {{final_value}} SAR
+        </div>
+        <p style="text-align: center; color: #666;">تم التقييم وفقاً لمعايير الهيئة السعودية للمقيمين المعتمدين (تقييم)</p>
+    </div>
+
+    <div class="footer">
+        <div class="expert-info">
+            <p><strong>الخبير المعتمد:</strong> هشام المهدي</p>
+            <p>رقم العضوية: #TAQEEM-9988</p>
+        </div>
+        <div class="seal">
+            <div class="seal-placeholder">ختم الخبير</div>
+            <p style="text-align: left; margin-top: 10px;">{{timestamp}}</p>
+        </div>
+    </div>
+</body>
+</html>

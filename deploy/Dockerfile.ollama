@@ -1,0 +1,25 @@
+# ──────────────────────────────────────────────────────────────────────────
+# Custom Ollama container that pre-pulls llama3:8b and aliases it as
+# qwen2.5:7b — so core_engine/rag_advisor.py works unmodified.
+# ──────────────────────────────────────────────────────────────────────────
+FROM ollama/ollama:latest
+
+# Override these at build/run time:
+ARG OLLAMA_MODEL=llama3:8b
+ARG ALIAS_AS=qwen2.5:7b
+ENV OLLAMA_MODEL=${OLLAMA_MODEL} \
+    ALIAS_AS=${ALIAS_AS} \
+    OLLAMA_HOST=0.0.0.0:11434
+
+COPY deploy/scripts/pull_models.sh /pull_models.sh
+RUN chmod +x /pull_models.sh
+
+EXPOSE 11434
+
+# Run pull_models.sh which:
+#   1. starts ollama serve in background
+#   2. waits for it to be ready
+#   3. pulls $OLLAMA_MODEL (default llama3:8b)
+#   4. creates the $ALIAS_AS alias so existing code finds the same name
+#   5. brings ollama serve to the foreground
+ENTRYPOINT ["/pull_models.sh"]

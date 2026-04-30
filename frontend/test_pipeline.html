@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pipeline Test</title>
+</head>
+<body>
+    <h1>Testing Pipeline...</h1>
+    <pre id="output"></pre>
+    <script src="data-engine/market-db.js"></script>
+    <script src="data-engine/scraper.js"></script>
+    <script src="data-engine/data-cleaner.js"></script>
+    <script src="data-engine/duplicate-detector.js"></script>
+    <script src="data-engine/scheduler.js"></script>
+    <script>
+        // Override console.log
+        const output = document.getElementById('output');
+        const oldLog = console.log;
+        console.log = function(...args) {
+            oldLog(...args);
+            output.textContent += args.join(' ') + '\n';
+        };
+
+        // Start scheduler (running once instantly, then recurring every hour for testing)
+        window.Scheduler.startDailyScheduler(3600000); 
+    </script>
+</body>
+</html>

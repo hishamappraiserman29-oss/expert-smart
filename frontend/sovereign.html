@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXPERT_SMART — الواجهة السيادية الموحدة</title>
+<meta name="theme-color" content="#030812">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   EXPERT_SMART — SOVEREIGN UNIFIED PLATFORM
+   الواجهة السيادية الموحدة لخبراء التقييم العقاري
+   مصر 🇪🇬 · المملكة العربية السعودية 🇸🇦
+   IVS 2022 · FRA · TAQEEM
+   ألوان: #030812 (نيفي) · #FFD700 (ذهبي)
+   خط: Tajawal
+═══════════════════════════════════════════════════════════════ */
+
+/* ── رموز التصميم ── */
+:root {
+  --navy:        #030812;
+  --navy-card:   #060e1c;
+  --navy-mid:    #091525;
+  --navy-glass:  rgba(6,14,28,0.82);
+  --gold:        #FFD700;
+  --gold-dim:    rgba(255,215,0,0.18);
+  --gold-glow:   rgba(255,215,0,0.12);
+  --gold-deep:   #c9a800;
+  --gold-border: rgba(255,215,0,0.30);
+  --surface:     rgba(255,255,255,0.025);
+  --border:      rgba(255,215,0,0.20);
+  --border-soft: rgba(255,255,255,0.06);
+  --text:        #eef2ff;
+  --text-muted:  #7a8baa;
+  --text-dim:    #3a4a5e;
+  --green:       #4ade80;
+  --amber:       #f59e0b;
+  --red:         #ef4444;
+  --blue:        #60a5fa;
+  --font-ar:     'Tajawal', sans-serif;
+  --font-en:     'Montserrat', sans-serif;
+  --ease:        cubic-bezier(0.16,1,0.3,1);
+  --t:           0.22s;
+  --radius:      14px;
+  --header-h:    68px;
+}
+
+/* ── إعادة الضبط الأساسي ── */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; height:100%; }
+body {
+  background: var(--navy);
+  color: var(--text);
+  font-family: var(--font-ar);
+  line-height: 1.65;
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4,h5 { font-family:var(--font-ar); font-weight:800; line-height:1.3; }
+a { text-decoration:none; color:inherit; }
+button { font-family:var(--font-ar); cursor:pointer; border:none; outline:none; }
+input,select,textarea { font-family:var(--font-ar); color:var(--text); outline:none; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,215,0,0.20); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(255,215,0,0.40); }
+option { background: #0a1528; color: var(--text); }
+
+/* ── الحركات ── */
+@keyframes fadeUp   { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes pulse    { 0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,0.4)} 50%{box-shadow:0 0 0 7px rgba(255,215,0,0)} }
+@keyframes bounce   { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+@keyframes goldFlow { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes gridIn   { from{opacity:0;transform:scale(0.96) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes shimmer  { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:0.5} }
+@keyframes scan     { 0%{transform:translateY(-100%)} 100%{transform:translateY(400%)} }
+
+/* ══════════════════════════════════════════════════════
+   هيكل التطبيق الرئيسي
+══════════════════════════════════════════════════════ */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,215,0,0.06) 0%, transparent 60%),
+    var(--navy);
+}
+
+/* ══════════════════════════════════════════════════════
+   الرأسية السيادية
+══════════════════════════════════════════════════════ */
+.sovereign-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: var(--header-h);
+  padding: 0 20px;
+  background: linear-gradient(135deg, #040b18 0%, #05101e 60%, #030812 100%);
+  border-bottom: 1px solid rgba(255,215,0,0.22);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 200;
+}
+.sovereign-header::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, #fff7a0 50%, var(--gold) 70%, transparent 100%);
+  background-size: 200% 100%;
+  animation: goldFlow 4s ease infinite;
+}
+
+/* الجانب الأيسر من الرأسية */
+.header-left { display:flex; align-items:center; gap:10px; }
+
+/* شعار + عنوان */
+.brand-wrap { display:flex; align-items:center; gap:10px; }
+.brand-icon {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, #1a1000, #3a2800);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 10px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 1.1rem; color: var(--gold);
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(255,215,0,0.15);
+}
+.brand-text { line-height:1.2; }
+.brand-name {
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+}
+.brand-name span { color: var(--gold); }
+.brand-sub {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-family: var(--font-ar);
+  display: block;
+}
+
+/* الوسط */
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+.hc-flags {
+  font-size: 1.2rem;
+  letter-spacing: 5px;
+  display: block;
+  margin-bottom: 1px;
+}
+.hc-title {
+  font-family: var(--font-en);
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+.hc-title .t-gold { color: var(--gold); }
+.hc-sub {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 1px;
+  font-family: var(--font-ar);
+  letter-spacing: 1px;
+}
+
+/* الجانب الأيمن */
+.header-right { display:flex; align-items:center; gap:8px; }
+
+.status-pill {
+  display: inline-flex; align-items:center; gap:5px;
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.28);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 0.68rem;
+  font-family: var(--font-en);
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+.status-dot {
+  width:6px; height:6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* زر المصادقة */
+.auth-btn {
+  display: flex; align-items:center; gap:6px;
+  background: rgba(255,215,0,0.07);
+  border: 1px solid rgba(255,215,0,0.22);
+  color: var(--gold);
+  border-radius: 9px;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition: all var(--t);
+  white-space: nowrap;
+}
+.auth-btn:hover { background:rgba(255,215,0,0.14); border-color:rgba(255,215,0,0.45); }
+.auth-btn i { font-size: 0.75rem; }
+
+/* بطاقة الخبير */
+.expert-pill {
+  display: flex; align-items:center; gap:7px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all var(--t);
+}
+.expert-pill:hover { background: rgba(255,215,0,0.06); }
+.expert-avatar {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, #8B6914, #FFD700);
+  border-radius: 7px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 0.8rem; color: var(--navy);
+  font-weight: 800;
+  font-family: var(--font-en);
+  flex-shrink: 0;
+}
+.expert-info { line-height:1.2; }
+.expert-name { font-size:0.7rem; font-weight:700; color:#fff; }
+.expert-role { font-size:0.58rem; color:var(--text-muted); display:block; }
+
+/* ══════════════════════════════════════════════════════
+   شريط السياق (Context Bar)
+══════════════════════════════════════════════════════ */
+.context-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 20px;
+  background: rgba(255,215,0,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  flex-shrink: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  min-height: 36px;
+}
+.ctx-label {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  font-family: var(--font-en);
+}
+.ctx-chip {
+  display: inline-flex; align-items:center; gap:4px;
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.22);
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 0.68rem;
+  color: var(--gold);
+  font-weight: 600;
+  flex-shrink: 0;
+  animation: fadeIn 0.3s ease;
+}
+.ctx-chip i { font-size: 0.6rem; opacity:0.7; }
+.ctx-chip.empty { color: var(--text-dim); border-color: rgba(255,255,255,0.08); background: transparent; }
+
+/* ══════════════════════════════════════════════════════
+   منطقة المحتوى الرئيسية
+══════════════════════════════════════════════════════ */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── الشبكة السيادية ── */
+.sovereign-grid-wrap {
+  flex-shrink: 0;
+  padding: 14px 16px 8px;
+  overflow: hidden;
+}
+.sovereign-grid-title {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: var(--font-en);
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.sovereign-grid-title span { color: var(--gold); opacity:0.7; }
+
+/* شبكة 3×2 */
+.sovereign-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* بطاقة زجاجية */
+.grid-card {
+  background: var(--navy-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,215,0,0.15);
+  border-radius: var(--radius);
+  padding: 12px 14px 10px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--t), box-shadow var(--t), transform var(--t);
+  animation: gridIn 0.5s var(--ease) both;
+  cursor: default;
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grid-card:nth-child(1) { animation-delay:0.05s }
+.grid-card:nth-child(2) { animation-delay:0.10s }
+.grid-card:nth-child(3) { animation-delay:0.15s }
+.grid-card:nth-child(4) { animation-delay:0.20s }
+.grid-card:nth-child(5) { animation-delay:0.25s }
+.grid-card:nth-child(6) { animation-delay:0.30s }
+.grid-card:hover {
+  border-color: rgba(255,215,0,0.38);
+  box-shadow: 0 0 20px rgba(255,215,0,0.08), 0 4px 24px rgba(0,0,0,0.4);
+  transform: translateY(-1px);
+}
+.grid-card.active {
+  border-color: rgba(255,215,0,0.55);
+  box-shadow: 0 0 0 1px rgba(255,215,0,0.12), 0 0 28px rgba(255,215,0,0.12);
+}
+/* خط ذهبي علوي */
+.grid-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity:0;
+  transition: opacity var(--t);
+}
+.grid-card:hover::before,
+.grid-card.active::before { opacity:1; }
+/* نقطة ضوء */
+.grid-card::after {
+  content:'';
+  position:absolute;
+  top:-40px; right:-40px;
+  width:80px; height:80px;
+  background: radial-gradient(circle, rgba(255,215,0,0.08) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+/* رأسية البطاقة */
+.gc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gc-icon {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,215,0,0.06));
+  border: 1px solid rgba(255,215,0,0.22);
+  border-radius: 8px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 0.75rem;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.gc-titles { flex:1; min-width:0; }
+.gc-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gc-sub {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 1px;
+}
+.gc-status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  transition: background var(--t);
+}
+.gc-status-dot.filled { background: var(--gold); animation: pulse 2s infinite; }
+
+/* محتوى البطاقة */
+.gc-body { flex:1; display:flex; flex-direction:column; gap:5px; }
+
+/* القائمة المنسدلة داخل البطاقة */
+.gc-select {
+  width: 100%;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,215,0,0.18);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  color: var(--text);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color var(--t), background var(--t);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23FFD700' opacity='.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  padding-left: 28px;
+}
+.gc-select:focus { border-color: rgba(255,215,0,0.5); background-color: rgba(255,215,0,0.05); }
+.gc-select:hover { border-color: rgba(255,215,0,0.35); }
+
+/* رفع الملفات */
+.gc-upload-zone {
+  border: 1px dashed rgba(255,215,0,0.22);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--t);
+  background: rgba(255,215,0,0.02);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  position: relative;
+}
+.gc-upload-zone:hover {
+  border-color: rgba(255,215,0,0.45);
+  background: rgba(255,215,0,0.06);
+  color: var(--gold);
+}
+.gc-upload-zone input[type=file] {
+  position: absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.gc-upload-icon { font-size:1rem; color:var(--gold); opacity:0.7; display:block; margin-bottom:2px; }
+.gc-upload-label { display:block; font-size:0.65rem; }
+.gc-upload-label strong { color: var(--text); }
+.gc-file-badge {
+  display: inline-flex; align-items:center; gap:5px;
+  background: rgba(74,222,128,0.1);
+  border: 1px solid rgba(74,222,128,0.3);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.62rem;
+  color: var(--green);
+  margin-top: 2px;
+}
+.gc-file-badge i { font-size:0.55rem; }
+
+/* حقل نصي صغير */
+.gc-input {
+  width: 100%;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,215,0,0.18);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text);
+  transition: border-color var(--t);
+}
+.gc-input:focus { border-color: rgba(255,215,0,0.5); }
+.gc-input::placeholder { color: var(--text-dim); font-size:0.68rem; }
+
+/* أزرار صغيرة */
+.gc-btn {
+  display: flex; align-items:center; justify-content:center; gap:5px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 0.67rem;
+  font-weight: 700;
+  transition: all var(--t);
+  border: none;
+  cursor: pointer;
+}
+.gc-btn-gold {
+  background: linear-gradient(135deg, #8B6914, #FFD700);
+  color: var(--navy);
+  box-shadow: 0 0 10px rgba(255,215,0,0.2);
+}
+.gc-btn-gold:hover { box-shadow: 0 0 16px rgba(255,215,0,0.4); transform:scale(1.03); }
+.gc-btn-ghost {
+  background: rgba(255,215,0,0.06);
+  border: 1px solid rgba(255,215,0,0.18);
+  color: var(--gold);
+}
+.gc-btn-ghost:hover { background: rgba(255,215,0,0.12); border-color: rgba(255,215,0,0.35); }
+
+/* شريط مجموعة الأزرار */
+.gc-btn-row { display:flex; gap:5px; }
+
+/* مؤشر المسح السوقي */
+.sweeper-row {
+  display: flex; align-items:center; gap:4px;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+.sweeper-dot {
+  width:5px; height:5px;
+  border-radius:50%;
+  background: var(--text-dim);
+  flex-shrink:0;
+}
+.sweeper-dot.live { background: var(--green); animation: pulse 2s infinite; }
+.sweeper-dot.pending { background: var(--amber); animation: shimmer 1.5s infinite; }
+
+/* لافتة الاستهداف */
+.target-tag {
+  display: inline-flex; align-items:center; gap:3px;
+  background: rgba(255,215,0,0.06);
+  border: 1px solid rgba(255,215,0,0.14);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.58rem;
+  color: var(--text-muted);
+}
+
+/* البطاقة رقم 1 — المحاكاة — اختياري */
+.gc-optional-badge {
+  display: inline-block;
+  background: rgba(96,165,250,0.12);
+  border: 1px solid rgba(96,165,250,0.25);
+  border-radius: 4px;
+  padding: 0 6px;
+  font-size: 0.57rem;
+  color: var(--blue);
+  margin-right: 4px;
+}
+
+/* ══════════════════════════════════════════════════════
+   منطقة الدردشة
+══════════════════════════════════════════════════════ */
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scroll-behavior: smooth;
+}
+.chat-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0.45;
+  animation: fadeIn 0.6s ease;
+}
+.chat-empty-icon { font-size:2rem; color:var(--gold); }
+.chat-empty-text { font-size:0.78rem; color:var(--text-muted); text-align:center; }
+
+/* رسالة */
+.msg {
+  max-width: 82%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  line-height: 1.65;
+  animation: fadeUp 0.25s var(--ease);
+  word-break: break-word;
+}
+.msg.user {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,215,0,0.07));
+  border: 1px solid rgba(255,215,0,0.22);
+  border-radius: 12px 12px 4px 12px;
+  color: var(--text);
+}
+.msg.bot {
+  align-self: flex-end;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px 12px 12px 4px;
+  color: var(--text);
+}
+.msg.bot .msg-meta {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  display: flex; align-items:center; gap:4px;
+}
+.msg.bot .msg-meta i { color: var(--gold); font-size:0.6rem; }
+
+/* نقاط الكتابة */
+.typing-dots span {
+  display:inline-block; width:6px; height:6px;
+  background:var(--gold); border-radius:50%;
+  margin:0 2px; opacity:0.7;
+  animation: bounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2){ animation-delay:.2s }
+.typing-dots span:nth-child(3){ animation-delay:.4s }
+
+/* بطاقات النتائج */
+.result-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px; margin-top: 8px;
+}
+.result-card {
+  background: rgba(255,215,0,0.05);
+  border: 1px solid rgba(255,215,0,0.18);
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+}
+.rc-val { font-size:1rem; font-weight:800; color:var(--gold); display:block; }
+.rc-lbl { font-size:0.62rem; color:var(--text-muted); margin-top:1px; display:block; }
+
+/* تنبيه النطاق */
+.scope-alert {
+  background: rgba(239,68,68,0.09);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 8px; padding:9px 13px;
+  font-size: 0.82rem; color: #fca5a5;
+}
+
+/* ══════════════════════════════════════════════════════
+   محرك الإدخال الديناميكي
+══════════════════════════════════════════════════════ */
+.prompt-engine {
+  flex-shrink: 0;
+  padding: 6px 16px 12px;
+  background: linear-gradient(to top, rgba(3,8,18,0.99) 85%, transparent);
+  position: relative;
+  z-index: 50;
+}
+
+/* لوحة رفع الملفات */
+.attach-panel {
+  display: none;
+  background: rgba(8,18,36,0.97);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 12px;
+  margin-bottom: 7px;
+  overflow: hidden;
+  animation: fadeUp 0.18s var(--ease);
+  max-width: 860px;
+  margin-left: auto; margin-right: auto;
+}
+.attach-panel.open { display:block; }
+.attach-hdr {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 8px 13px 6px;
+  border-bottom: 1px solid rgba(255,215,0,0.1);
+  font-size: 0.72rem; color: var(--text-muted);
+}
+.attach-close { background:none; color:var(--text-muted); font-size:0.85rem; border:none; cursor:pointer; transition:color var(--t); }
+.attach-close:hover { color: var(--gold); }
+.attach-opts { display:flex; gap:7px; padding:7px 10px 9px; }
+.attach-opt {
+  flex:1; display:flex; align-items:center; gap:8px;
+  padding: 9px 11px;
+  background: rgba(255,215,0,0.04);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: 9px; cursor:pointer; transition:all var(--t);
+  position:relative; overflow:hidden;
+}
+.attach-opt:hover { background:rgba(255,215,0,0.09); border-color:rgba(255,215,0,0.32); }
+.attach-opt input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+.attach-opt i { color:var(--gold); font-size:1.1rem; flex-shrink:0; }
+.attach-opt-title { font-size:0.75rem; font-weight:700; color:var(--text); }
+.attach-opt-sub { font-size:0.62rem; color:var(--text-muted); margin-top:1px; }
+
+/* صندوق الإدخال الذهبي */
+.prompt-glass {
+  display: flex; align-items: flex-end; gap: 7px;
+  background: rgba(255,255,255,0.025);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,215,0,0.35);
+  border-radius: 18px;
+  padding: 8px 10px;
+  box-shadow:
+    0 0 0 1px rgba(255,215,0,0.05),
+    0 0 32px rgba(255,215,0,0.07),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  max-width: 860px;
+  margin: 0 auto;
+  transition: border-color 0.22s, box-shadow 0.22s;
+}
+.prompt-glass:focus-within {
+  border-color: rgba(255,215,0,0.70);
+  box-shadow:
+    0 0 0 2px rgba(255,215,0,0.10),
+    0 0 44px rgba(255,215,0,0.15),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.prompt-icon-btn {
+  background: none;
+  border: 1px solid rgba(255,215,0,0.16);
+  color: var(--text-muted);
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 0.85rem; flex-shrink:0;
+  transition: all var(--t); cursor:pointer;
+}
+.prompt-icon-btn:hover { color:var(--gold); border-color:rgba(255,215,0,0.38); background:rgba(255,215,0,0.07); }
+.prompt-icon-btn.active { color:var(--gold); border-color:var(--gold); background:rgba(255,215,0,0.1); }
+
+.prompt-textarea {
+  flex:1; background:none; border:none;
+  color: var(--text);
+  font-family: var(--font-ar);
+  font-size: 0.9rem; line-height:1.6;
+  resize: none;
+  min-height: 36px; max-height: 160px;
+  padding: 4px 4px;
+  overflow-y: auto;
+}
+.prompt-textarea::placeholder { color: var(--text-muted); font-size:0.85rem; }
+
+.prompt-right { display:flex; align-items:center; gap:5px; }
+
+/* زر الإرسال */
+.send-btn {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, #8B6914 0%, #FFD700 55%, #c9a800 100%);
+  border-radius: 12px;
+  color: var(--navy);
+  font-size: 0.9rem;
+  display: flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  box-shadow: 0 0 16px rgba(255,215,0,0.32);
+  transition: box-shadow 0.18s, transform 0.18s;
+  border: none; cursor:pointer;
+}
+.send-btn:hover { box-shadow: 0 0 26px rgba(255,215,0,0.55); transform:scale(1.05); }
+.send-btn:active { transform:scale(0.96); }
+
+/* نص تنبيهي أسفل الصندوق */
+.prompt-guard {
+  text-align: center; font-size:0.63rem; color:var(--text-dim);
+  margin-top: 4px; max-width:860px; margin-left:auto; margin-right:auto;
+}
+.prompt-guard i { color:var(--gold); margin-left:3px; opacity:0.55; }
+
+/* ══════════════════════════════════════════════════════
+   نافذة المصادقة (RBAC Mock)
+══════════════════════════════════════════════════════ */
+.modal-backdrop {
+  position:fixed; inset:0; z-index:500;
+  background: rgba(3,8,18,0.88);
+  backdrop-filter: blur(8px);
+  display: flex; align-items:center; justify-content:center;
+  animation: fadeIn 0.2s ease;
+}
+.modal-backdrop.hidden { display:none; }
+.modal-box {
+  background: linear-gradient(145deg, #070f20, #060d1c);
+  border: 1px solid rgba(255,215,0,0.30);
+  border-radius: 18px;
+  padding: 28px 32px;
+  width: 360px;
+  max-width: 95vw;
+  animation: fadeUp 0.25s var(--ease);
+  position: relative;
+  box-shadow: 0 0 60px rgba(255,215,0,0.1);
+}
+.modal-close {
+  position:absolute; top:14px; left:14px;
+  background: none; border:none; color:var(--text-muted);
+  font-size:1rem; cursor:pointer; transition:color var(--t);
+}
+.modal-close:hover { color:var(--gold); }
+.modal-icon { text-align:center; font-size:2rem; margin-bottom:12px; color:var(--gold); }
+.modal-title { font-size:1rem; font-weight:800; text-align:center; margin-bottom:4px; }
+.modal-sub { font-size:0.75rem; color:var(--text-muted); text-align:center; margin-bottom:20px; }
+.modal-label { font-size:0.72rem; color:var(--text-muted); margin-bottom:5px; display:block; }
+.modal-input {
+  width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,215,0,0.2);
+  border-radius:9px; padding:9px 13px; font-size:0.82rem; color:var(--text);
+  margin-bottom:12px; transition:border-color var(--t);
+}
+.modal-input:focus { border-color:rgba(255,215,0,0.5); }
+.modal-btn-full {
+  width:100%; padding:11px; border-radius:10px;
+  background: linear-gradient(135deg, #8B6914, #FFD700);
+  color:var(--navy); font-size:0.85rem; font-weight:800;
+  border:none; cursor:pointer;
+  box-shadow: 0 0 18px rgba(255,215,0,0.3);
+  transition: box-shadow var(--t), transform var(--t);
+}
+.modal-btn-full:hover { box-shadow: 0 0 28px rgba(255,215,0,0.5); transform:scale(1.02); }
+.rbac-roles { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.rbac-role-chip {
+  padding: 4px 12px; border-radius:20px; font-size:0.67rem; cursor:pointer;
+  border: 1px solid rgba(255,215,0,0.18); color:var(--text-muted);
+  background: rgba(255,215,0,0.04); transition:all var(--t);
+}
+.rbac-role-chip:hover, .rbac-role-chip.selected {
+  background:rgba(255,215,0,0.12); border-color:rgba(255,215,0,0.45); color:var(--gold);
+}
+
+/* ══════════════════════════════════════════════════════
+   لوحة التحليل التنبؤي
+══════════════════════════════════════════════════════ */
+.predictive-strip {
+  display: none;
+  padding: 6px 16px;
+  background: rgba(96,165,250,0.05);
+  border-top: 1px solid rgba(96,165,250,0.12);
+  border-bottom: 1px solid rgba(96,165,250,0.12);
+  flex-shrink: 0;
+  animation: fadeUp 0.3s ease;
+}
+.predictive-strip.visible { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pred-label { font-size:0.63rem; color:var(--blue); font-weight:700; letter-spacing:1px; text-transform:uppercase; flex-shrink:0; }
+.pred-chips { display:flex; gap:5px; flex-wrap:wrap; }
+.pred-chip {
+  background: rgba(96,165,250,0.08);
+  border: 1px solid rgba(96,165,250,0.2);
+  border-radius: 6px; padding: 2px 8px;
+  font-size: 0.63rem; color: var(--blue);
+}
+.pred-chip.up { color:#4ade80; border-color:rgba(74,222,128,0.25); background:rgba(74,222,128,0.07); }
+.pred-chip.down { color:#f87171; border-color:rgba(248,113,113,0.25); background:rgba(248,113,113,0.07); }
+
+/* ══════════════════════════════════════════════════════
+   نظام الإشعارات
+══════════════════════════════════════════════════════ */
+.toast-container {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+  z-index:9000; display:flex; flex-direction:column; gap:6px; align-items:center;
+  pointer-events:none;
+}
+.toast {
+  background: rgba(8,18,34,0.97);
+  border: 1px solid rgba(255,215,0,0.25);
+  border-radius: 10px; padding:9px 18px;
+  font-size:0.78rem; color:var(--text);
+  display:flex; align-items:center; gap:7px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  animation: fadeUp 0.2s ease;
+  pointer-events:auto;
+  white-space:nowrap;
+}
+.toast i { color:var(--gold); }
+.toast.success i { color:var(--green); }
+.toast.error i { color:var(--red); }
+.toast.warning i { color:var(--amber); }
+
+/* ══════════════════════════════════════════════════════
+   الاستجابة للشاشات المختلفة
+══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .sovereign-grid { grid-template-columns: repeat(2, 1fr); }
+  .header-right .status-pill { display:none; }
+  .hc-flags { letter-spacing:3px; }
+}
+@media (max-width: 600px) {
+  .sovereign-grid { grid-template-columns: 1fr; }
+  .sovereign-grid-wrap { padding: 8px 10px 6px; }
+  .sovereign-header { padding: 0 10px; }
+  .brand-text { display:none; }
+  .header-right .auth-btn { display:none; }
+  .prompt-engine { padding: 6px 10px 10px; }
+  .chat-area { padding: 8px 10px 4px; }
+}
+@media (min-width: 1400px) {
+  .sovereign-grid { max-width:1200px; }
+  .grid-card { min-height:120px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     هيكل التطبيق
+══════════════════════════════════════════════════════ -->
+<div class="app" id="app">
+
+  <!-- ── الرأسية السيادية ── -->
+  <header class="sovereign-header">
+    <div class="header-left">
+      <div class="brand-wrap">
+        <div class="brand-icon"><i class="fas fa-landmark"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">EXPERT<span>_SMART</span></span>
+          <span class="brand-sub">الواجهة السيادية الموحدة</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <span class="hc-flags">🇪🇬 &nbsp; 🇸🇦</span>
+      <span class="hc-title"><span class="t-gold">EXPERT_SMART</span>: Regional Valuation Platform</span>
+      <span class="hc-sub">IVS 2022 · FRA مصر · TAQEEM السعودية</span>
+    </div>
+
+    <div class="header-right">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        ONLINE
+      </div>
+      <!-- زر المصادقة — RBAC Mock -->
+      <button class="auth-btn" id="authBtn" onclick="RBAC.openModal()">
+        <i class="fas fa-shield-alt"></i>
+        <span id="authLabel">تسجيل الدخول</span>
+      </button>
+      <!-- بطاقة الخبير -->
+      <div class="expert-pill" onclick="RBAC.openModal()">
+        <div class="expert-avatar" id="expertInitial">H</div>
+        <div class="expert-info">
+          <span class="expert-name" id="expertName">هشام المهدي</span>
+          <span class="expert-role" id="expertRoleLabel">خبير تقييم عقاري</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── شريط السياق ── -->
+  <div class="context-bar" id="contextBar">
+    <span class="ctx-label">السياق:</span>
+    <span class="ctx-chip empty" id="ctx-role"><i class="fas fa-user-tie"></i> الدور غير محدد</span>
+    <span class="ctx-chip empty" id="ctx-asset"><i class="fas fa-building"></i> الأصل غير محدد</span>
+    <span class="ctx-chip empty" id="ctx-timeline"><i class="fas fa-calendar-alt"></i> التاريخ غير محدد</span>
+    <span class="ctx-chip empty" id="ctx-sim"><i class="fas fa-file-alt"></i> نموذج: افتراضي</span>
+    <span class="ctx-chip empty" id="ctx-data"><i class="fas fa-database"></i> بيانات: غير مُحمّلة</span>
+    <span class="ctx-chip empty" id="ctx-market"><i class="fas fa-chart-line"></i> بيانات ميدانية: فارغة</span>
+  </div>
+
+  <!-- ── شريط التحليل التنبؤي ── -->
+  <div class="predictive-strip" id="predictiveStrip">
+    <span class="pred-label"><i class="fas fa-chart-line"></i> تحليل تنبؤي</span>
+    <div class="pred-chips" id="predChips">
+      <span class="pred-chip up">تضخم المنطقة: +8.2%</span>
+      <span class="pred-chip up">نمو السوق (12 شهراً): +11.4%</span>
+      <span class="pred-chip down">مؤشر المخاطر: متوسط</span>
+      <span class="pred-chip">توصية: الاحتفاظ بالأصل</span>
+    </div>
+  </div>
+
+  <!-- ── المحتوى الرئيسي ── -->
+  <div class="main-content">
+
+    <!-- ══ الشبكة السيادية 3×2 ══ -->
+    <div class="sovereign-grid-wrap">
+      <div class="sovereign-grid-title">
+        ◆ <span>الشبكة السيادية — محاور الإدخال المؤسسي</span> ◆
+      </div>
+
+      <div class="sovereign-grid" id="sovereignGrid">
+
+        <!-- ── البطاقة 1: محاكاة التقرير (اختياري) ── -->
+        <div class="grid-card" id="card-sim">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-magic"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">
+                <span class="gc-optional-badge">اختياري</span>محاكاة تقرير
+              </span>
+              <span class="gc-sub">تعليم النظام أسلوب الخبير</span>
+            </div>
+            <span class="gc-status-dot" id="sim-dot"></span>
+          </div>
+          <div class="gc-body">
+            <div class="gc-upload-zone" id="simDropZone">
+              <input type="file" id="simFile" accept=".pdf,.docx,.doc,.xlsx,.xls" multiple onchange="Grid.onSimFile(this)">
+              <i class="fas fa-cloud-upload-alt gc-upload-icon"></i>
+              <span class="gc-upload-label">
+                <strong>ارفع نماذج تقاريرك</strong><br>
+                PDF · Word · Excel
+              </span>
+            </div>
+            <div id="simFileBadge" style="display:none">
+              <span class="gc-file-badge"><i class="fas fa-check-circle"></i> <span id="simFileName">—</span></span>
+            </div>
+            <div class="gc-btn-row" style="margin-top:2px">
+              <button class="gc-btn gc-btn-ghost" style="flex:1;font-size:0.62rem" onclick="Grid.clearSim()">
+                <i class="fas fa-undo"></i> النموذج الافتراضي
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── البطاقة 2: مدخلات بيانات العقار ── -->
+        <div class="grid-card" id="card-data">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-file-import"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">مدخلات بيانات العقار</span>
+              <span class="gc-sub">ملفات الأصل الرئيسية</span>
+            </div>
+            <span class="gc-status-dot" id="data-dot"></span>
+          </div>
+          <div class="gc-body">
+            <div class="gc-upload-zone" id="dataDropZone">
+              <input type="file" id="dataFile" accept=".pdf,.docx,.doc,.xlsx,.xls,.json,.jpg,.jpeg,.png,.jfif" multiple onchange="Grid.onDataFile(this)">
+              <i class="fas fa-folder-open gc-upload-icon"></i>
+              <span class="gc-upload-label">
+                <strong>ملفات العقار</strong><br>
+                Excel · PDF · Word · صور
+              </span>
+            </div>
+            <div id="dataFileBadge" style="display:none">
+              <span class="gc-file-badge"><i class="fas fa-check-circle"></i> <span id="dataFileName">—</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── البطاقة 3: الدور الوظيفي ── -->
+        <div class="grid-card" id="card-role">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">الدور الوظيفي</span>
+              <span class="gc-sub">تحديد صلاحيات الإدخال</span>
+            </div>
+            <span class="gc-status-dot" id="role-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-role" onchange="Grid.onRoleChange(this.value)">
+              <option value="">— اختر الدور —</option>
+              <option value="bank-auditor">مراجع بنكي — Bank Auditor</option>
+              <option value="fund-manager">مدير صندوق — Fund Manager</option>
+              <option value="tax-expert">خبير ضريبي — Tax Expert</option>
+              <option value="valuer">مقيّم عقاري — Valuer</option>
+              <option value="appraiser">خبير مساحي — Appraiser</option>
+              <option value="investor">مستثمر — Investor</option>
+              <option value="insurance-expert">خبير تأمين — Insurance Expert</option>
+              <option value="general-user">مستخدم عام — General User</option>
+            </select>
+            <!-- وصف الدور -->
+            <div id="roleDesc" style="font-size:0.63rem;color:var(--text-muted);padding:2px 2px;display:none;line-height:1.5"></div>
+          </div>
+        </div>
+
+        <!-- ── البطاقة 4: نوع الأصل ── -->
+        <div class="grid-card" id="card-asset">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-landmark"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">نوع الأصل</span>
+              <span class="gc-sub">تصنيف الأصول المعقدة</span>
+            </div>
+            <span class="gc-status-dot" id="asset-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-asset" onchange="Grid.onAssetChange(this.value)">
+              <option value="">— نوع الأصل —</option>
+              <option value="heritage">تراثي / تاريخي — Historical/Heritage</option>
+              <option value="agricultural">زراعي — Agricultural</option>
+              <option value="extractive">صناعات استخراجية — Extractive Industries</option>
+              <option value="underconstruction">تحت الإنشاء — Under-Construction</option>
+              <option value="intangible">مرتبط بأصول غير ملموسة — Intangible-Linked</option>
+              <option value="partial">حقوق جزئية — Partial Rights</option>
+              <option value="traditional">تقليدي — Traditional</option>
+            </select>
+            <!-- معايير الأصل -->
+            <div id="assetStandard" style="font-size:0.6rem;color:var(--text-dim);padding:1px 2px;display:none"></div>
+          </div>
+        </div>
+
+        <!-- ── البطاقة 5: تاريخ التقييم ── -->
+        <div class="grid-card" id="card-timeline">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-calendar-alt"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">تاريخ التقييم</span>
+              <span class="gc-sub">الإطار الزمني للتقدير</span>
+            </div>
+            <span class="gc-status-dot" id="timeline-dot"></span>
+          </div>
+          <div class="gc-body">
+            <select class="gc-select" id="sel-timeline" onchange="Grid.onTimelineChange(this.value)">
+              <option value="">— الإطار الزمني —</option>
+              <option value="current">حالي — Current</option>
+              <option value="retrospective">سابق / رجعي — Retrospective</option>
+              <option value="prospective">لاحق / مستقبلي — Prospective</option>
+            </select>
+            <!-- تاريخ محدد -->
+            <input type="date" class="gc-input" id="timelineDate" style="display:none" onchange="Grid.onDateChange(this.value)" title="تاريخ التقييم المحدد">
+          </div>
+        </div>
+
+        <!-- ── البطاقة 6: البيانات الميدانية والمقارنات ── -->
+        <div class="grid-card" id="card-market">
+          <div class="gc-head">
+            <div class="gc-icon"><i class="fas fa-satellite-dish"></i></div>
+            <div class="gc-titles">
+              <span class="gc-label">البيانات الميدانية</span>
+              <span class="gc-sub">المقارنات ومسح السوق</span>
+            </div>
+            <span class="gc-status-dot" id="market-dot"></span>
+          </div>
+          <div class="gc-body">
+            <!-- ملاحظة الوسيط -->
+            <input type="text" class="gc-input" id="brokerNote"
+              placeholder="ملاحظة وسيط أو مصدر ميداني..."
+              oninput="Grid.onBrokerNote(this.value)">
+            <!-- مسح السوق الآلي -->
+            <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:3px;font-weight:700;letter-spacing:0.5px">مسح السوق الآلي:</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px" id="sweeperGrid">
+              <div class="sweeper-row" id="sw-aqarmap">
+                <span class="sweeper-dot" id="dot-aqarmap"></span>
+                <span class="target-tag">AqarMap 🇪🇬</span>
+              </div>
+              <div class="sweeper-row" id="sw-propertyfinder">
+                <span class="sweeper-dot" id="dot-pf"></span>
+                <span class="target-tag">PropertyFinder 🇸🇦</span>
+              </div>
+              <div class="sweeper-row" id="sw-easy">
+                <span class="sweeper-dot" id="dot-easy"></span>
+                <span class="target-tag">Easy.com 🇪🇬</span>
+              </div>
+              <div class="sweeper-row" id="sw-aqarksa">
+                <span class="sweeper-dot" id="dot-aqarksa"></span>
+                <span class="target-tag">Aqar KSA 🇸🇦</span>
+              </div>
+            </div>
+            <button class="gc-btn gc-btn-gold" style="margin-top:4px;width:100%" onclick="Grid.runMarketSweep()">
+              <i class="fas fa-radar"></i> تشغيل مسح السوق
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /sovereign-grid -->
+    </div><!-- /sovereign-grid-wrap -->
+
+    <!-- ══ منطقة الدردشة ══ -->
+    <div class="chat-area" id="chatArea">
+      <div class="chat-empty" id="chatEmpty">
+        <i class="fas fa-gem chat-empty-icon"></i>
+        <div class="chat-empty-text">
+          أكمل إعدادات الشبكة السيادية أعلاه<br>
+          ثم اكتب استفساركم في صندوق الإدخال الذهبي
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- ══ محرك الإدخال الديناميكي ══ -->
+  <div class="prompt-engine" id="promptEngine">
+    <!-- لوحة رفع الملفات -->
+    <div class="attach-panel" id="attachPanel">
+      <div class="attach-hdr">
+        <span><i class="fas fa-paperclip" style="color:var(--gold);margin-left:5px"></i> إرفاق ملف</span>
+        <button class="attach-close" onclick="UI.closeAttach()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="attach-opts">
+        <div class="attach-opt">
+          <input type="file" accept=".xlsx,.xls,.csv" onchange="UI.onAttachFile(this,'excel')">
+          <i class="fas fa-table"></i>
+          <div>
+            <div class="attach-opt-title">Excel / CSV</div>
+            <div class="attach-opt-sub">بيانات AVM · محفظة عقارية</div>
+          </div>
+        </div>
+        <div class="attach-opt">
+          <input type="file" accept=".pdf,.docx,.doc" onchange="UI.onAttachFile(this,'report')">
+          <i class="fas fa-file-word"></i>
+          <div>
+            <div class="attach-opt-title">PDF / Word</div>
+            <div class="attach-opt-sub">تقارير · محاضر معاينة</div>
+          </div>
+        </div>
+        <div class="attach-opt">
+          <input type="file" accept=".jpg,.jpeg,.png,.jfif" onchange="UI.onAttachFile(this,'image')">
+          <i class="fas fa-camera"></i>
+          <div>
+            <div class="attach-opt-title">صور الموقع</div>
+            <div class="attach-opt-sub">تحليل رؤية GPT-4o</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الصندوق الذهبي -->
+    <div class="prompt-glass" id="promptGlass">
+      <button class="prompt-icon-btn" id="attachToggle" title="إرفاق ملف" onclick="UI.toggleAttach()">
+        <i class="fas fa-paperclip"></i>
+      </button>
+      <button class="prompt-icon-btn" id="micToggle" title="إدخال صوتي" onclick="UI.toggleMic()">
+        <i class="fas fa-microphone"></i>
+      </button>
+      <textarea
+        class="prompt-textarea"
+        id="promptInput"
+        rows="1"
+        placeholder="اكتب استفسارك هنا — السياق يُضاف تلقائياً من الشبكة السيادية..."
+        onkeydown="UI.onPromptKey(event)"
+        oninput="UI.autoResize(this)"
+      ></textarea>
+      <div class="prompt-right">
+        <button class="prompt-icon-btn" title="تحليل تنبؤي" onclick="UI.togglePredictive()" id="predToggle">
+          <i class="fas fa-chart-area"></i>
+        </button>
+        <button class="send-btn" onclick="Chat.send()" id="sendBtn" title="إرسال">
+          <i class="fas fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+    <div class="prompt-guard">
+      <i class="fas fa-lock"></i>
+      منصة مقيّدة بالنطاق العقاري · IVS 2022 · FRA · TAQEEM · بيانات مشفرة
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══ نافذة المصادقة RBAC ══ -->
+<div class="modal-backdrop hidden" id="authModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="RBAC.closeModal()"><i class="fas fa-times"></i></button>
+    <div class="modal-icon"><i class="fas fa-shield-alt"></i></div>
+    <div class="modal-title">بوابة المصادقة السيادية</div>
+    <div class="modal-sub">نظام التحكم في الصلاحيات (RBAC) — محاكاة مؤسسية</div>
+    <!-- أدوار RBAC -->
+    <div style="margin-bottom:8px">
+      <span class="modal-label">اختر الصلاحية:</span>
+      <div class="rbac-roles" id="rbacRoles">
+        <span class="rbac-role-chip selected" data-role="valuer" onclick="RBAC.selectRole(this)">مقيّم</span>
+        <span class="rbac-role-chip" data-role="bank-auditor" onclick="RBAC.selectRole(this)">مراجع بنكي</span>
+        <span class="rbac-role-chip" data-role="fund-manager" onclick="RBAC.selectRole(this)">مدير صندوق</span>
+        <span class="rbac-role-chip" data-role="tax-expert" onclick="RBAC.selectRole(this)">خبير ضريبي</span>
+        <span class="rbac-role-chip" data-role="investor" onclick="RBAC.selectRole(this)">مستثمر</span>
+        <span class="rbac-role-chip" data-role="appraiser" onclick="RBAC.selectRole(this)">خبير مساحي</span>
+        <span class="rbac-role-chip" data-role="insurance-expert" onclick="RBAC.selectRole(this)">خبير تأمين</span>
+        <span class="rbac-role-chip" data-role="general-user" onclick="RBAC.selectRole(this)">مستخدم عام</span>
+      </div>
+    </div>
+    <span class="modal-label">اسم الخبير:</span>
+    <input type="text" class="modal-input" id="authName" value="هشام المهدي" placeholder="الاسم الكامل">
+    <span class="modal-label">كلمة المرور (تجريبي: أي كلمة):</span>
+    <input type="password" class="modal-input" id="authPass" placeholder="••••••••">
+    <button class="modal-btn-full" onclick="RBAC.login()">
+      <i class="fas fa-sign-in-alt" style="margin-left:6px"></i> دخول آمن
+    </button>
+  </div>
+</div>
+
+<!-- نظام الإشعارات -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     JavaScript — المنطق الكامل
+══════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════
+   0. ثوابت التكوين
+════════════════════════════════════════════════ */
+const API = 'http://localhost:5000';
+
+/* ════════════════════════════════════════════════
+   1. حالة التطبيق المركزية
+════════════════════════════════════════════════ */
+const STATE = {
+  // الشبكة السيادية
+  sim:       { file: null, useDefault: true },
+  data:      { files: [] },
+  role:      null,
+  asset:     null,
+  timeline:  null,
+  date:      null,
+  market:    { brokerNote: '', sweepDone: false, listings: [] },
+  // المصادقة
+  auth:      { loggedIn: false, name: 'هشام المهدي', role: 'valuer' },
+  // التحليل التنبؤي
+  predictive: false,
+};
+
+/* ════════════════════════════════════════════════
+   2. وصف الأدوار
+════════════════════════════════════════════════ */
+const ROLE_META = {
+  'bank-auditor':     { ar:'مراجع بنكي',      desc:'تدقيق LTV · Basel III · درجة المخاطر', endpoint:'bank-audit' },
+  'fund-manager':     { ar:'مدير صندوق',      desc:'IFRS 13 · NAV · FFO · صحة المحفظة',    endpoint:'fund-valuation' },
+  'tax-expert':       { ar:'خبير ضريبي',      desc:'نسبة ASR · COD · PRD · IAAO',          endpoint:'tax-pilot' },
+  'valuer':           { ar:'مقيّم عقاري',     desc:'IVS 2022 · تقدير المبلغ العادل',         endpoint:'valuation' },
+  'appraiser':        { ar:'خبير مساحي',      desc:'تقييم الأراضي · الحقوق العقارية',         endpoint:'valuation' },
+  'investor':         { ar:'مستثمر',          desc:'عائد الاستثمار · NPV · IRR · DCF',        endpoint:'hbu-scenarios' },
+  'insurance-expert': { ar:'خبير تأمين',      desc:'قيمة الاستبدال · DRC · الخسائر',         endpoint:'rcn' },
+  'general-user':     { ar:'مستخدم عام',      desc:'نظرة عامة على السوق',                    endpoint:'valuation' },
+};
+
+const ASSET_META = {
+  'heritage':        { ar:'تراثي/تاريخي',         std:'IVS 230 · حماية التراث',       icon:'🏛️' },
+  'agricultural':    { ar:'زراعي',                  std:'IVS 220 · المعايير الزراعية',  icon:'🌾' },
+  'extractive':      { ar:'صناعات استخراجية',       std:'IVS 210 · المعادن والمناجم',   icon:'⛏️' },
+  'underconstruction':{ ar:'تحت الإنشاء',          std:'IVS 410 · تكلفة الإنجاز',      icon:'🏗️' },
+  'intangible':      { ar:'مرتبط بأصول غير ملموسة', std:'IVS 210 · GW + العلامة التجارية', icon:'💡' },
+  'partial':         { ar:'حقوق جزئية',            std:'IVS 220 · حقوق الانتفاع',      icon:'⚖️' },
+  'traditional':     { ar:'تقليدي',                std:'IVS 105 · مقاربة السوق',        icon:'🏢' },
+};
+
+const TIMELINE_META = {
+  'current':      { ar:'حالي',          hint:'تاريخ التقييم: اليوم', needDate:false },
+  'retrospective':{ ar:'سابق/رجعي',    hint:'يُرجى تحديد تاريخ التقييم السابق', needDate:true },
+  'prospective':  { ar:'لاحق/مستقبلي', hint:'يُرجى تحديد التاريخ المستقبلي المستهدف', needDate:true },
+};
+
+/* ════════════════════════════════════════════════
+   3. نظام الإشعارات
+════════════════════════════════════════════════ */
+const Toast = {
+  show(msg, type='info', dur=3500) {
+    const icons = { info:'fas fa-info-circle', success:'fas fa-check-circle', warning:'fas fa-exclamation-triangle', error:'fas fa-times-circle' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<i class="${icons[type]||icons.info}"></i> ${msg}`;
+    document.getElementById('toastContainer').appendChild(el);
+    setTimeout(() => el.remove(), dur);
+  }
+};
+
+/* ════════════════════════════════════════════════
+   4. تحديث شريط السياق
+════════════════════════════════════════════════ */
+const Context = {
+  update() {
+    // الدور
+    const r = STATE.role;
+    const roleChip = document.getElementById('ctx-role');
+    if (r && ROLE_META[r]) {
+      roleChip.textContent = `${ROLE_META[r].ar}`;
+      roleChip.className = 'ctx-chip';
+    } else {
+      roleChip.innerHTML = '<i class="fas fa-user-tie"></i> الدور غير محدد';
+      roleChip.className = 'ctx-chip empty';
+    }
+    // الأصل
+    const a = STATE.asset;
+    const assetChip = document.getElementById('ctx-asset');
+    if (a && ASSET_META[a]) {
+      assetChip.textContent = `${ASSET_META[a].icon} ${ASSET_META[a].ar}`;
+      assetChip.className = 'ctx-chip';
+    } else {
+      assetChip.innerHTML = '<i class="fas fa-building"></i> الأصل غير محدد';
+      assetChip.className = 'ctx-chip empty';
+    }
+    // الزمن
+    const t = STATE.timeline;
+    const timeChip = document.getElementById('ctx-timeline');
+    if (t && TIMELINE_META[t]) {
+      timeChip.textContent = `${TIMELINE_META[t].ar}` + (STATE.date ? ` · ${STATE.date}` : '');
+      timeChip.className = 'ctx-chip';
+    } else {
+      timeChip.innerHTML = '<i class="fas fa-calendar-alt"></i> الإطار الزمني غير محدد';
+      timeChip.className = 'ctx-chip empty';
+    }
+    // المحاكاة
+    const simChip = document.getElementById('ctx-sim');
+    if (STATE.sim.file) {
+      simChip.textContent = `📄 نموذج: ${STATE.sim.file.name}`;
+      simChip.className = 'ctx-chip';
+    } else {
+      simChip.textContent = 'نموذج: افتراضي';
+      simChip.className = 'ctx-chip empty';
+    }
+    // البيانات
+    const dataChip = document.getElementById('ctx-data');
+    if (STATE.data.files.length > 0) {
+      dataChip.textContent = `📁 ${STATE.data.files.length} ملف`;
+      dataChip.className = 'ctx-chip';
+    } else {
+      dataChip.innerHTML = '<i class="fas fa-database"></i> بيانات: غير مُحمّلة';
+      dataChip.className = 'ctx-chip empty';
+    }
+    // الميداني
+    const mktChip = document.getElementById('ctx-market');
+    if (STATE.market.sweepDone) {
+      mktChip.textContent = `📡 ${STATE.market.listings.length} إدراج`;
+      mktChip.className = 'ctx-chip';
+    } else if (STATE.market.brokerNote) {
+      mktChip.textContent = `📝 ملاحظة وسيط`;
+      mktChip.className = 'ctx-chip';
+    } else {
+      mktChip.innerHTML = '<i class="fas fa-chart-line"></i> بيانات ميدانية: فارغة';
+      mktChip.className = 'ctx-chip empty';
+    }
+    // تحديث نص الإدخال الديناميكي
+    this._refreshPlaceholder();
+  },
+
+  _refreshPlaceholder() {
+    const parts = [];
+    if (STATE.role && ROLE_META[STATE.role]) parts.push(ROLE_META[STATE.role].ar);
+    if (STATE.asset && ASSET_META[STATE.asset]) parts.push(ASSET_META[STATE.asset].ar);
+    if (STATE.timeline && TIMELINE_META[STATE.timeline]) parts.push(TIMELINE_META[STATE.timeline].ar);
+    const ta = document.getElementById('promptInput');
+    if (parts.length > 0) {
+      ta.placeholder = `[${parts.join(' · ')}] — اكتب استفسارك هنا...`;
+    } else {
+      ta.placeholder = 'اكتب استفسارك هنا — السياق يُضاف تلقائياً من الشبكة السيادية...';
+    }
+  },
+
+  /* بناء سياق الإدخال الكامل */
+  buildContext() {
+    const lines = [];
+    if (STATE.auth.loggedIn) lines.push(`الخبير: ${STATE.auth.name}`);
+    if (STATE.role && ROLE_META[STATE.role]) lines.push(`الدور: ${ROLE_META[STATE.role].ar} (${ROLE_META[STATE.role].desc})`);
+    if (STATE.asset && ASSET_META[STATE.asset]) lines.push(`نوع الأصل: ${ASSET_META[STATE.asset].ar} — معيار: ${ASSET_META[STATE.asset].std}`);
+    if (STATE.timeline && TIMELINE_META[STATE.timeline]) {
+      let tl = `الإطار الزمني: ${TIMELINE_META[STATE.timeline].ar}`;
+      if (STATE.date) tl += ` (${STATE.date})`;
+      lines.push(tl);
+    }
+    if (STATE.sim.file) lines.push(`نموذج التقرير: ${STATE.sim.file.name}`);
+    else lines.push('نموذج التقرير: النموذج السيادي الافتراضي');
+    if (STATE.data.files.length > 0) lines.push(`ملفات العقار: ${STATE.data.files.map(f=>f.name).join(', ')}`);
+    if (STATE.market.brokerNote) lines.push(`ملاحظة ميدانية: ${STATE.market.brokerNote}`);
+    if (STATE.market.sweepDone) lines.push(`بيانات مسح السوق: ${STATE.market.listings.length} إدراج متاح`);
+    return lines.length ? '\n\n---\nالسياق السيادي:\n' + lines.map(l=>'• '+l).join('\n') : '';
+  }
+};
+
+/* ════════════════════════════════════════════════
+   5. منطق الشبكة السيادية
+════════════════════════════════════════════════ */
+const Grid = {
+  setDot(id, active) {
+    const dot = document.getElementById(id);
+    if (dot) dot.className = 'gc-status-dot' + (active ? ' filled' : '');
+  },
+  setActive(cardId, active) {
+    const card = document.getElementById(cardId);
+    if (card) card.classList.toggle('active', active);
+  },
+
+  /* بطاقة 1 — المحاكاة */
+  onSimFile(inp) {
+    if (!inp.files.length) return;
+    const f = inp.files[0];
+    STATE.sim.file = f;
+    STATE.sim.useDefault = false;
+    document.getElementById('simFileName').textContent = f.name.length > 22 ? f.name.slice(0,20)+'…' : f.name;
+    document.getElementById('simFileBadge').style.display = 'block';
+    this.setDot('sim-dot', true);
+    this.setActive('card-sim', true);
+    Context.update();
+    Toast.show(`تم رفع نموذج التقرير: ${f.name}`, 'success');
+    this._tryUpload(f, 'simulation');
+  },
+  clearSim() {
+    STATE.sim.file = null; STATE.sim.useDefault = true;
+    document.getElementById('simFileBadge').style.display = 'none';
+    document.getElementById('simFile').value = '';
+    this.setDot('sim-dot', false);
+    this.setActive('card-sim', false);
+    Context.update();
+    Toast.show('تم الرجوع للنموذج الافتراضي السيادي', 'info');
+  },
+
+  /* بطاقة 2 — بيانات العقار */
+  onDataFile(inp) {
+    if (!inp.files.length) return;
+    STATE.data.files = Array.from(inp.files);
+    const names = STATE.data.files.map(f=>f.name).join(', ');
+    const short = names.length > 28 ? names.slice(0,26)+'…' : names;
+    document.getElementById('dataFileName').textContent = short;
+    document.getElementById('dataFileBadge').style.display = 'block';
+    this.setDot('data-dot', true);
+    this.setActive('card-data', true);
+    Context.update();
+    Toast.show(`تم استلام ${STATE.data.files.length} ملف عقاري`, 'success');
+    STATE.data.files.forEach(f => this._tryUpload(f, 'property'));
+  },
+
+  /* بطاقة 3 — الدور */
+  onRoleChange(val) {
+    STATE.role = val || null;
+    const desc = document.getElementById('roleDesc');
+    if (val && ROLE_META[val]) {
+      desc.textContent = ROLE_META[val].desc;
+      desc.style.display = 'block';
+      this.setDot('role-dot', true);
+      this.setActive('card-role', true);
+    } else {
+      desc.style.display = 'none';
+      this.setDot('role-dot', false);
+      this.setActive('card-role', false);
+    }
+    // تحديث بطاقة الخبير
+    if (val && ROLE_META[val]) {
+      document.getElementById('expertRoleLabel').textContent = ROLE_META[val].ar;
+    }
+    Context.update();
+  },
+
+  /* بطاقة 4 — نوع الأصل */
+  onAssetChange(val) {
+    STATE.asset = val || null;
+    const std = document.getElementById('assetStandard');
+    if (val && ASSET_META[val]) {
+      std.textContent = `معيار: ${ASSET_META[val].std}`;
+      std.style.display = 'block';
+      this.setDot('asset-dot', true);
+      this.setActive('card-asset', true);
+    } else {
+      std.style.display = 'none';
+      this.setDot('asset-dot', false);
+      this.setActive('card-asset', false);
+    }
+    Context.update();
+  },
+
+  /* بطاقة 5 — الجدول الزمني */
+  onTimelineChange(val) {
+    STATE.timeline = val || null;
+    const dateInp = document.getElementById('timelineDate');
+    if (val && TIMELINE_META[val]) {
+      if (TIMELINE_META[val].needDate) {
+        dateInp.style.display = 'block';
+        dateInp.title = TIMELINE_META[val].hint;
+      } else {
+        dateInp.style.display = 'none';
+        STATE.date = new Date().toISOString().split('T')[0];
+      }
+      this.setDot('timeline-dot', true);
+      this.setActive('card-timeline', true);
+    } else {
+      dateInp.style.display = 'none';
+      this.setDot('timeline-dot', false);
+      this.setActive('card-timeline', false);
+    }
+    Context.update();
+  },
+  onDateChange(val) {
+    STATE.date = val;
+    Context.update();
+  },
+
+  /* بطاقة 6 — البيانات الميدانية */
+  onBrokerNote(val) {
+    STATE.market.brokerNote = val;
+    this.setDot('market-dot', !!val || STATE.market.sweepDone);
+    this.setActive('card-market', !!val || STATE.market.sweepDone);
+    Context.update();
+  },
+
+  /* مسح السوق */
+  runMarketSweep() {
+    const targets = [
+      { id:'dot-aqarmap', name:'AqarMap' },
+      { id:'dot-pf',      name:'PropertyFinder' },
+      { id:'dot-easy',    name:'Easy.com' },
+      { id:'dot-aqarksa', name:'Aqar KSA' },
+    ];
+    // رسم حالة المعالجة
+    targets.forEach(t => {
+      const d = document.getElementById(t.id);
+      if (d) d.className = 'sweeper-dot pending';
+    });
+    Toast.show('جارٍ مسح بوابات السوق...', 'info', 2000);
+
+    // محاكاة التسلسل
+    targets.forEach((t, i) => {
+      setTimeout(() => {
+        const d = document.getElementById(t.id);
+        if (d) d.className = 'sweeper-dot live';
+        Toast.show(`✓ ${t.name}: تم المسح`, 'success', 2000);
+      }, (i+1)*900);
+    });
+
+    // نهاية المسح
+    setTimeout(() => {
+      STATE.market.sweepDone = true;
+      STATE.market.listings = this._mockListings();
+      this.setDot('market-dot', true);
+      this.setActive('card-market', true);
+      Context.update();
+      Toast.show(`اكتمل المسح: ${STATE.market.listings.length} إدراج ميداني`, 'success');
+      // محاولة الإرسال للخادم
+      fetch(`${API}/api/market-sweep`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ region: STATE.role?.includes('ksa') ? 'KSA' : 'EG', listings: STATE.market.listings })
+      }).catch(()=>{});
+    }, targets.length * 900 + 600);
+  },
+
+  _mockListings() {
+    const zones = ['القاهرة الجديدة','المعادي','التجمع الخامس','الشيخ زايد','الرياض-العليا','جدة'];
+    return Array.from({length:12}, (_,i) => ({
+      id: `L${i+1}`,
+      zone: zones[i % zones.length],
+      area: 100 + i*25,
+      price_ppm: 15000 + i*800,
+      source: ['AqarMap','PropertyFinder','Easy','AqarKSA'][i%4]
+    }));
+  },
+
+  /* رفع ملف للخادم — يوجّه حسب النوع */
+  _tryUpload(file, type) {
+    const endpoint = (type === 'image') ? `${API}/api/upload` : `${API}/api/ingest`;
+    const form = new FormData();
+    form.append('file', file);
+    form.append('type', type);
+    fetch(endpoint, { method:'POST', body:form })
+      .then(r => r.json())
+      .then(d => {
+        if (d.status === 'success') Toast.show(`✅ تمت معالجة ${file.name}`, 'success');
+        else Toast.show(`⚠️ ${d.message || 'خطأ في المعالجة'}`, 'error');
+      })
+      .catch(() => Toast.show('⚠️ الخادم غير متاح — تحقق من تشغيل bridge_api.py', 'error'));
+  }
+};
+
+/* ════════════════════════════════════════════════
+   6. نظام المصادقة (RBAC Mock)
+════════════════════════════════════════════════ */
+const RBAC = {
+  _selectedRole: 'valuer',
+
+  openModal() {
+    document.getElementById('authModal').classList.remove('hidden');
+    document.getElementById('authName').value = STATE.auth.name;
+  },
+  closeModal() {
+    document.getElementById('authModal').classList.add('hidden');
+  },
+  selectRole(chip) {
+    document.querySelectorAll('.rbac-role-chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+    this._selectedRole = chip.dataset.role;
+  },
+  login() {
+    const name = document.getElementById('authName').value.trim() || 'مستخدم';
+    const pass = document.getElementById('authPass').value;
+    if (!pass) { Toast.show('يُرجى إدخال كلمة المرور', 'warning'); return; }
+    STATE.auth = { loggedIn: true, name, role: this._selectedRole };
+    // تحديث الواجهة
+    document.getElementById('expertName').textContent = name;
+    document.getElementById('expertInitial').textContent = name.charAt(0).toUpperCase();
+    document.getElementById('authLabel').textContent = name.split(' ')[0];
+    const rm = ROLE_META[this._selectedRole];
+    document.getElementById('expertRoleLabel').textContent = rm ? rm.ar : 'مستخدم';
+    // ضبط الدور في الشبكة
+    document.getElementById('sel-role').value = this._selectedRole;
+    Grid.onRoleChange(this._selectedRole);
+    this.closeModal();
+    Toast.show(`مرحباً ${name} — تم تسجيل الدخول بصلاحية ${rm?.ar||'عام'}`, 'success');
+  }
+};
+
+/* ════════════════════════════════════════════════
+   7. التحليل التنبؤي (Mock)
+════════════════════════════════════════════════ */
+const Predictive = {
+  show() {
+    STATE.predictive = true;
+    const strip = document.getElementById('predictiveStrip');
+    strip.classList.add('visible');
+    document.getElementById('predToggle').classList.add('active');
+    this._updateChips();
+  },
+  hide() {
+    STATE.predictive = false;
+    document.getElementById('predictiveStrip').classList.remove('visible');
+    document.getElementById('predToggle').classList.remove('active');
+  },
+  toggle() {
+    STATE.predictive ? this.hide() : this.show();
+  },
+  _updateChips() {
+    const asset = STATE.asset;
+    const data = {
+      heritage:        ['تضخم تراثي: +5.1%', 'ندرة سوقية: مرتفعة', 'توصية: احتفاظ'],
+      agricultural:    ['أسعار الأراضي: +7.8%', 'موسمية: متوسطة', 'توصية: مراجعة'],
+      extractive:      ['أسعار المعادن: +12%', 'مخاطر بيئية: مرتفعة', 'توصية: تحوط'],
+      underconstruction:['تكاليف البناء: +9%', 'توصية: تأمين تسعير مبكر'],
+      traditional:     ['نمو السوق: +11.4%', 'تضخم: +8.2%', 'توصية: احتفاظ'],
+    };
+    const chips = (data[asset] || data.traditional).map(c => {
+      const up = c.includes('+') || c.includes('احتفاظ');
+      const down = c.includes('مخاطر') || c.includes('تحوط');
+      return `<span class="pred-chip ${up?'up':down?'down':''}">${c}</span>`;
+    });
+    document.getElementById('predChips').innerHTML = chips.join('');
+  }
+};
+
+/* ════════════════════════════════════════════════
+   8. واجهة المستخدم
+════════════════════════════════════════════════ */
+const UI = {
+  _attachOpen: false,
+  _micActive: false,
+
+  toggleAttach() {
+    this._attachOpen = !this._attachOpen;
+    document.getElementById('attachPanel').classList.toggle('open', this._attachOpen);
+    document.getElementById('attachToggle').classList.toggle('active', this._attachOpen);
+  },
+  closeAttach() {
+    this._attachOpen = false;
+    document.getElementById('attachPanel').classList.remove('open');
+    document.getElementById('attachToggle').classList.remove('active');
+  },
+  toggleMic() {
+    this._micActive = !this._micActive;
+    document.getElementById('micToggle').classList.toggle('active', this._micActive);
+    Toast.show(this._micActive ? 'الميكروفون: نشط (محاكاة)' : 'الميكروفون: متوقف', 'info', 1800);
+  },
+  togglePredictive() {
+    Predictive.toggle();
+  },
+  onPromptKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); Chat.send(); }
+  },
+  autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  },
+  onAttachFile(inp, type) {
+    if (!inp.files.length) return;
+    const f = inp.files[0];
+    this.closeAttach();
+    inp.value = '';
+
+    const isImage = type === 'image';
+    const iconMap = { excel:'fa-table', report:'fa-file-word', image:'fa-image' };
+    const colorMap = { excel:'#22c55e', report:'#60a5fa', image:'#f59e0b' };
+    const icon  = iconMap[type]  || 'fa-paperclip';
+    const color = colorMap[type] || 'var(--gold)';
+
+    /* User bubble — show attached file pill */
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        Chat._addUser(`
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;
+                      background:rgba(245,158,11,0.08);border-radius:10px;
+                      border:1px solid rgba(245,158,11,0.3);">
+            <img src="${ev.target.result}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid rgba(245,158,11,0.4);">
+            <div>
+              <div style="font-size:0.8rem;color:${color};font-weight:600;">📷 صورة مرفقة</div>
+              <div style="font-size:0.85rem;">${f.name}</div>
+            </div>
+          </div>`);
+        document.getElementById('chatEmpty')?.remove();
+      };
+      reader.readAsDataURL(f);
+    } else {
+      Chat._addUser(`
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 12px;
+                    background:rgba(255,255,255,0.04);border-radius:10px;
+                    border:1px solid ${color}33;">
+          <i class="fa-solid ${icon}" style="color:${color};font-size:1.1rem;"></i>
+          <div>
+            <div style="font-size:0.8rem;color:${color};font-weight:600;">📎 ملف مرفق</div>
+            <div style="font-size:0.85rem;">${f.name}</div>
+          </div>
+        </div>`);
+      document.getElementById('chatEmpty')?.remove();
+    }
+
+    /* Bot confirmation bubble */
+    Chat._addBot(`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+                  background:rgba(212,175,55,0.06);border-radius:10px;
+                  border:1px solid rgba(212,175,55,0.2);">
+        <i class="fa-solid fa-circle-check" style="color:#22c55e;font-size:1rem;"></i>
+        <span style="font-size:0.88rem;">تم استلام <strong>${f.name}</strong> — جارٍ المعالجة…</span>
+      </div>`);
+
+    Toast.show(`تم إرفاق: ${f.name}`, 'success');
+    Grid._tryUpload(f, type);
+  }
+};
+
+/* ════════════════════════════════════════════════
+   9. محرك الدردشة
+════════════════════════════════════════════════ */
+const FORBIDDEN = ['طقس','موسيقى','رياضة','أفلام','وصفات','سياسة','ألعاب','صور','سيارات'];
+
+const Chat = {
+  _history: [],
+
+  send() {
+    const ta = document.getElementById('promptInput');
+    const raw = ta.value.trim();
+    if (!raw) return;
+
+    // فحص النطاق
+    if (FORBIDDEN.some(kw => raw.includes(kw))) {
+      this._addBot('<div class="scope-alert"><i class="fas fa-ban" style="margin-left:6px;color:#ef4444"></i>هذا الاستفسار خارج نطاق المنصة العقارية. يُرجى الاقتصار على التقييم العقاري.</div>');
+      ta.value = ''; UI.autoResize(ta);
+      return;
+    }
+
+    // حذف رسالة الترحيب
+    document.getElementById('chatEmpty')?.remove();
+
+    const ctx = Context.buildContext();
+    const fullMsg = raw + ctx;
+    this._addUser(raw);
+    ta.value = ''; UI.autoResize(ta);
+
+    const tid = this._addTyping();
+    this._history.push({ role:'user', content: fullMsg });
+
+    // اختيار المسار
+    const role = STATE.role;
+    if (role === 'bank-auditor') this._handleBank(tid, fullMsg);
+    else if (role === 'fund-manager') this._handleFund(tid, fullMsg);
+    else if (role === 'tax-expert') this._handleTax(tid, fullMsg);
+    else this._handleExpert(tid, fullMsg);
+  },
+
+  _handleBank(tid, msg) {
+    setTimeout(() => {
+      this._removeTyping(tid);
+      fetch(`${API}/api/bank-audit`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ query: msg, area_m2: 300, property_value: 2500000, loan_amount: 2000000, asset_type: STATE.asset||'traditional' })
+      })
+      .then(r => r.json())
+      .then(d => {
+        this._addBot(this._bankCard(d));
+      })
+      .catch(() => {
+        this._addBot(this._fallbackBank());
+      });
+    }, 1200);
+  },
+
+  _handleFund(tid, msg) {
+    setTimeout(() => {
+      this._removeTyping(tid);
+      fetch(`${API}/api/fund-valuation`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ query: msg, noi: 3540000, cap_rate: 0.07, asset_type: STATE.asset||'traditional' })
+      })
+      .then(r => r.json())
+      .then(d => { this._addBot(this._fundCard(d)); })
+      .catch(() => { this._addBot(this._fallbackFund()); });
+    }, 1200);
+  },
+
+  _handleTax(tid, msg) {
+    setTimeout(() => {
+      this._removeTyping(tid);
+      fetch(`${API}/api/tax-pilot`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ query: msg })
+      })
+      .then(r => r.json())
+      .then(d => { this._addBot(this._taxCard(d)); })
+      .catch(() => { this._addBot(this._fallbackTax()); });
+    }, 1200);
+  },
+
+  _handleExpert(tid, msg) {
+    setTimeout(() => {
+      this._removeTyping(tid);
+      const payload = {
+        query: msg,
+        area: 300,
+        property_name: 'عقار الاستفسار',
+        asset_type: STATE.asset || 'traditional',
+        timeline: STATE.timeline || 'current',
+        land_method: 'dual_path',
+        purpose: STATE.role === 'investor' ? 'fair_market' : 'fair_market',
+      };
+      fetch(`${API}/api/valuation`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      })
+      .then(r => r.json())
+      .then(d => { this._addBot(this._valuationCard(d)); })
+      .catch(() => { this._addBot(this._fallbackExpert(msg)); });
+    }, 1400);
+  },
+
+  /* ── قوالب البطاقات ── */
+  _bankCard(d) {
+    const ltv = d.ltv_ratio?.toFixed(1) || '—';
+    const risk = d.risk_class || '—';
+    const pass = d.ltv_breach === false;
+    return `
+      <div class="msg-meta"><i class="fas fa-university"></i> تقرير المراجعة البنكية</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val" style="color:${pass?'var(--green)':'var(--red)'}">${ltv}%</span><span class="rc-lbl">نسبة LTV</span></div>
+        <div class="result-card"><span class="rc-val" style="font-size:0.85rem">${risk}</span><span class="rc-lbl">درجة المخاطر</span></div>
+        <div class="result-card"><span class="rc-val" style="color:${pass?'var(--green)':'var(--red)'};font-size:0.85rem">${pass?'مقبول':'تجاوز'}</span><span class="rc-lbl">حكم Basel III</span></div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text-muted);margin-top:8px">${d.audit_id||'معرّف التدقيق: —'}</div>`;
+  },
+
+  _fundCard(d) {
+    const nav = d.nav ? Number(d.nav).toLocaleString('ar-EG') : '—';
+    const cap = d.cap_rate ? (d.cap_rate*100).toFixed(2)+'%' : '—';
+    const health = d.portfolio_health_score || '—';
+    return `
+      <div class="msg-meta"><i class="fas fa-chart-pie"></i> تقرير صندوق الاستثمار</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val">${nav}</span><span class="rc-lbl">صافي قيمة الأصول</span></div>
+        <div class="result-card"><span class="rc-val">${cap}</span><span class="rc-lbl">معدل الرسملة</span></div>
+        <div class="result-card"><span class="rc-val">${health}</span><span class="rc-lbl">صحة المحفظة / 100</span></div>
+      </div>`;
+  },
+
+  _taxCard(d) {
+    const cod = d.ai_cod?.toFixed(1) || '—';
+    const prd = d.ai_prd?.toFixed(3) || '—';
+    return `
+      <div class="msg-meta"><i class="fas fa-balance-scale"></i> بايلوت الجهاز الضريبي</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val">${cod}%</span><span class="rc-lbl">COD (نظام AI)</span></div>
+        <div class="result-card"><span class="rc-val">${prd}</span><span class="rc-lbl">PRD التراجع</span></div>
+        <div class="result-card"><span class="rc-val" style="color:var(--green)">✓ IAAO</span><span class="rc-lbl">مستوى الامتثال</span></div>
+      </div>`;
+  },
+
+  _valuationCard(d) {
+    const val = d.reconciled_value ? Number(d.reconciled_value).toLocaleString('ar-EG') : '—';
+    const ppm = d.reconciled_ppm ? Number(d.reconciled_ppm).toLocaleString('ar-EG') : '—';
+    const method = d.method_label || 'تسوية IVS';
+    return `
+      <div class="msg-meta"><i class="fas fa-gem"></i> نتيجة التقييم السيادي</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val" style="font-size:0.85rem">${val}</span><span class="rc-lbl">القيمة المُقدَّرة</span></div>
+        <div class="result-card"><span class="rc-val">${ppm}</span><span class="rc-lbl">سعر/م² مُرجَّح</span></div>
+        <div class="result-card"><span class="rc-val" style="font-size:0.7rem">${method}</span><span class="rc-lbl">أسلوب التسوية</span></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="gc-btn gc-btn-gold" onclick="Chat.downloadWord()" style="font-size:0.68rem;padding:5px 10px">
+          <i class="fas fa-file-word"></i> تقرير Word
+        </button>
+        <button class="gc-btn gc-btn-ghost" onclick="Chat.downloadExcel()" style="font-size:0.68rem;padding:5px 10px">
+          <i class="fas fa-file-excel"></i> تقرير Excel
+        </button>
+        <button class="gc-btn gc-btn-ghost" onclick="Chat.showMap()" style="font-size:0.68rem;padding:5px 10px">
+          <i class="fas fa-map-marked-alt"></i> خريطة الأسعار
+        </button>
+      </div>`;
+  },
+
+  /* ── ردود احتياطية (الخادم غير متصل) ── */
+  _fallbackBank() {
+    return `<div class="msg-meta"><i class="fas fa-university"></i> محاكاة — الخادم غير متصل</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val" style="color:var(--red)">85.0%</span><span class="rc-lbl">نسبة LTV (نموذج)</span></div>
+        <div class="result-card"><span class="rc-val">مرتفع</span><span class="rc-lbl">درجة المخاطر</span></div>
+        <div class="result-card"><span class="rc-val" style="color:var(--red);font-size:0.8rem">تجاوز Basel III</span><span class="rc-lbl">الحكم</span></div>
+      </div>
+      <div style="font-size:0.68rem;color:var(--amber);margin-top:6px">⚠ الخادم (bridge_api.py) غير متصل — هذه بيانات توضيحية</div>`;
+  },
+  _fallbackFund() {
+    return `<div class="msg-meta"><i class="fas fa-chart-pie"></i> محاكاة — الخادم غير متصل</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val">45,000,000</span><span class="rc-lbl">NAV تقريبي</span></div>
+        <div class="result-card"><span class="rc-val">7.87%</span><span class="rc-lbl">معدل الرسملة</span></div>
+        <div class="result-card"><span class="rc-val">82/100</span><span class="rc-lbl">صحة المحفظة</span></div>
+      </div>
+      <div style="font-size:0.68rem;color:var(--amber);margin-top:6px">⚠ بيانات توضيحية — ابدأ bridge_api.py</div>`;
+  },
+  _fallbackTax() {
+    return `<div class="msg-meta"><i class="fas fa-balance-scale"></i> محاكاة ضريبية — الخادم غير متصل</div>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val" style="color:var(--green)">9.3%</span><span class="rc-lbl">COD (AI نموذج)</span></div>
+        <div class="result-card"><span class="rc-val" style="color:var(--green)">1.003</span><span class="rc-lbl">PRD</span></div>
+        <div class="result-card"><span class="rc-val" style="color:var(--green)">✓ IAAO</span><span class="rc-lbl">امتثال</span></div>
+      </div>
+      <div style="font-size:0.68rem;color:var(--amber);margin-top:6px">⚠ بيانات توضيحية — ابدأ bridge_api.py</div>`;
+  },
+  _fallbackExpert(msg) {
+    return `<div class="msg-meta"><i class="fas fa-gem"></i> تحليل سيادي — وضع عدم الاتصال</div>
+      <p style="font-size:0.83rem;margin-bottom:8px">تم استلام الاستفسار: <em>"${msg.slice(0,60)}…"</em></p>
+      <div class="result-cards">
+        <div class="result-card"><span class="rc-val">3,374,679</span><span class="rc-lbl">قيمة إرشادية (EGP)</span></div>
+        <div class="result-card"><span class="rc-val">23,610</span><span class="rc-lbl">سعر/م² (IDW)</span></div>
+        <div class="result-card"><span class="rc-val">0.83</span><span class="rc-lbl">R² انحدار OLS</span></div>
+      </div>
+      <div style="font-size:0.68rem;color:var(--amber);margin-top:6px">⚠ قيم توضيحية — شغّل bridge_api.py للحصول على نتائج فعلية</div>`;
+  },
+
+  /* ── أفعال التقارير ── */
+  downloadWord() {
+    Toast.show('جارٍ توليد تقرير Word الموحد…', 'info', 2500);
+    fetch(`${API}/api/master-report`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        area:300, property_name:'عقار الاستفسار',
+        asset_type: STATE.asset||'traditional',
+        purpose:'fair_market', land_method:'dual_path',
+        finishing_description: STATE.market.brokerNote || 'تشطيب معياري'
+      })
+    })
+    .then(r => r.ok ? r.blob() : null)
+    .then(blob => {
+      if (!blob) { Toast.show('الخادم غير متصل', 'error'); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='تقرير_سيادي.docx'; a.click();
+      Toast.show('تم تحميل تقرير Word', 'success');
+    })
+    .catch(() => Toast.show('الخادم غير متصل — ابدأ bridge_api.py', 'error'));
+  },
+
+  downloadExcel() {
+    Toast.show('جارٍ توليد تقرير Excel المعزز…', 'info', 2500);
+    fetch(`${API}/api/report/generate`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ area:300, property_name:'عقار الاستفسار', asset_type: STATE.asset||'traditional' })
+    })
+    .then(r => r.ok ? r.blob() : null)
+    .then(blob => {
+      if (!blob) { Toast.show('الخادم غير متصل', 'error'); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='تقرير_سيادي.xlsx'; a.click();
+      Toast.show('تم تحميل تقرير Excel', 'success');
+    })
+    .catch(() => Toast.show('الخادم غير متصل — ابدأ bridge_api.py', 'error'));
+  },
+
+  showMap() {
+    Toast.show('جارٍ تحميل خريطة الأسعار…', 'info', 2000);
+    window.open(`${API}/api/price-map?format=html`, '_blank');
+  },
+
+  /* ── مساعدات الواجهة ── */
+  _addUser(html) {
+    const area = document.getElementById('chatArea');
+    const el = document.createElement('div');
+    el.className = 'msg user';
+    el.innerHTML = html;
+    area.appendChild(el);
+    area.scrollTop = area.scrollHeight;
+  },
+
+  _addBot(html) {
+    const area = document.getElementById('chatArea');
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    el.innerHTML = html;
+    area.appendChild(el);
+    area.scrollTop = area.scrollHeight;
+  },
+
+  _addTyping() {
+    const area = document.getElementById('chatArea');
+    const el = document.createElement('div');
+    el.className = 'msg bot';
+    const id = 'typing-' + Date.now();
+    el.id = id;
+    el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+    area.appendChild(el);
+    area.scrollTop = area.scrollHeight;
+    return id;
+  },
+
+  _removeTyping(id) {
+    document.getElementById(id)?.remove();
+  }
+};
+
+/* ════════════════════════════════════════════════
+   10. تهيئة التطبيق
+════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[Expert_Smart] الواجهة السيادية الموحدة — جاهزة');
+
+  // ضبط السياق الأولي
+  Context.update();
+
+  // رسالة ترحيب
+  setTimeout(() => {
+    Chat._addBot(`
+      <div class="msg-meta"><i class="fas fa-gem"></i> EXPERT_SMART — الواجهة السيادية الموحدة</div>
+      <p style="font-size:0.83rem;line-height:1.7">
+        مرحباً! أنا محرك التقييم السيادي لمصر 🇪🇬 والمملكة العربية السعودية 🇸🇦.<br>
+        يُرجى استكمال <strong style="color:var(--gold)">الشبكة السيادية</strong> أعلاه (الدور · نوع الأصل · الإطار الزمني) ثم ابدأ استفسارك.
+      </p>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">
+        <span class="ctx-chip" style="cursor:pointer" onclick="document.getElementById('sel-role').focus()">① اختر الدور</span>
+        <span class="ctx-chip" style="cursor:pointer" onclick="document.getElementById('sel-asset').focus()">② نوع الأصل</span>
+        <span class="ctx-chip" style="cursor:pointer" onclick="document.getElementById('sel-timeline').focus()">③ الإطار الزمني</span>
+        <span class="ctx-chip" style="cursor:pointer" onclick="Grid.runMarketSweep()">④ مسح السوق</span>
+      </div>
+    `);
+    document.getElementById('chatEmpty')?.remove();
+  }, 600);
+
+  // مزامنة القائمة المنسدلة مع نظام المصادقة
+  document.getElementById('sel-role').addEventListener('change', function() {
+    if (this.value) RBAC._selectedRole = this.value;
+  });
+});
+</script>
+</body>
+</html>

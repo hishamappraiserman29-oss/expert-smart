@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────────────────
+# Fly.io deployment config — Expert_Smart Flask app
+#
+# Recommended for Ollama because Fly volumes persist the ~5GB Llama 3 weights
+# between deploys and restarts (no re-download).
+#
+# First-time setup:
+#   fly launch --copy-config --config deploy/fly.toml --no-deploy
+#   fly volumes create ollama_models --size 10 --region fra
+#   fly volumes create qdrant_data   --size 5  --region fra
+#   fly secrets set OPENAI_API_KEY=sk-... ANTHROPIC_API_KEY=sk-ant-...
+#   fly deploy
+# ─────────────────────────────────────────────────────────────────────────
+
+app = "expert-smart"
+primary_region = "fra"   # Frankfurt — closest to MENA
+
+[build]
+  dockerfile = "Dockerfile.flask"
+  build-context = ".."
+
+[env]
+  WSGI = "gunicorn"
+  PORT = "5000"
+  PYTHONPATH = "/app:/app/core_engine"
+  OLLAMA_HOST = "http://localhost:11434"      # set to sidecar if split into two apps
+  QDRANT_URL  = "http://localhost:6333"
+  GUNICORN_WORKERS = "2"
+  GUNICORN_THREADS = "8"
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+  auto_stop_machines  = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 30
+
+[[services.http_checks]]
+  interval = "30s"
+  grace_period = "60s"
+  method = "get"
+  path = "/api/advisor/health"
+  protocol = "http"
+  timeout = "10s"
+
+[[mounts]]
+  source = "ollama_models"
+  destination = "/root/.ollama"
+
+[[mounts]]
+  source = "qdrant_data"
+  destination = "/qdrant/storage"
+
+[[vm]]
+  size = "performance-4x"   # 4 vCPU, 8 GB RAM — minimum for llama3:8b
+  memory = "8gb"

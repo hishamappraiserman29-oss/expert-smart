@@ -121,18 +121,31 @@ If the second number is below 10, regenerate with a higher `--count` rather than
 
 ---
 
-## D5 — Mojibake in `frontend/index.html:576` (`value="ا��دقي"`)
+## D5 — Mojibake in `frontend/index.html:576` (RESOLVED — single-file frontend fix)
 
-**Description:** Line 576 of the served frontend has a corrupted `<option>` value: `value="ا��دقي"` (Unicode replacement bytes where the letter ل should be). The display text `الدقي` looks correct, but the value attribute gets sent to `/api/valuation` when the user picks that neighbourhood.
+**Status:** ✅ **Resolved** in this stabilization session via a single-line frontend edit on line 576. No backend change was needed.
 
-**Why deferred:** The session's text-cleanup rules forbade editing `value=` attributes. Touching this value also risks breaking a lookup in `_PRICE_MAP` (in `bridge_api.py`) — that map's keys must match the value string exactly. We did not verify what `_PRICE_MAP` expects.
+**Original observation:** Line 576's `<option>` had a corrupted `value="ا��دقي"` — the letter ل (U+0644, 2 UTF-8 bytes) had been replaced by two U+FFFD replacement characters (6 bytes total) at some point in an earlier save cycle. The display text `الدقي` was clean, so users saw the correct label but submitted a corrupted form value to `/api/valuation`. The earlier hypothesis assumed a paired fix was needed across the frontend value AND the backend `_PRICE_MAP` key.
 
-**Impact:**
-- If a user selects "الدقي" in the dropdown, the corrupted value is sent. The backend doesn't find it in `_PRICE_MAP`, falls back to a default, and produces a valuation **not anchored** to the actual neighbourhood. Numbers are plausible but not specific to الدقي.
+**Audit conclusion (read-only inspection of `bridge_api.py` and the frontend):**
 
-**Classification:** **do not touch yet** — needs a paired fix in two files (frontend value + backend `_PRICE_MAP` key) to keep them in sync.
+- The backend already had the canonical key `_PRICE_MAP["الدقي"] = 30000` (intact UTF-8, verified zero replacement bytes anywhere in `bridge_api.py`).
+- Two other backend tables (coordinates at line 801, neighbourhood multipliers at line 882) were also keyed on the canonical `"الدقي"`.
+- The corruption was therefore confined to **one attribute on one line** in the frontend — a single-file fix, not a paired one.
 
-**Hint for next time:** Open `bridge_api.py` and grep for the surrounding entries (e.g. `"المهندسين":`) to confirm the canonical spelling. Then update `frontend/index.html:576` `value="..."` and any matching backend key in the same change.
+**Resolution:** Replaced `value="ا��دقي"` with `value="الدقي"` on `frontend/index.html:576`. Verified via post-edit hex inspection: the 6-byte sequence `ef bf bd ef bf bd` is gone from the file project-wide; `الدقي` now appears exactly twice on line 576 (once in `value=`, once in the display text), matching the form expected by `_PRICE_MAP`.
+
+**Before / After:**
+
+| Metric | Before | After |
+|---|---|---|
+| `value=` codepoints on line 576 | `ا U+FFFD U+FFFD د ق ي` (6 codepoints) | `ا ل د ق ي` (5 codepoints) |
+| Submitted form value when user picks الدقي | corrupted string never matches any key | matches `_PRICE_MAP["الدقي"]`, coordinates, multipliers |
+| Backend lookup result | falls through to default → valuation not anchored to الدقي | hits `_PRICE_MAP["الدقي"] = 30000` and the coordinates `(30.0499, 31.2091)` |
+
+**Classification:** **resolved** — no further action required. The "paired fix" warning in the original entry was based on an unverified assumption; the audit showed the backend was always correct.
+
+**Hint for next time:** If a similar mojibake is reported on another `<option>` value, run the same audit pattern: hex-inspect the suspect line, then grep `bridge_api.py` for the canonical Arabic key. If the backend already has the canonical form, the fix is single-file in `frontend/index.html`. If not, a paired fix is needed.
 
 ---
 
@@ -168,7 +181,7 @@ First failure is most likely on the Ollama service (memory or model-pull timeout
 | D2 | `/api/image/geo-analyze` missing | do not touch yet | 1–2 h (after stakeholder decision) |
 | D3 | PowerShell `???` display | safe now | 5 min (doc note) |
 | ~~D4~~ | ~~AVM filter too strict~~ | ✅ **resolved** (data densification, April 25, 2026) | done — `--count 1500` |
-| D5 | Mojibake in الدقي value | do not touch yet | 15 min (paired fix) |
+| ~~D5~~ | ~~Mojibake in الدقي value~~ | ✅ **resolved** (single-file frontend fix, this session) | done |
 | D6 | Deploy stack unvalidated | later | 1–2 h (real deploy) |
 
 ---

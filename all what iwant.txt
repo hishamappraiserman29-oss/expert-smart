@@ -1,0 +1,49 @@
+To ensure Claude (or any CLI-based AI) understands the full scope of your **Expert Smart System**, you need a prompt that combines your technical requirements, the specific valuation methodologies (Traditional + Advanced GIS), and the exact output formatting you expect.
+
+Here is a comprehensive, professional English prompt you can copy and paste:
+
+---
+
+### **The Expert Smart System: Master Integration Prompt**
+
+**Role:** You are an expert Real Estate Valuation Data Scientist and Python Developer. 
+**Objective:** Develop a high-fidelity "Mirror System" that automates real estate appraisal reports by merging traditional methodologies with advanced Geospatial (GIS) and Statistical models.
+
+**1. Data Sources & Context:**
+* **Traditional Reference:** Use the logic and structure of `EXAMPLE.xls` (Standard market grids, cost approach, and income capitalization).
+* **Advanced Reference:** Mirror the "Dreamland" project logic (Multiple Regression, Kriging, and Spatial Autocorrelation).
+* **Narrative Reference:** Use the formatting style of "King Abdulaziz" and "White Cubes" reports for the verbal description.
+
+**2. Functional Requirements (The "Mirror" Logic):**
+The system must generate two synchronized outputs:
+* **A. Professional Excel Workbook (RTL - Arabic):** * **Market Grid Sheet:** A detailed 4-5 comparison matrix with percentage-based adjustments (+/-) for location, area, and finishing.
+    * **Cost Approach Sheet:** A depreciated replacement cost (DRC) calculator (Land Value + [Building Cost - Depreciation]).
+    * **Spatial Analysis Sheet:** Live calculation results from **IDW (Inverse Distance Weighting)** and **Ordinary Kriging** using `scipy` and `pykrige`.
+    * **Advanced Statistics Sheet:** Multiple Linear Regression outputs (Coefficients, P-values, R-squared) using `statsmodels`.
+    * **Reconciliation Sheet:** A weighted matrix of **7 Valuation Methods** (Market, Cost, Income, Regression, Kriging, Real Options, and AI Analysis).
+
+* **B. Professional Word Report (RTL - Arabic):**
+    * A high-end narrative report with a formal cover page.
+    * Full Arabic support (Right-to-Left alignment) using `python-docx`.
+    * Automated sections for Site Inspection, Finishing Descriptions, and the GIS Technical Summary.
+
+**3. Technical Stack & Dependencies:**
+* **Data Handling:** `pandas`, `numpy`, `openpyxl`.
+* **GIS/Math:** `scipy` (for IDW), `pykrige` (for Kriging), `shapely`/`geopandas`.
+* **Statistics:** `statsmodels` (for OLS Regression), `prophet` (for market forecasting).
+* **Formatting:** `xlsxwriter` (for Excel styling) and `python-docx` (for Word).
+
+**4. Special Instructions:**
+* **Long Path Support:** Ensure the environment handles long file paths (especially for the Prophet library).
+* **Real Options:** Include a placeholder/model for "Real Options Analysis" to evaluate future development potential.
+* **Output Direction:** ALL outputs must be strictly formatted for Arabic users (Right-to-Left).
+
+**Goal:** Create a "Master Engine" script that reads source data and produces a "Final Mirror" that looks exactly like a high-level professional appraisal office output, but powered by modern data science.
+
+---
+
+### **How to use this with Claude CLI:**
+1.  Open your terminal.
+2.  Type `claude` (or your specific CLI command).
+3.  Paste the text above.
+4.  **Important:** If you have specific files you want it to analyze, mention: *"I am now uploading the files [EXAMPLE.xls, DREAMLAND.xlsx, etc.]—please apply this prompt logic to these specific datasets."*

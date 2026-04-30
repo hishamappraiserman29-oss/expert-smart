@@ -919,7 +919,7 @@
         <div class="action-card">
             <i class="fas fa-file-invoice-dollar" style="color: var(--gold);"></i>
             <h3 style="color: var(--gold);">الغرض من التقييم (مسارات منطقية)</h3>
-            <select class="select-full" id="val-purpose" onchange="runSimulatedConsole(this.value)">
+            <select class="select-full" id="val-purpose" onchange="runSimulatedConsole(this.value); togglePurposeInputs(this.value);">
                 <option value="fair_market_value">البيع والشراء — القيمة السوقية العادلة (Market Value)</option>
                 <option value="acquisition">الاستحواذ والاندماج — القيمة الاستثمارية (Investment Value)</option>
                 <option value="bank_financing">الرهن والتمويل البنكي — القيمة السوقية لأغراض التمويل (×0.95)</option>
@@ -936,6 +936,51 @@
                 <option value="environmental_impact_assessment">تقييم الأثر البيئي (Environmental Impact Assessment — EIA)</option>
             </select>
         </div>
+    </div>
+
+    <!-- ── HBU input panel (revealed when valuation_purpose=highest_and_best_use) ── -->
+    <div class="action-card" id="hbu-input-panel" style="margin-bottom: 2rem; display: none; border-color: var(--gold);">
+        <i class="fas fa-route" style="color: var(--gold);"></i>
+        <h3 style="color: var(--gold);">بيانات تحليل أعلى وأفضل استغلال (HBU)</h3>
+        <div style="font-size:0.85rem; color:#9ca3af; margin-bottom:12px;">أدخل سيناريوهين على الأقل للمقارنة. القيم بالجنيه المصري. الحقول الافتراضية (ممكن قانونياً، ممكن مادياً، فترة إنشاء سنتان، فترة احتفاظ 8 سنوات) مدمجة تلقائياً.</div>
+        <div id="hbu-rows-container"></div>
+        <button type="button" class="btn-main" style="background:#374151; color:#fff; padding:6px 14px; font-size:0.85rem;" onclick="addHbuRow()">
+            <i class="fas fa-plus"></i> إضافة سيناريو
+        </button>
+    </div>
+
+    <!-- ── REIT input panel (revealed when valuation_purpose=investment_funds) ── -->
+    <div class="action-card" id="reit-input-panel" style="margin-bottom: 2rem; display: none; border-color: var(--gold);">
+        <i class="fas fa-coins" style="color: var(--gold);"></i>
+        <h3 style="color: var(--gold);">بيانات تقييم الصندوق العقاري (REIT)</h3>
+        <div style="font-size:0.85rem; color:#9ca3af; margin-bottom:12px;">عقار واحد على الأقل. القيم بالجنيه المصري. مستوى IFRS الافتراضي = 2.</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:14px;">
+            <div><label style="font-size:0.78rem; color:var(--text);">عدد وحدات الصندوق</label>
+                 <input id="reit-units" type="number" class="input-box" placeholder="مثال: 100000"></div>
+            <div><label style="font-size:0.78rem; color:var(--text);">إجمالي القروض</label>
+                 <input id="reit-loans" type="number" class="input-box" placeholder="0"></div>
+            <div><label style="font-size:0.78rem; color:var(--text);">النقد ومعادلاته</label>
+                 <input id="reit-cash" type="number" class="input-box" placeholder="0"></div>
+        </div>
+        <div id="reit-rows-container"></div>
+        <button type="button" class="btn-main" style="background:#374151; color:#fff; padding:6px 14px; font-size:0.85rem;" onclick="addReitRow()">
+            <i class="fas fa-plus"></i> إضافة عقار
+        </button>
+    </div>
+
+    <!-- ── EIA input panel (revealed when valuation_purpose=environmental_impact_assessment) ── -->
+    <div class="action-card" id="eia-input-panel" style="margin-bottom: 2rem; display: none; border-color: var(--gold);">
+        <i class="fas fa-leaf" style="color: var(--gold);"></i>
+        <h3 style="color: var(--gold);">بيانات تقييم الأثر البيئي (EIA)</h3>
+        <div style="font-size:0.85rem; color:#9ca3af; margin-bottom:12px;">على الأقل أثر بيئي واحد. اختر مستويات الشدة والاحتمالية من القيم القياسية.</div>
+        <div style="margin-bottom:14px;">
+            <label style="font-size:0.78rem; color:var(--text);">القيمة السوقية للمشروع (قبل تطبيق ERF)</label>
+            <input id="eia-market-value" type="number" class="input-box" placeholder="مثال: 250000000">
+        </div>
+        <div id="eia-rows-container"></div>
+        <button type="button" class="btn-main" style="background:#374151; color:#fff; padding:6px 14px; font-size:0.85rem;" onclick="addEiaRow()">
+            <i class="fas fa-plus"></i> إضافة أثر
+        </button>
     </div>
 
     <!-- Trends Module: Dual Comparison Engine -->
@@ -1128,20 +1173,33 @@
             // ── التقاط نتائج الاستخبارات من الواجهة ──────────
             const sovereign_insights = _captureSovereignInsights();
 
+            // Build the base payload used for all valuation purposes
+            const basePayload = {
+                expert: "م. هشام المهدي",
+                location: document.getElementById('loc-eg').value || document.getElementById('loc-sa').value,
+                description: description,
+                date: document.getElementById('val-date').value,
+                property_type: document.getElementById('asset-type').value,
+                valuation_purpose: document.getElementById('val-purpose').value,
+                area: area,
+                price_per_meter: ppm,
+                sovereign_insights: sovereign_insights
+            };
+
+            // For delegated purposes, merge the corresponding type-specific arrays
+            // collected from the conditional input panels.
+            if (basePayload.valuation_purpose === 'highest_and_best_use') {
+                Object.assign(basePayload, collectHbuPayload());
+            } else if (basePayload.valuation_purpose === 'investment_funds') {
+                Object.assign(basePayload, collectReitPayload());
+            } else if (basePayload.valuation_purpose === 'environmental_impact_assessment') {
+                Object.assign(basePayload, collectEiaPayload());
+            }
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    expert: "م. هشام المهدي",
-                    location: document.getElementById('loc-eg').value || document.getElementById('loc-sa').value,
-                    description: description,
-                    date: document.getElementById('val-date').value,
-                    property_type: document.getElementById('asset-type').value,
-                    valuation_purpose: document.getElementById('val-purpose').value,
-                    area: area,
-                    price_per_meter: ppm,
-                    sovereign_insights: sovereign_insights
-                })
+                body: JSON.stringify(basePayload)
             });
 
             const result = await response.json();
@@ -1162,30 +1220,359 @@
     function generateVisualReport(description, apiResult) {
         const date = document.getElementById('val-date').value || new Date().toLocaleDateString('en-GB');
         const location = document.getElementById('loc-eg').value || document.getElementById('loc-sa').value || 'نطاق دراسة عام';
-        const marketValue = apiResult && apiResult.market_value ? apiResult.market_value.toLocaleString('en-US', {maximumFractionDigits:2}) : '-';
+        const marketValueRaw = (apiResult && typeof apiResult.market_value === 'number') ? apiResult.market_value : null;
+        const marketValue = marketValueRaw !== null
+            ? marketValueRaw.toLocaleString('en-US', {maximumFractionDigits:0}) + ' ج.م'
+            : '—';
         const excelUrl = apiResult && apiResult.excel_url ? apiResult.excel_url : null;
+        const purposeReportUrl = apiResult && (apiResult.purpose_report_url || apiResult.word_url) ? (apiResult.purpose_report_url || apiResult.word_url) : null;
+        const reportId = apiResult && apiResult.report_id ? apiResult.report_id : '';
+        const avm = (apiResult && apiResult.avm) ? apiResult.avm : null;
 
+        // ── AVM trust block ──────────────────────────────────────────────
+        // Surfaces confidence, sample size, and the auto-injected ppm so the
+        // user can judge how data-driven the valuation is.
+        let avmRowHtml = '';
+        if (avm && avm.applied === true) {
+            const conf = avm.confidence || '—';
+            const confLabel = conf === 'high'   ? 'عالية'
+                            : conf === 'medium' ? 'متوسطة'
+                            : conf === 'low'    ? 'منخفضة'
+                            : conf;
+            const confColor = conf === 'high' ? '#16a34a' : conf === 'medium' ? '#d97706' : '#6b7280';
+            const ppm  = (typeof avm.avm_ppm === 'number') ? avm.avm_ppm.toLocaleString('en-US') + ' ج.م/م²' : '—';
+            const nrec = (typeof avm.n_records === 'number') ? avm.n_records : '—';
+            avmRowHtml = `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">تقدير AVM:</td>
+                    <td style="padding:10px; border:1px solid #eee;">
+                        <span style="display:inline-block;padding:2px 10px;border-radius:12px;background:${confColor};color:#fff;font-size:0.82rem;font-weight:bold;">ثقة ${confLabel}</span>
+                        <span style="color:#444;margin-right:10px;">سعر المتر المعتمد: <b>${ppm}</b></span>
+                        <span style="color:#666;font-size:0.85rem;">(مبني على ${nrec} معاملة سوقية)</span>
+                    </td>
+                </tr>`;
+        } else if (avm && avm.applied === false && avm.eligible === true) {
+            avmRowHtml = `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">تقدير AVM:</td>
+                    <td style="padding:10px; border:1px solid #eee; color:#666; font-size:0.9rem;">لم يُفعَّل (سعر المتر المُدخَل من المستخدم محفوظ كما هو).</td>
+                </tr>`;
+        }
+
+        // ── Specialized-flow detection (HBU / REIT / EIA via /api/valuation delegation) ──
+        const delegatedTo  = (apiResult && apiResult.delegated_to) ? apiResult.delegated_to : null;
+        const result       = (apiResult && apiResult.result) ? apiResult.result : null;
+        let marketValueLabel = 'القيمة السوقية:';
+        let delegatedSubtitle = '';
+        let delegatedRowsHtml = '';
+        const fmtEgp  = (n) => (typeof n === 'number') ? n.toLocaleString('en-US', {maximumFractionDigits:0}) + ' ج.م' : '—';
+        const fmtPct  = (n) => (typeof n === 'number') ? n.toFixed(2) + '%' : '—';
+
+        if (delegatedTo === 'hbu_analysis_engine' && result) {
+            marketValueLabel = 'صافي القيمة الحالية (NPV):';
+            delegatedSubtitle = 'تحليل أعلى وأفضل استغلال (HBU)';
+            const recUse = result.recommended_use || '—';
+            const nScen  = Array.isArray(result.scenarios_evaluated) ? result.scenarios_evaluated.length : 0;
+            const note   = result.recommendation_note || '';
+            delegatedRowsHtml = `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">الاستخدام الأمثل:</td>
+                    <td style="padding:10px; border:1px solid #eee; font-weight:bold; color:#16a34a;">${recUse}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">عدد السيناريوهات المُقيَّمة:</td>
+                    <td style="padding:10px; border:1px solid #eee;">${nScen}</td>
+                </tr>
+                ${note ? `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">التوصية:</td>
+                    <td style="padding:10px; border:1px solid #eee; font-size:0.9rem; color:#444; line-height:1.6;">${note}</td>
+                </tr>` : ''}`;
+        } else if (delegatedTo === 'reit_nav_engine' && result) {
+            marketValueLabel = 'صافي قيمة الأصول (NAV):';
+            delegatedSubtitle = 'تقييم الصندوق العقاري (REIT NAV)';
+            const navPerUnit = (typeof result.nav_per_unit === 'number')
+                ? result.nav_per_unit.toLocaleString('en-US', {maximumFractionDigits:2}) + ' ج.م/وحدة' : '—';
+            const ltv = (typeof result.ltv_pct === 'number') ? result.ltv_pct : null;
+            const ltvColor = ltv === null ? '#6b7280' : ltv > 50 ? '#dc2626' : ltv > 35 ? '#d97706' : '#16a34a';
+            const health = result.health_label || '—';
+            delegatedRowsHtml = `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">إجمالي قيمة الأصول (GAV):</td>
+                    <td style="padding:10px; border:1px solid #eee;">${fmtEgp(result.gross_asset_value)}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">إجمالي الالتزامات:</td>
+                    <td style="padding:10px; border:1px solid #eee;">${fmtEgp(result.total_liabilities)}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">صافي القيمة لكل وحدة:</td>
+                    <td style="padding:10px; border:1px solid #eee; font-weight:bold;">${navPerUnit}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">نسبة الرفع المالي (LTV):</td>
+                    <td style="padding:10px; border:1px solid #eee;">
+                        <span style="display:inline-block;padding:2px 10px;border-radius:12px;background:${ltvColor};color:#fff;font-size:0.82rem;font-weight:bold;">${fmtPct(ltv)}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">حالة الصندوق:</td>
+                    <td style="padding:10px; border:1px solid #eee; font-size:0.9rem; color:#444;">${health}</td>
+                </tr>`;
+        } else if (delegatedTo === 'eia_engine' && result) {
+            marketValueLabel = 'القيمة السوقية المعدّلة:';
+            delegatedSubtitle = 'تقييم الأثر البيئي (EIA)';
+            const cat      = apiResult.environmental_category || '—';
+            const catLabel = apiResult.environmental_label || '—';
+            const erf      = (typeof apiResult.environmental_risk_factor === 'number')
+                ? apiResult.environmental_risk_factor.toFixed(2) : '—';
+            const inv = result.investment_linkage || {};
+            const ia  = result.impact_assessment  || {};
+            const catColor = cat === 'A' ? '#16a34a' : cat === 'B' ? '#d97706' : cat === 'C' ? '#dc2626' : '#6b7280';
+            delegatedRowsHtml = `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">التصنيف البيئي:</td>
+                    <td style="padding:10px; border:1px solid #eee;">
+                        <span style="display:inline-block;padding:2px 12px;border-radius:12px;background:${catColor};color:#fff;font-size:0.9rem;font-weight:bold;">فئة ${cat}</span>
+                        <span style="color:#444;margin-right:10px;">${catLabel}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">معامل المخاطر البيئية (ERF):</td>
+                    <td style="padding:10px; border:1px solid #eee;">${erf}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">القيمة السوقية الأصلية:</td>
+                    <td style="padding:10px; border:1px solid #eee;">${fmtEgp(inv.market_value)}</td>
+                </tr>
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">القيمة المعرَّضة للخطر:</td>
+                    <td style="padding:10px; border:1px solid #eee; color:#dc2626; font-weight:bold;">${fmtEgp(inv.value_at_risk)}</td>
+                </tr>
+                ${(typeof ia.n_critical === 'number') ? `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">الآثار الحرجة:</td>
+                    <td style="padding:10px; border:1px solid #eee;">${ia.n_critical} حالة (متوسط الشدة: ${ia.avg_impact_score ?? '—'})</td>
+                </tr>` : ''}`;
+        }
+
+        // ── Download buttons ────────────────────────────────────────────
         const excelBtnHtml = excelUrl
-            ? `<a href="${excelUrl}" class="btn-main" style="background:#217346; color:#fff; text-decoration:none;" download>
-                   <i class="fas fa-file-excel"></i> تحميل تقرير Excel
+            ? `<a href="${excelUrl}" class="btn-main" style="background:#217346; color:#fff; text-decoration:none; margin:0 6px;" download>
+                   <i class="fas fa-file-excel"></i> تحميل التقرير الفني (Excel)
                </a>`
+            : '';
+        const wordBtnHtml = purposeReportUrl
+            ? `<a href="${purposeReportUrl}" class="btn-main" style="background:#2b579a; color:#fff; text-decoration:none; margin:0 6px;" download>
+                   <i class="fas fa-file-word"></i> تحميل تقرير الغرض (Word)
+               </a>`
+            : '';
+        const downloadsHtml = (excelBtnHtml || wordBtnHtml)
+            ? `<div style="margin-top:20px; text-align:center;">${excelBtnHtml}${wordBtnHtml}</div>`
+            : '';
+
+        // ── Report ID footer ───────────────────────────────────────────
+        const reportIdHtml = reportId
+            ? `<div style="margin-top:14px; text-align:center; color:#9ca3af; font-size:0.78rem;">رقم التقرير: <code>${reportId}</code></div>`
             : '';
 
         document.getElementById('reportResult').innerHTML = `
             <div style="text-align:center; border-bottom:3px solid #d4af37; padding-bottom:20px; margin-bottom:30px;">
-                <h1 style="margin:0; color:#111;">تقرير تقييم عقاري فني (v26)</h1>
+                <h1 style="margin:0; color:#111;">تقرير تقييم عقاري فني</h1>
+                ${delegatedSubtitle ? `<p style="color:#d4af37; font-weight:bold; font-size:0.95rem; margin:6px 0 0 0;">${delegatedSubtitle}</p>` : ''}
                 <p style="color:#666; font-weight:bold;">صادر عن: م. هشام المهدي</p>
             </div>
             <table style="width:100%; border-collapse:collapse; margin-bottom:30px;">
                 <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold; width:160px;">التاريخ:</td><td style="padding:10px; border:1px solid #eee;">${date}</td></tr>
                 <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">الموقع:</td><td style="padding:10px; border:1px solid #eee;">${location}</td></tr>
-                <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">القيمة السوقية:</td><td style="padding:10px; border:1px solid #eee; font-size:1.1rem; font-weight:bold; color:#217346;">${marketValue}</td></tr>
+                <tr><td style="padding:10px; border:1px solid #eee; background:#f9f9f9; font-weight:bold;">${marketValueLabel}</td><td style="padding:10px; border:1px solid #eee; font-size:1.1rem; font-weight:bold; color:#217346;">${marketValue}</td></tr>
+                ${avmRowHtml}
+                ${delegatedRowsHtml}
             </table>
             <h3 style="color:#d4af37; border-right:5px solid #d4af37; padding-right:12px; margin-bottom:15px;">الوصف الفني:</h3>
             <div style="background:#fefefe; padding:20px; border:1px solid #eee; border-radius:5px; line-height:1.8;">${description.replace(/\n/g, '<br>')}</div>
             <div style="margin-top:50px; text-align:center;"><p><b>خبير التقييم المعتمد</b></p><br><p>م. هشام المهدي</p></div>
-            ${excelBtnHtml ? `<div style="margin-top:20px; text-align:center;">${excelBtnHtml}</div>` : ''}`;
+            ${downloadsHtml}
+            ${reportIdHtml}`;
         document.getElementById('reportModal').style.display = 'block';
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  Conditional input panels for delegated purposes (HBU / REIT / EIA)
+    //  Show the matching panel when the val-purpose dropdown changes;
+    //  collect the type-specific arrays when the form is submitted.
+    // ════════════════════════════════════════════════════════════════════
+
+    function togglePurposeInputs(val) {
+        const panels = {
+            'highest_and_best_use':              'hbu-input-panel',
+            'investment_funds':                  'reit-input-panel',
+            'environmental_impact_assessment':   'eia-input-panel',
+        };
+        // Hide all three first
+        Object.values(panels).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        // Show and populate the matching panel
+        const targetId = panels[val];
+        if (targetId) {
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.style.display = 'block';
+                ensurePurposeRows(val);
+                el.scrollIntoView({behavior:'smooth', block:'nearest'});
+            }
+        }
+    }
+
+    function ensurePurposeRows(val) {
+        if (val === 'highest_and_best_use') {
+            const c = document.getElementById('hbu-rows-container');
+            if (c && c.children.length === 0) { addHbuRow(); addHbuRow(); }
+        } else if (val === 'investment_funds') {
+            const c = document.getElementById('reit-rows-container');
+            if (c && c.children.length === 0) { addReitRow(); }
+        } else if (val === 'environmental_impact_assessment') {
+            const c = document.getElementById('eia-rows-container');
+            if (c && c.children.length === 0) { addEiaRow(); addEiaRow(); }
+        }
+    }
+
+    // ── HBU row + collector ──────────────────────────────────────────────
+    function addHbuRow() {
+        const container = document.getElementById('hbu-rows-container');
+        if (!container) return;
+        const html = `
+            <div class="hbu-row" style="border:1px solid var(--border); padding:12px; margin-bottom:10px; border-radius:6px;">
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                    <div><label style="font-size:0.78rem; color:var(--text);">اسم الاستخدام</label><input type="text" class="input-box hbu-use-name" placeholder="مثال: برج سكني"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">تكلفة الإنشاء</label><input type="number" class="input-box hbu-construction-cost" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">الإيرادات السنوية</label><input type="number" class="input-box hbu-annual-revenue" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">المصروفات السنوية</label><input type="number" class="input-box hbu-annual-opex" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">قيمة البيع النهائية</label><input type="number" class="input-box hbu-exit-value" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">تكلفة الأرض</label><input type="number" class="input-box hbu-land-cost" placeholder="0" min="0"></div>
+                </div>
+                <button type="button" onclick="this.closest('.hbu-row').remove()" style="background:transparent; color:#dc2626; border:none; font-size:0.78rem; cursor:pointer; margin-top:6px;"><i class="fas fa-times"></i> حذف هذا السيناريو</button>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function collectHbuPayload() {
+        const rows = document.querySelectorAll('#hbu-rows-container .hbu-row');
+        const alternative_uses = [];
+        rows.forEach(row => {
+            const useName = row.querySelector('.hbu-use-name').value.trim();
+            if (!useName) return;  // skip empty rows
+            alternative_uses.push({
+                use_name:                  useName,
+                construction_cost:         parseFloat(row.querySelector('.hbu-construction-cost').value) || 0,
+                annual_revenue:            parseFloat(row.querySelector('.hbu-annual-revenue').value) || 0,
+                annual_opex:               parseFloat(row.querySelector('.hbu-annual-opex').value) || 0,
+                exit_value:                parseFloat(row.querySelector('.hbu-exit-value').value) || 0,
+                land_cost:                 parseFloat(row.querySelector('.hbu-land-cost').value) || 0,
+                is_legally_permissible:    true,
+                is_physically_possible:    true,
+                construction_period_years: 2,
+                holding_period_years:      8,
+            });
+        });
+        return { alternative_uses, discount_rate: 0.10 };
+    }
+
+    // ── REIT row + collector ─────────────────────────────────────────────
+    function addReitRow() {
+        const container = document.getElementById('reit-rows-container');
+        if (!container) return;
+        const html = `
+            <div class="reit-row" style="border:1px solid var(--border); padding:12px; margin-bottom:10px; border-radius:6px;">
+                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                    <div><label style="font-size:0.78rem; color:var(--text);">اسم العقار</label><input type="text" class="input-box reit-asset-name" placeholder="مثال: برج التجمع"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">القيمة العادلة</label><input type="number" class="input-box reit-fair-value" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">صافي الدخل (NOI)</label><input type="number" class="input-box reit-noi" placeholder="0" min="0"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">المساحة (م²)</label><input type="number" class="input-box reit-area" placeholder="0" min="0"></div>
+                </div>
+                <button type="button" onclick="this.closest('.reit-row').remove()" style="background:transparent; color:#dc2626; border:none; font-size:0.78rem; cursor:pointer; margin-top:6px;"><i class="fas fa-times"></i> حذف هذا العقار</button>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function collectReitPayload() {
+        const rows = document.querySelectorAll('#reit-rows-container .reit-row');
+        const properties = [];
+        rows.forEach(row => {
+            const name = row.querySelector('.reit-asset-name').value.trim();
+            if (!name) return;
+            properties.push({
+                asset_name: name,
+                fair_value: parseFloat(row.querySelector('.reit-fair-value').value) || 0,
+                noi:        parseFloat(row.querySelector('.reit-noi').value) || 0,
+                area_m2:    parseFloat(row.querySelector('.reit-area').value) || 0,
+            });
+        });
+        return {
+            units_outstanding: parseInt(document.getElementById('reit-units').value, 10) || 0,
+            loans:             parseFloat(document.getElementById('reit-loans').value) || 0,
+            cash_and_equiv:    parseFloat(document.getElementById('reit-cash').value)  || 0,
+            properties:        properties,
+            ifrs_level:        2,
+        };
+    }
+
+    // ── EIA row + collector ──────────────────────────────────────────────
+    function addEiaRow() {
+        const container = document.getElementById('eia-rows-container');
+        if (!container) return;
+        const html = `
+            <div class="eia-row" style="border:1px solid var(--border); padding:12px; margin-bottom:10px; border-radius:6px;">
+                <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; gap:8px;">
+                    <div><label style="font-size:0.78rem; color:var(--text);">النشاط</label><input type="text" class="input-box eia-activity" placeholder="مثال: إنبعاثات هواء"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">العنصر</label><input type="text" class="input-box eia-element" placeholder="مثال: هواء"></div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">الشدة</label>
+                        <select class="input-box eia-severity">
+                            <option value="منخفض">منخفض</option>
+                            <option value="متوسط" selected>متوسط</option>
+                            <option value="عالي">عالي</option>
+                        </select>
+                    </div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">المدة</label>
+                        <select class="input-box eia-duration">
+                            <option value="منخفض">قصير</option>
+                            <option value="متوسط" selected>متوسط</option>
+                            <option value="عالي">طويل</option>
+                        </select>
+                    </div>
+                    <div><label style="font-size:0.78rem; color:var(--text);">الاحتمالية</label>
+                        <select class="input-box eia-probability">
+                            <option value="منخفض">منخفض</option>
+                            <option value="متوسط" selected>متوسط</option>
+                            <option value="عالي">عالي</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="button" onclick="this.closest('.eia-row').remove()" style="background:transparent; color:#dc2626; border:none; font-size:0.78rem; cursor:pointer; margin-top:6px;"><i class="fas fa-times"></i> حذف هذا الأثر</button>
+            </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+    }
+
+    function collectEiaPayload() {
+        const rows = document.querySelectorAll('#eia-rows-container .eia-row');
+        const impact_matrix = [];
+        rows.forEach(row => {
+            const activity = row.querySelector('.eia-activity').value.trim();
+            if (!activity) return;
+            impact_matrix.push({
+                activity:    activity,
+                element:     row.querySelector('.eia-element').value.trim() || '—',
+                severity:    row.querySelector('.eia-severity').value,
+                duration:    row.querySelector('.eia-duration').value,
+                probability: row.querySelector('.eia-probability').value,
+            });
+        });
+        return {
+            impact_matrix: impact_matrix,
+            market_value:  parseFloat(document.getElementById('eia-market-value').value) || 0,
+        };
     }
 
     function closeModal() { document.getElementById('reportModal').style.display = 'none'; }

@@ -430,6 +430,434 @@
             .modal-content { position: absolute; left: 0; top: 0; width: 100%; border: none; }
             .btn-main, .close-btn, .print-hide, .admin-dashboard { display: none !important; }
         }
+
+        /* ── Phase 3.11 — Mass Appraisal Workspace Shell ─────────────────── */
+        #mass-appraisal-workflow.mass-workflow-shell {
+            margin-top: 24px;
+            padding: 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(99,102,241,0.18);
+            background: linear-gradient(180deg, rgba(30,41,59,0.45), rgba(15,23,42,0.25));
+        }
+        #mass-appraisal-workflow .mass-workspace-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+        #mass-appraisal-workflow .mass-workspace-title {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+        #mass-appraisal-workflow .mass-workspace-subtitle {
+            margin: 4px 0 0;
+            opacity: 0.75;
+        }
+        #mass-appraisal-workflow .mass-workspace-note {
+            max-width: 420px;
+            font-size: 0.92rem;
+            opacity: 0.8;
+        }
+        #mass-appraisal-workflow .mass-workspace-body {
+            display: grid;
+            gap: 16px;
+        }
+
+        /* ── Phase 3.11 Prompt 2 — Summary Cards ────────────────────────── */
+        #mass-appraisal-workflow .mass-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        #mass-appraisal-workflow .mass-summary-card {
+            border: 1px solid rgba(99,102,241,0.22);
+            border-radius: 14px;
+            padding: 12px 16px;
+            background: rgba(30,41,59,0.55);
+        }
+        #mass-appraisal-workflow .mass-summary-label {
+            font-size: 0.82rem;
+            opacity: 0.72;
+        }
+        #mass-appraisal-workflow .mass-summary-value {
+            margin-top: 6px;
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: #818cf8;
+        }
+        #mass-appraisal-workflow .mass-summary-hint {
+            margin-top: 4px;
+            font-size: 0.78rem;
+            opacity: 0.65;
+        }
+        @media (max-width: 900px) {
+            #mass-appraisal-workflow .mass-summary-grid {
+                grid-template-columns: repeat(2, minmax(140px, 1fr));
+            }
+        }
+        @media (max-width: 520px) {
+            #mass-appraisal-workflow .mass-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Phase 3.11 Prompt 3 — Action Bar ───────────────────────────── */
+        #mass-appraisal-workflow .mass-action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 0 16px;
+            padding: 12px;
+            border: 1px solid rgba(99,102,241,0.18);
+            border-radius: 14px;
+            background: rgba(30,41,59,0.40);
+        }
+        #mass-appraisal-workflow .mass-action-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        #mass-appraisal-workflow .mass-action-btn {
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 999px;
+            padding: 7px 14px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: inherit;
+            font-size: 0.85rem;
+            transition: opacity 0.15s;
+        }
+        #mass-appraisal-workflow .mass-action-btn:hover { opacity: 0.85; }
+        #mass-appraisal-workflow .mass-action-btn-primary {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+        }
+        #mass-appraisal-workflow .mass-action-btn-secondary {
+            background: rgba(30,41,59,0.7);
+            color: #e2e8f0;
+        }
+        #mass-appraisal-workflow .mass-action-btn-muted {
+            background: rgba(120,53,15,0.25);
+            color: #fbbf24;
+            border-color: rgba(251,191,36,0.3);
+        }
+
+        /* ── Phase 3.11 Prompt 4 — Tabs ─────────────────────────────────── */
+        #mass-appraisal-workflow .mass-tab-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 0 0 16px;
+            padding: 10px;
+            border: 1px solid rgba(99,102,241,0.18);
+            border-radius: 14px;
+            background: rgba(30,41,59,0.40);
+        }
+        #mass-appraisal-workflow .mass-tab-btn {
+            border: 1px solid rgba(99,102,241,0.25);
+            border-radius: 999px;
+            padding: 7px 14px;
+            cursor: pointer;
+            font-weight: 800;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: rgba(30,41,59,0.6);
+            color: #94a3b8;
+            transition: background 0.15s, color 0.15s;
+        }
+        #mass-appraisal-workflow .mass-tab-btn.mass-tab-btn-active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4f46e5;
+        }
+        #mass-appraisal-workflow .mass-tab-btn:hover:not(.mass-tab-btn-active) {
+            background: rgba(79,70,229,0.2);
+            color: #e2e8f0;
+        }
+        #mass-appraisal-workflow .mass-tab-panels {
+            display: block;
+        }
+        #mass-appraisal-workflow .mass-tab-panel {
+            display: none;
+        }
+        #mass-appraisal-workflow .mass-tab-panel.mass-tab-panel-active {
+            display: grid;
+            gap: 16px;
+        }
+        #mass-appraisal-workflow .mass-export-helper-card {
+            border: 1px dashed rgba(99,102,241,0.30);
+            border-radius: 14px;
+            padding: 20px;
+            background: rgba(30,41,59,0.45);
+        }
+        /* Phase 3.11 Prompt 5 — Executive Change Summary */
+        #mass-appraisal-workflow .mass-change-summary-card {
+            border: 1px solid rgba(99,102,241,0.28);
+            border-radius: 16px;
+            padding: 16px 20px;
+            background: rgba(30,41,59,0.55);
+            margin-bottom: 16px;
+            display: none;
+        }
+        #mass-appraisal-workflow .mass-change-summary-card.mass-change-summary-visible {
+            display: block;
+        }
+        #mass-appraisal-workflow .mass-change-summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #mass-appraisal-workflow .mass-change-summary-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #c7d2fe;
+            margin: 0 0 4px 0;
+        }
+        #mass-appraisal-workflow .mass-change-summary-subtitle {
+            font-size: 0.78rem;
+            color: #6b7280;
+            margin: 0;
+        }
+        #mass-appraisal-workflow .mass-change-summary-muted {
+            font-size: 0.75rem;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        #mass-appraisal-workflow .mass-change-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        #mass-appraisal-workflow .mass-exec-item {
+            background: rgba(15,23,42,0.4);
+            border: 1px solid rgba(99,102,241,0.15);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+        #mass-appraisal-workflow .mass-exec-label {
+            font-size: 0.72rem;
+            color: #6b7280;
+            margin-bottom: 4px;
+        }
+        #mass-appraisal-workflow .mass-exec-value {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+        #mass-appraisal-workflow .mass-exec-sub {
+            font-size: 0.70rem;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        #mass-appraisal-workflow .mass-change-summary-note {
+            font-size: 0.76rem;
+            color: #6b7280;
+            padding-top: 10px;
+            border-top: 1px solid rgba(99,102,241,0.12);
+        }
+        /* Phase 3.11 Prompt 6 — Browser Polish */
+        #mass-appraisal-workflow .mass-action-btn:disabled,
+        #mass-appraisal-workflow .mass-tab-btn:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        #mass-appraisal-workflow .mass-tab-btn:focus-visible {
+            outline: 2px solid #818cf8;
+            outline-offset: 2px;
+        }
+        #mass-appraisal-workflow .mass-tab-btn.mass-tab-btn-active {
+            border-bottom: 2px solid #818cf8;
+        }
+        #mass-appraisal-workflow .mass-tab-panels {
+            overflow-anchor: none;
+        }
+        #mass-appraisal-workflow .mass-ma-empty-state {
+            color: #6b7280;
+            font-size: 0.85rem;
+            padding: 14px 0 6px 0;
+            text-align: center;
+        }
+        #mass-appraisal-workflow .mass-ma-empty-state i {
+            margin-left: 6px;
+            color: #4f46e5;
+        }
+        /* ─── Phase 3.12 P3: Excel Import Wizard ─────────────────────── */
+        #mass-appraisal-workflow .mass-excel-import-card {
+            border: 1px solid rgba(34,197,94,0.28);
+            border-radius: 16px;
+            padding: 16px 20px;
+            background: rgba(16,35,25,0.55);
+            margin-top: 16px;
+        }
+        #mass-appraisal-workflow .mass-excel-import-card h3 {
+            margin: 0 0 6px;
+            font-size: 1.02rem;
+            color: #86efac;
+        }
+        #mass-appraisal-workflow .mass-excel-import-desc {
+            font-size: 0.86rem;
+            opacity: 0.75;
+            margin: 0 0 12px;
+        }
+        #mass-appraisal-workflow .mass-excel-import-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        #mass-appraisal-workflow .mass-excel-import-label {
+            font-size: 0.84rem;
+            color: #94a3b8;
+            min-width: 80px;
+        }
+        #mass-appraisal-workflow .mass-excel-import-status {
+            font-size: 0.84rem;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+        #mass-appraisal-workflow .mass-import-ok {
+            display: block;
+            background: rgba(34,197,94,0.12);
+            color: #86efac;
+            border: 1px solid rgba(34,197,94,0.25);
+        }
+        #mass-appraisal-workflow .mass-import-err {
+            display: block;
+            background: rgba(239,68,68,0.12);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.25);
+        }
+        #mass-appraisal-workflow .mass-import-warn {
+            display: block;
+            background: rgba(234,179,8,0.12);
+            color: #fde68a;
+            border: 1px solid rgba(234,179,8,0.25);
+        }
+        #mass-appraisal-workflow .mass-excel-import-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            margin: 12px 0 10px;
+        }
+        #mass-appraisal-workflow .mass-excel-import-count-tile {
+            background: rgba(30,41,59,0.7);
+            border: 1px solid rgba(99,102,241,0.2);
+            border-radius: 10px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        #mass-appraisal-workflow .mect-val {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #a5b4fc;
+        }
+        #mass-appraisal-workflow .mect-lbl {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        #mass-appraisal-workflow .mass-excel-import-fill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        /* ─── Phase 3.12 P4A: Validation Panel ───────────────────────── */
+        #mass-appraisal-workflow .mass-excel-validation-panel {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(99,102,241,0.18);
+            background: rgba(15,23,42,0.45);
+        }
+        #mass-appraisal-workflow .mass-excel-validation-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-title {
+            font-weight: 900;
+            color: #e2e8f0;
+            font-size: 0.92rem;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-status {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-status-ok {
+            background: rgba(34,197,94,0.15);
+            color: #86efac;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-status-warning {
+            background: rgba(234,179,8,0.15);
+            color: #fde68a;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-status-error {
+            background: rgba(239,68,68,0.15);
+            color: #fca5a5;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-table-wrap {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-table th,
+        #mass-appraisal-workflow .mass-excel-validation-table td {
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 8px;
+            text-align: right;
+            vertical-align: top;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-table th {
+            color: #94a3b8;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-type-error {
+            color: #fca5a5;
+            font-weight: 900;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-type-warning {
+            color: #fde68a;
+            font-weight: 900;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-empty {
+            margin-top: 8px;
+            color: #86efac;
+            font-weight: 800;
+            font-size: 0.88rem;
+        }
+        #mass-appraisal-workflow .mass-excel-validation-advice {
+            margin-top: 6px;
+            font-size: 0.84rem;
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -899,7 +1327,7 @@
         <div class="action-card">
             <i class="fas fa-building"></i>
             <h3>نوع الأصل العقاري</h3>
-            <select class="select-full" id="asset-type">
+            <select class="select-full" id="asset-type" onchange="toggleAssetInputs(this.value);">
                 <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
                 <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
                 <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
@@ -914,6 +1342,8 @@
                 <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
                 <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
                 <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
+                <option value="historical">العقارات التاريخية</option>
+                <option value="heritage">العقارات ذات التراث المعماري المتميز</option>
             </select>
         </div>
         <div class="action-card">
@@ -983,7 +1413,898 @@
         </button>
     </div>
 
+
+
+
+    <!-- ── Usufruct input panel (revealed when valuation_purpose=usufruct) ── -->
+    <div class="action-card" id="usufruct-input-panel" style="margin-bottom:2rem;display:none;border-color:var(--gold);">
+        <i class="fas fa-handshake" style="color:var(--gold);"></i>
+        <h3 style="color:var(--gold);">بيانات حق الانتفاع (Usufruct Right)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">القيمة السوقية × معامل القيمة الحالية للمنفعة — وفق IVS 104 §70 والقانون المدني المصري.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">مدة حق الانتفاع (سنوات)</label>
+                 <input type="number" id="usufruct-years" class="input-box" placeholder="25" min="1" max="99" value="25"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معدل الخصم السنوي (%)</label>
+                 <input type="number" id="usufruct-discount-rate" class="input-box" placeholder="10" min="1" max="50" step="0.5" value="10"></div>
+        </div>
+    </div>
+
+    <!-- ── Uncertainty input panel (revealed when valuation_purpose=uncertainty_valuation) ── -->
+    <div class="action-card" id="uncertainty-input-panel" style="margin-bottom:2rem;display:none;border-color:var(--gold);">
+        <i class="fas fa-random" style="color:var(--gold);"></i>
+        <h3 style="color:var(--gold);">بيانات التقييم في حالة عدم اليقين (IFRS 13 §93)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">يُنتج نطاق قيمة (منخفضة / متوقعة / مرتفعة) وفق إفصاح IFRS 13 §93 Level 3. الانتشار الافتراضي 15% من القيمة المتوقعة.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">نطاق عدم اليقين (%) — Spread</label>
+                 <input type="number" id="uncertainty-spread-pct" class="input-box" placeholder="15" min="1" max="50" step="1" value="15"></div>
+            <div style="display:flex;align-items:center;padding-top:24px;font-size:0.85rem;color:#9ca3af;">
+                القيمة المنخفضة = Q × (1 − spread)  |  المرتفعة = Q × (1 + spread)
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Tax Assessment input panel (revealed when valuation_purpose=tax_assessment) ── -->
+    <div class="action-card" id="tax-input-panel" style="margin-bottom:2rem;display:none;border-color:var(--gold);">
+        <i class="fas fa-landmark" style="color:var(--gold);"></i>
+        <h3 style="color:var(--gold);">بيانات الضريبة العقارية (قانون 196 لسنة 2008)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">المعاملات الافتراضية = 1.00. الحد المُعفى الافتراضي 24,000 ج.م. سعر الضريبة 10% من الوعاء الخاضع.</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">معامل المحافظة</label>
+                 <input type="number" id="tax-governorate-factor" class="input-box" placeholder="1.00" min="0.5" max="3" step="0.01" value="1.00"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معامل تصنيف البناء</label>
+                 <input type="number" id="tax-construction-factor" class="input-box" placeholder="1.00" min="0.5" max="3" step="0.01" value="1.00"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معامل الموقع داخل المحافظة</label>
+                 <input type="number" id="tax-location-factor" class="input-box" placeholder="1.00" min="0.5" max="3" step="0.01" value="1.00"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">الحد المُعفى السنوي (ج.م)</label>
+                 <input type="number" id="tax-exemption-threshold" class="input-box" placeholder="24000" min="0" value="24000"></div>
+        </div>
+    </div>
+
+    <!-- ── Bank Financing input panel (revealed when valuation_purpose=bank_financing) ── -->
+    <div class="action-card" id="bank-financing-input-panel" style="margin-bottom:2rem;display:none;border-color:var(--gold);">
+        <i class="fas fa-university" style="color:var(--gold);"></i>
+        <h3 style="color:var(--gold);">بيانات التمويل البنكي — Basel III / CBE</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">يحسب LTV ومعدل DSCR ووزن المخاطر RWA وفق Basel III وتعليمات CBE. القيم الافتراضية تعكس الحد المعتاد للتمويل العقاري.</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة LTV المستهدفة (%)</label>
+                 <input type="number" id="bank-ltv-target" class="input-box" placeholder="70" min="10" max="100" step="1" value="70"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معدل الفائدة السنوي (%)</label>
+                 <input type="number" id="bank-interest-rate" class="input-box" placeholder="18" min="1" max="50" step="0.5" value="18"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">مدة القرض (سنوات)</label>
+                 <input type="number" id="bank-loan-term" class="input-box" placeholder="15" min="1" max="30" step="1" value="15"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">صافي الدخل التشغيلي السنوي (NOI) — اتركه فارغاً لتقدير تلقائي</label>
+                 <input type="number" id="bank-annual-noi" class="input-box" placeholder="اختياري — يُقدَّر تلقائياً (7% من القيمة)" min="0"></div>
+        </div>
+    </div>
+
+    <!-- ── Financial Reporting input panel (revealed when valuation_purpose=financial_reporting) ── -->
+    <div class="action-card" id="financial-reporting-input-panel" style="margin-bottom:2rem;display:none;border-color:var(--gold);">
+        <i class="fas fa-chart-bar" style="color:var(--gold);"></i>
+        <h3 style="color:var(--gold);">بيانات القيمة العادلة — IFRS 13 / IAS 40</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">Level 3 هو الأكثر شيوعاً للعقارات التجارية والمتخصصة. سيتضمن التقرير تحليل حساسية وفق IFRS 13 §93(h).</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">المستوى الهرمي للقيمة العادلة (Fair Value Hierarchy)</label>
+                 <select id="ifrs-level" class="input-box">
+                     <option value="3">Level 3 — مدخلات غير قابلة للملاحظة (الأكثر شيوعاً)</option>
+                     <option value="2">Level 2 — مدخلات قابلة للملاحظة</option>
+                     <option value="1">Level 1 — أسعار معلنة في أسواق نشطة</option>
+                 </select></div>
+            <div style="display:flex;align-items:center;padding-top:24px;font-size:0.85rem;color:#9ca3af;">
+                يُنتج تقرير تحليل حساسية ± معدل خصم، Cap Rate، ونمو NOI.
+            </div>
+        </div>
+    </div>
+
+    <!-- Asset Type — Intangible-linked Real Estate panel -->
+    <div class="action-card" id="asset-intangible-panel" style="margin-bottom:2rem;display:none;border-color:#818cf8;">
+        <i class="fas fa-brain" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">بيانات الأصول العقارية المرتبطة بأصول معنوية — MPEEM (IFRS 13 / IVS 210)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">يُحسب قيمة الحق المعنوي المرتبط بالعقار بمنهج الأرباح الزائدة المتعددة الفترات (MPEEM).</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">الإيراد السنوي من الحق المعنوي (ج.م)</label>
+                 <input type="number" id="intangible-annual-revenue" class="input-box" placeholder="500000" min="1"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة العائد المنسوبة للأصل المعنوي (%)</label>
+                 <input type="number" id="intangible-attribution-pct" class="input-box" placeholder="35" min="1" max="100" step="1" value="35"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">عمر الحق المعنوي (سنوات)</label>
+                 <input type="number" id="intangible-license-years" class="input-box" placeholder="10" min="1" max="50" value="10"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معدل الخصم (%)</label>
+                 <input type="number" id="intangible-discount-rate" class="input-box" placeholder="15" min="1" max="50" step="0.5" value="15"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة مساهمة الأصول الأخرى (%)</label>
+                 <input type="number" id="intangible-contributory-charge" class="input-box" placeholder="10" min="0" max="50" step="1" value="10"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">TAB — مزية الإهلاك الضريبي (%)</label>
+                 <input type="number" id="intangible-tab" class="input-box" placeholder="18" min="0" max="50" step="1" value="18"></div>
+        </div>
+    </div>
+
+    <!-- Asset Type — Partial Interests panel -->
+    <div class="action-card" id="asset-partial-panel" style="margin-bottom:2rem;display:none;border-color:#818cf8;">
+        <i class="fas fa-percentage" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">بيانات المصالح والملكيات الجزئية — IVS 200</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">القيمة السوقية للحصة = (قيمة الملكية الكاملة × نسبة الحصة) × (1 − DLOC) × (1 − DLOM).</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة الملكية (%)</label>
+                 <input type="number" id="partial-ownership-pct" class="input-box" placeholder="50" min="1" max="100" step="1" value="50"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">خصم عدم السيطرة DLOC (%) — للأقلية فقط</label>
+                 <input type="number" id="partial-dloc-pct" class="input-box" placeholder="20" min="0" max="50" step="1" value="20"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">خصم عدم القابلية للتسويق DLOM (%)</label>
+                 <input type="number" id="partial-dlom-pct" class="input-box" placeholder="20" min="0" max="50" step="1" value="20"></div>
+        </div>
+        <div style="margin-top:10px;">
+            <label style="font-size:0.78rem;color:var(--text);">
+                <input type="checkbox" id="partial-is-controlling" style="margin-left:6px;">
+                الحصة تكفي للسيطرة (يُلغي DLOC)
+            </label>
+        </div>
+    </div>
+
+    <!-- Asset Type — Under Construction panel -->
+    <div class="action-card" id="asset-construction-panel" style="margin-bottom:2rem;display:none;border-color:#818cf8;">
+        <i class="fas fa-hard-hat" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">بيانات الاستثمارات تحت الإنشاء — IAS 16 / IFRS 13 / IVS 230</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">يطبق منهجين: Cost-to-date (إلزامي) والقيمة التصفية المخصومة (اختياري). النتيجة = 60% A + 40% B إن توفر B.</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">التكلفة الكاملة المخططة (ج.م)</label>
+                 <input type="number" id="construction-planned-cost" class="input-box" placeholder="10000000" min="1"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة الإنجاز الحالية (%)</label>
+                 <input type="number" id="construction-completion-pct" class="input-box" placeholder="50" min="1" max="99" step="1" value="50"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة مخاطر الإنشاء (%)</label>
+                 <input type="number" id="construction-risk-pct" class="input-box" placeholder="10" min="0" max="40" step="1" value="10"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">المدة المتبقية لاكتمال (شهر)</label>
+                 <input type="number" id="construction-months-to-complete" class="input-box" placeholder="12" min="1" max="120" value="12"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">القيمة السوقية عند الاكتمال (اختياري)</label>
+                 <input type="number" id="construction-planned-mv" class="input-box" placeholder="0"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">هامش ربح المطور (%)</label>
+                 <input type="number" id="construction-developer-profit" class="input-box" placeholder="15" min="0" max="40" step="1" value="15"></div>
+        </div>
+    </div>
+
+
+
+    <!-- Asset Type — Historical Properties panel (reconstructed per user spec) -->
+    <div class="action-card" id="asset-historical-panel" style="margin-bottom:2rem;display:none;border-color:#92400e;">
+        <i class="fas fa-university" style="color:#92400e;"></i>
+        <h3 style="color:#92400e;">العقارات التاريخية</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
+            للعقارات ذات القيمة التاريخية أو الواقعة في مناطق تاريخية. يشمل التقييم تحليل الفترة الزمنية، قيود الحماية، حالة التوثيق، وأثر القيمة التاريخية على السعر السوقي.
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">الفترة التاريخية</label>
+                 <input type="text" id="historical-period" class="input-box" placeholder="مثال: العصر العثماني، القرن 18"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">الأهمية التاريخية</label>
+                 <select id="historical-significance" class="input-box">
+                     <option value="national">وطنية — National</option>
+                     <option value="regional">إقليمية — Regional</option>
+                     <option value="local">محلية — Local</option>
+                 </select></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">حالة التوثيق التاريخي</label>
+                 <select id="historical-documentation-status" class="input-box">
+                     <option value="fully_documented">موثقة بالكامل</option>
+                     <option value="partially_documented">موثقة جزئياً</option>
+                     <option value="undocumented">غير موثقة</option>
+                 </select></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">قيود الحماية أو التصرف</label>
+                 <select id="historical-restrictions" class="input-box">
+                     <option value="none">لا توجد قيود</option>
+                     <option value="partial">قيود جزئية</option>
+                     <option value="full">قيود كاملة</option>
+                 </select></div>
+        </div>
+        <div style="margin-top:10px;padding:8px;background:rgba(146,64,14,0.08);border-radius:6px;font-size:0.8rem;color:#92400e;">
+            <i class="fas fa-info-circle"></i> ملاحظة: هذه الحقول وصفية فقط — يستلزم التقييم الكامل للعقارات التاريخية تقريراً متخصصاً.
+        </div>
+    </div>
+
+    <!-- Asset Type — Heritage / Historical panel (source: sovereign reference files) -->
+    <div class="action-card" id="asset-heritage-panel" style="margin-bottom:2rem;display:none;border-color:#f59e0b;">
+        <i class="fas fa-landmark" style="color:#f59e0b;"></i>
+        <h3 style="color:#f59e0b;">العقارات ذات التراث المعماري المتميز — IVS 105 / Heritage Assets</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
+            تقييم العقارات ذات الطراز المعماري التراثي المتميز وفق IVS 105، يشمل تصنيف التراث المعماري، تكلفة الترميم، والعلاوة/الخصم السوقي.
+            أدخل البيانات الأساسية في النموذج الرئيسي. هذا النوع مخصص للطراز المعماري فقط — للعقارات التاريخية استخدم خيار "العقارات التاريخية".
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">تصنيف التراث</label>
+                 <select id="heritage-classification" class="input-box">
+                     <option value="national">وطني — National Heritage</option>
+                     <option value="local">محلي — Local Heritage</option>
+                     <option value="unesco">دولي — UNESCO Listed</option>
+                 </select></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">تكلفة الترميم التقديرية (ج.م)</label>
+                 <input type="number" id="heritage-restoration-cost" class="input-box" placeholder="0" min="0" value="0"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">علاوة التراث / خصم السوق (%)</label>
+                 <input type="number" id="heritage-premium-pct" class="input-box" placeholder="0" min="-50" max="50" step="1" value="0">
+                 <div style="font-size:0.72rem;color:#6b7280;margin-top:4px;">موجب = علاوة ، سالب = خصم</div></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">درجة التدهور الإنشائي</label>
+                 <select id="heritage-condition" class="input-box">
+                     <option value="good">جيدة — Good</option>
+                     <option value="fair">متوسطة — Fair</option>
+                     <option value="poor">ضعيفة — Poor</option>
+                     <option value="critical">حرجة — Critical</option>
+                 </select></div>
+        </div>
+        <div style="margin-top:10px;padding:8px;background:rgba(245,158,11,0.08);border-radius:6px;font-size:0.8rem;color:#d97706;">
+            <i class="fas fa-info-circle"></i> ملاحظة: تحليل الاستخدام الأمثل المقيَّد (Heritage HBU) والتقرير التفصيلي متاح في مسار HBU أعلاه.
+        </div>
+    </div>
+
+    <!-- Asset Type — Quarry / Mining panel -->
+    <div class="action-card" id="asset-quarry-panel" style="margin-bottom:2rem;display:none;border-color:#818cf8;">
+        <i class="fas fa-mountain" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">بيانات المناجم والآبار (DCF معدلاً)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">يحسب القيمة الحالية لصافي الإيرادات الاستخراجية على عمر المنجم.</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+            <div><label style="font-size:0.78rem;color:var(--text);">الاحتياطي الإجمالي (طن)</label>
+                 <input type="number" id="quarry-reserve-tons" class="input-box" placeholder="1000000" min="1"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">الإنتاج السنوي (طن/سنة)</label>
+                 <input type="number" id="quarry-annual-extraction" class="input-box" placeholder="50000" min="1"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">سعر بيع الطن (ج.م)</label>
+                 <input type="number" id="quarry-price-per-ton" class="input-box" placeholder="120" min="1" value="120"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">نسبة التكاليف التشغيلية (%)</label>
+                 <input type="number" id="quarry-operating-cost-pct" class="input-box" placeholder="55" min="10" max="90" step="1" value="55"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">تكاليف إعادة التأهيل البيئي (ج.م)</label>
+                 <input type="number" id="quarry-rehabilitation-cost" class="input-box" placeholder="0" min="0" value="0"></div>
+            <div><label style="font-size:0.78rem;color:var(--text);">معدل الخصم (%)</label>
+                 <input type="number" id="quarry-discount-rate" class="input-box" placeholder="12" min="1" max="30" step="0.5" value="12"></div>
+        </div>
+    </div>
+
+    <section id="mass-appraisal-workflow" class="mass-workflow-shell" dir="rtl">
+      <div class="mass-workspace-header">
+        <div>
+          <h2 class="mass-workspace-title">مساحة عمل التقييم الجماعي</h2>
+          <p class="mass-workspace-subtitle">Mass Appraisal Workspace</p>
+        </div>
+        <div class="mass-workspace-note">
+          إدارة محفظة العقارات، بيانات المبيعات، دراسة النسب، المعايرة، الحوكمة، ودورة النموذج.
+        </div>
+      </div>
+
+      <div class="mass-summary-grid" dir="rtl">
+        <div class="mass-summary-card">
+          <div class="mass-summary-label">عدد الوحدات</div>
+          <div class="mass-summary-value" id="mass-summary-units">—</div>
+          <div class="mass-summary-hint">آخر تشغيل للتقييم الجماعي</div>
+        </div>
+        <div class="mass-summary-card">
+          <div class="mass-summary-label">إجمالي المحفظة</div>
+          <div class="mass-summary-value" id="mass-summary-total-value">—</div>
+          <div class="mass-summary-hint">قيمة إجمالية تقديرية</div>
+        </div>
+        <div class="mass-summary-card">
+          <div class="mass-summary-label">متوسط سعر/م²</div>
+          <div class="mass-summary-value" id="mass-summary-avg-ppm">—</div>
+          <div class="mass-summary-hint">من آخر نتيجة تشغيل</div>
+        </div>
+        <div class="mass-summary-card">
+          <div class="mass-summary-label">حالة الدراسة</div>
+          <div class="mass-summary-value" id="mass-summary-status">جاهز</div>
+          <div class="mass-summary-hint">Preview / Run / Export</div>
+        </div>
+      </div>
+
+      <div class="mass-action-bar" dir="rtl" aria-label="إجراءات التقييم الجماعي السريعة">
+        <div class="mass-action-group">
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="loadMassAppraisalExample()">تحميل مثال</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="previewMassAppraisal()">معاينة</button>
+          <button type="button" class="mass-action-btn mass-action-btn-primary"   onclick="runMassAppraisal()">تشغيل التقييم الجماعي</button>
+        </div>
+        <div class="mass-action-group">
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
+          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="exportMassAppraisalSession()">تصدير الجلسة</button>
+          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="document.getElementById('mass-import-session-file').click()">استيراد الجلسة</button>
+        </div>
+      </div>
+
+      <!-- Phase 3.11 Prompt 5 — Executive Change Summary card -->
+      <div class="mass-change-summary-card" id="mass-change-summary-card" dir="rtl">
+        <div class="mass-change-summary-header">
+          <div>
+            <h3 class="mass-change-summary-title">ملخص تنفيذي لتغيرات التقييم الجماعي</h3>
+            <p class="mass-change-summary-subtitle">قراءة سريعة لآخر تشغيل ونتائج دراسة النسب والمعايرة.</p>
+          </div>
+          <div class="mass-change-summary-muted" id="mass-exec-last-update">لم يتم التحديث بعد</div>
+        </div>
+        <div class="mass-change-summary-grid">
+          <div class="mass-exec-item">
+            <div class="mass-exec-label">قيمة المحفظة الإجمالية</div>
+            <div class="mass-exec-value" id="mass-exec-portfolio-value">—</div>
+            <div class="mass-exec-sub" id="mass-exec-portfolio-value-sub"></div>
+          </div>
+          <div class="mass-exec-item">
+            <div class="mass-exec-label">عدد الوحدات المقيَّمة</div>
+            <div class="mass-exec-value" id="mass-exec-unit-count">—</div>
+            <div class="mass-exec-sub" id="mass-exec-unit-count-sub"></div>
+          </div>
+          <div class="mass-exec-item">
+            <div class="mass-exec-label">الوسيط / نسبة التقييم</div>
+            <div class="mass-exec-value" id="mass-exec-median-ratio">—</div>
+            <div class="mass-exec-sub" id="mass-exec-cod-prd"></div>
+          </div>
+          <div class="mass-exec-item">
+            <div class="mass-exec-label">عامل المعايرة / تأثير الـ Sandbox</div>
+            <div class="mass-exec-value" id="mass-exec-calibration-factor">—</div>
+            <div class="mass-exec-sub" id="mass-exec-sandbox-impact"></div>
+          </div>
+        </div>
+        <div class="mass-change-summary-note" id="mass-exec-note">سيظهر الملخص بعد أول تشغيل ناجح.</div>
+      </div>
+
+      <div class="mass-tab-nav" dir="rtl" role="tablist" aria-label="تبويبات التقييم الجماعي">
+        <button type="button" class="mass-tab-btn mass-tab-btn-active" data-mass-tab="portfolio"      onclick="switchMassTab('portfolio')">المحفظة</button>
+        <button type="button" class="mass-tab-btn" data-mass-tab="sales"                             onclick="switchMassTab('sales')">المبيعات</button>
+        <button type="button" class="mass-tab-btn" data-mass-tab="ratio-calibration"                 onclick="switchMassTab('ratio-calibration')">دراسة النسب والمعايرة</button>
+        <button type="button" class="mass-tab-btn" data-mass-tab="governance"                        onclick="switchMassTab('governance')">الحوكمة ودورة النموذج</button>
+        <button type="button" class="mass-tab-btn" data-mass-tab="export"                            onclick="switchMassTab('export')">التصدير والجلسة</button>
+      </div>
+
+      <div class="mass-workspace-body">
+
+      <div class="mass-tab-panels" dir="rtl">
+
+      <div class="mass-tab-panel mass-tab-panel-active" data-mass-panel="portfolio">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         التقييم الجماعي — Mass Appraisal
+         Calls: /api/mass-appraisal/preview  (معاينة)
+                /api/mass-appraisal/run       (تشغيل)
+                /api/mass-appraisal/export-xlsx (تصدير Excel)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="action-card mass-appraisal-basic" id="mass-appraisal-basic" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-th-list" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">التقييم الجماعي للعقارات — Mass Appraisal</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
+            أدخل مجموعة عقارات بصيغة JSON أو ارفع ملف CSV/JSON لتشغيل التقييم الجماعي.
+            الحقول المطلوبة لكل صف: <code style="color:var(--gold);">location</code>، <code style="color:var(--gold);">area</code>، <code style="color:var(--gold);">property_type</code>.
+            اختيارية: <code style="color:var(--gold);">row_id</code>، <code style="color:var(--gold);">valuation_purpose</code>، <code style="color:var(--gold);">price_per_meter</code>، <code style="color:var(--gold);">zone_id</code>، <code style="color:var(--gold);">property_class</code>.
+        </div>
+        <textarea id="mass-appraisal-input" class="prompt-textarea"
+            dir="ltr"
+            style="height:180px;font-size:0.85rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
+            spellcheck="false"
+            placeholder='[
+  {"row_id":"R-001","location":"التجمع الخامس","property_type":"شقة سكنية","area":150,"valuation_purpose":"fair_market_value"},
+  {"row_id":"R-002","location":"المعادي","property_type":"عمارة سكنية","area":400,"price_per_meter":12000}
+]'></textarea>
+
+        <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center;">
+            <!-- Load example -->
+            <button type="button" class="btn-main"
+                onclick="loadMassAppraisalExample()"
+                style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
+                <i class="fas fa-file-import"></i> تحميل مثال
+            </button>
+
+            <!-- File upload -->
+            <label class="btn-main"
+                style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
+                <i class="fas fa-upload"></i> رفع ملف JSON/CSV
+                <input type="file" id="mass-upload-file" accept=".json,.csv"
+                    style="display:none;"
+                    onchange="loadMassAppraisalFile(event);">
+            </label>
+
+            <!-- Preview -->
+            <button type="button" class="btn-main" id="mass-preview-btn"
+                onclick="previewMassAppraisal()"
+                style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
+                <i class="fas fa-eye"></i> معاينة
+            </button>
+
+            <!-- Run -->
+            <button type="button" class="btn-main" id="mass-run-btn"
+                onclick="runMassAppraisal()"
+                style="background:#4f46e5;color:#fff;padding:8px 14px;font-size:0.85rem;">
+                <i class="fas fa-play"></i> تشغيل التقييم الجماعي
+            </button>
+
+            <!-- Download CSV (hidden until results ready) -->
+            <button type="button" class="btn-main" id="mass-download-csv-btn"
+                onclick="downloadMassAppraisalCsv()"
+                style="background:#217346;color:#fff;padding:8px 14px;font-size:0.85rem;display:none;">
+                <i class="fas fa-file-csv"></i> تصدير CSV
+            </button>
+
+            <!-- Download XLSX (hidden until results ready) -->
+            <button type="button" class="btn-main" id="mass-download-xlsx-btn"
+                onclick="downloadMassAppraisalXlsx()"
+                style="background:#217346;color:#fff;padding:8px 14px;font-size:0.85rem;display:none;">
+                <i class="fas fa-file-excel"></i> تصدير Excel
+            </button>
+
+            <!-- Session export -->
+            <button type="button" class="btn-main"
+                onclick="exportMassAppraisalSession()"
+                style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
+                <i class="fas fa-save"></i> تصدير الجلسة
+            </button>
+
+            <!-- Session import -->
+            <label class="btn-main"
+                style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
+                <i class="fas fa-folder-open"></i> استيراد الجلسة
+                <input type="file" id="mass-import-session-file" accept=".json"
+                    style="display:none;"
+                    onchange="importMassAppraisalSession(event);">
+            </label>
+        </div>
+
+        <!-- Summary (shown after preview or run) -->
+        <div id="mass-appraisal-summary" style="margin-top:14px;">
+            <div class="mass-ma-empty-state" id="mass-appraisal-empty-hint">
+                <i class="fas fa-info-circle"></i>
+                لم يتم تشغيل التقييم الجماعي بعد. ابدأ بتحميل مثال أو رفع ملف ثم اضغط <strong>معاينة</strong>.
+            </div>
+        </div>
+
+        <!-- Results table (shown after run) -->
+        <div id="mass-appraisal-results" style="margin-top:8px;overflow-x:auto;"></div>
+    </div>
+
+      </div><!-- /.mass-tab-panel portfolio -->
+
+      <div class="mass-tab-panel" data-mass-panel="sales">
+
     <!-- Trends Module: Dual Comparison Engine -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.2 — Sales Verification  (/api/mass-appraisal/sales/verify)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="sales-verify-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-check-double" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">التحقق من بيانات المبيعات — Sales Verification (Phase 3.2)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:10px;">
+            أدخل صفقات البيع بصيغة JSON Array. الحقول المطلوبة لكل صفقة:
+            <code style="color:var(--gold);">sale_price</code>،
+            <code style="color:var(--gold);">sale_date</code>،
+            <code style="color:var(--gold);">location</code>،
+            <code style="color:var(--gold);">property_type</code>،
+            <code style="color:var(--gold);">area</code>.
+            الاختيارية: <code style="color:var(--gold);">source</code>، <code style="color:var(--gold);">sale_id</code>.
+        </div>
+        <textarea id="sales-verify-input" class="prompt-textarea"
+            dir="ltr"
+            style="height:130px;font-size:0.83rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
+            spellcheck="false"
+            placeholder='[
+  {"sale_id":"S-001","sale_price":1500000,"sale_date":"2024-01-15","location":"التجمع الخامس","property_type":"شقة سكنية","area":150,"source":"market"},
+  {"sale_id":"S-002","sale_price":2800000,"sale_date":"2024-03-10","location":"المعادي","property_type":"عمارة سكنية","area":300,"source":"auction"}
+]'></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+            <button type="button" class="btn-main"
+                onclick="runSalesVerification()"
+                id="sales-verify-btn"
+                style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+                <i class="fas fa-shield-alt"></i> تحقق من المبيعات
+            </button>
+            <span style="font-size:0.8rem;color:#6b7280;">الحد الأقصى 1000 صفقة</span>
+        </div>
+        <div id="sales-verify-results" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.4 — Time Adjustment  (/api/mass-appraisal/sales/time-adjust)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="time-adjust-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-calendar-check" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">ضبط الأسعار الزمني — Time Adjustment (Phase 3.4)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:10px;">
+            الصق هنا مصفوفة المبيعات المتحقق منها (من الخطوة السابقة)، ثم حدد تاريخ التقييم. يحسب
+            <code style="color:var(--gold);">time_adjustment_factor</code> و
+            <code style="color:var(--gold);">adjusted_sale_price</code> لكل صفقة.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:8px;align-items:end;">
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">تاريخ التقييم</label>
+                <input type="date" id="time-adjust-date" class="input-box" style="padding:7px;">
+            </div>
+            <div style="font-size:0.8rem;color:#6b7280;padding-bottom:8px;">يُستخدم كتاريخ مرجعي لحساب معامل التعديل</div>
+        </div>
+        <textarea id="time-adjust-input" class="prompt-textarea"
+            dir="ltr"
+            style="height:140px;font-size:0.83rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
+            spellcheck="false"
+            placeholder='[
+  {"sale_price":1500000,"sale_date":"2024-01-15","location":"Cairo","property_type":"apartment","area":150},
+  {"sale_price":2800000,"sale_date":"2024-03-10","location":"Cairo","property_type":"villa","area":300}
+]'></textarea>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn-main"
+                onclick="runTimeAdjustment()"
+                id="time-adjust-btn"
+                style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+                <i class="fas fa-clock"></i> ضبط الوقت
+            </button>
+        </div>
+        <div id="time-adjust-results" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.5 — Sales Adjustments  (/api/mass-appraisal/sales/adjust)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="sales-adjust-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-sliders-h" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">عوامل التعديل البيعي — Sales Adjustments (Phase 3.5)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:10px;">
+            الصق مصفوفة المبيعات مباشرة أو كائن JSON يحتوي على <code style="color:var(--gold);">sale_records</code>.
+            عوامل التعديل الاختيارية لكل صفقة:
+            <code style="color:var(--gold);">location_factor</code>،
+            <code style="color:var(--gold);">condition_factor</code>،
+            <code style="color:var(--gold);">quality_factor</code>،
+            <code style="color:var(--gold);">financing_factor</code>.
+            جميعها تساوي 1.0 افتراضياً.
+        </div>
+        <textarea id="sales-adjust-input" class="prompt-textarea"
+            dir="ltr"
+            style="height:160px;font-size:0.83rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
+            spellcheck="false"
+            placeholder='{
+  "sale_records": [
+    {
+      "sale_id": "S-001",
+      "location": "Cairo",
+      "property_type": "apartment",
+      "area": 150,
+      "sale_price": 7900000,
+      "adjusted_sale_price": 8091450,
+      "location_factor": 1.03,
+      "condition_factor": 1.02,
+      "quality_factor": 1.01,
+      "financing_factor": 1.0
+    }
+  ],
+  "adjustment_profile": {},
+  "options": {}
+}'></textarea>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn-main"
+                onclick="runSalesAdjustments()"
+                id="sales-adjust-btn"
+                style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+                <i class="fas fa-magic"></i> تطبيق عوامل التعديل
+            </button>
+        </div>
+        <div id="sales-adjust-results" style="margin-top:12px;"></div>
+    </div>
+
+      </div><!-- /.mass-tab-panel sales -->
+
+      <div class="mass-tab-panel" data-mass-panel="ratio-calibration">
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.3 — Ratio Study  (/api/mass-appraisal/ratio-study/run)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="ratio-study-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">دراسة النسب — Ratio Study / IAAO (Phase 3.3)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:10px;">
+            يحسب Median Ratio و COD و PRD وفق معايير IAAO. الصق:
+            (أ) نتيجة التشغيل (<code style="color:var(--gold);">run_result</code>) من بطاقة التقييم الجماعي،
+            (ب) صفقات البيع المعدلة (<code style="color:var(--gold);">sales</code>).
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
+            <div>
+                <div dir="rtl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <label dir="rtl" style="font-size:0.78rem;color:var(--text);">نتيجة التقييم الجماعي السابقة</label>
+                    <button type="button" dir="rtl"
+                        onclick="_fillFromLatest('ratio-study-run-input','latestMassAppraisalRunResult')"
+                        style="font-size:0.7rem;padding:2px 7px;background:#1f2937;border:1px solid rgba(99,102,241,0.45);border-radius:4px;color:#818cf8;cursor:pointer;white-space:nowrap;">
+                        استخدام آخر نتيجة التقييم الجماعي ⚡
+                    </button>
+                </div>
+                <textarea id="ratio-study-run-input" class="prompt-textarea"
+                    dir="ltr"
+                    style="height:100px;font-size:0.8rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.4;"
+                    spellcheck="false" placeholder='الصق run_result هنا (يحتوي على units[] أو rows[]) — أو اضغط الزر أعلاه...'></textarea>
+            </div>
+            <div>
+                <div dir="rtl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <label dir="rtl" style="font-size:0.78rem;color:var(--text);">بيانات المبيعات المعدلة</label>
+                    <button type="button" dir="rtl"
+                        onclick="_fillFromLatest('ratio-study-sales-input','latestSalesAdjustmentsResult','latestTimeAdjustedSales','latestSalesVerificationResult')"
+                        style="font-size:0.7rem;padding:2px 7px;background:#1f2937;border:1px solid rgba(99,102,241,0.45);border-radius:4px;color:#818cf8;cursor:pointer;white-space:nowrap;">
+                        استخدام آخر بيانات المبيعات ⚡
+                    </button>
+                </div>
+                <textarea id="ratio-study-sales-input" class="prompt-textarea"
+                    dir="ltr"
+                    style="height:100px;font-size:0.8rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.4;"
+                    spellcheck="false" placeholder='الصق sales array هنا (sale_price، zone_id/location) — أو اضغط الزر أعلاه...'></textarea>
+            </div>
+        </div>
+        <button type="button" class="btn-main"
+            onclick="runRatioStudy()"
+            id="ratio-study-btn"
+            style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+            <i class="fas fa-percentage"></i> إجراء دراسة النسب
+        </button>
+        <div id="ratio-study-results" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.6 + 3.7 — Calibration Preview + Sandbox
+         Calls: /api/mass-appraisal/calibration/preview
+                /api/mass-appraisal/calibration/sandbox
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="calibration-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-balance-scale" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">المعايرة — Calibration Preview &amp; Sandbox (Phase 3.6 / 3.7)</h3>
+
+        <div style="font-weight:600;color:#818cf8;font-size:0.9rem;margin-bottom:6px;">3.6 — معاينة المعايرة</div>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:8px;">
+            الصق run_result ونتيجة ratio_study للحصول على
+            <code style="color:var(--gold);">suggested_factor</code> و
+            <code style="color:var(--gold);">recommendation</code>.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px;">
+            <div>
+                <div dir="rtl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <label dir="rtl" style="font-size:0.78rem;color:var(--text);">نتيجة التقييم الجماعي السابقة</label>
+                    <button type="button" dir="rtl"
+                        onclick="_fillFromLatest('calibration-preview-input','latestMassAppraisalRunResult')"
+                        style="font-size:0.7rem;padding:2px 7px;background:#1f2937;border:1px solid rgba(99,102,241,0.45);border-radius:4px;color:#818cf8;cursor:pointer;white-space:nowrap;">
+                        استخدام آخر نتيجة التقييم الجماعي ⚡
+                    </button>
+                </div>
+                <textarea id="calibration-preview-input" class="prompt-textarea"
+                    style="height:90px;font-size:0.8rem;direction:ltr;font-family:monospace;"
+                    spellcheck="false" placeholder='الصق run_result — أو اضغط الزر أعلاه...'></textarea>
+            </div>
+            <div>
+                <div dir="rtl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <label dir="rtl" style="font-size:0.78rem;color:var(--text);">نتيجة دراسة النسب السابقة</label>
+                    <button type="button" dir="rtl"
+                        onclick="_fillFromLatest('calibration-ratio-input','latestRatioStudyResult')"
+                        style="font-size:0.7rem;padding:2px 7px;background:#1f2937;border:1px solid rgba(99,102,241,0.45);border-radius:4px;color:#818cf8;cursor:pointer;white-space:nowrap;">
+                        استخدام آخر نتيجة دراسة النسب ⚡
+                    </button>
+                </div>
+                <textarea id="calibration-ratio-input" class="prompt-textarea"
+                    style="height:90px;font-size:0.8rem;direction:ltr;font-family:monospace;"
+                    spellcheck="false" placeholder='الصق ratio_study_result — أو اضغط الزر أعلاه...'></textarea>
+            </div>
+        </div>
+        <button type="button" class="btn-main"
+            onclick="runCalibrationPreview()"
+            id="calibration-preview-btn"
+            style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+            <i class="fas fa-eye"></i> معاينة المعايرة
+        </button>
+        <div id="calibration-preview-results" style="margin-top:10px;"></div>
+
+        <hr style="border-color:rgba(99,102,241,0.2);margin:16px 0;">
+
+        <div style="font-weight:600;color:#818cf8;font-size:0.9rem;margin-bottom:6px;">3.7 — اختبار المعايرة (Sandbox)</div>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:8px;">
+            اختبر عامل المعايرة على القيم دون تعديل القيم الأصلية.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;margin-bottom:8px;align-items:end;">
+            <div>
+                <div dir="rtl" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                    <label dir="rtl" style="font-size:0.78rem;color:var(--text);">نتيجة معاينة المعايرة السابقة</label>
+                    <button type="button" dir="rtl"
+                        onclick="_fillFromLatest('calibration-sandbox-input','latestCalibrationPreviewResult')"
+                        style="font-size:0.7rem;padding:2px 7px;background:#1f2937;border:1px solid rgba(99,102,241,0.45);border-radius:4px;color:#818cf8;cursor:pointer;white-space:nowrap;">
+                        استخدام آخر نتيجة المعايرة ⚡
+                    </button>
+                </div>
+                <textarea id="calibration-sandbox-input" class="prompt-textarea"
+                    style="height:80px;font-size:0.8rem;direction:ltr;font-family:monospace;"
+                    spellcheck="false" placeholder='الصق نتيجة معاينة المعايرة (يجب أن تحتوي على portfolio_calibration) — أو اضغط الزر أعلاه أو اتركه فارغًا...'></textarea>
+                <div style="font-size:0.72rem;color:#6b7280;margin-top:3px;">الصق نتيجة Phase 3.6 Calibration Preview مباشرة، ويجب أن تحتوي على portfolio_calibration.</div>
+            </div>
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">عامل المعايرة</label>
+                <input type="number" id="calibration-sandbox-factor"
+                    class="input-box" placeholder="1.05" min="0.75" max="1.35" step="0.01" value="1.05"
+                    style="padding:7px;">
+                <div style="font-size:0.72rem;color:#6b7280;margin-top:3px;">النطاق: 0.75 – 1.35</div>
+            </div>
+        </div>
+        <button type="button" class="btn-main"
+            onclick="runCalibrationSandbox()"
+            id="calibration-sandbox-btn"
+            style="background:#374151;color:#fff;padding:8px 16px;font-size:0.85rem;">
+            <i class="fas fa-flask"></i> اختبار المعايرة (Sandbox)
+        </button>
+        <div id="calibration-sandbox-results" style="margin-top:10px;"></div>
+    </div>
+
+      </div><!-- /.mass-tab-panel ratio-calibration -->
+
+      <div class="mass-tab-panel" data-mass-panel="governance">
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.8 — Governance Approval (frontend state only)
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="mass-governance-panel" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-gavel" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">الحوكمة والاعتماد — Governance Approval (Phase 3.8)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
+            وثِّق قرار مراجعة نموذج التقييم الجماعي. البيانات محفوظة في الجلسة وتُدرج في التصدير.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">اسم المراجع / الجهة المعتمِدة</label>
+                <input type="text" id="governance-reviewer" class="input-box"
+                    placeholder="م. هشام المهدي" style="padding:8px;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">حالة الحوكمة</label>
+                <select id="governance-status" class="input-box" style="padding:8px;">
+                    <option value="pending">قيد المراجعة — Pending</option>
+                    <option value="under_review">تحت الفحص — Under Review</option>
+                    <option value="approved">معتمد — Approved</option>
+                    <option value="rejected">مرفوض — Rejected</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-top:10px;">
+            <label style="font-size:0.78rem;color:var(--text);">ملاحظات القرار</label>
+            <textarea id="governance-notes" class="prompt-textarea"
+                style="height:70px;font-size:0.85rem;"
+                placeholder="أدخل ملاحظات أو مبررات القرار هنا..."></textarea>
+        </div>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn-main"
+                onclick="saveMassGovernanceDecision()"
+                style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+                <i class="fas fa-stamp"></i> حفظ قرار الحوكمة
+            </button>
+        </div>
+        <div id="governance-status-display" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         Phase 3.9 + 3.10 — Model Cycle Metadata + Export
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="action-card" id="mass-model-cycle-panel" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-code-branch" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">دورة إصدار النموذج — Model &amp; Revaluation Cycle (Phase 3.9 / 3.10)</h3>
+        <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
+            سجّل بيانات الإصدار ودورة إعادة التقييم. تُدرج في ملف XLSX والجلسة المُصدَّرة.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">معرّف الدورة (Cycle ID)</label>
+                <input type="text" id="model-cycle-id" class="input-box"
+                    placeholder="CYCLE-2025-GENERAL" style="padding:8px;"
+                    value="CYCLE-2025-GENERAL">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">إصدار النموذج (Model Version)</label>
+                <input type="text" id="model-version-id" class="input-box"
+                    placeholder="MA-MODEL-v1.0" style="padding:8px;"
+                    value="MA-MODEL-v1.0">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">حالة النموذج</label>
+                <select id="model-status-select" class="input-box" style="padding:8px;">
+                    <option value="draft">مسودة — Draft</option>
+                    <option value="under_review">قيد المراجعة — Under Review</option>
+                    <option value="approved">معتمد — Approved</option>
+                    <option value="retired">متقاعد — Retired</option>
+                    <option value="superseded">مُستبدَل — Superseded</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">تاريخ بدء دورة التقييم</label>
+                <input type="date" id="model-cycle-start-date" class="input-box" style="padding:7px;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem;color:var(--text);">تاريخ انتهاء دورة التقييم</label>
+                <input type="date" id="model-cycle-end-date" class="input-box" style="padding:7px;">
+            </div>
+        </div>
+        <div style="margin-top:10px;">
+            <button type="button" class="btn-main"
+                onclick="saveMassModelCycleMetadata()"
+                style="background:#4f46e5;color:#fff;padding:8px 16px;font-size:0.85rem;">
+                <i class="fas fa-save"></i> حفظ بيانات دورة التقييم
+            </button>
+        </div>
+        <div id="model-cycle-status-display" style="margin-top:10px;"></div>
+    </div>
+
+      </div><!-- /.mass-tab-panel governance -->
+
+      <div class="mass-tab-panel" data-mass-panel="export">
+        <div class="mass-export-helper-card" dir="rtl">
+          <h3 style="margin:0 0 8px;font-size:1.05rem;">التصدير والجلسة</h3>
+          <p style="font-size:0.88rem;opacity:0.8;margin:0 0 12px;">استخدم شريط الإجراءات بالأعلى لتصدير CSV أو Excel أو حفظ/استيراد الجلسة.</p>
+          <div class="mass-action-group">
+            <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
+            <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
+            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="exportMassAppraisalSession()">تصدير الجلسة</button>
+            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="document.getElementById('mass-import-session-file')?.click()">استيراد الجلسة</button>
+          </div>
+        </div>
+
+        <!-- ─── Phase 3.12 P3: Excel Import Wizard ─── -->
+        <div class="mass-excel-import-card" id="mass-excel-import-card" dir="rtl">
+          <h3><i class="fas fa-file-excel" style="color:#86efac;margin-left:6px;"></i>استيراد من قالب Excel</h3>
+          <p class="mass-excel-import-desc">نزّل القالب، عبّئه، ثم ارفعه هنا لتحميل البيانات تلقائياً في حقول العمل.</p>
+
+          <div class="mass-excel-import-step">
+            <span class="mass-excel-import-label">الخطوة 1:</span>
+            <button type="button" class="mass-action-btn mass-action-btn-secondary" id="mass-download-template-btn" onclick="downloadMassExcelTemplate()">
+              <i class="fas fa-download"></i> تنزيل القالب
+            </button>
+          </div>
+
+          <div class="mass-excel-import-step">
+            <span class="mass-excel-import-label">الخطوة 2:</span>
+            <label class="mass-action-btn mass-action-btn-secondary" style="cursor:pointer;margin:0;">
+              <i class="fas fa-upload"></i> رفع الملف المعبّأ
+              <input type="file" id="mass-excel-import-file" accept=".xlsx" style="display:none;" onchange="importMassExcelTemplateFile(event)">
+            </label>
+            <span id="mass-excel-import-filename" style="font-size:0.82rem;color:#94a3b8;"></span>
+          </div>
+
+          <div class="mass-excel-import-status" id="mass-excel-import-status"></div>
+
+          <div id="mass-excel-import-preview" style="display:none;">
+            <div id="mass-excel-import-summary" class="mass-excel-import-summary-grid">
+              <div class="mass-excel-import-count-tile">
+                <div class="mect-val" id="meci-prop-count">—</div>
+                <div class="mect-lbl">وحدة عقارية</div>
+              </div>
+              <div class="mass-excel-import-count-tile">
+                <div class="mect-val" id="meci-sales-count">—</div>
+                <div class="mect-lbl">صفقة بيع</div>
+              </div>
+              <div class="mass-excel-import-count-tile">
+                <div class="mect-val" id="meci-assump-count">—</div>
+                <div class="mect-lbl">افتراض</div>
+              </div>
+              <div class="mass-excel-import-count-tile">
+                <div class="mect-val" id="meci-warn-count">—</div>
+                <div class="mect-lbl">تحذير</div>
+              </div>
+            </div>
+
+            <!-- ─── Phase 3.12 P4A: Validation Panel ─── -->
+            <div id="mass-excel-validation-panel" class="mass-excel-validation-panel" hidden>
+              <div class="mass-excel-validation-header">
+                <div>
+                  <div class="mass-excel-validation-title">نتيجة التحقق من ملف Excel</div>
+                  <div class="mass-excel-validation-advice" id="mass-excel-validation-advice">
+                    ارفع ملف Excel لعرض الأخطاء والتحذيرات هنا.
+                  </div>
+                </div>
+                <div id="mass-excel-validation-status" class="mass-excel-validation-status">
+                  لم يتم الفحص
+                </div>
+              </div>
+              <div id="mass-excel-validation-content"></div>
+            </div>
+
+            <div id="mass-excel-import-fill-actions" class="mass-excel-import-fill-row">
+              <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassPropertiesFromExcelImport()">
+                <i class="fas fa-building"></i> تحميل العقارات
+              </button>
+              <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassSalesFromExcelImport()">
+                <i class="fas fa-handshake"></i> تحميل المبيعات
+              </button>
+              <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassGovernanceFromExcelImport()">
+                <i class="fas fa-shield-alt"></i> تحميل الحوكمة
+              </button>
+              <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassModelCycleFromExcelImport()">
+                <i class="fas fa-sync-alt"></i> تحميل دورة التقييم
+              </button>
+            </div>
+          </div>
+        </div><!-- /.mass-excel-import-card -->
+
+      </div><!-- /.mass-tab-panel export -->
+
+      </div><!-- /.mass-tab-panels -->
+
+      </div><!-- /.mass-workspace-body -->
+    </section><!-- /#mass-appraisal-workflow -->
+
     <div class="action-card" style="margin-bottom: 2rem; display: none; border-color: var(--gold);" id="trends-module">
         <i class="fas fa-chart-line" style="color: var(--gold);"></i>
         <h3 style="color: var(--gold);">اتجاهات السوق — Market Trends</h3>
@@ -1194,7 +2515,20 @@
                 Object.assign(basePayload, collectReitPayload());
             } else if (basePayload.valuation_purpose === 'environmental_impact_assessment') {
                 Object.assign(basePayload, collectEiaPayload());
+            } else if (basePayload.valuation_purpose === 'usufruct') {
+                Object.assign(basePayload, collectUsufructPayload());
+            } else if (basePayload.valuation_purpose === 'uncertainty_valuation') {
+                Object.assign(basePayload, collectUncertaintyPayload());
+            } else if (basePayload.valuation_purpose === 'tax_assessment') {
+                Object.assign(basePayload, collectTaxPayload());
+            } else if (basePayload.valuation_purpose === 'bank_financing') {
+                Object.assign(basePayload, collectBankFinancingPayload());
+            } else if (basePayload.valuation_purpose === 'financial_reporting') {
+                Object.assign(basePayload, collectFinancialReportingPayload());
             }
+
+            // Asset-type specific fields (intangible, partial interest, construction, quarry)
+            Object.assign(basePayload, collectAssetTypePayload(basePayload.property_type));
 
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -1408,6 +2742,11 @@
             'highest_and_best_use':              'hbu-input-panel',
             'investment_funds':                  'reit-input-panel',
             'environmental_impact_assessment':   'eia-input-panel',
+            'usufruct':                          'usufruct-input-panel',
+            'uncertainty_valuation':             'uncertainty-input-panel',
+            'tax_assessment':                    'tax-input-panel',
+            'bank_financing':                    'bank-financing-input-panel',
+            'financial_reporting':               'financial-reporting-input-panel',
         };
         // Hide all three first
         Object.values(panels).forEach(id => {
@@ -2075,6 +3414,1630 @@ function _showIndexToast(msg, type) {
     document.body.appendChild(d);
     setTimeout(() => d.remove(), 3000);
 }
+
+    // ── escapeHtml — safe HTML insertion helper ───────────────────────────
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  MASS APPRAISAL — simple working UI
+    //  Endpoints: /api/mass-appraisal/preview  /api/mass-appraisal/run
+    //             /api/mass-appraisal/export-xlsx
+    // ════════════════════════════════════════════════════════════════════
+
+    // Latest step results — used for "Use latest result" helpers and downstream steps
+    window.latestMassAppraisalRunResult  = null;
+    window.latestSalesVerificationResult = null;
+    window.latestTimeAdjustedSales       = null;
+    window.latestSalesAdjustmentsResult  = null;
+    window.latestRatioStudyResult        = null;
+    window.latestCalibrationPreviewResult = null;
+    window.latestCalibrationSandboxResult = null;
+    window.latestMassGovernanceResult    = null;
+    window.latestMassModelCycleResult    = null;
+
+    // ── helpers ──────────────────────────────────────────────────────────
+    function _maGetRows() {
+        const ta = document.getElementById('mass-appraisal-input');
+        if (!ta || !ta.value.trim()) return null;
+        try { return JSON.parse(ta.value); }
+        catch(e) { alert('خطأ في صيغة JSON:\n' + e.message); return null; }
+    }
+
+    function _maSummaryEl() { return document.getElementById('mass-appraisal-summary'); }
+    function _maResultsEl() { return document.getElementById('mass-appraisal-results'); }
+
+    function _maApiUrl() {
+        const base = (document.getElementById('api-url')?.value || 'http://127.0.0.1:5000/api/valuation')
+            .replace(/\/api\/valuation$/, '');
+        return base;
+    }
+
+    // Fill a textarea from the first non-null window variable in the fallback list.
+    // Usage: _fillFromLatest('taId', 'varName1', 'varName2', ...)
+    function _fillFromLatest(taId) {
+        var varNames = Array.prototype.slice.call(arguments, 1);
+        var val = null;
+        for (var i = 0; i < varNames.length; i++) {
+            if (window[varNames[i]] != null) { val = window[varNames[i]]; break; }
+        }
+        if (val == null) {
+            alert('لا توجد نتيجة سابقة بعد. شغّل الخطوة السابقة أولًا.');
+            return;
+        }
+        var el = document.getElementById(taId);
+        if (el) {
+            el.value = JSON.stringify(val, null, 2);
+            el.dispatchEvent(new Event('input'));
+        }
+    }
+
+    function _maSetBusy(busy) {
+        const runBtn = document.getElementById('mass-run-btn');
+        const prevBtn = document.getElementById('mass-preview-btn');
+        if (runBtn)  { runBtn.disabled  = busy; runBtn.innerHTML  = busy ? '<i class="fas fa-spinner fa-spin"></i> جاري التشغيل...' : '<i class="fas fa-play"></i> تشغيل التقييم الجماعي'; }
+        if (prevBtn) { prevBtn.disabled = busy; prevBtn.innerHTML = busy ? '<i class="fas fa-spinner fa-spin"></i> جاري المعاينة...'  : '<i class="fas fa-eye"></i> معاينة'; }
+    }
+
+    function setMassButtonLoading(buttonId, isLoading, loadingText) {
+        var btn = document.getElementById(buttonId);
+        if (!btn) return;
+        if (isLoading) {
+            btn.dataset.originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (loadingText || 'جاري التنفيذ...');
+        } else {
+            btn.disabled = false;
+            if (btn.dataset.originalText) {
+                btn.innerHTML = btn.dataset.originalText;
+                delete btn.dataset.originalText;
+            }
+        }
+    }
+
+    function _maShowDownloadBtns(show) {
+        const ids = ['mass-download-csv-btn','mass-download-xlsx-btn'];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = show ? '' : 'none';
+        });
+    }
+
+    // ── loadMassAppraisalExample ─────────────────────────────────────────
+    function loadMassAppraisalExample() {
+        const example = [
+            {"row_id":"R-001","location":"التجمع الخامس","property_type":"شقة سكنية","area":150,"valuation_purpose":"fair_market_value","zone_id":"Z-1","property_class":"A"},
+            {"row_id":"R-002","location":"المعادي","property_type":"عمارة سكنية","area":400,"valuation_purpose":"fair_market_value","price_per_meter":12000,"zone_id":"Z-2","property_class":"B"},
+            {"row_id":"R-003","location":"مدينة نصر","property_type":"محل تجاري","area":80,"valuation_purpose":"rental_arbitration","zone_id":"Z-1","property_class":"B"},
+            {"row_id":"R-004","location":"الزمالك","property_type":"شقة سكنية","area":220,"valuation_purpose":"bank_financing","zone_id":"Z-3","property_class":"A"}
+        ];
+        const ta = document.getElementById('mass-appraisal-input');
+        if (ta) ta.value = JSON.stringify(example, null, 2);
+        const s = _maSummaryEl(); if (s) s.innerHTML = '';
+        const r = _maResultsEl(); if (r) r.innerHTML = '';
+        _maShowDownloadBtns(false);
+    }
+
+    // ── loadMassAppraisalFile ────────────────────────────────────────────
+    function loadMassAppraisalFile(event) {
+        const file = event?.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const ta = document.getElementById('mass-appraisal-input');
+            if (!ta) return;
+            if (file.name.toLowerCase().endsWith('.json')) {
+                ta.value = text;
+            } else {
+                // Minimal CSV → JSON conversion: first row = headers
+                const lines = text.split(/\r?\n/).filter(l => l.trim());
+                if (lines.length < 2) { alert('الملف فارغ أو لا يحتوي على بيانات.'); return; }
+                const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+                const rows = lines.slice(1).map((line, idx) => {
+                    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g,''));
+                    const obj = {};
+                    headers.forEach((h, i) => {
+                        const v = vals[i] ?? '';
+                        obj[h] = isNaN(v) || v === '' ? v : Number(v);
+                    });
+                    if (!obj.row_id) obj.row_id = 'R-' + String(idx+1).padStart(3,'0');
+                    return obj;
+                }).filter(r => r.area > 0 && r.location);
+                ta.value = JSON.stringify(rows, null, 2);
+            }
+            const s = _maSummaryEl(); if (s) s.innerHTML = '';
+            const r = _maResultsEl(); if (r) r.innerHTML = '';
+            _maShowDownloadBtns(false);
+        };
+        reader.readAsText(file, 'UTF-8');
+        event.target.value = '';
+    }
+
+    // ── renderMassExecutiveChangeSummary — read-only executive card ──────
+    function _massExecSetText(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = (val != null ? val : '—');
+    }
+    function _massExecNumber(val, decimals) {
+        if (val == null || isNaN(Number(val))) return '—';
+        return Number(val).toLocaleString('ar-EG', { maximumFractionDigits: decimals != null ? decimals : 0 });
+    }
+    function renderMassExecutiveChangeSummary() {
+        var card = document.getElementById('mass-change-summary-card');
+        if (!card) return;
+        var run   = window.latestMassAppraisalRunResult    || null;
+        var ratio = window.latestRatioStudyResult           || null;
+        var calib = window.latestCalibrationPreviewResult   || null;
+        var sand  = window.latestCalibrationSandboxResult   || null;
+        if (!run && !ratio && !calib && !sand) return;
+        card.classList.add('mass-change-summary-visible');
+        // Portfolio value & unit count
+        var totalVal = null, unitCount = null, avgPpm = null;
+        if (run) {
+            totalVal  = run.total_portfolio_value != null ? run.total_portfolio_value : null;
+            var _units = Array.isArray(run.units) ? run.units : [];
+            unitCount = run.n_units != null ? run.n_units : run.unit_count != null ? run.unit_count : _units.length;
+            avgPpm    = run.avg_ppm != null ? run.avg_ppm : null;
+        }
+        _massExecSetText('mass-exec-portfolio-value',
+            totalVal != null ? _massExecNumber(totalVal) + ' ج.م' : '—');
+        _massExecSetText('mass-exec-portfolio-value-sub',
+            avgPpm != null ? 'متوسط السعر/م²: ' + _massExecNumber(avgPpm) : '');
+        _massExecSetText('mass-exec-unit-count',
+            unitCount != null ? _massExecNumber(unitCount, 0) : '—');
+        _massExecSetText('mass-exec-unit-count-sub', '');
+        // Ratio study metrics
+        var medianRatio = null, cod = null, prd = null;
+        if (ratio && ratio.status === 'success') {
+            var rs = ratio.ratio_study || ratio.summary || ratio;
+            medianRatio = rs.median_ratio != null ? rs.median_ratio : rs.median != null ? rs.median : null;
+            cod = rs.cod  != null ? rs.cod  : null;
+            prd = rs.prd  != null ? rs.prd  : null;
+        }
+        _massExecSetText('mass-exec-median-ratio',
+            (medianRatio != null && !isNaN(Number(medianRatio)))
+                ? (Number(medianRatio) * 100).toFixed(1) + '%' : '—');
+        _massExecSetText('mass-exec-cod-prd',
+            (cod != null || prd != null)
+                ? 'COD: ' + (cod != null ? Number(cod).toFixed(1) + '%' : '—') +
+                  ' | PRD: ' + (prd != null ? Number(prd).toFixed(3) : '—')
+                : '');
+        // Calibration factor
+        var calibFactor = null, calibNote = '';
+        if (calib && calib.status === 'success') {
+            var pc = calib.portfolio_calibration || calib;
+            calibFactor = pc.suggested_factor != null ? pc.suggested_factor : null;
+            calibNote   = pc.calibration_status || '';
+        }
+        _massExecSetText('mass-exec-calibration-factor',
+            calibFactor != null ? Number(calibFactor).toFixed(4) : '—');
+        // Sandbox impact
+        var sandImpact = '';
+        if (sand && sand.status === 'success' && sand.summary) {
+            var sm = sand.summary;
+            if (sm.total_value_delta_pct != null) {
+                sandImpact = 'تأثير: ' + (sm.total_value_delta_pct >= 0 ? '+' : '') +
+                    Number(sm.total_value_delta_pct).toFixed(2) + '%';
+            }
+        }
+        _massExecSetText('mass-exec-sandbox-impact', sandImpact || calibNote || '');
+        // Timestamp
+        var _now = new Date();
+        _massExecSetText('mass-exec-last-update',
+            'آخر تحديث: ' + _now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }));
+        // Advisory note
+        var notes = [];
+        if (medianRatio != null && !isNaN(Number(medianRatio))) {
+            var mr = Number(medianRatio);
+            if (mr < 0.90 || mr > 1.10) notes.push('⚠️ نسبة التقييم الوسيطة خارج النطاق 90%–110%.');
+        }
+        if (cod != null && Number(cod) > 15) notes.push('⚠️ COD مرتفع — تحقق من جودة البيانات.');
+        if (calibFactor != null) {
+            var cf = Number(calibFactor);
+            if (cf < 0.90 || cf > 1.10) notes.push('ℹ️ عامل المعايرة يتجاوز ±10%، راجع مع لجنة التقييم.');
+        }
+        _massExecSetText('mass-exec-note',
+            notes.length > 0 ? notes.join(' ') : 'القراءات ضمن النطاق المقبول. لا توجد تنبيهات.');
+    }
+
+    // ── switchMassTab — tab navigation for Mass Appraisal workspace ─────
+    function switchMassTab(tabKey) {
+        var workflow = document.getElementById('mass-appraisal-workflow');
+        if (!workflow) return;
+        workflow.querySelectorAll('[data-mass-tab]').forEach(function(btn) {
+            var active = btn.getAttribute('data-mass-tab') === tabKey;
+            btn.classList.toggle('mass-tab-btn-active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        workflow.querySelectorAll('[data-mass-panel]').forEach(function(panel) {
+            var active = panel.getAttribute('data-mass-panel') === tabKey;
+            panel.classList.toggle('mass-tab-panel-active', active);
+            panel.hidden = !active;
+        });
+    }
+
+    // ── updateMassSummaryCards — updates workspace header summary cards ──
+    function updateMassSummaryCards(result, mode) {
+        if (!result || typeof result !== 'object') return;
+        var units = Array.isArray(result.units) ? result.units
+                  : Array.isArray(result.rows)  ? result.rows
+                  : [];
+        var nUnits = result.n_units != null ? result.n_units
+                   : result.unit_count != null ? result.unit_count
+                   : units.length;
+        var totalValue = result.total_portfolio_value != null ? result.total_portfolio_value
+                       : (result.portfolio_summary && result.portfolio_summary.total_portfolio_value != null)
+                           ? result.portfolio_summary.total_portfolio_value
+                       : (result.summary && result.summary.total_portfolio_value != null)
+                           ? result.summary.total_portfolio_value
+                       : null;
+        var avgPpm = result.avg_ppm != null ? result.avg_ppm
+                   : (result.portfolio_summary && result.portfolio_summary.avg_ppm != null)
+                       ? result.portfolio_summary.avg_ppm
+                   : (result.summary && result.summary.avg_ppm != null)
+                       ? result.summary.avg_ppm
+                   : null;
+        var setText = function(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = val;
+        };
+        var fmtNumber = function(v) {
+            var n = Number(v);
+            if (!isFinite(n) || v == null) return '—';
+            return n.toLocaleString('ar-EG', {maximumFractionDigits: 0});
+        };
+        setText('mass-summary-units',       fmtNumber(nUnits));
+        setText('mass-summary-total-value', fmtNumber(totalValue));
+        setText('mass-summary-avg-ppm',     fmtNumber(avgPpm));
+        setText('mass-summary-status',
+            mode === 'preview' ? 'معاينة جاهزة' :
+            mode === 'run'     ? 'تم التشغيل'    : 'جاهز');
+    }
+
+    // ── previewMassAppraisal ─────────────────────────────────────────────
+    async function previewMassAppraisal() {
+        const rows = _maGetRows();
+        if (!rows) return;
+        if (!Array.isArray(rows) || rows.length === 0) { alert('القائمة فارغة.'); return; }
+
+        const summaryEl = _maSummaryEl();
+        const resultsEl = _maResultsEl();
+        if (summaryEl) summaryEl.innerHTML = '<div style="color:#9ca3af;font-size:0.9rem;">جاري المعاينة…</div>';
+        if (resultsEl) resultsEl.innerHTML = '';
+        _maSetBusy(true);
+
+        try {
+            const resp = await fetch(_maApiUrl() + '/api/mass-appraisal/preview', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({rows})
+            });
+            const data = await resp.json();
+            // Backend returns run_mass_appraisal result on success (no "status" field).
+            // Only returns status:"error" on failure.
+            if (data.status === 'error') {
+                if (summaryEl) summaryEl.innerHTML = `<div style="color:#ef4444;">خطأ: ${escapeHtml(data.message || data.error_code || 'خطأ غير معروف')}</div>`;
+                return;
+            }
+            // Map actual backend fields: n_units, total_portfolio_value, avg_ppm, portfolio_summary, ratio_study
+            const total   = data.n_units ?? rows.length;
+            const totalVal = (typeof data.total_portfolio_value === 'number')
+                ? data.total_portfolio_value.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
+            const avgPpm  = (typeof data.avg_ppm === 'number')
+                ? data.avg_ppm.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
+            const ps = data.portfolio_summary || {};
+            const rs = data.ratio_study || {};
+
+            if (summaryEl) summaryEl.innerHTML = `
+                <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px;background:rgba(99,102,241,0.08);border-radius:8px;border:1px solid rgba(99,102,241,0.3);font-size:0.9rem;margin-bottom:6px;">
+                    <span>📋 <b>الوحدات:</b> ${total}</span>
+                    <span style="color:#10b981;"><b>إجمالي المحفظة:</b> ${totalVal} ج.م</span>
+                    <span><b>متوسط سعر/م²:</b> ${avgPpm}</span>
+                    <span style="color:#9ca3af;"><b>الطريقة:</b> ${escapeHtml(data.method||'avm')}</span>
+                </div>
+                ${ps.min_value !== undefined ? `<div style="font-size:0.82rem;color:#9ca3af;padding:4px 8px;background:rgba(99,102,241,0.04);border-radius:6px;">
+                    نطاق القيمة: ${(ps.min_value||0).toLocaleString('en-US',{maximumFractionDigits:0})} — ${(ps.max_value||0).toLocaleString('en-US',{maximumFractionDigits:0})} ج.م
+                    &nbsp;|&nbsp; الوسيط: ${(ps.median_val||0).toLocaleString('en-US',{maximumFractionDigits:0})} ج.م
+                </div>` : ''}
+                ${rs.n_sales > 0 ? `<div style="font-size:0.82rem;color:#9ca3af;padding:4px 8px;">
+                    دراسة النسب (${rs.n_sales} صفقة): COD=${rs.cod}% | PRD=${rs.prd} | ${escapeHtml(rs.uniformity||'')}
+                </div>` : ''}`;
+
+            updateMassSummaryCards(data, 'preview');
+            if (resultsEl) resultsEl.innerHTML = '';
+        } catch(e) {
+            if (summaryEl) summaryEl.innerHTML = `<div style="color:#ef4444;">تعذر الاتصال بـ /api/mass-appraisal/preview<br>${escapeHtml(e.message)}</div>`;
+        } finally {
+            _maSetBusy(false);
+        }
+    }
+
+    // ── renderMassResult — builds the results table ──────────────────────
+    function renderMassResult(data) {
+        const summaryEl = _maSummaryEl();
+        const resultsEl = _maResultsEl();
+        // Backend returns status:"error" on failure; no status field on success.
+        if (!data || data.status === 'error') {
+            if (summaryEl) summaryEl.innerHTML = `<div style="color:#ef4444;">خطأ: ${escapeHtml((data && data.message) || 'استجابة غير متوقعة')}</div>`;
+            return;
+        }
+
+        // Actual backend fields from run_mass_appraisal: units[], n_units, total_portfolio_value, avg_ppm, portfolio_summary, ratio_study
+        const units    = data.units || [];
+        const total    = data.n_units ?? units.length;
+        const totalVal = (typeof data.total_portfolio_value === 'number')
+            ? data.total_portfolio_value.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
+        const avgPpm   = (typeof data.avg_ppm === 'number')
+            ? data.avg_ppm.toLocaleString('en-US', {maximumFractionDigits:0}) : '—';
+        const ps = data.portfolio_summary || {};
+        const rs = data.ratio_study || {};
+
+        // Summary bar
+        if (summaryEl) summaryEl.innerHTML = `
+            <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px;background:rgba(16,185,129,0.08);border-radius:8px;border:1px solid rgba(16,185,129,0.3);font-size:0.9rem;margin-bottom:6px;">
+                <span>📋 <b>الوحدات:</b> ${total}</span>
+                <span style="color:#10b981;"><b>إجمالي المحفظة:</b> ${totalVal} ج.م</span>
+                <span><b>متوسط سعر/م²:</b> ${avgPpm}</span>
+                <span style="color:#9ca3af;"><b>الطريقة:</b> ${escapeHtml(data.method||'avm')}</span>
+            </div>
+            ${ps.min_ppm !== undefined ? `<div style="font-size:0.82rem;color:#9ca3af;padding:4px 8px;background:rgba(16,185,129,0.04);border-radius:6px;margin-bottom:4px;">
+                نطاق سعر/م²: ${(ps.min_ppm||0).toLocaleString('en-US',{maximumFractionDigits:0})} — ${(ps.max_ppm||0).toLocaleString('en-US',{maximumFractionDigits:0})} ج.م/م²
+                &nbsp;|&nbsp; الوسيط: ${(ps.median_ppm||0).toLocaleString('en-US',{maximumFractionDigits:0})} ج.م/م²
+                &nbsp;|&nbsp; الانحراف: ${(ps.std_ppm||0).toLocaleString('en-US',{maximumFractionDigits:0})}
+            </div>` : ''}
+            ${rs.n_sales > 0 ? `<div style="font-size:0.82rem;color:#9ca3af;padding:4px 8px;">
+                دراسة النسب (${rs.n_sales} صفقة): COD=${rs.cod}% | PRD=${rs.prd} | ${escapeHtml(rs.uniformity||'')}
+            </div>` : ''}`;
+
+        // Results table — columns match actual unit dict from run_mass_appraisal
+        if (resultsEl) {
+            if (units.length === 0) {
+                resultsEl.innerHTML = '<div style="color:#9ca3af;font-size:0.85rem;padding:8px;">لا توجد وحدات في النتيجة.</div>';
+                return;
+            }
+            let tbl = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:6px;">
+                <thead><tr style="background:#1f2937;color:var(--gold);">
+                    <th style="padding:7px;border:1px solid var(--border);text-align:left;direction:ltr;">المعرف</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:center;">المساحة م²</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:center;">الدور</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:center;">سنة البناء</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:right;">الحالة</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:left;direction:ltr;">AVM/م² (ج.م)</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:left;direction:ltr;">النهائي/م² (ج.م)</th>
+                    <th style="padding:7px;border:1px solid var(--border);text-align:left;direction:ltr;">قيمة الوحدة (ج.م)</th>
+                </tr></thead><tbody>`;
+            units.forEach(u => {
+                const mv      = (typeof u.unit_value === 'number') ? u.unit_value.toLocaleString('en-US',{maximumFractionDigits:0}) : '—';
+                const avmPpm  = (typeof u.avm_ppm   === 'number') ? u.avm_ppm.toLocaleString('en-US',{maximumFractionDigits:0})   : '—';
+                const finPpm  = (typeof u.final_ppm  === 'number') ? u.final_ppm.toLocaleString('en-US',{maximumFractionDigits:0})  : '—';
+                tbl += `<tr>
+                    <td style="padding:6px;border:1px solid var(--border);direction:ltr;text-align:left;font-family:monospace;">${escapeHtml(u.id||'—')}</td>
+                    <td style="padding:6px;border:1px solid var(--border);text-align:center;">${u.area||'—'}</td>
+                    <td style="padding:6px;border:1px solid var(--border);text-align:center;">${u.floor||'—'}</td>
+                    <td style="padding:6px;border:1px solid var(--border);text-align:center;">${u.year_built||'—'}</td>
+                    <td style="padding:6px;border:1px solid var(--border);text-align:right;">${escapeHtml(u.condition||'—')}</td>
+                    <td style="padding:6px;border:1px solid var(--border);direction:ltr;text-align:left;">${avmPpm}</td>
+                    <td style="padding:6px;border:1px solid var(--border);direction:ltr;text-align:left;">${finPpm}</td>
+                    <td style="padding:6px;border:1px solid var(--border);direction:ltr;text-align:left;font-weight:bold;color:#10b981;">${mv}</td>
+                </tr>`;
+            });
+            tbl += '</tbody></table></div>';
+            resultsEl.innerHTML = tbl;
+        }
+    }
+
+    // ── runMassAppraisal ─────────────────────────────────────────────────
+    async function runMassAppraisal() {
+        const rows = _maGetRows();
+        if (!rows) return;
+        if (!Array.isArray(rows) || rows.length === 0) { alert('القائمة فارغة.'); return; }
+
+        const summaryEl = _maSummaryEl();
+        const resultsEl = _maResultsEl();
+        if (summaryEl) summaryEl.innerHTML = '<div style="color:#9ca3af;font-size:0.9rem;">جاري تشغيل التقييم الجماعي…</div>';
+        if (resultsEl) resultsEl.innerHTML = '';
+        _maShowDownloadBtns(false);
+        _maSetBusy(true);
+
+        try {
+            const resp = await fetch(_maApiUrl() + '/api/mass-appraisal/run', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({rows})
+            });
+            const data = await resp.json();
+            // Backend returns status:"error" on failure; no status field on success.
+            const success = data.status !== 'error' && (data.units != null || data.n_units != null);
+            window.latestMassAppraisalRunResult = success ? data : null;
+            if (success) updateMassSummaryCards(data, 'run');
+            if (success) renderMassExecutiveChangeSummary();
+            renderMassResult(data);
+            if (success) _maShowDownloadBtns(true);
+        } catch(e) {
+            if (summaryEl) summaryEl.innerHTML = `<div style="color:#ef4444;">تعذر الاتصال بـ /api/mass-appraisal/run<br>${escapeHtml(e.message)}</div>`;
+        } finally {
+            _maSetBusy(false);
+        }
+    }
+
+    // ── downloadMassAppraisalCsv ─────────────────────────────────────────
+    function downloadMassAppraisalCsv() {
+        const result = window.latestMassAppraisalRunResult;
+        if (!result || !result.units) { alert('لا توجد نتائج للتصدير. شغّل التقييم الجماعي أولاً.'); return; }
+        const headers = ['id','area','floor','year_built','condition','avm_ppm','adj_ppm','final_ppm','unit_value','sale_price'];
+        const csvRows = result.units.map(r => headers.map(h => {
+            const v = r[h] ?? '';
+            return '"' + String(v).replace(/"/g,'""') + '"';
+        }));
+        const csv = '﻿' + [headers, ...csvRows].map(r => r.join ? r.join(',') : r).join('\r\n');
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mass_appraisal_' + new Date().toISOString().slice(0,10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ── downloadMassAppraisalXlsx ────────────────────────────────────────
+    async function downloadMassAppraisalXlsx() {
+        const result = window.latestMassAppraisalRunResult;
+        if (!result) { alert('لا توجد نتائج للتصدير. شغّل التقييم الجماعي أولاً.'); return; }
+        const xlsxBtn = document.getElementById('mass-download-xlsx-btn');
+        if (xlsxBtn) { xlsxBtn.disabled = true; xlsxBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+        try {
+            const resp = await fetch(_maApiUrl() + '/api/mass-appraisal/export-xlsx', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({result: result})
+            });
+            if (!resp.ok) { alert('فشل تحميل ملف Excel: ' + resp.status); return; }
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mass_appraisal_' + new Date().toISOString().slice(0,10) + '.xlsx';
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch(e) {
+            alert('تعذر تحميل ملف Excel: ' + e.message);
+        } finally {
+            if (xlsxBtn) { xlsxBtn.disabled = false; xlsxBtn.innerHTML = '<i class="fas fa-file-excel"></i> تصدير Excel'; }
+        }
+    }
+
+    // ── exportMassAppraisalSession ───────────────────────────────────────
+    function exportMassAppraisalSession() {
+        const ta = document.getElementById('mass-appraisal-input');
+        const session = {
+            exported_at: new Date().toISOString(),
+            input: ta ? ta.value : '',
+            run_result: window.latestMassAppraisalRunResult || null,
+            governance: window.massGovernanceState || null,
+            model_cycle: window.massModelCycleState || null
+        };
+        const blob = new Blob([JSON.stringify(session, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mass_appraisal_session_' + new Date().toISOString().slice(0,16).replace('T','-') + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ── importMassAppraisalSession ───────────────────────────────────────
+    function importMassAppraisalSession(event) {
+        const file = event?.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const session = JSON.parse(e.target.result);
+                const ta = document.getElementById('mass-appraisal-input');
+                if (ta && session.input) ta.value = session.input;
+                if (session.run_result) {
+                    window.latestMassAppraisalRunResult = session.run_result;
+                    renderMassResult(session.run_result);
+                    _maShowDownloadBtns(true);
+                }
+                if (session.governance) {
+                    window.massGovernanceState = session.governance;
+                    _renderGovernanceStatus();
+                }
+                if (session.model_cycle) {
+                    window.massModelCycleState = session.model_cycle;
+                    _renderModelCycleStatus();
+                }
+            } catch(err) {
+                alert('تعذر تحميل الجلسة: ' + err.message);
+            }
+        };
+        reader.readAsText(file, 'UTF-8');
+        event.target.value = '';
+    }
+
+    // ── Phase 3.12 P3: Excel Import Wizard ──────────────────────────────────
+    window.latestMassExcelImportResult = window.latestMassExcelImportResult || null;
+
+    function downloadMassExcelTemplate() {
+        var btn = document.getElementById('mass-download-template-btn');
+        if (btn) btn.disabled = true;
+        var a = document.createElement('a');
+        a.href = '/api/mass-appraisal/template-xlsx';
+        a.download = 'mass_appraisal_template.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { if (btn) btn.disabled = false; }, 1500);
+    }
+
+    async function importMassExcelTemplateFile(event) {
+        var file = event && event.target && event.target.files && event.target.files[0];
+        var statusEl = document.getElementById('mass-excel-import-status');
+        var previewEl = document.getElementById('mass-excel-import-preview');
+        var filenameEl = document.getElementById('mass-excel-import-filename');
+        if (!file) return;
+        if (filenameEl) filenameEl.textContent = file.name;
+        if (statusEl) { statusEl.className = 'mass-excel-import-status'; statusEl.textContent = ''; }
+        if (previewEl) previewEl.style.display = 'none';
+        window.latestMassExcelImportResult = null;
+        var formData = new FormData();
+        formData.append('file', file);
+        // Use same base URL as all other mass-appraisal calls
+        var apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
+        var url = apiBase + '/api/mass-appraisal/import-xlsx';
+        try {
+            if (statusEl) {
+                statusEl.className = 'mass-excel-import-status mass-import-warn';
+                statusEl.textContent = 'جاري تحليل الملف...';
+            }
+            var resp = await fetch(url, { method: 'POST', body: formData });
+            var data = await resp.json();
+            if (!resp.ok) {
+                if (statusEl) {
+                    statusEl.className = 'mass-excel-import-status mass-import-err';
+                    statusEl.textContent = 'خطأ من الخادم: ' + escapeHtml(String(data.message || data.error || resp.status));
+                }
+                if (event.target) event.target.value = '';
+                return;
+            }
+            window.latestMassExcelImportResult = data;
+            renderMassExcelImportPreview(data);
+        } catch(err) {
+            console.error('[importMassExcelTemplateFile] fetch error:', err, 'url:', url);
+            if (statusEl) {
+                statusEl.className = 'mass-excel-import-status mass-import-err';
+                statusEl.textContent = 'تعذر الاتصال بخدمة استيراد Excel. تأكد أن الخادم يعمل على: ' + escapeHtml(apiBase || 'http://127.0.0.1:5000');
+            }
+        }
+        if (event.target) event.target.value = '';
+    }
+
+    function renderMassExcelImportPreview(data) {
+        var statusEl = document.getElementById('mass-excel-import-status');
+        var previewEl = document.getElementById('mass-excel-import-preview');
+        if (!data) return;
+        if (data.status === 'error') {
+            if (statusEl) {
+                statusEl.className = 'mass-excel-import-status mass-import-err';
+                statusEl.textContent = 'فشل: ' + escapeHtml(String(data.message || 'خطأ غير معروف'));
+            }
+            return;
+        }
+        var s = data.summary || {};
+        var v = data.validation || {};
+        var errs = (v.errors || []).length;
+        var warns = (v.warnings || []).length;
+        // Set the compact status badge
+        if (data.status === 'validation_error' && errs > 0) {
+            if (statusEl) {
+                statusEl.className = 'mass-excel-import-status mass-import-err';
+                statusEl.textContent = 'الملف يحتوي على ' + errs + ' خطأ.';
+            }
+        } else {
+            var statusMsg = 'تم قراءة الملف بنجاح.';
+            if (warns > 0) statusMsg += ' (' + warns + ' تحذير)';
+            if (statusEl) {
+                statusEl.className = 'mass-excel-import-status ' + (warns > 0 ? 'mass-import-warn' : 'mass-import-ok');
+                statusEl.textContent = statusMsg;
+            }
+        }
+        // Fill count tiles and show preview area (always, even on validation_error)
+        var propCount  = document.getElementById('meci-prop-count');
+        var salesCount = document.getElementById('meci-sales-count');
+        var assumpCount = document.getElementById('meci-assump-count');
+        var warnCount  = document.getElementById('meci-warn-count');
+        if (propCount)   propCount.textContent   = s.properties_count  != null ? s.properties_count  : '—';
+        if (salesCount)  salesCount.textContent  = s.sales_count       != null ? s.sales_count       : '—';
+        if (assumpCount) assumpCount.textContent = s.assumptions_count != null ? s.assumptions_count : '—';
+        if (warnCount)   warnCount.textContent   = warns;
+        if (previewEl) previewEl.style.display = 'block';
+        // Render detailed validation panel
+        renderMassExcelValidation(data);
+    }
+
+    // ── Phase 3.12 P4A: Validation Panel Render ──────────────────────────────
+    function renderMassExcelValidation(data) {
+        var panel     = document.getElementById('mass-excel-validation-panel');
+        var statusEl  = document.getElementById('mass-excel-validation-status');
+        var contentEl = document.getElementById('mass-excel-validation-content');
+        var adviceEl  = document.getElementById('mass-excel-validation-advice');
+        if (!panel || !statusEl || !contentEl) return;
+
+        panel.hidden = false;
+
+        var rawErrors   = Array.isArray(data && data.validation && data.validation.errors)
+            ? data.validation.errors : [];
+        var rawWarnings = Array.isArray(data && data.validation && data.validation.warnings)
+            ? data.validation.warnings : [];
+
+        // Normalise: items may be strings or structured objects
+        function _toItem(raw, type) {
+            if (typeof raw === 'string') return { message: raw, _type: type };
+            return Object.assign({}, raw, { _type: type });
+        }
+        var items = rawErrors.map(function(i) { return _toItem(i, 'error'); })
+            .concat(rawWarnings.map(function(i) { return _toItem(i, 'warning'); }));
+
+        // Status badge
+        statusEl.className = 'mass-excel-validation-status';
+        if (rawErrors.length > 0) {
+            statusEl.classList.add('mass-excel-validation-status-error');
+            statusEl.textContent = 'يوجد ' + rawErrors.length + ' خطأ';
+            if (adviceEl) adviceEl.textContent =
+                'يرجى تصحيح الأخطاء في ملف Excel ثم رفعه مرة أخرى. يمكن تعبئة البيانات المتاحة للمراجعة فقط، لكن لا يُنصح بالتشغيل قبل معالجة الأخطاء.';
+        } else if (rawWarnings.length > 0) {
+            statusEl.classList.add('mass-excel-validation-status-warning');
+            statusEl.textContent = 'يوجد ' + rawWarnings.length + ' تحذير';
+            if (adviceEl) adviceEl.textContent =
+                'يمكنك المتابعة بعد مراجعة التحذيرات. تأكد من صحة الحقول الاختيارية قبل التشغيل.';
+        } else {
+            statusEl.classList.add('mass-excel-validation-status-ok');
+            statusEl.textContent = 'الملف صالح';
+            if (adviceEl) adviceEl.textContent =
+                'لا توجد أخطاء أو تحذيرات. يمكنك تعبئة البيانات في خطوات التقييم.';
+        }
+
+        // Content
+        if (!items.length) {
+            contentEl.innerHTML =
+                '<div class="mass-excel-validation-empty">لا توجد أخطاء أو تحذيرات.</div>';
+            return;
+        }
+
+        var esc = typeof escapeHtml === 'function' ? escapeHtml : function(v) {
+            return String(v == null ? '' : v)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+        };
+
+        var rowsHtml = items.map(function(item, index) {
+            var typeLabel = item._type === 'error' ? 'خطأ' : 'تحذير';
+            var typeClass = item._type === 'error'
+                ? 'mass-excel-validation-type-error'
+                : 'mass-excel-validation-type-warning';
+            return '<tr>' +
+                '<td>' + (index + 1) + '</td>' +
+                '<td class="' + typeClass + '">' + typeLabel + '</td>' +
+                '<td>' + esc(item.sheet  || '—') + '</td>' +
+                '<td>' + esc(item.row    != null ? item.row : '—') + '</td>' +
+                '<td>' + esc(item.field  || '—') + '</td>' +
+                '<td>' + esc(item.message || '—') + '</td>' +
+                '</tr>';
+        }).join('');
+
+        contentEl.innerHTML =
+            '<div class="mass-excel-validation-table-wrap">' +
+            '<table class="mass-excel-validation-table">' +
+            '<thead><tr>' +
+            '<th>#</th><th>النوع</th><th>الشيت</th><th>الصف</th><th>الحقل</th><th>الرسالة</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rowsHtml + '</tbody>' +
+            '</table></div>';
+    }
+
+    // ── Phase 3.12 P4B: Fill-safety helpers ─────────────────────────────────
+    function massExcelImportHasValidationErrors() {
+        var result = window.latestMassExcelImportResult;
+        var errors = Array.isArray(result && result.validation && result.validation.errors)
+            ? result.validation.errors : [];
+        var summaryErrors = Number((result && result.summary && result.summary.errors_count) || 0);
+        return errors.length > 0 || summaryErrors > 0 || (result && result.status === 'validation_error');
+    }
+
+    function confirmMassExcelFillWithErrors() {
+        if (!massExcelImportHasValidationErrors()) return true;
+        return confirm('يوجد أخطاء في ملف Excel. هل تريد تعبئة البيانات المتاحة للمراجعة فقط؟');
+    }
+
+    function fillMassPropertiesFromExcelImport() {
+        var res = window.latestMassExcelImportResult;
+        var ta  = document.getElementById('mass-appraisal-input');
+        if (!res || !ta) { alert('لم يتم استيراد ملف Excel بعد.'); return; }
+        var props = (res.data && res.data.properties) || [];
+        if (!props.length) { alert('لا توجد وحدات عقارية في الملف المستورد.'); return; }
+        if (!confirmMassExcelFillWithErrors()) return;
+        ta.value = JSON.stringify(props, null, 2);
+        switchMassTab('portfolio');
+    }
+
+    function fillMassSalesFromExcelImport() {
+        var res = window.latestMassExcelImportResult;
+        if (!res) { alert('لم يتم استيراد ملف Excel بعد.'); return; }
+        var sales = (res.data && res.data.sales) || [];
+        if (!sales.length) { alert('لا توجد صفقات بيع في الملف المستورد.'); return; }
+        if (!confirmMassExcelFillWithErrors()) return;
+        // Switch tab FIRST so the textarea is in the visible DOM before assignment
+        switchMassTab('sales');
+        var section = document.getElementById('sales-verify-section');
+        var ta = document.getElementById('sales-verify-input') ||
+                 (section && section.querySelector('textarea')) ||
+                 (section && section.querySelector('.prompt-textarea'));
+        if (!ta) { alert('لم يتم العثور على حقل بيانات المبيعات.'); return; }
+        ta.value = JSON.stringify(sales, null, 2);
+        ta.focus();
+        ta.dispatchEvent(new Event('input',  { bubbles: true }));
+        ta.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function fillMassGovernanceFromExcelImport() {
+        var res = window.latestMassExcelImportResult;
+        if (!res) { alert('لم يتم استيراد ملف Excel بعد.'); return; }
+        if (!confirmMassExcelFillWithErrors()) return;
+        var gov = (res.data && res.data.governance) || {};
+        var reviewer = document.getElementById('governance-reviewer');
+        var status   = document.getElementById('governance-status');
+        var notes    = document.getElementById('governance-notes');
+        if (reviewer && gov.reviewer != null) reviewer.value = String(gov.reviewer);
+        if (status   && gov.status   != null) status.value   = String(gov.status);
+        if (notes    && gov.notes    != null) notes.value    = String(gov.notes);
+        switchMassTab('governance');
+    }
+
+    function fillMassModelCycleFromExcelImport() {
+        var res = window.latestMassExcelImportResult;
+        if (!res) { alert('لم يتم استيراد ملف Excel بعد.'); return; }
+        if (!confirmMassExcelFillWithErrors()) return;
+        var mc = (res.data && res.data.model_cycle) || {};
+
+        // Safe field setter — skips null/empty, dispatches events
+        function _mcSet(id, value) {
+            if (value == null || String(value).trim() === '') return;
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.value = String(value).trim();
+            el.dispatchEvent(new Event('input',  { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        _mcSet('model-cycle-id',         mc.cycle_id         || mc.cycleId);
+        _mcSet('model-cycle-start-date', mc.cycle_start_date || mc.start_date);
+        _mcSet('model-cycle-end-date',   mc.cycle_end_date   || mc.end_date);
+        _mcSet('model-version-id',       mc.model_version    || mc.version || mc.modelVersion);
+
+        // Status select: validate option exists before setting
+        var statusValue = mc.model_status || mc.status;
+        var statusEl    = document.getElementById('model-status-select');
+        if (statusEl && statusValue != null && String(statusValue).trim() !== '') {
+            var sv = String(statusValue).trim();
+            var optionExists = Array.from(statusEl.options || []).some(function(opt) { return opt.value === sv; });
+            if (optionExists) {
+                statusEl.value = sv;
+                statusEl.dispatchEvent(new Event('input',  { bubbles: true }));
+                statusEl.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                console.warn('[fillMassModelCycleFromExcelImport] حالة النموذج المستوردة غير موجودة في القائمة:', sv);
+            }
+        }
+
+        switchMassTab('governance');
+        var firstField = document.getElementById('model-cycle-id');
+        if (firstField) firstField.focus();
+    }
+
+    // Asset-type toggle and payload helpers (Phase 3.10)
+    function _numEl(id, def) {
+        var v = parseFloat(document.getElementById(id) ? document.getElementById(id).value : '');
+        return isNaN(v) ? def : v;
+    }
+
+    function toggleAssetInputs(val) {
+        var panelMap = {
+            'أصول معنوية':            'asset-intangible-panel',
+            'ملكيات جزئية':           'asset-partial-panel',
+            'استثمارات تحت الإنشاء': 'asset-construction-panel',
+            'مناجم':                  'asset-quarry-panel',
+            'heritage':               'asset-heritage-panel',
+            'historical':             'asset-historical-panel'
+        };
+        ['asset-intangible-panel','asset-partial-panel','asset-construction-panel','asset-quarry-panel','asset-heritage-panel','asset-historical-panel'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+        var targetId = panelMap[val];
+        if (targetId) {
+            var el = document.getElementById(targetId);
+            if (el) {
+                el.style.display = 'block';
+                el.scrollIntoView({behavior:'smooth', block:'nearest'});
+            }
+        }
+    }
+
+    function collectUsufructPayload() {
+        return {
+            usufruct_years: _numEl('usufruct-years', 25),
+            discount_rate:  _numEl('usufruct-discount-rate', 10) / 100,
+        };
+    }
+
+    function collectUncertaintyPayload() {
+        return {
+            uncertainty_spread_pct: _numEl('uncertainty-spread-pct', 15) / 100,
+        };
+    }
+
+    function collectTaxPayload() {
+        return {
+            governorate_factor:  _numEl('tax-governorate-factor', 1.00),
+            construction_factor: _numEl('tax-construction-factor', 1.00),
+            location_factor:     _numEl('tax-location-factor', 1.00),
+            exemption_threshold: _numEl('tax-exemption-threshold', 24000),
+        };
+    }
+
+    function collectBankFinancingPayload() {
+        var noi = _numEl('bank-annual-noi', 0);
+        var p = {
+            ltv_target:      _numEl('bank-ltv-target', 70) / 100,
+            interest_rate:   _numEl('bank-interest-rate', 18) / 100,
+            loan_term_years: _numEl('bank-loan-term', 15),
+        };
+        if (noi > 0) p.annual_noi = noi;
+        return p;
+    }
+
+    function collectFinancialReportingPayload() {
+        var el = document.getElementById('ifrs-level');
+        return {
+            ifrs_level: parseInt(el ? el.value : '3', 10),
+        };
+    }
+
+    function collectAssetTypePayload(propertyType) {
+        var p = {};
+        if (propertyType === 'أصول معنوية') {
+            var rev = _numEl('intangible-annual-revenue', 0);
+            if (rev > 0) {
+                p.annual_revenue                = rev;
+                p.intangible_attribution_pct    = _numEl('intangible-attribution-pct', 35) / 100;
+                p.license_term_years            = _numEl('intangible-license-years', 10);
+                p.discount_rate                 = _numEl('intangible-discount-rate', 15) / 100;
+                p.contributory_asset_charge_pct = _numEl('intangible-contributory-charge', 10) / 100;
+                p.tax_amortization_benefit_pct  = _numEl('intangible-tab', 18) / 100;
+            }
+        } else if (propertyType === 'ملكيات جزئية') {
+            p.ownership_pct  = _numEl('partial-ownership-pct', 50) / 100;
+            p.dloc_pct       = _numEl('partial-dloc-pct', 20) / 100;
+            p.dlom_pct       = _numEl('partial-dlom-pct', 20) / 100;
+            var cb = document.getElementById('partial-is-controlling');
+            p.is_controlling = cb ? cb.checked : false;
+        } else if (propertyType === 'استثمارات تحت الإنشاء') {
+            var pc = _numEl('construction-planned-cost', 0);
+            if (pc > 0) {
+                p.planned_total_cost    = pc;
+                p.completion_pct        = _numEl('construction-completion-pct', 50) / 100;
+                p.construction_risk_pct = _numEl('construction-risk-pct', 10) / 100;
+                p.months_to_completion  = _numEl('construction-months-to-complete', 12);
+                p.developer_profit_pct  = _numEl('construction-developer-profit', 15) / 100;
+                var pmv = _numEl('construction-planned-mv', 0);
+                if (pmv > 0) p.planned_market_value = pmv;
+            }
+        } else if (propertyType === 'مناجم') {
+            var rt = _numEl('quarry-reserve-tons', 0);
+            var ae = _numEl('quarry-annual-extraction', 0);
+            if (rt > 0 && ae > 0) {
+                p.reserve_tons           = rt;
+                p.annual_extraction_tons = ae;
+                p.price_per_ton          = _numEl('quarry-price-per-ton', 120);
+                p.operating_cost_pct     = _numEl('quarry-operating-cost-pct', 55) / 100;
+                p.rehabilitation_cost    = _numEl('quarry-rehabilitation-cost', 0);
+                p.discount_rate          = _numEl('quarry-discount-rate', 12) / 100;
+            }
+        } else if (propertyType === 'heritage') {
+            p.heritage_classification  = (document.getElementById('heritage-classification') || {}).value || 'national';
+            var rc = _numEl('heritage-restoration-cost', 0);
+            if (rc > 0) p.restoration_cost = rc;
+            var hp = _numEl('heritage-premium-pct', 0);
+            if (hp !== 0) p.heritage_premium_pct = hp / 100;
+            p.heritage_condition = (document.getElementById('heritage-condition') || {}).value || 'good';
+        } else if (propertyType === 'historical') {
+            p.historical_period        = (document.getElementById('historical-period') || {}).value || '';
+            p.historical_significance  = (document.getElementById('historical-significance') || {}).value || 'national';
+            p.historical_documentation = (document.getElementById('historical-documentation-status') || {}).value || 'partially_documented';
+            p.historical_restrictions  = (document.getElementById('historical-restrictions') || {}).value || 'none';
+        }
+        return p;
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  Phase 3 Mass Appraisal Tool Functions
+    //  (reconstructed from documented backend endpoints)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    // Shared state for governance and model cycle (included in session export)
+    window.massGovernanceState  = null;
+    window.massModelCycleState  = null;
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function _p3SetBusy(btnId, busy, labelBusy, labelIdle) {
+        var btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.disabled = busy;
+        btn.innerHTML = busy ? ('<i class="fas fa-spinner fa-spin"></i> ' + labelBusy) : labelIdle;
+    }
+
+    function _p3ParseJson(textareaId, label) {
+        var ta = document.getElementById(textareaId);
+        if (!ta || !ta.value.trim()) { alert('يرجى إدخال بيانات ' + label); return null; }
+        try { return JSON.parse(ta.value); }
+        catch(e) { alert('خطأ في صيغة JSON (' + label + '): ' + e.message); return null; }
+    }
+
+    function _p3ResultEl(id) { return document.getElementById(id); }
+
+    function _p3ShowError(elId, msg) {
+        var el = _p3ResultEl(elId);
+        if (el) el.innerHTML = '<div style="color:#ef4444;padding:8px;border:1px solid rgba(239,68,68,0.3);border-radius:6px;">'
+            + (typeof escapeHtml === 'function' ? escapeHtml(String(msg)) : String(msg)) + '</div>';
+    }
+
+    function _p3ShowJson(elId, data) {
+        var el = _p3ResultEl(elId);
+        if (!el) return;
+        el.innerHTML = '<pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;font-size:0.8rem;overflow-x:auto;max-height:350px;">' + JSON.stringify(data, null, 2) + '</pre>';
+    }
+
+    // ── Phase 3.2 — Sales Verification ───────────────────────────────────────
+    async function runSalesVerification() {
+        var records = _p3ParseJson('sales-verify-input', 'المبيعات');
+        if (!records) return;
+        if (!Array.isArray(records)) { alert('يجب أن تكون البيانات مصفوفة JSON'); return; }
+        _p3SetBusy('sales-verify-btn', true, 'جاري التحقق...', '<i class="fas fa-shield-alt"></i> تحقق من المبيعات');
+        _p3ShowError('sales-verify-results', '');
+        try {
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/sales/verify', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({records: records})
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                var vs = data.summary || {};
+                var html = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;">' +
+                    '<div style="font-weight:600;color:#818cf8;margin-bottom:6px;">نتائج التحقق</div>' +
+                    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:0.85rem;">' +
+                    '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">إجمالي</div><div style="color:#f8fafc;font-weight:700;">' + (vs.total_records != null ? vs.total_records : records.length) + '</div></div>' +
+                    '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">قابل للاستخدام</div><div style="color:#10b981;font-weight:700;">' + (vs.usable_sales != null ? vs.usable_sales : '—') + '</div></div>' +
+                    '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">يحتاج مراجعة</div><div style="color:#f59e0b;font-weight:700;">' + (vs.needs_review_sales != null ? vs.needs_review_sales : '—') + '</div></div>' +
+                    '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">مستبعد</div><div style="color:#ef4444;font-weight:700;">' + (vs.excluded_sales != null ? vs.excluded_sales : '—') + '</div></div>' +
+                    '</div></div>';
+                var resEl = _p3ResultEl('sales-verify-results');
+                if (resEl) resEl.innerHTML = html;
+                window.latestSalesVerifyResult        = data;
+                window.latestSalesVerificationResult  = data;
+            } else {
+                _p3ShowError('sales-verify-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('sales-verify-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('sales-verify-btn', false, '', '<i class="fas fa-shield-alt"></i> تحقق من المبيعات');
+        }
+    }
+
+    // ── Phase 3.4 — Time Adjustment ───────────────────────────────────────────
+    async function runTimeAdjustment() {
+        var raw = _p3ParseJson('time-adjust-input', 'المبيعات');
+        if (!raw) return;
+        // Normalize: accept array, {sale_records:[...]}, or {records:[...]}
+        var saleRecords;
+        if (Array.isArray(raw)) {
+            saleRecords = raw;
+        } else if (Array.isArray(raw.sale_records)) {
+            saleRecords = raw.sale_records;
+        } else if (Array.isArray(raw.records)) {
+            saleRecords = raw.records;
+        } else {
+            alert('يجب أن تكون البيانات مصفوفة JSON أو كائناً يحتوي على sale_records');
+            return;
+        }
+        if (saleRecords.length === 0) { alert('قائمة المبيعات فارغة'); return; }
+        var dateEl = document.getElementById('time-adjust-date');
+        var valuationDate = dateEl ? dateEl.value : '';
+        if (!valuationDate) { alert('يرجى تحديد تاريخ التقييم'); return; }
+        _p3SetBusy('time-adjust-btn', true, 'جاري الضبط...', '<i class="fas fa-clock"></i> ضبط الوقت');
+        try {
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/sales/time-adjust', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({records: saleRecords, valuation_date: valuationDate, options: {}})
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                _p3ShowJson('time-adjust-results', data);
+                window.latestTimeAdjustResult  = data;
+                window.latestTimeAdjustedSales = data;
+            } else {
+                _p3ShowError('time-adjust-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('time-adjust-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('time-adjust-btn', false, '', '<i class="fas fa-clock"></i> ضبط الوقت');
+        }
+    }
+
+    // ── Phase 3.5 — Sales Adjustments ────────────────────────────────────────
+    async function runSalesAdjustments() {
+        var raw = _p3ParseJson('sales-adjust-input', 'المبيعات');
+        if (!raw) return;
+        var saleRecords = [], adjustmentProfile = {}, options = {};
+        if (Array.isArray(raw)) {
+            saleRecords = raw;
+        } else if (raw && Array.isArray(raw.sale_records)) {
+            saleRecords       = raw.sale_records;
+            adjustmentProfile = raw.adjustment_profile || {};
+            options           = raw.options || {};
+        } else if (raw && Array.isArray(raw.records)) {
+            saleRecords       = raw.records;
+            adjustmentProfile = raw.adjustment_profile || {};
+            options           = raw.options || {};
+        } else {
+            _p3ShowError('sales-adjust-results', 'يجب إدخال sale_records كمصفوفة غير فارغة أو لصق مصفوفة مبيعات مباشرة.');
+            return;
+        }
+        if (saleRecords.length === 0) {
+            _p3ShowError('sales-adjust-results', 'يجب إدخال sale_records كمصفوفة غير فارغة أو لصق مصفوفة مبيعات مباشرة.');
+            return;
+        }
+        _p3SetBusy('sales-adjust-btn', true, 'جاري التعديل...', '<i class="fas fa-magic"></i> تطبيق عوامل التعديل');
+        try {
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/sales/adjust', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({sale_records: saleRecords, adjustment_profile: adjustmentProfile, options: options})
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                _p3ShowJson('sales-adjust-results', data);
+                window.latestSalesAdjustResult      = data;
+                window.latestSalesAdjustmentsResult = data;
+            } else {
+                _p3ShowError('sales-adjust-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('sales-adjust-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('sales-adjust-btn', false, '', '<i class="fas fa-magic"></i> تطبيق عوامل التعديل');
+        }
+    }
+
+    // ── Phase 3.3 — Ratio Study ──────────────────────────────────────────────
+    async function runRatioStudy() {
+        var runResult = _p3ParseJson('ratio-study-run-input', 'run_result');
+        if (!runResult) return;
+        var salesResult = _p3ParseJson('ratio-study-sales-input', 'sales');
+        if (!salesResult) return;
+
+        // Extract subject rows from run_result (supports units[] or rows[])
+        var units = Array.isArray(runResult.units) ? runResult.units
+                  : Array.isArray(runResult.rows)  ? runResult.rows
+                  : [];
+        if (units.length === 0) {
+            _p3ShowError('ratio-study-results', 'يرجى إدخال run_result يحتوي على units أو rows بقيم market_value/unit_value.');
+            return;
+        }
+        var subjectRows = units
+            .filter(function(u) { return Number(u.market_value || u.unit_value || 0) > 0; })
+            .map(function(u, i) {
+                return {
+                    id:             u.id || u.row_id || u.unit_id || ('U-' + String(i+1).padStart(3,'0')),
+                    row_id:         u.row_id || u.id || u.unit_id || ('U-' + String(i+1).padStart(3,'0')),
+                    location:       u.location       || '',
+                    zone_id:        u.zone_id        || '',
+                    property_class: u.property_class || '',
+                    property_type:  u.property_type  || '',
+                    area:           Number(u.area    || 0),
+                    market_value:   Number(u.market_value || u.unit_value || 0),
+                    unit_value:     Number(u.unit_value   || u.market_value || 0),
+                    final_ppm:      Number(u.final_ppm    || u.avm_ppm || 0)
+                };
+            });
+        if (subjectRows.length === 0) {
+            _p3ShowError('ratio-study-results', 'يرجى إدخال run_result يحتوي على units أو rows بقيم market_value/unit_value.');
+            return;
+        }
+
+        // Extract sales (accept array, {sale_records:[]}, {records:[]}, {adjusted_sales:[]}, etc.)
+        var rawSales = Array.isArray(salesResult)                         ? salesResult
+                     : Array.isArray(salesResult.sale_records)            ? salesResult.sale_records
+                     : Array.isArray(salesResult.records)                 ? salesResult.records
+                     : Array.isArray(salesResult.adjusted_sales)          ? salesResult.adjusted_sales
+                     : Array.isArray(salesResult.sales)                   ? salesResult.sales
+                     : [];
+        if (rawSales.length === 0) {
+            _p3ShowError('ratio-study-results', 'يرجى إدخال مصفوفة مبيعات تحتوي على sale_price أو adjusted_sale_price.');
+            return;
+        }
+        var saleRecords = rawSales
+            .filter(function(s) { return Number(s.adjusted_sale_price || s.sale_price || 0) > 0; })
+            .map(function(s, i) {
+                return {
+                    sale_id:               s.sale_id  || s.id || ('S-' + String(i+1).padStart(3,'0')),
+                    subject_id:            s.subject_id || s.id || s.row_id || '',
+                    id:                    s.id || s.subject_id || s.row_id || '',
+                    row_id:                s.row_id || s.subject_id || s.id || '',
+                    location:              s.location       || '',
+                    zone_id:               s.zone_id        || '',
+                    property_class:        s.property_class || '',
+                    property_type:         s.property_type  || '',
+                    area:                  Number(s.area    || 0),
+                    sale_price:            Number(s.adjusted_sale_price || s.sale_price || 0),
+                    adjusted_sale_price:   Number(s.adjusted_sale_price || s.sale_price || 0),
+                    usability_status:      s.usability_status || 'usable',
+                    verified:              s.verified !== false,
+                    arms_length:           s.arms_length !== false,
+                    usable_for_ratio_study: s.usable_for_ratio_study !== false
+                };
+            });
+        if (saleRecords.length === 0) {
+            _p3ShowError('ratio-study-results', 'يرجى إدخال مصفوفة مبيعات تحتوي على sale_price أو adjusted_sale_price.');
+            return;
+        }
+
+        window.latestRatioStudySaleRecords = saleRecords;
+        _p3SetBusy('ratio-study-btn', true, 'جاري الحساب...', '<i class="fas fa-percentage"></i> إجراء دراسة النسب');
+        try {
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/ratio-study/run', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({subject_rows: subjectRows, sale_records: saleRecords, options: {include_needs_review_sales: false}})
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                var summary      = data.summary             || {};
+                var pm           = summary.portfolio_metrics || {};
+                var matchedCount = summary.matched_pair_count || 0;
+                if (matchedCount === 0) {
+                    var warns = (summary.warnings || []).map(function(w) { return w.message || w.code; }).join(' | ');
+                    _p3ShowError('ratio-study-results',
+                        'تم التشغيل لكن لم يتم العثور على أزواج مطابقة. تأكد من zone_id و property_class أو subject_id في كلا المصفوفتين.' +
+                        (warns ? ' (' + warns + ')' : ''));
+                } else {
+                    var medianR = pm.median_ratio != null ? Number(pm.median_ratio).toFixed(4) : '—';
+                    var codVal  = pm.cod          != null ? Number(pm.cod).toFixed(2) + '%'     : '—';
+                    var prdVal  = pm.prd          != null ? Number(pm.prd).toFixed(4)            : '—';
+                    var html = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;">' +
+                        '<div style="font-weight:600;color:#818cf8;margin-bottom:8px;">نتائج دراسة النسب (IAAO) — ' + matchedCount + ' أزواج مطابقة</div>' +
+                        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:0.85rem;">' +
+                        '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">Median Ratio</div><div style="color:#f8fafc;font-weight:700;">' + medianR + '</div></div>' +
+                        '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">COD</div><div style="color:#f8fafc;font-weight:700;">' + codVal + '</div></div>' +
+                        '<div style="text-align:center;background:#1f2937;padding:8px;border-radius:6px;"><div style="color:#9ca3af;font-size:0.75rem;">PRD</div><div style="color:#f8fafc;font-weight:700;">' + prdVal + '</div></div>' +
+                        '</div>';
+                    var pairs = data.matched_pairs || [];
+                    if (pairs.length > 0) {
+                        html += '<div style="margin-top:10px;overflow-x:auto;"><table style="width:100%;font-size:0.78rem;border-collapse:collapse;">' +
+                            '<tr style="background:#374151;color:#9ca3af;">' +
+                            '<th style="padding:4px 8px;text-align:left;">Subject</th><th style="padding:4px 8px;text-align:left;">Sale</th>' +
+                            '<th style="padding:4px 8px;text-align:right;">Appraised</th><th style="padding:4px 8px;text-align:right;">Sale Price</th>' +
+                            '<th style="padding:4px 8px;text-align:right;">Ratio</th><th style="padding:4px 8px;text-align:left;">Match</th></tr>';
+                        pairs.slice(0, 20).forEach(function(p) {
+                            html += '<tr style="border-bottom:1px solid #374151;">' +
+                                '<td style="padding:4px 8px;">' + escapeHtml(String(p.subject_row_id || '')) + '</td>' +
+                                '<td style="padding:4px 8px;">' + escapeHtml(String(p.sale_id || '')) + '</td>' +
+                                '<td style="padding:4px 8px;text-align:right;">' + (p.appraised_value != null ? Number(p.appraised_value).toLocaleString() : '—') + '</td>' +
+                                '<td style="padding:4px 8px;text-align:right;">' + (p.sale_price_used != null ? Number(p.sale_price_used).toLocaleString() : '—') + '</td>' +
+                                '<td style="padding:4px 8px;text-align:right;">' + (p.ratio != null ? Number(p.ratio).toFixed(4) : '—') + '</td>' +
+                                '<td style="padding:4px 8px;">' + escapeHtml(String(p.match_basis || '')) + '</td></tr>';
+                        });
+                        html += '</table></div>';
+                    }
+                    html += '</div>';
+                    var resEl = _p3ResultEl('ratio-study-results');
+                    if (resEl) resEl.innerHTML = html;
+                }
+                window.latestRatioStudyResult = data;
+                if (data.status === 'success') renderMassExecutiveChangeSummary();
+            } else {
+                _p3ShowError('ratio-study-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('ratio-study-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('ratio-study-btn', false, '', '<i class="fas fa-percentage"></i> إجراء دراسة النسب');
+        }
+    }
+
+    // ── Phase 3.6 — Calibration Preview ─────────────────────────────────────
+    async function runCalibrationPreview() {
+        var runResult = _p3ParseJson('calibration-preview-input', 'run_result');
+        if (!runResult) return;
+
+        // ratio_study_result textarea is optional — fall back to last ratio study
+        var ratioResultRaw = null;
+        var ratioEl   = document.getElementById('calibration-ratio-input');
+        var ratioText = ratioEl ? ratioEl.value.trim() : '';
+        if (ratioText) {
+            ratioResultRaw = _p3ParseJson('calibration-ratio-input', 'ratio_study_result');
+            if (ratioResultRaw === null) return;
+        } else if (window.latestRatioStudyResult) {
+            ratioResultRaw = window.latestRatioStudyResult;
+        }
+
+        _p3SetBusy('calibration-preview-btn', true, 'جاري المعاينة...', '<i class="fas fa-eye"></i> معاينة المعايرة');
+        try {
+            // ── Extract subject rows ──────────────────────────────────────────
+            var rawUnits = Array.isArray(runResult) ? runResult
+                         : Array.isArray(runResult.units) ? runResult.units
+                         : Array.isArray(runResult.rows)  ? runResult.rows
+                         : [];
+            var subjectRows = rawUnits.filter(function(u) {
+                return Number(u.market_value || u.unit_value || 0) > 0;
+            }).map(function(u, i) {
+                return {
+                    id:             u.id || u.row_id || ('U-' + String(i + 1).padStart(3, '0')),
+                    row_id:         u.row_id || u.id || ('U-' + String(i + 1).padStart(3, '0')),
+                    location:       u.location || '',
+                    zone_id:        u.zone_id || '',
+                    property_class: u.property_class || '',
+                    property_type:  u.property_type || '',
+                    area:           Number(u.area || 0),
+                    market_value:   Number(u.market_value || u.unit_value || 0),
+                    unit_value:     Number(u.unit_value || u.market_value || 0),
+                    final_ppm:      Number(u.final_ppm || u.avm_ppm || 0)
+                };
+            });
+
+            // ── Normalize ratio_study object ──────────────────────────────────
+            var normalizedRatioStudy = null;
+            if (ratioResultRaw) {
+                var rSrc = ratioResultRaw;
+                var pm = (rSrc.summary && rSrc.summary.portfolio_metrics) ? rSrc.summary.portfolio_metrics
+                        : rSrc.portfolio_metrics || rSrc;
+                var matchedPairs = (rSrc.summary && Array.isArray(rSrc.summary.matched_pairs)) ? rSrc.summary.matched_pairs
+                                 : Array.isArray(rSrc.matched_pairs) ? rSrc.matched_pairs
+                                 : [];
+                normalizedRatioStudy = {
+                    status:             (rSrc.status === 'success' || matchedPairs.length > 0) ? 'success' : 'no_data',
+                    matched_pairs:      matchedPairs,
+                    median_ratio:       pm.median_ratio != null ? Number(pm.median_ratio) : null,
+                    cod:                pm.cod != null ? Number(pm.cod) : null,
+                    prd:                pm.prd != null ? Number(pm.prd) : null,
+                    matched_pair_count: matchedPairs.length || (rSrc.summary && rSrc.summary.matched_pair_count) || 0
+                };
+            }
+
+            // ── Reuse sale records from last ratio study if available ──────────
+            var saleRecords = (window.latestRatioStudySaleRecords && Array.isArray(window.latestRatioStudySaleRecords))
+                              ? window.latestRatioStudySaleRecords : [];
+
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/calibration/preview', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    subject_rows: subjectRows,
+                    sale_records: saleRecords,
+                    ratio_study:  normalizedRatioStudy,
+                    options:      {target_ratio: 1.0, min_factor: 0.85, max_factor: 1.15}
+                })
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                var pc   = data.portfolio_calibration || {};
+                var smm  = data.summary || {};
+                var sf   = pc.suggested_factor != null ? Number(pc.suggested_factor) : 1.0;
+                var rec  = pc.recommendation || smm.recommendation || '—';
+                var matchedCount = smm.matched_pair_count || pc.matched_pair_count || 0;
+                var pairsSource  = smm.pairs_source || '—';
+                var medR = pc.median_ratio != null ? Number(pc.median_ratio).toFixed(4) : '—';
+                var codV = pc.cod         != null ? Number(pc.cod).toFixed(2) + '%'    : '—';
+
+                var warnHtml = '';
+                if (sf === 1.0 && matchedCount === 0) {
+                    warnHtml = '<div style="margin-top:8px;padding:7px 10px;background:rgba(245,158,11,0.12);border-left:3px solid #f59e0b;border-radius:4px;font-size:0.8rem;color:#f59e0b;">' +
+                        '<i class="fas fa-exclamation-triangle"></i> لم يتم تكوين أزواج مطابقة — العامل افتراضي 1.0. شغّل دراسة النسب أولًا أو استخدم زر «استخدام آخر نتيجة دراسة النسب».</div>';
+                } else if (sf === 1.0) {
+                    warnHtml = '<div style="margin-top:8px;padding:7px 10px;background:rgba(99,102,241,0.08);border-left:3px solid #6366f1;border-radius:4px;font-size:0.8rem;color:#a5b4fc;">' +
+                        '<i class="fas fa-info-circle"></i> العامل = 1.0 (لا تعديل مطلوب)</div>';
+                }
+
+                var html = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;">' +
+                    '<div style="font-weight:600;color:#818cf8;margin-bottom:8px;">معاينة المعايرة</div>' +
+                    '<div style="font-size:0.85rem;display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">العامل المقترح: </span><span style="color:#f59e0b;font-weight:700;">' + sf.toFixed(4) + '</span></div>' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">التوصية: </span><span style="color:#10b981;font-weight:700;">' + escapeHtml(String(rec)) + '</span></div>' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">Median Ratio: </span><span style="color:#e2e8f0;">' + medR + '</span></div>' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">COD: </span><span style="color:#e2e8f0;">' + codV + '</span></div>' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">أزواج مطابقة: </span><span style="color:#e2e8f0;">' + matchedCount + '</span></div>' +
+                    '<div style="background:#1f2937;padding:8px;border-radius:6px;"><span style="color:#9ca3af;">مصدر الأزواج: </span><span style="color:#e2e8f0;">' + escapeHtml(String(pairsSource)) + '</span></div>' +
+                    '</div>' +
+                    warnHtml +
+                    (pc.calibration_note ? '<div style="margin-top:8px;font-size:0.82rem;color:#9ca3af;">' + escapeHtml(String(pc.calibration_note)) + '</div>' : '') +
+                    '</div>';
+                var resEl = _p3ResultEl('calibration-preview-results');
+                if (resEl) resEl.innerHTML = html;
+                window.latestCalibrationPreviewResult = data;
+                if (data.status === 'success') renderMassExecutiveChangeSummary();
+            } else {
+                _p3ShowError('calibration-preview-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('calibration-preview-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('calibration-preview-btn', false, '', '<i class="fas fa-eye"></i> معاينة المعايرة');
+        }
+    }
+
+    // ── Phase 3.7 — Calibration Sandbox ─────────────────────────────────────
+    async function runCalibrationSandbox() {
+        // ── Parse calibration_preview — accept shapes A / B / C / D ──────────
+        var calibrationPreview = null;
+        var sbEl   = document.getElementById('calibration-sandbox-input');
+        var sbText = sbEl ? sbEl.value.trim() : '';
+        if (sbText) {
+            var parsed = _p3ParseJson('calibration-sandbox-input', 'calibration_preview');
+            if (parsed === null) return;
+            // Shape B: {calibration_preview: {portfolio_calibration: {...}}}
+            // Shape A: {portfolio_calibration: {...}}
+            // Shape C: {subject_rows:[...], calibration_preview:{...}}
+            calibrationPreview = (parsed && parsed.calibration_preview) ? parsed.calibration_preview : parsed;
+        } else if (window.latestCalibrationPreviewResult) {
+            // Shape D: blank textarea — fallback to last preview result
+            calibrationPreview = window.latestCalibrationPreviewResult;
+        }
+
+        if (!calibrationPreview || !calibrationPreview.portfolio_calibration) {
+            _p3ShowError('calibration-sandbox-results',
+                'شغّل معاينة المعايرة أولًا أو الصق نتيجة Phase 3.6 كاملة (يجب أن تحتوي على portfolio_calibration).');
+
+            return;
+        }
+
+        // ── Manual factor — inject as portfolio fallback if user specified one ─
+        var factorEl     = document.getElementById('calibration-sandbox-factor');
+        var manualFactor = factorEl ? parseFloat(factorEl.value) : NaN;
+        if (isNaN(manualFactor) || manualFactor <= 0) manualFactor = null;
+
+        var calibPreviewToSend = calibrationPreview;
+        if (manualFactor !== null) {
+            calibPreviewToSend = JSON.parse(JSON.stringify(calibrationPreview));
+            calibPreviewToSend.portfolio_calibration = Object.assign(
+                {}, calibPreviewToSend.portfolio_calibration, { suggested_factor: manualFactor }
+            );
+        }
+
+        // ── Extract subject rows — CRITICAL: include status field ─────────────
+        // apply_calibration_sandbox skips rows whose status is not in apply_to_status.
+        // Default apply_to_status = ["success"]. Rows without a status field get
+        // status="" which is not in {"success"}, so all rows are skipped.
+        // Fix: always set status: row.status || "success" during normalization.
+        var subjectRows = [];
+        var latestRun = window.latestMassAppraisalRunResult;
+        if (latestRun) {
+            var rawUnits = Array.isArray(latestRun.units) ? latestRun.units
+                         : Array.isArray(latestRun.rows)  ? latestRun.rows
+                         : [];
+            subjectRows = rawUnits.filter(function(u) {
+                return Number(u.market_value || u.unit_value || 0) > 0;
+            }).map(function(u, i) {
+                return {
+                    id:             u.id || u.row_id || ('U-' + String(i + 1).padStart(3, '0')),
+                    row_id:         u.row_id || u.id || ('U-' + String(i + 1).padStart(3, '0')),
+                    location:       u.location || '',
+                    zone_id:        u.zone_id || '',
+                    property_class: u.property_class || '',
+                    property_type:  u.property_type || '',
+                    area:           Number(u.area || 0),
+                    market_value:   Number(u.market_value || u.unit_value || 0),
+                    unit_value:     Number(u.unit_value || u.market_value || 0),
+                    final_ppm:      Number(u.final_ppm || u.avm_ppm || 0),
+                    status:         u.status || 'success'
+                };
+            });
+        }
+
+        if (subjectRows.length === 0) {
+            _p3ShowError('calibration-sandbox-results',
+                'يجب تشغيل التقييم الجماعي أولًا أو تمرير subject_rows في JSON.');
+            return;
+        }
+
+        _p3SetBusy('calibration-sandbox-btn', true, 'جاري الاختبار...', '<i class="fas fa-flask"></i> اختبار المعايرة (Sandbox)');
+        try {
+            var resp = await fetch(_maApiUrl() + '/api/mass-appraisal/calibration/sandbox', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    subject_rows:        subjectRows,
+                    calibration_preview: calibPreviewToSend,
+                    options: {
+                        manual_factor:    manualFactor,
+                        calibration_factor: manualFactor,
+                        apply_level:      'auto',
+                        dry_run:          true,
+                        apply_to_status:  ['success', '']
+                    }
+                })
+            });
+            var data = await resp.json();
+            if (data.status === 'success') {
+                var rows = data.rows || [];
+                var smm  = data.summary || {};
+
+                // ── Factor display: backend avg → portfolio factor → manual ────
+                var pcFactor = (calibPreviewToSend.portfolio_calibration || {}).suggested_factor;
+                var avgFRaw  = smm.average_calibration_factor != null ? Number(smm.average_calibration_factor) : null;
+                var avgF     = avgFRaw  != null ? avgFRaw.toFixed(4)
+                             : pcFactor != null ? Number(pcFactor).toFixed(4) + ' (portfolio)'
+                             : manualFactor != null ? manualFactor.toFixed(4) + ' (manual)'
+                             : '—';
+
+                // ── Summary counts ────────────────────────────────────────────
+                var totalRows     = smm.total_rows      != null ? smm.total_rows      : rows.length;
+                var calibrated    = smm.calibrated_rows  != null ? smm.calibrated_rows
+                                  : rows.filter(function(r) { return r.sandbox_calibrated_value != null; }).length;
+                var unchanged     = smm.unchanged_rows   != null ? smm.unchanged_rows   : (totalRows - calibrated);
+                var origTotal     = smm.original_total_market_value != null ? Number(smm.original_total_market_value) : null;
+                var sbTotal       = smm.sandbox_total_market_value  != null ? Number(smm.sandbox_total_market_value)  : null;
+                var deltaTotalPct = smm.total_value_delta_pct       != null ? Number(smm.total_value_delta_pct)       : null;
+
+                var html = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;">' +
+                    '<div style="font-weight:600;color:#818cf8;margin-bottom:8px;">نتائج Sandbox — العامل المطبّق: ' + avgF + '</div>' +
+                    '<div style="font-size:0.82rem;color:#9ca3af;margin-bottom:8px;display:flex;gap:16px;flex-wrap:wrap;">' +
+                    '<span>صفوف: <b style="color:#f8fafc;">' + totalRows + '</b></span>' +
+                    '<span>معايَرة: <b style="color:#10b981;">' + calibrated + '</b></span>' +
+                    '<span>غير متغيرة: <b style="color:#9ca3af;">' + unchanged + '</b></span>' +
+                    (origTotal != null ? '<span>أصلي: <b style="color:#f8fafc;">' + origTotal.toLocaleString('en-US') + '</b></span>' : '') +
+                    (sbTotal   != null ? '<span>Sandbox: <b style="color:#f59e0b;">' + sbTotal.toLocaleString('en-US') + '</b></span>' : '') +
+                    (deltaTotalPct != null ? '<span>Δ: <b style="color:' + (deltaTotalPct >= 0 ? '#10b981' : '#f87171') + ';">' + (deltaTotalPct > 0 ? '+' : '') + deltaTotalPct.toFixed(2) + '%</b></span>' : '') +
+                    '</div>';
+
+                if (rows.length > 0) {
+                    html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.8rem;">' +
+                        '<thead><tr style="background:#1f2937;color:var(--gold);">' +
+                        '<th style="padding:6px;border:1px solid var(--border);">row_id</th>' +
+                        '<th style="padding:6px;border:1px solid var(--border);">القيمة الأصلية</th>' +
+                        '<th style="padding:6px;border:1px solid var(--border);">قيمة Sandbox</th>' +
+                        '<th style="padding:6px;border:1px solid var(--border);">العامل</th>' +
+                        '<th style="padding:6px;border:1px solid var(--border);">التغيير</th>' +
+                        '</tr></thead><tbody>';
+                    rows.slice(0, 50).forEach(function(r) {
+                        var orig = r.original_market_value != null ? r.original_market_value
+                                 : r.market_value != null ? r.market_value
+                                 : r.unit_value != null ? r.unit_value : null;
+                        var sand = r.sandbox_calibrated_value != null ? r.sandbox_calibrated_value
+                                 : r.calibrated_value != null ? r.calibrated_value
+                                 : r.new_market_value != null ? r.new_market_value : null;
+                        var appliedF = r.calibration_factor_applied != null ? r.calibration_factor_applied
+                                     : r.applied_factor != null ? r.applied_factor
+                                     : r.factor != null ? r.factor : null;
+                        var deltaPct = r.sandbox_value_delta_pct != null ? r.sandbox_value_delta_pct
+                                     : r.value_delta_pct != null ? r.value_delta_pct
+                                     : (sand != null && orig != null && orig > 0) ? (sand - orig) / orig * 100 : null;
+                        var isError    = (r.status === 'error' || r.error);
+                        var sandColor  = sand != null ? '#10b981' : '#9ca3af';
+                        var sandDisp   = sand != null ? Number(sand).toLocaleString('en-US') : (isError ? 'خطأ' : '—');
+                        var deltaDisp  = deltaPct != null ? (deltaPct > 0 ? '+' : '') + Number(deltaPct).toFixed(2) + '%' : '—';
+                        var deltaColor = deltaPct != null ? (deltaPct >= 0 ? '#10b981' : '#f87171') : '#9ca3af';
+                        var fDisp      = appliedF != null ? Number(appliedF).toFixed(4) : '—';
+                        html += '<tr style="border-bottom:1px solid #1f2937;">' +
+                            '<td style="padding:5px;border:1px solid var(--border);text-align:center;">' + escapeHtml(String(r.row_id || '—')) + '</td>' +
+                            '<td style="padding:5px;border:1px solid var(--border);text-align:left;">' + (orig != null ? Number(orig).toLocaleString('en-US') : '—') + '</td>' +
+                            '<td style="padding:5px;border:1px solid var(--border);text-align:left;color:' + sandColor + ';">' + sandDisp + '</td>' +
+                            '<td style="padding:5px;border:1px solid var(--border);text-align:center;color:#f59e0b;">' + fDisp + '</td>' +
+                            '<td style="padding:5px;border:1px solid var(--border);text-align:center;color:' + deltaColor + ';">' + deltaDisp + '</td>' +
+                            '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+                    if (rows.length > 50) html += '<div style="color:#9ca3af;font-size:0.78rem;margin-top:6px;">عرض أول 50 صف من ' + rows.length + '</div>';
+                }
+                html += '</div>';
+                var resEl = _p3ResultEl('calibration-sandbox-results');
+                if (resEl) resEl.innerHTML = html;
+                window.latestCalibrationSandboxResult = data;
+                if (data.status === 'success') renderMassExecutiveChangeSummary();
+            } else {
+                _p3ShowError('calibration-sandbox-results', 'خطأ: ' + (data.message || data.error_code || 'خطأ غير معروف'));
+            }
+        } catch(e) {
+            _p3ShowError('calibration-sandbox-results', 'فشل الاتصال: ' + e.message);
+        } finally {
+            _p3SetBusy('calibration-sandbox-btn', false, '', '<i class="fas fa-flask"></i> اختبار المعايرة (Sandbox)');
+        }
+    }
+
+    // ── Phase 3.8 — Governance ────────────────────────────────────────────────
+    function saveMassGovernanceDecision() {
+        var reviewer = (document.getElementById('governance-reviewer') || {}).value || '';
+        var status   = (document.getElementById('governance-status')  || {}).value || 'pending';
+        var notes    = (document.getElementById('governance-notes')   || {}).value || '';
+        var now = new Date().toISOString();
+        var prev = window.massGovernanceState || {};
+        window.massGovernanceState = {
+            governance_id: prev.governance_id || ('GOV-' + now.slice(0,10).replace(/-/g,'') + '-' + Math.random().toString(36).slice(2,6).toUpperCase()),
+            reviewer:      reviewer,
+            governance_status: status,
+            notes:         notes,
+            last_updated:  now,
+            approval_timestamp: status === 'approved' ? now : null,
+            governance_history: (prev.governance_history || []).concat({
+                from_status: prev.governance_status || 'new',
+                to_status:   status,
+                by:          reviewer,
+                note:        notes,
+                timestamp:   now
+            })
+        };
+        _renderGovernanceStatus();
+    }
+
+    function _renderGovernanceStatus() {
+        var g = window.massGovernanceState;
+        var el = document.getElementById('governance-status-display');
+        if (!el) return;
+        if (!g) { el.innerHTML = ''; return; }
+        var statusColors = {approved:'#10b981', rejected:'#ef4444', pending:'#f59e0b', under_review:'#818cf8'};
+        var color = statusColors[g.governance_status] || '#9ca3af';
+        el.innerHTML = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;font-size:0.85rem;">' +
+            '<div><b style="color:' + color + ';">الحالة: ' + g.governance_status + '</b>' +
+            ' &nbsp;|&nbsp; المراجع: ' + (g.reviewer||'—') +
+            ' &nbsp;|&nbsp; <span style="color:#6b7280;">' + g.governance_id + '</span></div>' +
+            (g.notes ? '<div style="color:#9ca3af;margin-top:4px;">' + g.notes + '</div>' : '') +
+            '<div style="color:#6b7280;font-size:0.75rem;margin-top:4px;">آخر تحديث: ' + g.last_updated + '</div>' +
+            '</div>';
+    }
+
+    // ── Phase 3.9 — Model Cycle ───────────────────────────────────────────────
+    function saveMassModelCycleMetadata() {
+        var cycleId   = (document.getElementById('model-cycle-id')       || {}).value || 'CYCLE-2025-GENERAL';
+        var version   = (document.getElementById('model-version-id')     || {}).value || 'MA-MODEL-v1.0';
+        var status    = (document.getElementById('model-status-select')  || {}).value || 'draft';
+        var startDate = (document.getElementById('model-cycle-start-date')|| {}).value || '';
+        var endDate   = (document.getElementById('model-cycle-end-date')  || {}).value || '';
+        window.massModelCycleState = {
+            cycle_id:         cycleId,
+            model_version:    version,
+            model_status:     status,
+            cycle_start_date: startDate,
+            cycle_end_date:   endDate,
+            last_updated:     new Date().toISOString()
+        };
+        _renderModelCycleStatus();
+    }
+
+    function _renderModelCycleStatus() {
+        var m = window.massModelCycleState;
+        var el = document.getElementById('model-cycle-status-display');
+        if (!el) return;
+        if (!m) { el.innerHTML = ''; return; }
+        el.innerHTML = '<div style="padding:10px;border:1px solid rgba(99,102,241,0.3);border-radius:8px;font-size:0.85rem;">' +
+            '<div><b style="color:#818cf8;">' + m.cycle_id + '</b>' +
+            ' &nbsp;|&nbsp; الإصدار: ' + m.model_version +
+            ' &nbsp;|&nbsp; الحالة: <span style="color:#10b981;">' + m.model_status + '</span></div>' +
+            (m.cycle_start_date ? '<div style="color:#9ca3af;margin-top:4px;">الفترة: ' + m.cycle_start_date + ' → ' + (m.cycle_end_date||'—') + '</div>' : '') +
+            '<div style="color:#6b7280;font-size:0.75rem;margin-top:4px;">آخر تحديث: ' + m.last_updated + '</div>' +
+            '</div>';
+    }
+
 </script>
 </body>
 </html>

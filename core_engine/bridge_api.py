@@ -6706,6 +6706,324 @@ def handle_price_index():
         print(traceback.format_exc())
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Mass Appraisal Routes — Phase 3 (Limited Backend Route Restore)
+# Adds POST handlers for all /api/mass-appraisal/* endpoints.
+# Only bridge_api.py is modified; specialist modules are not touched.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _ma_units(body: dict) -> list:
+    """Map frontend rows[] / units[] to engine-compatible unit dicts."""
+    rows = body.get("rows") or body.get("units") or []
+    out = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        u = dict(r)
+        if "id" not in u and "row_id" in u:
+            u["id"] = u["row_id"]
+        out.append(u)
+    return out
+
+
+@app.route("/api/mass-appraisal/preview", methods=["POST", "OPTIONS"])
+def handle_mass_appraisal_preview():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from mass_appraisal import run_mass_appraisal
+    except Exception:
+        try:
+            from core_engine.mass_appraisal import run_mass_appraisal  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"mass_appraisal not available: {imp_err}"}), 500
+    try:
+        body  = request.get_json(silent=True) or {}
+        units = _ma_units(body)
+        if not units:
+            return jsonify({"status": "error", "error_code": "MISSING_ROWS",
+                            "message": "rows[] is required and must be non-empty."}), 400
+        result = run_mass_appraisal(
+            units,
+            base_market_ppm=float(body.get("base_market_ppm", 0)),
+            location=body.get("location", "Cairo"),
+            region=body.get("region", "EG"),
+            method=body.get("method", "avm"),
+            purpose=body.get("purpose", "fair_market"),
+        )
+        # Preview: summary only — omit per-unit rows and disk path
+        preview = {k: v for k, v in result.items() if k not in ("units", "output_xlsx")}
+        preview["preview"] = True
+        return jsonify(preview)
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/run", methods=["POST", "OPTIONS"])
+def handle_mass_appraisal_run():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from mass_appraisal import run_mass_appraisal
+    except Exception:
+        try:
+            from core_engine.mass_appraisal import run_mass_appraisal  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"mass_appraisal not available: {imp_err}"}), 500
+    try:
+        body  = request.get_json(silent=True) or {}
+        units = _ma_units(body)
+        if not units:
+            return jsonify({"status": "error", "error_code": "MISSING_ROWS",
+                            "message": "rows[] is required and must be non-empty."}), 400
+        result = run_mass_appraisal(
+            units,
+            base_market_ppm=float(body.get("base_market_ppm", 0)),
+            location=body.get("location", "Cairo"),
+            region=body.get("region", "EG"),
+            method=body.get("method", "avm"),
+            purpose=body.get("purpose", "fair_market"),
+        )
+        return jsonify(result)
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/export-xlsx", methods=["POST", "OPTIONS"])
+def handle_mass_appraisal_export_xlsx():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from mass_appraisal_excel import build_mass_appraisal_workbook
+    except Exception:
+        try:
+            from core_engine.mass_appraisal_excel import build_mass_appraisal_workbook  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"mass_appraisal_excel not available: {imp_err}"}), 500
+    try:
+        from flask import Response
+        body       = request.get_json(silent=True) or {}
+        run_result = body.get("result") or body
+        xlsx_bytes = build_mass_appraisal_workbook(run_result)
+        return Response(
+            xlsx_bytes,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=mass_appraisal.xlsx"},
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/sales/verify", methods=["POST", "OPTIONS"])
+def handle_mass_sales_verify():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from sales_verification import verify_sales_records
+    except Exception:
+        try:
+            from core_engine.sales_verification import verify_sales_records  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"sales_verification not available: {imp_err}"}), 500
+    try:
+        body    = request.get_json(silent=True) or {}
+        records = body.get("records") or []
+        options = body.get("options")
+        return jsonify(verify_sales_records(records, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/sales/time-adjust", methods=["POST", "OPTIONS"])
+def handle_mass_sales_time_adjust():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from sales_time_adjustment import adjust_sales_for_time
+    except Exception:
+        try:
+            from core_engine.sales_time_adjustment import adjust_sales_for_time  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"sales_time_adjustment not available: {imp_err}"}), 500
+    try:
+        body           = request.get_json(silent=True) or {}
+        records        = body.get("records") or []
+        valuation_date = body.get("valuation_date", "")
+        options        = body.get("options")
+        return jsonify(adjust_sales_for_time(records, valuation_date, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/sales/adjust", methods=["POST", "OPTIONS"])
+def handle_mass_sales_adjust():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from sales_adjustments import apply_sales_adjustments
+    except Exception:
+        try:
+            from core_engine.sales_adjustments import apply_sales_adjustments  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"sales_adjustments not available: {imp_err}"}), 500
+    try:
+        body               = request.get_json(silent=True) or {}
+        records            = body.get("sale_records") or body.get("records") or []
+        adjustment_profile = body.get("adjustment_profile")
+        options            = body.get("options")
+        return jsonify(apply_sales_adjustments(records, adjustment_profile, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/ratio-study/run", methods=["POST", "OPTIONS"])
+def handle_mass_ratio_study():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from ratio_studies import run_ratio_study
+    except Exception:
+        try:
+            from core_engine.ratio_studies import run_ratio_study  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"ratio_studies not available: {imp_err}"}), 500
+    try:
+        body         = request.get_json(silent=True) or {}
+        subject_rows = body.get("subject_rows") or []
+        sale_records = body.get("sale_records") or []
+        options      = body.get("options")
+        return jsonify(run_ratio_study(subject_rows, sale_records, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/calibration/preview", methods=["POST", "OPTIONS"])
+def handle_mass_calibration_preview():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from model_calibration import preview_calibration
+    except Exception:
+        try:
+            from core_engine.model_calibration import preview_calibration  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"model_calibration not available: {imp_err}"}), 500
+    try:
+        body         = request.get_json(silent=True) or {}
+        subject_rows = body.get("subject_rows") or []
+        sale_records = body.get("sale_records") or []
+        ratio_study  = body.get("ratio_study")
+        options      = body.get("options")
+        return jsonify(preview_calibration(subject_rows, sale_records, ratio_study, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/mass-appraisal/calibration/sandbox", methods=["POST", "OPTIONS"])
+def handle_mass_calibration_sandbox():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from calibration_sandbox import apply_calibration_sandbox
+    except Exception:
+        try:
+            from core_engine.calibration_sandbox import apply_calibration_sandbox  # type: ignore
+        except Exception as imp_err:
+            return jsonify({"status": "error",
+                            "message": f"calibration_sandbox not available: {imp_err}"}), 500
+    try:
+        body                = request.get_json(silent=True) or {}
+        subject_rows        = body.get("subject_rows") or []
+        calibration_preview = body.get("calibration_preview") or {}
+        options             = body.get("options")
+        return jsonify(apply_calibration_sandbox(subject_rows, calibration_preview, options))
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# ── Phase 3.12 — Mass Appraisal Excel Template Download ──────────────────────
+@app.route("/api/mass-appraisal/template-xlsx", methods=["GET", "OPTIONS"])
+def handle_mass_appraisal_template_xlsx():
+    """Return a blank Mass Appraisal Excel template for download."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        try:
+            from mass_appraisal_template import build_mass_appraisal_template_workbook
+        except ImportError:
+            from core_engine.mass_appraisal_template import build_mass_appraisal_template_workbook  # type: ignore
+        from io import BytesIO
+        from flask import send_file
+        xlsx_bytes = build_mass_appraisal_template_workbook()
+        return send_file(
+            BytesIO(xlsx_bytes),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name="mass_appraisal_template.xlsx",
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+# ── Phase 3.12 — Mass Appraisal Excel Import Parse Preview ───────────────────
+@app.route("/api/mass-appraisal/import-xlsx", methods=["POST", "OPTIONS"])
+def handle_mass_appraisal_import_xlsx():
+    """
+    Parse an uploaded Mass Appraisal template .xlsx and return normalized JSON preview.
+    No valuation is executed. No files are saved to disk.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    # ── File validation ───────────────────────────────────────────────────────
+    if "file" not in request.files:
+        return jsonify({"status": "error",
+                        "message": "No file part in request. Send multipart/form-data with field 'file'."}), 400
+    uploaded = request.files["file"]
+    if not uploaded.filename:
+        return jsonify({"status": "error",
+                        "message": "Empty filename. Please upload a valid .xlsx file."}), 400
+    ext = os.path.splitext(uploaded.filename)[1].lower()
+    if ext not in (".xlsx",):
+        return jsonify({"status": "error",
+                        "message": f"Unsupported file extension '{ext}'. Only .xlsx is accepted."}), 400
+    # ── Read bytes in memory — no disk write ──────────────────────────────────
+    try:
+        file_bytes = uploaded.read()
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to read file: {e}"}), 400
+    # ── Parse workbook ────────────────────────────────────────────────────────
+    try:
+        try:
+            from mass_appraisal_template import parse_mass_appraisal_template_workbook
+        except ImportError:
+            from core_engine.mass_appraisal_template import parse_mass_appraisal_template_workbook  # type: ignore
+        result = parse_mass_appraisal_template_workbook(file_bytes)
+        return jsonify(result), 200
+    except ValueError as ve:
+        return jsonify({"status": "error", "message": str(ve)}), 400
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")
     print(f"Outputs  : {OUTPUTS}")

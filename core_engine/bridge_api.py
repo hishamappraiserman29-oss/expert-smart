@@ -6983,6 +6983,10 @@ def handle_mass_appraisal_template_xlsx():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+# ── Phase 3.13 P3 — Import-xlsx hardening constants ──────────────────────────
+_MA_IMPORT_MAX_BYTES   = 10 * 1024 * 1024   # 10 MB per-route limit
+_MA_IMPORT_ALLOWED_EXT = {".xlsx"}           # strict: no .xls / .csv / .zip
+
 # ── Phase 3.12 — Mass Appraisal Excel Import Parse Preview ───────────────────
 @app.route("/api/mass-appraisal/import-xlsx", methods=["POST", "OPTIONS"])
 def handle_mass_appraisal_import_xlsx():
@@ -6992,24 +6996,48 @@ def handle_mass_appraisal_import_xlsx():
     """
     if request.method == "OPTIONS":
         return jsonify({}), 200
-    # ── File validation ───────────────────────────────────────────────────────
+
+    # ── 1. File field present ─────────────────────────────────────────────────
     if "file" not in request.files:
         return jsonify({"status": "error",
-                        "message": "No file part in request. Send multipart/form-data with field 'file'."}), 400
+                        "message": "No file part. Upload an .xlsx file using multipart field 'file'."}), 400
+
     uploaded = request.files["file"]
+
+    # ── 2. Non-empty filename ─────────────────────────────────────────────────
     if not uploaded.filename:
         return jsonify({"status": "error",
-                        "message": "Empty filename. Please upload a valid .xlsx file."}), 400
+                        "message": "No file selected."}), 400
+
+    # ── 3. Extension check (strict: .xlsx only) ───────────────────────────────
     ext = os.path.splitext(uploaded.filename)[1].lower()
-    if ext not in (".xlsx",):
+    if ext not in _MA_IMPORT_ALLOWED_EXT:
         return jsonify({"status": "error",
-                        "message": f"Unsupported file extension '{ext}'. Only .xlsx is accepted."}), 400
-    # ── Read bytes in memory — no disk write ──────────────────────────────────
+                        "message": "Unsupported file type. Please upload an .xlsx Excel file."}), 400
+
+    # ── 4. Read bytes in memory — no disk write ───────────────────────────────
     try:
         file_bytes = uploaded.read()
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Failed to read file: {e}"}), 400
-    # ── Parse workbook ────────────────────────────────────────────────────────
+    except Exception:
+        return jsonify({"status": "error",
+                        "message": "Failed to read uploaded file."}), 400
+
+    # ── 5. Empty file ─────────────────────────────────────────────────────────
+    if len(file_bytes) == 0:
+        return jsonify({"status": "error",
+                        "message": "Uploaded file is empty."}), 400
+
+    # ── 6. File size limit ────────────────────────────────────────────────────
+    if len(file_bytes) > _MA_IMPORT_MAX_BYTES:
+        return jsonify({"status": "error",
+                        "message": "Excel file is too large. Maximum allowed size is 10 MB."}), 413
+
+    # ── 7. Magic bytes — .xlsx is a ZIP container (starts with PK) ────────────
+    if file_bytes[:2] != b"PK":
+        return jsonify({"status": "error",
+                        "message": "Invalid .xlsx file. The uploaded file is not a valid Excel workbook."}), 400
+
+    # ── 8. Parse workbook ─────────────────────────────────────────────────────
     try:
         try:
             from mass_appraisal_template import parse_mass_appraisal_template_workbook
@@ -7018,10 +7046,14 @@ def handle_mass_appraisal_import_xlsx():
         result = parse_mass_appraisal_template_workbook(file_bytes)
         return jsonify(result), 200
     except ValueError as ve:
-        return jsonify({"status": "error", "message": str(ve)}), 400
+        return jsonify({"status": "error",
+                        "message": "Could not read Excel workbook.",
+                        "details": str(ve)[:200]}), 400
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return jsonify({"status": "error",
+                        "message": "Could not read Excel workbook.",
+                        "details": type(e).__name__}), 400
 
 
 if __name__ == "__main__":

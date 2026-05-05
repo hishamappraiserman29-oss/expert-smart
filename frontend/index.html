@@ -1691,8 +1691,8 @@
         <div class="mass-action-group">
           <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
           <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
-          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="exportMassAppraisalSession()">تصدير الجلسة</button>
-          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="document.getElementById('mass-import-session-file').click()">استيراد الجلسة</button>
+          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="exportMassAppraisalSession()">تصدير جلسة العمل</button>
+          <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="document.getElementById('mass-import-session-file').click()">استيراد جلسة محفوظة</button>
         </div>
       </div>
 
@@ -1754,7 +1754,7 @@
         <i class="fas fa-th-list" style="color:#818cf8;"></i>
         <h3 style="color:#818cf8;">التقييم الجماعي للعقارات — Mass Appraisal</h3>
         <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
-            أدخل مجموعة عقارات بصيغة JSON أو ارفع ملف CSV/JSON لتشغيل التقييم الجماعي.
+            أدخل بيانات العقارات يدويًا بصيغة JSON، أو ارفع ملف CSV/JSON سريع. لاستخدام قالب Excel الكامل، انتقل إلى تبويب التصدير والجلسة ثم قسم استيراد بيانات من Excel.
             الحقول المطلوبة لكل صف: <code style="color:var(--gold);">location</code>، <code style="color:var(--gold);">area</code>، <code style="color:var(--gold);">property_type</code>.
             اختيارية: <code style="color:var(--gold);">row_id</code>، <code style="color:var(--gold);">valuation_purpose</code>، <code style="color:var(--gold);">price_per_meter</code>، <code style="color:var(--gold);">zone_id</code>، <code style="color:var(--gold);">property_class</code>.
         </div>
@@ -1816,13 +1816,13 @@
             <button type="button" class="btn-main"
                 onclick="exportMassAppraisalSession()"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
-                <i class="fas fa-save"></i> تصدير الجلسة
+                <i class="fas fa-save"></i> تصدير جلسة العمل
             </button>
 
             <!-- Session import -->
             <label class="btn-main"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
-                <i class="fas fa-folder-open"></i> استيراد الجلسة
+                <i class="fas fa-folder-open"></i> استيراد جلسة محفوظة
                 <input type="file" id="mass-import-session-file" accept=".json"
                     style="display:none;"
                     onchange="importMassAppraisalSession(event);">
@@ -2213,31 +2213,32 @@
       <div class="mass-tab-panel" data-mass-panel="export">
         <div class="mass-export-helper-card" dir="rtl">
           <h3 style="margin:0 0 8px;font-size:1.05rem;">التصدير والجلسة</h3>
-          <p style="font-size:0.88rem;opacity:0.8;margin:0 0 12px;">استخدم شريط الإجراءات بالأعلى لتصدير CSV أو Excel أو حفظ/استيراد الجلسة.</p>
+          <p style="font-size:0.88rem;opacity:0.8;margin:0 0 4px;">تصدير CSV وExcel مخصص لنتائج التقييم فقط.</p>
+          <p style="font-size:0.88rem;opacity:0.8;margin:0 0 12px;">تصدير/استيراد جلسة العمل مخصص لحفظ حالة العمل الحالية واستعادتها لاحقًا، وليس لرفع قالب Excel.</p>
           <div class="mass-action-group">
             <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
             <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
-            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="exportMassAppraisalSession()">تصدير الجلسة</button>
-            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="document.getElementById('mass-import-session-file')?.click()">استيراد الجلسة</button>
+            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="exportMassAppraisalSession()">تصدير جلسة العمل</button>
+            <button type="button" class="mass-action-btn mass-action-btn-muted" onclick="document.getElementById('mass-import-session-file')?.click()">استيراد جلسة محفوظة</button>
           </div>
         </div>
 
         <!-- ─── Phase 3.12 P3: Excel Import Wizard ─── -->
         <div class="mass-excel-import-card" id="mass-excel-import-card" dir="rtl">
-          <h3><i class="fas fa-file-excel" style="color:#86efac;margin-left:6px;"></i>استيراد من قالب Excel</h3>
-          <p class="mass-excel-import-desc">نزّل القالب، عبّئه، ثم ارفعه هنا لتحميل البيانات تلقائياً في حقول العمل.</p>
+          <h3><i class="fas fa-file-excel" style="color:#86efac;margin-left:6px;"></i>استيراد بيانات من Excel</h3>
+          <p class="mass-excel-import-desc">حمّل قالب Excel، املأ شيتات العقارات والمبيعات والافتراضات، ثم ارفع الملف هنا لمعاينة البيانات قبل تعبئة حقول العمل.</p>
 
           <div class="mass-excel-import-step">
             <span class="mass-excel-import-label">الخطوة 1:</span>
             <button type="button" class="mass-action-btn mass-action-btn-secondary" id="mass-download-template-btn" onclick="downloadMassExcelTemplate()">
-              <i class="fas fa-download"></i> تنزيل القالب
+              <i class="fas fa-download"></i> تحميل قالب Excel
             </button>
           </div>
 
           <div class="mass-excel-import-step">
             <span class="mass-excel-import-label">الخطوة 2:</span>
             <label class="mass-action-btn mass-action-btn-secondary" style="cursor:pointer;margin:0;">
-              <i class="fas fa-upload"></i> رفع الملف المعبّأ
+              <i class="fas fa-upload"></i> رفع قالب Excel المعبأ
               <input type="file" id="mass-excel-import-file" accept=".xlsx" style="display:none;" onchange="importMassExcelTemplateFile(event)">
             </label>
             <span id="mass-excel-import-filename" style="font-size:0.82rem;color:#94a3b8;"></span>
@@ -2271,7 +2272,7 @@
                 <div>
                   <div class="mass-excel-validation-title">نتيجة التحقق من ملف Excel</div>
                   <div class="mass-excel-validation-advice" id="mass-excel-validation-advice">
-                    ارفع ملف Excel لعرض الأخطاء والتحذيرات هنا.
+                    سيتم عرض الأخطاء والتحذيرات هنا بعد رفع الملف.
                   </div>
                 </div>
                 <div id="mass-excel-validation-status" class="mass-excel-validation-status">
@@ -2283,18 +2284,19 @@
 
             <div id="mass-excel-import-fill-actions" class="mass-excel-import-fill-row">
               <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassPropertiesFromExcelImport()">
-                <i class="fas fa-building"></i> تحميل العقارات
+                <i class="fas fa-building"></i> تعبئة بيانات العقارات
               </button>
               <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassSalesFromExcelImport()">
-                <i class="fas fa-handshake"></i> تحميل المبيعات
+                <i class="fas fa-handshake"></i> تعبئة بيانات المبيعات
               </button>
               <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassGovernanceFromExcelImport()">
-                <i class="fas fa-shield-alt"></i> تحميل الحوكمة
+                <i class="fas fa-shield-alt"></i> تعبئة بيانات الحوكمة
               </button>
               <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="fillMassModelCycleFromExcelImport()">
-                <i class="fas fa-sync-alt"></i> تحميل دورة التقييم
+                <i class="fas fa-sync-alt"></i> تعبئة بيانات دورة النموذج
               </button>
             </div>
+            <p style="font-size:0.8rem;color:#94a3b8;margin:8px 0 0;text-align:right;">هذه الأزرار تملأ الحقول فقط ولا تشغّل أي عملية تقييم تلقائيًا.</p>
           </div>
         </div><!-- /.mass-excel-import-card -->
 

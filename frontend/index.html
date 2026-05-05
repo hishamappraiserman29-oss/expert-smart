@@ -858,6 +858,10 @@
             font-size: 0.84rem;
             color: #94a3b8;
         }
+        /* Phase 3.13 P2B — duplicate inner card actions hidden; use Action Bar */
+        #mass-appraisal-workflow #mass-appraisal-basic .mass-duplicate-card-action {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -1685,8 +1689,8 @@
       <div class="mass-action-bar" dir="rtl" aria-label="إجراءات التقييم الجماعي السريعة">
         <div class="mass-action-group">
           <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="loadMassAppraisalExample()">تحميل مثال</button>
-          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="previewMassAppraisal()">معاينة</button>
-          <button type="button" class="mass-action-btn mass-action-btn-primary"   onclick="runMassAppraisal()">تشغيل التقييم الجماعي</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" id="mass-preview-btn" onclick="previewMassAppraisal()">معاينة</button>
+          <button type="button" class="mass-action-btn mass-action-btn-primary"   id="mass-run-btn"     onclick="runMassAppraisal()">تشغيل التقييم الجماعي</button>
         </div>
         <div class="mass-action-group">
           <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
@@ -1768,14 +1772,14 @@
 ]'></textarea>
 
         <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center;">
-            <!-- Load example -->
-            <button type="button" class="btn-main"
-                onclick="loadMassAppraisalExample()"
+            <!-- Load example — duplicate: hidden, use Action Bar -->
+            <button type="button" class="btn-main mass-duplicate-card-action"
+                onclick="loadMassAppraisalExample()" aria-hidden="true" tabindex="-1"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
                 <i class="fas fa-file-import"></i> تحميل مثال
             </button>
 
-            <!-- File upload -->
+            <!-- File upload — KEEP: JSON/CSV upload unique to this card -->
             <label class="btn-main"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
                 <i class="fas fa-upload"></i> رفع ملف JSON/CSV
@@ -1784,50 +1788,54 @@
                     onchange="loadMassAppraisalFile(event);">
             </label>
 
-            <!-- Preview -->
-            <button type="button" class="btn-main" id="mass-preview-btn"
-                onclick="previewMassAppraisal()"
+            <!-- Preview — duplicate: hidden. ID moved to Action Bar button. -->
+            <button type="button" class="btn-main mass-duplicate-card-action"
+                onclick="previewMassAppraisal()" aria-hidden="true" tabindex="-1"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
                 <i class="fas fa-eye"></i> معاينة
             </button>
 
-            <!-- Run -->
-            <button type="button" class="btn-main" id="mass-run-btn"
-                onclick="runMassAppraisal()"
+            <!-- Run — duplicate: hidden. ID moved to Action Bar button. -->
+            <button type="button" class="btn-main mass-duplicate-card-action"
+                onclick="runMassAppraisal()" aria-hidden="true" tabindex="-1"
                 style="background:#4f46e5;color:#fff;padding:8px 14px;font-size:0.85rem;">
                 <i class="fas fa-play"></i> تشغيل التقييم الجماعي
             </button>
 
-            <!-- Download CSV (hidden until results ready) -->
+            <!-- Download CSV (JS-controlled: shown after successful run) -->
             <button type="button" class="btn-main" id="mass-download-csv-btn"
                 onclick="downloadMassAppraisalCsv()"
                 style="background:#217346;color:#fff;padding:8px 14px;font-size:0.85rem;display:none;">
                 <i class="fas fa-file-csv"></i> تصدير CSV
             </button>
 
-            <!-- Download XLSX (hidden until results ready) -->
+            <!-- Download XLSX (JS-controlled: shown after successful run) -->
             <button type="button" class="btn-main" id="mass-download-xlsx-btn"
                 onclick="downloadMassAppraisalXlsx()"
                 style="background:#217346;color:#fff;padding:8px 14px;font-size:0.85rem;display:none;">
                 <i class="fas fa-file-excel"></i> تصدير Excel
             </button>
 
-            <!-- Session export -->
-            <button type="button" class="btn-main"
-                onclick="exportMassAppraisalSession()"
+            <!-- Session export — duplicate: hidden, use Action Bar -->
+            <button type="button" class="btn-main mass-duplicate-card-action"
+                onclick="exportMassAppraisalSession()" aria-hidden="true" tabindex="-1"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;">
                 <i class="fas fa-save"></i> تصدير جلسة العمل
             </button>
 
-            <!-- Session import -->
-            <label class="btn-main"
+            <!-- Session import label — duplicate: hidden. File input moved standalone below. -->
+            <label class="btn-main mass-duplicate-card-action" aria-hidden="true"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
                 <i class="fas fa-folder-open"></i> استيراد جلسة محفوظة
-                <input type="file" id="mass-import-session-file" accept=".json"
-                    style="display:none;"
-                    onchange="importMassAppraisalSession(event);">
             </label>
         </div>
+        <!-- Session import file input — standalone so programmatic .click() works when label is hidden -->
+        <input type="file" id="mass-import-session-file" accept=".json"
+            style="display:none;"
+            onchange="importMassAppraisalSession(event);">
+        <p style="font-size:0.8rem;color:#6b7280;margin:8px 0 0;text-align:right;" dir="rtl">
+            الأوامر الرئيسية مثل المعاينة والتشغيل والتصدير موجودة في شريط الإجراءات أعلى مساحة العمل.
+        </p>
 
         <!-- Summary (shown after preview or run) -->
         <div id="mass-appraisal-summary" style="margin-top:14px;">

@@ -911,9 +911,10 @@
             }
             function loadGrowth(){
                 try{
+                    const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
                     var ctrl = new AbortController();
                     setTimeout(function(){ ctrl.abort(); }, 5000);
-                    fetch("http://127.0.0.1:5000/api/price-index", {signal: ctrl.signal})
+                    fetch(apiBase + "/api/price-index", {signal: ctrl.signal})
                         .then(function(r){ return r.ok ? r.json() : null; })
                         .then(function(d){
                             if (!d || d.status !== "success" || !d.regions) return;
@@ -929,9 +930,10 @@
             // Trigger continuous market data feed (Market Radar) silently on load
             function startRadarFeed(){
                 try{
+                    const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
                     var ctrl = new AbortController();
                     setTimeout(function(){ ctrl.abort(); }, 4000);
-                    fetch("http://127.0.0.1:5000/api/radar/start", {
+                    fetch(apiBase + "/api/radar/start", {
                         method: "POST",
                         headers: {"Content-Type": "application/json"},
                         body: "{}",
@@ -3014,10 +3016,9 @@ function triggerVoiceInput() {
 }
 
 /* ── Core upload handler ── */
-const INDEX_BACKEND = 'http://localhost:5000';
-
 async function handleAttachmentUpload(files, type) {
     if (!files || !files.length) return;
+    const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
     const btn = type === 'document' ? document.getElementById('btn-doc-clip')
               : type === 'training' ? document.getElementById('btn-train-clip')
               : document.getElementById('btn-cam-clip');
@@ -3050,7 +3051,7 @@ async function handleAttachmentUpload(files, type) {
         form.append('file', file);
         form.append('type', type);
         try {
-            const res = await fetch(INDEX_BACKEND + endpoint, { method: 'POST', body: form });
+            const res = await fetch(apiBase + endpoint, { method: 'POST', body: form });
             if (res.ok) {
                 _showIndexToast(`✅ تم رفع: ${file.name}`, 'success');
             } else {
@@ -3086,7 +3087,8 @@ async function runFraudCheck() {
     if (!ppm || !loc) { _showIndexToast('أدخل سعر المتر والموقع', 'error'); return; }
     resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
     try {
-        const res = await fetch('http://localhost:5000/api/fraud/detect', {
+        const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
+        const res = await fetch(apiBase + '/api/fraud/detect', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ price_per_meter: ppm, location: loc })
         });
@@ -3119,7 +3121,8 @@ async function runGeoCheck() {
     if (!loc) { _showIndexToast('أدخل الموقع', 'error'); return; }
     resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
     try {
-        const res = await fetch('http://localhost:5000/api/geo/risk', {
+        const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
+        const res = await fetch(apiBase + '/api/geo/risk', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ location: loc })
         });
@@ -3157,7 +3160,8 @@ async function runDemoCheck() {
     if (!loc) { _showIndexToast('أدخل الموقع', 'error'); return; }
     resultEl.innerHTML = '<div style="color:#9ca3af;font-size:0.8rem;padding:6px;">جاري التحليل…</div>';
     try {
-        const res = await fetch('http://localhost:5000/api/demographic/flow', {
+        const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
+        const res = await fetch(apiBase + '/api/demographic/flow', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ location: loc, investment_horizon_yr: horizon })
         });
@@ -3297,8 +3301,9 @@ async function handleGeoMapIndexUpload(files) {
     }
 
     // ── 4. POST to /api/image/geo-analyze ─────────────────────
+    const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
     try {
-        const res = await fetch(INDEX_BACKEND + '/api/image/geo-analyze', {
+        const res = await fetch(apiBase + '/api/image/geo-analyze', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({

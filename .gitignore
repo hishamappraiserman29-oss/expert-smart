@@ -60,3 +60,19 @@ core_engine/service_account.json
 core_engine/inputs_case_json/
 core_engine/market_radar.db
 core_engine/data/market_feed.backup_*.json
+
+# Expert Smart local recovery / debug artifacts
+frontend/index.before-*.html
+frontend/index.broken.*.html
+ma_patch_*.py
+ma_restore_mass.py
+verify_ma_fix.py
+mass_preview.json
+mass_run.json
+mass_run_debug.json
+mass_run_enriched_test.json
+
+# Expert Smart temporary Excel import test artifacts
+mass_appraisal_template_test.xlsx
+mass_appraisal_invalid_test.xlsx
+make_invalid_test.py

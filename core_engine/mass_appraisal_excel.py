@@ -1774,7 +1774,7 @@ def _sheet_calibration_sandbox(wb: Workbook, sandbox: dict) -> None:
     # Column widths
     col_widths = [14, 14, 16, 24, 16, 20, 26, 14, 40]
     for ci, w in enumerate(col_widths, 1):
-        ws.column_dimensions[ws.cell(row=1, column=ci).column_letter].width = w
+        ws.column_dimensions[get_column_letter(ci)].width = w
     ws.freeze_panes = "A4"
 
 

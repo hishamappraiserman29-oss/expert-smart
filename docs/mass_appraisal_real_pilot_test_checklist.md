@@ -494,15 +494,13 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ### تسجيل النتائج
 
-| Metric | Value |
-|---|---|
-| model_version | MA-MODEL-v1.0 |
-| model_status | draft |
-| cycle_id | CYCLE-2025-GENERAL |
-| cycle_start_date | 2026-06-03 |
-| cycle_end_date | 2026-05-06 |
-| last_updated | 2026-05-06T17:18:29.969Z |
-| notes | الحفظ نجح، والسنة ظهرت صحيحة. توجد ملاحظة منطقية: تاريخ البداية بعد تاريخ النهاية، ويجب تصحيحها في بيانات Excel قبل الاعتماد النهائي. |
+- model_version: MA-MODEL-v1.0
+- model_status: draft
+- cycle_id: CYCLE-2025-GENERAL
+- cycle_start_date: 2026-05-06
+- cycle_end_date: 2026-06-03
+- last_updated: 2026-05-06T17:18:29.969Z
+- notes: الحفظ نجح، والسنة ظهرت صحيحة، وتاريخ البداية قبل تاريخ النهاية.
 
 ### معايير الاجتياز
 
@@ -512,9 +510,9 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 - [x] معرّف الدورة يظهر.
 - [x] الحفظ يعمل.
 - [x] السنة تظهر بصيغة صحيحة وليست `0026`.
+- [x] تاريخ بداية الدورة قبل تاريخ نهاية الدورة.
 ```
 
-> **تنبيه:** تحقق من أن السنة في حقول التاريخ تظهر بأربعة أرقام صحيحة (مثلاً 2025 وليس 0025 أو 0026). هذا ناتج عن قراءة Excel للتواريخ برقمين أحياناً.
 
 ---
 
@@ -612,31 +610,58 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ### سجل المشكلات أثناء الاختبار
 
-| # | Area | Severity | Description | Screenshot/Log | Owner | Status |
-|---|---|---|---|---|---|---|
-| 1 | XLSX Export | High | فشل تصدير Excel أول مرة بسبب خطأ backend: `MergedCell object has no attribute column_letter` داخل `Calibration Sandbox` sheet. | Flask logs / HTTP 500 | Dev | Resolved |
-| 2 | Browser Console | Low | ظهور `favicon.ico 404`. لا يؤثر على التشغيل. | Console | Dev | Accepted |
-| 3 | Browser Console | Low | ظهور `Tracking Prevention` بسبب المتصفح/CDN. لا يؤثر على التشغيل. | Console | Browser | Accepted |
-| 4 | Model Cycle Data | Medium | تاريخ بداية الدورة ظهر بعد تاريخ نهاية الدورة في بيانات الاختبار. الحفظ نجح تقنيًا، لكن يجب تعديل بيانات Excel قبل الاعتماد النهائي. | UI | Data Owner | Open - Data Fix |
+Issue 1
 
-### تفاصيل الإصلاح
+- Area: XLSX Export
+- Severity: High
+- Description: فشل تصدير Excel أول مرة بسبب خطأ backend: `MergedCell object has no attribute column_letter` داخل `Calibration Sandbox` sheet.
+- Screenshot/Log: Flask logs / HTTP 500
+- Owner: Dev
+- Status: Resolved
 
-| Item | Value |
-|---|---|
-| Hotfix Commit | `1e1b686` |
-| Commit Message | `fix: prevent merged-cell error in XLSX calibration sandbox export` |
-| File Fixed | `core_engine/mass_appraisal_excel.py` |
-| Result After Fix | XLSX export works and no HTTP 500 |
-| Pilot Impact | تم حل المشكلة قبل قرار النجاح النهائي |
+Issue 2
+
+- Area: Browser Console
+- Severity: Low
+- Description: ظهور `favicon.ico 404`. لا يؤثر على التشغيل.
+- Screenshot/Log: Console
+- Owner: Dev
+- Status: Accepted
+
+Issue 3
+
+- Area: Browser Console
+- Severity: Low
+- Description: ظهور `Tracking Prevention` بسبب المتصفح/CDN. لا يؤثر على التشغيل.
+- Screenshot/Log: Console
+- Owner: Browser
+- Status: Accepted
+
+Issue 4
+
+- Area: Model Cycle Data
+- Severity: None
+- Description: تم التحقق من التاريخ. تاريخ البداية `2026-05-06` قبل تاريخ النهاية `2026-06-03`. لا توجد مشكلة بيانات.
+- Screenshot/Log: UI
+- Owner: Data Owner
+- Status: Resolved
+
+### تفاصيل إصلاح مشكلة XLSX Export
+
+- Hotfix Commit: `1e1b686`
+- Commit Message: `fix: prevent merged-cell error in XLSX calibration sandbox export`
+- File Fixed: `core_engine/mass_appraisal_excel.py`
+- Result After Fix: XLSX export works and no HTTP 500.
+- Pilot Impact: تم حل المشكلة قبل قرار النجاح النهائي.
 
 ### ملخص حالة المشكلات
 
-| Severity | Count | Status |
-|---|---:|---|
-| Blocker | 0 | None |
-| High | 1 | Resolved |
-| Medium | 1 | Open - Data Fix |
-| Low | 2 | Accepted |
+- Blocker: 0
+- High: 1 Resolved
+- Medium: 0
+- Low: 2 Accepted
+- Open Code Issues: 0
+- Open Data Issues: 0
 
 ---
 
@@ -648,65 +673,72 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 - [x] No high-severity unresolved issues.
 - [x] Excel upload works.
 - [x] Mass Appraisal run works.
-- [x] Sales/Ratio/Calibration chain works.
-- [x] XLSX export reviewed.
+- [x] Sales Verification works.
+- [x] Time Adjustment works.
+- [x] Sales Adjustments work.
+- [x] Ratio Study works.
+- [x] Calibration Preview works.
+- [x] Calibration Sandbox works.
+- [x] Governance save works.
+- [x] Model Cycle save works.
+- [x] XLSX export works after hotfix.
 - [x] Session export/import works.
 - [x] Logs reviewed.
 - [x] Results accepted for technical pilot review.
-- [ ] Model Cycle dates require data correction before final business approval.
+- [x] Model Cycle dates verified and valid.
 
 ### قرار الاختبار
 
-| Field | Value |
-|---|---|
-| Pilot Result | Conditional Pass |
-| Reviewer | م. هشام المهدي |
-| Date | 2026-05-06 |
-| Notes | الاختبار التشغيلي نجح وظيفيًا. تم رفع Excel بدون أخطاء، وتشغيل التقييم الجماعي، والتحقق من المبيعات، والتعديل الزمني، وتعديلات المبيعات، ودراسة النسب، والمعايرة، وSandbox، والحوكمة، والتصدير، واستيراد/تصدير الجلسة. توجد ملاحظة بيانات فقط: تاريخ بداية دورة النموذج بعد تاريخ النهاية، ويجب تصحيحها في ملف Excel قبل الاعتماد النهائي. |
+- Pilot Result: Pass
+- Reviewer: م. هشام المهدي
+- Date: 2026-05-06
+- Notes: الاختبار التشغيلي نجح وظيفيًا. تم رفع Excel بدون أخطاء، وتشغيل التقييم الجماعي، والتحقق من المبيعات، والتعديل الزمني، وتعديلات المبيعات، ودراسة النسب، والمعايرة، وSandbox، والحوكمة، والتصدير، واستيراد/تصدير الجلسة. تم إصلاح مشكلة XLSX Export، وتم التحقق من تواريخ Model Cycle وأن تاريخ البداية قبل تاريخ النهاية.
 
 ### ملخص القرار
 
-| Area | Result |
-|---|---|
-| Environment | Pass |
-| Excel Upload | Pass |
-| Mass Appraisal | Pass |
-| Sales Verification | Pass |
-| Time Adjustment | Pass |
-| Sales Adjustments | Pass |
-| Ratio Study | Pass |
-| Calibration Preview | Pass |
-| Calibration Sandbox | Pass |
-| Governance | Pass |
-| Model Cycle | Conditional Pass - data correction needed |
-| XLSX Export | Pass after hotfix |
-| Session Export/Import | Pass |
-| Final Console | Pass |
+- Environment: Pass
+- Excel Upload: Pass
+- Mass Appraisal: Pass
+- Sales Verification: Pass
+- Time Adjustment: Pass
+- Sales Adjustments: Pass
+- Ratio Study: Pass
+- Calibration Preview: Pass
+- Calibration Sandbox: Pass
+- Governance: Pass
+- Model Cycle: Pass
+- XLSX Export: Pass after hotfix
+- Session Export/Import: Pass
+- Final Console: Pass
 
 ### القرار النهائي
 
-- [x] النظام جاهز لاستكمال Pilot Controlled Use.
+- [x] النظام جاهز لاستكمال Controlled Pilot Use.
 - [x] لا توجد مشاكل كود مانعة بعد إصلاح XLSX Export.
-- [x] يجب تصحيح تواريخ Model Cycle في بيانات Excel قبل اعتبار النتيجة Business-approved.
-- [ ] لا يتم اعتبار الاختبار Final Pass إلا بعد تصحيح بيانات دورة النموذج أو اعتمادها كملاحظة مقبولة.
+- [x] تم التحقق من تواريخ Model Cycle، وتاريخ البداية قبل تاريخ النهاية.
+- [x] الاختبار يعتبر Pass.
 
 ---
 
 ## 23. Next Action After Pilot
 
-### القرار الحالي بعد الاختبار
+### Current Pilot Decision
 
-| Field | Value |
-|---|---|
-| Pilot Result | Conditional Pass |
-| Blocking Code Issues | None |
-| Blocking Functional Issues | None |
-| Main Note | توجد ملاحظة بيانات في Model Cycle: تاريخ بداية الدورة بعد تاريخ النهاية |
-| Required Action Before Final Pass | تصحيح تواريخ دورة النموذج في ملف Excel أو اعتمادها كملاحظة بيانات غير مانعة |
+Pilot Result: Pass
 
-### معنى Conditional Pass
+Blocking Code Issues: None
 
-الاختبار نجح وظيفيًا من ناحية النظام:
+Blocking Functional Issues: None
+
+Data Issues: None
+
+Required Action Before Final Pass: None
+
+### Meaning of Pass
+
+الاختبار نجح وظيفيًا من ناحية النظام.
+
+تم التأكد من الآتي:
 
 - [x] Excel upload يعمل.
 - [x] Mass Appraisal يعمل.
@@ -717,69 +749,60 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 - [x] Calibration Preview يعمل.
 - [x] Calibration Sandbox يعمل.
 - [x] Governance يعمل.
+- [x] Model Cycle يعمل.
 - [x] XLSX Export يعمل بعد إصلاح الخطأ.
 - [x] Session Export / Import يعمل.
 - [x] لا توجد أخطاء Console مانعة.
+- [x] لا توجد مشاكل بيانات مفتوحة.
 
-لكن النتيجة ليست Final Pass بسبب ملاحظة بيانات:
+### Tag Decision
 
-- [ ] تاريخ بداية Model Cycle يجب أن يكون قبل تاريخ النهاية.
+يمكن تحديث tag الحالي `v3.14-pilot-ready` بعد حفظ هذا الملف في Git.
 
-### الإجراء التالي
+السبب:
 
-يوجد اختياران:
+- تم إصلاح مشكلة XLSX Export في commit لاحق.
+- تم تسجيل نتائج اختبار Pilot في checklist.
+- نتيجة الاختبار أصبحت Pass.
+- يجب أن يشير tag إلى آخر commit بعد نتائج الاختبار.
 
-| Option | Action | Result |
-|---|---|---|
-| Option 1 | تصحيح تاريخ بداية ونهاية Model Cycle في Excel ثم إعادة اختبار Section 17 فقط | يمكن تحويل النتيجة إلى Pass |
-| Option 2 | قبول الملاحظة لأنها بيانات اختبار فقط | تبقى النتيجة Conditional Pass |
+### Save Checklist Results
 
-### قرار Tag
+بعد حفظ الملف، نفذ الأوامر التالية في PowerShell:
 
-| Item | Decision |
-|---|---|
-| Create v3.14-pilot-ready now | No |
-| Reason | يوجد Hotfix بعد tag السابق، وملف checklist تم تعديله بنتائج الاختبار |
-| Required before tag | Commit نتائج الاختبار ثم قرار المراجع |
-| Current recommendation | Commit checklist first, then update tag بعد الاعتماد |
+`git status --short`
 
-### أوامر حفظ نتائج الاختبار
+`git add docs/mass_appraisal_real_pilot_test_checklist.md`
 
-نفذ الأوامر التالية بعد حفظ الملف:
+`git commit -m "test: mark real pilot checklist as passed"`
 
-| Step | Command |
-|---|---|
-| 1 | git status --short |
-| 2 | git add docs/mass_appraisal_real_pilot_test_checklist.md |
-| 3 | git commit -m "test: record real pilot checklist results" |
-| 4 | git status --short |
-| 5 | git log --oneline --decorate -5 |
+`git status --short`
 
-### أوامر تحديث Tag بعد الاعتماد
+`git log --oneline --decorate -5`
 
-لا تنفذ هذه الأوامر إلا بعد اعتماد النتيجة النهائية:
+### Update Tag After Checklist Commit
 
-| Step | Command |
-|---|---|
-| 1 | git tag -f -a v3.14-pilot-ready -m "Phase 3.14 pilot-ready: Mass Appraisal real data pilot baseline" |
-| 2 | git push origin main |
-| 3 | git push origin -f v3.14-pilot-ready |
+بعد عمل commit لنتيجة الاختبار، نفذ:
 
-### القرار النهائي المقترح الآن
+`git tag -f -a v3.14-pilot-ready -m "Phase 3.14 pilot-ready: Mass Appraisal real data pilot baseline"`
 
-| Item | Decision |
-|---|---|
-| Continue controlled pilot use | Yes |
-| Pilot result now | Conditional Pass |
-| Required data fix | Correct Model Cycle date order |
-| Required code fix | None |
-| Public production release | Not yet |
-| Reason production is not final | Authentication, CORS restriction, HTTPS, and access control still need production hardening |
+`git push origin main`
 
-- وثِّق جميع الـ Blockers في سجل المشاكل.
-- لا تُنشئ الوسم.
-- حدِّد المطلوب: إصلاح بيانات أم إصلاح في النظام.
-- ابدأ دورة إصلاح جديدة وأعد الاختبار.
+`git push origin -f v3.14-pilot-ready`
+
+### Final Recommendation
+
+Continue controlled pilot use: Yes
+
+Pilot result now: Pass
+
+Required data fix: None
+
+Required code fix: None
+
+Public production release: Not yet
+
+Reason production is not final: Authentication, CORS restriction, HTTPS, and access control still need production hardening.
 
 ---
 

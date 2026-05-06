@@ -496,6 +496,7 @@ def _parse_properties(ws, errors: list, warnings: list) -> list:
 
     col_map = {h: i for i, h in enumerate(headers) if h}
     rows_out = []
+    seen_row_ids: set = set()
 
     for row in ws.iter_rows(min_row=hdr_row + 1):
         if _is_row_empty(row):
@@ -531,6 +532,12 @@ def _parse_properties(ws, errors: list, warnings: list) -> list:
         if row_errors:
             continue  # skip invalid row but keep collecting errors
 
+        if row_id in seen_row_ids:
+            errors.append({"sheet": "Properties", "row": ri, "field": "row_id",
+                           "message": "Duplicate row_id. Each property row_id must be unique."})
+            continue
+        seen_row_ids.add(row_id)
+
         # Optional numeric fields
         def _opt_float(field: str) -> Optional[float]:
             c = _get(field)
@@ -551,6 +558,14 @@ def _parse_properties(ws, errors: list, warnings: list) -> list:
             "notes":            _cell_str(_get("notes"))            if _get("notes")            else None,
         })
 
+        prop = rows_out[-1]
+        if not prop["zone_id"]:
+            warnings.append({"sheet": "Properties", "row": ri, "field": "zone_id",
+                             "message": "Missing zone_id. Ratio Study matching may be weaker."})
+        if not prop["property_class"]:
+            warnings.append({"sheet": "Properties", "row": ri, "field": "property_class",
+                             "message": "Missing property_class. Calibration grouping may be weaker."})
+
     return rows_out
 
 
@@ -563,6 +578,7 @@ def _parse_sales(ws, errors: list, warnings: list) -> list:
 
     col_map = {h: i for i, h in enumerate(headers) if h}
     rows_out = []
+    seen_sale_ids: set = set()
 
     for row in ws.iter_rows(min_row=hdr_row + 1):
         if _is_row_empty(row):
@@ -607,6 +623,12 @@ def _parse_sales(ws, errors: list, warnings: list) -> list:
         if row_errors:
             continue
 
+        if sale_id in seen_sale_ids:
+            errors.append({"sheet": "Sales", "row": ri, "field": "sale_id",
+                           "message": "Duplicate sale_id. Each sale_id must be unique."})
+            continue
+        seen_sale_ids.add(sale_id)
+
         def _opt_float(field: str) -> Optional[float]:
             c = _get(field)
             return _cell_float(c) if c is not None else None
@@ -636,6 +658,24 @@ def _parse_sales(ws, errors: list, warnings: list) -> list:
             "usability_status":      usability,
             "notes":                 _cell_str(_get("notes"))           if _get("notes")          else None,
         })
+
+        sale = rows_out[-1]
+        if not sale["zone_id"]:
+            warnings.append({"sheet": "Sales", "row": ri, "field": "zone_id",
+                             "message": "Missing zone_id. This sale may not match portfolio properties by zone."})
+        if not sale["property_class"]:
+            warnings.append({"sheet": "Sales", "row": ri, "field": "property_class",
+                             "message": "Missing property_class. This sale may not match comparable property class."})
+        if usable is True:
+            if sale["verified"] is not True:
+                warnings.append({"sheet": "Sales", "row": ri, "field": "verified",
+                                 "message": "Sale is marked usable_for_ratio_study but verified is not TRUE."})
+            if sale["arms_length"] is not True:
+                warnings.append({"sheet": "Sales", "row": ri, "field": "arms_length",
+                                 "message": "Sale is marked usable but arms_length is not TRUE."})
+            if sale["buyer_seller_related"] is True:
+                warnings.append({"sheet": "Sales", "row": ri, "field": "buyer_seller_related",
+                                 "message": "Related-party sale is marked usable_for_ratio_study. Review before Ratio Study."})
 
     return rows_out
 
@@ -727,6 +767,40 @@ def parse_mass_appraisal_template_workbook(file_bytes: bytes) -> dict:
     model_cycle = _parse_kv_sheet(wb["Model_Cycle"], "Model_Cycle", errors, warnings) \
         if "Model_Cycle" in sheet_names else {}
 
+    # ── Cross-sheet: subject_id match check ──────────────────────────────────
+    prop_ids = {p["row_id"] for p in properties if p.get("row_id")}
+    for sale in sales:
+        sid = sale.get("subject_id")
+        if sid and sid not in prop_ids:
+            warnings.append({"sheet": "Sales", "row": None, "field": "subject_id",
+                             "message": f"subject_id '{sid}' does not match any Properties row_id."})
+
+    # ── Cross-sheet: matching readiness ───────────────────────────────────────
+    subject_id_matches = sum(
+        1 for s in sales
+        if s.get("subject_id") and s["subject_id"] in prop_ids
+    )
+    prop_zone_class = {
+        (p.get("zone_id"), p.get("property_class"))
+        for p in properties
+        if p.get("zone_id") and p.get("property_class")
+    }
+    zone_class_matches = sum(
+        1 for s in sales
+        if s.get("zone_id") and s.get("property_class")
+        and (s["zone_id"], s["property_class"]) in prop_zone_class
+    )
+
+    if properties and sales:
+        if subject_id_matches == 0 and zone_class_matches == 0:
+            warnings.append({"sheet": None, "row": None, "field": None,
+                             "message": "No subject_id or zone_id/property_class matches detected. "
+                                        "Ratio Study may produce 0 matched pairs."})
+        elif zone_class_matches < 3:
+            warnings.append({"sheet": None, "row": None, "field": None,
+                             "message": "Few zone_id/property_class matches detected. "
+                                        "Ratio Study reliability may be limited."})
+
     # ── Build response ────────────────────────────────────────────────────────
     status = "validation_error" if errors else "success"
 
@@ -740,6 +814,10 @@ def parse_mass_appraisal_template_workbook(file_bytes: bytes) -> dict:
             "model_cycle_count": len(model_cycle),
             "warnings_count":    len(warnings),
             "errors_count":      len(errors),
+            "matching_readiness": {
+                "subject_id_matches": subject_id_matches,
+                "zone_class_matches": zone_class_matches,
+            },
         },
         "data": {
             "properties":  properties,

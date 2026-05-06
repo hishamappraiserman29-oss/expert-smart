@@ -17,33 +17,55 @@
 
 ## 2. معلومات الاختبار
 
+## 2. معلومات الاختبار
+
 | الحقل | القيمة |
 |---|---|
-| تاريخ الاختبار | |
-| المختبِر (Tester) | |
-| اسم مجموعة البيانات | |
-| إصدار مجموعة البيانات | |
-| Git Commit (hash) | |
-| Git Tag الحالي | |
-| المتصفح | |
-| ملاحظات عامة | |
-
----
+| تاريخ الاختبار | 2026-05-05 |
+| المختبر | م. هشام المهدي |
+| اسم مجموعة البيانات | Mass Appraisal Pilot Dataset 01 |
+| إصدار مجموعة البيانات | v1.0 |
+| Git Commit | 4ad6e1c |
+| Git Tag | v3.14-pilot-ready |
+| المتصفح | Microsoft Edge |
+| البيئة | Local Docker / http://127.0.0.1:5000 |
+| عدد العقارات | |
+| عدد المبيعات | |
+| نتيجة الاختبار | Pending |
+| ملاحظات عامة | أول اختبار تشغيل تجريبي ببيانات حقيقية أو شبه حقيقية |
 
 ## 3. قائمة تحقق بيئة ما قبل الاختبار
 
-```
-□ Docker Desktop يعمل
-□ حاوية Flask تعمل وحالتها healthy
-□ حاوية Qdrant تعمل (إن كانت مطلوبة)
-□ حاوية Ollama في حالة healthy (إن كانت مطلوبة)
-□ Health endpoint يُرجع status: ok
-□ الواجهة تفتح على http://127.0.0.1:5000/
-□ Hard refresh تم في المتصفح (Ctrl+Shift+R)
-□ Console المتصفح لا يحتوي أخطاء blocking
-□ تم تسجيل hash الـ commit الحالي
-□ وسم الرجوع (v3.13-stable) معروف وموثَّق
-```
+### ملاحظات عامة
+
+- [x] Docker Desktop يعمل.
+- [x] حاوية Flask تعمل وحالتها Healthy أو Running.
+- [x] حاوية Qdrant تعمل إن كانت مطلوبة.
+- [x] حاوية Ollama تعمل وحالتها Healthy إن كانت مطلوبة.
+- [x] Health endpoint يُرجع `status: ok`.
+- [x] الواجهة تفتح على `http://127.0.0.1:5000/`.
+- [x] تم عمل Hard Refresh في المتصفح باستخدام `Ctrl + Shift + R`.
+- [x] Console المتصفح لا يحتوي أخطاء Blocking.
+- [x] تم تسجيل Git Commit الحالي في جدول معلومات الاختبار.
+- [x] وسم الرجوع `v3.13-stable` معروف وموثق.
+
+### أوامر التحقق
+
+```powershell
+git log --oneline --decorate -5
+
+docker compose -f deploy/docker-compose.yml ps
+
+curl.exe -s http://127.0.0.1:5000/api/advisor/health
+
+### أوامر التحقق
+
+```powershell
+git log --oneline --decorate -5
+
+docker compose -f deploy/docker-compose.yml ps
+
+curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ### أوامر التحقق
 
@@ -62,20 +84,28 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ## 4. قائمة تحقق ملف Excel التجريبي
 
-```
-□ الملف بصيغة .xlsx (لا .xls ولا .csv)
-□ أسماء الأوراق (Sheet names) لم تتغير عن القالب
-□ رؤوس الأعمدة (Column headers) لم تتغير
-□ ورقة Properties مُعبَّأة ببيانات حقيقية
-□ ورقة Sales مُعبَّأة ببيانات حقيقية
-□ ورقة Assumptions مُعبَّأة (ولو بملاحظات أولية)
-□ ورقة Governance مُعبَّأة (ولو بقيم مبدئية)
-□ ورقة Model_Cycle مُعبَّأة
-□ لا توجد خلايا مدمجة (Merged cells) في نطاق البيانات
-□ لا توجد صور أو كائنات مضمَّنة
-□ حجم الملف أقل من 10 MB
-```
+### الهدف
 
+التأكد أن ملف Excel المستخدم في التجربة صالح للرفع في قسم **استيراد بيانات من Excel**، وأنه لم يتم تغيير بنية القالب.
+
+### قائمة التحقق
+
+- [x] ملف Excel بصيغة `.xlsx`.
+- [x] أسماء الشيتات لم يتم تغييرها.
+- [x] أسماء الأعمدة لم يتم تغييرها.
+- [x] شيت `Properties` يحتوي بيانات العقارات.
+- [x] شيت `Sales` يحتوي بيانات المبيعات.
+- [x] Upload succeeds.
+- [x] errors_count = 0.
+
+### نتيجة هذا الاختبار
+
+| Metric | Value |
+|---|---|
+| properties_count | اكتب الرقم الظاهر |
+| sales_count | اكتب الرقم الظاهر |
+| errors_count | 0 |
+| warnings_count | اكتب الرقم الظاهر |
 ---
 
 ## 5. قائمة تحقق جودة بيانات العقارات (Properties)
@@ -164,15 +194,15 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ---
 
-## 9. اختبار تعبئة العقارات والتقييم الجماعي
+## 9. Properties Fill and Mass Appraisal Test
 
-### الخطوات
-
-1. انقر **تعبئة بيانات العقارات**.
-2. تأكد من فتح تبويب **المحفظة** وظهور البيانات.
-3. تأكد أن JSON يبدأ بـ `[` وينتهي بـ `]`.
-4. انقر **معاينة**.
-5. انقر **تشغيل التقييم الجماعي**.
+- [x] Properties fill works.
+- [x] Preview works.
+- [x] Run works.
+- [x] Summary cards update.
+- [x] Executive summary updates.
+- [x] No "القائمة فارغة".
+- [x] No JSON parse error.
 
 ### معايير الاجتياز
 
@@ -188,388 +218,563 @@ curl.exe -s http://127.0.0.1:5000/api/advisor/health
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| n_units | |
-| total_portfolio_value | |
-| average_value_per_m2 (avg_ppm) | |
-| method | |
-| successful_rows | |
-| failed_rows | |
+| n_units | 3 |
+| total_portfolio_value | 29,479,500 ج.م |
+| avg_ppm | 81,888 |
+| method | avm |
 
 ---
 
-## 10. اختبار التحقق من المبيعات (Sales Verification)
+## 10. Sales Verification Test
 
-### الخطوات
+### حالة الاختبار
 
-1. انتقل لتبويب **التصدير والجلسة**.
-2. انقر **تعبئة بيانات المبيعات**.
-3. تأكد من فتح تبويب **المبيعات** وظهور البيانات.
-4. انقر **تحقق من المبيعات**.
-
-### معايير الاجتياز
-
-```
-□ تعبئة المبيعات تعمل
-□ Sales Verification يعمل وتظهر النتائج
-□ لا تظهر رسالة "يرجى إدخال بيانات المبيعات"
-□ أعداد المبيعات الصالحة والمرفوضة معقولة ومبررة
-```
+- [x] Sales fill works.
+- [x] Sales Verification works.
+- [x] No "يرجى إدخال بيانات المبيعات".
+- [x] Usable/rejected sales counts are reasonable.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| إجمالي المبيعات | |
-| المبيعات الصالحة (usable) | |
-| المبيعات المرفوضة | |
-| تحذيرات | |
-
----
-
-## 11. اختبار التعديل الزمني (Time Adjustment)
-
-### الخطوات
-
-1. استخدم المبيعات المُتحقَّق منها.
-2. حدد تاريخ التقييم إن لزم.
-3. انقر **ضبط الوقت**.
+| total sales | 3 |
+| usable sales | 3 |
+| rejected sales | 0 |
+| warnings | 0 |
 
 ### معايير الاجتياز
 
-```
-□ التعديل الزمني يعمل
-□ adjusted_sale_price يظهر في النتائج
-□ time_adjustment_factor يظهر
-□ لا تظهر أخطاء "قائمة فارغة"
-```
+- [x] تعبئة المبيعات تعمل.
+- [x] Sales Verification يعمل وتظهر النتائج.
+- [x] لا تظهر رسالة "يرجى إدخال بيانات المبيعات".
+- [x] أعداد المبيعات الصالحة والمرفوضة معقولة ومبررة.
+
+---
+
+## 11. Time Adjustment Test
+
+### خطوات الاختبار
+
+1. استخدم نتيجة التحقق من المبيعات `Sales Verification`.
+2. أدخل تاريخ التقييم.
+3. اضغط زر `ضبط الوقت`.
+
+### حالة الاختبار
+
+- [x] Time adjustment runs.
+- [x] adjusted_sale_price appears.
+- [x] time_adjustment_factor appears.
+- [x] No empty list errors.
+- [x] No console errors.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| تاريخ التقييم (valuation_date) | |
-| معدل النمو الشهري | |
-| عدد السجلات المُعدَّلة | |
-
----
-
-## 12. اختبار تعديلات المبيعات (Sales Adjustments)
-
-### الخطوات
-
-1. استخدم المبيعات المُعدَّلة زمنياً.
-2. انقر **تطبيق عوامل التعديل**.
+| valuation_date | 2026-05-03 |
+| monthly_growth_rate | 0.0075 |
+| adjusted records | 3 |
+| sample adjusted_sale_price | 8,220,771.68 |
+| sample months_to_valuation_date | 4 |
+| notes | تم التعديل الزمني بنجاح على بيانات المبيعات. |
 
 ### معايير الاجتياز
 
-```
-□ تعديلات المبيعات تعمل
-□ final_adjusted_price يظهر في النتائج
-□ لا تظهر أخطاء "قائمة فارغة"
-```
+- [x] التعديل الزمني يعمل بدون أخطاء.
+- [x] تظهر قيمة `adjusted_sale_price`.
+- [x] تظهر قيمة `time_adjustment_factor`.
+- [x] لا تظهر رسالة `sale_records must be a non-empty list`.
+---
+
+## 12. Sales Adjustments Test
+
+### خطوات الاختبار
+
+1. استخدم نتيجة التعديل الزمني `Time Adjustment`.
+2. أدخل عوامل التعديل البيعي.
+3. اضغط زر `تطبيق عوامل التعديل`.
+
+### حالة الاختبار
+
+- [x] Sales adjustments run.
+- [x] final_adjusted_price appears.
+- [x] No empty list errors.
+- [x] No console errors.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| عدد السجلات المُعدَّلة | |
-| متوسط عامل التعديل | |
-| ملاحظات | |
-
----
-
-## 13. اختبار دراسة النسب (Ratio Study)
-
-### الخطوات
-
-1. افتح تبويب **دراسة النسب والمعايرة**.
-2. استخدم نتيجة آخر تشغيل جماعي.
-3. استخدم آخر مبيعات مُعدَّلة.
-4. انقر **إجراء دراسة النسب**.
+| adjusted records | 3 |
+| sample final_adjusted_sale_price | 8,220,771.68 |
+| final_adjustment_factor | 1 |
+| adjustment_method | no_adjustment |
+| notes | تم تطبيق عوامل التعديل بنجاح. لم يتم تغيير السعر لأن عوامل التعديل = 1.0. |
 
 ### معايير الاجتياز
 
-```
-□ matched_pair_count > 0
-□ Median Ratio يظهر
-□ COD يظهر
-□ PRD يظهر
-□ القيم ليست كلها صفر (إلا إن كان ذلك مبرراً بالبيانات)
-```
+- [x] تعديلات المبيعات تعمل بدون أخطاء.
+- [x] تظهر قيمة `final_adjusted_sale_price`.
+- [x] لا تظهر رسالة `sale_records must be a non-empty list`.
+- [x] النتيجة منطقية؛ السعر النهائي يساوي السعر المعدل زمنيًا عند استخدام عوامل تعديل = 1.0.
+
+---
+
+## 13. Ratio Study Test
+
+### خطوات الاختبار
+
+1. افتح تبويب `دراسة النسب والمعايرة`.
+2. استخدم آخر نتيجة تشغيل للتقييم الجماعي.
+3. استخدم آخر نتيجة تعديلات المبيعات.
+4. اضغط زر `إجراء دراسة النسب`.
+
+### حالة الاختبار
+
+- [x] matched_pair_count > 0.
+- [x] Median Ratio appears.
+- [x] COD appears.
+- [x] PRD appears.
+- [x] Metrics are not all zero unless justified.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| matched_pair_count | |
-| median_ratio | |
-| COD | |
-| PRD | |
-| تفسير | |
-
----
-
-## 14. اختبار معاينة المعايرة (Calibration Preview)
-
-### الخطوات
-
-1. استخدم نتيجة دراسة النسب.
-2. انقر **معاينة المعايرة**.
+| matched_pair_count | 3 |
+| median_ratio | 1.4869 |
+| COD | 24.07% |
+| PRD | 1.0754 |
+| matching method | subject_id / zone_id + property_class |
 
 ### معايير الاجتياز
 
-```
-□ suggested_factor يظهر
-□ recommendation يظهر
-□ لا يظهر خطأ "missing ratio_study"
-□ العامل المقترح منطقي ومبرر
-```
+- [x] دراسة النسب تعمل بدون أخطاء.
+- [x] تم إنشاء أزواج مطابقة.
+- [x] تظهر قيمة `Median Ratio`.
+- [x] تظهر قيمة `COD`.
+- [x] تظهر قيمة `PRD`.
+
+---
+
+## 14. Calibration Preview Test
+
+### خطوات الاختبار
+
+1. استخدم آخر نتيجة `Ratio Study`.
+2. اضغط زر `معاينة المعايرة`.
+
+### حالة الاختبار
+
+- [x] calibration factor appears.
+- [x] recommendation appears.
+- [x] no missing ratio_study error.
+- [x] factor is meaningful or justified.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| suggested_factor | |
-| recommendation | |
-| matched pairs | |
-
----
-
-## 15. اختبار Calibration Sandbox
-
-### الخطوات
-
-1. استخدم نتيجة معاينة المعايرة.
-2. انقر **اختبار المعايرة Sandbox**.
+| suggested_factor | 0.6725 |
+| recommendation | major_review |
+| matched pairs | 3 |
+| median_ratio | 1.4869 |
+| COD | 24.07% |
+| source | ratio_study |
 
 ### معايير الاجتياز
 
-```
-□ Sandbox يعمل
-□ calibrated_rows > 0 حيث ينطبق ذلك
-□ القيم الأصلية لم تتغير (Sandbox فقط)
-□ لا يظهر خطأ portfolio_calibration
-```
+- [x] معاينة المعايرة تعمل بدون أخطاء.
+- [x] يظهر عامل المعايرة المقترح.
+- [x] تظهر التوصية.
+- [x] لا تظهر رسالة `missing ratio_study`.
+- [x] النتيجة منطقية؛ `major_review` بسبب ارتفاع Median Ratio.
+
+---
+
+## 15. Calibration Sandbox Test
+
+### خطوات الاختبار
+
+1. استخدم نتيجة `Calibration Preview`.
+2. أدخل عامل معايرة للاختبار داخل Sandbox.
+3. اضغط زر `اختبار المعايرة (Sandbox)`.
+
+### حالة الاختبار
+
+- [x] Sandbox runs.
+- [x] calibrated_rows > 0 when applicable.
+- [x] original values are not modified.
+- [x] no portfolio_calibration error.
 
 ### تسجيل النتائج
 
-| المقياس | القيمة |
+| Metric | Value |
 |---|---|
-| عامل المعايرة المطبَّق | |
-| calibrated_rows | |
-| unchanged_rows | |
-
----
-
-## 16. اختبار الحوكمة (Governance)
-
-### الخطوات
-
-1. انتقل لتبويب **التصدير والجلسة**.
-2. انقر **تعبئة بيانات الحوكمة**.
-3. أدخل بيانات المراجع والحالة والملاحظات.
-4. انقر **حفظ قرار الحوكمة**.
+| applied factor | 1.0500 |
+| original total | 29,479,500 |
+| sandbox total | 30,953,000 |
+| calibrated rows | 3 |
+| unchanged rows | 0 |
+| total change | +5.00% |
+| notes | تم اختبار عامل يدوي 1.05 للمراجعة فقط؛ لا يتم تطبيقه تلقائيًا على القيم الأصلية. |
 
 ### معايير الاجتياز
 
-```
-□ حقل المراجع (Reviewer) مُعبَّأ
-□ حالة الحوكمة مُعبَّأة
-□ الملاحظات مُعبَّأة
-□ الحفظ يعمل
-□ Governance ID يظهر في الواجهة
-□ السجل لا يُخزَّن server-side (client-side فقط — طبيعي)
+- [x] اختبار Sandbox يعمل بدون أخطاء.
+- [x] تظهر قيم Sandbox.
+- [x] عدد الصفوف المعايرة = 3.
+- [x] القيم الأصلية لا يتم تعديلها تلقائيًا.
+- [x] لا تظهر رسالة `portfolio_calibration`.
+
+---
+
+## 16. Governance Test
+
+### خطوات الاختبار
+
+1. افتح تبويب `التصدير والجلسة`.
+2. اضغط زر `تعبئة بيانات الحوكمة`.
+3. تأكد أن تبويب `الحوكمة ودورة النموذج` تم فتحه.
+4. راجع بيانات الحوكمة.
+5. اضغط زر `حفظ قرار الحوكمة`.
+
+### حالة الاختبار
+
+- [x] Reviewer filled.
+- [x] Governance status filled.
+- [x] Notes filled.
+- [x] Save works.
+- [x] Governance ID appears.
+
+### تسجيل النتائج
+
+| Metric | Value |
+|---|---|
+| governance_status | pending |
+| reviewer | م هشام المهدى |
+| notes | تم إنشاء القالب للاختبار |
+| governance_id | GOV-20260506-6E1S |
+| last_updated | 2026-05-06T17:14:09.742Z |
+
+### معايير الاجتياز
+
+- [x] تعبئة بيانات الحوكمة تعمل.
+- [x] حالة الحوكمة تظهر.
+- [x] اسم المراجع يظهر.
+- [x] ملاحظات القرار تظهر.
+- [x] حفظ قرار الحوكمة يعمل.
+- [x] يظهر Governance ID بعد الحفظ.
 ```
 
 ---
 
-## 17. اختبار دورة النموذج (Model Cycle)
+## 17. Model Cycle Test
 
-### الخطوات
+### خطوات الاختبار
 
-1. انتقل لتبويب **التصدير والجلسة**.
-2. انقر **تعبئة بيانات دورة النموذج**.
-3. أدخل بيانات الدورة والإصدار والحالة والتواريخ.
-4. انقر **حفظ بيانات دورة التقييم**.
+1. افتح تبويب `التصدير والجلسة`.
+2. اضغط زر `تعبئة بيانات دورة النموذج`.
+3. تأكد أن تبويب `الحوكمة ودورة النموذج` تم فتحه.
+4. راجع بيانات دورة النموذج.
+5. اضغط زر `حفظ بيانات دورة التقييم`.
+
+### حالة الاختبار
+
+- [x] model-version-id filled.
+- [x] model-status-select filled.
+- [x] model-cycle-id filled.
+- [x] start date filled correctly.
+- [x] end date filled correctly.
+- [x] Date year is correct, not 0026.
+- [x] Save works.
+
+### تسجيل النتائج
+
+| Metric | Value |
+|---|---|
+| model_version | MA-MODEL-v1.0 |
+| model_status | draft |
+| cycle_id | CYCLE-2025-GENERAL |
+| cycle_start_date | 2026-06-03 |
+| cycle_end_date | 2026-05-06 |
+| last_updated | 2026-05-06T17:18:29.969Z |
+| notes | الحفظ نجح، والسنة ظهرت صحيحة. توجد ملاحظة منطقية: تاريخ البداية بعد تاريخ النهاية، ويجب تصحيحها في بيانات Excel قبل الاعتماد النهائي. |
 
 ### معايير الاجتياز
 
-```
-□ model-version-id مُعبَّأ
-□ model-status-select مُعبَّأ
-□ model-cycle-id مُعبَّأ
-□ تاريخ البداية صحيح
-□ تاريخ النهاية صحيح
-□ السنة صحيحة — ليست 0026 (تحقق من صيغة التاريخ في Excel)
-□ الحفظ يعمل
+- [x] تعبئة بيانات دورة النموذج تعمل.
+- [x] إصدار النموذج يظهر.
+- [x] حالة النموذج تظهر.
+- [x] معرّف الدورة يظهر.
+- [x] الحفظ يعمل.
+- [x] السنة تظهر بصيغة صحيحة وليست `0026`.
 ```
 
 > **تنبيه:** تحقق من أن السنة في حقول التاريخ تظهر بأربعة أرقام صحيحة (مثلاً 2025 وليس 0025 أو 0026). هذا ناتج عن قراءة Excel للتواريخ برقمين أحياناً.
 
 ---
 
-## 18. اختبار تصدير XLSX
+## 18. XLSX Export Test
 
-### الخطوات
+### حالة الاختبار
 
-1. انقر **تصدير Excel**.
-2. افتح الملف المُنزَّل في Excel أو LibreOffice.
-3. راجع الأوراق.
+- [x] زر تصدير Excel ظاهر.
+- [x] تم تشغيل التقييم الجماعي قبل التصدير.
+- [x] Workbook downloads.
+- [x] Workbook opens.
+- [x] Export_Metadata sheet exists.
+- [x] Import_Validation sheet exists.
+- [x] Readiness sheet exists.
+- [x] Sales_Verification sheet exists.
+- [x] Time_Adjustment sheet exists.
+- [x] Sales_Adjustments sheet exists.
 
-### الأوراق المتوقعة (الجديدة من Phase 3.14)
+### نتيجة الاختبار
+
+| البند | النتيجة |
+|---|---|
+| export-xlsx HTTP status | 200 |
+| النتيجة | Pass |
+| ملاحظات | تم إصلاح خطأ MergedCell، وملف Excel تم تحميله وفتحه بنجاح. |
+
+### قرار
+
+- [x] XLSX Export جاهز للاستخدام في الـ pilot.
+
+
+
 
 ```
-□ Export_Metadata — تاريخ التصدير + ملخص الاستيراد
-□ Import_Validation — تفصيل التحذيرات والأخطاء
-□ Readiness — ملخص matching_readiness و normalization_readiness
-□ Sales_Verification — جدول المبيعات الصالحة والمرفوضة
-□ Time_Adjustment — جدول المبيعات المُعدَّلة زمنياً
-□ Sales_Adjustments — جدول تعديلات المبيعات
-```
 
-### الأوراق الأساسية الموجودة مسبقاً
+---
 
-```
-□ Executive Summary
-□ Portfolio Results
-□ Zone Analysis
-□ Property Class Analysis
-□ Ratio Study (إن وُجد)
-□ Calibration Preview (إن وُجد)
-□ Governance Approval (إن وُجد)
-□ Assumptions
-```
+## 19. Session Export / Import Test
+
+### حالة الاختبار
+
+- [x] Session exports.
+- [x] Session imports.
+- [x] State is restored.
+- [x] This is clearly separate from Excel import.
+
+### تسجيل النتائج
+
+| Metric | Value |
+|---|---|
+| session_export | Pass |
+| session_import | Pass |
+| restored_state | نعم |
+| notes | تم تصدير واستيراد الجلسة بنجاح، وتم استرجاع حالة العمل بعد تحديث الصفحة. |
 
 ### معايير الاجتياز
 
-```
-□ الملف يفتح بلا أخطاء
-□ الأوراق مقروءة ومنسقة
-□ تحذيرات Validation موجودة حيثما ينبغي
-□ ملخص Readiness موجود
-□ Governance/Model Cycle موجودة إن تم حفظها
-□ الملف غير تالف
+- [x] يتم تنزيل ملف الجلسة.
+- [x] يتم استيراد ملف الجلسة بنجاح.
+- [x] حالة العمل يتم استرجاعها.
+- [x] لا يحدث خلط بين استيراد الجلسة ورفع Excel.
 ```
 
 ---
 
-## 19. اختبار تصدير / استيراد الجلسة
+## 20. Final Browser Console Check
 
-### الخطوات
+### المسموح
 
-1. انقر **تصدير جلسة العمل**.
-2. احفظ ملف JSON.
-3. أعد تحميل المتصفح (F5).
-4. انقر **استيراد جلسة محفوظة**.
-5. اختر ملف JSON المُصدَّر.
+- [x] `favicon.ico 404` إن ظهر.
+- [x] Browser tracking prevention warnings إن ظهرت.
 
-### معايير الاجتياز
+### غير مسموح
 
-```
-□ تصدير الجلسة يعمل وينتج ملف JSON
-□ استيراد الجلسة يعمل
-□ الحالة تُستعاد (نتيجة التشغيل + Governance + Model Cycle)
-□ واضح أن هذا منفصل تماماً عن رفع Excel
-```
+- [x] لا يوجد `Failed to fetch`.
+- [x] لا يوجد `Uncaught TypeError`.
+- [x] لا يوجد `Cannot read properties of null`.
+- [x] لا يوجد `JSON.parse error`.
+- [x] لا يوجد `NaN` في الواجهة.
+- [x] لا يوجد `[object Object]` في الواجهة.
 
----
+### نتيجة الفحص
 
-## 20. فحص Console المتصفح النهائي
-
-### مسموح به (غير مؤثر)
-
-```
-✓ favicon.ico 404 — طبيعي
-✓ تحذيرات Tracking prevention للخطوط من CDN — طبيعي
-```
-
-### غير مسموح به (يستوجب التوقف)
-
-```
-□ Failed to fetch — ✗
-□ Uncaught TypeError — ✗
-□ Cannot read properties of null — ✗
-□ JSON.parse error — ✗
-□ NaN يظهر في قيمة مالية في الواجهة — ✗
-□ [object Object] يظهر للمستخدم — ✗
+| البند | النتيجة |
+|---|---|
+| Console status | Pass |
+| Blocking errors | None |
+| Allowed warnings | `favicon.ico 404` و `Tracking Prevention` فقط |
+| notes | لا توجد أخطاء blocking أثناء الاختبار النهائي. التحذيرات الظاهرة غير مؤثرة على التشغيل. |
 ```
 
 ---
 
-## 21. سجل المشاكل (Issue Log)
+## 21. Issue Log
 
-| # | المجال | الخطورة | الوصف | السجل / Screenshot | المسؤول | الحالة |
+### سجل المشكلات أثناء الاختبار
+
+| # | Area | Severity | Description | Screenshot/Log | Owner | Status |
 |---|---|---|---|---|---|---|
-| 1 | | | | | | |
-| 2 | | | | | | |
-| 3 | | | | | | |
-| 4 | | | | | | |
-| 5 | | | | | | |
+| 1 | XLSX Export | High | فشل تصدير Excel أول مرة بسبب خطأ backend: `MergedCell object has no attribute column_letter` داخل `Calibration Sandbox` sheet. | Flask logs / HTTP 500 | Dev | Resolved |
+| 2 | Browser Console | Low | ظهور `favicon.ico 404`. لا يؤثر على التشغيل. | Console | Dev | Accepted |
+| 3 | Browser Console | Low | ظهور `Tracking Prevention` بسبب المتصفح/CDN. لا يؤثر على التشغيل. | Console | Browser | Accepted |
+| 4 | Model Cycle Data | Medium | تاريخ بداية الدورة ظهر بعد تاريخ نهاية الدورة في بيانات الاختبار. الحفظ نجح تقنيًا، لكن يجب تعديل بيانات Excel قبل الاعتماد النهائي. | UI | Data Owner | Open - Data Fix |
 
-**مستويات الخطورة:**
+### تفاصيل الإصلاح
 
-| المستوى | المعنى |
+| Item | Value |
 |---|---|
-| Blocker | يمنع الاستخدام الكامل — لا يمكن تجاوزه |
-| High | مؤثر على الدقة أو الجودة — يُعاد الاختبار بعد الإصلاح |
-| Medium | مزعج لكن لا يمنع الاستخدام |
-| Low | ملاحظة بسيطة للتحسين |
+| Hotfix Commit | `1e1b686` |
+| Commit Message | `fix: prevent merged-cell error in XLSX calibration sandbox export` |
+| File Fixed | `core_engine/mass_appraisal_excel.py` |
+| Result After Fix | XLSX export works and no HTTP 500 |
+| Pilot Impact | تم حل المشكلة قبل قرار النجاح النهائي |
+
+### ملخص حالة المشكلات
+
+| Severity | Count | Status |
+|---|---:|---|
+| Blocker | 0 | None |
+| High | 1 | Resolved |
+| Medium | 1 | Open - Data Fix |
+| Low | 2 | Accepted |
 
 ---
 
-## 22. قرار اجتياز التجربة (Pass / Fail)
+## 22. Pilot Pass/Fail Decision
 
-### قائمة التحقق النهائية
+### قائمة قرار النجاح
 
-```
-□ لا توجد Blockers
-□ لا توجد High مشاكل غير محلولة
-□ رفع Excel يعمل
-□ التشغيل الجماعي يعمل
-□ سلسلة المبيعات / دراسة النسب / المعايرة تعمل
-□ XLSX export مراجَع ومقبول
-□ تصدير / استيراد الجلسة يعمل
-□ السجلات (Logs) مراجَعة ولا توجد Tracebacks غير متوقعة
-□ النتائج مقبولة من قِبَل المراجع
-```
+- [x] No blockers.
+- [x] No high-severity unresolved issues.
+- [x] Excel upload works.
+- [x] Mass Appraisal run works.
+- [x] Sales/Ratio/Calibration chain works.
+- [x] XLSX export reviewed.
+- [x] Session export/import works.
+- [x] Logs reviewed.
+- [x] Results accepted for technical pilot review.
+- [ ] Model Cycle dates require data correction before final business approval.
 
-### قرار التجربة
+### قرار الاختبار
 
-| الحقل | القيمة |
+| Field | Value |
 |---|---|
-| نتيجة التجربة | **Pass / Conditional Pass / Fail** |
-| المراجع (Reviewer) | |
-| التاريخ | |
-| ملاحظات | |
+| Pilot Result | Conditional Pass |
+| Reviewer | م. هشام المهدي |
+| Date | 2026-05-06 |
+| Notes | الاختبار التشغيلي نجح وظيفيًا. تم رفع Excel بدون أخطاء، وتشغيل التقييم الجماعي، والتحقق من المبيعات، والتعديل الزمني، وتعديلات المبيعات، ودراسة النسب، والمعايرة، وSandbox، والحوكمة، والتصدير، واستيراد/تصدير الجلسة. توجد ملاحظة بيانات فقط: تاريخ بداية دورة النموذج بعد تاريخ النهاية، ويجب تصحيحها في ملف Excel قبل الاعتماد النهائي. |
+
+### ملخص القرار
+
+| Area | Result |
+|---|---|
+| Environment | Pass |
+| Excel Upload | Pass |
+| Mass Appraisal | Pass |
+| Sales Verification | Pass |
+| Time Adjustment | Pass |
+| Sales Adjustments | Pass |
+| Ratio Study | Pass |
+| Calibration Preview | Pass |
+| Calibration Sandbox | Pass |
+| Governance | Pass |
+| Model Cycle | Conditional Pass - data correction needed |
+| XLSX Export | Pass after hotfix |
+| Session Export/Import | Pass |
+| Final Console | Pass |
+
+### القرار النهائي
+
+- [x] النظام جاهز لاستكمال Pilot Controlled Use.
+- [x] لا توجد مشاكل كود مانعة بعد إصلاح XLSX Export.
+- [x] يجب تصحيح تواريخ Model Cycle في بيانات Excel قبل اعتبار النتيجة Business-approved.
+- [ ] لا يتم اعتبار الاختبار Final Pass إلا بعد تصحيح بيانات دورة النموذج أو اعتمادها كملاحظة مقبولة.
 
 ---
 
-## 23. الخطوة التالية بعد التجربة
+## 23. Next Action After Pilot
 
-### إذا كانت النتيجة: **Pass** ✅
+### القرار الحالي بعد الاختبار
 
-يمكن إنشاء وسم `v3.14-pilot-ready`:
+| Field | Value |
+|---|---|
+| Pilot Result | Conditional Pass |
+| Blocking Code Issues | None |
+| Blocking Functional Issues | None |
+| Main Note | توجد ملاحظة بيانات في Model Cycle: تاريخ بداية الدورة بعد تاريخ النهاية |
+| Required Action Before Final Pass | تصحيح تواريخ دورة النموذج في ملف Excel أو اعتمادها كملاحظة بيانات غير مانعة |
 
-```powershell
-# تأكد من نظافة الـ working tree أولاً
-git status --short
+### معنى Conditional Pass
 
-# أنشئ الوسم
-git tag -a v3.14-pilot-ready -m "Phase 3.14 pilot-ready: Mass Appraisal real data pilot baseline"
+الاختبار نجح وظيفيًا من ناحية النظام:
 
-# لا ترفع الوسم حتى تُراجَع من قِبَل الفريق
-# git push origin v3.14-pilot-ready
-```
+- [x] Excel upload يعمل.
+- [x] Mass Appraisal يعمل.
+- [x] Sales Verification يعمل.
+- [x] Time Adjustment يعمل.
+- [x] Sales Adjustments تعمل.
+- [x] Ratio Study تعمل.
+- [x] Calibration Preview يعمل.
+- [x] Calibration Sandbox يعمل.
+- [x] Governance يعمل.
+- [x] XLSX Export يعمل بعد إصلاح الخطأ.
+- [x] Session Export / Import يعمل.
+- [x] لا توجد أخطاء Console مانعة.
 
-### إذا كانت النتيجة: **Conditional Pass** ⚠️
+لكن النتيجة ليست Final Pass بسبب ملاحظة بيانات:
 
-- حدِّد المشاكل المتبقية وأصلحها.
-- أعد تشغيل الاختبارات المتأثرة فقط.
-- أعد تقييم القرار.
+- [ ] تاريخ بداية Model Cycle يجب أن يكون قبل تاريخ النهاية.
 
-### إذا كانت النتيجة: **Fail** ✗
+### الإجراء التالي
+
+يوجد اختياران:
+
+| Option | Action | Result |
+|---|---|---|
+| Option 1 | تصحيح تاريخ بداية ونهاية Model Cycle في Excel ثم إعادة اختبار Section 17 فقط | يمكن تحويل النتيجة إلى Pass |
+| Option 2 | قبول الملاحظة لأنها بيانات اختبار فقط | تبقى النتيجة Conditional Pass |
+
+### قرار Tag
+
+| Item | Decision |
+|---|---|
+| Create v3.14-pilot-ready now | No |
+| Reason | يوجد Hotfix بعد tag السابق، وملف checklist تم تعديله بنتائج الاختبار |
+| Required before tag | Commit نتائج الاختبار ثم قرار المراجع |
+| Current recommendation | Commit checklist first, then update tag بعد الاعتماد |
+
+### أوامر حفظ نتائج الاختبار
+
+نفذ الأوامر التالية بعد حفظ الملف:
+
+| Step | Command |
+|---|---|
+| 1 | git status --short |
+| 2 | git add docs/mass_appraisal_real_pilot_test_checklist.md |
+| 3 | git commit -m "test: record real pilot checklist results" |
+| 4 | git status --short |
+| 5 | git log --oneline --decorate -5 |
+
+### أوامر تحديث Tag بعد الاعتماد
+
+لا تنفذ هذه الأوامر إلا بعد اعتماد النتيجة النهائية:
+
+| Step | Command |
+|---|---|
+| 1 | git tag -f -a v3.14-pilot-ready -m "Phase 3.14 pilot-ready: Mass Appraisal real data pilot baseline" |
+| 2 | git push origin main |
+| 3 | git push origin -f v3.14-pilot-ready |
+
+### القرار النهائي المقترح الآن
+
+| Item | Decision |
+|---|---|
+| Continue controlled pilot use | Yes |
+| Pilot result now | Conditional Pass |
+| Required data fix | Correct Model Cycle date order |
+| Required code fix | None |
+| Public production release | Not yet |
+| Reason production is not final | Authentication, CORS restriction, HTTPS, and access control still need production hardening |
 
 - وثِّق جميع الـ Blockers في سجل المشاكل.
 - لا تُنشئ الوسم.

@@ -480,6 +480,100 @@ def _normalize_kv_value(cell):
     return s
 
 
+def _norm_text_for_warning(value) -> str:
+    """Normalize text for warning comparison only. Never mutates parsed output."""
+    s = str(value or "").strip()
+    s = " ".join(s.split())                          # collapse internal whitespace
+    s = s.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+    s = s.replace("ة", "ه")
+    s = s.replace("ى", "ي")
+    return s.lower()
+
+
+def _add_normalization_warnings(
+    properties: list, sales: list, warnings: list
+) -> dict:
+    """
+    Detect location/property_type spelling variants and cross-sheet coverage gaps.
+    Appends warnings in-place. Returns normalization_readiness metadata dict.
+    Data values in properties/sales are never mutated.
+    """
+    prop_locs  = [p["location"]      for p in properties if p.get("location")]
+    prop_types = [p["property_type"] for p in properties if p.get("property_type")]
+    sale_locs  = [s["location"]      for s in sales      if s.get("location")]
+    sale_types = [s["property_type"] for s in sales      if s.get("property_type")]
+
+    def _detect_variants(values: list, field: str, max_warn: int = 10) -> int:
+        """Return count of variant groups found; emit one warning per group."""
+        norm_map: dict = {}
+        for raw in values:
+            norm_map.setdefault(_norm_text_for_warning(raw), set()).add(raw)
+        variant_groups = 0
+        for raw_set in norm_map.values():
+            if len(raw_set) > 1 and variant_groups < max_warn:
+                variants = " / ".join(sorted(raw_set))
+                warnings.append({
+                    "sheet": None, "row": None, "field": field,
+                    "message": (
+                        f"Potential {field} spelling variants detected: {variants}. "
+                        f"Standardize {field} values before pilot testing."
+                    ),
+                })
+                variant_groups += 1
+        return variant_groups
+
+    loc_var_groups  = _detect_variants(prop_locs  + sale_locs,  "location")
+    type_var_groups = _detect_variants(prop_types + sale_types, "property_type")
+
+    # ── Cross-sheet coverage ──────────────────────────────────────────────────
+    prop_locs_norm  = {_norm_text_for_warning(v) for v in prop_locs}
+    sale_locs_norm  = {_norm_text_for_warning(v) for v in sale_locs}
+    prop_types_norm = {_norm_text_for_warning(v) for v in prop_types}
+    sale_types_norm = {_norm_text_for_warning(v) for v in sale_types}
+
+    if properties and sales:
+        if sale_locs_norm - prop_locs_norm:
+            warnings.append({
+                "sheet": "Sales", "row": None, "field": "location",
+                "message": (
+                    "Some sales locations do not appear in Properties. "
+                    "Matching and Ratio Study may be weaker."
+                ),
+            })
+        if prop_locs_norm - sale_locs_norm:
+            warnings.append({
+                "sheet": "Properties", "row": None, "field": "location",
+                "message": (
+                    "Some property locations have no sales evidence. "
+                    "Valuation support may be weaker."
+                ),
+            })
+        if sale_types_norm - prop_types_norm:
+            warnings.append({
+                "sheet": "Sales", "row": None, "field": "property_type",
+                "message": (
+                    "Some sales property_type values do not appear in Properties. "
+                    "Comparable matching may be weaker."
+                ),
+            })
+        if prop_types_norm - sale_types_norm:
+            warnings.append({
+                "sheet": "Properties", "row": None, "field": "property_type",
+                "message": (
+                    "Some property_type values in Properties have no matching sales evidence."
+                ),
+            })
+
+    return {
+        "unique_property_locations":    len(prop_locs_norm),
+        "unique_sales_locations":       len(sale_locs_norm),
+        "unique_property_types":        len(prop_types_norm),
+        "unique_sales_property_types":  len(sale_types_norm),
+        "location_variant_groups":      loc_var_groups,
+        "property_type_variant_groups": type_var_groups,
+    }
+
+
 # ── Sheet parsers ─────────────────────────────────────────────────────────────
 
 _PROP_REQUIRED = {"row_id", "location", "property_type", "area"}
@@ -801,6 +895,9 @@ def parse_mass_appraisal_template_workbook(file_bytes: bytes) -> dict:
                              "message": "Few zone_id/property_class matches detected. "
                                         "Ratio Study reliability may be limited."})
 
+    # ── Cross-sheet: normalization readiness ──────────────────────────────────
+    norm_readiness = _add_normalization_warnings(properties, sales, warnings)
+
     # ── Build response ────────────────────────────────────────────────────────
     status = "validation_error" if errors else "success"
 
@@ -818,6 +915,7 @@ def parse_mass_appraisal_template_workbook(file_bytes: bytes) -> dict:
                 "subject_id_matches": subject_id_matches,
                 "zone_class_matches": zone_class_matches,
             },
+            "normalization_readiness": norm_readiness,
         },
         "data": {
             "properties":  properties,

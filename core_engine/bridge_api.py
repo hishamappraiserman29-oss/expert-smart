@@ -6807,9 +6807,29 @@ def handle_mass_appraisal_export_xlsx():
                             "message": f"mass_appraisal_excel not available: {imp_err}"}), 500
     try:
         from flask import Response
-        body       = request.get_json(silent=True) or {}
-        run_result = body.get("result") or body
-        xlsx_bytes = build_mass_appraisal_workbook(run_result)
+        body                = request.get_json(silent=True) or {}
+        run_result          = body.get("result") or body
+        ratio_study         = body.get("ratio_study")
+        calibration_preview = body.get("calibration_preview")
+        calibration_sandbox = body.get("calibration_sandbox")
+        governance          = body.get("governance")
+        model_cycle         = body.get("model_cycle")
+        import_validation   = body.get("import_validation")
+        sales_verification  = body.get("sales_verification")
+        time_adjustment     = body.get("time_adjustment")
+        sales_adjustments   = body.get("sales_adjustments")
+        xlsx_bytes = build_mass_appraisal_workbook(
+            run_result,
+            ratio_study=ratio_study,
+            calibration_preview=calibration_preview,
+            calibration_sandbox=calibration_sandbox,
+            governance=governance,
+            model_cycle=model_cycle,
+            import_validation=import_validation,
+            sales_verification=sales_verification,
+            time_adjustment=time_adjustment,
+            sales_adjustments=sales_adjustments,
+        )
         return Response(
             xlsx_bytes,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

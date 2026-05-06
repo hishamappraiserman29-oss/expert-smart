@@ -1251,7 +1251,7 @@ def _sheet_audit_governance(wb: Workbook, audit: Optional[dict],
 
 # ── Sheet 12: Assumptions ─────────────────────────────────────────────────────
 
-def _sheet_assumptions(wb: Workbook) -> None:
+def _sheet_assumptions(wb: Workbook, import_validation: Optional[dict] = None) -> None:
     ws = wb.create_sheet("Assumptions")
 
     _section_title(ws, 1, 3, "Assumptions & Notes")
@@ -1275,6 +1275,20 @@ def _sheet_assumptions(wb: Workbook) -> None:
         "Standards: IVSC, IVS 2022, Basel III/IV, IFRS 13.",
         f"Export timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
     ]
+    if import_validation:
+        iv_sum = import_validation.get("summary") or {}
+        mr     = iv_sum.get("matching_readiness") or {}
+        points.append(
+            f"Phase 3.14: Import source: Excel Upload | "
+            f"Properties: {iv_sum.get('total_rows', '')} | Sales: {iv_sum.get('total_sales', '')} | "
+            f"Warnings: {iv_sum.get('warnings_count', '')} | Errors: {iv_sum.get('errors_count', '')}"
+        )
+        points.append(
+            f"Phase 3.14: Matching ready: {mr.get('matching_ready', '')} | "
+            f"Matched: {mr.get('matched_count', '')} | "
+            f"Unmatched properties: {mr.get('unmatched_properties', '')} | "
+            f"Unmatched sales: {mr.get('unmatched_sales', '')}"
+        )
     for i, point in enumerate(points, 2):
         c = ws.cell(row=i, column=1, value=f"• {point}")
         c.alignment = Alignment(wrap_text=True)
@@ -1879,7 +1893,7 @@ def _sheet_governance(wb: Workbook, governance: dict) -> None:
 
     # Column widths
     for ci, w in enumerate([22, 20, 20, 60], 1):
-        ws.column_dimensions[ws.cell(row=1, column=ci).column_letter].width = w
+        ws.column_dimensions[get_column_letter(ci)].width = w
 
 
 # ── Phase 3.9: Model & Revaluation Cycle sheet ───────────────────────────────
@@ -1979,6 +1993,243 @@ def _sheet_model_cycle(wb: Workbook, mc: dict) -> None:
     ws.column_dimensions["C"].width = 40
 
 
+# ── Phase 3.14: Export Metadata ───────────────────────────────────────────────
+
+def _sheet_export_metadata(wb: Workbook, result: dict, import_validation: Optional[dict]) -> None:
+    ws = wb.create_sheet("Export_Metadata")
+    _section_title(ws, 1, 2, "Export Metadata")
+    summary = result.get("summary") or {}
+    iv_sum  = (import_validation or {}).get("summary") or {}
+    mr      = iv_sum.get("matching_readiness") or {}
+    fields: List[tuple] = [
+        ("Export Timestamp",   datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        ("Run Status",         result.get("status", "unknown")),
+        ("Total Properties",   summary.get("total_rows", len(result.get("rows") or []))),
+        ("Successful Rows",    summary.get("successful_rows", "")),
+        ("Failed Rows",        summary.get("failed_rows", "")),
+        ("Total Market Value", summary.get("total_market_value", "")),
+        ("Import Source",      "Excel Upload" if import_validation else "Manual / API"),
+        ("Import Properties",  iv_sum.get("total_rows", "")),
+        ("Import Sales",       iv_sum.get("total_sales", "")),
+        ("Warnings Count",     iv_sum.get("warnings_count", "")),
+        ("Errors Count",       iv_sum.get("errors_count", "")),
+        ("Matching Ready",     str(mr.get("matching_ready", "")) if mr else ""),
+    ]
+    for r, (key, val) in enumerate(fields, 2):
+        kc = ws.cell(row=r, column=1, value=key)
+        vc = ws.cell(row=r, column=2, value=str(val) if val not in (None, "") else "")
+        kc.border = _BORDER
+        vc.border = _BORDER
+        kc.font   = Font(bold=True)
+    ws.column_dimensions["A"].width = 30
+    ws.column_dimensions["B"].width = 40
+
+
+# ── Phase 3.14: Import Validation Detail ──────────────────────────────────────
+
+def _sheet_import_validation(wb: Workbook, import_validation: dict) -> None:
+    ws = wb.create_sheet("Import_Validation")
+    ws.sheet_view.rightToLeft = True
+    _section_title(ws, 1, 3, "Import Validation — Warnings & Errors")
+    warnings = import_validation.get("warnings") or []
+    if not warnings:
+        ws.cell(row=2, column=1, value="لا توجد تحذيرات أو أخطاء في عملية الاستيراد.").font = _FNT_NOTE
+        return
+    row = 2
+    hdr_fill = PatternFill("solid", fgColor="1E3A5F")
+    for col, txt in enumerate(["الصنف", "الخطورة", "الرسالة"], 1):
+        hc = ws.cell(row=row, column=col, value=txt)
+        hc.fill = hdr_fill
+        hc.font = Font(bold=True, color="FFFFFF")
+        hc.border = _BORDER
+    row += 1
+    for w in warnings:
+        if isinstance(w, str):
+            cat, sev, msg = "general", "warning", w
+        else:
+            cat = w.get("category", w.get("type", "general"))
+            sev = w.get("severity", "warning")
+            msg = w.get("message", str(w))
+        row_fill = PatternFill("solid", fgColor="FEE2E2" if sev == "error" else "FEF9C3")
+        for col, val in enumerate([cat, sev, msg], 1):
+            c = ws.cell(row=row, column=col, value=val)
+            c.fill      = row_fill
+            c.border    = _BORDER
+            c.alignment = Alignment(wrap_text=True)
+        row += 1
+    ws.column_dimensions["A"].width = 20
+    ws.column_dimensions["B"].width = 14
+    ws.column_dimensions["C"].width = 70
+    ws.freeze_panes = "A3"
+
+
+# ── Phase 3.14: Readiness Summary ─────────────────────────────────────────────
+
+def _sheet_readiness(wb: Workbook, import_validation: dict) -> None:
+    ws = wb.create_sheet("Readiness")
+    ws.sheet_view.rightToLeft = True
+    _section_title(ws, 1, 2, "Import Readiness Summary")
+    summary  = import_validation.get("summary") or {}
+    matching = summary.get("matching_readiness") or {}
+    norma    = summary.get("normalization_readiness") or {}
+
+    def _kv(r: int, label: str, value: object, fill_hex: Optional[str] = None) -> None:
+        kc = ws.cell(row=r, column=1, value=label)
+        vc = ws.cell(row=r, column=2, value=str(value) if value is not None else "")
+        kc.border = _BORDER
+        vc.border = _BORDER
+        kc.font   = Font(bold=True)
+        if fill_hex:
+            vc.fill = PatternFill("solid", fgColor=fill_hex)
+
+    row = 2
+    _section_title(ws, row, 2, "Matching Readiness"); row += 1
+    mr_ok = bool(matching.get("matching_ready"))
+    _kv(row, "Matching Ready",       "نعم ✓" if mr_ok else "لا ✗",
+        "D1FAE5" if mr_ok else "FEE2E2"); row += 1
+    _kv(row, "Properties Imported",  matching.get("properties_imported", "")); row += 1
+    _kv(row, "Sales Imported",       matching.get("sales_imported", "")); row += 1
+    _kv(row, "Matched (subject_id)", matching.get("matched_count", "")); row += 1
+    _kv(row, "Unmatched Properties", matching.get("unmatched_properties", "")); row += 1
+    _kv(row, "Unmatched Sales",      matching.get("unmatched_sales", "")); row += 1
+
+    row += 1
+    _section_title(ws, row, 2, "Normalization Readiness"); row += 1
+    nr_ok = bool(norma.get("normalization_ok"))
+    _kv(row, "Normalization OK",        "نعم ✓" if nr_ok else "تحذير",
+        "D1FAE5" if nr_ok else "FEF9C3"); row += 1
+    _kv(row, "Zone Variants Detected",  norma.get("zone_variants_detected", "")); row += 1
+    _kv(row, "Class Variants Detected", norma.get("class_variants_detected", "")); row += 1
+    _kv(row, "Coverage Gaps",           norma.get("coverage_gaps", "")); row += 1
+
+    ws.column_dimensions["A"].width = 32
+    ws.column_dimensions["B"].width = 24
+
+
+# ── Phase 3.14: Sales Verification ───────────────────────────────────────────
+
+def _sheet_sales_verification(wb: Workbook, sales_verification: dict) -> None:
+    ws = wb.create_sheet("Sales_Verification")
+    ws.sheet_view.rightToLeft = True
+    _section_title(ws, 1, 7, "Sales Verification")
+    records = sales_verification.get("records") or sales_verification.get("results") or []
+    if not records:
+        ws.cell(row=2, column=1, value="لا توجد بيانات مبيعات للتحقق.").font = _FNT_NOTE
+        return
+    row = 2
+    headers = ["sale_id", "verified", "arms_length", "usable_for_ratio_study",
+               "market_value", "sale_price", "flags"]
+    hdr_fill = PatternFill("solid", fgColor="1E3A5F")
+    for col, h in enumerate(headers, 1):
+        hc = ws.cell(row=row, column=col, value=h)
+        hc.fill = hdr_fill
+        hc.font = Font(bold=True, color="FFFFFF")
+        hc.border = _BORDER
+    row += 1
+    for rec in records:
+        usable   = rec.get("usable_for_ratio_study", rec.get("usable", False))
+        row_fill = PatternFill("solid", fgColor="D1FAE5" if usable else "FEE2E2")
+        for col, key in enumerate(["sale_id", "verified", "arms_length", "usable_for_ratio_study",
+                                    "market_value", "sale_price"], 1):
+            c        = ws.cell(row=row, column=col, value=rec.get(key, ""))
+            c.fill   = row_fill
+            c.border = _BORDER
+        fc           = ws.cell(row=row, column=7, value="; ".join(rec.get("flags", []) or []))
+        fc.fill      = row_fill
+        fc.border    = _BORDER
+        fc.alignment = Alignment(wrap_text=True)
+        row += 1
+    for i, w in enumerate([14, 12, 14, 22, 18, 14, 40], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = "A3"
+
+
+# ── Phase 3.14: Time Adjustment ───────────────────────────────────────────────
+
+def _sheet_time_adjustment(wb: Workbook, time_adjustment: dict) -> None:
+    ws = wb.create_sheet("Time_Adjustment")
+    ws.sheet_view.rightToLeft = True
+    _section_title(ws, 1, 6, "Sales Time Adjustment")
+    summary  = time_adjustment.get("summary") or {}
+    adjusted = time_adjustment.get("adjusted_sales") or time_adjustment.get("records") or []
+    row = 2
+    if summary:
+        for label, val in [
+            ("Status",           time_adjustment.get("status", "")),
+            ("Monthly Rate (%)", summary.get("monthly_rate_pct", summary.get("monthly_rate", ""))),
+            ("Reference Date",   summary.get("reference_date", "")),
+            ("Adjusted Records", summary.get("adjusted_count", len(adjusted))),
+        ]:
+            kc = ws.cell(row=row, column=1, value=label)
+            vc = ws.cell(row=row, column=2, value=str(val) if val is not None else "")
+            kc.border = _BORDER
+            vc.border = _BORDER
+            kc.font   = Font(bold=True)
+            row += 1
+        row += 1
+    if not adjusted:
+        ws.cell(row=row, column=1, value="لا توجد بيانات تعديل زمني.").font = _FNT_NOTE
+        return
+    hdr_row = row
+    headers = ["sale_id", "sale_date", "original_price", "adjusted_price",
+               "months_elapsed", "adjustment_factor"]
+    hdr_fill = PatternFill("solid", fgColor="1E3A5F")
+    for col, h in enumerate(headers, 1):
+        hc = ws.cell(row=row, column=col, value=h)
+        hc.fill = hdr_fill
+        hc.font = Font(bold=True, color="FFFFFF")
+        hc.border = _BORDER
+    row += 1
+    for rec in adjusted:
+        for col, key in enumerate(headers, 1):
+            c        = ws.cell(row=row, column=col, value=rec.get(key, ""))
+            c.border = _BORDER
+        row += 1
+    for i, w in enumerate([14, 14, 18, 18, 16, 18], 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+    ws.freeze_panes = f"A{hdr_row + 1}"
+
+
+# ── Phase 3.14: Sales Adjustments ────────────────────────────────────────────
+
+def _sheet_sales_adjustments(wb: Workbook, sales_adjustments: dict) -> None:
+    ws = wb.create_sheet("Sales_Adjustments")
+    ws.sheet_view.rightToLeft = True
+    _section_title(ws, 1, 6, "Sales Adjustments")
+    records = sales_adjustments.get("adjusted_sales") or sales_adjustments.get("records") or []
+    summary = sales_adjustments.get("summary") or {}
+    row = 2
+    if summary:
+        for k, v in summary.items():
+            kc = ws.cell(row=row, column=1, value=str(k))
+            vc = ws.cell(row=row, column=2, value=str(v) if v is not None else "")
+            kc.border = _BORDER
+            vc.border = _BORDER
+            kc.font   = Font(bold=True)
+            row += 1
+        row += 1
+    if not records:
+        ws.cell(row=row, column=1, value="لا توجد بيانات تعديلات مبيعات.").font = _FNT_NOTE
+        return
+    all_keys = list(records[0].keys())
+    hdr_fill = PatternFill("solid", fgColor="1E3A5F")
+    hdr_row  = row
+    for col, h in enumerate(all_keys, 1):
+        hc = ws.cell(row=row, column=col, value=h)
+        hc.fill = hdr_fill
+        hc.font = Font(bold=True, color="FFFFFF")
+        hc.border = _BORDER
+    row += 1
+    for rec in records:
+        for col, key in enumerate(all_keys, 1):
+            c        = ws.cell(row=row, column=col, value=rec.get(key, ""))
+            c.border = _BORDER
+        row += 1
+    for i in range(len(all_keys)):
+        ws.column_dimensions[get_column_letter(i + 1)].width = 18
+    ws.freeze_panes = f"A{hdr_row + 1}"
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def build_mass_appraisal_workbook(result: dict,
@@ -1988,7 +2239,11 @@ def build_mass_appraisal_workbook(result: dict,
                                    calibration_preview: Optional[dict] = None,
                                    calibration_sandbox: Optional[dict] = None,
                                    governance: Optional[dict] = None,
-                                   model_cycle: Optional[dict] = None) -> bytes:
+                                   model_cycle: Optional[dict] = None,
+                                   import_validation: Optional[dict] = None,
+                                   sales_verification: Optional[dict] = None,
+                                   time_adjustment: Optional[dict] = None,
+                                   sales_adjustments: Optional[dict] = None) -> bytes:
     """
     Build a professional XLSX workbook for the given Mass Appraisal Run result.
     Pass reviewed_summary (Phase 1.8) to include the Reviewed Portfolio section.
@@ -2066,7 +2321,17 @@ def build_mass_appraisal_workbook(result: dict,
         _sheet_governance(wb, governance)                           # Phase 3.8
     if isinstance(model_cycle, dict) and model_cycle.get("cycle_id"):
         _sheet_model_cycle(wb, model_cycle)                        # Phase 3.9
-    _sheet_assumptions(wb)
+    _sheet_export_metadata(wb, _result, import_validation)          # Phase 3.14
+    if isinstance(import_validation, dict):
+        _sheet_import_validation(wb, import_validation)             # Phase 3.14
+        _sheet_readiness(wb, import_validation)                     # Phase 3.14
+    if isinstance(sales_verification, dict) and sales_verification.get("status") == "success":
+        _sheet_sales_verification(wb, sales_verification)           # Phase 3.14
+    if isinstance(time_adjustment, dict):
+        _sheet_time_adjustment(wb, time_adjustment)                 # Phase 3.14
+    if isinstance(sales_adjustments, dict):
+        _sheet_sales_adjustments(wb, sales_adjustments)             # Phase 3.14
+    _sheet_assumptions(wb, import_validation=import_validation)
 
     buf = BytesIO()
     wb.save(buf)

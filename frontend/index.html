@@ -3911,7 +3911,18 @@ function _showIndexToast(msg, type) {
             const resp = await fetch(_maApiUrl() + '/api/mass-appraisal/export-xlsx', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({result: result})
+                body: JSON.stringify({
+                result:              result,
+                governance:          window.massGovernanceState              || null,
+                model_cycle:         window.massModelCycleState              || null,
+                ratio_study:         window.latestRatioStudyResult           || null,
+                calibration_preview: window.latestCalibrationPreviewResult   || null,
+                calibration_sandbox: window.latestCalibrationSandboxResult   || null,
+                import_validation:   window.latestMassExcelImportResult      || null,
+                sales_verification:  window.latestSalesVerificationResult    || null,
+                time_adjustment:     window.latestTimeAdjustedSales          || null,
+                sales_adjustments:   window.latestSalesAdjustmentsResult     || null,
+            })
             });
             if (!resp.ok) { alert('فشل تحميل ملف Excel: ' + resp.status); return; }
             const blob = await resp.blob();

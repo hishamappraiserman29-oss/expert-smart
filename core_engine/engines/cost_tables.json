@@ -1,0 +1,37 @@
+{
+  "Cairo": {
+    "economy": 8000,
+    "standard": 14000,
+    "luxury": 25000
+  },
+  "Giza": {
+    "economy": 7500,
+    "standard": 13000,
+    "luxury": 23000
+  },
+  "Alexandria": {
+    "economy": 7000,
+    "standard": 12000,
+    "luxury": 20000
+  },
+  "Ismailia": {
+    "economy": 6500,
+    "standard": 11000,
+    "luxury": 18000
+  },
+  "Suez": {
+    "economy": 6500,
+    "standard": 11000,
+    "luxury": 18000
+  },
+  "Port_Said": {
+    "economy": 6500,
+    "standard": 11000,
+    "luxury": 18000
+  },
+  "_default": {
+    "economy": 6500,
+    "standard": 11000,
+    "luxury": 18000
+  }
+}

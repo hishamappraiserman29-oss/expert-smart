@@ -47,6 +47,12 @@ del _utf8_stream
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 
+# ── Phase 4 engines ──────────────────────────────────────────────────────────
+from engines.comparable_search import ComparableSearchEngine
+from engines.comparative import ComparativeEngine
+from engines.cost import CostEngine
+from engines.income import IncomeEngine
+
 # ── Market Intelligence (auto-web + sector intelligence) ─────────────────────
 try:
     from market_intelligence import (
@@ -289,6 +295,38 @@ app = Flask(__name__,
             static_folder=_FRONTEND_DIR,
             static_url_path="/static")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# ── Phase 4 engine singletons (lazy-loaded on first request) ─────────────────
+_comparable_search_engine = None
+_comparative_engine       = None
+_cost_engine              = None
+_income_engine            = None
+
+def get_search_engine():
+    global _comparable_search_engine
+    if _comparable_search_engine is None:
+        feed_path = os.path.join(_BASE, "data", "market_feed.json")
+        _comparable_search_engine = ComparableSearchEngine(market_feed_path=feed_path)
+    return _comparable_search_engine
+
+def get_comparative_engine():
+    global _comparative_engine
+    if _comparative_engine is None:
+        _comparative_engine = ComparativeEngine()
+    return _comparative_engine
+
+def get_cost_engine():
+    global _cost_engine
+    if _cost_engine is None:
+        tables_path = os.path.join(_BASE, "engines", "cost_tables.json")
+        _cost_engine = CostEngine(cost_tables_path=tables_path)
+    return _cost_engine
+
+def get_income_engine():
+    global _income_engine
+    if _income_engine is None:
+        _income_engine = IncomeEngine()
+    return _income_engine
 
 @app.after_request
 def _cors(r):
@@ -7074,6 +7112,98 @@ def handle_mass_appraisal_import_xlsx():
         return jsonify({"status": "error",
                         "message": "Could not read Excel workbook.",
                         "details": type(e).__name__}), 400
+
+
+# ── Phase 4 Routes ───────────────────────────────────────────────────────────
+
+def _engine_result_to_dict(result):
+    """Serialise an EngineResult to a plain dict safe for jsonify()."""
+    return {
+        "status":      "success",
+        "engine_name": result.engine_name,
+        "value":       float(result.value) if result.value is not None else None,
+        "confidence":  result.confidence,
+        "metadata":    result.metadata,
+        "audit_trail": [
+            {
+                "step_name":  e.step_name,
+                "inputs":     e.inputs,
+                "outputs":    e.outputs,
+                "formula":    e.formula,
+                "references": e.references,
+            }
+            for e in result.audit_trail
+        ],
+        "issues": [
+            {
+                "severity": i.severity,
+                "code":     i.code,
+                "message":  i.message,
+            }
+            for i in result.issues
+        ],
+    }
+
+
+@app.route("/api/comparables/search", methods=["POST", "OPTIONS"])
+def api_comparable_search():
+    """Search market_feed.json for similar comparables, rank by 6-factor similarity."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data    = request.get_json(force=True) or {}
+        subject = data.get("subject_property", {})
+        filters = data.get("filters", {})
+        limit   = int(data.get("limit", 20))
+
+        engine  = get_search_engine()
+        results = engine.search_and_rank(subject=subject, filters=filters, limit=limit)
+
+        return jsonify({"status": "success", "count": len(results), "results": results}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/engines/comparative", methods=["POST", "OPTIONS"])
+def api_engine_comparative():
+    """Sales Comparison Approach — applies area/age adjustments to ranked comparables."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data   = request.get_json(force=True) or {}
+        engine = get_comparative_engine()
+        result = engine.calculate(data)
+        return jsonify(_engine_result_to_dict(result)), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/engines/cost", methods=["POST", "OPTIONS"])
+def api_engine_cost():
+    """Cost Approach — Replacement Cost New minus depreciation plus land value."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data   = request.get_json(force=True) or {}
+        engine = get_cost_engine()
+        result = engine.calculate(data)
+        return jsonify(_engine_result_to_dict(result)), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/engines/income", methods=["POST", "OPTIONS"])
+def api_engine_income():
+    """Income Approach — Direct Capitalization (NOI / Cap Rate)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data   = request.get_json(force=True) or {}
+        engine = get_income_engine()
+        result = engine.calculate(data)
+        return jsonify(_engine_result_to_dict(result)), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
 
 
 if __name__ == "__main__":

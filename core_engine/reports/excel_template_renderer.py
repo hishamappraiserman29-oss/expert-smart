@@ -50,7 +50,36 @@ Usage — Mass Appraisal professional template (.xlsm)
             "calibration":        [...],
         },
     )
-    # result is Path on success, None if template missing → use fallback export
+    # result is Path on success, None if template missing -> use fallback export
+
+Usage — Individual Valuation professional template (.xlsm)
+----------------------------------------------------------
+    from core_engine.reports.excel_template_renderer import build_individual_valuation_report
+
+    result = build_individual_valuation_report(
+        output_path="outputs/valuation_report_2026.xlsm",
+        context={
+            "report_date":       "2026-05-10",
+            "valuation_date":    "2026-05-01",
+            "client_name":       "Cairo Bank",
+            "property_type":     "residential",
+            "location":          "Cairo - Maadi",
+            "area":              180,
+            "valuation_purpose": "mortgage_lending",
+            "final_value":       4_500_000,
+            "confidence":        "high",
+            "reviewer_name":     "Hisham Elmahdy",
+            "report_id":         "RPT-2026-001",
+        },
+        tables={
+            "comparables":        [...],
+            "valuation_methods":  [...],
+            "audit_trail":        [...],
+            "assumptions":        [...],
+            "issues":             [...],
+        },
+    )
+    # result is Path on success, None if template missing -> use fallback export
 
 Fallback
 --------
@@ -74,6 +103,9 @@ from openpyxl.utils import get_column_letter
 # ── Registered professional templates ─────────────────────────────────────────
 MASS_APPRAISAL_TEMPLATE = Path(
     "templates/reports/mass_appraisal_professional_template.xlsm"
+)
+INDIVIDUAL_VALUATION_TEMPLATE = Path(
+    "templates/reports/individual_valuation_professional_template.xlsm"
 )
 
 # ── Regex patterns ─────────────────────────────────────────────────────────────
@@ -359,6 +391,57 @@ def build_mass_appraisal_report(
         Override the registered ``MASS_APPRAISAL_TEMPLATE`` path.
     """
     tpl = Path(template_path) if template_path else MASS_APPRAISAL_TEMPLATE
+    renderer = ExcelTemplateRenderer(
+        template_path=tpl,
+        context=context,
+        tables=tables or {},
+    )
+    if not renderer.is_available():
+        return None
+    try:
+        return renderer.build(output_path)
+    except Exception:
+        return None
+
+
+def build_individual_valuation_report(
+    output_path: Union[str, Path],
+    context: Dict[str, Any],
+    tables: Optional[Dict[str, TableData]] = None,
+    template_path: Optional[Union[str, Path]] = None,
+) -> Optional[Path]:
+    """
+    Render the Individual Valuation professional template (``.xlsm``) and save
+    to *output_path*.
+
+    Uses ``INDIVIDUAL_VALUATION_TEMPLATE`` by default.  Accepts an optional
+    *template_path* override (useful for testing or alternate layouts).
+
+    Returns the output ``Path`` on success.  Returns ``None`` when the template
+    file is missing or rendering fails — callers must then fall back to their
+    existing export logic.
+
+    Parameters
+    ----------
+    output_path:
+        Destination for the rendered workbook.  Use a ``.xlsm`` extension to
+        preserve VBA macros; a ``.xlsx`` path is also accepted and will contain
+        the template's VBA content.
+    context:
+        Scalar placeholders matched against ``{{key}}`` tokens in the template.
+        Supported keys: ``report_date``, ``valuation_date``, ``client_name``,
+        ``property_type``, ``location``, ``area``, ``valuation_purpose``,
+        ``market_value``, ``comparative_value``, ``cost_value``,
+        ``income_value``, ``final_value``, ``confidence``, ``reviewer_name``,
+        ``report_id``.  Missing keys are left as-is in the template.
+    tables:
+        Named row data matched against ``{{TABLE:name}}`` anchors in the
+        template.  Supported anchors: ``comparables``, ``valuation_methods``,
+        ``audit_trail``, ``assumptions``, ``issues``.
+    template_path:
+        Override the registered ``INDIVIDUAL_VALUATION_TEMPLATE`` path.
+    """
+    tpl = Path(template_path) if template_path else INDIVIDUAL_VALUATION_TEMPLATE
     renderer = ExcelTemplateRenderer(
         template_path=tpl,
         context=context,

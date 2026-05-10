@@ -833,6 +833,101 @@ class ExcelReportBuilder:
               cross_border_disclosure=None, portfolio_summary=None,
               portfolio_performance=None) -> str:
         """Build all sheets and save to filename. Returns the filename."""
+        # ── Try professional template export (individual valuation) ───────────
+        # Attempts template rendering first; any failure silently falls through
+        # to the existing openpyxl sheet-by-sheet builder below.
+        if self.result is not None:
+            try:
+                from pathlib import Path as _Path
+                try:
+                    from reports.excel_template_renderer import (
+                        INDIVIDUAL_VALUATION_TEMPLATE as _TPL,
+                        build_individual_valuation_report as _build_tpl,
+                    )
+                except ImportError:
+                    from core_engine.reports.excel_template_renderer import (  # type: ignore
+                        INDIVIDUAL_VALUATION_TEMPLATE as _TPL,
+                        build_individual_valuation_report as _build_tpl,
+                    )
+                if _TPL.is_file():
+                    _r    = self.result
+                    _meta = _r.metadata or {}
+                    _context = {
+                        "report_date":       self.report_date,
+                        "valuation_date":    _meta.get("valuation_date") or self.report_date,
+                        "client_name":       _meta.get("client_name") or _meta.get("borrower_name") or "N/A",
+                        "property_type":     _r.asset_type,
+                        "location":          _meta.get("location") or _meta.get("address") or "N/A",
+                        "area":              _meta.get("area") or _meta.get("floor_area_m2") or "",
+                        "valuation_purpose": _r.primary_purpose,
+                        "market_value":      float(_r.primary_value) if _r.primary_value else 0,
+                        "comparative_value": float(_meta.get("comparable") or 0),
+                        "cost_value":        float(_meta.get("cost") or 0),
+                        "income_value":      float(_meta.get("income") or 0),
+                        "final_value":       float(_r.primary_value) if _r.primary_value else 0,
+                        "confidence":        _r.confidence,
+                        "reviewer_name":     _meta.get("reviewer_name") or _meta.get("appraiser_name") or "N/A",
+                        "report_id":         _meta.get("report_id") or "N/A",
+                    }
+                    _tables: Dict[str, list] = {}
+                    if _r.audit_trail:
+                        _tables["audit_trail"] = [
+                            {
+                                "Step":       e.step_name,
+                                "Formula":    e.formula or "",
+                                "References": ", ".join(e.references or []),
+                            }
+                            for e in _r.audit_trail
+                        ]
+                    if _r.issues:
+                        _tables["issues"] = [
+                            {"Severity": i.severity, "Code": i.code, "Message": i.message}
+                            for i in _r.issues
+                        ]
+                    _methods = [
+                        {
+                            "Approach":    label,
+                            "Value (EGP)": float(_meta.get(key) or 0),
+                            "Weight":      (_r.weights_applied or {}).get(key, ""),
+                        }
+                        for key, label in (
+                            ("comparable", "Comparable Sales"),
+                            ("cost",       "Cost Approach"),
+                            ("income",     "Income Approach"),
+                        )
+                        if _meta.get(key)
+                    ]
+                    if _methods:
+                        _tables["valuation_methods"] = _methods
+                    _comps = _meta.get("comparables") or _meta.get("comparable_sales") or []
+                    if _comps:
+                        _tables["comparables"] = [
+                            dict(c) if isinstance(c, dict) else {"Value": str(c)}
+                            for c in _comps[:20]
+                        ]
+                    if _r.disclosures:
+                        _tables["assumptions"] = [{"Reference": d} for d in _r.disclosures]
+
+                    # Use .xlsm extension when the template is .xlsm but
+                    # the requested filename was .xlsx (bridge_api default).
+                    _req   = _Path(filename)
+                    _out_path = (
+                        _req.with_suffix(".xlsm")
+                        if _TPL.suffix.lower() == ".xlsm"
+                        and _req.suffix.lower() == ".xlsx"
+                        else _req
+                    )
+                    _out = _build_tpl(
+                        output_path=str(_out_path),
+                        context=_context,
+                        tables=_tables,
+                    )
+                    if _out is not None and _out_path.is_file():
+                        return str(_out_path)
+            except Exception:
+                pass
+        # ─────────────────────────────────────────────────────────────────────
+
         if self.result is not None:
             self.sheet_summary()
             self.sheet_three_approaches()

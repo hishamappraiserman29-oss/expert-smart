@@ -15,6 +15,7 @@ __pycache__/
 # Docker / local runtime data
 core_engine/outputs/
 reports/
+!core_engine/reports/
 shared_data/
 expert_smart_system/vector_db/
 expert_smart_system/vector_db_new/
@@ -75,4 +76,4 @@ mass_run_enriched_test.json
 # Expert Smart temporary Excel import test artifacts
 mass_appraisal_template_test.xlsx
 mass_appraisal_invalid_test.xlsx
-make_invalid_test.py
+make_invalid_test.py!core_engine/reports/**

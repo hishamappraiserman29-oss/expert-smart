@@ -3,8 +3,12 @@ core_engine/reports/excel_template_renderer.py
 
 Template-based Excel report renderer for Expert Smart.
 
-Usage
------
+Supports both ``.xlsx`` and ``.xlsm`` (macro-enabled) templates.
+When the template is ``.xlsm`` the workbook is opened with ``keep_vba=True``
+so VBA code is preserved in the output file.
+
+Usage — generic template
+------------------------
     from core_engine.reports.excel_template_renderer import build_from_template
 
     build_from_template(
@@ -29,6 +33,25 @@ Usage
         },
     )
 
+Usage — Mass Appraisal professional template (.xlsm)
+-----------------------------------------------------
+    from core_engine.reports.excel_template_renderer import build_mass_appraisal_report
+
+    result = build_mass_appraisal_report(
+        output_path="outputs/mass_appraisal_2026.xlsm",
+        context={
+            "report_date":           "2026-05-10",
+            "valuation_date":        "2026-05-01",
+            "total_portfolio_value": 125_000_000,
+        },
+        tables={
+            "properties_results": [...],
+            "ratio_study":        [...],
+            "calibration":        [...],
+        },
+    )
+    # result is Path on success, None if template missing → use fallback export
+
 Fallback
 --------
     If *template_path* is None or the file does not exist, ``build_from_template``
@@ -47,6 +70,11 @@ from openpyxl.cell.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+
+# ── Registered professional templates ─────────────────────────────────────────
+MASS_APPRAISAL_TEMPLATE = Path(
+    "templates/reports/mass_appraisal_professional_template.xlsm"
+)
 
 # ── Regex patterns ─────────────────────────────────────────────────────────────
 _RE_PLACEHOLDER = re.compile(r"\{\{([A-Za-z_]\w*)\}\}")
@@ -113,7 +141,8 @@ class ExcelTemplateRenderer:
         if not self.is_available():
             return None
 
-        self._wb = load_workbook(str(self.template_path))
+        keep_vba = self.template_path.suffix.lower() == ".xlsm"
+        self._wb = load_workbook(str(self.template_path), keep_vba=keep_vba)
         self._replace_placeholders()
         self._expand_tables()
 
@@ -294,3 +323,50 @@ def build_from_template(
         tables=tables or {},
     )
     return renderer.build(output_path)
+
+
+def build_mass_appraisal_report(
+    output_path: Union[str, Path],
+    context: Dict[str, Any],
+    tables: Optional[Dict[str, TableData]] = None,
+    template_path: Optional[Union[str, Path]] = None,
+) -> Optional[Path]:
+    """
+    Render the Mass Appraisal professional template (``.xlsm``) and save to
+    *output_path*.
+
+    Uses ``MASS_APPRAISAL_TEMPLATE`` by default.  Accepts an optional
+    *template_path* override (useful for testing or alternate layouts).
+
+    Returns the output ``Path`` on success.  Returns ``None`` when the template
+    file is missing or rendering fails — callers must then fall back to their
+    existing export logic.
+
+    Parameters
+    ----------
+    output_path:
+        Destination for the rendered workbook.  Use a ``.xlsm`` extension to
+        preserve VBA macros in the output file.
+    context:
+        Scalar placeholders matched against ``{{key}}`` tokens in the template,
+        e.g. ``{"report_date": "2026-05-10", "valuation_date": "2026-05-01",
+        "total_portfolio_value": 125_000_000}``.
+    tables:
+        Named row data matched against ``{{TABLE:name}}`` anchors in the
+        template.  Supported anchors: ``properties_results``, ``ratio_study``,
+        ``calibration``.
+    template_path:
+        Override the registered ``MASS_APPRAISAL_TEMPLATE`` path.
+    """
+    tpl = Path(template_path) if template_path else MASS_APPRAISAL_TEMPLATE
+    renderer = ExcelTemplateRenderer(
+        template_path=tpl,
+        context=context,
+        tables=tables or {},
+    )
+    if not renderer.is_available():
+        return None
+    try:
+        return renderer.build(output_path)
+    except Exception:
+        return None

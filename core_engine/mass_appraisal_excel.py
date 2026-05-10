@@ -2289,6 +2289,127 @@ def build_mass_appraisal_workbook(result: dict,
             "purpose_counts":       {result.get("purpose", "fair_market"): result.get("n_units") or len(rows_data)},
         }
 
+    # ── Professional template export (optional) ───────────────────────────────
+    # Attempt to render the registered .xlsm template.  Any failure (missing
+    # template, import error, render error) silently falls through to the
+    # existing openpyxl workbook builder below.
+    try:
+        import os as _os
+        import tempfile as _tempfile
+        from pathlib import Path as _Path
+
+        try:
+            from reports.excel_template_renderer import (
+                MASS_APPRAISAL_TEMPLATE as _TPL,
+                build_mass_appraisal_report as _build_tpl,
+            )
+        except ImportError:
+            from core_engine.reports.excel_template_renderer import (  # type: ignore
+                MASS_APPRAISAL_TEMPLATE as _TPL,
+                build_mass_appraisal_report as _build_tpl,
+            )
+
+        if _TPL.is_file():
+            _rs  = result.get("ratio_study") or {}
+            _pm  = ((ratio_study or {}).get("summary") or {}).get("portfolio_metrics") or {}
+            _cp  = calibration_preview or {}
+            _mc  = model_cycle or {}
+            _gov = governance or {}
+
+            _context: Dict[str, Any] = {
+                "report_date":           datetime.now().strftime("%Y-%m-%d"),
+                "valuation_date":        result.get("valuation_date") or datetime.now().strftime("%Y-%m-%d"),
+                "total_units":           result.get("n_units") or len(rows_data),
+                "total_portfolio_value": result.get("total_portfolio_value") or 0,
+                "avg_price_per_meter":   result.get("avg_ppm") or 0,
+                "median_ratio":          _pm.get("median_ratio") or _rs.get("median_ratio") or "",
+                "cod":                   _pm.get("cod") or _rs.get("cod") or "",
+                "prd":                   _pm.get("prd") or _rs.get("prd") or "",
+                "calibration_factor":    (_cp.get("portfolio_calibration") or {}).get("calibration_factor") or "",
+                "governance_status":     _gov.get("status") or "",
+                "reviewer_name":         result.get("reviewer_name") or "N/A",
+                "model_version":         _mc.get("model_version") or result.get("model_version") or "N/A",
+                "cycle_id":              _mc.get("cycle_id") or result.get("cycle_id") or "N/A",
+            }
+
+            _tables: Dict[str, List[Dict[str, Any]]] = {}
+
+            if rows_data:
+                _tables["properties_results"] = [
+                    {
+                        "ID":               r.get("row_id") or r.get("id", ""),
+                        "Area (m²)":   r.get("area", ""),
+                        "Final PPM":        r.get("price_per_meter_effective") or r.get("final_ppm") or "",
+                        "Unit Value (EGP)": r.get("market_value") or r.get("unit_value") or 0,
+                        "Status":           r.get("status", ""),
+                    }
+                    for r in rows_data[:500]
+                ]
+
+            if isinstance(sales_verification, dict) and sales_verification.get("status") == "success":
+                _sv = sales_verification.get("records") or sales_verification.get("results") or []
+                if _sv:
+                    _tables["sales_verification"] = [
+                        {
+                            "Sale ID":    r.get("sale_id", ""),
+                            "Verified":   r.get("verified", ""),
+                            "Arms Length":r.get("arms_length", ""),
+                            "Usable":     r.get("usable_for_ratio_study", ""),
+                            "Mkt Value":  r.get("market_value", ""),
+                            "Sale Price": r.get("sale_price", ""),
+                        }
+                        for r in _sv[:200]
+                    ]
+
+            if _pm:
+                _tables["ratio_study"] = [
+                    {"Metric": k, "Value": v}
+                    for k, v in _pm.items()
+                    if v is not None
+                ]
+
+            _cp_port = _cp.get("portfolio_calibration") or {}
+            if _cp_port:
+                _tables["calibration"] = [
+                    row for row in [
+                        {"Parameter": "Calibration Factor",    "Value": _cp_port.get("calibration_factor")},
+                        {"Parameter": "Pre-Cal Median Ratio",  "Value": _cp_port.get("pre_calibration_median_ratio")},
+                        {"Parameter": "Post-Cal Median Ratio", "Value": _cp_port.get("post_calibration_median_ratio")},
+                        {"Parameter": "Sample Size",           "Value": _cp_port.get("sample_size")},
+                    ]
+                    if row["Value"] is not None
+                ]
+
+            if _gov.get("governance_id"):
+                _tables["governance"] = [
+                    {"Field": "Governance ID", "Value": _gov.get("governance_id", "")},
+                    {"Field": "Status",        "Value": _gov.get("status", "")},
+                    {"Field": "Approved By",   "Value": _gov.get("approved_by", "")},
+                    {"Field": "Approved At",   "Value": str(_gov.get("approved_at") or "")},
+                    {"Field": "Comments",      "Value": str(_gov.get("comments") or "")},
+                ]
+
+            with _tempfile.NamedTemporaryFile(suffix=".xlsm", delete=False) as _tf:
+                _tmp_path = _tf.name
+            try:
+                _out = _build_tpl(
+                    output_path=_tmp_path,
+                    context=_context,
+                    tables=_tables,
+                )
+                if _out is not None and _Path(_tmp_path).is_file():
+                    _tpl_bytes = _Path(_tmp_path).read_bytes()
+                    if _tpl_bytes:
+                        return _tpl_bytes
+            finally:
+                try:
+                    _os.unlink(_tmp_path)
+                except OSError:
+                    pass
+    except Exception:
+        pass  # fall through to existing workbook builder
+    # ─────────────────────────────────────────────────────────────────────────
+
     _result = dict(result)
     _result["rows"]    = rows_data
     _result["summary"] = summary

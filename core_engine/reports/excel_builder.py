@@ -36,6 +36,19 @@ _BORDER_THIN   = Border(
 _FMT_CURRENCY  = '#,##0.00'
 _FMT_PCT       = '0.00%'
 
+# ── Legacy Arabic-sheet style constants ───────────────────────────────────────
+_FILL_INPUT_SECT  = PatternFill(start_color="2E4057", end_color="2E4057", fill_type="solid")
+_FILL_INPUT_CELL  = PatternFill(start_color="EBF3FB", end_color="EBF3FB", fill_type="solid")
+_FILL_CALC_CELL   = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+_FILL_FINAL_VALUE = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+_FILL_ROW_BAND    = PatternFill(start_color="F2F7FF", end_color="F2F7FF", fill_type="solid")
+_FILL_SUBHEAD_AR  = PatternFill(start_color="D6E4F7", end_color="D6E4F7", fill_type="solid")
+_FONT_FINAL_VALUE = Font(bold=True, size=12, color="1A6B2A")
+_BORDER_MEDIUM    = Border(
+    left=Side(style="medium"), right=Side(style="medium"),
+    top=Side(style="medium"),  bottom=Side(style="medium"),
+)
+
 # ── Advanced-analytics sheets excluded from the legacy export ─────────────────
 # Match is performed on sheet_name.strip().lower() so both Arabic variants
 # (ي / ى endings, hamza variants) and English names are covered.
@@ -846,6 +859,1695 @@ class ExcelReportBuilder:
             f"{var_pct * 100:.2f}%" if var_pct is not None else "—"); r += 1
 
     # ──────────────────────────────────────────────────────────────────────────
+    # Legacy-only enhanced Arabic sheets
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def sheet_assumptions_inputs(self) -> None:
+        """'الافتراضات والمدخلات' — Assumptions & Inputs sheet (legacy only)."""
+        ws = self.workbook.create_sheet("الافتراضات والمدخلات")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 34
+        ws.column_dimensions["C"].width = 28
+        ws.column_dimensions["D"].width = 22
+
+        md  = self.result.metadata if self.result else {}
+        fv  = float(self.result.primary_value) if self.result and self.result.primary_value else 0
+        w   = self.result.weights_applied if self.result else {}
+
+        # Banner
+        ws.merge_cells("A1:D1")
+        t            = ws["A1"]
+        t.value      = "الافتراضات والمدخلات — Assumptions & Inputs"
+        t.fill       = _FILL_HEADER
+        t.font       = Font(bold=True, color="FFFFFF", size=14)
+        t.alignment  = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:D2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str, en: str = "") -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:D{r}")
+            c            = ws.cell(row=r, column=1)
+            c.value      = f"  {label}" + (f"  — {en}" if en else "")
+            c.fill       = _FILL_INPUT_SECT
+            c.font       = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment  = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _inp(label: str, value, note: str = "", is_calc: bool = False,
+                 fmt: str = "") -> None:
+            nonlocal r
+            fill = _FILL_CALC_CELL if is_calc else _FILL_INPUT_CELL
+            lc            = ws.cell(row=r, column=2)
+            lc.value      = label
+            lc.font       = Font(bold=True, size=10)
+            lc.alignment  = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            lc.fill       = fill
+            lc.border     = _BORDER_THIN
+
+            vc            = ws.cell(row=r, column=3)
+            vc.value      = value if value is not None else "—"
+            vc.alignment  = Alignment(horizontal="center", vertical="center")
+            vc.fill       = fill
+            vc.border     = _BORDER_THIN
+            if fmt:
+                vc.number_format = fmt
+
+            if note:
+                nc            = ws.cell(row=r, column=4)
+                nc.value      = note
+                nc.font       = Font(italic=True, color="666666", size=9)
+                nc.alignment  = Alignment(horizontal="right", vertical="center", wrap_text=True)
+                nc.fill       = fill
+                nc.border     = _BORDER_THIN
+
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        # ── Section 1: بيانات التقرير ─────────────────────────────────────────
+        _sect("بيانات التقرير", "Report Data")
+        _inp("رقم التقرير",    md.get("report_id") or "—")
+        _inp("تاريخ التقييم", md.get("valuation_date") or self.report_date)
+        _inp("تاريخ المعاينة", md.get("inspection_date") or "—")
+        _inp("غرض التقييم",   self.result.primary_purpose if self.result else "—")
+        _inp("أساس القيمة",   "القيمة السوقية")
+        r += 1
+
+        # ── Section 2: بيانات العميل والمقيم ────────────────────────────────
+        _sect("بيانات العميل والمقيم", "Client & Appraiser")
+        _inp("اسم العميل",    md.get("client_name") or md.get("borrower_name") or "—")
+        _inp("اسم المقيم",   md.get("appraiser_name") or md.get("reviewer_name") or "—")
+        _inp("رقم الترخيص",  md.get("license_no") or "—")
+        _inp("الجهة المعينة", md.get("instructed_by") or "—")
+        r += 1
+
+        # ── Section 3: بيانات العقار ─────────────────────────────────────────
+        _sect("بيانات العقار", "Property Data")
+        _inp("نوع الأصل",          self.result.asset_type if self.result else "—")
+        _inp("الموقع / العنوان",   md.get("location") or md.get("address") or "—")
+        _inp("المساحة (م²)",       md.get("area") or md.get("floor_area_m2") or "—")
+        _inp("سنة الإنشاء",       md.get("year_built") or "—")
+        _inp("الحالة",             md.get("condition") or "—")
+        r += 1
+
+        # ── Section 4: بيانات السوق ──────────────────────────────────────────
+        _sect("بيانات السوق", "Market Data")
+        _inp("متوسط سعر السوق (EGP/م²)", md.get("market_avg_price_sqm") or "—")
+        _inp("معدل الرسملة",    md.get("cap_rate") or "—")
+        _inp("معدل الشاغر",    md.get("vacancy_rate") or "—")
+        _inp("عدد المقارنات",  md.get("comparables_count") or
+             len(md.get("comparables") or []) or "—")
+        r += 1
+
+        # ── Section 5: افتراضات التقييم ─────────────────────────────────────
+        _sect("افتراضات التقييم", "Valuation Assumptions")
+        comp = float(md.get("comparable") or 0)
+        cost = float(md.get("cost")       or 0)
+        inc  = float(md.get("income")     or 0)
+
+        _inp("القيمة — المقارنة البيعية (EGP)", comp, is_calc=True, fmt=_FMT_CURRENCY)
+        _inp("الوزن — المقارنة",               w.get("comparable", 0), fmt=_FMT_PCT)
+        _inp("القيمة — طريقة التكلفة (EGP)",   cost, is_calc=True, fmt=_FMT_CURRENCY)
+        _inp("الوزن — التكلفة",                w.get("cost", 0), fmt=_FMT_PCT)
+        _inp("القيمة — رأسمالة الدخل (EGP)",   inc,  is_calc=True, fmt=_FMT_CURRENCY)
+        _inp("الوزن — الدخل",                  w.get("income", 0), fmt=_FMT_PCT)
+        r += 1
+
+        # Final value banner
+        ws.merge_cells(f"B{r}:D{r}")
+        fv_cell            = ws.cell(row=r, column=2)
+        fv_cell.value      = f"القيمة السوقية النهائية (EGP):  {fv:,.0f}"
+        fv_cell.font       = _FONT_FINAL_VALUE
+        fv_cell.fill       = _FILL_FINAL_VALUE
+        fv_cell.alignment  = Alignment(horizontal="center", vertical="center")
+        fv_cell.border     = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 24
+        r += 2
+
+        # ── Section 6: حدود ومحددات الاستخدام ──────────────────────────────
+        _sect("حدود ومحددات الاستخدام", "Limiting Conditions")
+        for cond in (
+            "يُعدّ هذا التقرير سارياً فقط بالغرض المُبيَّن أعلاه.",
+            "لا يجوز الاستشهاد بجزء منه دون الرجوع إلى التقرير الكامل.",
+            "القيمة محددة وفق أحوال السوق في تاريخ التقييم.",
+            "لم يُراعَ في التقدير أي تكاليف بيع أو ضرائب.",
+        ):
+            ws.merge_cells(f"B{r}:D{r}")
+            c            = ws.cell(row=r, column=2)
+            c.value      = f"• {cond}"
+            c.font       = Font(size=9)
+            c.alignment  = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            ws.row_dimensions[r].height = 16
+            r += 1
+        r += 1
+
+        # ── Section 7: إعدادات التقرير ──────────────────────────────────────
+        _sect("إعدادات التقرير", "Report Settings")
+        _inp("نمط التقرير",      "Legacy — أساسي")
+        _inp("مستوى الثقة",     self.result.confidence if self.result else "—")
+        _inp("المعايير المطبقة", "EGVS / IFRS 13")
+        r += 2
+
+        # ── Legend ────────────────────────────────────────────────────────────
+        ws.cell(row=r, column=2).value     = "دليل الألوان:"
+        ws.cell(row=r, column=2).font      = Font(bold=True, size=9)
+        ws.cell(row=r, column=2).alignment = Alignment(horizontal="right")
+        r += 1
+        for lbl, clr in (
+            ("خلية إدخال يدوي",    "EBF3FB"),
+            ("خلية محسوبة / ناتجة", "F5F5F5"),
+            ("القيمة النهائية",    "C6EFCE"),
+        ):
+            ws.cell(row=r, column=2).value     = lbl
+            ws.cell(row=r, column=2).font      = Font(size=9)
+            ws.cell(row=r, column=2).alignment = Alignment(horizontal="right")
+            ic       = ws.cell(row=r, column=3)
+            ic.fill  = PatternFill(start_color=clr, end_color=clr, fill_type="solid")
+            ic.border = _BORDER_THIN
+            r += 1
+
+        ws.freeze_panes = "B3"
+
+    def sheet_main_report(self) -> None:
+        """'التقرير' — Executive main report sheet (legacy only)."""
+        ws = self.workbook.create_sheet("التقرير")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 30
+        ws.column_dimensions["C"].width = 22
+        ws.column_dimensions["D"].width = 16
+        ws.column_dimensions["E"].width = 16
+
+        md   = self.result.metadata if self.result else {}
+        fv   = float(self.result.primary_value) if self.result and self.result.primary_value else 0
+        comp = float(md.get("comparable") or 0)
+        cost = float(md.get("cost")       or 0)
+        inc  = float(md.get("income")     or 0)
+        w    = self.result.weights_applied if self.result else {}
+
+        # ── Title block ───────────────────────────────────────────────────────
+        ws.merge_cells("A1:E1")
+        t            = ws["A1"]
+        t.value      = "تقرير التقييم العقاري"
+        t.fill       = _FILL_HEADER
+        t.font       = Font(bold=True, color="FFFFFF", size=16)
+        t.alignment  = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 36
+
+        ws.merge_cells("A2:E2")
+        ws["A2"].value     = "Real Estate Valuation Report"
+        ws["A2"].fill      = _FILL_SECTION
+        ws["A2"].font      = Font(bold=True, color="FFFFFF", size=12, italic=True)
+        ws["A2"].alignment = _ALIGN_CENTER
+        ws.row_dimensions[2].height = 22
+
+        asset_type = self.result.asset_type if self.result else "—"
+        confidence = self.result.confidence if self.result else "—"
+        ws.merge_cells("A3:E3")
+        ws["A3"].value     = (f"تاريخ التقرير: {self.report_date}  |  "
+                              f"نوع الأصل: {asset_type}  |  الثقة: {confidence}")
+        ws["A3"].fill      = _FILL_INPUT_SECT
+        ws["A3"].font      = Font(italic=True, color="FFFFFF", size=10)
+        ws["A3"].alignment = _ALIGN_CENTER
+        ws.row_dimensions[3].height = 18
+
+        # ── Final Value card ──────────────────────────────────────────────────
+        ws.merge_cells("B5:E6")
+        fv_cell            = ws["B5"]
+        fv_cell.value      = f"القيمة السوقية النهائية\n{fv:,.0f}  جنيه مصري"
+        fv_cell.fill       = _FILL_FINAL_VALUE
+        fv_cell.font       = Font(bold=True, size=14, color="1A6B2A")
+        fv_cell.alignment  = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        fv_cell.border     = _BORDER_MEDIUM
+        ws.row_dimensions[5].height = 28
+        ws.row_dimensions[6].height = 28
+
+        r = 8
+
+        def _section_hd(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"B{r}:E{r}")
+            c            = ws.cell(row=r, column=2)
+            c.value      = f"  {label}"
+            c.fill       = _FILL_INPUT_SECT
+            c.font       = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment  = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _kv(label: str, value, currency: bool = False,
+                pct: bool = False, alt: bool = False) -> None:
+            nonlocal r
+            fill = _FILL_ROW_BAND if alt else None
+            lc            = ws.cell(row=r, column=2)
+            lc.value      = label
+            lc.font       = Font(bold=True, size=10)
+            lc.alignment  = Alignment(horizontal="right", vertical="center")
+            lc.border     = _BORDER_THIN
+            if fill: lc.fill = fill
+
+            vc            = ws.cell(row=r, column=3)
+            vc.value      = value if value is not None else "—"
+            vc.alignment  = Alignment(horizontal="center", vertical="center")
+            vc.border     = _BORDER_THIN
+            if fill: vc.fill = fill
+            if currency: vc.number_format = _FMT_CURRENCY
+            if pct:      vc.number_format = _FMT_PCT
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        # ── Property basics ───────────────────────────────────────────────────
+        _section_hd("بيانات العقار الأساسية")
+        _kv("نوع الأصل",      asset_type)
+        _kv("الموقع",         md.get("location") or md.get("address") or "—", alt=True)
+        _kv("غرض التقييم",   self.result.primary_purpose if self.result else "—")
+        _kv("تاريخ التقييم", md.get("valuation_date") or self.report_date, alt=True)
+        _kv("مستوى الثقة",   confidence)
+        r += 1
+
+        # ── Three approaches table ────────────────────────────────────────────
+        _section_hd("نتائج أساليب التقييم الثلاثة")
+
+        for col, hdr in enumerate(("الأسلوب", "القيمة (EGP)", "الوزن"), 2):
+            hc            = ws.cell(row=r, column=col)
+            hc.value      = hdr
+            hc.fill       = _FILL_SUBHEAD_AR
+            hc.font       = Font(bold=True, size=10)
+            hc.alignment  = _ALIGN_CENTER
+            hc.border     = _BORDER_THIN
+            ws.row_dimensions[r].height = 18
+        ws.cell(row=r, column=5).fill   = _FILL_SUBHEAD_AR
+        ws.cell(row=r, column=5).border = _BORDER_THIN
+        r += 1
+
+        for i, (lbl, val, wk) in enumerate((
+            ("المقارنة البيعية", comp, "comparable"),
+            ("طريقة التكلفة",   cost, "cost"),
+            ("رأسمالة الدخل",   inc,  "income"),
+        )):
+            fill = _FILL_ROW_BAND if i % 2 else None
+            nc = ws.cell(row=r, column=2)
+            nc.value     = lbl
+            nc.font      = Font(bold=True, size=10)
+            nc.alignment = Alignment(horizontal="right", vertical="center")
+            nc.border    = _BORDER_THIN
+            if fill: nc.fill = fill
+
+            vc = ws.cell(row=r, column=3)
+            vc.value         = val
+            vc.number_format = _FMT_CURRENCY
+            vc.alignment     = _ALIGN_CENTER
+            vc.border        = _BORDER_THIN
+            if fill: vc.fill = fill
+
+            wc = ws.cell(row=r, column=4)
+            wc.value         = w.get(wk, 0)
+            wc.number_format = _FMT_PCT
+            wc.alignment     = _ALIGN_CENTER
+            wc.border        = _BORDER_THIN
+            if fill: wc.fill = fill
+
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        # Reconciled total
+        rc = ws.cell(row=r, column=2)
+        rc.value     = "القيمة التوفيقية النهائية"
+        rc.font      = _FONT_FINAL_VALUE
+        rc.fill      = _FILL_FINAL_VALUE
+        rc.alignment = Alignment(horizontal="right", vertical="center")
+        rc.border    = _BORDER_MEDIUM
+
+        vc = ws.cell(row=r, column=3)
+        vc.value         = fv
+        vc.number_format = _FMT_CURRENCY
+        vc.font          = _FONT_FINAL_VALUE
+        vc.fill          = _FILL_FINAL_VALUE
+        vc.alignment     = _ALIGN_CENTER
+        vc.border        = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 22
+        r += 2
+
+        # ── Simple bar chart ──────────────────────────────────────────────────
+        # Write chart data in hidden-ish rows (no explicit hide — keeps things simple)
+        chart_data_row = r
+        for col, hdr in enumerate(("الأسلوب", "القيمة"), 2):
+            ws.cell(row=r, column=col).value = hdr
+            ws.cell(row=r, column=col).font  = _FONT_BOLD
+        r += 1
+        for lbl, val in (
+            ("المقارنة", comp),
+            ("التكلفة",  cost),
+            ("الدخل",    inc),
+            ("النهائية", fv),
+        ):
+            ws.cell(row=r, column=2).value = lbl
+            ws.cell(row=r, column=3).value = val
+            ws.cell(row=r, column=3).number_format = _FMT_CURRENCY
+            r += 1
+        chart_last_row = r - 1
+
+        try:
+            from openpyxl.chart import BarChart, Reference
+            chart              = BarChart()
+            chart.type         = "col"
+            chart.title        = "مقارنة أساليب التقييم"
+            chart.y_axis.title = "القيمة (EGP)"
+            chart.style        = 10
+            chart.width        = 18
+            chart.height       = 12
+            data = Reference(ws, min_col=3, min_row=chart_data_row,
+                             max_row=chart_last_row)
+            cats = Reference(ws, min_col=2, min_row=chart_data_row + 1,
+                             max_row=chart_last_row)
+            chart.add_data(data, titles_from_data=True)
+            chart.set_categories(cats)
+            ws.add_chart(chart, f"B{r + 1}")
+        except Exception:
+            pass  # chart is optional
+
+        ws.freeze_panes = "B4"
+
+    def sheet_sales_comparison(self) -> None:
+        """'مقارنات البيوع' — USPAP/IVS Sales Comparison Adjustment Grid (legacy only)."""
+        ws = self.workbook.create_sheet("مقارنات البيوع")
+        ws.sheet_view.rightToLeft = True
+
+        # Local fill/font constants
+        _F_ADJ_POS  = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
+        _F_ADJ_NEG  = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
+        _F_ADJ_ZERO = PatternFill(start_color="E8E8E8", end_color="E8E8E8", fill_type="solid")
+        _F_GOLD     = PatternFill(start_color="FFD966", end_color="FFD966", fill_type="solid")
+        _F_EMERALD  = PatternFill(start_color="A9D18E", end_color="A9D18E", fill_type="solid")
+        _F_COLHDR   = PatternFill(start_color="2E4057", end_color="2E4057", fill_type="solid")
+        _FONT_GOLD    = Font(bold=True, size=10, color="7F5700")
+        _FONT_EMERALD = Font(bold=True, size=10, color="1A6B2A")
+        _FONT_FINAL   = Font(bold=True, size=13, color="7F3700")
+        _FONT_COLHDR  = Font(bold=True, color="FFFFFF", size=9)
+
+        md = self.result.metadata if self.result else {}
+
+        # ── Comparable data (cap at 5, pad to at least 3) ─────────────────────
+        raw_comps = md.get("comparables") or md.get("comparable_sales") or []
+        comps = list(raw_comps[:5])
+        while len(comps) < 3:
+            comps.append({})
+        n = len(comps)
+
+        # ── 9 Adjustment items ─────────────────────────────────────────────────
+        _ADJ_ITEMS = [
+            ("الموقع",   "adj_location",  "location"),
+            ("المساحة",  "adj_area",      "area"),
+            ("الدور",    "adj_floor",     "floor"),
+            ("العمر",    "adj_age",       "age"),
+            ("التشطيب",  "adj_condition", "condition"),
+            ("الإطلالة", "adj_view",      "view"),
+            ("التوقيت",  "adj_timing",    "timing"),
+            ("الواجهة",  "adj_facade",    "facade"),
+            ("الخدمات",  "adj_services",  "services"),
+        ]
+        N_ADJ = len(_ADJ_ITEMS)
+
+        # ── Column layout: B=label, then (val, adj%) pairs per comparable ──────
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 26
+        for i in range(n):
+            ws.column_dimensions[get_column_letter(3 + 2 * i)].width = 17
+            ws.column_dimensions[get_column_letter(4 + 2 * i)].width = 12
+        last_data_col = 2 + 2 * n
+        last_col_lt   = get_column_letter(last_data_col)
+
+        # ── Row 1: Professional matrix banner ─────────────────────────────────
+        ws.merge_cells(f"A1:{last_col_lt}1")
+        t           = ws["A1"]
+        t.value     = "مصفوفة الضبط الاحترافية"
+        t.fill      = _FILL_HEADER
+        t.font      = Font(bold=True, color="FFFFFF", size=16)
+        t.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 36
+
+        # ── Row 2: English subtitle ────────────────────────────────────────────
+        ws.merge_cells(f"A2:{last_col_lt}2")
+        ws["A2"].value     = "Professional Sales Adjustment Grid — USPAP / IVS"
+        ws["A2"].font      = Font(bold=True, color="FFFFFF", size=11)
+        ws["A2"].fill      = _FILL_INPUT_SECT
+        ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[2].height = 22
+
+        # ── Row 3: Report info sub-banner ──────────────────────────────────────
+        ws.merge_cells(f"A3:{last_col_lt}3")
+        ws["A3"].value     = (
+            f"تاريخ التقرير: {self.report_date}  |  "
+            f"نوع الأصل: {getattr(self.result, 'asset_type', '—') if self.result else '—'}  |  "
+            "المعيار: USPAP / IVS 105"
+        )
+        ws["A3"].font      = _FONT_MUTED
+        ws["A3"].alignment = Alignment(horizontal="center")
+        ws.row_dimensions[3].height = 16
+
+        # ── Row 4: Column headers ──────────────────────────────────────────────
+        HDR_ROW = 4
+        ws.row_dimensions[HDR_ROW].height = 22
+        lhc           = ws.cell(row=HDR_ROW, column=2)
+        lhc.value     = "بند الضبط"
+        lhc.fill      = _F_COLHDR
+        lhc.font      = Font(bold=True, color="FFFFFF", size=10)
+        lhc.alignment = Alignment(horizontal="right", vertical="center")
+        lhc.border    = _BORDER_THIN
+
+        for i in range(n):
+            comp_label = f"مقارن {i + 1}"
+            for offset, suffix in ((0, " - الخاصية"), (1, " - الضبط %")):
+                c           = ws.cell(row=HDR_ROW, column=3 + 2 * i + offset)
+                c.value     = comp_label + suffix
+                c.fill      = _F_COLHDR
+                c.font      = _FONT_COLHDR
+                c.alignment = _ALIGN_CENTER
+                c.border    = _BORDER_THIN
+
+        # ── Rows 5-13: Adjustment items ────────────────────────────────────────
+        ADJ_START = 5
+        ADJ_END   = ADJ_START + N_ADJ - 1   # = 13
+
+        for row_i, (ar_label, adj_key, val_key) in enumerate(_ADJ_ITEMS):
+            r    = ADJ_START + row_i
+            band = _FILL_ROW_BAND if row_i % 2 else _FILL_INPUT_CELL
+
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = ar_label
+            lc.font      = Font(bold=True, size=10)
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.fill      = band
+            lc.border    = _BORDER_THIN
+            ws.row_dimensions[r].height = 18
+
+            for i, comp in enumerate(comps):
+                adj_pct = 0.0
+                try:
+                    adj_pct = float(comp.get(adj_key, 0) or 0)
+                except (TypeError, ValueError):
+                    pass
+
+                char_val = str(comp.get(val_key, "") or "")
+                vcol     = 3 + 2 * i
+                acol     = 4 + 2 * i
+
+                vc           = ws.cell(row=r, column=vcol)
+                vc.value     = char_val
+                vc.alignment = _ALIGN_CENTER
+                vc.fill      = _F_ADJ_ZERO
+                vc.border    = _BORDER_THIN
+
+                ac              = ws.cell(row=r, column=acol)
+                ac.value        = adj_pct
+                ac.number_format = _FMT_PCT
+                ac.alignment    = _ALIGN_CENTER
+                ac.border       = _BORDER_THIN
+                ac.fill = (
+                    _F_ADJ_POS  if adj_pct > 0 else
+                    _F_ADJ_NEG  if adj_pct < 0 else
+                    _F_ADJ_ZERO
+                )
+
+        # ── Row 14: thin spacer ────────────────────────────────────────────────
+        ws.row_dimensions[14].height = 6
+
+        # ── Row 15: إجمالي الضبط الصافي (SUM formula) ─────────────────────────
+        NET_ROW = 15
+        ws.row_dimensions[NET_ROW].height = 20
+        nc           = ws.cell(row=NET_ROW, column=2)
+        nc.value     = "إجمالي الضبط الصافي"
+        nc.font      = _FONT_GOLD
+        nc.fill      = _F_GOLD
+        nc.alignment = Alignment(horizontal="right", vertical="center")
+        nc.border    = _BORDER_THIN
+
+        for i in range(n):
+            vcol    = 3 + 2 * i
+            acol    = 4 + 2 * i
+            adj_let = get_column_letter(acol)
+
+            vc        = ws.cell(row=NET_ROW, column=vcol)
+            vc.fill   = _F_GOLD
+            vc.border = _BORDER_THIN
+
+            ac              = ws.cell(row=NET_ROW, column=acol)
+            ac.value        = f"=SUM({adj_let}{ADJ_START}:{adj_let}{ADJ_END})"
+            ac.number_format = _FMT_PCT
+            ac.font         = _FONT_GOLD
+            ac.fill         = _F_GOLD
+            ac.alignment    = _ALIGN_CENTER
+            ac.border       = _BORDER_THIN
+
+        # ── Row 16: السعر الأصلي (EGP/م²) ────────────────────────────────────
+        ORIG_ROW = 16
+        ws.row_dimensions[ORIG_ROW].height = 18
+        oc           = ws.cell(row=ORIG_ROW, column=2)
+        oc.value     = "السعر الأصلي (EGP/م²)"
+        oc.font      = Font(bold=True, size=10)
+        oc.fill      = _FILL_SUBHEAD_AR
+        oc.alignment = Alignment(horizontal="right", vertical="center")
+        oc.border    = _BORDER_THIN
+
+        for i, comp in enumerate(comps):
+            vcol      = 3 + 2 * i
+            acol      = 4 + 2 * i
+            price_sqm = 0.0
+            try:
+                price_sqm = float(
+                    comp.get("price_per_sqm") or comp.get("price_sqm") or
+                    comp.get("unit_price") or 0
+                )
+                if not price_sqm:
+                    total     = float(comp.get("price") or comp.get("sale_price") or
+                                      comp.get("value") or 0)
+                    area      = float(comp.get("area") or comp.get("floor_area_m2") or 0)
+                    price_sqm = (total / area) if area > 0 else 0.0
+            except (TypeError, ValueError):
+                pass
+
+            vc              = ws.cell(row=ORIG_ROW, column=vcol)
+            vc.value        = price_sqm
+            vc.number_format = _FMT_CURRENCY
+            vc.alignment    = _ALIGN_CENTER
+            vc.fill         = _FILL_SUBHEAD_AR
+            vc.border       = _BORDER_THIN
+
+            ac        = ws.cell(row=ORIG_ROW, column=acol)
+            ac.fill   = _FILL_SUBHEAD_AR
+            ac.border = _BORDER_THIN
+
+        # ── Row 17: السعر بعد الضبط (formula) ────────────────────────────────
+        ADJ_PRICE_ROW = 17
+        ws.row_dimensions[ADJ_PRICE_ROW].height = 20
+        apc           = ws.cell(row=ADJ_PRICE_ROW, column=2)
+        apc.value     = "السعر بعد الضبط (EGP/م²)"
+        apc.font      = _FONT_EMERALD
+        apc.fill      = _F_EMERALD
+        apc.alignment = Alignment(horizontal="right", vertical="center")
+        apc.border    = _BORDER_THIN
+
+        for i in range(n):
+            vcol    = 3 + 2 * i
+            acol    = 4 + 2 * i
+            val_let = get_column_letter(vcol)
+            adj_let = get_column_letter(acol)
+
+            vc              = ws.cell(row=ADJ_PRICE_ROW, column=vcol)
+            vc.value        = f"={val_let}{ORIG_ROW}*(1+{adj_let}{NET_ROW})"
+            vc.number_format = _FMT_CURRENCY
+            vc.font         = _FONT_EMERALD
+            vc.fill         = _F_EMERALD
+            vc.alignment    = _ALIGN_CENTER
+            vc.border       = _BORDER_THIN
+
+            ac        = ws.cell(row=ADJ_PRICE_ROW, column=acol)
+            ac.fill   = _F_EMERALD
+            ac.border = _BORDER_THIN
+
+        # ── Row 18: وزن المقارن (Match Quality) ──────────────────────────────
+        WEIGHT_ROW = 18
+        ws.row_dimensions[WEIGHT_ROW].height = 18
+        wc           = ws.cell(row=WEIGHT_ROW, column=2)
+        wc.value     = "وزن المقارن (Match Quality)"
+        wc.font      = Font(bold=True, size=10)
+        wc.fill      = _FILL_ROW_BAND
+        wc.alignment = Alignment(horizontal="right", vertical="center")
+        wc.border    = _BORDER_THIN
+
+        default_wt = 1.0 / n if n else 1.0
+        for i, comp in enumerate(comps):
+            vcol = 3 + 2 * i
+            acol = 4 + 2 * i
+            wt   = default_wt
+            try:
+                raw_wt = comp.get("weight") or comp.get("match_quality")
+                if raw_wt is not None:
+                    wt = float(raw_wt)
+            except (TypeError, ValueError):
+                pass
+
+            vc              = ws.cell(row=WEIGHT_ROW, column=vcol)
+            vc.value        = wt
+            vc.number_format = _FMT_PCT
+            vc.alignment    = _ALIGN_CENTER
+            vc.fill         = _FILL_ROW_BAND
+            vc.border       = _BORDER_THIN
+
+            ac        = ws.cell(row=WEIGHT_ROW, column=acol)
+            ac.fill   = _FILL_ROW_BAND
+            ac.border = _BORDER_THIN
+
+        # ── Row 19: spacer ────────────────────────────────────────────────────
+        ws.row_dimensions[19].height = 6
+
+        # ── Row 20: السعر النهائي الموزون (weighted average formula) ──────────
+        FINAL_ROW = 20
+        ws.row_dimensions[FINAL_ROW].height = 26
+        ws.merge_cells(f"A{FINAL_ROW}:B{FINAL_ROW}")
+        fc_lbl           = ws.cell(row=FINAL_ROW, column=1)
+        fc_lbl.value     = "السعر النهائي الموزون (EGP/م²)"
+        fc_lbl.font      = _FONT_FINAL
+        fc_lbl.fill      = _F_GOLD
+        fc_lbl.alignment = Alignment(horizontal="right", vertical="center")
+        fc_lbl.border    = _BORDER_MEDIUM
+
+        # Formula: =SUMPRODUCT(adj_prices, weights) / SUM(weights)
+        # Intermediate (adjustment %) columns are empty so their zero values
+        # are harmless inside the contiguous range used by SUMPRODUCT / SUM.
+        final_formula = (
+            f"=SUMPRODUCT(C{ADJ_PRICE_ROW}:{last_col_lt}{ADJ_PRICE_ROW},"
+            f"C{WEIGHT_ROW}:{last_col_lt}{WEIGHT_ROW})/"
+            f"SUM(C{WEIGHT_ROW}:{last_col_lt}{WEIGHT_ROW})"
+        )
+
+        fc_val              = ws.cell(row=FINAL_ROW, column=3)
+        fc_val.value        = final_formula
+        fc_val.number_format = _FMT_CURRENCY
+        fc_val.font         = _FONT_FINAL
+        fc_val.fill         = _F_GOLD
+        fc_val.alignment    = _ALIGN_CENTER
+        fc_val.border       = _BORDER_MEDIUM
+        for col in range(4, last_data_col + 1):
+            c        = ws.cell(row=FINAL_ROW, column=col)
+            c.fill   = _F_GOLD
+            c.border = _BORDER_THIN
+
+        # ── Legend (row 22+) ──────────────────────────────────────────────────
+        LEGEND_ROW = 22
+        ws.row_dimensions[LEGEND_ROW].height = 18
+        ws.merge_cells(f"B{LEGEND_ROW}:E{LEGEND_ROW}")
+        lhdr           = ws.cell(row=LEGEND_ROW, column=2)
+        lhdr.value     = "دليل الألوان — Color Legend"
+        lhdr.fill      = _F_COLHDR
+        lhdr.font      = Font(bold=True, color="FFFFFF", size=10)
+        lhdr.alignment = _ALIGN_CENTER
+
+        legend_items = [
+            (_F_ADJ_POS,  "ضبط موجب — المقارن أدنى من العقار (يُضاف للسعر)"),
+            (_F_ADJ_NEG,  "ضبط سالب — المقارن أفضل من العقار (يُخصم من السعر)"),
+            (_F_ADJ_ZERO, "لا يوجد ضبط — المقارن مماثل للعقار"),
+            (_F_GOLD,     "صفوف الملخص (إجمالي الضبط / السعر النهائي الموزون)"),
+            (_F_EMERALD,  "السعر بعد تطبيق الضبط (Adjusted Price)"),
+        ]
+        for j, (fill, text) in enumerate(legend_items):
+            lr = LEGEND_ROW + 1 + j
+            ws.row_dimensions[lr].height = 16
+            ic        = ws.cell(row=lr, column=2)
+            ic.fill   = fill
+            ic.border = _BORDER_THIN
+            ws.merge_cells(f"C{lr}:E{lr}")
+            tc           = ws.cell(row=lr, column=3)
+            tc.value     = text
+            tc.font      = Font(size=9)
+            tc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+
+        # ── Methodology block ─────────────────────────────────────────────────
+        METH_ROW = LEGEND_ROW + len(legend_items) + 2
+        ws.row_dimensions[METH_ROW].height = 20
+        ws.merge_cells(f"B{METH_ROW}:{last_col_lt}{METH_ROW}")
+        mhdr           = ws.cell(row=METH_ROW, column=2)
+        mhdr.value     = "منهجية التقييم بأسلوب المقارنة البيعية — Methodology"
+        mhdr.fill      = _FILL_INPUT_SECT
+        mhdr.font      = Font(bold=True, color="FFFFFF", size=11)
+        mhdr.alignment = Alignment(horizontal="right", vertical="center")
+
+        steps = [
+            "١. اختيار المقارنات الأقرب للعقار محل التقييم من حيث الموقع والنوع والحجم.",
+            "٢. مقارنة خصائص كل مقارن مع العقار محل التقييم للكشف عن أوجه الاختلاف.",
+            "٣. تحديد فروق الموقع والمساحة والعمر والتشطيب وباقي البنود.",
+            "٤. تطبيق نسب الضبط الموجبة (المقارن أدنى) أو السالبة (المقارن أفضل).",
+            "٥. حساب السعر بعد الضبط = السعر الأصلي × (١ + إجمالي الضبط الصافي).",
+            "٦. حساب السعر النهائي المرجح بناءً على جودة المقارنات (وزن كل مقارن).",
+        ]
+        for k, step in enumerate(steps):
+            sr = METH_ROW + 1 + k
+            ws.row_dimensions[sr].height = 16
+            ws.merge_cells(f"B{sr}:{last_col_lt}{sr}")
+            sc           = ws.cell(row=sr, column=2)
+            sc.value     = step
+            sc.font      = Font(size=9)
+            sc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            if k % 2:
+                sc.fill = _FILL_ROW_BAND
+
+        ws.freeze_panes = f"C{ADJ_START}"
+
+    # ── Remaining legacy Arabic sheets ────────────────────────────────────────
+
+    def sheet_rental_comparables(self) -> None:
+        """'المقارنات الإيجارية' — Rental Comparables (legacy only)."""
+        ws = self.workbook.create_sheet("المقارنات الإيجارية")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 28
+        ws.column_dimensions["C"].width = 20
+        ws.column_dimensions["D"].width = 20
+        ws.column_dimensions["E"].width = 20
+        ws.column_dimensions["F"].width = 20
+
+        md     = self.result.metadata if self.result else {}
+        r_comp = list((md.get("rental_comparables") or md.get("rent_comps") or [])[:3])
+        while len(r_comp) < 3:
+            r_comp.append({})
+
+        ws.merge_cells("A1:F1")
+        b           = ws["A1"]
+        b.value     = "المقارنات الإيجارية — Rental Comparables"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:F2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: IVS 105"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+        ws.row_dimensions[r].height = 22
+        for ci, hdr in enumerate(("البند", "مقارن 1", "مقارن 2", "مقارن 3", "العقار"), 2):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = hdr
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=10)
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_THIN
+        r += 1
+
+        _ROWS = [
+            ("الموقع",             "location",    md.get("location") or "—"),
+            ("المساحة (م²)",      "area",         md.get("area") or "—"),
+            ("الطابق",             "floor",        "—"),
+            ("العمر (سنة)",       "age",          md.get("year_built") or "—"),
+            ("الحالة",             "condition",    "—"),
+            ("الإيجار (EGP/م²)", "rent_sqm",     "—"),
+            ("نسبة الشاغر",       "vacancy_rate", "—"),
+            ("تاريخ الإيجار",     "lease_date",   self.report_date),
+        ]
+        for ri, (lbl, key, subj) in enumerate(_ROWS):
+            ws.row_dimensions[r].height = 18
+            fill = _FILL_ROW_BAND if ri % 2 else _FILL_INPUT_CELL
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = lbl
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            for ci, comp in enumerate(r_comp, 3):
+                v           = str(comp.get(key, "") or "—")
+                c           = ws.cell(row=r, column=ci)
+                c.value     = v
+                c.alignment = _ALIGN_CENTER
+                c.fill      = fill
+                c.border    = _BORDER_THIN
+            sc           = ws.cell(row=r, column=6)
+            sc.value     = str(subj)
+            sc.font      = Font(bold=True)
+            sc.fill      = _FILL_FINAL_VALUE
+            sc.alignment = _ALIGN_CENTER
+            sc.border    = _BORDER_THIN
+            r += 1
+
+        ws.freeze_panes = "C5"
+
+    def sheet_cost_approach(self) -> None:
+        """'طريقة التكلفة' — Cost Approach (legacy only)."""
+        ws = self.workbook.create_sheet("طريقة التكلفة")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 38
+        ws.column_dimensions["C"].width = 24
+        ws.column_dimensions["D"].width = 16
+
+        md         = self.result.metadata if self.result else {}
+        area       = float(md.get("area") or md.get("floor_area_m2") or 0)
+        land_val   = float(md.get("land_value") or md.get("land_price") or 0)
+        cost_sqm   = float(md.get("construction_cost_sqm") or 8000)
+        const_cost = float(md.get("construction_cost") or md.get("replacement_cost") or (area * cost_sqm))
+        depr_pct   = float(md.get("depreciation_rate") or md.get("depreciation") or 0)
+        add_items  = float(md.get("additional_items") or 0)
+        depr_amt   = const_cost * depr_pct
+        indicated  = land_val + const_cost + add_items - depr_amt
+
+        ws.merge_cells("A1:D1")
+        b           = ws["A1"]
+        b.value     = "طريقة التكلفة — Cost Approach"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:D2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: EGVS 3.2 / IVS 105"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:D{r}")
+            c           = ws.cell(row=r, column=1)
+            c.value     = f"  {label}"
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _row(label: str, value, fmt: str = _FMT_CURRENCY,
+                 is_calc: bool = False, alt: bool = False) -> None:
+            nonlocal r
+            fill         = _FILL_CALC_CELL if is_calc else (_FILL_ROW_BAND if alt else _FILL_INPUT_CELL)
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = label
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = value
+            vc.number_format = fmt
+            vc.alignment = _ALIGN_CENTER
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        _sect("قيمة الأرض")
+        _row("مساحة الأرض (م²)", area, '#,##0.00 "م²"')
+        _row("قيمة الأرض الإجمالية (EGP)", land_val)
+        r += 1
+
+        _sect("تكلفة الإنشاء والبناء")
+        _row("المساحة المبنية (م²)", area, '#,##0.00 "م²"')
+        _row("تكلفة البناء للمتر (EGP/م²)", cost_sqm, alt=True)
+        _row("إجمالي تكلفة البناء (EGP)", const_cost, is_calc=True)
+        _row("بنود إضافية (EGP)", add_items, alt=True)
+        r += 1
+
+        _sect("الاستهلاك والتقادم")
+        _row("نسبة الاستهلاك", depr_pct, _FMT_PCT)
+        _row("قيمة الاستهلاك (EGP)", depr_amt, is_calc=True)
+        r += 1
+
+        _sect("القيمة الاستدلالية بطريقة التكلفة")
+        _row("المباني بعد الاستهلاك (EGP)", const_cost + add_items - depr_amt, is_calc=True)
+        ws.merge_cells(f"B{r}:D{r}")
+        fc           = ws.cell(row=r, column=2)
+        fc.value     = f"القيمة الاستدلالية الإجمالية (EGP):  {indicated:,.0f}"
+        fc.font      = _FONT_FINAL_VALUE
+        fc.fill      = _FILL_FINAL_VALUE
+        fc.alignment = Alignment(horizontal="center", vertical="center")
+        fc.border    = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 24
+
+        ws.freeze_panes = "B3"
+
+    def sheet_income_capitalization(self) -> None:
+        """'رأسمالة الدخل' — Income Capitalization Approach (legacy only)."""
+        ws = self.workbook.create_sheet("رأسمالة الدخل")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 38
+        ws.column_dimensions["C"].width = 24
+        ws.column_dimensions["D"].width = 16
+
+        md         = self.result.metadata if self.result else {}
+        area       = float(md.get("area") or md.get("floor_area_m2") or 0)
+        rent_sqm   = float(md.get("rent_sqm") or md.get("rent_per_sqm") or 0)
+        vacancy    = float(md.get("vacancy_rate") or 0.05)
+        mgmt_pct   = float(md.get("management_rate") or 0.05)
+        maint_pct  = float(md.get("maintenance_rate") or 0.02)
+        tax_pct    = float(md.get("tax_rate") or 0.01)
+        cap_rate   = float(md.get("cap_rate") or md.get("capitalization_rate") or 0.08)
+
+        gross_income = float(md.get("gross_income") or (area * rent_sqm * 12 if area and rent_sqm else 0))
+        vac_loss     = gross_income * vacancy
+        egi          = gross_income - vac_loss
+        total_exp    = egi * (mgmt_pct + maint_pct + tax_pct)
+        noi          = egi - total_exp
+        indicated    = noi / cap_rate if cap_rate else 0
+
+        ws.merge_cells("A1:D1")
+        b           = ws["A1"]
+        b.value     = "رأسمالة الدخل — Income Capitalization"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:D2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: EGVS 3.3 / IVS 105"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:D{r}")
+            c           = ws.cell(row=r, column=1)
+            c.value     = f"  {label}"
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _row(label: str, value, fmt: str = _FMT_CURRENCY,
+                 is_calc: bool = False, alt: bool = False) -> None:
+            nonlocal r
+            fill         = _FILL_CALC_CELL if is_calc else (_FILL_ROW_BAND if alt else _FILL_INPUT_CELL)
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = label
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = value
+            vc.number_format = fmt
+            vc.alignment = _ALIGN_CENTER
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        _sect("بيانات الدخل الإجمالي")
+        _row("المساحة القابلة للإيجار (م²)", area, '#,##0.00 "م²"')
+        _row("معدل الإيجار (EGP/م²/شهر)", rent_sqm, alt=True)
+        _row("الدخل الإجمالي السنوي (EGP)", gross_income, is_calc=True)
+        r += 1
+
+        _sect("الشاغر والخسائر")
+        _row("نسبة الشاغر", vacancy, _FMT_PCT)
+        _row("خسارة الشاغر (EGP)", vac_loss, is_calc=True, alt=True)
+        _row("الدخل الفعلي الإجمالي — EGI (EGP)", egi, is_calc=True)
+        r += 1
+
+        _sect("المصروفات التشغيلية والنتيجة")
+        _row("إجمالي المصروفات (EGP)", total_exp, is_calc=True)
+        _row("صافي الدخل التشغيلي — NOI (EGP)", noi, is_calc=True, alt=True)
+        _row("معدل الرسملة", cap_rate, _FMT_PCT)
+        ws.merge_cells(f"B{r}:D{r}")
+        fc           = ws.cell(row=r, column=2)
+        fc.value     = f"القيمة الاستدلالية (EGP):  {indicated:,.0f}"
+        fc.font      = _FONT_FINAL_VALUE
+        fc.fill      = _FILL_FINAL_VALUE
+        fc.alignment = Alignment(horizontal="center", vertical="center")
+        fc.border    = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 24
+
+        ws.freeze_panes = "B3"
+
+    def sheet_reconciliation(self) -> None:
+        """'توفيق النتائج' — Reconciliation of Value Indications (legacy only)."""
+        ws = self.workbook.create_sheet("توفيق النتائج")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 34
+        ws.column_dimensions["C"].width = 24
+        ws.column_dimensions["D"].width = 14
+        ws.column_dimensions["E"].width = 24
+
+        md   = self.result.metadata if self.result else {}
+        fv   = float(self.result.primary_value) if self.result and self.result.primary_value else 0
+        comp = float(md.get("comparable") or 0)
+        cost = float(md.get("cost") or 0)
+        inc  = float(md.get("income") or 0)
+        w    = self.result.weights_applied if self.result else {}
+
+        ws.merge_cells("A1:E1")
+        b           = ws["A1"]
+        b.value     = "توفيق النتائج — Reconciliation of Value Indications"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:E2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: EGVS 3.0 / IVS 105"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+        ws.row_dimensions[r].height = 22
+        for ci, hdr in enumerate(
+            ("أسلوب التقييم", "القيمة الاستدلالية (EGP)", "الوزن", "القيمة الموزونة (EGP)"), 2
+        ):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = hdr
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=10)
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_THIN
+        r += 1
+
+        for i, (lbl, val, wt_key) in enumerate((
+            ("أسلوب المقارنة البيعية", comp, "comparable"),
+            ("أسلوب التكلفة",          cost, "cost"),
+            ("رأسمالة الدخل",          inc,  "income"),
+        )):
+            wt   = w.get(wt_key, 0)
+            fill = _FILL_ROW_BAND if i % 2 else _FILL_INPUT_CELL
+            ws.row_dimensions[r].height = 18
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = lbl
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            for ci, (v, fmt) in enumerate(((val, _FMT_CURRENCY), (wt, _FMT_PCT), (val * wt, _FMT_CURRENCY)), 3):
+                c                = ws.cell(row=r, column=ci)
+                c.value          = v
+                c.number_format  = fmt
+                c.alignment      = _ALIGN_CENTER
+                c.fill           = fill
+                c.border         = _BORDER_THIN
+            r += 1
+
+        ws.row_dimensions[r].height = 26
+        for ci, (v, fmt) in enumerate((
+            ("القيمة التوفيقية النهائية", None),
+            (fv, _FMT_CURRENCY),
+            ("—", None),
+            (fv, _FMT_CURRENCY),
+        ), 2):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = v
+            c.font      = _FONT_FINAL_VALUE
+            c.fill      = _FILL_FINAL_VALUE
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_MEDIUM
+            if fmt:
+                c.number_format = fmt
+        ws.cell(row=r, column=2).alignment = Alignment(horizontal="right", vertical="center")
+        r += 2
+
+        ws.merge_cells(f"B{r}:E{r}")
+        nh           = ws.cell(row=r, column=2)
+        nh.value     = "  ملاحظات التوفيق"
+        nh.fill      = _FILL_INPUT_SECT
+        nh.font      = Font(bold=True, color="FFFFFF", size=11)
+        nh.alignment = Alignment(horizontal="right", vertical="center")
+        ws.row_dimensions[r].height = 20
+        r += 1
+        for note in (
+            "• تم إعطاء الوزن الأكبر لأسلوب المقارنة البيعية لتوافر بيانات السوق.",
+            "• تم دعم النتيجة بأسلوب التكلفة والدخل لتأكيد القيمة.",
+            "• تتوافق نتائج الأساليب الثلاثة مع مؤشرات السوق الحالية.",
+        ):
+            ws.merge_cells(f"B{r}:E{r}")
+            nc           = ws.cell(row=r, column=2)
+            nc.value     = note
+            nc.font      = Font(size=9)
+            nc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            ws.row_dimensions[r].height = 16
+            r += 1
+
+        ws.freeze_panes = "B3"
+
+    def sheet_valuation_parameters(self) -> None:
+        """'محددات التقييم' — Valuation Parameters & Limiting Conditions (legacy only)."""
+        ws = self.workbook.create_sheet("محددات التقييم")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 36
+        ws.column_dimensions["C"].width = 36
+
+        md = self.result.metadata if self.result else {}
+
+        ws.merge_cells("A1:C1")
+        b           = ws["A1"]
+        b.value     = "محددات التقييم — Valuation Parameters & Limiting Conditions"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:C2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: EGVS 2.0"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:C{r}")
+            c           = ws.cell(row=r, column=1)
+            c.value     = f"  {label}"
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _param(label: str, value) -> None:
+            nonlocal r
+            fill         = _FILL_ROW_BAND if r % 2 else _FILL_INPUT_CELL
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = label
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = str(value) if value is not None else "—"
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            vc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        def _cond(text: str) -> None:
+            nonlocal r
+            fill = _FILL_ROW_BAND if r % 2 else None
+            ws.merge_cells(f"B{r}:C{r}")
+            c           = ws.cell(row=r, column=2)
+            c.value     = f"• {text}"
+            c.font      = Font(size=9)
+            c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            if fill:
+                c.fill = fill
+            ws.row_dimensions[r].height = 16
+            r += 1
+
+        _sect("الافتراضات العامة")
+        _param("تاريخ التقييم",  md.get("valuation_date") or self.report_date)
+        _param("غرض التقييم",    self.result.primary_purpose if self.result else "—")
+        _param("أساس القيمة",    "القيمة السوقية — Market Value")
+        _param("نوع الأصل",      getattr(self.result, "asset_type", "—") if self.result else "—")
+        _param("حق الانتفاع",    md.get("tenure") or "ملكية حرة — Freehold")
+        _param("عملة التقرير",   "جنيه مصري — EGP")
+        r += 1
+
+        _sect("الافتراضات الخاصة")
+        _param("حالة العقار",          md.get("condition") or "جيدة")
+        _param("مصدر بيانات المساحة",  md.get("area_source") or "وثائق الملكية")
+        _param("بيانات السوق",         md.get("market_data_source") or "مصادر السوق المحلية")
+        r += 1
+
+        _sect("محددات الاستخدام")
+        for cond in (
+            "يُعدّ هذا التقرير سارياً فقط في تاريخ التقييم المُبيَّن.",
+            "لا يجوز الاستشهاد بجزء من التقرير دون الرجوع إلى النص الكامل.",
+            "لا يُؤخذ في الاعتبار أي عبء مالي غير ظاهر في المستندات الرسمية.",
+            "القيم المُحددة خاضعة لأحوال السوق في تاريخ التقييم.",
+            "لم يُراعَ في التقدير أي تكاليف بيع أو ضرائب نقل ملكية.",
+        ):
+            _cond(cond)
+
+        ws.freeze_panes = "B3"
+
+    def sheet_certification_ar(self) -> None:
+        """'شهادة' — Arabic Certification (legacy only)."""
+        ws = self.workbook.create_sheet("شهادة")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 70
+
+        md = self.result.metadata if self.result else {}
+
+        ws.merge_cells("A1:B1")
+        b           = ws["A1"]
+        b.value     = "شهادة المقيم — Appraiser Certification"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:B2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+        cert_ar = (
+            "أشهد أنا الموقع أدناه بأن البيانات الواردة في هذا التقرير صحيحة وصادقة "
+            "وفق أفضل ما لديَّ من معرفة ومعلومات، وأن الاستنتاجات المُبيَّنة فيه تمثل "
+            "رأيي المهني المستقل والمحايد، وقد توصلتُ إليها وفق المعايير المهنية المعتمدة.\n\n"
+            "أُقرّ بأنه لا توجد لديَّ أي مصلحة حالية أو مستقبلية في العقار موضوع التقرير.\n\n"
+            "تم إعداد هذا التقرير وفقاً للمعايير المصرية للتقييم (EgVS) "
+            "والمعيار الدولي للتقارير المالية (IFRS 13)."
+        )
+        ws.merge_cells(f"B{r}:B{r + 5}")
+        cc           = ws.cell(row=r, column=2)
+        cc.value     = cert_ar
+        cc.alignment = Alignment(horizontal="right", vertical="top", wrap_text=True)
+        cc.fill      = _FILL_INPUT_CELL
+        cc.border    = _BORDER_THIN
+        ws.row_dimensions[r].height = 120
+        r += 7
+
+        for lbl, val in (
+            ("اسم المقيم:",    md.get("appraiser_name") or "________________________________"),
+            ("رقم الترخيص:", md.get("license_no")      or "________________________________"),
+            ("التاريخ:",       self.report_date),
+            ("التوقيع:",       "________________________________"),
+        ):
+            ws.row_dimensions[r].height = 22
+            c           = ws.cell(row=r, column=2)
+            c.value     = f"{lbl}  {val}"
+            c.font      = Font(bold=True, size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            r += 2
+
+    def sheet_data_sources(self) -> None:
+        """'مصادر البيانات والمنهجية' — Data Sources & Methodology (legacy only)."""
+        ws = self.workbook.create_sheet("مصادر البيانات والمنهجية")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 30
+        ws.column_dimensions["C"].width = 46
+
+        md = self.result.metadata if self.result else {}
+
+        ws.merge_cells("A1:C1")
+        b           = ws["A1"]
+        b.value     = "مصادر البيانات والمنهجية — Data Sources & Methodology"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:C2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:C{r}")
+            c           = ws.cell(row=r, column=1)
+            c.value     = f"  {label}"
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _src(name: str, desc: str) -> None:
+            nonlocal r
+            fill         = _FILL_ROW_BAND if r % 2 else _FILL_INPUT_CELL
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = name
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = desc
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            vc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        _sect("مصادر البيانات")
+        _src("بيانات السوق",          "صفقات البيع والإيجار المسجلة من مصادر محلية معتمدة")
+        _src("المستندات الرسمية",     "مستندات الملكية ووثائق المساحة الرسمية")
+        _src("المعاينة الميدانية",    f"تاريخ المعاينة: {md.get('inspection_date') or self.report_date}")
+        _src("الصور الجوية والخرائط", "خرائط الموقع والصور الجوية المحدّثة")
+        _src("قواعد البيانات",        md.get("data_source") or "قاعدة بيانات Expert Smart EgVS")
+        r += 1
+
+        _sect("المنهجية المتبعة")
+        for step in (
+            "تحليل السوق وتحديد العوامل المؤثرة في القيمة.",
+            "اختيار المقارنات الأكثر ملاءمة وتطبيق الضبط.",
+            "تطبيق الأساليب الثلاثة: المقارنة، التكلفة، الدخل.",
+            "توفيق النتائج وإعطاء الأوزان المناسبة لكل أسلوب.",
+            "إعداد التقرير وفق معايير EgVS / IVS.",
+        ):
+            fill = _FILL_ROW_BAND if r % 2 else None
+            ws.merge_cells(f"B{r}:C{r}")
+            c           = ws.cell(row=r, column=2)
+            c.value     = f"• {step}"
+            c.font      = Font(size=9)
+            c.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            if fill:
+                c.fill = fill
+            ws.row_dimensions[r].height = 16
+            r += 1
+        r += 1
+
+        _sect("المعايير المطبقة")
+        for name, desc in (
+            ("EgVS",   "المعايير المصرية للتقييم العقاري"),
+            ("IVS 2022", "معايير التقييم الدولية"),
+            ("IFRS 13",  "المعيار الدولي للتقارير المالية — القيمة العادلة"),
+            ("USPAP",    "مبادئ التقييم المقبولة عموماً"),
+        ):
+            _src(name, desc)
+
+        ws.freeze_panes = "B3"
+
+    def sheet_dcf(self) -> None:
+        """'DCF — التدفقات النقدية' — Discounted Cash Flow (legacy only)."""
+        ws = self.workbook.create_sheet("DCF — التدفقات النقدية")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 8
+        ws.column_dimensions["B"].width = 28
+        ws.column_dimensions["C"].width = 22
+        ws.column_dimensions["D"].width = 16
+        ws.column_dimensions["E"].width = 22
+
+        md          = self.result.metadata if self.result else {}
+        noi         = float(md.get("noi") or md.get("net_operating_income") or 0)
+        growth_r    = float(md.get("income_growth_rate") or md.get("growth_rate") or 0.03)
+        discount_r  = float(md.get("discount_rate") or 0.10)
+        hold_yrs    = int(md.get("holding_period") or 10)
+        terminal_cr = float(md.get("terminal_cap_rate") or md.get("exit_cap_rate") or 0.09)
+
+        ws.merge_cells("A1:E1")
+        b           = ws["A1"]
+        b.value     = "DCF — التدفقات النقدية المخصومة"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:E2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: IVS 105"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+
+        def _sect(label: str) -> None:
+            nonlocal r
+            ws.merge_cells(f"A{r}:E{r}")
+            c           = ws.cell(row=r, column=1)
+            c.value     = f"  {label}"
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+        def _param(label: str, value, fmt: str = "") -> None:
+            nonlocal r
+            fill         = _FILL_ROW_BAND if r % 2 else _FILL_INPUT_CELL
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = label
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = value
+            if fmt:
+                vc.number_format = fmt
+            vc.alignment = _ALIGN_CENTER
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            ws.row_dimensions[r].height = 18
+            r += 1
+
+        _sect("افتراضات التحليل")
+        _param("صافي الدخل التشغيلي الأولي (NOI)", noi, _FMT_CURRENCY)
+        _param("معدل نمو الدخل السنوي", growth_r, _FMT_PCT)
+        _param("معدل الخصم (Discount Rate)", discount_r, _FMT_PCT)
+        _param("فترة الاحتجاز (سنوات)", hold_yrs)
+        _param("معدل الرسملة عند الخروج", terminal_cr, _FMT_PCT)
+        r += 1
+
+        _sect("جدول التدفقات النقدية المخصومة")
+        ws.row_dimensions[r].height = 22
+        for ci, hdr in enumerate(("السنة", "NOI (EGP)", "معامل الخصم", "القيمة الحالية (EGP)"), 2):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = hdr
+            c.fill      = _FILL_SUBHEAD_AR
+            c.font      = Font(bold=True, size=10)
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_THIN
+        r += 1
+
+        total_pv = 0.0
+        for yr in range(1, hold_yrs + 1):
+            yr_noi = noi * ((1 + growth_r) ** yr)
+            factor = 1 / ((1 + discount_r) ** yr)
+            pv     = yr_noi * factor
+            total_pv += pv
+            fill = _FILL_ROW_BAND if yr % 2 else _FILL_INPUT_CELL
+            ws.row_dimensions[r].height = 17
+            for ci, (v, fmt) in enumerate((
+                (yr,     ""),
+                (yr_noi, _FMT_CURRENCY),
+                (factor, "0.000000"),
+                (pv,     _FMT_CURRENCY),
+            ), 2):
+                c           = ws.cell(row=r, column=ci)
+                c.value     = v
+                if fmt:
+                    c.number_format = fmt
+                c.alignment = _ALIGN_CENTER
+                c.fill      = fill
+                c.border    = _BORDER_THIN
+            r += 1
+
+        terminal_noi  = noi * ((1 + growth_r) ** (hold_yrs + 1))
+        terminal_val  = terminal_noi / terminal_cr if terminal_cr else 0
+        pv_terminal   = terminal_val / ((1 + discount_r) ** hold_yrs)
+        total_pv     += pv_terminal
+
+        ws.row_dimensions[r].height = 18
+        for ci, (v, fmt) in enumerate((
+            ("القيمة النهائية", ""),
+            (terminal_val, _FMT_CURRENCY),
+            ("—", ""),
+            (pv_terminal, _FMT_CURRENCY),
+        ), 2):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = v
+            if fmt:
+                c.number_format = fmt
+            c.font      = Font(bold=True)
+            c.fill      = _FILL_SUBHEAD_AR
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_THIN
+        r += 2
+
+        ws.merge_cells(f"B{r}:D{r}")
+        fc           = ws.cell(row=r, column=2)
+        fc.value     = f"القيمة الحالية الصافية — NPV (EGP):  {total_pv:,.0f}"
+        fc.font      = _FONT_FINAL_VALUE
+        fc.fill      = _FILL_FINAL_VALUE
+        fc.alignment = Alignment(horizontal="center", vertical="center")
+        fc.border    = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 24
+
+        ws.freeze_panes = "B3"
+
+    def sheet_rent_vs_buy(self) -> None:
+        """'الإيجار مقابل الشراء' — Rent vs Buy Analysis (legacy only)."""
+        ws = self.workbook.create_sheet("الإيجار مقابل الشراء")
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 36
+        ws.column_dimensions["C"].width = 24
+        ws.column_dimensions["D"].width = 24
+
+        md           = self.result.metadata if self.result else {}
+        fv           = float(self.result.primary_value) if self.result and self.result.primary_value else 0
+        area         = float(md.get("area") or md.get("floor_area_m2") or 0)
+        rent_monthly = float(md.get("rent_monthly") or
+                             (float(md.get("rent_sqm", 0) or 0) * area) or 0)
+        dp_pct       = float(md.get("down_payment_pct") or 0.20)
+        mort_r       = float(md.get("mortgage_rate") or 0.12)
+        years        = int(md.get("mortgage_years") or 20)
+        down_pmt     = fv * dp_pct
+        loan         = fv - down_pmt
+        monthly_r    = mort_r / 12
+        n_months     = years * 12
+        mort_pmt     = (
+            loan * monthly_r / (1 - (1 + monthly_r) ** (-n_months))
+            if monthly_r > 0 and n_months > 0 else
+            (loan / n_months if n_months else 0)
+        )
+
+        ws.merge_cells("A1:D1")
+        b           = ws["A1"]
+        b.value     = "الإيجار مقابل الشراء — Rent vs Buy Analysis"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:D2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+        ws.row_dimensions[r].height = 22
+        for ci, hdr in enumerate(("البند", "الشراء", "الإيجار"), 2):
+            c           = ws.cell(row=r, column=ci)
+            c.value     = hdr
+            c.fill      = _FILL_INPUT_SECT
+            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.alignment = _ALIGN_CENTER
+            c.border    = _BORDER_THIN
+        r += 1
+
+        _ROWS = [
+            ("سعر الشراء / الإيجار الشهري",     fv,         rent_monthly,        _FMT_CURRENCY),
+            ("الدفعة المقدمة",                   down_pmt,   0,                   _FMT_CURRENCY),
+            ("قيمة القرض / الصفر",               loan,       0,                   _FMT_CURRENCY),
+            ("معدل الفائدة / نمو الإيجار",       mort_r,     float(md.get("rent_growth", 0.05) or 0), _FMT_PCT),
+            ("القسط/الإيجار الشهري (EGP)",      mort_pmt,   rent_monthly,        _FMT_CURRENCY),
+            (f"إجمالي التكلفة على {years} سنة",  mort_pmt * n_months, rent_monthly * n_months, _FMT_CURRENCY),
+        ]
+        for ri, (lbl, buy_v, rent_v, fmt) in enumerate(_ROWS):
+            ws.row_dimensions[r].height = 18
+            fill = _FILL_ROW_BAND if ri % 2 else _FILL_INPUT_CELL
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = lbl
+            lc.font      = Font(bold=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            for ci, v in enumerate((buy_v, rent_v), 3):
+                c                = ws.cell(row=r, column=ci)
+                c.value          = v
+                c.number_format  = fmt
+                c.alignment      = _ALIGN_CENTER
+                c.fill           = fill
+                c.border         = _BORDER_THIN
+            r += 1
+
+        r += 1
+        conclusion = "الشراء" if (mort_pmt < rent_monthly * 1.5 or rent_monthly == 0) else "الإيجار"
+        ws.merge_cells(f"B{r}:D{r}")
+        fc           = ws.cell(row=r, column=2)
+        fc.value     = f"التوصية: {conclusion} هو الخيار الأمثل بناءً على الافتراضات المُبيَّنة."
+        fc.font      = _FONT_FINAL_VALUE
+        fc.fill      = _FILL_FINAL_VALUE
+        fc.alignment = Alignment(horizontal="center", vertical="center")
+        fc.border    = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 24
+
+        ws.freeze_panes = "B3"
+
+    def sheet_habu(self) -> None:
+        """'أفضل وأعلى استخدام — HABU' — Highest and Best Use (legacy only)."""
+        ws = self.workbook.create_sheet(
+            "أفضل وأعلى استخدام — HABU"
+        )
+        ws.sheet_view.rightToLeft = True
+        ws.column_dimensions["A"].width = 4
+        ws.column_dimensions["B"].width = 30
+        ws.column_dimensions["C"].width = 52
+
+        md = self.result.metadata if self.result else {}
+
+        ws.merge_cells("A1:C1")
+        b           = ws["A1"]
+        b.value     = "أفضل وأعلى استخدام — Highest & Best Use (HABU)"
+        b.fill      = _FILL_HEADER
+        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 32
+
+        ws.merge_cells("A2:C2")
+        ws["A2"].value     = f"تاريخ التقرير: {self.report_date}  |  المعيار: IVS 102"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        r = 4
+        criteria = [
+            ("١. المشروعية القانونية",
+             "هل الاستخدام مسموح به بموجب التقسيم واللوائح التنظيمية؟",
+             md.get("habu_legal") or "الاستخدام السكاني / التجاري مُرخَّص ومتوافق مع لوائح المنطقة."),
+            ("٢. الجدوى الفيزيائية",
+             "هل الموقع يتحمّل الاستخدام المقترح هيكلياً ومساحياً؟",
+             md.get("habu_physical") or "المساحة وطبيعة الموقع تدعم الاستخدام المقترح."),
+            ("٣. الجدوى المالية",
+             "هل الاستخدام يحقق عائداً يتجاوز تكلفة الاستثمار؟",
+             md.get("habu_financial") or "الاستخدام المقترح يُحقق عائداً إيجابياً بناءً على تحليل السوق."),
+            ("٤. تعظيم الإنتاجية",
+             "أي استخدام يحقق أعلى قيمة للعقار؟",
+             md.get("habu_productive") or "الاستخدام الحالي يُعظّم قيمة العقار في السوق الراهن."),
+        ]
+        for i, (crit, question, answer) in enumerate(criteria):
+            fill = _FILL_ROW_BAND if i % 2 else _FILL_INPUT_CELL
+            ws.merge_cells(f"B{r}:C{r}")
+            ch           = ws.cell(row=r, column=2)
+            ch.value     = crit
+            ch.fill      = _FILL_INPUT_SECT
+            ch.font      = Font(bold=True, color="FFFFFF", size=11)
+            ch.alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[r].height = 20
+            r += 1
+
+            ws.row_dimensions[r].height = 18
+            lc           = ws.cell(row=r, column=2)
+            lc.value     = "السؤال:"
+            lc.font      = Font(bold=True, italic=True, size=10)
+            lc.fill      = fill
+            lc.alignment = Alignment(horizontal="right", vertical="center")
+            lc.border    = _BORDER_THIN
+            vc           = ws.cell(row=r, column=3)
+            vc.value     = question
+            vc.font      = Font(italic=True, size=10)
+            vc.fill      = fill
+            vc.border    = _BORDER_THIN
+            vc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+            r += 1
+
+            ws.row_dimensions[r].height = 30
+            la           = ws.cell(row=r, column=2)
+            la.value     = "الجواب:"
+            la.font      = Font(bold=True, size=10)
+            la.fill      = fill
+            la.alignment = Alignment(horizontal="right", vertical="center")
+            la.border    = _BORDER_THIN
+            va           = ws.cell(row=r, column=3)
+            va.value     = answer
+            va.fill      = fill
+            va.border    = _BORDER_THIN
+            va.alignment = Alignment(horizontal="right", vertical="top", wrap_text=True)
+            r += 2
+
+        ws.merge_cells(f"B{r}:C{r}")
+        ch           = ws.cell(row=r, column=2)
+        ch.value     = "  خلاصة أفضل وأعلى استخدام"
+        ch.fill      = _FILL_INPUT_SECT
+        ch.font      = Font(bold=True, color="FFFFFF", size=11)
+        ch.alignment = Alignment(horizontal="right", vertical="center")
+        ws.row_dimensions[r].height = 20
+        r += 1
+
+        ws.merge_cells(f"B{r}:C{r}")
+        cc           = ws.cell(row=r, column=2)
+        cc.value     = (
+            md.get("habu_conclusion") or
+            f"أفضل وأعلى استخدام للعقار هو: "
+            f"{getattr(self.result, 'asset_type', 'سكني') if self.result else 'سكني'} "
+            "كما هو قائم حالياً، وهو الاستخدام الذي يُحقق أعلى قيمة سوقية."
+        )
+        cc.font      = Font(bold=True, size=10)
+        cc.fill      = _FILL_FINAL_VALUE
+        cc.alignment = Alignment(horizontal="right", vertical="center", wrap_text=True)
+        cc.border    = _BORDER_MEDIUM
+        ws.row_dimensions[r].height = 40
+
+        ws.freeze_panes = "B3"
+
+    # ──────────────────────────────────────────────────────────────────────────
     # Style helper
     # ──────────────────────────────────────────────────────────────────────────
 
@@ -1110,6 +2812,21 @@ class ExcelReportBuilder:
                 self.sheet_ivsc_compliance(ivsc_disclosure)
             if cross_border_disclosure is not None:
                 self.sheet_cross_border(cross_border_disclosure)
+            # ── Legacy-only enhanced Arabic sheets ────────────────────────────
+            if report_style == "legacy":
+                self.sheet_assumptions_inputs()
+                self.sheet_main_report()
+                self.sheet_sales_comparison()
+                self.sheet_rental_comparables()
+                self.sheet_cost_approach()
+                self.sheet_income_capitalization()
+                self.sheet_reconciliation()
+                self.sheet_valuation_parameters()
+                self.sheet_certification_ar()
+                self.sheet_data_sources()
+                self.sheet_dcf()
+                self.sheet_rent_vs_buy()
+                self.sheet_habu()
             # ── Advanced-analytics sheets (detailed only) ─────────────────────
             _inc = self._should_include_sheet
             if _inc("التحليل المكاني", report_style):

@@ -1319,6 +1319,14 @@
                     </button>
                 </div>
             </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <label for="excel-report-style" style="font-size:0.85rem;color:var(--gold-light);white-space:nowrap;">نمط تقرير Excel:</label>
+                <select id="excel-report-style" style="background:#1f2937;color:var(--text);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-family:Tajawal;font-size:0.85rem;">
+                    <option value="legacy">التقرير التقليدي</option>
+                    <option value="detailed">التقرير التفصيلي</option>
+                    <option value="professional_template">التقرير الاحترافي بالقالب</option>
+                </select>
+            </div>
             <button id="generateBtn" class="btn-main" onclick="processAndGenerate()">
                 تحليل وإصدار التقرير <i class="fas fa-magic"></i>
             </button>
@@ -2225,6 +2233,14 @@
           <h3 style="margin:0 0 8px;font-size:1.05rem;">التصدير والجلسة</h3>
           <p style="font-size:0.88rem;opacity:0.8;margin:0 0 4px;">تصدير CSV وExcel مخصص لنتائج التقييم فقط.</p>
           <p style="font-size:0.88rem;opacity:0.8;margin:0 0 12px;">تصدير/استيراد جلسة العمل مخصص لحفظ حالة العمل الحالية واستعادتها لاحقًا، وليس لرفع قالب Excel.</p>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <label for="mass-excel-report-style" style="font-size:0.85rem;color:var(--gold-light);white-space:nowrap;">نمط تقرير Excel:</label>
+            <select id="mass-excel-report-style" style="background:#1f2937;color:var(--text);border:1px solid var(--gold);border-radius:6px;padding:4px 10px;font-family:Tajawal;font-size:0.85rem;">
+                <option value="legacy">التقرير التقليدي</option>
+                <option value="detailed">التقرير التفصيلي</option>
+                <option value="professional_template">التقرير الاحترافي بالقالب</option>
+            </select>
+          </div>
           <div class="mass-action-group">
             <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
             <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
@@ -2516,7 +2532,8 @@
                 valuation_purpose: document.getElementById('val-purpose').value,
                 area: area,
                 price_per_meter: ppm,
-                sovereign_insights: sovereign_insights
+                sovereign_insights: sovereign_insights,
+                report_style: document.getElementById('excel-report-style')?.value || 'legacy'
             };
 
             // For delegated purposes, merge the corresponding type-specific arrays
@@ -3907,6 +3924,7 @@ function _showIndexToast(msg, type) {
         if (!result) { alert('لا توجد نتائج للتصدير. شغّل التقييم الجماعي أولاً.'); return; }
         const xlsxBtn = document.getElementById('mass-download-xlsx-btn');
         if (xlsxBtn) { xlsxBtn.disabled = true; xlsxBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+        const reportStyle = document.getElementById('mass-excel-report-style')?.value || 'legacy';
         try {
             const resp = await fetch(_maApiUrl() + '/api/mass-appraisal/export-xlsx', {
                 method: 'POST',
@@ -3922,6 +3940,7 @@ function _showIndexToast(msg, type) {
                 sales_verification:  window.latestSalesVerificationResult    || null,
                 time_adjustment:     window.latestTimeAdjustedSales          || null,
                 sales_adjustments:   window.latestSalesAdjustmentsResult     || null,
+                report_style:        reportStyle,
             })
             });
             if (!resp.ok) { alert('فشل تحميل ملف Excel: ' + resp.status); return; }
@@ -3929,7 +3948,13 @@ function _showIndexToast(msg, type) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'mass_appraisal_' + new Date().toISOString().slice(0,10) + '.xlsx';
+            // Use filename from Content-Disposition if available (handles .xlsm extension)
+            const cd = resp.headers.get('Content-Disposition') || '';
+            const fnMatch = cd.match(/filename=([^\s;]+)/);
+            const baseDate = new Date().toISOString().slice(0,10);
+            a.download = fnMatch
+                ? fnMatch[1].replace(/^mass_appraisal/, `mass_appraisal_${baseDate}`)
+                : `mass_appraisal_${baseDate}.xlsx`;
             a.click();
             URL.revokeObjectURL(url);
         } catch(e) {

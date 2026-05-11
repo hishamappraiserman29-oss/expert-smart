@@ -2243,7 +2243,8 @@ def build_mass_appraisal_workbook(result: dict,
                                    import_validation: Optional[dict] = None,
                                    sales_verification: Optional[dict] = None,
                                    time_adjustment: Optional[dict] = None,
-                                   sales_adjustments: Optional[dict] = None) -> bytes:
+                                   sales_adjustments: Optional[dict] = None,
+                                   report_style: str = "legacy") -> bytes:
     """
     Build a professional XLSX workbook for the given Mass Appraisal Run result.
     Pass reviewed_summary (Phase 1.8) to include the Reviewed Portfolio section.
@@ -2309,7 +2310,7 @@ def build_mass_appraisal_workbook(result: dict,
                 build_mass_appraisal_report as _build_tpl,
             )
 
-        if _TPL.is_file():
+        if _TPL.is_file() and report_style == "professional_template":
             _rs  = result.get("ratio_study") or {}
             _pm  = ((ratio_study or {}).get("summary") or {}).get("portfolio_metrics") or {}
             _cp  = calibration_preview or {}

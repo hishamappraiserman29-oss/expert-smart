@@ -5053,12 +5053,68 @@ def handle_valuation():
                 "report_date": datetime.now().strftime("%d/%m/%Y"),
                 "expert":      "م. هشام المهدي"}
 
-        ts   = datetime.now().strftime("%H%M%S")
-        ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-        name = f"Report_{rid}_{ts}{ext}"
-        path = os.path.join(OUTPUTS, name)
+        ts           = datetime.now().strftime("%H%M%S")
+        report_style = payload.get("report_style", "legacy")
+        _valid_styles = ("legacy", "detailed", "professional_template")
+        _style_used  = report_style if report_style in _valid_styles else "legacy"
+        _tpl_used    = False
+        _fallback    = False
+        _fb_reason   = ""
 
-        write_to_excel_template(full, path)
+        if report_style == "professional_template":
+            # ── Attempt individual_valuation_professional_template.xlsm ───────
+            try:
+                try:
+                    from reports.excel_template_renderer import (
+                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
+                        build_individual_valuation_report as _build_iv,
+                    )
+                except ImportError:
+                    from core_engine.reports.excel_template_renderer import (  # type: ignore
+                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
+                        build_individual_valuation_report as _build_iv,
+                    )
+                if _IVTPL.is_file():
+                    _tpl_name = f"Report_{rid}_{ts}.xlsm"
+                    _tpl_path = os.path.join(OUTPUTS, _tpl_name)
+                    _iv_ctx = {
+                        "report_date":       full.get("report_date", datetime.now().strftime("%d/%m/%Y")),
+                        "valuation_date":    full.get("date", ""),
+                        "client_name":       full.get("client_name", full.get("expert", "N/A")),
+                        "property_type":     full.get("property_type", ""),
+                        "location":          full.get("location", ""),
+                        "area":              full.get("area", ""),
+                        "valuation_purpose": full.get("valuation_purpose", ""),
+                        "market_value":      float(full.get("market_value") or 0),
+                        "final_value":       float(full.get("market_value") or 0),
+                        "confidence":        full.get("confidence", ""),
+                        "reviewer_name":     full.get("expert", "N/A"),
+                        "report_id":         rid,
+                    }
+                    _iv_out = _build_iv(output_path=_tpl_path, context=_iv_ctx, tables={})
+                    if _iv_out is not None and os.path.isfile(_tpl_path):
+                        name      = _tpl_name
+                        _tpl_used = True
+                    else:
+                        raise RuntimeError("template render returned None")
+                else:
+                    raise FileNotFoundError("individual_valuation_professional_template.xlsm not found")
+            except Exception as _iv_err:
+                _fallback  = True
+                _fb_reason = str(_iv_err)
+                _style_used = "legacy"
+                ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
+                name = f"Report_{rid}_{ts}{ext}"
+                path = os.path.join(OUTPUTS, name)
+                write_to_excel_template(full, path)
+        else:
+            # legacy / detailed — existing path unchanged
+            # TODO detailed: add richer sheet set when ExcelReportBuilder is wired in here
+            ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
+            name = f"Report_{rid}_{ts}{ext}"
+            path = os.path.join(OUTPUTS, name)
+            write_to_excel_template(full, path)
+
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
 
         # ── (Wave 2) تقرير Word مخصص لكل غرض ولكل نوع أصل ────────────────────
@@ -5082,7 +5138,12 @@ def handle_valuation():
         resp = {"status":"success",
                 "market_value": res["market_value"],
                 "valuation_purpose": _vp,
-                "excel_url": f"http://127.0.0.1:5000/api/download/{name}"}
+                "excel_url": f"http://127.0.0.1:5000/api/download/{name}",
+                "report_style_requested": report_style,
+                "report_style_used":      _style_used,
+                "template_used":          _tpl_used,
+                "fallback_used":          _fallback,
+                "fallback_reason":        _fb_reason if _fallback else ""}
         if _avm_decision is not None:
             resp["avm"] = {
                 "applied":     _avm_decision.get("applied"),
@@ -6856,6 +6917,64 @@ def handle_mass_appraisal_export_xlsx():
         sales_verification  = body.get("sales_verification")
         time_adjustment     = body.get("time_adjustment")
         sales_adjustments   = body.get("sales_adjustments")
+
+        _valid_ma_styles = ("legacy", "detailed", "professional_template")
+        report_style     = body.get("report_style", "legacy")
+        _ma_style_used   = report_style if report_style in _valid_ma_styles else "legacy"
+        _ma_tpl_used     = False
+        _ma_fallback     = False
+        _ma_fb_reason    = ""
+
+        if report_style == "professional_template":
+            try:
+                try:
+                    from reports.excel_template_renderer import (
+                        MASS_APPRAISAL_TEMPLATE as _MATPL,
+                        build_mass_appraisal_report as _build_ma,
+                    )
+                except ImportError:
+                    from core_engine.reports.excel_template_renderer import (  # type: ignore
+                        MASS_APPRAISAL_TEMPLATE as _MATPL,
+                        build_mass_appraisal_report as _build_ma,
+                    )
+                if not _MATPL.is_file():
+                    raise FileNotFoundError("mass_appraisal_professional_template.xlsm not found")
+                import tempfile, os as _os
+                _ma_tmp = _os.path.join(tempfile.gettempdir(), "ma_prof_export.xlsm")
+                _ma_ctx = {
+                    "report_date": datetime.now().strftime("%d/%m/%Y"),
+                    "total_units": run_result.get("total_units", ""),
+                    "mean_ratio":  run_result.get("mean_ratio", ""),
+                    "cod":         run_result.get("cod", ""),
+                    "prd":         run_result.get("prd", ""),
+                }
+                _ma_out = _build_ma(output_path=_ma_tmp, context=_ma_ctx, tables={})
+                if _ma_out is None or not _os.path.isfile(_ma_tmp):
+                    raise RuntimeError("template render returned None")
+                with open(_ma_tmp, "rb") as _f:
+                    xlsx_bytes = _f.read()
+                try:
+                    _os.remove(_ma_tmp)
+                except Exception:
+                    pass
+                _ma_tpl_used = True
+                _ma_style_used = "professional_template"
+                return Response(
+                    xlsx_bytes,
+                    mimetype="application/vnd.ms-excel.sheet.macroEnabled.12",
+                    headers={
+                        "Content-Disposition": "attachment; filename=mass_appraisal.xlsm",
+                        "X-Report-Style-Requested": report_style,
+                        "X-Report-Style-Used":      _ma_style_used,
+                        "X-Template-Used":          "true",
+                        "X-Fallback-Used":          "false",
+                    },
+                )
+            except Exception as _ma_err:
+                _ma_fallback  = True
+                _ma_fb_reason = str(_ma_err)
+                _ma_style_used = "legacy"
+
         xlsx_bytes = build_mass_appraisal_workbook(
             run_result,
             ratio_study=ratio_study,
@@ -6867,11 +6986,19 @@ def handle_mass_appraisal_export_xlsx():
             sales_verification=sales_verification,
             time_adjustment=time_adjustment,
             sales_adjustments=sales_adjustments,
+            report_style="legacy",
         )
         return Response(
             xlsx_bytes,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": "attachment; filename=mass_appraisal.xlsx"},
+            headers={
+                "Content-Disposition": "attachment; filename=mass_appraisal.xlsx",
+                "X-Report-Style-Requested": report_style,
+                "X-Report-Style-Used":      _ma_style_used,
+                "X-Template-Used":          "false",
+                "X-Fallback-Used":          str(_ma_fallback).lower(),
+                "X-Fallback-Reason":        _ma_fb_reason,
+            },
         )
     except Exception as e:
         print(traceback.format_exc())

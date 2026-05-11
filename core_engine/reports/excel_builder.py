@@ -831,12 +831,13 @@ class ExcelReportBuilder:
 
     def build(self, filename: str, ivsc_disclosure=None,
               cross_border_disclosure=None, portfolio_summary=None,
-              portfolio_performance=None) -> str:
+              portfolio_performance=None,
+              report_style: str = "legacy") -> str:
         """Build all sheets and save to filename. Returns the filename."""
         # ── Try professional template export (individual valuation) ───────────
-        # Attempts template rendering first; any failure silently falls through
-        # to the existing openpyxl sheet-by-sheet builder below.
-        if self.result is not None:
+        # Only attempted when report_style == "professional_template".
+        # Any failure silently falls through to the existing builder below.
+        if self.result is not None and report_style == "professional_template":
             try:
                 from pathlib import Path as _Path
                 try:

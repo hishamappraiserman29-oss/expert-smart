@@ -228,81 +228,139 @@ except Exception as _ba_err:
     print(f"\n  [SKIP] bridge_api import failed ({_ba_err}) — Scenarios 8-10 skipped")
 
 
-def _make_workbook_with_advanced(basic=("Summary", "Audit Trail"),
-                                  advanced=("التحليل المكاني",
-                                            "Spatial Analysis",
-                                            "الانحدار المتعدد",
-                                            "لوحة القيادة التنفيذية")) -> str:
-    """Build a minimal workbook with known sheets and return a temp .xlsx path."""
+# Real sheet names from the live template workbook (as reported by the user).
+# Basic sheets that MUST be kept in legacy:
+_REAL_BASIC_SHEETS = (
+    "الافتراضات والمدخلات",
+    "التقرير",
+    "مقارنات البيوع",
+    "المقارنات الإيجارية",
+    "طريقة التكلفة",
+    "رأسمالة الدخل",
+    "توفيق النتائج",
+    "محددات التقييم",
+    "شهادة",
+    "مصادر البيانات والمنهجية",
+    "DCF — التدفقات النقدية",
+    "الإيجار مقابل الشراء",
+    "أفضل وأعلى استخدام — HABU",
+)
+# Advanced sheets that MUST be removed in legacy:
+_REAL_ADVANCED_SHEETS = (
+    "التحليل المكاني",            # exact match
+    "الانحدار المتعدد",           # exact match
+    "الخيارات الحقيقية",          # exact match
+    "لوحة القيادة التنفيذية",     # exact match
+    "ANN — الشبكات العصبية",     # substring: "الشبكات العصبية"
+    "ARIMA — السلاسل الزمنية",   # substring: "السلاسل الزمنية"
+    "استخبارات السوق — MI",       # substring: "استخبارات السوق"
+)
+
+
+def _make_workbook_from_sheets(sheets: tuple, fname: str) -> str:
+    """Build a minimal workbook with the given sheet names and return path."""
     wb = openpyxl.Workbook()
     wb.remove(wb.active)
-    for s in list(basic) + list(advanced):
+    for s in sheets:
         wb.create_sheet(s)
-    p = os.path.join(tempfile.gettempdir(), "test_t8_helper.xlsx")
+    p = os.path.join(tempfile.gettempdir(), fname)
     wb.save(p)
     wb.close()
     return p
 
 
-print("\nScenario 8: _remove_legacy_advanced_sheets — legacy strips advanced sheets")
+print("\nScenario 8: _remove_legacy_advanced_sheets — exact-match removal")
 if _remove_fn is None:
     check("S8 skipped (bridge_api not importable)", True)
 else:
     try:
-        _p8 = _make_workbook_with_advanced()
+        _p8 = _make_workbook_from_sheets(
+            _REAL_BASIC_SHEETS[:4] + _REAL_ADVANCED_SHEETS[:4],
+            "test_t8_exact.xlsx",
+        )
         _remove_fn(_p8)
         _s8 = _sheet_names(_p8)
-        check("S8: basic 'Summary' kept",        "Summary" in _s8)
-        check("S8: basic 'Audit Trail' kept",    "Audit Trail" in _s8)
-        check("S8: Arabic [1] removed",          "التحليل المكاني"         not in _s8)
-        check("S8: English 'Spatial Analysis' removed", "Spatial Analysis" not in _s8)
-        check("S8: Arabic [2] removed",          "الانحدار المتعدد"        not in _s8)
-        check("S8: Arabic [3] removed",          "لوحة القيادة التنفيذية"  not in _s8)
+        for _bs in _REAL_BASIC_SHEETS[:4]:
+            check(f"S8: basic kept",                    _bs in _s8)
+        check("S8: 'التحليل المكاني' removed",          "التحليل المكاني"        not in _s8)
+        check("S8: 'الانحدار المتعدد' removed",         "الانحدار المتعدد"       not in _s8)
+        check("S8: 'الخيارات الحقيقية' removed",        "الخيارات الحقيقية"      not in _s8)
+        check("S8: 'لوحة القيادة التنفيذية' removed",   "لوحة القيادة التنفيذية" not in _s8)
         os.remove(_p8)
     except Exception as e:
         check("S8 setup", False, str(e))
 
 
-print("\nScenario 9: _remove_legacy_advanced_sheets — variant normalization (ى / hamza)")
+print("\nScenario 9: _remove_legacy_advanced_sheets — substring matching (prefixed names)")
 if _remove_fn is None:
     check("S9 skipped (bridge_api not importable)", True)
 else:
     try:
-        # Use the ى-variant and hamza-variant names to verify _norm() handles them
-        _p9 = _make_workbook_with_advanced(
-            basic=("ملخص",),
-            advanced=("التحليل المكانى",       # ى variant
-                       "الإنحدار المتعدد",     # hamza إ variant
-                       "إستخبارات السوق",      # hamza إ
-                       "استخبارات السوق"),     # regular form
+        _KEEP = ("التقرير", "DCF — التدفقات النقدية", "أفضل وأعلى استخدام — HABU")
+        _REMOVE = (
+            "ANN — الشبكات العصبية",    # prefix + Arabic keyword
+            "ARIMA — السلاسل الزمنية",  # prefix + Arabic keyword
+            "استخبارات السوق — MI",      # Arabic keyword + suffix
         )
+        _p9 = _make_workbook_from_sheets(_KEEP + _REMOVE, "test_t9_substr.xlsx")
         _remove_fn(_p9)
         _s9 = _sheet_names(_p9)
-        check("S9: basic 'ملخص' kept",                    "ملخص" in _s9)
-        check("S9: ى-variant removed",                    "التحليل المكانى"  not in _s9)
-        check("S9: hamza-variant removed",                "الإنحدار المتعدد" not in _s9)
-        check("S9: hamza-استخبارات removed",              "إستخبارات السوق"  not in _s9)
-        check("S9: regular-استخبارات removed",            "استخبارات السوق"  not in _s9)
+        # Non-advanced sheets with similar structure must NOT be removed
+        check("S9: 'التقرير' kept",                          "التقرير"                not in [s for s in _REAL_ADVANCED_SHEETS] and "التقرير" in _s9)
+        check("S9: 'DCF — التدفقات النقدية' kept",           "DCF — التدفقات النقدية" in _s9)
+        check("S9: 'أفضل وأعلى استخدام — HABU' kept",       "أفضل وأعلى استخدام — HABU" in _s9)
+        check("S9: 'ANN — الشبكات العصبية' removed",         "ANN — الشبكات العصبية"    not in _s9)
+        check("S9: 'ARIMA — السلاسل الزمنية' removed",       "ARIMA — السلاسل الزمنية"  not in _s9)
+        check("S9: 'استخبارات السوق — MI' removed",           "استخبارات السوق — MI"     not in _s9)
         os.remove(_p9)
     except Exception as e:
         check("S9 setup", False, str(e))
 
 
-print("\nScenario 10: _remove_legacy_advanced_sheets — detailed path (no removal)")
+print("\nScenario 10: _remove_legacy_advanced_sheets — full real template simulation")
 if _remove_fn is None:
     check("S10 skipped (bridge_api not importable)", True)
 else:
     try:
-        _p10 = _make_workbook_with_advanced()
-        # For detailed: do NOT call _remove_fn — sheets must remain
+        _all_real = _REAL_BASIC_SHEETS + _REAL_ADVANCED_SHEETS
+        _p10 = _make_workbook_from_sheets(_all_real, "test_t10_real.xlsx")
+        _remove_fn(_p10)
         _s10 = _sheet_names(_p10)
-        check("S10: all 6 sheets present without removal",
-              len(_s10) == 6, f"got {len(_s10)}: {_s10}")
-        check("S10: advanced sheet [1] still present", "التحليل المكاني"    in _s10)
-        check("S10: advanced sheet [2] still present", "Spatial Analysis"   in _s10)
+        # Every basic sheet must remain
+        for _bs in _REAL_BASIC_SHEETS:
+            check(f"S10: basic kept [{_REAL_BASIC_SHEETS.index(_bs)+1}]", _bs in _s10)
+        # Every advanced sheet must be gone
+        for _adv in _REAL_ADVANCED_SHEETS:
+            check(f"S10: advanced removed [{_REAL_ADVANCED_SHEETS.index(_adv)+1}]",
+                  _adv not in _s10)
         os.remove(_p10)
     except Exception as e:
         check("S10 setup", False, str(e))
+
+
+print("\nScenario 10b: variant normalization (ى / hamza)")
+if _remove_fn is None:
+    check("S10b skipped (bridge_api not importable)", True)
+else:
+    try:
+        _p10b = _make_workbook_from_sheets(
+            ("ملخص",
+             "التحليل المكانى",       # ى variant
+             "الإنحدار المتعدد",      # hamza إ
+             "إستخبارات السوق",       # hamza إ prefix
+             "استخبارات السوق"),      # normal
+            "test_t10b_norm.xlsx",
+        )
+        _remove_fn(_p10b)
+        _s10b = _sheet_names(_p10b)
+        check("S10b: 'ملخص' kept",                   "ملخص"              in _s10b)
+        check("S10b: ى-variant removed",              "التحليل المكانى"   not in _s10b)
+        check("S10b: hamza-الانحدار removed",         "الإنحدار المتعدد"  not in _s10b)
+        check("S10b: hamza-استخبارات removed",        "إستخبارات السوق"   not in _s10b)
+        check("S10b: regular-استخبارات removed",      "استخبارات السوق"   not in _s10b)
+        os.remove(_p10b)
+    except Exception as e:
+        check("S10b setup", False, str(e))
 
 
 # ── Constant sanity check ─────────────────────────────────────────────────────

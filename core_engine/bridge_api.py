@@ -53,6 +53,40 @@ from engines.comparative import ComparativeEngine
 from engines.cost import CostEngine
 from engines.income import IncomeEngine
 
+# ── Phase 5 adapters ─────────────────────────────────────────────────────────
+from adapters.market_value import MarketValueAdapter
+from adapters.mortgage import MortgageValueAdapter
+from adapters.insurance import InsuranceValueAdapter
+from adapters.ifrs_13 import IFRS13FairValueAdapter
+
+# ── Phase 6 asset adapters + Excel report builder ────────────────────────────
+from adapters.residential import ResidentialAdapter
+from adapters.commercial import CommercialAdapter
+from reports.excel_builder import ExcelReportBuilder
+
+# ── Phase 7 land adapter + quality auditor ────────────────────────────────────
+from adapters.land import LandAdapter
+from reports.quality_auditor import ReportQualityAuditor
+
+# ── Phase 15 enterprise features ──────────────────────────────────────────────
+from adapters.enterprise import (
+    TenantManager              as _TenantManager,
+    TenantRole                 as _TenantRole,
+    EnterpriseLicenseValidator as _LicenseValidator,
+)
+from database.audit_log import AuditLog as _AuditLog, AuditAction as _AuditAction, AuditEvent as _AuditEvent
+_tenant_manager = _TenantManager()
+
+# ── Phase 8: database layer (lazy — psycopg2 optional) ────────────────────────
+try:
+    from database.models     import Valuation  as _DbValuation
+    from database.models     import QualityAudit as _DbQualityAudit
+    from database.queries    import SearchComparable as _SearchComparable
+    from database.connection import SessionLocal as _DbSession
+    _DB_AVAILABLE = True
+except Exception:           # psycopg2 not installed or DB package missing
+    _DB_AVAILABLE = False
+
 # ── Market Intelligence (auto-web + sector intelligence) ─────────────────────
 try:
     from market_intelligence import (
@@ -327,6 +361,105 @@ def get_income_engine():
     if _income_engine is None:
         _income_engine = IncomeEngine()
     return _income_engine
+
+# ── Phase 5 adapter singletons (lazy-loaded on first request) ────────────────
+_market_value_adapter = None
+_mortgage_adapter     = None
+_insurance_adapter    = None
+_ifrs13_adapter       = None
+
+def get_market_value_adapter():
+    global _market_value_adapter
+    if _market_value_adapter is None:
+        _market_value_adapter = MarketValueAdapter()
+    return _market_value_adapter
+
+def get_mortgage_adapter():
+    global _mortgage_adapter
+    if _mortgage_adapter is None:
+        _mortgage_adapter = MortgageValueAdapter()
+    return _mortgage_adapter
+
+def get_insurance_adapter():
+    global _insurance_adapter
+    if _insurance_adapter is None:
+        _insurance_adapter = InsuranceValueAdapter()
+    return _insurance_adapter
+
+def get_ifrs13_adapter():
+    global _ifrs13_adapter
+    if _ifrs13_adapter is None:
+        _ifrs13_adapter = IFRS13FairValueAdapter()
+    return _ifrs13_adapter
+
+# ── Phase 6 asset adapter singletons ─────────────────────────────────────────
+_residential_adapter = None
+_commercial_adapter  = None
+
+def get_residential_adapter():
+    global _residential_adapter
+    if _residential_adapter is None:
+        _residential_adapter = ResidentialAdapter()
+    return _residential_adapter
+
+def get_commercial_adapter():
+    global _commercial_adapter
+    if _commercial_adapter is None:
+        _commercial_adapter = CommercialAdapter()
+    return _commercial_adapter
+
+# ── Phase 7 singletons ────────────────────────────────────────────────────────
+_land_adapter   = None
+_report_auditor = None
+
+def get_land_adapter():
+    global _land_adapter
+    if _land_adapter is None:
+        _land_adapter = LandAdapter()
+    return _land_adapter
+
+def get_report_auditor():
+    global _report_auditor
+    if _report_auditor is None:
+        _report_auditor = ReportQualityAuditor()
+    return _report_auditor
+
+
+def _search_db_comparables(subject: dict, filters: dict, limit: int) -> list | None:
+    """
+    Query PostgreSQL via SearchComparable; return list of dicts or None on failure.
+
+    Returns None (not an empty list) when the DB is unavailable so callers
+    know to fall back to the JSON search engine.
+    """
+    if not _DB_AVAILABLE:
+        return None
+    try:
+        session = _DbSession()
+        try:
+            q = _SearchComparable(session)
+            prop_type = subject.get("property_type") or filters.get("property_type")
+            if prop_type:
+                q = q.by_property_type(prop_type)
+            gov = subject.get("governorate") or filters.get("governorate")
+            if gov:
+                q = q.by_governorate(gov)
+            min_area = filters.get("min_area_sqm") or filters.get("area_sqm_min")
+            max_area = filters.get("max_area_sqm") or filters.get("area_sqm_max")
+            if min_area is not None and max_area is not None:
+                q = q.by_area_range(float(min_area), float(max_area))
+            lat = subject.get("latitude") or filters.get("latitude")
+            lng = subject.get("longitude") or filters.get("longitude")
+            radius = filters.get("radius_meters", 5_000)
+            if lat is not None and lng is not None:
+                q = q.by_location(float(lat), float(lng), float(radius))
+            q = q.by_data_quality(0.5)
+            return q.limit(limit).to_dict_list()
+        finally:
+            session.close()
+    except Exception:
+        return None
+
 
 @app.after_request
 def _cors(r):
@@ -4752,19 +4885,28 @@ def write_to_excel_template(data, output_path):
 def _remove_legacy_advanced_sheets(path: str) -> None:
     """Remove advanced-analytics sheets from a saved workbook for legacy exports.
 
+    A sheet is removed when its normalized name EQUALS or CONTAINS any excluded
+    keyword.  This handles prefixed/suffixed sheet names such as:
+      "ANN — الشبكات العصبية"   → contains "الشبكات العصبية"
+      "ARIMA — السلاسل الزمنية" → contains "السلاسل الزمنية"
+      "استخبارات السوق — MI"    → contains "استخبارات السوق"
+
     Operates in-place on an already-saved file.  Any failure is logged and
     suppressed so the export is never blocked by sheet-removal errors.
     """
-    _EXCL: frozenset = frozenset({
-        # Arabic (both ي/ى forms + hamza variants handled by _norm)
-        "التحليل المكاني", "التحليل المكانى",
-        "الإنحدار المتعدد", "الانحدار المتعدد",
+    # Keywords — matching is done after normalization (see _norm below).
+    # Each entry is a keyword: a sheet is removed if its normalized name
+    # equals OR contains the keyword.
+    _KEYWORDS: tuple = (
+        # Arabic core keywords (variants unified by _norm)
+        "التحليل المكاني",       # also catches المكانى via ى→ي
+        "الانحدار المتعدد",      # also catches الإنحدار via hamza→ا
         "الخيارات الحقيقية",
         "لوحة القيادة التنفيذية",
         "الشبكات العصبية",
         "السلاسل الزمنية",
-        "إستخبارات السوق", "استخبارات السوق",
-        # English equivalents
+        "استخبارات السوق",       # also catches إستخبارات via hamza→ا
+        # English keywords
         "spatial analysis",
         "multiple regression",
         "real options",
@@ -4772,7 +4914,7 @@ def _remove_legacy_advanced_sheets(path: str) -> None:
         "neural networks",
         "time series",
         "market intelligence",
-    })
+    )
 
     def _norm(name: str) -> str:
         """Normalize for matching: strip, lower, unify hamza variants and ى→ي."""
@@ -4781,18 +4923,31 @@ def _remove_legacy_advanced_sheets(path: str) -> None:
             n = n.replace(_ch, "ا")
         return n.replace("ى", "ي")
 
-    _excl_norm = {_norm(s) for s in _EXCL}
+    # Pre-normalize keywords once
+    _kw_norm = tuple(_norm(k) for k in _KEYWORDS)
+
+    def _is_advanced(sheet_name: str) -> bool:
+        """True if the sheet's normalized name equals OR contains any keyword."""
+        sn = _norm(sheet_name)
+        for kw in _kw_norm:
+            if kw == sn or kw in sn:
+                return True
+        return False
 
     try:
         import openpyxl as _xl
         _is_xlsm = path.lower().endswith(".xlsm")
         _wb      = _xl.load_workbook(path, keep_vba=_is_xlsm)
-        _to_del  = [s for s in list(_wb.sheetnames) if _norm(s) in _excl_norm]
+        _all     = list(_wb.sheetnames)
+        _to_del  = [s for s in _all if _is_advanced(s)]
+        print(f"{_ts()} [LEGACY-FILTER] before: {len(_all)} sheet(s)")
+        print(f"{_ts()} [LEGACY-FILTER] matched: {_to_del}")
         for _s in _to_del:
             del _wb[_s]
         if _to_del:
             _wb.save(path)
-            print(f"{_ts()} [LEGACY-FILTER] removed {len(_to_del)} advanced sheet(s): {_to_del}")
+        _after = list(_wb.sheetnames)
+        print(f"{_ts()} [LEGACY-FILTER] after:  {len(_after)} sheet(s)")
         _wb.close()
     except Exception as _rf_err:
         print(f"{_ts()} [LEGACY-FILTER] warning — sheet removal skipped: {_rf_err}")
@@ -5167,7 +5322,8 @@ def handle_valuation():
             name = f"Report_{rid}_{ts}{ext}"
             path = os.path.join(OUTPUTS, name)
             write_to_excel_template(full, path)
-            if _style_used == "legacy":
+            print(f"{_ts()} [REPORT-STYLE] requested={report_style} used={_style_used} path={path}")
+            if report_style == "legacy" or _style_used == "legacy":
                 _remove_legacy_advanced_sheets(path)
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
@@ -7329,7 +7485,7 @@ def _engine_result_to_dict(result):
 
 @app.route("/api/comparables/search", methods=["POST", "OPTIONS"])
 def api_comparable_search():
-    """Search market_feed.json for similar comparables, rank by 6-factor similarity."""
+    """Search comparables: PostgreSQL first, JSON search engine fallback."""
     if request.method == "OPTIONS":
         return jsonify({}), 200
     try:
@@ -7338,10 +7494,24 @@ def api_comparable_search():
         filters = data.get("filters", {})
         limit   = int(data.get("limit", 20))
 
+        db_results = _search_db_comparables(subject, filters, limit)
+        if db_results is not None:
+            return jsonify({
+                "status": "success",
+                "count":  len(db_results),
+                "results": db_results,
+                "source": "postgresql",
+            }), 200
+
+        # DB unavailable — fall back to JSON search engine
         engine  = get_search_engine()
         results = engine.search_and_rank(subject=subject, filters=filters, limit=limit)
-
-        return jsonify({"status": "success", "count": len(results), "results": results}), 200
+        return jsonify({
+            "status": "success",
+            "count":  len(results),
+            "results": results,
+            "source": "json",
+        }), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
@@ -7387,6 +7557,3914 @@ def api_engine_income():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
 
+
+# ── Phase 5 Route ────────────────────────────────────────────────────────────
+
+def _purpose_result_to_dict(result):
+    """Convert PurposeResult to JSON-serialisable dict."""
+    def _dec(v):
+        return float(v) if v is not None else None
+
+    return {
+        "purpose_name":   result.purpose_name,
+        "adjusted_value": _dec(result.adjusted_value),
+        "confidence":     result.confidence,
+        "adjustments": [
+            {
+                "factor_name":  adj.factor_name,
+                "before_value": float(adj.before_value),
+                "after_value":  float(adj.after_value),
+                "percentage":   adj.percentage,
+                "reason":       adj.reason,
+            }
+            for adj in result.adjustments
+        ],
+        "audit_trail": [
+            {
+                "step_name":  e.step_name,
+                "inputs":     e.inputs,
+                "outputs":    e.outputs,
+                "formula":    e.formula,
+                "references": e.references,
+            }
+            for e in result.audit_trail
+        ],
+        "disclosures": result.disclosures,
+        "metadata":    {
+            k: float(v) if hasattr(v, "__float__") and not isinstance(v, (bool, str, list, dict))
+               else v
+            for k, v in result.metadata.items()
+        },
+        "issues": [
+            {"severity": i.severity, "code": i.code, "message": i.message}
+            for i in result.issues
+        ],
+    }
+
+
+@app.route("/api/valuation/full", methods=["POST", "OPTIONS"])
+def api_valuation_full():
+    """
+    Full valuation pipeline: Phase 4 engines → Phase 5 purpose adapters.
+
+    Input JSON keys (all optional except subject_property):
+      subject_property       dict   property attributes for search + engines
+      filters                dict   lat/lng/radius/governorate for comparable search
+      comparable_count       int    how many comparables to use  (default 5)
+      valuation_purposes     list   subset of: market_value, mortgage, insurance, ifrs_13
+      borrower_profile       str    standard | preferred | subprime  (mortgage)
+      building_age_years     int    for insurance tier + cost engine  (default 5)
+      cap_rate_source        str    market | published | expert  (IFRS 13 + income)
+      land_value_egp         float  land component for cost engine  (default 1 000 000)
+      gross_income_annual_egp float annual gross rental income  (default 240 000)
+      vacancy_rate           float  (default 0.10)
+      opex_ratio             float  (default 0.35)
+      cap_rate               float  (default 0.10)
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data = request.get_json(force=True) or {}
+
+        subject            = data.get("subject_property", {})
+        filters            = data.get("filters", {})
+        comparable_count   = int(data.get("comparable_count", 5))
+        requested_purposes = data.get(
+            "valuation_purposes",
+            ["market_value", "mortgage", "insurance", "ifrs_13"],
+        )
+        borrower_profile   = data.get("borrower_profile", "standard")
+        building_age       = int(data.get("building_age_years", 5))
+        cap_rate_source    = data.get("cap_rate_source", "market")
+        land_value_egp     = float(data.get("land_value_egp", 1_000_000))
+        gross_income       = float(data.get("gross_income_annual_egp", 240_000))
+        vacancy_rate       = float(data.get("vacancy_rate", 0.10))
+        opex_ratio         = float(data.get("opex_ratio", 0.35))
+        cap_rate           = float(data.get("cap_rate", 0.10))
+        governorate        = filters.get("governorate", "Cairo")
+
+        # ── Phase 4: comparable search ────────────────────────────────────────
+        comparables = get_search_engine().search_and_rank(
+            subject=subject, filters=filters, limit=20
+        )
+        if not comparables:
+            return jsonify({
+                "status": "error",
+                "message": "No comparables found matching the given criteria.",
+            }), 400
+
+        selected = comparables[:comparable_count]
+
+        # ── Phase 4: three-approach engines ───────────────────────────────────
+        result_comp = get_comparative_engine().calculate({
+            "subject_area_sqm":  subject.get("area_sqm"),
+            "subject_age_years": subject.get("age_years"),
+            "comparables":       selected,
+        })
+
+        result_cost = get_cost_engine().calculate({
+            "building_area_sqm":    subject.get("area_sqm"),
+            "building_age_years":   building_age,
+            "construction_quality": "standard",
+            "governorate":          governorate,
+            "land_value_egp":       land_value_egp,
+        })
+
+        result_income = get_income_engine().calculate({
+            "gross_income_annual_egp":   gross_income,
+            "vacancy_rate":              vacancy_rate,
+            "operating_expenses_ratio":  opex_ratio,
+            "cap_rate":                  cap_rate,
+            "cap_rate_source":           cap_rate_source,
+        })
+
+        three_values = {
+            "comparative": result_comp.value,
+            "cost":        result_cost.value,
+            "income":      result_income.value,
+        }
+
+        # ── Phase 5: purpose adapters ─────────────────────────────────────────
+        purpose_valuations = {}
+
+        if "market_value" in requested_purposes:
+            r = get_market_value_adapter().adjust(three_values, {
+                "comparable_count":   len(selected),
+                "comparable_quality": "strong",
+            })
+            purpose_valuations["market_value"] = _purpose_result_to_dict(r)
+
+        if "mortgage" in requested_purposes:
+            r = get_mortgage_adapter().adjust(three_values, {
+                "borrower_profile":  borrower_profile,
+                "market_conditions": "neutral",
+            })
+            purpose_valuations["mortgage"] = _purpose_result_to_dict(r)
+
+        if "insurance" in requested_purposes:
+            r = get_insurance_adapter().adjust(three_values, {
+                "building_age_years": building_age,
+                "location":           governorate,
+                "claim_history":      "clean",
+            })
+            purpose_valuations["insurance"] = _purpose_result_to_dict(r)
+
+        if "ifrs_13" in requested_purposes or "ifrs_13_fair_value" in requested_purposes:
+            r = get_ifrs13_adapter().adjust(three_values, {
+                "comparable_count": len(selected),
+                "cap_rate_source":  cap_rate_source,
+            })
+            purpose_valuations["ifrs_13_fair_value"] = _purpose_result_to_dict(r)
+
+        top_score = selected[0].get("similarity_score", 0) if selected else 0
+
+        # ── Persist to PostgreSQL (graceful — never blocks the response) ──────
+        valuation_id = None
+        if _DB_AVAILABLE:
+            try:
+                _sess = _DbSession()
+                try:
+                    _rec = _DbValuation(
+                        asset_type=subject.get("property_type", "unknown"),
+                        comparable_value=float(result_comp.value) if result_comp.value is not None else None,
+                        cost_value=float(result_cost.value) if result_cost.value is not None else None,
+                        income_value=float(result_income.value) if result_income.value is not None else None,
+                        result_json={"purpose_valuations": purpose_valuations},
+                    )
+                    _sess.add(_rec)
+                    _sess.commit()
+                    valuation_id = str(_rec.id)
+                finally:
+                    _sess.close()
+            except Exception:
+                pass  # DB write failure must not affect the API response
+
+        return jsonify({
+            "status": "success",
+            "phase_4_values": {
+                "comparative": float(result_comp.value)   if result_comp.value   is not None else None,
+                "cost":        float(result_cost.value)   if result_cost.value   is not None else None,
+                "income":      float(result_income.value) if result_income.value is not None else None,
+            },
+            "comparable_search": {
+                "count":               len(selected),
+                "top_similarity_score": top_score,
+            },
+            "purpose_valuations": purpose_valuations,
+            "valuation_id": valuation_id,
+            "issues": [],
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 6 report routes ─────────────────────────────────────────────────────
+
+# Temp directory for generated reports (cleaned on process restart)
+_REPORT_DIR = os.path.join(tempfile.gettempdir(), "expert_smart_reports")
+os.makedirs(_REPORT_DIR, exist_ok=True)
+
+# Map asset_type → adapter getter
+_ASSET_ADAPTER_MAP = {
+    "residential": get_residential_adapter,
+    "commercial":  get_commercial_adapter,
+    "land":        get_land_adapter,
+}
+
+
+@app.route("/api/valuation/report", methods=["POST", "OPTIONS"])
+def api_valuation_report():
+    """
+    Generate an EGVS-compliant 8-sheet Excel report for an asset valuation.
+
+    Runs the same Phase 4 + Phase 5 pipeline as /api/valuation/full, then
+    applies the Phase 6 AssetAdapter for the requested asset_type and writes
+    the Excel workbook via ExcelReportBuilder.
+
+    Required body keys:
+      subject_property  dict  — property attributes (must include property_type)
+      asset_type        str   — "residential" | "commercial"
+
+    Optional body keys (same as /api/valuation/full):
+      filters, comparable_count, valuation_purposes, borrower_profile,
+      building_age_years, cap_rate_source, land_value_egp,
+      gross_income_annual_egp, vacancy_rate, opex_ratio, cap_rate
+
+    Returns JSON:
+      { "status": "success", "report_id": "<uuid>",
+        "download_url": "/api/valuation/report/download/<uuid>.xlsx",
+        "primary_value": <float>, "confidence": <str> }
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data = request.get_json(force=True) or {}
+
+        subject          = data.get("subject_property", {})
+        asset_type       = data.get("asset_type", "residential").lower()
+        filters          = data.get("filters", {})
+        comparable_count = int(data.get("comparable_count", 5))
+        requested_purposes = data.get(
+            "valuation_purposes",
+            ["market_value", "mortgage", "insurance"],
+        )
+        borrower_profile = data.get("borrower_profile", "standard")
+        building_age     = int(data.get("building_age_years", 5))
+        cap_rate_source  = data.get("cap_rate_source", "market")
+        land_value_egp   = float(data.get("land_value_egp", 1_000_000))
+        gross_income     = float(data.get("gross_income_annual_egp", 240_000))
+        vacancy_rate     = float(data.get("vacancy_rate", 0.10))
+        opex_ratio       = float(data.get("opex_ratio", 0.35))
+        cap_rate         = float(data.get("cap_rate", 0.10))
+        governorate      = filters.get("governorate", "Cairo")
+
+        # Validate asset_type early
+        if asset_type not in _ASSET_ADAPTER_MAP:
+            return jsonify({
+                "status": "error",
+                "message": f"Unsupported asset_type '{asset_type}'. "
+                           f"Choose from: {list(_ASSET_ADAPTER_MAP.keys())}",
+            }), 400
+
+        # ── Phase 4: comparable search ────────────────────────────────────────
+        comparables = get_search_engine().search_and_rank(
+            subject=subject, filters=filters, limit=20
+        )
+        if not comparables:
+            return jsonify({
+                "status": "error",
+                "message": "No comparables found for the given criteria.",
+            }), 400
+
+        selected = comparables[:comparable_count]
+
+        # ── Phase 4: three-approach engines ───────────────────────────────────
+        result_comp = get_comparative_engine().calculate({
+            "subject_area_sqm":  subject.get("area_sqm"),
+            "subject_age_years": subject.get("age_years"),
+            "comparables":       selected,
+        })
+        result_cost = get_cost_engine().calculate({
+            "building_area_sqm":    subject.get("area_sqm"),
+            "building_age_years":   building_age,
+            "construction_quality": "standard",
+            "governorate":          governorate,
+            "land_value_egp":       land_value_egp,
+        })
+        result_income = get_income_engine().calculate({
+            "gross_income_annual_egp":  gross_income,
+            "vacancy_rate":             vacancy_rate,
+            "operating_expenses_ratio": opex_ratio,
+            "cap_rate":                 cap_rate,
+            "cap_rate_source":          cap_rate_source,
+        })
+
+        from decimal import Decimal as _D
+        three_values = {
+            "comparable": result_comp.value  if result_comp.value  is not None else _D("0"),
+            "cost":       result_cost.value  if result_cost.value  is not None else _D("0"),
+            "income":     result_income.value if result_income.value is not None else _D("0"),
+        }
+
+        # ── Phase 5: market_value purpose adapter (drives confidence) ─────────
+        market_result = get_market_value_adapter().adjust(three_values, {
+            "comparable_count":   len(selected),
+            "comparable_quality": "strong",
+        })
+
+        # Optional extra purpose adapters (for alternative_values)
+        alternative_values = {}
+        if "mortgage" in requested_purposes:
+            r = get_mortgage_adapter().adjust(three_values, {
+                "borrower_profile":  borrower_profile,
+                "market_conditions": "neutral",
+            })
+            if r.adjusted_value is not None:
+                alternative_values["mortgage"] = r.adjusted_value
+        if "insurance" in requested_purposes:
+            r = get_insurance_adapter().adjust(three_values, {
+                "building_age_years": building_age,
+                "location":           governorate,
+                "claim_history":      "clean",
+            })
+            if r.adjusted_value is not None:
+                alternative_values["insurance"] = r.adjusted_value
+
+        # ── Phase 6: asset adapter ─────────────────────────────────────────────
+        asset_adapter  = _ASSET_ADAPTER_MAP[asset_type]()
+        asset_result   = asset_adapter.value(subject, three_values, market_result)
+        asset_result.alternative_values = alternative_values
+
+        # ── Generate IVSC disclosure ───────────────────────────────────────────
+        _ivsc_disclosure = None
+        try:
+            from adapters.ivsc import IVSComplianceBuilder as _IVSBuilder
+            _ivsc_builder = _IVSBuilder()
+            _ivsc_fn_map = {
+                "residential": _ivsc_builder.for_residential,
+                "commercial":  _ivsc_builder.for_commercial,
+                "land":        _ivsc_builder.for_land,
+            }
+            _ivsc_fn = _ivsc_fn_map.get(asset_type)
+            if _ivsc_fn:
+                _ivsc_disclosure = _ivsc_fn(
+                    appraiser_name=data.get("appraiser_name", "Expert Smart System"),
+                    property_address=str(subject.get("address", subject.get("location", ""))),
+                )
+        except Exception:
+            pass
+
+        # ── Generate cross-border disclosure (optional) ────────────────────────
+        _cb_disclosure = None
+        if data.get("include_cross_border"):
+            try:
+                from adapters.cross_border import CrossBorderBuilder as _CBBuilder
+                from datetime import date as _date
+                _cb_builder       = _CBBuilder()
+                _primary_egp      = float(asset_result.primary_value) if asset_result.primary_value else 0.0
+                _rep_currency     = str(data.get("reporting_currency", "EGP")).upper()
+                _rate_source      = str(data.get("rate_source", "Central Bank of Egypt"))
+                _prop_country     = str(data.get("property_country", "Egypt"))
+                if _rep_currency == "EGP":
+                    _cb_disclosure = _cb_builder.domestic_egp(
+                        primary_value=_primary_egp,
+                        property_country=_prop_country,
+                    )
+                elif _rep_currency == "USD":
+                    _cb_disclosure = _cb_builder.cross_border_usd(
+                        primary_value_egp=_primary_egp,
+                        exchange_rate=float(data.get("usd_exchange_rate", 30.0)),
+                        rate_source=_rate_source,
+                        rate_date=_date.today(),
+                    )
+                else:
+                    _cb_disclosure = _cb_builder.multi_currency(
+                        primary_value_egp=_primary_egp,
+                        usd_rate=float(data.get("usd_exchange_rate", 30.0)),
+                        eur_rate=float(data.get("eur_exchange_rate", 33.0)),
+                        rate_source=_rate_source,
+                        rate_date=_date.today(),
+                    )
+            except Exception:
+                pass
+
+        # ── Generate Excel report ──────────────────────────────────────────────
+        report_id       = str(uuid.uuid4())
+        filename        = f"{report_id}.xlsx"
+        filepath        = os.path.join(_REPORT_DIR, filename)
+        actual_filepath = ExcelReportBuilder(asset_result).build(
+            filepath,
+            ivsc_disclosure=_ivsc_disclosure,
+            cross_border_disclosure=_cb_disclosure,
+        )
+        # build() may promote .xlsx to .xlsm when the professional template is used
+        actual_filename = os.path.basename(str(actual_filepath or filepath))
+
+        return jsonify({
+            "status":              "success",
+            "report_id":           report_id,
+            "download_url":        f"/api/valuation/report/download/{actual_filename}",
+            "primary_value":       float(asset_result.primary_value) if asset_result.primary_value is not None else None,
+            "confidence":          asset_result.confidence,
+            "asset_type":          asset_result.asset_type,
+            "issues_count":        len(asset_result.issues),
+            "ivsc_compliant":      _ivsc_disclosure is not None,
+            "cross_border_compliant": _cb_disclosure is not None,
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/valuation/report/download/<filename>", methods=["GET"])
+def api_valuation_report_download(filename: str):
+    """
+    Download a previously generated Excel valuation report.
+
+    <filename> must be the UUID-based name returned by POST /api/valuation/report.
+    The file is served as an attachment with MIME type application/vnd.openxmlformats.
+    """
+    # Reject path traversal attempts
+    safe_name = os.path.basename(filename)
+    if not safe_name.endswith(".xlsx") or safe_name != filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+
+    filepath = os.path.join(_REPORT_DIR, safe_name)
+    if not os.path.exists(filepath):
+        return jsonify({"status": "error", "message": "Report not found or expired"}), 404
+
+    return send_file(
+        filepath,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"valuation_report_{safe_name}",
+    )
+
+
+# ── Phase 7 routes ────────────────────────────────────────────────────────────
+
+@app.route("/api/valuation/land", methods=["POST", "OPTIONS"])
+def api_valuation_land():
+    """
+    Land valuation pipeline: Phase 4 engines → Phase 5 market adapter → Phase 7 LandAdapter.
+
+    Required body keys:
+      subject_property  dict  — must include property_type (vacant_land / raw_land /
+                                development_site / leasehold_land), area_sqm, hbu
+    Optional body keys:
+      filters               dict   latitude + longitude required for comparable search
+      comparable_count      int    default 5
+      land_value_egp        float  nominal land value passed as cost proxy (default 500 000)
+      gross_income_annual_egp float default 100 000
+      vacancy_rate          float  default 0.10
+      opex_ratio            float  default 0.35
+      cap_rate              float  default 0.08
+      run_quality_audit     bool   when true, appends quality_audit to response
+
+    Returns JSON with phase_4_values, comparable_search, land_valuation, quality_audit.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data = request.get_json(force=True) or {}
+        from decimal import Decimal as _D
+
+        subject          = data.get("subject_property", {})
+        filters          = data.get("filters", {})
+        comparable_count = int(data.get("comparable_count", 5))
+        run_audit        = bool(data.get("run_quality_audit", False))
+        land_value_egp   = float(data.get("land_value_egp", 500_000))
+        gross_income     = float(data.get("gross_income_annual_egp", 100_000))
+        vacancy_rate     = float(data.get("vacancy_rate", 0.10))
+        opex_ratio       = float(data.get("opex_ratio", 0.35))
+        cap_rate         = float(data.get("cap_rate", 0.08))
+        governorate      = filters.get("governorate", "Cairo")
+
+        # ── Phase 4: comparable search ────────────────────────────────────────
+        comparables = get_search_engine().search_and_rank(
+            subject=subject, filters=filters, limit=20
+        )
+        if not comparables:
+            return jsonify({
+                "status": "error",
+                "message": "No comparables found matching the given criteria.",
+            }), 400
+
+        selected = comparables[:comparable_count]
+
+        # ── Phase 4: comparable sales engine ──────────────────────────────────
+        result_comp = get_comparative_engine().calculate({
+            "subject_area_sqm":  subject.get("area_sqm"),
+            "subject_age_years": subject.get("age_years", 0),
+            "comparables":       selected,
+        })
+
+        # ── Phase 4: income engine (land leased for parking / commercial use) ─
+        result_income = get_income_engine().calculate({
+            "gross_income_annual_egp":  gross_income,
+            "vacancy_rate":             vacancy_rate,
+            "operating_expenses_ratio": opex_ratio,
+            "cap_rate":                 cap_rate,
+            "cap_rate_source":          "market",
+        })
+
+        comp_value  = result_comp.value  if result_comp.value  is not None else _D("0")
+        inc_value   = result_income.value if result_income.value is not None else _D("0")
+        cost_proxy  = _D(str(land_value_egp))  # nominal; multiplied by 0 in land adapter
+
+        # Phase 5 adapters use "comparative"; Phase 6/7 asset adapters use "comparable"
+        p5_values = {"comparative": comp_value, "cost": cost_proxy, "income": inc_value}
+        p6_values = {"comparable":  comp_value, "cost": cost_proxy, "income": inc_value}
+
+        # ── Phase 5: market value adapter (drives confidence + audit chain) ───
+        market_result = get_market_value_adapter().adjust(p5_values, {
+            "comparable_count":   len(selected),
+            "comparable_quality": "standard",
+        })
+
+        # ── Phase 7: land adapter ──────────────────────────────────────────────
+        land_result = get_land_adapter().value(subject, p6_values, market_result)
+
+        # ── Phase 7: optional quality audit ───────────────────────────────────
+        audit_data = None
+        if run_audit:
+            audit = get_report_auditor().audit(land_result)
+            audit_data = {
+                "passed":        audit.passed,
+                "quality_score": audit.quality_score,
+                "quality_grade": audit.quality_grade,
+                "summary":       audit.summary,
+                "findings": [
+                    {
+                        "severity":       f.severity,
+                        "category":       f.category,
+                        "code":           f.code,
+                        "message":        f.message,
+                        "recommendation": f.recommendation,
+                    }
+                    for f in audit.findings
+                ],
+            }
+
+        top_score = selected[0].get("similarity_score", 0) if selected else 0
+
+        # ── Persist to PostgreSQL (graceful — never blocks the response) ──────
+        valuation_id = None
+        if _DB_AVAILABLE:
+            try:
+                _sess = _DbSession()
+                try:
+                    _rec = _DbValuation(
+                        asset_type=subject.get("property_type", "vacant_land"),
+                        comparable_value=float(comp_value),
+                        cost_value=float(cost_proxy),
+                        income_value=float(inc_value),
+                        primary_value=float(land_result.primary_value) if land_result.primary_value is not None else None,
+                        confidence=land_result.confidence,
+                        result_json={"land_valuation": {"asset_type": land_result.asset_type}},
+                    )
+                    _sess.add(_rec)
+                    _sess.flush()   # populate _rec.id before QualityAudit FK
+                    valuation_id = str(_rec.id)
+
+                    if run_audit and audit_data:
+                        _qa = _DbQualityAudit(
+                            valuation_id=_rec.id,
+                            passed=audit_data.get("passed", False),
+                            quality_score=audit_data.get("quality_score"),
+                            quality_grade=audit_data.get("quality_grade"),
+                            findings_json=audit_data.get("findings", []),
+                        )
+                        _sess.add(_qa)
+
+                    _sess.commit()
+                finally:
+                    _sess.close()
+            except Exception:
+                pass  # DB write failure must not affect the API response
+
+        return jsonify({
+            "status": "success",
+            "phase_4_values": {
+                "comparable": float(comp_value),
+                "cost":       float(cost_proxy),
+                "income":     float(inc_value),
+            },
+            "comparable_search": {
+                "count":                len(selected),
+                "top_similarity_score": top_score,
+            },
+            "land_valuation": {
+                "asset_type":     land_result.asset_type,
+                "primary_value":  float(land_result.primary_value) if land_result.primary_value is not None else None,
+                "confidence":     land_result.confidence,
+                "weights_applied": land_result.weights_applied,
+                "audit_trail": [
+                    {
+                        "step_name":  e.step_name,
+                        "inputs":     e.inputs,
+                        "outputs":    e.outputs,
+                        "formula":    e.formula,
+                        "references": e.references,
+                    }
+                    for e in land_result.audit_trail
+                ],
+                "disclosures": land_result.disclosures,
+                "metadata":    {
+                    k: (float(v) if hasattr(v, "__float__") and not isinstance(v, (bool, str, list, dict)) else v)
+                    for k, v in land_result.metadata.items()
+                },
+                "issues": [
+                    {"severity": i.severity, "code": i.code, "message": i.message}
+                    for i in land_result.issues
+                ],
+            },
+            "quality_audit": audit_data,
+            "valuation_id": valuation_id,
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/valuation/audit", methods=["POST", "OPTIONS"])
+def api_valuation_audit():
+    """
+    Quality audit endpoint: run ReportQualityAuditor on any Phase 5-7 result JSON.
+
+    Accepts the serialised form of an AssetValuationResult and returns a full
+    AuditReport without needing the original Python object.
+
+    Required body key:
+      result  dict  — serialised AssetValuationResult with at minimum:
+                      asset_type, primary_value, confidence, weights_applied,
+                      audit_trail (list of step dicts), disclosures (list of str)
+
+    Returns JSON with passed, quality_score, quality_grade, summary, findings.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        data = request.get_json(force=True) or {}
+        from decimal import Decimal as _D
+
+        result_json = data.get("result")
+        if not result_json:
+            return jsonify({
+                "status": "error",
+                "message": "Missing 'result' key in request body.",
+            }), 400
+
+        # Re-hydrate a lightweight proxy object that satisfies AuditFinding checks
+        raw_pv = result_json.get("primary_value")
+        primary_value = _D(str(raw_pv)) if raw_pv is not None else None
+
+        class _AuditEntry:
+            def __init__(self, d):
+                self.step_name  = d.get("step_name", "")
+                self.inputs     = d.get("inputs", {})
+                self.outputs    = d.get("outputs", {})
+                self.formula    = d.get("formula", "")
+                self.references = d.get("references", [])
+
+        class _Issue:
+            def __init__(self, d):
+                self.severity = d.get("severity", "warning")
+                self.code     = d.get("code", "")
+                self.message  = d.get("message", "")
+
+        class _Result:
+            pass
+
+        result_obj = _Result()
+        result_obj.asset_type         = result_json.get("asset_type", "")
+        result_obj.primary_purpose    = result_json.get("primary_purpose", "market_value")
+        result_obj.primary_value      = primary_value
+        result_obj.confidence         = result_json.get("confidence", "")
+        result_obj.weights_applied    = result_json.get("weights_applied", {})
+        result_obj.alternative_values = {
+            k: _D(str(v)) for k, v in result_json.get("alternative_values", {}).items()
+        }
+        result_obj.audit_trail        = [_AuditEntry(e) for e in result_json.get("audit_trail", [])]
+        result_obj.disclosures        = result_json.get("disclosures", [])
+        result_obj.issues             = [_Issue(i) for i in result_json.get("issues", [])]
+        result_obj.metadata           = result_json.get("metadata", {})
+
+        audit = get_report_auditor().audit(result_obj)
+
+        return jsonify({
+            "status": "success",
+            "quality_audit": {
+                "passed":        audit.passed,
+                "quality_score": audit.quality_score,
+                "quality_grade": audit.quality_grade,
+                "summary":       audit.summary,
+                "error_count":   len(audit.errors),
+                "warning_count": len(audit.warnings),
+                "findings": [
+                    {
+                        "severity":       f.severity,
+                        "category":       f.category,
+                        "code":           f.code,
+                        "message":        f.message,
+                        "recommendation": f.recommendation,
+                        "field_path":     f.field_path,
+                        "score_impact":   f.score_impact,
+                    }
+                    for f in audit.findings
+                ],
+            },
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 11: Portfolio Analysis ─────────────────────────────────────────────
+
+@app.route("/api/valuation/portfolio", methods=["POST", "OPTIONS"])
+def api_valuation_portfolio():
+    """
+    Portfolio valuation endpoint (Phase 11).
+
+    Accepts a list of pre-valued properties, computes aggregate metrics,
+    and optionally generates an Excel portfolio summary report.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from adapters.portfolio import PortfolioBuilder as _PBuilder
+        from datetime import datetime as _dt
+
+        data = request.get_json(silent=True) or {}
+
+        builder = _PBuilder(data.get("portfolio_name", "Unnamed Portfolio"))
+        for pd in data.get("properties", []):
+            builder.add_property(
+                property_id=str(pd.get("property_id", "")),
+                property_name=str(pd.get("property_name", "")),
+                property_type=str(pd.get("property_type", "residential")),
+                valuation_value=float(pd.get("valuation_value", 0)),
+                valuation_confidence=str(pd.get("valuation_confidence", "medium")),
+                annual_noi=float(pd.get("annual_noi", 0)),
+                annual_gross_income=float(pd.get("annual_gross_income", 0)),
+            )
+
+        builder.calculate_metrics()
+        portfolio_summary    = builder.get_portfolio_summary()
+        diversification_score = builder.get_diversification_score()
+
+        # ── Optional Excel report ──────────────────────────────────────────────
+        report_id    = None
+        download_url = None
+        if data.get("generate_report"):
+            report_id  = str(uuid.uuid4())
+            filename   = f"{report_id}.xlsx"
+            filepath   = os.path.join(_REPORT_DIR, filename)
+            ExcelReportBuilder().build(filepath, portfolio_summary=portfolio_summary)
+            download_url = f"/api/valuation/report/download/{filename}"
+
+        return jsonify({
+            "status":               "success",
+            "portfolio":            portfolio_summary,
+            "diversification_score": round(diversification_score, 4),
+            "report_id":            report_id,
+            "download_url":         download_url,
+            "timestamp":            _dt.now().isoformat(),
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/valuation/portfolio/performance", methods=["POST", "OPTIONS"])
+def api_valuation_portfolio_performance():
+    """
+    Portfolio performance + scenario analysis endpoint (Phase 11.2).
+
+    Accepts a list of pre-valued properties and optional scenario definitions.
+    Returns stressed metrics, value-at-risk, and IRR estimates across scenarios.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from adapters.portfolio import PortfolioBuilder as _PBuilder
+        from adapters.portfolio_performance import (
+            PortfolioPerformanceAnalyzer as _PPA,
+            PortfolioScenario as _PScenario,
+        )
+        from datetime import datetime as _dt
+
+        data = request.get_json(silent=True) or {}
+
+        # ── Build portfolio ────────────────────────────────────────────────────
+        builder = _PBuilder(data.get("portfolio_name", "Unnamed Portfolio"))
+        for pd in data.get("properties", []):
+            builder.add_property(
+                property_id=str(pd.get("property_id", "")),
+                property_name=str(pd.get("property_name", "")),
+                property_type=str(pd.get("property_type", "residential")),
+                valuation_value=float(pd.get("valuation_value", 0)),
+                valuation_confidence=str(pd.get("valuation_confidence", "medium")),
+                annual_noi=float(pd.get("annual_noi", 0)),
+                annual_gross_income=float(pd.get("annual_gross_income", 0)),
+            )
+
+        analyzer = _PPA(builder)
+
+        # ── Scenarios: standard presets or caller-supplied list ────────────────
+        custom_scenarios = data.get("scenarios", [])
+        if data.get("use_standard_scenarios", True) and not custom_scenarios:
+            analyzer.create_standard_scenarios()
+        else:
+            for sc in custom_scenarios:
+                analyzer.add_scenario(_PScenario(
+                    label=str(sc.get("label", "custom")),
+                    noi_shock=float(sc.get("noi_shock", 1.0)),
+                    value_shock=float(sc.get("value_shock", 1.0)),
+                    cap_rate_shift=float(sc.get("cap_rate_shift", 0.0)),
+                ))
+
+        performance_summary = analyzer.get_performance_summary()
+
+        return jsonify({
+            "status":               "success",
+            "performance_analysis": performance_summary,
+            "timestamp":            _dt.now().isoformat(),
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 12: Batch Valuation ────────────────────────────────────────────────
+
+@app.route("/api/valuation/batch", methods=["POST", "OPTIONS"])
+def api_valuation_batch():
+    """
+    Batch valuation endpoint (Phase 12.1).
+
+    Accepts an array of properties and processes them in a single request.
+    Each property resolves its valuation value via one of three strategies:
+      1. input_data.valuation_value  — use directly (pre-valued)
+      2. input_data.price_per_sqm   — multiply by area_sqm
+      3. neither                    — property is failed with an explanatory message
+
+    Request body:
+      {
+        "batch_name": "...",          // optional
+        "properties": [
+          {
+            "property_id": "P1",
+            "property_name": "...",
+            "property_type": "residential|commercial|land",
+            "area_sqm": 120,
+            "input_data": {
+              "valuation_value": 3645000,   // strategy 1
+              "price_per_sqm":   30000,     // strategy 2 (if no valuation_value)
+              "primary_purpose": "market_value"
+            }
+          }
+        ],
+        "generate_report": false      // optional; creates portfolio Excel
+      }
+
+    Response:
+      { "status": "success", "batch_id": "...", "batch_name": "...",
+        "summary": {...}, "completed_properties": [...],
+        "failed_properties": [...], "skipped_properties": [...],
+        "report_id": null, "download_url": null, "timestamp": "..." }
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from adapters.batch_processor import BatchProcessor as _BP
+        from datetime import datetime as _dt
+
+        data = request.get_json(silent=True) or {}
+        properties_raw = data.get("properties", [])
+
+        if not properties_raw:
+            return jsonify({"status": "error",
+                            "message": "properties array is required and must not be empty"}), 400
+
+        # ── Build and validate batch ───────────────────────────────────────────
+        bp = _BP(data.get("batch_name", "Unnamed Batch"))
+        for pd in properties_raw:
+            bp.add_property(
+                property_id=str(pd.get("property_id", "")),
+                property_name=str(pd.get("property_name", "")),
+                property_type=str(pd.get("property_type", "residential")),
+                area_sqm=float(pd.get("area_sqm", 0)),
+                input_data=pd.get("input_data", {}),
+            )
+
+        bp.validate_batch()
+        bp.start_processing()
+
+        # ── Process each property ─────────────────────────────────────────────
+        for idx, prop in enumerate(bp.properties):
+            if prop.status == "skipped":
+                continue
+            inp     = prop.input_data
+            purpose = str(inp.get("primary_purpose", "market_value"))
+
+            # Strategy 1: explicit pre-valued
+            if "valuation_value" in inp and float(inp["valuation_value"]) > 0:
+                bp.process_property(idx, float(inp["valuation_value"]), purpose)
+                continue
+
+            # Strategy 2: price per sqm × area
+            if "price_per_sqm" in inp and float(inp["price_per_sqm"]) > 0:
+                value = float(inp["price_per_sqm"]) * prop.area_sqm
+                bp.process_property(idx, value, purpose)
+                continue
+
+            # Strategy 3: insufficient data
+            bp.fail_property(idx, "No valuation_value or price_per_sqm in input_data")
+
+        bp.complete_batch()
+        report = bp.get_completion_report()
+
+        # ── Persist to SQLite batch store for durable GET retrieval ──────────────
+        from database.batch_store import BatchStore as _BS
+        _BS().save({**report, "batch_name": bp.batch_name})
+
+        # ── Optional webhook notification (Phase 14) ───────────────────────────
+        webhook_url = data.get("webhook_url", "").strip()
+        if webhook_url:
+            try:
+                from adapters.webhook_dispatcher import WebhookDispatcher as _WD
+                from database.webhook_log import WebhookLog as _WL
+                _wl = _WL()
+                _WD().dispatch(
+                    webhook_url, report,
+                    batch_id=bp.batch_id,
+                    on_complete=lambda d: _wl.record(d),
+                )
+            except Exception:
+                pass
+
+        # ── Optional Excel report (batch-specific 3-sheet workbook) ──────────────
+        report_id    = None
+        download_url = None
+        if data.get("generate_report"):
+            from reports.batch_report_builder import BatchReportBuilder as _BRB
+            report_id    = str(uuid.uuid4())
+            filename     = f"{report_id}.xlsx"
+            filepath     = os.path.join(_REPORT_DIR, filename)
+            _BRB(report).build(filepath)
+            download_url = f"/api/valuation/report/download/{filename}"
+
+        response_body = {
+            "status":                "success",
+            "batch_id":              report["batch_id"],
+            "batch_name":            bp.batch_name,
+            "summary":               report["summary"],
+            "completed_properties":  report["completed_properties"],
+            "failed_properties":     report["failed_properties"],
+            "skipped_properties":    report["skipped_properties"],
+            "report_id":             report_id,
+            "download_url":          download_url,
+            "timestamp":             _dt.now().isoformat(),
+        }
+        return jsonify(response_body), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/valuation/batch/<batch_id>", methods=["GET", "OPTIONS"])
+def api_valuation_batch_status(batch_id: str):
+    """
+    Retrieve a stored batch report by batch_id (Phase 12.3).
+
+    Returns the completion report registered by POST /api/valuation/batch.
+    Returns 404 if the batch_id is not found (unknown or server restarted).
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from database.batch_store import BatchStore as _BS
+        from datetime import datetime as _dt
+
+        stored = _BS().get(batch_id)
+        if stored is None:
+            return jsonify({
+                "status":   "not_found",
+                "message":  f"Batch '{batch_id}' not found. "
+                            "Batches are held in memory and cleared on server restart.",
+                "batch_id": batch_id,
+            }), 404
+
+        return jsonify({
+            "status":    "success",
+            "batch":     stored,
+            "timestamp": _dt.now().isoformat(),
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/valuation/batch", methods=["GET", "OPTIONS"])
+def api_valuation_batch_list():
+    """
+    List recent batches from the in-memory registry (Phase 12.3).
+
+    Query params:
+      limit  — max results to return (default 20, max 100)
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from database.batch_store import BatchStore as _BS
+        from datetime import datetime as _dt
+
+        limit  = min(int(request.args.get("limit", 20)), 100)
+        recent = _BS().list_recent(limit=limit)
+
+        summaries = [
+            {
+                "batch_id":       r.get("batch_id"),
+                "status":         r.get("status"),
+                "completed":      r.get("summary", {}).get("completed", 0),
+                "failed":         r.get("summary", {}).get("failed", 0),
+                "total_submitted":r.get("summary", {}).get("total_submitted", 0),
+                "registered_at":  r.get("registered_at"),
+            }
+            for r in recent
+        ]
+
+        return jsonify({
+            "status":      "success",
+            "count":       len(summaries),
+            "batches":     summaries,
+            "timestamp":   _dt.now().isoformat(),
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 10: DCF Income Valuation ───────────────────────────────────────────
+
+@app.route("/api/valuation/dcf", methods=["POST", "OPTIONS"])
+def api_valuation_dcf():
+    """
+    DCF income valuation endpoint (Phase 10).
+
+    Accepts multi-year cash flow projections and optional sensitivity analysis.
+    Returns NPV-based property value + optional scenario comparison.
+    """
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        from adapters.dcf_model import DCFModel as _DCFModel
+        from adapters.dcf_sensitivity import DCFSensitivityAnalysis as _DCFSens
+        from datetime import datetime as _dt
+
+        data = request.get_json(silent=True) or {}
+
+        # ── DCF assumptions ────────────────────────────────────────────────────
+        dcf_assumptions   = data.get("dcf_assumptions", {})
+        discount_rate     = float(dcf_assumptions.get("discount_rate", 0.08))
+        holding_period    = int(dcf_assumptions.get("holding_period", 5))
+        terminal_cap_rate = float(dcf_assumptions.get("terminal_cap_rate", 0.07))
+        terminal_method   = str(dcf_assumptions.get("terminal_value_method", "cap_rate"))
+        terminal_growth   = float(dcf_assumptions.get("terminal_noi_growth", 0.02))
+
+        annual_projections = dcf_assumptions.get("annual_projections", [])
+        if not annual_projections:
+            return jsonify({"status": "error",
+                            "message": "dcf_assumptions.annual_projections is required"}), 400
+
+        # ── Build DCF model ────────────────────────────────────────────────────
+        dcf = _DCFModel(
+            discount_rate=discount_rate,
+            holding_period=holding_period,
+            terminal_cap_rate=terminal_cap_rate,
+        )
+
+        final_year_noi = 0.0
+        last_year      = max(p.get("year", 1) for p in annual_projections)
+
+        for proj in annual_projections:
+            year    = int(proj.get("year", 1))
+            gross   = float(proj.get("gross_income", 0))
+            vacancy = float(proj.get("vacancy_rate", 0.05))
+            opex    = float(proj.get("operating_expenses", 0))
+            debt    = float(proj.get("debt_service", 0))
+            dcf.add_annual_cash_flow(year, gross, vacancy, opex, debt)
+            if year == last_year:
+                eri            = gross * (1 - vacancy)
+                final_year_noi = eri - opex
+
+        dcf.set_terminal_value(
+            final_year_noi=final_year_noi,
+            method=terminal_method,
+            terminal_noi_growth=terminal_growth,
+        )
+        dcf.calculate_npv()
+
+        dcf_result = {
+            "property_value":    round(dcf.property_value, 2),
+            "pv_cash_flows":     round(dcf.pv_cash_flows, 2),
+            "pv_terminal_value": round(dcf.pv_terminal_value, 2),
+            "discount_rate":     discount_rate,
+            "terminal_cap_rate": terminal_cap_rate,
+            "holding_period":    holding_period,
+            "annual_cash_flows": [a.to_dict() for a in dcf.annual_cash_flows],
+            "terminal_value":    dcf.terminal_value.to_dict() if dcf.terminal_value else None,
+        }
+
+        # ── Optional sensitivity analysis ──────────────────────────────────────
+        sensitivity_result = None
+        if data.get("include_sensitivity"):
+            sens = _DCFSens(discount_rate, holding_period, terminal_cap_rate)
+            for proj in annual_projections:
+                sens.add_year_projection(
+                    int(proj.get("year", 1)),
+                    float(proj.get("gross_income", 0)),
+                    float(proj.get("vacancy_rate", 0.05)),
+                    float(proj.get("operating_expenses", 0)),
+                    float(proj.get("debt_service", 0)),
+                )
+            cap_rates  = data.get("sensitivity_cap_rates")
+            disc_rates = data.get("sensitivity_discount_rates")
+            if cap_rates and len(cap_rates) >= 3:
+                sens.create_cap_rate_scenarios(
+                    float(cap_rates[0]), float(cap_rates[1]), float(cap_rates[2])
+                )
+            if disc_rates:
+                sens.create_discount_rate_scenarios([float(r) for r in disc_rates])
+            sensitivity_result = sens.get_scenario_summary()
+
+        return jsonify({
+            "status":              "success",
+            "dcf_valuation":       dcf_result,
+            "sensitivity_analysis": sensitivity_result,
+            "timestamp":           _dt.now().isoformat(),
+        }), 200
+
+    except Exception as e:
+        import traceback as _tb
+        print(_tb.format_exc())
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 15: Enterprise API routes ──────────────────────────────────────────
+
+@app.route("/api/enterprise/tenant", methods=["POST"])
+def api_enterprise_create_tenant():
+    """POST /api/enterprise/tenant — create a new tenant organization."""
+    try:
+        data = request.get_json(force=True) or {}
+        org_name = (data.get("organization_name") or "").strip()
+        country  = (data.get("country") or "").strip()
+        tier     = (data.get("subscription_tier") or "professional").strip()
+
+        if not org_name:
+            return jsonify({"status": "error", "message": "organization_name required"}), 400
+        if not country:
+            return jsonify({"status": "error", "message": "country required"}), 400
+
+        tenant = _tenant_manager.create_tenant(org_name, country, tier)
+        try:
+            _AuditLog().record(_AuditEvent(
+                tenant_id=tenant.tenant_id,
+                action=_AuditAction.TENANT_CREATED,
+                resource_type="tenant",
+                resource_id=tenant.tenant_id,
+                details={"organization_name": org_name, "country": country, "tier": tier},
+                ip_address=request.remote_addr or "",
+            ))
+        except Exception:
+            pass
+        return jsonify({
+            "status": "success",
+            "tenant": tenant.to_dict(),
+        }), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/enterprise/tenant/<tenant_id>", methods=["GET"])
+def api_enterprise_get_tenant(tenant_id: str):
+    """GET /api/enterprise/tenant/<tenant_id> — fetch tenant summary."""
+    summary = _tenant_manager.get_tenant_summary(tenant_id)
+    if not summary:
+        return jsonify({"status": "error", "message": "Tenant not found"}), 404
+    return jsonify({"status": "success", **summary}), 200
+
+
+@app.route("/api/enterprise/tenant/<tenant_id>/user", methods=["POST"])
+def api_enterprise_add_user(tenant_id: str):
+    """POST /api/enterprise/tenant/<tenant_id>/user — add a user to a tenant."""
+    try:
+        data      = request.get_json(force=True) or {}
+        email     = (data.get("email") or "").strip()
+        full_name = (data.get("full_name") or "").strip()
+        role      = (data.get("role") or "").strip()
+
+        if not email:
+            return jsonify({"status": "error", "message": "email required"}), 400
+        if not role:
+            return jsonify({"status": "error", "message": "role required"}), 400
+
+        try:
+            _TenantRole(role)
+        except ValueError:
+            valid = [r.value for r in _TenantRole]
+            return jsonify({
+                "status": "error",
+                "message": f"Invalid role '{role}'. Must be one of: {valid}",
+            }), 400
+
+        if not _tenant_manager.get_tenant(tenant_id):
+            return jsonify({"status": "error", "message": "Tenant not found"}), 404
+
+        user = _tenant_manager.add_user_to_tenant(tenant_id, email, full_name, role)
+        try:
+            _AuditLog().record(_AuditEvent(
+                tenant_id=tenant_id,
+                action=_AuditAction.USER_ADDED,
+                resource_type="user",
+                resource_id=user.user_id,
+                user_id=user.user_id,
+                details={"email": email, "role": role},
+                ip_address=request.remote_addr or "",
+            ))
+        except Exception:
+            pass
+        return jsonify({"status": "success", "user": user.to_dict()}), 201
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.route("/api/enterprise/tenant/<tenant_id>/license", methods=["GET"])
+def api_enterprise_license(tenant_id: str):
+    """GET /api/enterprise/tenant/<tenant_id>/license — validate subscription."""
+    tenant = _tenant_manager.get_tenant(tenant_id)
+    if not tenant:
+        return jsonify({"status": "error", "message": "Tenant not found"}), 404
+    result = _LicenseValidator.validate_subscription(tenant)
+    return jsonify({"status": "success", **result}), 200
+
+
+@app.route("/api/enterprise/tenant/<tenant_id>/audit", methods=["GET"])
+def api_enterprise_audit(tenant_id: str):
+    """GET /api/enterprise/tenant/<tenant_id>/audit — fetch audit trail."""
+    if not _tenant_manager.get_tenant(tenant_id):
+        return jsonify({"status": "error", "message": "Tenant not found"}), 404
+    try:
+        limit  = min(int(request.args.get("limit", 50)), 200)
+        action = request.args.get("action", "").strip() or None
+        user_id = request.args.get("user_id", "").strip() or None
+        al = _AuditLog()
+        if user_id:
+            events = al.get_by_user(tenant_id, user_id, limit=limit)
+        else:
+            events = al.get_by_tenant(tenant_id, limit=limit)
+        if action:
+            events = [e for e in events if e["action"] == action]
+        return jsonify({
+            "status":      "success",
+            "tenant_id":   tenant_id,
+            "event_count": len(events),
+            "events":      events,
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
+# ── Phase 21 — Agent Chat API ─────────────────────────────────────────────────
+
+try:
+    from agents.workspace_manager import WorkspaceManager as _WorkspaceManager
+    from agents.supervised_agent import SupervisedAgent as _SupervisedAgent, ExecutionMode as _ExecMode
+    from agents.chat_agent import ChatAgent as _ChatAgent
+    _chat_wm    = _WorkspaceManager()
+    _chat_agent = _SupervisedAgent(_chat_wm, None, execution_mode=_ExecMode.SUPERVISED)
+    _chat_bot   = _ChatAgent(_chat_wm, _chat_agent)
+    _CHAT_OK    = True
+except Exception as _chat_err:
+    _CHAT_OK    = False
+    _chat_bot   = None
+
+
+@app.route("/agent")
+def agent_chat_ui():
+    """Serve the Phase 21 Agent Chat UI."""
+    chat_html = Path(BASE_DIR).parent / "frontend" / "agent_chat.html"
+    if chat_html.exists():
+        return send_file(str(chat_html))
+    return "Agent Chat UI not found", 404
+
+
+@app.route("/api/agent/chat", methods=["POST"])
+def agent_chat():
+    """
+    POST /api/agent/chat
+    Body: {"message": "run pipeline on <workspace_id>", "workspace_id": "<optional>"}
+    Returns: {"success": bool, "message": str, "data": {...}, "intent": str}
+    """
+    if not _CHAT_OK or _chat_bot is None:
+        return jsonify({"success": False,
+                        "message": "Chat agent not available",
+                        "data": None, "intent": "unknown"}), 503
+    body         = request.get_json(force=True, silent=True) or {}
+    text         = str(body.get("message", "")).strip()
+    workspace_id = str(body.get("workspace_id", "")).strip() or None
+    if not text:
+        return jsonify({"success": False,
+                        "message": "message field is required",
+                        "data": None, "intent": "unknown"}), 400
+    try:
+        resp = _chat_bot.chat(text, workspace_id=workspace_id)
+        return jsonify(resp.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"success": False, "message": str(exc),
+                        "data": None, "intent": "unknown"}), 500
+
+
+# ── Phase 22 — Knowledge Base + RAG ──────────────────────────────────────────
+
+try:
+    from knowledge.knowledge_base import KnowledgeBase as _KnowledgeBase
+    from knowledge.rag_enhancer import RAGEnhancer as _RAGEnhancer
+    from knowledge.seed_data import get_seed_entries as _get_seed_entries
+    _kb22 = _KnowledgeBase()
+    for _se in _get_seed_entries():
+        _kb22.add_entry(_se, auto_embed=False)
+    _rag22 = _RAGEnhancer(_kb22)
+    _KB22_OK = True
+except Exception as _kb22_err:
+    _KB22_OK = False
+    _kb22 = None
+    _rag22 = None
+
+
+@app.route("/api/knowledge/search", methods=["POST"])
+def knowledge_search():
+    """
+    POST /api/knowledge/search
+    Body: {"query": str, "top_k": int, "category": str}
+    Returns: {"results": [...entry dicts...], "count": int}
+    """
+    if not _KB22_OK or _kb22 is None:
+        return jsonify({"error": "Knowledge base not available"}), 503
+    body     = request.get_json(force=True, silent=True) or {}
+    query    = str(body.get("query", "")).strip()
+    top_k    = int(body.get("top_k", 5))
+    category = body.get("category")
+    if not query:
+        return jsonify({"error": "query is required"}), 400
+    try:
+        from knowledge.knowledge_base import KnowledgeCategory as _KC
+        cat = _KC(category) if category else None
+        entries = _kb22.search(query, top_k=top_k, category=cat)
+        return jsonify({"results": [e.to_dict() for e in entries], "count": len(entries)}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/knowledge/enhance", methods=["POST"])
+def knowledge_enhance():
+    """
+    POST /api/knowledge/enhance
+    Body: {"property_type": str, "location": str, "purpose": str}
+    Returns: {"context": str, "citations": [...], "entries": [...]}
+    """
+    if not _KB22_OK or _rag22 is None:
+        return jsonify({"error": "RAG enhancer not available"}), 503
+    body          = request.get_json(force=True, silent=True) or {}
+    property_type = str(body.get("property_type", "residential"))
+    location      = str(body.get("location", "Cairo"))
+    purpose       = str(body.get("purpose", "market_value"))
+    try:
+        result = _rag22.enhance_valuation_context(property_type, location, purpose)
+        return jsonify(result), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/stats", methods=["GET"])
+def knowledge_stats():
+    """GET /api/knowledge/stats — returns KB statistics."""
+    if not _KB22_OK or _kb22 is None:
+        return jsonify({"error": "Knowledge base not available"}), 503
+    try:
+        return jsonify(_kb22.get_statistics()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── API Hardening — Resilience, Idempotency, Observability ───────────────────
+
+try:
+    from api.resilience import (
+        RetryPolicy as _RetryPolicy,
+        CircuitBreaker as _CircuitBreaker,
+        RetryStrategy as _RetryStrategy,
+        api_retry_policy as _api_retry_policy,
+        valuation_circuit_breaker as _valuation_cb,
+    )
+    from api.request_deduplication import RequestDeduplicator as _ReqDedup
+    from api.response_formatter import ResponseFormatter as _RespFmt, format_response as _fmt_resp
+    from api.error_handler import (
+        APIError as _APIError,
+        ValidationError as _ValError,
+        NotFoundError as _NotFoundError,
+        ErrorCode as _ErrCode,
+    )
+    from api.observability import StructuredLogger as _SLog
+    _API_HARD_OK = True
+    _api_logger  = _SLog("bridge_api")
+except Exception as _ah_err:
+    _API_HARD_OK = False
+    _api_logger  = None
+
+import uuid as _uuid_mod
+import time as _time_mod
+
+
+@app.before_request
+def _harden_before_request():
+    from flask import g
+    g.request_id = str(_uuid_mod.uuid4())
+    g.start_time = _time_mod.time()
+
+
+@app.after_request
+def _harden_after_request(response):
+    from flask import g
+    if hasattr(g, "request_id"):
+        response.headers["X-Request-ID"] = g.request_id
+    if hasattr(g, "start_time"):
+        elapsed = _time_mod.time() - g.start_time
+        response.headers["X-Process-Time"] = f"{elapsed:.6f}"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"]        = "DENY"
+    response.headers["X-XSS-Protection"]       = "1; mode=block"
+    return response
+
+
+@app.route("/api/health", methods=["GET"])
+def api_health_hardened():
+    """GET /api/health — system-wide health with component flags."""
+    return jsonify({
+        "status": "healthy",
+        "components": {
+            "api_hardening": _API_HARD_OK,
+            "i18n":          _I18N_OK,
+            "knowledge_base": _KB22_OK,
+            "scenarios":     _SCENARIOS_OK,
+        },
+    }), 200
+
+
+# ── Phase 24 — Advanced Scenario Modeling ────────────────────────────────────
+
+try:
+    from scenarios.scenario_builder import ScenarioType as _ST24, ScenarioBuilder as _SB24
+    from scenarios.monte_carlo import MonteCarloConfig as _MCCfg24, MonteCarloEngine as _MCE24
+    from scenarios.sensitivity_matrix import SensitivityMatrix as _SM24
+    from scenarios.stress_test import StressTestSuite as _STS24, StressScenario as _SS24
+    _SCENARIOS_OK = True
+except Exception as _sc24_err:
+    _SCENARIOS_OK = False
+
+
+@app.route("/api/scenarios/run", methods=["POST"])
+def scenarios_run():
+    """
+    POST /api/scenarios/run
+    Body: {"base_value": float, "parameters": [{"name": str, "optimistic_delta": float, "pessimistic_delta": float}]}
+    Returns: {"scenarios": [...]}
+    """
+    if not _SCENARIOS_OK:
+        return jsonify({"error": "Scenario engine not available"}), 503
+    body       = request.get_json(force=True, silent=True) or {}
+    base_value = float(body.get("base_value", 0))
+    if base_value <= 0:
+        return jsonify({"error": "base_value must be positive"}), 400
+    try:
+        sb = _SB24(base_value)
+        for p in body.get("parameters", []):
+            sb.add_parameter(
+                name=str(p.get("name", "param")),
+                base_value=float(p.get("base_value", 0)),
+                optimistic_delta=float(p.get("optimistic_delta", 0)),
+                pessimistic_delta=float(p.get("pessimistic_delta", 0)),
+                description=str(p.get("description", "")),
+            )
+        results = sb.build_all()
+        return jsonify({"scenarios": [r.to_dict() for r in results]}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/scenarios/monte_carlo", methods=["POST"])
+def scenarios_monte_carlo():
+    """
+    POST /api/scenarios/monte_carlo
+    Body: {"base_value": float, "volatility": float, "iterations": int, "seed": int}
+    Returns: MonteCarloResult dict
+    """
+    if not _SCENARIOS_OK:
+        return jsonify({"error": "Scenario engine not available"}), 503
+    body       = request.get_json(force=True, silent=True) or {}
+    base_value = float(body.get("base_value", 0))
+    volatility = float(body.get("volatility", 15))
+    iterations = int(body.get("iterations", 10_000))
+    seed       = body.get("seed")
+    if base_value <= 0:
+        return jsonify({"error": "base_value must be positive"}), 400
+    try:
+        cfg    = _MCCfg24(iterations=min(iterations, 100_000), seed=seed)
+        engine = _MCE24(cfg)
+        result = engine.run(base_value, volatility=volatility)
+        return jsonify(result.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/scenarios/sensitivity", methods=["POST"])
+def scenarios_sensitivity():
+    """
+    POST /api/scenarios/sensitivity
+    Body: {"base_value": float, "var1_name": str, "var1_changes": [...],
+           "var2_name": str, "var2_changes": [...]}
+    Returns: SensitivityResult dict
+    """
+    if not _SCENARIOS_OK:
+        return jsonify({"error": "Scenario engine not available"}), 503
+    body       = request.get_json(force=True, silent=True) or {}
+    base_value = float(body.get("base_value", 0))
+    if base_value <= 0:
+        return jsonify({"error": "base_value must be positive"}), 400
+    try:
+        sm     = _SM24(base_value)
+        result = sm.analyze(
+            var1_name=str(body.get("var1_name", "var1")),
+            var1_changes=[float(x) for x in body.get("var1_changes", [-20, -10, 0, 10, 20])],
+            var2_name=str(body.get("var2_name", "var2")),
+            var2_changes=[float(x) for x in body.get("var2_changes", [-20, -10, 0, 10, 20])],
+        )
+        return jsonify(result.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/scenarios/stress_test", methods=["POST"])
+def scenarios_stress_test():
+    """
+    POST /api/scenarios/stress_test
+    Body: {"base_value": float}
+    Returns: StressTestSuite summary dict
+    """
+    if not _SCENARIOS_OK:
+        return jsonify({"error": "Scenario engine not available"}), 503
+    body       = request.get_json(force=True, silent=True) or {}
+    base_value = float(body.get("base_value", 0))
+    if base_value <= 0:
+        return jsonify({"error": "base_value must be positive"}), 400
+    try:
+        return jsonify(_STS24().summary(base_value)), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Phase 23 — i18n / Localization ───────────────────────────────────────────
+
+try:
+    from i18n.localization import Language as _Lang23, get_localization as _get_loc23
+    from i18n.language_detector import LanguageDetector as _LangDetect23
+    from i18n.translations import get_translations as _get_trans23
+    _loc23 = _get_loc23()
+    for _lang23 in (_Lang23.ENGLISH, _Lang23.ARABIC, _Lang23.FRENCH):
+        _loc23.load_translations(_lang23, _get_trans23(_lang23.value))
+    _I18N_OK = True
+except Exception as _i18n_err:
+    _I18N_OK = False
+    _loc23 = None
+
+
+@app.route("/api/language/set/<language_code>", methods=["POST"])
+def set_language(language_code: str):
+    """POST /api/language/set/<ar|en|fr> — switch active language."""
+    if not _I18N_OK or _loc23 is None:
+        return jsonify({"error": "i18n not available"}), 503
+    try:
+        code = language_code.lower()
+        if code in ("ar", "arabic"):
+            lang = _Lang23.ARABIC
+        elif code in ("fr", "french"):
+            lang = _Lang23.FRENCH
+        else:
+            lang = _Lang23.ENGLISH
+        _loc23.set_language(lang)
+        return jsonify({
+            "status": "success",
+            "language": lang.value,
+            "direction": _loc23.get_ui_direction(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/language/strings", methods=["GET"])
+def get_language_strings():
+    """GET /api/language/strings — return all translation strings for current language."""
+    if not _I18N_OK or _loc23 is None:
+        return jsonify({"error": "i18n not available"}), 503
+    try:
+        lang = _loc23.get_current_language()
+        return jsonify({
+            "status": "success",
+            "language": lang.value,
+            "direction": _loc23.get_ui_direction(),
+            "strings": _loc23.translations.get(lang, {}),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/language/detect", methods=["POST"])
+def detect_language():
+    """POST /api/language/detect — auto-detect language from Accept-Language header."""
+    if not _I18N_OK or _loc23 is None:
+        return jsonify({"error": "i18n not available"}), 503
+    try:
+        detected = _LangDetect23.detect_from_headers(dict(request.headers))
+        _loc23.set_language(detected)
+        return jsonify({
+            "status": "success",
+            "detected_language": detected.value,
+            "direction": _loc23.get_ui_direction(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ===========================================================================
+# Phase 26 — Multi-Tenant SaaS Readiness
+# ===========================================================================
+_SAAS_OK = False
+try:
+    from saas.tenant_manager import (
+        TenantManager as _TenantManager26,
+        TenantStatus as _TenantStatus26,
+        UserRole as _UserRole26,
+        SubscriptionTier as _SubTier26,
+        get_tenant_manager as _get_tm26,
+    )
+    from saas.tenant_isolation import TenantIsolationValidator as _TIV26
+    from saas.billing_engine import BillingEngine as _BillingEngine26, UsageMetric as _UsageMetric26
+    from saas.subscription_manager import SubscriptionManager as _SubMgr26
+    from saas.dashboard import TenantDashboard as _Dashboard26
+
+    _tm26 = _get_tm26()
+    _billing26 = _BillingEngine26()
+    _sm26 = _SubMgr26(tenant_manager=_tm26, billing_engine=_billing26)
+    _dashboard26 = _Dashboard26(
+        tenant_manager=_tm26,
+        billing_engine=_billing26,
+        subscription_manager=_sm26,
+    )
+    _validator26 = _TIV26(_tm26)
+    _SAAS_OK = True
+except Exception as _saas_err:
+    print(f"  [Phase26/SaaS] disabled: {_saas_err}")
+
+
+@app.route("/api/saas/tenants", methods=["POST"])
+def saas_create_tenant():
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        name = body.get("name", "").strip()
+        domain = body.get("domain", "").strip()
+        tier_str = body.get("tier", "free").lower()
+        trial_days = int(body.get("trial_days", 0))
+        if not name or not domain:
+            return jsonify({"error": "name and domain are required"}), 400
+        tier = _SubTier26(tier_str) if tier_str in [t.value for t in _SubTier26] else _SubTier26.FREE
+        tenant = _tm26.create_tenant(name, domain, tier=tier, trial_days=trial_days)
+        return jsonify({"status": "created", "tenant": tenant.to_dict()}), 201
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 409
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants", methods=["GET"])
+def saas_list_tenants():
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        tenants = _tm26.list_tenants()
+        return jsonify({
+            "status": "success",
+            "tenants": [t.to_dict() for t in tenants],
+            "count": len(tenants),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>", methods=["GET"])
+def saas_get_tenant(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        tenant = _tm26.get_tenant(tenant_id)
+        if tenant is None:
+            return jsonify({"error": "Tenant not found"}), 404
+        return jsonify({"status": "success", "tenant": tenant.to_dict()}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/users", methods=["POST"])
+def saas_add_user(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        email = body.get("email", "").strip()
+        role_str = body.get("role", "analyst").lower()
+        if not email:
+            return jsonify({"error": "email is required"}), 400
+        role = _UserRole26(role_str) if role_str in [r.value for r in _UserRole26] else _UserRole26.ANALYST
+        user = _tm26.add_user(tenant_id, email, role=role)
+        return jsonify({"status": "created", "user": user.to_dict()}), 201
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/subscription", methods=["PUT"])
+def saas_update_subscription(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        action = body.get("action", "upgrade")
+        tier_str = body.get("tier", "").lower()
+        if not tier_str:
+            return jsonify({"error": "tier is required"}), 400
+        tier = _SubTier26(tier_str)
+        if action == "upgrade":
+            result = _sm26.upgrade_plan(tenant_id, tier)
+        elif action == "downgrade":
+            result = _sm26.downgrade_plan(tenant_id, tier)
+        elif action == "convert":
+            _sm26.convert_to_paid(tenant_id, tier)
+            result = {"tenant_id": tenant_id, "action": "converted", "tier": tier_str}
+        else:
+            return jsonify({"error": f"Unknown action '{action}'"}), 400
+        return jsonify({"status": "success", **result}), 200
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/suspend", methods=["POST"])
+def saas_suspend_tenant(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        reason = body.get("reason", "")
+        tenant = _sm26.suspend_tenant(tenant_id, reason=reason)
+        return jsonify({"status": "suspended", "tenant_id": tenant_id, "reason": reason}), 200
+    except KeyError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/reactivate", methods=["POST"])
+def saas_reactivate_tenant(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        _sm26.reactivate_tenant(tenant_id)
+        return jsonify({"status": "reactivated", "tenant_id": tenant_id}), 200
+    except KeyError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/billing/usage", methods=["POST"])
+def saas_record_usage(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        metric_str = body.get("metric", "api_call").lower()
+        quantity = float(body.get("quantity", 1.0))
+        metric = _UsageMetric26(metric_str)
+        record = _billing26.record_usage(tenant_id, metric, quantity)
+        return jsonify({"status": "recorded", "record": record.to_dict()}), 201
+    except (KeyError, ValueError) as exc:
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/billing/invoice", methods=["POST"])
+def saas_generate_invoice(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        result = _sm26.generate_monthly_invoice(tenant_id)
+        return jsonify({"status": "success", "invoice": result}), 200
+    except KeyError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/tenants/<tenant_id>/dashboard", methods=["GET"])
+def saas_tenant_dashboard(tenant_id):
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        overview = _dashboard26.get_overview(tenant_id)
+        return jsonify({"status": "success", "dashboard": overview}), 200
+    except KeyError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/saas/stats", methods=["GET"])
+def saas_platform_stats():
+    if not _SAAS_OK:
+        return jsonify({"error": "SaaS module not available"}), 503
+    try:
+        stats = _dashboard26.get_platform_stats()
+        return jsonify({"status": "success", "stats": stats}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ===========================================================================
+# ML / AVM Training Pipeline
+# ===========================================================================
+_ML_OK = False
+_avm_predictor_instance = None
+try:
+    import os as _os_ml
+    import joblib as _joblib_ml
+    from ml.data_processor import DataProcessor as _DataProcessor
+    from ml.feature_engineer import FeatureEngineer as _FeatureEngineer
+    from ml.model_trainer import ModelTrainer as _ModelTrainer
+    from ml.model_validator import ModelValidator as _ModelValidator
+    from ml.avm_predictor import AVMPredictor as _AVMPredictor
+    from ml.model_registry import ModelRegistry as _ModelRegistry
+
+    _ml_registry = _ModelRegistry()
+    _avm_model_path = _os_ml.getenv("AVM_MODEL_PATH", "models/avm_model.pkl")
+
+    _active_meta = _ml_registry.get_active_model()
+    if _active_meta:
+        _loaded_model = _joblib_ml.load(_active_meta.model_path)
+        _ml_engineer = _FeatureEngineer()
+        _avm_predictor_instance = _AVMPredictor(_loaded_model, _ml_engineer)
+    elif _os_ml.path.exists(_avm_model_path):
+        _loaded_model = _joblib_ml.load(_avm_model_path)
+        _ml_engineer = _FeatureEngineer()
+        _avm_predictor_instance = _AVMPredictor(_loaded_model, _ml_engineer)
+
+    _ML_OK = True
+except Exception as _ml_err:
+    print(f"  [ML/AVM] disabled: {_ml_err}")
+
+
+@app.route("/api/valuation/avm", methods=["POST"])
+def api_avm_valuation():
+    if not _ML_OK:
+        return jsonify({"error": "AVM model not available"}), 503
+    if _avm_predictor_instance is None:
+        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        area_sqm = float(body.get("area_sqm", 0))
+        location = str(body.get("location", "")).strip()
+        property_type = str(body.get("property_type", "")).strip()
+        if area_sqm <= 0 or not location or not property_type:
+            return jsonify({"error": "area_sqm, location, and property_type are required"}), 400
+        additional = body.get("additional_features")
+        result = _avm_predictor_instance.predict(
+            area_sqm=area_sqm,
+            location=location,
+            property_type=property_type,
+            additional_features=additional,
+        )
+        if result.get("predicted_value") is None:
+            return jsonify({"error": result.get("error", "Prediction failed")}), 500
+        return jsonify(result), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/valuation/avm/batch", methods=["POST"])
+def api_avm_batch_valuation():
+    if not _ML_OK:
+        return jsonify({"error": "AVM model not available"}), 503
+    if _avm_predictor_instance is None:
+        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        properties = body.get("properties", [])
+        if not isinstance(properties, list) or not properties:
+            return jsonify({"error": "properties must be a non-empty list"}), 400
+        if len(properties) > 500:
+            return jsonify({"error": "Batch size cannot exceed 500 properties"}), 400
+        result = _avm_predictor_instance.predict_batch(properties)
+        return jsonify(result), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/avm/info", methods=["GET"])
+def api_avm_info():
+    if not _ML_OK:
+        return jsonify({"status": "unavailable", "reason": "ML module not loaded"}), 503
+    try:
+        active = _ml_registry.get_active_model()
+        stats = _ml_registry.get_stats()
+        return jsonify({
+            "status": "ready" if _avm_predictor_instance else "no_model",
+            "active_model": active.to_dict() if active else None,
+            "registry": stats,
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ===========================================================================
+# Integration Marketplace
+# ===========================================================================
+_MARKETPLACE_OK = False
+try:
+    from plugins.plugin_system import PluginSystem as _PluginSystem
+    from plugins.plugin_registry import PluginRegistry as _PluginRegistry
+    from integrations.oauth_manager import OAuthManager as _OAuthManager
+    from integrations.webhook_manager import (
+        WebhookManager as _WebhookManager,
+        WebhookEventType as _WebhookEventType,
+        WebhookPayload as _WebhookPayload,
+    )
+    from integrations.payment_integration import PaymentIntegration as _PaymentIntegration, PaymentProvider as _PaymentProvider
+    from marketplace.marketplace import Marketplace as _Marketplace
+    from datetime import datetime as _dt_mp
+
+    _mp_plugin_system = _PluginSystem()
+    _mp_plugin_registry = _PluginRegistry()
+    _mp_oauth_manager = _OAuthManager()
+    _mp_webhook_manager = _WebhookManager()
+    _mp_marketplace = _Marketplace()
+    _mp_payment = _PaymentIntegration(provider=_PaymentProvider.MOCK)
+
+    _MARKETPLACE_OK = True
+except Exception as _mp_err:
+    print(f"  [Marketplace] disabled: {_mp_err}")
+
+
+@app.route("/api/marketplace/plugins", methods=["GET"])
+def api_marketplace_list_plugins():
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    query = request.args.get("q", "")
+    category = request.args.get("category", "")
+    sort_by = request.args.get("sort", "rating")
+    results = _mp_marketplace.search_plugins(
+        query=query or None,
+        category=category or None,
+        sort_by=sort_by,
+    )
+    return jsonify({"plugins": [p.to_dict() for p in results], "count": len(results)}), 200
+
+
+@app.route("/api/marketplace/plugins/<listing_id>", methods=["GET"])
+def api_marketplace_plugin_detail(listing_id):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    listing = _mp_marketplace.listings.get(listing_id)
+    if not listing:
+        return jsonify({"error": "Plugin not found"}), 404
+    reviews = _mp_marketplace.get_reviews(listing_id)
+    return jsonify({
+        "plugin": listing.to_dict(),
+        "reviews": [r.to_dict() for r in reviews],
+        "review_count": len(reviews),
+    }), 200
+
+
+@app.route("/api/marketplace/plugins/<listing_id>/reviews", methods=["POST"])
+def api_marketplace_add_review(listing_id):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        tenant_id = request.headers.get("X-Tenant-ID", "anonymous")
+        rating = int(body.get("rating", 0))
+        title = str(body.get("title", "")).strip()
+        comment = str(body.get("comment", "")).strip()
+        if not title or not comment:
+            return jsonify({"error": "title and comment are required"}), 400
+        review = _mp_marketplace.add_review(listing_id, tenant_id, rating, title, comment)
+        if review is None:
+            return jsonify({"error": "Invalid rating (must be 1–5) or listing not found"}), 400
+        return jsonify({"review": review.to_dict(), "message": "Review added"}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/marketplace/trending", methods=["GET"])
+def api_marketplace_trending():
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    limit = int(request.args.get("limit", 10))
+    plugins = _mp_marketplace.get_trending_plugins(limit=limit)
+    return jsonify({"plugins": [p.to_dict() for p in plugins], "count": len(plugins)}), 200
+
+
+@app.route("/api/integrations/plugins", methods=["GET"])
+def api_integrations_list_plugins():
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    tenant_id = request.headers.get("X-Tenant-ID", "")
+    if not tenant_id:
+        return jsonify({"error": "X-Tenant-ID header required"}), 400
+    plugins = _mp_plugin_system.list_installed_plugins(tenant_id)
+    return jsonify({"plugins": [p.to_dict() for p in plugins], "count": len(plugins)}), 200
+
+
+@app.route("/api/integrations/plugins/<plugin_id>/install", methods=["POST"])
+def api_integrations_install_plugin(plugin_id):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    try:
+        tenant_id = request.headers.get("X-Tenant-ID", "")
+        if not tenant_id:
+            return jsonify({"error": "X-Tenant-ID header required"}), 400
+        body = request.get_json(force=True) or {}
+        config = body.get("configuration", {})
+        credentials = body.get("credentials", {})
+        instance = _mp_plugin_system.install_plugin(tenant_id, plugin_id, config, credentials)
+        if instance is None:
+            return jsonify({"error": "Plugin installation failed"}), 400
+        _mp_marketplace.record_installation(tenant_id, plugin_id)
+        return jsonify({"plugin": instance.to_dict(), "message": "Plugin installed"}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/integrations/webhooks", methods=["GET"])
+def api_integrations_list_webhooks():
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    tenant_id = request.headers.get("X-Tenant-ID", "")
+    if not tenant_id:
+        return jsonify({"error": "X-Tenant-ID header required"}), 400
+    webhooks = _mp_webhook_manager.list_webhooks(tenant_id)
+    return jsonify({"webhooks": [w.to_dict() for w in webhooks], "count": len(webhooks)}), 200
+
+
+@app.route("/api/integrations/webhooks", methods=["POST"])
+def api_integrations_create_webhook():
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    try:
+        tenant_id = request.headers.get("X-Tenant-ID", "")
+        if not tenant_id:
+            return jsonify({"error": "X-Tenant-ID header required"}), 400
+        body = request.get_json(force=True) or {}
+        url = str(body.get("url", "")).strip()
+        if not url:
+            return jsonify({"error": "url is required"}), 400
+        raw_events = body.get("events", [])
+        events = []
+        for e in raw_events:
+            key = e.upper().replace(".", "_")
+            try:
+                events.append(_WebhookEventType[key])
+            except KeyError:
+                return jsonify({"error": f"Unknown event type: {e}"}), 400
+        if not events:
+            return jsonify({"error": "At least one event is required"}), 400
+        webhook = _mp_webhook_manager.register_webhook(tenant_id, url, events)
+        return jsonify({"webhook": webhook.to_dict(), "message": "Webhook created"}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/integrations/webhooks/<webhook_id>", methods=["DELETE"])
+def api_integrations_delete_webhook(webhook_id):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    if _mp_webhook_manager.unregister_webhook(webhook_id):
+        return jsonify({"message": "Webhook deleted"}), 200
+    return jsonify({"error": "Webhook not found"}), 404
+
+
+@app.route("/api/integrations/oauth/<service>/authorize", methods=["GET"])
+def api_oauth_authorize(service):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    try:
+        auth_url = _mp_oauth_manager.get_authorization_url(service)
+        return jsonify({"auth_url": auth_url, "service": service}), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@app.route("/api/integrations/oauth/<service>/callback", methods=["GET"])
+def api_oauth_callback(service):
+    if not _MARKETPLACE_OK:
+        return jsonify({"error": "Marketplace not available"}), 503
+    code = request.args.get("code", "")
+    state = request.args.get("state", "")
+    error = request.args.get("error", "")
+    if error:
+        return jsonify({"error": f"OAuth error: {error}"}), 400
+    token = _mp_oauth_manager.exchange_code_for_token(service, code, state or None)
+    if not token:
+        return jsonify({"error": "Failed to obtain token"}), 400
+    return jsonify({"token": token.to_dict(), "service": service, "message": "Authorized"}), 200
+
+
+@app.route("/api/marketplace/info", methods=["GET"])
+def api_marketplace_info():
+    if not _MARKETPLACE_OK:
+        return jsonify({"status": "unavailable"}), 503
+    counts = _mp_marketplace.get_category_counts()
+    all_listings = list(_mp_marketplace.listings.values())
+    return jsonify({
+        "status": "ready",
+        "total_plugins": len(all_listings),
+        "categories": counts,
+        "registry_total": _mp_plugin_registry.get_stats()["total"],
+    }), 200
+
+
+# ===========================================================================
+# Phase 23B — USPAP-Oriented Compliance Framework
+# Reporting / disclosure support only — zero impact on valuations.
+# ===========================================================================
+_USPAP_OK = False
+try:
+    from standards.uspap import (
+        USPAPReport as _USPAPReport,
+        USPAPPropertyIdentification as _USPAPPropID,
+        USPAPAssumptions as _USPAPAssumptions,
+        USPAPCompetencyStatement as _USPAPCompetency,
+        USPAPCertification as _USPAPCertification,
+        USPAPWorkfileNote as _USPAPWorkfileNote,
+        USPAPComplianceChecker as _USPAPChecker,
+        USPAPComplianceAddenum as _USPAPAddenum,
+        USPAPCompliance as _USPAPComplianceEnum,
+    )
+    from standards.standards_manager import (
+        StandardsManager as _StandardsManager,
+        StandardsFramework as _StandardsFramework,
+    )
+    _standards_mgr = _StandardsManager()
+    _USPAP_OK = True
+except Exception as _uspap_err:
+    print(f"  [USPAP/Standards] disabled: {_uspap_err}")
+
+
+@app.route("/api/standards/frameworks", methods=["GET"])
+def api_standards_list_frameworks():
+    if not _USPAP_OK:
+        return jsonify({"error": "Standards module not available"}), 503
+    return jsonify({
+        "frameworks": _standards_mgr.list_frameworks(),
+        "note": (
+            "All frameworks are optional reporting/disclosure frameworks. "
+            "None change valuation calculations."
+        ),
+    }), 200
+
+
+@app.route("/api/standards/validate", methods=["POST"])
+def api_standards_validate():
+    if not _USPAP_OK:
+        return jsonify({"error": "Standards module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        raw = body.get("frameworks", [])
+        frameworks = []
+        for f in raw:
+            try:
+                frameworks.append(_StandardsFramework(f.lower()))
+            except ValueError:
+                return jsonify({"error": f"Unknown framework: {f}"}), 400
+        is_valid, warnings = _standards_mgr.validate_framework_combination(frameworks)
+        return jsonify({
+            "is_valid": is_valid,
+            "warnings": warnings,
+            "frameworks": [fw.value for fw in frameworks],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/standards/uspap/generate", methods=["POST"])
+def api_uspap_generate():
+    """
+    Generate a USPAP-oriented disclosure addendum.
+    Does NOT change or recalculate any valuation.
+    Returns the disclosure framework for the supplied property data.
+    """
+    if not _USPAP_OK:
+        return jsonify({"error": "USPAP module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        prop_data = body.get("property", {})
+        uspap_data = body.get("uspap_parameters", {})
+
+        prop_id = _USPAPPropID(
+            street_address=prop_data.get("street_address", ""),
+            city=prop_data.get("city", ""),
+            state=prop_data.get("state", ""),
+            zip_code=prop_data.get("zip_code", ""),
+            parcel_id=prop_data.get("parcel_id"),
+            legal_description=prop_data.get("legal_description"),
+        )
+
+        assumptions = _USPAPAssumptions()
+        for ea in uspap_data.get("extraordinary_assumptions", []):
+            assumptions.add_extraordinary_assumption(ea)
+        for hc in uspap_data.get("hypothetical_conditions", []):
+            assumptions.add_hypothetical_condition(hc)
+
+        competency = _USPAPCompetency(
+            appraiser_name=uspap_data.get("appraiser_name", ""),
+            appraiser_license=uspap_data.get("appraiser_license", ""),
+            appraiser_designation=uspap_data.get("appraiser_designation"),
+        )
+
+        from datetime import datetime as _dt23b
+        cert_date_raw = uspap_data.get("certification_date")
+        cert_date = _dt23b.fromisoformat(cert_date_raw) if cert_date_raw else _dt23b.utcnow()
+
+        certification = _USPAPCertification(
+            appraiser_name=uspap_data.get("appraiser_name", ""),
+            certification_date=cert_date,
+            appraiser_license=uspap_data.get("appraiser_license", ""),
+            scope_of_work=uspap_data.get("scope_of_work", "Desktop"),
+        )
+
+        workfile = _USPAPWorkfileNote(content=uspap_data.get("workfile_note", ""))
+
+        eff_raw = uspap_data.get("effective_date")
+        eff_date = _dt23b.fromisoformat(eff_raw) if eff_raw else _dt23b.utcnow()
+
+        report = _USPAPReport(
+            report_type=uspap_data.get("report_type", "Desktop"),
+            intended_user=uspap_data.get("intended_user", ""),
+            intended_use=uspap_data.get("intended_use", ""),
+            scope_of_work=uspap_data.get("scope_of_work", ""),
+            effective_date=eff_date,
+            report_date=_dt23b.utcnow(),
+            property_identification=prop_id,
+            assumptions=assumptions,
+            competency=competency,
+            certification=certification,
+            workfile_note=workfile,
+            compliance_level=_USPAPComplianceEnum.USPAP_ORIENTED,
+            is_avm_valuation=bool(body.get("is_avm_valuation", False)),
+            is_mass_appraisal=bool(body.get("is_mass_appraisal", False)),
+        )
+
+        warnings, errors = _USPAPChecker.check_compliance(report)
+        addendum = _USPAPAddenum.generate_addendum(report)
+
+        return jsonify({
+            "status": "generated",
+            "compliance_level": report.compliance_level.value,
+            "report_data": report.to_dict(),
+            "compliance_warnings": warnings,
+            "compliance_errors": errors,
+            "addendum": addendum,
+            "note": (
+                "USPAP-Oriented Disclosure Support. "
+                "Does NOT change valuation results. "
+                "Subject to professional review and verification."
+            ),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ===========================================================================
+# Phase 32 — Government / Tax Pilot Package
+# Compliance engine, tax calculator, official forms, audit trail, PKI signing.
+# Zero impact on valuation calculations.
+# ===========================================================================
+_GOVERNMENT_OK = False
+try:
+    from government.compliance_engine import (
+        GovernmentComplianceEngine as _GovCompliance,
+        GovernmentStandard as _GovStandard,
+        ComplianceLevel as _ComplianceLevel,
+    )
+    from government.tax_calculator import (
+        TaxCalculator as _TaxCalculator,
+        TaxClassification as _TaxClassification,
+    )
+    from government.forms_generator import (
+        FormsGenerator as _FormsGenerator,
+        GovernmentForm as _GovernmentForm,
+    )
+    from government.audit_trail import (
+        GovernmentAuditTrail as _GovAudit,
+        AuditAction as _AuditAction,
+    )
+    from government.government_portal import GovernmentPortalManager as _GovPortal
+
+    _gov_compliance = _GovCompliance()
+    _gov_tax = _TaxCalculator()
+    _gov_forms = _FormsGenerator()
+    _gov_audit = _GovAudit()
+    _gov_portal = _GovPortal()
+    _GOVERNMENT_OK = True
+except Exception as _gov_err:
+    print(f"  [Government] disabled: {_gov_err}")
+
+
+@app.route("/api/government/info", methods=["GET"])
+def api_government_info():
+    """Government pilot program capabilities and supported standards."""
+    return jsonify({
+        "program": "Expert Smart Government Pilot",
+        "supported_authorities": [
+            "Central Bank of Egypt (CBE)",
+            "Egyptian Financial Supervisory Authority (EGFSA)",
+            "Egyptian Tax Authority",
+            "Ministry of Finance",
+        ],
+        "standards_supported": [
+            "EGVS — Egyptian General Valuation Standards",
+            "CBE — Central Bank of Egypt Standards",
+            "EGFSA — Egyptian Financial Supervisory Authority",
+            "Tax Authority — Egyptian Tax Code",
+            "IFRS 13 — Fair Value Measurement",
+            "IFRS 16 — Lease Accounting",
+        ],
+        "forms_available": [
+            "CBE Form 101 — Collateral Valuation",
+            "Tax Authority Form 50 — Property Valuation",
+            "EGFSA Form 30 — Fair Value Assessment",
+        ],
+        "features": [
+            "Rule-based compliance checking per standard",
+            "Automated tax valuation calculation",
+            "Official form generation (CBE 101, Tax 50, EGFSA 30)",
+            "Complete audit trail",
+            "Digital signatures (HMAC-SHA256, PKI-ready)",
+            "Government agency portal management",
+        ],
+        "module_status": "available" if _GOVERNMENT_OK else "disabled",
+    }), 200
+
+
+@app.route("/api/government/compliance/check", methods=["POST"])
+def api_government_compliance_check():
+    """Check property data against one or more Egyptian government standards."""
+    if not _GOVERNMENT_OK:
+        return jsonify({"error": "Government module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        property_data = body.get("property_data", {})
+        standards_requested = body.get("standards", [])
+
+        if not standards_requested:
+            standards_requested = [s.value for s in _GovStandard]
+
+        results = {}
+        for std_str in standards_requested:
+            try:
+                std = _GovStandard(std_str)
+                result = _gov_compliance.check_compliance(property_data, std)
+                results[std_str] = result.to_dict()
+                _gov_audit.record(
+                    _AuditAction.COMPLIANCE_CHECK,
+                    entity_id=property_data.get("property_id", "unknown"),
+                    entity_type="property",
+                    details={"standard": std_str, "level": result.compliance_level.value},
+                )
+            except ValueError:
+                results[std_str] = {"error": f"Unknown standard: {std_str}"}
+
+        return jsonify({
+            "compliance_results": results,
+            "total_standards_checked": len(results),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/government/tax/calculate", methods=["POST"])
+def api_government_tax_calculate():
+    """Calculate property tax per Egyptian Tax Authority standards."""
+    if not _GOVERNMENT_OK:
+        return jsonify({"error": "Government module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        property_id = body.get("property_id", "unknown")
+        assessed_value = float(body.get("assessed_value", 0))
+        classification_str = body.get("tax_classification", "residential")
+        purchase_price = body.get("purchase_price")
+        years_held = body.get("years_held")
+
+        classification = _TaxClassification(classification_str)
+        result = _gov_tax.calculate_tax_valuation(
+            property_id=property_id,
+            assessed_value=assessed_value,
+            classification=classification,
+            purchase_price=float(purchase_price) if purchase_price is not None else None,
+            years_held=int(years_held) if years_held is not None else None,
+        )
+        _gov_audit.record(
+            _AuditAction.TAX_CALCULATION,
+            entity_id=property_id,
+            entity_type="property",
+            details={"classification": classification_str, "total_tax": result.total_estimated_tax},
+        )
+        return jsonify({
+            "tax_valuation": result.to_dict(),
+            "report": _gov_tax.get_tax_report(result),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/government/forms/generate", methods=["POST"])
+def api_government_forms_generate():
+    """Generate an official government valuation form."""
+    if not _GOVERNMENT_OK:
+        return jsonify({"error": "Government module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        form_type_str = body.get("form_type", "cbe_101")
+        property_data = body.get("property_data", {})
+        valuation_result = body.get("valuation_result", {})
+        appraiser_info = body.get("appraiser_info", {})
+
+        form_type = _GovernmentForm(form_type_str)
+
+        if form_type == _GovernmentForm.CBE_FORM_101:
+            form_text = _gov_forms.generate_cbe_form_101(
+                property_data, valuation_result, appraiser_info
+            )
+        elif form_type == _GovernmentForm.TAX_FORM_50:
+            owner_info = body.get("owner_info", {})
+            form_text = _gov_forms.generate_tax_form_50(
+                property_data, valuation_result, owner_info
+            )
+        elif form_type == _GovernmentForm.EGFSA_FORM_30:
+            expert_info = body.get("expert_info", {})
+            form_text = _gov_forms.generate_egfsa_form_30(
+                property_data, valuation_result, expert_info
+            )
+        else:
+            return jsonify({"error": f"Form type not supported: {form_type_str}"}), 400
+
+        from datetime import datetime as _dt32
+        _gov_audit.record(
+            _AuditAction.FORM_GENERATED,
+            entity_id=property_data.get("property_id", "unknown"),
+            entity_type="form",
+            details={"form_type": form_type_str},
+        )
+        return jsonify({
+            "form_type": form_type_str,
+            "form_content": form_text,
+            "generated_at": _dt32.utcnow().isoformat(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/government/portal/create", methods=["POST"])
+def api_government_portal_create():
+    """Register a new government agency portal."""
+    if not _GOVERNMENT_OK:
+        return jsonify({"error": "Government module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        agency_name = body.get("agency_name", "")
+        contact_person = body.get("contact_person", "")
+        contact_email = body.get("contact_email", "")
+        if not agency_name:
+            return jsonify({"error": "agency_name is required"}), 400
+        portal = _gov_portal.create_portal(agency_name, contact_person, contact_email)
+        return jsonify(portal.get_dashboard_summary()), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ===========================================================================
+# Phase 33 — CBE / Banking Collateral Pilot
+# Collateral valuation, LTV, risk scoring, registry, and bank dashboard.
+# ===========================================================================
+_BANKING_OK = False
+try:
+    from banking.collateral_engine import (
+        CollateralValuationEngine as _ColEngine,
+        CollateralProperty as _ColProp,
+        CollateralType as _ColType,
+    )
+    from banking.ltv_calculator import (
+        LTVCalculator as _LTVCalc,
+        LTVTier as _LTVTier,
+        CreditRiskRating as _CRR,
+    )
+    from banking.collateral_registry import CollateralRegistry as _ColRegistry
+    from banking.risk_assessment import PropertyRiskAnalyzer as _RiskAnalyzer
+    from banking.compliance_tracker import CBEComplianceTracker as _CBETracker
+    from banking.loan_servicing import LoanServicingManager as _LoanMgr
+    from banking.market_monitoring import MarketMonitor as _MktMonitor
+    from banking.bank_dashboard import BankDashboard as _BankDash
+
+    _col_engine   = _ColEngine()
+    _ltv_calc     = _LTVCalc()
+    _col_registry = _ColRegistry()
+    _risk_analyzer = _RiskAnalyzer()
+    _cbe_tracker  = _CBETracker()
+    _loan_mgr     = _LoanMgr()
+    _mkt_monitor  = _MktMonitor()
+    _bank_dash    = _BankDash()
+    _BANKING_OK   = True
+except Exception as _banking_err:
+    print(f"  [Banking] disabled: {_banking_err}")
+
+
+@app.route("/api/banking/info", methods=["GET"])
+def api_banking_info():
+    """Banking pilot capabilities and market coverage."""
+    return jsonify({
+        "program": "Expert Smart CBE / Banking Collateral Pilot",
+        "module_status": "available" if _BANKING_OK else "disabled",
+        "supported_institutions": [
+            "Central Bank of Egypt (CBE)",
+            "Commercial Banks",
+            "Investment Banks",
+            "Mortgage Lenders",
+            "Finance Companies",
+        ],
+        "capabilities": [
+            "Collateral valuation (appraised / conservative / forced-sale)",
+            "LTV tier classification (Prime / Conventional / Conforming / High-LTV)",
+            "Credit risk scoring (AAA–CCC, 7-tier scale)",
+            "Collateral registry (central asset tracking)",
+            "Property risk profiling (Basel III risk weights)",
+            "CBE regulatory compliance checking",
+            "Loan servicing and lifecycle management",
+            "Market monitoring and LTV-breach alerts",
+            "Bank portfolio dashboard",
+        ],
+        "pricing": {
+            "per_bank_annually": "50,000–200,000 EGP",
+            "per_valuation": "500–2,000 EGP",
+        },
+    }), 200
+
+
+@app.route("/api/banking/collateral/value", methods=["POST"])
+def api_banking_collateral_value():
+    """Value a property as bank collateral (appraised, conservative, forced-sale)."""
+    if not _BANKING_OK:
+        return jsonify({"error": "Banking module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        from datetime import datetime as _dt33
+        cid = body.get("collateral_id") or f"COL-{_dt33.utcnow().timestamp():.0f}"
+        col = _ColProp(
+            collateral_id=cid,
+            property_id=body.get("property_id", ""),
+            owner_name=body.get("owner_name", ""),
+            owner_id=body.get("owner_id", ""),
+            property_type=_ColType(body.get("property_type", "residential_property")),
+            location=body.get("location", ""),
+            city=body.get("city", ""),
+            area_sqm=float(body.get("area_sqm", 0)),
+            year_built=int(body.get("year_built", 2000)),
+            condition=body.get("condition", "good"),
+            legal_status=body.get("legal_status", "free"),
+            existing_liens=int(body.get("existing_liens", 0)),
+            assessed_value=float(body.get("assessed_value", 0)),
+            market_value=float(body.get("market_value", 0)),
+        )
+        result = _col_engine.value_collateral(
+            col,
+            market_conditions=body.get("market_conditions", "Stable"),
+            comparable_count=int(body.get("comparable_count", 3)),
+        )
+        return jsonify({
+            "collateral": col.to_dict(),
+            "valuation": result.to_dict(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/banking/ltv/calculate", methods=["POST"])
+def api_banking_ltv_calculate():
+    """Calculate LTV ratio and credit risk assessment."""
+    if not _BANKING_OK:
+        return jsonify({"error": "Banking module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        loan_id = body.get("loan_id", "unknown")
+        ltv_result = _ltv_calc.calculate_ltv(
+            loan_id=loan_id,
+            loan_amount=float(body.get("loan_amount", 0)),
+            collateral_value=float(body.get("collateral_value", 0)),
+        )
+        risk = _ltv_calc.assess_credit_risk(
+            loan_id=loan_id,
+            borrower_credit_score=body.get("borrower_credit_score"),
+            ltv_ratio=ltv_result.ltv_ratio,
+            property_quality=body.get("property_quality", "good"),
+            loan_purpose=body.get("loan_purpose", "residential_mortgage"),
+            market_conditions=body.get("market_conditions", "Stable"),
+        )
+        return jsonify({
+            "ltv": ltv_result.to_dict(),
+            "risk_assessment": risk.to_dict(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/banking/collateral/register", methods=["POST"])
+def api_banking_collateral_register():
+    """Register collateral in the central registry."""
+    if not _BANKING_OK:
+        return jsonify({"error": "Banking module not available"}), 503
+    try:
+        from datetime import datetime as _dt33, timedelta as _td33
+        body = request.get_json(force=True) or {}
+        mat_raw = body.get("loan_maturity_date")
+        maturity = _dt33.fromisoformat(mat_raw) if mat_raw else _dt33.utcnow() + _td33(days=3650)
+        entry = _col_registry.register_collateral(
+            collateral_id=body.get("collateral_id", ""),
+            property_id=body.get("property_id", ""),
+            owner_id=body.get("owner_id", ""),
+            loan_id=body.get("loan_id", ""),
+            bank_id=body.get("bank_id", ""),
+            collateral_value=float(body.get("collateral_value", 0)),
+            loan_amount=float(body.get("loan_amount", 0)),
+            ltv_ratio=float(body.get("ltv_ratio", 0)),
+            loan_maturity_date=maturity,
+        )
+        return jsonify({"registered": entry.to_dict()}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/banking/dashboard/<bank_id>", methods=["GET"])
+def api_banking_dashboard(bank_id: str):
+    """Get bank portfolio dashboard and metrics."""
+    if not _BANKING_OK:
+        return jsonify({"error": "Banking module not available"}), 503
+    try:
+        portfolio = _col_registry.get_bank_portfolio(bank_id)
+        metrics = _bank_dash.calculate_portfolio_metrics(bank_id, portfolio.get("entries", []))
+        return jsonify({
+            "portfolio": portfolio,
+            "dashboard": _bank_dash.get_dashboard_summary(bank_id),
+            "metrics": metrics.to_dict(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/banking/compliance/check", methods=["POST"])
+def api_banking_compliance_check():
+    """Check CBE regulatory compliance for a loan."""
+    if not _BANKING_OK:
+        return jsonify({"error": "Banking module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        status = _cbe_tracker.check_loan(
+            loan_id=body.get("loan_id", ""),
+            bank_id=body.get("bank_id", ""),
+            ltv_ratio=float(body.get("ltv_ratio", 0)),
+            collateral_type=body.get("collateral_type", "residential_property"),
+            has_valuation=bool(body.get("has_valuation", True)),
+            cbe_approved_appraiser=bool(body.get("cbe_approved_appraiser", True)),
+            documentation_complete=bool(body.get("documentation_complete", True)),
+            risk_class_assigned=bool(body.get("risk_class_assigned", True)),
+            property_insured=bool(body.get("property_insured", True)),
+            revaluation_overdue=bool(body.get("revaluation_overdue", False)),
+        )
+        return jsonify(status.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Phase 34 — FRA / Funds & Fair Value Pilot
+# ---------------------------------------------------------------------------
+
+_FUNDS_OK = False
+try:
+    from funds.fair_value_calculator import (
+        FairValueCalculator as _FVCalc,
+        ValuationInput as _FVInput,
+        FairValueInput as _FVInputType,
+        ValuationApproach as _FVApproach,
+    )
+    from funds.nav_calculator import (
+        NAVCalculator as _NAVCalc,
+        FundAsset as _FundAsset,
+        FundLiability as _FundLiability,
+    )
+    from funds.fund_engine import (
+        FundValuationEngine as _FundEngine,
+        FundType as _FundType,
+        FundStrategy as _FundStrategy,
+    )
+    from funds.fra_compliance import FRAComplianceEngine as _FRAEngine
+    from funds.fund_dashboard import FundDashboard as _FundDash
+    from datetime import date as _date
+
+    _fv_calc   = _FVCalc()
+    _nav_calc  = _NAVCalc()
+    _fund_eng  = _FundEngine()
+    _fra_eng   = _FRAEngine()
+    _fund_dash = _FundDash()
+    _FUNDS_OK  = True
+    print("  [Funds] FRA / Funds & Fair Value module loaded OK")
+except Exception as _funds_err:
+    print(f"  [Funds] disabled: {_funds_err}")
+
+
+@app.route("/api/funds/info", methods=["GET"])
+def api_funds_info():
+    """FRA / Funds & Fair Value pilot capabilities."""
+    return jsonify({
+        "pilot": "FRA / Funds & Fair Value",
+        "version": "1.0",
+        "status": "active" if _FUNDS_OK else "unavailable",
+        "capabilities": [
+            "IFRS 13 fair value (3-level hierarchy)",
+            "NAV calculation",
+            "Fund valuation (6 fund types)",
+            "FRA compliance (18-point checklist)",
+            "Portfolio dashboard",
+        ],
+        "target_clients": ["FRA", "REITs", "Real Estate Funds", "MENA Funds"],
+        "pricing": "$100K–$300K per fund/year",
+    }), 200
+
+
+@app.route("/api/funds/fair-value/assess", methods=["POST"])
+def api_funds_fair_value_assess():
+    """Assess IFRS 13 fair value for an asset."""
+    if not _FUNDS_OK:
+        return jsonify({"error": "Funds module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        raw_inputs = body.get("inputs", [])
+        if not raw_inputs:
+            return jsonify({"error": "inputs list is required"}), 400
+
+        inputs = []
+        for ri in raw_inputs:
+            inputs.append(_FVInput(
+                input_type=_FVInputType(ri.get("input_type", "appraisal")),
+                value=float(ri.get("value", 0)),
+                date=_date.today(),
+                source=ri.get("source", "unknown"),
+                observable=bool(ri.get("observable", False)),
+                weight=float(ri.get("weight", 1.0)),
+                confidence=float(ri.get("confidence", 1.0)),
+                market_condition=ri.get("market_condition", "normal"),
+            ))
+
+        approach_str = body.get("approach", "market_approach")
+        try:
+            approach = _FVApproach(approach_str)
+        except ValueError:
+            approach = _FVApproach.MARKET_APPROACH
+
+        assessment = _fv_calc.assess_fair_value(
+            asset_id=body.get("asset_id", ""),
+            asset_type=body.get("asset_type", "residential"),
+            inputs=inputs,
+            approach=approach,
+        )
+        return jsonify({
+            "assessment": assessment.to_dict(),
+            "disclosure": _fv_calc.generate_ifrs13_disclosure(assessment),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/funds/nav/calculate", methods=["POST"])
+def api_funds_nav_calculate():
+    """Calculate NAV and NAV per share for a fund."""
+    if not _FUNDS_OK:
+        return jsonify({"error": "Funds module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        fund_id = body.get("fund_id", "")
+        shares = float(body.get("shares_outstanding", 1))
+        if shares <= 0:
+            return jsonify({"error": "shares_outstanding must be positive"}), 400
+
+        assets = [
+            _FundAsset(
+                asset_id=a.get("asset_id", ""),
+                asset_type=a.get("asset_type", "residential"),
+                current_value=float(a.get("current_value", 0)),
+                original_cost=float(a.get("original_cost", 0)),
+                acquisition_date=_date.today(),
+                last_valuation_date=_date.today(),
+            )
+            for a in body.get("assets", [])
+        ]
+        liabilities = [
+            _FundLiability(
+                liability_id=l.get("liability_id", ""),
+                liability_type=l.get("liability_type", "other"),
+                amount=float(l.get("amount", 0)),
+            )
+            for l in body.get("liabilities", [])
+        ]
+
+        result = _nav_calc.calculate_nav(fund_id, assets, liabilities, shares)
+        return jsonify({
+            "nav_result": result.to_dict(),
+            "report": _nav_calc.generate_nav_report(result),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/funds/value", methods=["POST"])
+def api_funds_value():
+    """Value a fund and compute risk metrics."""
+    if not _FUNDS_OK:
+        return jsonify({"error": "Funds module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+
+        try:
+            fund_type = _FundType(body.get("fund_type", "reit"))
+        except ValueError:
+            fund_type = _FundType.REIT
+        try:
+            strategy = _FundStrategy(body.get("strategy", "mixed"))
+        except ValueError:
+            strategy = _FundStrategy.MIXED
+
+        result = _fund_eng.value_fund(
+            fund_id=body.get("fund_id", ""),
+            fund_name=body.get("fund_name", ""),
+            fund_type=fund_type,
+            strategy=strategy,
+            aum=float(body.get("aum", 0)),
+            nav=float(body.get("nav", 0)),
+            shares_outstanding=float(body.get("shares_outstanding", 1)),
+            ytd_return=float(body.get("ytd_return", 0)),
+            volatility=float(body.get("volatility", 0)),
+            dividend_per_share=float(body.get("dividend_per_share", 0)),
+            fra_registered=bool(body.get("fra_registered", True)),
+        )
+        return jsonify(result.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/funds/compliance/check", methods=["POST"])
+def api_funds_compliance_check():
+    """Check FRA regulatory compliance for a fund."""
+    if not _FUNDS_OK:
+        return jsonify({"error": "Funds module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        fund_id = body.get("fund_id", "")
+        if not fund_id:
+            return jsonify({"error": "fund_id is required"}), 400
+
+        result = _fra_eng.check_compliance(fund_id, body)
+        return jsonify({
+            "compliance": result.to_dict(),
+            "report": _fra_eng.generate_compliance_report(result),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/funds/dashboard/<manager_id>", methods=["GET"])
+def api_funds_dashboard(manager_id: str):
+    """Get cached fund manager dashboard metrics."""
+    if not _FUNDS_OK:
+        return jsonify({"error": "Funds module not available"}), 503
+    try:
+        snap = _fund_dash.get_snapshot(manager_id)
+        if snap is None:
+            return jsonify({"error": f"No dashboard data for manager {manager_id}"}), 404
+        return jsonify({
+            "manager_id": manager_id,
+            "metrics": snap.to_dict(),
+            "report": _fund_dash.generate_summary_report(snap),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ---------------------------------------------------------------------------
+# Phase 35 — Knowledge Base + Standards Expansion
+# ---------------------------------------------------------------------------
+
+_KNOWLEDGE_OK = False
+try:
+    from knowledge.kb_engine import (
+        KnowledgeBaseEngine as _KBEngine,
+        ContentType as _ContentType,
+        ContentLevel as _ContentLevel,
+    )
+    from knowledge.standards_registry import StandardsRegistry as _StdRegistry
+    from knowledge.ai_search import SmartSearchEngine as _SmartSearch
+    from knowledge.learning_platform import (
+        LearningPlatform as _LearnPlatform,
+        CourseLevel as _CourseLevel,
+    )
+    from knowledge.best_practices import BestPracticesLibrary as _BPLibrary
+
+    _kb_engine       = _KBEngine()
+    _std_registry    = _StdRegistry()
+    _smart_search    = _SmartSearch()
+    _learn_platform  = _LearnPlatform()
+    _bp_library      = _BPLibrary()
+    _KNOWLEDGE_OK    = True
+    print("  [Knowledge] Phase 35 Knowledge Base + Standards module loaded OK")
+except Exception as _knowledge_err:
+    print(f"  [Knowledge] disabled: {_knowledge_err}")
+
+
+@app.route("/api/knowledge/info", methods=["GET"])
+def api_knowledge_info():
+    """Knowledge Base + Standards pilot capabilities."""
+    return jsonify({
+        "pilot": "Knowledge Base + Standards Expansion",
+        "version": "1.0",
+        "status": "active" if _KNOWLEDGE_OK else "unavailable",
+        "capabilities": [
+            "10 content types (articles, guides, case studies, standards, etc.)",
+            "20+ international and local valuation standards",
+            "AI-powered semantic search with query expansion",
+            "Learning platform with 4 course levels",
+            "Automated certification management",
+            "Regulatory update tracking and compliance deadlines",
+            "Best practices library",
+        ],
+        "standards_count": len(_std_registry.standards) if _KNOWLEDGE_OK else 0,
+        "target_users": ["Appraisers", "Fund managers", "Banks", "Government"],
+        "pricing": "$50K–$100K/year premium knowledge tier",
+    }), 200
+
+
+@app.route("/api/knowledge/search", methods=["GET"])
+def api_knowledge_search():
+    """Search the knowledge base."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        query = request.args.get("q", "").strip()
+        if not query:
+            return jsonify({"error": "q parameter is required"}), 400
+        ctype_str = request.args.get("type")
+        category = request.args.get("category")
+        limit = min(int(request.args.get("limit", 10)), 50)
+
+        content_type = None
+        if ctype_str:
+            try:
+                content_type = _ContentType(ctype_str)
+            except ValueError:
+                pass
+
+        results = _kb_engine.search_content(
+            query=query, content_type=content_type,
+            category=category, limit=limit,
+        )
+        for r in results:
+            _kb_engine.add_view(r.content_id)
+
+        # Also run semantic re-ranking on results
+        scored = _smart_search.semantic_search(query, results, similarity_threshold=0.0)
+        if scored:
+            results = [item for item, _ in scored]
+
+        return jsonify({
+            "query": query,
+            "results_count": len(results),
+            "results": [r.to_dict() for r in results],
+            "suggestions": _smart_search.get_search_suggestions(query),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/standards", methods=["GET"])
+def api_knowledge_standards_list():
+    """List all registered standards."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        standards = _std_registry.list_all_standards(active_only=True)
+        return jsonify({
+            "total": len(standards),
+            "standards": [s.to_dict() for s in standards],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/standards/compatible", methods=["POST"])
+def api_knowledge_standards_compatible():
+    """Get compatible standards for an asset type and country."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        asset_type = body.get("asset_type", "")
+        country = body.get("country", "Egypt")
+        if not asset_type:
+            return jsonify({"error": "asset_type is required"}), 400
+        matrix = _std_registry.get_compatibility_matrix(asset_type, country)
+        return jsonify(matrix), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/courses", methods=["GET"])
+def api_knowledge_courses_list():
+    """List published courses."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        level_str = request.args.get("level")
+        courses = [
+            c.to_dict() for c in _learn_platform.courses.values()
+            if c.is_published and (not level_str or c.level.value == level_str)
+        ]
+        return jsonify({"courses_count": len(courses), "courses": courses}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/courses/<course_id>/enroll", methods=["POST"])
+def api_knowledge_enroll(course_id: str):
+    """Enroll a user in a course."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        body = request.get_json(force=True) or {}
+        user_id = body.get("user_id", "")
+        if not user_id:
+            return jsonify({"error": "user_id is required"}), 400
+        enrollment = _learn_platform.enroll_user(user_id, course_id)
+        return jsonify({"enrollment": enrollment.to_dict()}), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/regulatory/updates", methods=["GET"])
+def api_knowledge_regulatory_updates():
+    """Get active regulatory updates."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        source = request.args.get("source")
+        updates = _bp_library.get_active_updates(source=source or None)
+        return jsonify({
+            "updates_count": len(updates),
+            "updates": [u.to_dict() for u in updates],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/regulatory/deadlines", methods=["GET"])
+def api_knowledge_regulatory_deadlines():
+    """Get upcoming compliance deadlines."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        days = min(int(request.args.get("days", 90)), 365)
+        deadlines = _bp_library.get_upcoming_compliance_deadlines(days_ahead=days)
+        return jsonify({
+            "deadlines_count": len(deadlines),
+            "deadlines": [d.to_dict() for d in deadlines],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/knowledge/statistics", methods=["GET"])
+def api_knowledge_statistics():
+    """Get knowledge base and learning platform statistics."""
+    if not _KNOWLEDGE_OK:
+        return jsonify({"error": "Knowledge module not available"}), 503
+    try:
+        return jsonify({
+            "knowledge_base": _kb_engine.get_statistics(),
+            "learning_platform": _learn_platform.get_platform_statistics(),
+            "standards_count": _std_registry.count(),
+            "best_practices_count": _bp_library.count_practices(),
+            "regulatory_updates_count": _bp_library.count_updates(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Phase 36: Advanced Analytics & Business Intelligence ──────────────────────
+_ANALYTICS_OK = False
+try:
+    from analytics.analytics_engine import AnalyticsEngine as _AnalyticsEngine, MetricType as _MetricType, TimeGranularity as _TimeGranularity
+    from analytics.dashboard_system import DashboardSystem as _DashboardSystem, DashboardType as _DashboardType, WidgetType as _WidgetType
+    from analytics.forecasting import ForecastingEngine as _ForecastingEngine
+    from analytics.market_intelligence import MarketIntelligence as _MarketIntelligence, MarketSegment as _MarketSegment
+    from analytics.portfolio_risk import PortfolioRiskAnalytics as _PortfolioRiskAnalytics
+    _analytics_engine = _AnalyticsEngine()
+    _dashboard_system = _DashboardSystem()
+    _forecasting_engine = _ForecastingEngine()
+    _market_intelligence = _MarketIntelligence()
+    _portfolio_risk_analytics = _PortfolioRiskAnalytics()
+    _ANALYTICS_OK = True
+    print("  [Analytics] Phase 36 loaded OK")
+except Exception as _analytics_err:
+    print(f"  [Analytics] disabled: {_analytics_err}")
+
+
+@app.route("/api/analytics/info", methods=["GET"])
+def analytics_info():
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        return jsonify({
+            "phase": 36,
+            "module": "Advanced Analytics & Business Intelligence",
+            "features": ["metric_tracking", "dashboards", "forecasting", "market_intelligence", "portfolio_risk"],
+            "status": "operational",
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/metrics/<metric_id>/record", methods=["POST"])
+def analytics_record_metric(metric_id):
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        value = data.get("value")
+        if value is None:
+            return jsonify({"error": "value is required"}), 400
+        if metric_id not in _analytics_engine.metrics:
+            metric_type_str = data.get("metric_type", "count")
+            try:
+                metric_type = _MetricType(metric_type_str)
+            except ValueError:
+                metric_type = _MetricType.COUNT
+            _analytics_engine.register_metric(
+                metric_id=metric_id,
+                name=data.get("name", metric_id),
+                metric_type=metric_type,
+                unit=data.get("unit", ""),
+                description=data.get("description", ""),
+                tenant_id=data.get("tenant_id", "default"),
+            )
+        ok = _analytics_engine.record_data_point(metric_id=metric_id, value=float(value), tags=data.get("tags"))
+        if not ok:
+            return jsonify({"error": "Failed to record data point"}), 400
+        return jsonify({"status": "recorded", "metric_id": metric_id, "value": value}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/metrics/<metric_id>/statistics", methods=["GET"])
+def analytics_metric_statistics(metric_id):
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        stats = _analytics_engine.get_metric_statistics(metric_id)
+        if stats is None:
+            return jsonify({"error": "Metric not found"}), 404
+        return jsonify(stats), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/metrics/<metric_id>/timeseries", methods=["GET"])
+def analytics_metric_timeseries(metric_id):
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        granularity_str = request.args.get("granularity", "daily")
+        try:
+            granularity = _TimeGranularity(granularity_str)
+        except ValueError:
+            granularity = _TimeGranularity.DAILY
+        series = _analytics_engine.get_time_series(metric_id=metric_id, granularity=granularity)
+        return jsonify({"metric_id": metric_id, "granularity": granularity_str, "series": series}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/dashboards", methods=["GET"])
+def analytics_list_dashboards():
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        owner_id = request.args.get("owner_id")
+        dashboard_type_str = request.args.get("type")
+        if owner_id:
+            dashboards = _dashboard_system.get_user_dashboards(owner_id)
+        elif dashboard_type_str:
+            try:
+                dtype = _DashboardType(dashboard_type_str)
+            except ValueError:
+                return jsonify({"error": f"Unknown dashboard type: {dashboard_type_str}"}), 400
+            dashboards = _dashboard_system.get_dashboards_by_type(dtype)
+        else:
+            with _dashboard_system._lock:
+                dashboards = list(_dashboard_system.dashboards.values())
+        return jsonify({"dashboards": [d.to_dict() for d in dashboards], "total": len(dashboards)}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/dashboards/<dashboard_id>", methods=["GET"])
+def analytics_get_dashboard(dashboard_id):
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        viewer_id = request.args.get("viewer_id", "anonymous")
+        dashboard = _dashboard_system.get_dashboard(dashboard_id, viewer_id=viewer_id)
+        if dashboard is None:
+            return jsonify({"error": "Dashboard not found"}), 404
+        return jsonify(dashboard.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/risk/portfolio/<portfolio_id>", methods=["POST"])
+def analytics_portfolio_risk(portfolio_id):
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        tenant_id = data.get("tenant_id", "default")
+        total_value = float(data.get("total_value", 0))
+        assets = data.get("assets", [])
+        credit_risk = float(data.get("credit_risk", 10.0))
+        operational_risk = float(data.get("operational_risk", 5.0))
+        result = _portfolio_risk_analytics.assess_portfolio_risk(
+            portfolio_id=portfolio_id,
+            tenant_id=tenant_id,
+            total_value=total_value,
+            assets=assets,
+            credit_risk=credit_risk,
+            operational_risk=operational_risk,
+        )
+        return jsonify(result.to_dict()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/analytics/market/trends", methods=["GET"])
+def analytics_market_trends():
+    if not _ANALYTICS_OK:
+        return jsonify({"error": "Analytics module unavailable"}), 503
+    try:
+        segment_str = request.args.get("segment")
+        location = request.args.get("location")
+        if segment_str:
+            try:
+                segment = _MarketSegment(segment_str)
+            except ValueError:
+                return jsonify({"error": f"Unknown segment: {segment_str}"}), 400
+            trends = _market_intelligence.get_trends_by_segment(segment)
+        elif location:
+            trends = _market_intelligence.get_trends_by_location(location)
+        else:
+            with _market_intelligence._lock:
+                trends = list(_market_intelligence.trends.values())
+        summary = _market_intelligence.get_market_summary()
+        return jsonify({
+            "trends": [t.to_dict() for t in trends],
+            "total": len(trends),
+            "summary": summary,
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Phase 37: Comparable Search Enhancement ───────────────────────────────────
+_SEARCH_OK = False
+try:
+    from search.comparable_search import ComparableSearchEngine as _CSEngine, SearchCriteria as _SearchCriteria
+    from search.similarity_matcher import SmartMatcher as _SmartMatcher, MatchingStrategy as _MatchingStrategy
+    from search.adjustment_factors import AdjustmentFactorEngine as _AdjEngine
+    _cs_engine = _CSEngine()
+    _smart_matcher = _SmartMatcher()
+    _adj_engine = _AdjEngine()
+    _SEARCH_OK = True
+    print("  [Search] Phase 37 loaded OK")
+except Exception as _search_err:
+    print(f"  [Search] disabled: {_search_err}")
+
+
+@app.route("/api/search/info", methods=["GET"])
+def search_info():
+    if not _SEARCH_OK:
+        return jsonify({"error": "Search module unavailable"}), 503
+    try:
+        stats = _cs_engine.get_search_statistics()
+        return jsonify({
+            "phase": 37,
+            "module": "Comparable Search Enhancement",
+            "features": {
+                "multi_criteria_search": True,
+                "similarity_scoring": True,
+                "price_adjustments": True,
+                "smart_matching": True,
+            },
+            "matching_strategies": ["exact", "weighted", "ml", "hybrid"],
+            "adjustment_categories": 7,
+            "search_statistics": stats,
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/search/properties/register", methods=["POST"])
+def search_register_property():
+    if not _SEARCH_OK:
+        return jsonify({"error": "Search module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        property_id = data.get("property_id")
+        if not property_id:
+            return jsonify({"error": "property_id is required"}), 400
+
+        from datetime import datetime as _dt
+        sale_date_str = data.get("sale_date")
+        try:
+            sale_date = _dt.fromisoformat(sale_date_str) if sale_date_str else None
+        except ValueError:
+            sale_date = None
+
+        property_data = {
+            "property_id": property_id,
+            "property_type": data.get("property_type", ""),
+            "location": data.get("location", ""),
+            "area_sqm": float(data.get("area_sqm", 0)),
+            "price": float(data.get("price", 0)),
+            "age_years": int(data.get("age_years", 0)),
+            "condition": data.get("condition", "good"),
+            "bedrooms": int(data.get("bedrooms", 0)),
+            "bathrooms": int(data.get("bathrooms", 0)),
+            "features": data.get("features", []),
+            "sale_date": sale_date,
+        }
+
+        _cs_engine.register_property(property_id=property_id, property_data=property_data)
+        return jsonify({"property_id": property_id, "status": "registered_for_search"}), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/search/comparables", methods=["POST"])
+def search_comparables():
+    if not _SEARCH_OK:
+        return jsonify({"error": "Search module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+
+        criteria = _SearchCriteria(
+            property_type=data.get("property_type", "residential"),
+            location=data.get("location", ""),
+            area_sqm_min=float(data.get("area_sqm_min", 0)),
+            area_sqm_max=float(data.get("area_sqm_max", 10000)),
+            price_min=float(data.get("price_min", 0)),
+            price_max=float(data.get("price_max", 100_000_000)),
+            distance_km=float(data.get("distance_km", 5.0)),
+            sale_date_months_back=int(data.get("sale_date_months", 12)),
+            condition=data.get("condition"),
+            max_results=int(data.get("max_results", 10)),
+            sort_by=data.get("sort_by", "similarity"),
+            min_similarity_score=float(data.get("min_similarity", 0.7)),
+            exclude_property_ids=data.get("exclude_ids", []),
+            required_features=data.get("required_features", []),
+        )
+
+        results = _cs_engine.search_comparables(
+            criteria=criteria,
+            user_id=data.get("user_id"),
+        )
+
+        if data.get("apply_adjustments"):
+            for r in results:
+                time_adj = _adj_engine.create_time_adjustment(r.days_since_sale)
+                cond_adj = _adj_engine.create_condition_adjustment(
+                    r.property_data.get("condition", "good")
+                )
+                loc_adj = _adj_engine.create_location_adjustment(
+                    criteria.location, r.property_data.get("location", "")
+                )
+                adjs = [time_adj, cond_adj] + ([loc_adj] if loc_adj else [])
+                adjusted = _adj_engine.apply_adjustments(
+                    comparable_id=r.property_id,
+                    original_price=r.property_data.get("price", 0),
+                    adjustments=adjs,
+                )
+                r.adjusted_price = adjusted.adjusted_price
+                r.is_adjusted = True
+
+        return jsonify({
+            "results_count": len(results),
+            "results": [r.to_dict() for r in results],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/search/match", methods=["POST"])
+def search_match_properties():
+    if not _SEARCH_OK:
+        return jsonify({"error": "Search module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        subject = data.get("subject_property")
+        candidates = data.get("candidate_properties", [])
+        strategy_str = data.get("strategy", "weighted")
+
+        if not subject:
+            return jsonify({"error": "subject_property is required"}), 400
+
+        try:
+            strategy = _MatchingStrategy(strategy_str)
+        except ValueError:
+            strategy = _MatchingStrategy.WEIGHTED
+
+        matches = _smart_matcher.match_properties(
+            subject=subject, candidates=candidates, strategy=strategy
+        )
+        return jsonify({
+            "subject_id": subject.get("property_id"),
+            "matches_count": len(matches),
+            "matches": [m.to_dict() for m in matches],
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+# ── Phase 38: API Hardening & External Integration Readiness ──────────────────
+_API38_OK = False
+try:
+    from api.security_layer import APISecurityLayer as _SecurityLayer, RateLimitTier as _RLTier
+    from api.request_validation import RequestValidator as _ReqValidator
+    from api.performance_optimizer import PerformanceOptimizer as _PerfOpt
+    from api.error_standardizer import ErrorStandardizer as _ErrStd, StandardErrorCode as _ErrCode
+    from api.integration_framework import (
+        IntegrationFramework as _IntegFW,
+        IntegrationEvent as _IntegEvent,
+    )
+    _security_layer = _SecurityLayer()
+    _req_validator = _ReqValidator()
+    _perf_optimizer = _PerfOpt()
+    _err_std = _ErrStd()
+    _integ_fw = _IntegFW()
+    _API38_OK = True
+    print("  [API38] Phase 38 loaded OK")
+except Exception as _api38_err:
+    print(f"  [API38] disabled: {_api38_err}")
+
+
+@app.route("/api/hardening/info", methods=["GET"])
+def api38_info():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        return jsonify({
+            "phase": 38,
+            "module": "API Hardening & External Integration Readiness",
+            "features": {
+                "api_key_management": True,
+                "rate_limiting": True,
+                "request_validation": True,
+                "response_caching": True,
+                "error_standardization": True,
+                "integration_webhooks": True,
+            },
+            "rate_tiers": ["free", "starter", "professional", "enterprise"],
+            "security": _security_layer.get_security_status(),
+            "cache": _perf_optimizer.get_cache_statistics(),
+            "integrations": _integ_fw.get_integration_statistics(),
+        }), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/hardening/api-keys/generate", methods=["POST"])
+def api38_generate_key():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        partner_id = data.get("partner_id")
+        partner_name = data.get("partner_name")
+        if not partner_id or not partner_name:
+            return jsonify({"error": "partner_id and partner_name are required"}), 400
+        tier_str = data.get("tier", "starter")
+        try:
+            tier = _RLTier(tier_str)
+        except ValueError:
+            tier = _RLTier.STARTER
+        api_key = _security_layer.generate_api_key(
+            partner_id=partner_id, partner_name=partner_name, tier=tier
+        )
+        return jsonify({
+            "key_id": api_key.key_id,
+            "key_secret": api_key.key_secret,
+            "tier": api_key.tier.value,
+            "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+            "note": "Store key_secret securely — it cannot be retrieved later",
+        }), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/hardening/api-keys/validate", methods=["POST"])
+def api38_validate_key():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        key_id = data.get("key_id", "")
+        key_secret = data.get("key_secret", "")
+        is_valid, api_key = _security_layer.validate_api_key(
+            key_id=key_id, key_secret=key_secret
+        )
+        if not is_valid:
+            return jsonify({"valid": False, "reason": "Invalid credentials or inactive key"}), 401
+        return jsonify({"valid": True, "key_info": api_key.to_dict()}), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/hardening/integrations/register", methods=["POST"])
+def api38_register_integration():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        data = request.get_json(force=True) or {}
+        integration_id = data.get("integration_id")
+        name = data.get("name")
+        provider = data.get("provider")
+        if not all([integration_id, name, provider]):
+            return jsonify({"error": "integration_id, name, and provider are required"}), 400
+
+        raw_events = data.get("events", [])
+        events = []
+        for ev in raw_events:
+            try:
+                events.append(_IntegEvent(ev))
+            except ValueError:
+                pass
+
+        integ = _integ_fw.register_integration(
+            integration_id=integration_id,
+            name=name,
+            provider=provider,
+            webhook_url=data.get("webhook_url"),
+            events=events,
+        )
+        return jsonify(integ.to_dict()), 201
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/hardening/integrations/stats", methods=["GET"])
+def api38_integration_stats():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        return jsonify(_integ_fw.get_integration_statistics()), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/docs/openapi.json", methods=["GET"])
+def api38_openapi_spec():
+    if not _API38_OK:
+        return jsonify({"error": "API Hardening module unavailable"}), 503
+    try:
+        spec = {
+            "openapi": "3.0.0",
+            "info": {
+                "title": "Expert Smart API",
+                "version": "1.0.0",
+                "description": "Real Estate Valuation Platform API — Phases 1-38",
+            },
+            "security_schemes": {
+                "ApiKeyAuth": {"type": "apiKey", "in": "header", "name": "X-API-Key"},
+            },
+            "paths": {
+                "/api/valuation/batch": {
+                    "post": {"summary": "Batch property valuation", "tags": ["Valuations"]}
+                },
+                "/api/search/comparables": {
+                    "post": {"summary": "Search comparable properties", "tags": ["Search"]}
+                },
+                "/api/analytics/metrics/{metric_id}/record": {
+                    "post": {"summary": "Record analytics metric", "tags": ["Analytics"]}
+                },
+                "/api/hardening/api-keys/generate": {
+                    "post": {"summary": "Generate partner API key", "tags": ["Security"]}
+                },
+            },
+        }
+        return jsonify(spec), 200
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Phase 40 — Integration Framework
+# ════════════════════════════════════════════════════════════════════════════
+_INTEG40_OK = False
+try:
+    from integrations.connector_base import (
+        ConnectorConfig as _ConnCfg40,
+        ConnectorType as _ConnType40,
+        SyncDirection as _SyncDir40,
+    )
+    from integrations.connectors.bank_connector import BankConnector as _BankConn40
+    from integrations.data_mapper import DataMapper as _DataMapper40
+    from integrations.sync_engine import SyncEngine as _SyncEng40
+    from integrations.partner_portal import (
+        PartnerPortal as _PartnerPortal40,
+        PartnerTier as _PartnerTier40,
+    )
+    from integrations.webhook_manager import (
+        WebhookManager as _WHMgr40,
+        WebhookEventType as _WHEvent40,
+    )
+    _dm40 = _DataMapper40()
+    _se40 = _SyncEng40()
+    _pp40 = _PartnerPortal40()
+    _wh40 = _WHMgr40()
+    _INTEG40_OK = True
+except Exception as _err40:
+    print(f"Phase 40 load error: {_err40}")
+
+
+@app.route("/api/integrations/info", methods=["GET"])
+def integ40_info():
+    """Integration Framework status and capabilities."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    stats = _se40.get_sync_statistics()
+    return jsonify({
+        "phase": 40,
+        "module": "Integration Framework",
+        "capabilities": {
+            "connector_types": [t.value for t in _ConnType40],
+            "sync_directions": [d.value for d in _SyncDir40],
+            "partner_tiers": [t.value for t in _PartnerTier40],
+            "data_mappings": _dm40.list_mappings(),
+            "webhook_event_types": [e.value for e in _WHEvent40],
+        },
+        "sync_statistics": stats,
+    })
+
+
+@app.route("/api/integrations/sync", methods=["POST"])
+def integ40_sync():
+    """Trigger connector synchronisation."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    data = request.get_json(silent=True) or {}
+    connector_id = data.get("connector_id")
+    if connector_id:
+        success = _se40.sync_connector(connector_id)
+        return jsonify({"connector_id": connector_id, "sync_successful": success})
+    results = _se40.sync_all()
+    return jsonify({"sync_results": results, "synced_count": len(results)})
+
+
+@app.route("/api/integrations/partners", methods=["POST"])
+def integ40_create_partner():
+    """Create a new integration partner account."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    data = request.get_json(silent=True) or {}
+    partner_id = data.get("partner_id")
+    name = data.get("name")
+    email = data.get("email")
+    if not partner_id or not name or not email:
+        return jsonify({"error": "partner_id, name, and email are required"}), 400
+    try:
+        tier = _PartnerTier40(data.get("tier", "trial"))
+    except ValueError:
+        tier = _PartnerTier40.TRIAL
+    partner = _pp40.create_partner(partner_id=partner_id, name=name, email=email, tier=tier)
+    return jsonify({"partner": partner.to_dict(), "api_key": partner.api_key}), 201
+
+
+@app.route("/api/integrations/partners/<partner_id>/dashboard", methods=["GET"])
+def integ40_partner_dashboard(partner_id):
+    """Get partner dashboard overview."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    dashboard = _pp40.get_partner_dashboard(partner_id)
+    if not dashboard:
+        return jsonify({"error": "Partner not found"}), 404
+    return jsonify(dashboard)
+
+
+@app.route("/api/integrations/connector-webhooks", methods=["POST"])
+def integ40_register_webhook():
+    """Register a connector-level webhook endpoint."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    data = request.get_json(silent=True) or {}
+    tenant_id = data.get("tenant_id")
+    url = data.get("url")
+    events_raw = data.get("events", [])
+    if not tenant_id or not url:
+        return jsonify({"error": "tenant_id and url are required"}), 400
+    events = []
+    for e in events_raw:
+        try:
+            events.append(_WHEvent40(e))
+        except ValueError:
+            pass
+    if not events:
+        events = [_WHEvent40.VALUATION_COMPLETED]
+    wh = _wh40.register_webhook(tenant_id=tenant_id, url=url, events=events)
+    return jsonify({"webhook": wh.to_dict()}), 201
+
+
+@app.route("/api/integrations/data-map", methods=["POST"])
+def integ40_map_data():
+    """Transform a data record using a registered mapping."""
+    if not _INTEG40_OK:
+        return jsonify({"error": "Integration Framework unavailable"}), 503
+    data = request.get_json(silent=True) or {}
+    mapping_name = data.get("mapping")
+    source = data.get("source", {})
+    if not mapping_name:
+        return jsonify({"error": "mapping is required"}), 400
+    try:
+        result = _dm40.map_data(source, mapping_name)
+        return jsonify({"mapped": result, "mapping": mapping_name})
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# Phase 41.0 — Market Indicators Backend API
+# Read-only market price indicators for Mass Appraisal charts
+# ════════════════════════════════════════════════════════════════════════════
+_MI41_OK = False
+try:
+    from market_indicators import (
+        MarketIndicatorsBackend as _MIBackend41,
+        market_indicators as _mi41_singleton,
+    )
+    _mi41 = _MIBackend41()           # fresh instance per server start
+    _MI41_OK = True
+except Exception as _err41:
+    print(f"Phase 41.0 load error: {_err41}")
+
+
+@app.route("/api/market-indicators/latest", methods=["GET"])
+def mi41_latest():
+    """Current values for all four market indicators."""
+    if not _MI41_OK:
+        return jsonify({"error": "Market Indicators module unavailable"}), 503
+    return jsonify(_mi41.get_latest_indicators())
+
+
+@app.route("/api/market-indicators/history", methods=["GET"])
+def mi41_history():
+    """12-month time-series for all four indicators.
+
+    Query param: days_back (int, default 365, currently returns all 12 sample months).
+    """
+    if not _MI41_OK:
+        return jsonify({"error": "Market Indicators module unavailable"}), 503
+    try:
+        days_back = int(request.args.get("days_back", 365))
+    except ValueError:
+        days_back = 365
+    return jsonify(_mi41.get_indicators_history(days_back=days_back))
+
+
+@app.route("/api/market-indicators/statistics", methods=["GET"])
+def mi41_statistics():
+    """Min / max / avg statistics for each indicator over the sample window."""
+    if not _MI41_OK:
+        return jsonify({"error": "Market Indicators module unavailable"}), 503
+    stats = _mi41.get_statistics()
+    return jsonify({"status": "success", "statistics": stats})
+
+
+@app.route("/api/market-indicators/info", methods=["GET"])
+def mi41_info():
+    """Metadata: indicator descriptions, units, ranges, and endpoint list."""
+    return jsonify({
+        "module": "Expert Smart Market Indicators",
+        "version": "1.0",
+        "phase": "41.0",
+        "indicators": {
+            "stratification": {
+                "name": "Market Stratification Index",
+                "description": "Local price variation and market segmentation",
+                "unit": "percentage",
+                "typical_range": "8-14%",
+                "use_case": "Neighbourhood price variation in Mass Appraisal",
+            },
+            "rppi": {
+                "name": "Residential Property Price Index",
+                "description": "Annual residential property price growth",
+                "unit": "percentage",
+                "typical_range": "10-18%",
+                "use_case": "Market trend analysis and time adjustments",
+            },
+            "avm": {
+                "name": "Automated Valuation Model Index",
+                "description": "AVM accuracy / performance indicator",
+                "unit": "percentage",
+                "typical_range": "9-13%",
+                "use_case": "Confidence level in automated valuations",
+            },
+            "cma": {
+                "name": "Comparative Market Analysis Index",
+                "description": "Effectiveness of comparable-property analysis",
+                "unit": "percentage",
+                "typical_range": "8-12%",
+                "use_case": "Reliability of comparable-based valuations",
+            },
+        },
+        "data_source": "sample_data",
+        "endpoints": [
+            "GET /api/market-indicators/latest",
+            "GET /api/market-indicators/history",
+            "GET /api/market-indicators/statistics",
+            "GET /api/market-indicators/info",
+        ],
+        "note": "Data is representative sample values. TODO: live market data collector.",
+    })
 
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")

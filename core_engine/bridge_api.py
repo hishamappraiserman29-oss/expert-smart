@@ -4746,6 +4746,59 @@ def write_to_excel_template(data, output_path):
     return output_path
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Legacy sheet filter — strips advanced-analytics sheets from a saved workbook
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _remove_legacy_advanced_sheets(path: str) -> None:
+    """Remove advanced-analytics sheets from a saved workbook for legacy exports.
+
+    Operates in-place on an already-saved file.  Any failure is logged and
+    suppressed so the export is never blocked by sheet-removal errors.
+    """
+    _EXCL: frozenset = frozenset({
+        # Arabic (both ي/ى forms + hamza variants handled by _norm)
+        "التحليل المكاني", "التحليل المكانى",
+        "الإنحدار المتعدد", "الانحدار المتعدد",
+        "الخيارات الحقيقية",
+        "لوحة القيادة التنفيذية",
+        "الشبكات العصبية",
+        "السلاسل الزمنية",
+        "إستخبارات السوق", "استخبارات السوق",
+        # English equivalents
+        "spatial analysis",
+        "multiple regression",
+        "real options",
+        "executive dashboard",
+        "neural networks",
+        "time series",
+        "market intelligence",
+    })
+
+    def _norm(name: str) -> str:
+        """Normalize for matching: strip, lower, unify hamza variants and ى→ي."""
+        n = name.strip().lower()
+        for _ch in "أإآ":
+            n = n.replace(_ch, "ا")
+        return n.replace("ى", "ي")
+
+    _excl_norm = {_norm(s) for s in _EXCL}
+
+    try:
+        import openpyxl as _xl
+        _is_xlsm = path.lower().endswith(".xlsm")
+        _wb      = _xl.load_workbook(path, keep_vba=_is_xlsm)
+        _to_del  = [s for s in list(_wb.sheetnames) if _norm(s) in _excl_norm]
+        for _s in _to_del:
+            del _wb[_s]
+        if _to_del:
+            _wb.save(path)
+            print(f"{_ts()} [LEGACY-FILTER] removed {len(_to_del)} advanced sheet(s): {_to_del}")
+        _wb.close()
+    except Exception as _rf_err:
+        print(f"{_ts()} [LEGACY-FILTER] warning — sheet removal skipped: {_rf_err}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # تقرير Word
 # ═══════════════════════════════════════════════════════════════════════════
 def write_word_summary(data, output_path):
@@ -5108,12 +5161,14 @@ def handle_valuation():
                 path = os.path.join(OUTPUTS, name)
                 write_to_excel_template(full, path)
         else:
-            # legacy / detailed — existing path unchanged
-            # TODO detailed: add richer sheet set when ExcelReportBuilder is wired in here
+            # legacy / detailed — write_to_excel_template fills all template sheets.
+            # For legacy, advanced analytics sheets are stripped from the saved file.
             ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
             name = f"Report_{rid}_{ts}{ext}"
             path = os.path.join(OUTPUTS, name)
             write_to_excel_template(full, path)
+            if _style_used == "legacy":
+                _remove_legacy_advanced_sheets(path)
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
 

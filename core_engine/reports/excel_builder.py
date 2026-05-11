@@ -36,6 +36,26 @@ _BORDER_THIN   = Border(
 _FMT_CURRENCY  = '#,##0.00'
 _FMT_PCT       = '0.00%'
 
+# ── Advanced-analytics sheets excluded from the legacy export ─────────────────
+# Match is performed on sheet_name.strip().lower() so both Arabic variants
+# (ي / ى endings, hamza variants) and English names are covered.
+_LEGACY_EXCLUDED_SHEETS: frozenset = frozenset({
+    "التحليل المكاني", "التحليل المكانى",
+    "الإنحدار المتعدد", "الانحدار المتعدد",
+    "الخيارات الحقيقية",
+    "لوحة القيادة التنفيذية",
+    "الشبكات العصبية",
+    "السلاسل الزمنية",
+    "إستخبارات السوق", "استخبارات السوق",
+    "spatial analysis",
+    "multiple regression",
+    "real options",
+    "executive dashboard",
+    "neural networks",
+    "time series",
+    "market intelligence",
+})
+
 # EGVS / IFRS reference descriptions
 _DISCLOSURE_DESCRIPTIONS: dict[str, str] = {
     "EGVS_1.0":  "Definition of Market Value",
@@ -826,6 +846,154 @@ class ExcelReportBuilder:
             f"{var_pct * 100:.2f}%" if var_pct is not None else "—"); r += 1
 
     # ──────────────────────────────────────────────────────────────────────────
+    # Style helper
+    # ──────────────────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _should_include_sheet(sheet_name: str, report_style: str) -> bool:
+        """Return False for advanced-analytics sheets when report_style == 'legacy'."""
+        if report_style == "legacy":
+            return sheet_name.strip().lower() not in _LEGACY_EXCLUDED_SHEETS
+        return True
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # Advanced-analytics sheets (detailed only — excluded from legacy)
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _adv_sheet(self, ar_title: str, en_title: str, description: str) -> None:
+        """Create an advanced-analytics sheet with a standard header."""
+        ws = self.workbook.create_sheet(ar_title)
+        ws.column_dimensions["A"].width = 28
+        ws.column_dimensions["B"].width = 55
+        ws.merge_cells("A1:B1")
+        tc           = ws["A1"]
+        tc.value     = f"{ar_title}  —  {en_title}"
+        tc.font      = _FONT_TITLE
+        tc.fill      = _FILL_HEADER
+        tc.font      = Font(bold=True, color="FFFFFF", size=13)
+        tc.alignment = _ALIGN_CENTER
+        ws.row_dimensions[1].height = 26
+
+        ws.merge_cells("A2:B2")
+        ws["A2"].value     = f"Report Date: {self.report_date}"
+        ws["A2"].font      = _FONT_MUTED
+        ws["A2"].alignment = Alignment(horizontal="right")
+
+        ws.merge_cells("A4:B4")
+        desc_cell           = ws["A4"]
+        desc_cell.value     = description
+        desc_cell.alignment = _ALIGN_WRAP
+        ws.row_dimensions[4].height = 45
+
+        if self.result is not None:
+            md = self.result.metadata or {}
+            ws.cell(row=6, column=1).value = "Asset Type"
+            ws.cell(row=6, column=1).font  = _FONT_BOLD
+            ws.cell(row=6, column=2).value = self.result.asset_type
+            ws.cell(row=7, column=1).value = "Primary Value (EGP)"
+            ws.cell(row=7, column=1).font  = _FONT_BOLD
+            ws.cell(row=7, column=2).value = float(self.result.primary_value) if self.result.primary_value else 0
+            self._apply_currency_format(ws, 7, 7, 2)
+            ws.cell(row=8, column=1).value = "Confidence"
+            ws.cell(row=8, column=1).font  = _FONT_BOLD
+            ws.cell(row=8, column=2).value = self.result.confidence
+            ws.cell(row=9, column=1).value = "Location"
+            ws.cell(row=9, column=1).font  = _FONT_BOLD
+            ws.cell(row=9, column=2).value = md.get("location") or md.get("address") or "—"
+
+    def sheet_spatial_analysis(self) -> None:
+        self._adv_sheet(
+            "التحليل المكاني", "Spatial Analysis",
+            "يحتوي هذا القسم على التحليل المكاني للعقارات المقارنة والموقع الجغرافي "
+            "للأصل. يشمل خرائط الكثافة السعرية، نصف قطر البحث، وتأثير الموقع على القيمة.",
+        )
+
+    def sheet_multiple_regression(self) -> None:
+        ws_name = "الانحدار المتعدد"
+        self._adv_sheet(
+            ws_name, "Multiple Regression",
+            "يحتوي هذا القسم على نموذج الانحدار المتعدد لتقدير القيمة. يشمل المتغيرات "
+            "المستقلة (المساحة، الموقع، العمر)، معاملات الانحدار، ومعامل التحديد R².",
+        )
+        if self.result is not None:
+            ws  = self.workbook[ws_name]
+            md  = self.result.metadata or {}
+            row = 11
+            ws.cell(row=row, column=1).value = "Inputs (Three Approaches)"; row += 1
+            for key, label in (("comparable", "Comparable"), ("cost", "Cost"), ("income", "Income")):
+                ws.cell(row=row, column=1).value = label
+                ws.cell(row=row, column=1).font  = _FONT_BOLD
+                ws.cell(row=row, column=2).value = float(md.get(key) or 0)
+                self._apply_currency_format(ws, row, row, 2)
+                row += 1
+
+    def sheet_real_options(self) -> None:
+        self._adv_sheet(
+            "الخيارات الحقيقية", "Real Options",
+            "يحتوي هذا القسم على تحليل الخيارات الحقيقية للأصل. يشمل قيمة خيار التطوير، "
+            "خيار التأخير، خيار التوسع، وخيار التخلي مع التقلبات الضمنية في السوق.",
+        )
+
+    def sheet_executive_dashboard(self) -> None:
+        ws_name = "لوحة القيادة التنفيذية"
+        self._adv_sheet(
+            ws_name, "Executive Dashboard",
+            "لوحة القيادة التنفيذية — ملخص المؤشرات الرئيسية للتقرير للإطلاع السريع.",
+        )
+        if self.result is not None:
+            ws  = self.workbook[ws_name]
+            md  = self.result.metadata or {}
+            row = 11
+            headers = ["Metric", "Value"]
+            self._apply_header_style(ws, row, 2)
+            for col, h in enumerate(headers, 1):
+                ws.cell(row=row, column=col).value = h
+            row += 1
+            for label, val in (
+                ("Asset Type",      self.result.asset_type),
+                ("Primary Purpose", self.result.primary_purpose),
+                ("Confidence",      self.result.confidence),
+                ("Comparable (EGP)", float(md.get("comparable") or 0)),
+                ("Cost (EGP)",       float(md.get("cost")       or 0)),
+                ("Income (EGP)",     float(md.get("income")     or 0)),
+                ("Final Value (EGP)", float(self.result.primary_value) if self.result.primary_value else 0),
+            ):
+                ws.cell(row=row, column=1).value = label
+                ws.cell(row=row, column=1).font  = _FONT_BOLD
+                ws.cell(row=row, column=2).value = val
+                if "EGP" in label:
+                    self._apply_currency_format(ws, row, row, 2)
+                row += 1
+
+    def sheet_neural_networks(self) -> None:
+        self._adv_sheet(
+            "الشبكات العصبية", "Neural Networks",
+            "يحتوي هذا القسم على نموذج الشبكة العصبية الاصطناعية لتقدير القيمة السوقية. "
+            "يشمل البنية المعمارية للنموذج، الطبقات المخفية، دالة التفعيل، ومقاييس الأداء.",
+        )
+
+    def sheet_time_series(self) -> None:
+        ws_name = "السلاسل الزمنية"
+        self._adv_sheet(
+            ws_name, "Time Series",
+            "يحتوي هذا القسم على تحليل السلاسل الزمنية لأسعار العقارات في المنطقة. "
+            "يشمل اتجاهات الأسعار التاريخية، نماذج ARIMA، والتنبؤ بالأسعار المستقبلية.",
+        )
+        if self.result is not None:
+            ws  = self.workbook[ws_name]
+            row = 11
+            ws.cell(row=row, column=1).value = "Valuation Date"
+            ws.cell(row=row, column=1).font  = _FONT_BOLD
+            ws.cell(row=row, column=2).value = self.report_date
+
+    def sheet_market_intelligence(self) -> None:
+        self._adv_sheet(
+            "استخبارات السوق", "Market Intelligence",
+            "يحتوي هذا القسم على تقرير استخبارات السوق العقاري. يشمل مؤشرات الطلب والعرض، "
+            "متوسطات أسعار المنطقة، حجم الصفقات، وتحليل المنافسين.",
+        )
+
+    # ──────────────────────────────────────────────────────────────────────────
     # Public entry point
     # ──────────────────────────────────────────────────────────────────────────
 
@@ -942,6 +1110,22 @@ class ExcelReportBuilder:
                 self.sheet_ivsc_compliance(ivsc_disclosure)
             if cross_border_disclosure is not None:
                 self.sheet_cross_border(cross_border_disclosure)
+            # ── Advanced-analytics sheets (detailed only) ─────────────────────
+            _inc = self._should_include_sheet
+            if _inc("التحليل المكاني", report_style):
+                self.sheet_spatial_analysis()
+            if _inc("الانحدار المتعدد", report_style):
+                self.sheet_multiple_regression()
+            if _inc("الخيارات الحقيقية", report_style):
+                self.sheet_real_options()
+            if _inc("لوحة القيادة التنفيذية", report_style):
+                self.sheet_executive_dashboard()
+            if _inc("الشبكات العصبية", report_style):
+                self.sheet_neural_networks()
+            if _inc("السلاسل الزمنية", report_style):
+                self.sheet_time_series()
+            if _inc("استخبارات السوق", report_style):
+                self.sheet_market_intelligence()
         if portfolio_summary is not None:
             self.sheet_portfolio_summary(portfolio_summary)
         if portfolio_performance is not None:

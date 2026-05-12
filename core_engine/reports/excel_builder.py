@@ -6,18 +6,19 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from adapters.asset import AssetValuationResult
+from reports.report_theme import BuilderPalette as _BP, get_fill as _gf
 
 
 # ── Style constants ────────────────────────────────────────────────────────────
 
-_FILL_HEADER   = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-_FILL_SUBHEAD  = PatternFill(start_color="D6E4F7", end_color="D6E4F7", fill_type="solid")
-_FILL_SECTION  = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-_FILL_CB         = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
-_FILL_PORTFOLIO  = PatternFill(start_color="203864", end_color="203864", fill_type="solid")
-_FILL_PORT_COL   = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
-_FILL_ERROR      = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-_FILL_WARNING  = PatternFill(start_color="FFC000", end_color="FFC000", fill_type="solid")
+_FILL_HEADER   = _gf(_BP.HEADER)
+_FILL_SUBHEAD  = _gf(_BP.SUBHEAD)
+_FILL_SECTION  = _gf(_BP.SECTION_MID)
+_FILL_CB         = _gf(_BP.CB_GREEN)
+_FILL_PORTFOLIO  = _gf(_BP.PORTFOLIO)
+_FILL_PORT_COL   = _gf(_BP.PORT_COL)
+_FILL_ERROR      = _gf(_BP.ERROR)
+_FILL_WARNING  = _gf(_BP.WARNING)
 
 _FONT_HEADER   = Font(bold=True, color="FFFFFF", size=12)
 _FONT_TITLE    = Font(bold=True, size=14)
@@ -37,12 +38,12 @@ _FMT_CURRENCY  = '#,##0.00'
 _FMT_PCT       = '0.00%'
 
 # ── Legacy Arabic-sheet style constants ───────────────────────────────────────
-_FILL_INPUT_SECT  = PatternFill(start_color="2E4057", end_color="2E4057", fill_type="solid")
-_FILL_INPUT_CELL  = PatternFill(start_color="EBF3FB", end_color="EBF3FB", fill_type="solid")
-_FILL_CALC_CELL   = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
-_FILL_FINAL_VALUE = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
-_FILL_ROW_BAND    = PatternFill(start_color="F2F7FF", end_color="F2F7FF", fill_type="solid")
-_FILL_SUBHEAD_AR  = PatternFill(start_color="D6E4F7", end_color="D6E4F7", fill_type="solid")
+_FILL_INPUT_SECT  = _gf(_BP.SECTION_DARK)
+_FILL_INPUT_CELL  = _gf(_BP.INPUT_CELL)
+_FILL_CALC_CELL   = _gf(_BP.CALC_CELL)
+_FILL_FINAL_VALUE = _gf(_BP.SUCCESS_LIGHT)
+_FILL_ROW_BAND    = _gf(_BP.ROW_BAND)
+_FILL_SUBHEAD_AR  = _gf(_BP.SUBHEAD)
 _FONT_FINAL_VALUE = Font(bold=True, size=12, color="1A6B2A")
 _BORDER_MEDIUM    = Border(
     left=Side(style="medium"), right=Side(style="medium"),
@@ -50,24 +51,9 @@ _BORDER_MEDIUM    = Border(
 )
 
 # ── Advanced-analytics sheets excluded from the legacy export ─────────────────
-# Match is performed on sheet_name.strip().lower() so both Arabic variants
-# (ي / ى endings, hamza variants) and English names are covered.
-_LEGACY_EXCLUDED_SHEETS: frozenset = frozenset({
-    "التحليل المكاني", "التحليل المكانى",
-    "الإنحدار المتعدد", "الانحدار المتعدد",
-    "الخيارات الحقيقية",
-    "لوحة القيادة التنفيذية",
-    "الشبكات العصبية",
-    "السلاسل الزمنية",
-    "إستخبارات السوق", "استخبارات السوق",
-    "spatial analysis",
-    "multiple regression",
-    "real options",
-    "executive dashboard",
-    "neural networks",
-    "time series",
-    "market intelligence",
-})
+# Sourced from the central report profiles registry (report_profiles.py).
+from reports.report_profiles import get_legacy_excluded_sheets as _get_legacy_excluded_sheets
+_LEGACY_EXCLUDED_SHEETS: frozenset = _get_legacy_excluded_sheets()
 
 # EGVS / IFRS reference descriptions
 _DISCLOSURE_DESCRIPTIONS: dict[str, str] = {
@@ -1030,7 +1016,7 @@ class ExcelReportBuilder:
             ws.cell(row=r, column=2).font      = Font(size=9)
             ws.cell(row=r, column=2).alignment = Alignment(horizontal="right")
             ic       = ws.cell(row=r, column=3)
-            ic.fill  = PatternFill(start_color=clr, end_color=clr, fill_type="solid")
+            ic.fill  = _gf(clr)
             ic.border = _BORDER_THIN
             r += 1
 
@@ -1242,12 +1228,12 @@ class ExcelReportBuilder:
         ws.sheet_view.rightToLeft = True
 
         # Local fill/font constants
-        _F_ADJ_POS  = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
-        _F_ADJ_NEG  = PatternFill(start_color="FFCCCC", end_color="FFCCCC", fill_type="solid")
-        _F_ADJ_ZERO = PatternFill(start_color="E8E8E8", end_color="E8E8E8", fill_type="solid")
-        _F_GOLD     = PatternFill(start_color="FFD966", end_color="FFD966", fill_type="solid")
-        _F_EMERALD  = PatternFill(start_color="A9D18E", end_color="A9D18E", fill_type="solid")
-        _F_COLHDR   = PatternFill(start_color="2E4057", end_color="2E4057", fill_type="solid")
+        _F_ADJ_POS  = _gf(_BP.SUCCESS_LIGHT)
+        _F_ADJ_NEG  = _gf(_BP.ADJ_NEG)
+        _F_ADJ_ZERO = _gf(_BP.ADJ_ZERO)
+        _F_GOLD     = _gf(_BP.ADJ_GOLD)
+        _F_EMERALD  = _gf(_BP.ADJ_EMERALD)
+        _F_COLHDR   = _gf(_BP.SECTION_DARK)
         _FONT_GOLD    = Font(bold=True, size=10, color="7F5700")
         _FONT_EMERALD = Font(bold=True, size=10, color="1A6B2A")
         _FONT_FINAL   = Font(bold=True, size=13, color="7F3700")

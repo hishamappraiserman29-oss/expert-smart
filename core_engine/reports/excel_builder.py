@@ -50,6 +50,18 @@ _BORDER_MEDIUM    = Border(
     top=Side(style="medium"),  bottom=Side(style="medium"),
 )
 
+# ── Sales comparison adjustment fills (promoted from method scope) ─────────────
+_F_ADJ_POS  = _gf(_BP.SUCCESS_LIGHT)
+_F_ADJ_NEG  = _gf(_BP.ADJ_NEG)
+_F_ADJ_ZERO = _gf(_BP.ADJ_ZERO)
+_F_GOLD     = _gf(_BP.ADJ_GOLD)
+_F_EMERALD  = _gf(_BP.ADJ_EMERALD)
+_F_COLHDR   = _gf(_BP.SECTION_DARK)
+_FONT_GOLD    = Font(bold=True, size=10, color=_BP.GOLD_DARK)
+_FONT_EMERALD = Font(bold=True, size=10, color=_BP.SUCCESS_DARK)
+_FONT_FINAL   = Font(bold=True, size=13, color=_BP.AMBER_DARK)
+_FONT_COLHDR  = Font(bold=True, color=_Palette.WHITE, size=9)
+
 # ── Advanced-analytics sheets excluded from the legacy export ─────────────────
 # Sourced from the central report profiles registry (report_profiles.py).
 from reports.report_profiles import get_legacy_excluded_sheets as _get_legacy_excluded_sheets
@@ -1226,18 +1238,6 @@ class ExcelReportBuilder:
         """'مقارنات البيوع' — USPAP/IVS Sales Comparison Adjustment Grid (legacy only)."""
         ws = self.workbook.create_sheet("مقارنات البيوع")
         ws.sheet_view.rightToLeft = True
-
-        # Local fill/font constants
-        _F_ADJ_POS  = _gf(_BP.SUCCESS_LIGHT)
-        _F_ADJ_NEG  = _gf(_BP.ADJ_NEG)
-        _F_ADJ_ZERO = _gf(_BP.ADJ_ZERO)
-        _F_GOLD     = _gf(_BP.ADJ_GOLD)
-        _F_EMERALD  = _gf(_BP.ADJ_EMERALD)
-        _F_COLHDR   = _gf(_BP.SECTION_DARK)
-        _FONT_GOLD    = Font(bold=True, size=10, color=_BP.GOLD_DARK)
-        _FONT_EMERALD = Font(bold=True, size=10, color=_BP.SUCCESS_DARK)
-        _FONT_FINAL   = Font(bold=True, size=13, color=_BP.AMBER_DARK)
-        _FONT_COLHDR  = Font(bold=True, color=_Palette.WHITE, size=9)
 
         md = self.result.metadata if self.result else {}
 

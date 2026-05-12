@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 
 from adapters.asset import AssetValuationResult
@@ -43,7 +43,6 @@ _FILL_INPUT_CELL  = _gf(_BP.INPUT_CELL)
 _FILL_CALC_CELL   = _gf(_BP.CALC_CELL)
 _FILL_FINAL_VALUE = _gf(_BP.SUCCESS_LIGHT)
 _FILL_ROW_BAND    = _gf(_BP.ROW_BAND)
-_FILL_SUBHEAD_AR  = _gf(_BP.SUBHEAD)
 _FONT_FINAL_VALUE = Font(bold=True, size=12, color=_BP.SUCCESS_DARK)
 _BORDER_MEDIUM    = Border(
     left=Side(style="medium"), right=Side(style="medium"),
@@ -51,12 +50,10 @@ _BORDER_MEDIUM    = Border(
 )
 
 # ── Sales comparison adjustment fills (promoted from method scope) ─────────────
-_F_ADJ_POS  = _gf(_BP.SUCCESS_LIGHT)
 _F_ADJ_NEG  = _gf(_BP.ADJ_NEG)
 _F_ADJ_ZERO = _gf(_BP.ADJ_ZERO)
 _F_GOLD     = _gf(_BP.ADJ_GOLD)
 _F_EMERALD  = _gf(_BP.ADJ_EMERALD)
-_F_COLHDR   = _gf(_BP.SECTION_DARK)
 _FONT_GOLD    = Font(bold=True, size=10, color=_BP.GOLD_DARK)
 _FONT_EMERALD = Font(bold=True, size=10, color=_BP.SUCCESS_DARK)
 _FONT_FINAL   = Font(bold=True, size=13, color=_BP.AMBER_DARK)
@@ -1137,12 +1134,12 @@ class ExcelReportBuilder:
         for col, hdr in enumerate(("الأسلوب", "القيمة (EGP)", "الوزن"), 2):
             hc            = ws.cell(row=r, column=col)
             hc.value      = hdr
-            hc.fill       = _FILL_SUBHEAD_AR
+            hc.fill       = _FILL_SUBHEAD
             hc.font       = Font(bold=True, size=10)
             hc.alignment  = _ALIGN_CENTER
             hc.border     = _BORDER_THIN
             ws.row_dimensions[r].height = 18
-        ws.cell(row=r, column=5).fill   = _FILL_SUBHEAD_AR
+        ws.cell(row=r, column=5).fill   = _FILL_SUBHEAD
         ws.cell(row=r, column=5).border = _BORDER_THIN
         r += 1
 
@@ -1304,7 +1301,7 @@ class ExcelReportBuilder:
         ws.row_dimensions[HDR_ROW].height = 22
         lhc           = ws.cell(row=HDR_ROW, column=2)
         lhc.value     = "بند الضبط"
-        lhc.fill      = _F_COLHDR
+        lhc.fill      = _FILL_INPUT_SECT
         lhc.font      = Font(bold=True, color=_Palette.WHITE, size=10)
         lhc.alignment = Alignment(horizontal="right", vertical="center")
         lhc.border    = _BORDER_THIN
@@ -1314,7 +1311,7 @@ class ExcelReportBuilder:
             for offset, suffix in ((0, " - الخاصية"), (1, " - الضبط %")):
                 c           = ws.cell(row=HDR_ROW, column=3 + 2 * i + offset)
                 c.value     = comp_label + suffix
-                c.fill      = _F_COLHDR
+                c.fill      = _FILL_INPUT_SECT
                 c.font      = _FONT_COLHDR
                 c.alignment = _ALIGN_CENTER
                 c.border    = _BORDER_THIN
@@ -1358,7 +1355,7 @@ class ExcelReportBuilder:
                 ac.alignment    = _ALIGN_CENTER
                 ac.border       = _BORDER_THIN
                 ac.fill = (
-                    _F_ADJ_POS  if adj_pct > 0 else
+                    _FILL_FINAL_VALUE  if adj_pct > 0 else
                     _F_ADJ_NEG  if adj_pct < 0 else
                     _F_ADJ_ZERO
                 )
@@ -1399,7 +1396,7 @@ class ExcelReportBuilder:
         oc           = ws.cell(row=ORIG_ROW, column=2)
         oc.value     = "السعر الأصلي (EGP/م²)"
         oc.font      = Font(bold=True, size=10)
-        oc.fill      = _FILL_SUBHEAD_AR
+        oc.fill      = _FILL_SUBHEAD
         oc.alignment = Alignment(horizontal="right", vertical="center")
         oc.border    = _BORDER_THIN
 
@@ -1424,11 +1421,11 @@ class ExcelReportBuilder:
             vc.value        = price_sqm
             vc.number_format = _FMT_CURRENCY
             vc.alignment    = _ALIGN_CENTER
-            vc.fill         = _FILL_SUBHEAD_AR
+            vc.fill         = _FILL_SUBHEAD
             vc.border       = _BORDER_THIN
 
             ac        = ws.cell(row=ORIG_ROW, column=acol)
-            ac.fill   = _FILL_SUBHEAD_AR
+            ac.fill   = _FILL_SUBHEAD
             ac.border = _BORDER_THIN
 
         # ── Row 17: السعر بعد الضبط (formula) ────────────────────────────────
@@ -1533,12 +1530,12 @@ class ExcelReportBuilder:
         ws.merge_cells(f"B{LEGEND_ROW}:E{LEGEND_ROW}")
         lhdr           = ws.cell(row=LEGEND_ROW, column=2)
         lhdr.value     = "دليل الألوان — Color Legend"
-        lhdr.fill      = _F_COLHDR
+        lhdr.fill      = _FILL_INPUT_SECT
         lhdr.font      = Font(bold=True, color=_Palette.WHITE, size=10)
         lhdr.alignment = _ALIGN_CENTER
 
         legend_items = [
-            (_F_ADJ_POS,  "ضبط موجب — المقارن أدنى من العقار (يُضاف للسعر)"),
+            (_FILL_FINAL_VALUE,  "ضبط موجب — المقارن أدنى من العقار (يُضاف للسعر)"),
             (_F_ADJ_NEG,  "ضبط سالب — المقارن أفضل من العقار (يُخصم من السعر)"),
             (_F_ADJ_ZERO, "لا يوجد ضبط — المقارن مماثل للعقار"),
             (_F_GOLD,     "صفوف الملخص (إجمالي الضبط / السعر النهائي الموزون)"),
@@ -2276,7 +2273,7 @@ class ExcelReportBuilder:
         for ci, hdr in enumerate(("السنة", "NOI (EGP)", "معامل الخصم", "القيمة الحالية (EGP)"), 2):
             c           = ws.cell(row=r, column=ci)
             c.value     = hdr
-            c.fill      = _FILL_SUBHEAD_AR
+            c.fill      = _FILL_SUBHEAD
             c.font      = Font(bold=True, size=10)
             c.alignment = _ALIGN_CENTER
             c.border    = _BORDER_THIN
@@ -2322,7 +2319,7 @@ class ExcelReportBuilder:
             if fmt:
                 c.number_format = fmt
             c.font      = Font(bold=True)
-            c.fill      = _FILL_SUBHEAD_AR
+            c.fill      = _FILL_SUBHEAD
             c.alignment = _ALIGN_CENTER
             c.border    = _BORDER_THIN
         r += 2

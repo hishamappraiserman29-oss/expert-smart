@@ -1017,9 +1017,9 @@ class ExcelReportBuilder:
         ws.cell(row=r, column=2).alignment = Alignment(horizontal="right")
         r += 1
         for lbl, clr in (
-            ("خلية إدخال يدوي",    "EBF3FB"),
-            ("خلية محسوبة / ناتجة", "F5F5F5"),
-            ("القيمة النهائية",    "C6EFCE"),
+            ("خلية إدخال يدوي",    _BP.INPUT_CELL),
+            ("خلية محسوبة / ناتجة", _BP.CALC_CELL),
+            ("القيمة النهائية",    _BP.SUCCESS_LIGHT),
         ):
             ws.cell(row=r, column=2).value     = lbl
             ws.cell(row=r, column=2).font      = Font(size=9)

@@ -6,7 +6,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from adapters.asset import AssetValuationResult
-from reports.report_theme import BuilderPalette as _BP, get_fill as _gf
+from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, get_fill as _gf
 
 
 # ── Style constants ────────────────────────────────────────────────────────────
@@ -34,8 +34,8 @@ _BORDER_THIN   = Border(
     top=Side(style="thin"),  bottom=Side(style="thin"),
 )
 
-_FMT_CURRENCY  = '#,##0.00'
-_FMT_PCT       = '0.00%'
+_FMT_CURRENCY  = _NF.CURRENCY_2DP
+_FMT_PCT       = _NF.PERCENT_DETAILED
 
 # ── Legacy Arabic-sheet style constants ───────────────────────────────────────
 _FILL_INPUT_SECT  = _gf(_BP.SECTION_DARK)

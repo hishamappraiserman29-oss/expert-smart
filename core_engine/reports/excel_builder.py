@@ -6,7 +6,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 from adapters.asset import AssetValuationResult
-from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, get_fill as _gf
+from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, Palette as _Palette, get_fill as _gf
 
 
 # ── Style constants ────────────────────────────────────────────────────────────
@@ -20,12 +20,12 @@ _FILL_PORT_COL   = _gf(_BP.PORT_COL)
 _FILL_ERROR      = _gf(_BP.ERROR)
 _FILL_WARNING  = _gf(_BP.WARNING)
 
-_FONT_HEADER   = Font(bold=True, color="FFFFFF", size=12)
+_FONT_HEADER   = Font(bold=True, color=_Palette.WHITE, size=12)
 _FONT_TITLE    = Font(bold=True, size=14)
 _FONT_SECTION  = Font(bold=True, size=12)
 _FONT_BOLD     = Font(bold=True)
-_FONT_ERR_LBL  = Font(color="FFFFFF", bold=True)
-_FONT_MUTED    = Font(italic=True, color="888888")
+_FONT_ERR_LBL  = Font(color=_Palette.WHITE, bold=True)
+_FONT_MUTED    = Font(italic=True, color=_BP.MUTED)
 
 _ALIGN_CENTER  = Alignment(horizontal="center", vertical="center", wrap_text=True)
 _ALIGN_WRAP    = Alignment(wrap_text=True, vertical="top")
@@ -44,7 +44,7 @@ _FILL_CALC_CELL   = _gf(_BP.CALC_CELL)
 _FILL_FINAL_VALUE = _gf(_BP.SUCCESS_LIGHT)
 _FILL_ROW_BAND    = _gf(_BP.ROW_BAND)
 _FILL_SUBHEAD_AR  = _gf(_BP.SUBHEAD)
-_FONT_FINAL_VALUE = Font(bold=True, size=12, color="1A6B2A")
+_FONT_FINAL_VALUE = Font(bold=True, size=12, color=_BP.SUCCESS_DARK)
 _BORDER_MEDIUM    = Border(
     left=Side(style="medium"), right=Side(style="medium"),
     top=Side(style="medium"),  bottom=Side(style="medium"),
@@ -400,7 +400,7 @@ class ExcelReportBuilder:
             cell = ws.cell(row=row, column=1)
             cell.value     = title
             cell.fill      = _FILL_SECTION
-            cell.font      = Font(bold=True, color="FFFFFF", size=11)
+            cell.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             cell.alignment = _ALIGN_WRAP
             ws.cell(row=row, column=2).fill = _FILL_SECTION
 
@@ -418,7 +418,7 @@ class ExcelReportBuilder:
         title_cell           = ws["A1"]
         title_cell.value     = "IVSC COMPLIANCE DISCLOSURE"
         title_cell.fill      = _FILL_HEADER
-        title_cell.font      = Font(bold=True, color="FFFFFF", size=14)
+        title_cell.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         title_cell.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 28
 
@@ -509,7 +509,7 @@ class ExcelReportBuilder:
         ws.column_dimensions["C"].width = 25
         ws.column_dimensions["D"].width = 25
 
-        _cb_section_font = Font(bold=True, color="FFFFFF", size=11)
+        _cb_section_font = Font(bold=True, color=_Palette.WHITE, size=11)
 
         def _section(row: int, title: str) -> None:
             ws.merge_cells(f"A{row}:D{row}")
@@ -535,7 +535,7 @@ class ExcelReportBuilder:
         title_cell           = ws["A1"]
         title_cell.value     = "CROSS-BORDER COMPLIANCE DISCLOSURE"
         title_cell.fill      = _FILL_CB
-        title_cell.font      = Font(bold=True, color="FFFFFF", size=14)
+        title_cell.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         title_cell.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 28
 
@@ -615,7 +615,7 @@ class ExcelReportBuilder:
         ws.column_dimensions["C"].width = 18
         ws.column_dimensions["D"].width = 15
 
-        _port_sect_font = Font(bold=True, color="FFFFFF", size=11)
+        _port_sect_font = Font(bold=True, color=_Palette.WHITE, size=11)
 
         def _section(row: int, title: str) -> None:
             ws.merge_cells(f"A{row}:D{row}")
@@ -643,7 +643,7 @@ class ExcelReportBuilder:
         title_cell           = ws["A1"]
         title_cell.value     = "PORTFOLIO SUMMARY"
         title_cell.fill      = _FILL_PORTFOLIO
-        title_cell.font      = Font(bold=True, color="FFFFFF", size=14)
+        title_cell.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         title_cell.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 28
 
@@ -730,7 +730,7 @@ class ExcelReportBuilder:
         for col, width in zip("ABCDEFGH", (24, 22, 14, 22, 14, 16, 14, 14)):
             ws.column_dimensions[col].width = width
 
-        _port_sect_font = Font(bold=True, color="FFFFFF", size=12)
+        _port_sect_font = Font(bold=True, color=_Palette.WHITE, size=12)
 
         def _section(row: int, title: str) -> None:
             ws.merge_cells(f"A{row}:H{row}")
@@ -758,7 +758,7 @@ class ExcelReportBuilder:
         tc           = ws["A1"]
         tc.value     = "PORTFOLIO PERFORMANCE ANALYSIS"
         tc.fill      = _FILL_PORTFOLIO
-        tc.font      = Font(bold=True, color="FFFFFF", size=14)
+        tc.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         tc.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 28
 
@@ -866,7 +866,7 @@ class ExcelReportBuilder:
         t            = ws["A1"]
         t.value      = "الافتراضات والمدخلات — Assumptions & Inputs"
         t.fill       = _FILL_HEADER
-        t.font       = Font(bold=True, color="FFFFFF", size=14)
+        t.font       = Font(bold=True, color=_Palette.WHITE, size=14)
         t.alignment  = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -883,7 +883,7 @@ class ExcelReportBuilder:
             c            = ws.cell(row=r, column=1)
             c.value      = f"  {label}" + (f"  — {en}" if en else "")
             c.fill       = _FILL_INPUT_SECT
-            c.font       = Font(bold=True, color="FFFFFF", size=11)
+            c.font       = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment  = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -910,7 +910,7 @@ class ExcelReportBuilder:
             if note:
                 nc            = ws.cell(row=r, column=4)
                 nc.value      = note
-                nc.font       = Font(italic=True, color="666666", size=9)
+                nc.font       = Font(italic=True, color=_BP.NOTE, size=9)
                 nc.alignment  = Alignment(horizontal="right", vertical="center", wrap_text=True)
                 nc.fill       = fill
                 nc.border     = _BORDER_THIN
@@ -1044,14 +1044,14 @@ class ExcelReportBuilder:
         t            = ws["A1"]
         t.value      = "تقرير التقييم العقاري"
         t.fill       = _FILL_HEADER
-        t.font       = Font(bold=True, color="FFFFFF", size=16)
+        t.font       = Font(bold=True, color=_Palette.WHITE, size=16)
         t.alignment  = _ALIGN_CENTER
         ws.row_dimensions[1].height = 36
 
         ws.merge_cells("A2:E2")
         ws["A2"].value     = "Real Estate Valuation Report"
         ws["A2"].fill      = _FILL_SECTION
-        ws["A2"].font      = Font(bold=True, color="FFFFFF", size=12, italic=True)
+        ws["A2"].font      = Font(bold=True, color=_Palette.WHITE, size=12, italic=True)
         ws["A2"].alignment = _ALIGN_CENTER
         ws.row_dimensions[2].height = 22
 
@@ -1061,7 +1061,7 @@ class ExcelReportBuilder:
         ws["A3"].value     = (f"تاريخ التقرير: {self.report_date}  |  "
                               f"نوع الأصل: {asset_type}  |  الثقة: {confidence}")
         ws["A3"].fill      = _FILL_INPUT_SECT
-        ws["A3"].font      = Font(italic=True, color="FFFFFF", size=10)
+        ws["A3"].font      = Font(italic=True, color=_Palette.WHITE, size=10)
         ws["A3"].alignment = _ALIGN_CENTER
         ws.row_dimensions[3].height = 18
 
@@ -1070,7 +1070,7 @@ class ExcelReportBuilder:
         fv_cell            = ws["B5"]
         fv_cell.value      = f"القيمة السوقية النهائية\n{fv:,.0f}  جنيه مصري"
         fv_cell.fill       = _FILL_FINAL_VALUE
-        fv_cell.font       = Font(bold=True, size=14, color="1A6B2A")
+        fv_cell.font       = Font(bold=True, size=14, color=_BP.SUCCESS_DARK)
         fv_cell.alignment  = Alignment(horizontal="center", vertical="center", wrap_text=True)
         fv_cell.border     = _BORDER_MEDIUM
         ws.row_dimensions[5].height = 28
@@ -1084,7 +1084,7 @@ class ExcelReportBuilder:
             c            = ws.cell(row=r, column=2)
             c.value      = f"  {label}"
             c.fill       = _FILL_INPUT_SECT
-            c.font       = Font(bold=True, color="FFFFFF", size=11)
+            c.font       = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment  = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -1234,10 +1234,10 @@ class ExcelReportBuilder:
         _F_GOLD     = _gf(_BP.ADJ_GOLD)
         _F_EMERALD  = _gf(_BP.ADJ_EMERALD)
         _F_COLHDR   = _gf(_BP.SECTION_DARK)
-        _FONT_GOLD    = Font(bold=True, size=10, color="7F5700")
-        _FONT_EMERALD = Font(bold=True, size=10, color="1A6B2A")
-        _FONT_FINAL   = Font(bold=True, size=13, color="7F3700")
-        _FONT_COLHDR  = Font(bold=True, color="FFFFFF", size=9)
+        _FONT_GOLD    = Font(bold=True, size=10, color=_BP.GOLD_DARK)
+        _FONT_EMERALD = Font(bold=True, size=10, color=_BP.SUCCESS_DARK)
+        _FONT_FINAL   = Font(bold=True, size=13, color=_BP.AMBER_DARK)
+        _FONT_COLHDR  = Font(bold=True, color=_Palette.WHITE, size=9)
 
         md = self.result.metadata if self.result else {}
 
@@ -1276,14 +1276,14 @@ class ExcelReportBuilder:
         t           = ws["A1"]
         t.value     = "مصفوفة الضبط الاحترافية"
         t.fill      = _FILL_HEADER
-        t.font      = Font(bold=True, color="FFFFFF", size=16)
+        t.font      = Font(bold=True, color=_Palette.WHITE, size=16)
         t.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 36
 
         # ── Row 2: English subtitle ────────────────────────────────────────────
         ws.merge_cells(f"A2:{last_col_lt}2")
         ws["A2"].value     = "Professional Sales Adjustment Grid — USPAP / IVS"
-        ws["A2"].font      = Font(bold=True, color="FFFFFF", size=11)
+        ws["A2"].font      = Font(bold=True, color=_Palette.WHITE, size=11)
         ws["A2"].fill      = _FILL_INPUT_SECT
         ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
         ws.row_dimensions[2].height = 22
@@ -1305,7 +1305,7 @@ class ExcelReportBuilder:
         lhc           = ws.cell(row=HDR_ROW, column=2)
         lhc.value     = "بند الضبط"
         lhc.fill      = _F_COLHDR
-        lhc.font      = Font(bold=True, color="FFFFFF", size=10)
+        lhc.font      = Font(bold=True, color=_Palette.WHITE, size=10)
         lhc.alignment = Alignment(horizontal="right", vertical="center")
         lhc.border    = _BORDER_THIN
 
@@ -1534,7 +1534,7 @@ class ExcelReportBuilder:
         lhdr           = ws.cell(row=LEGEND_ROW, column=2)
         lhdr.value     = "دليل الألوان — Color Legend"
         lhdr.fill      = _F_COLHDR
-        lhdr.font      = Font(bold=True, color="FFFFFF", size=10)
+        lhdr.font      = Font(bold=True, color=_Palette.WHITE, size=10)
         lhdr.alignment = _ALIGN_CENTER
 
         legend_items = [
@@ -1563,7 +1563,7 @@ class ExcelReportBuilder:
         mhdr           = ws.cell(row=METH_ROW, column=2)
         mhdr.value     = "منهجية التقييم بأسلوب المقارنة البيعية — Methodology"
         mhdr.fill      = _FILL_INPUT_SECT
-        mhdr.font      = Font(bold=True, color="FFFFFF", size=11)
+        mhdr.font      = Font(bold=True, color=_Palette.WHITE, size=11)
         mhdr.alignment = Alignment(horizontal="right", vertical="center")
 
         steps = [
@@ -1609,7 +1609,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "المقارنات الإيجارية — Rental Comparables"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -1624,7 +1624,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=ci)
             c.value     = hdr
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=10)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=10)
             c.alignment = _ALIGN_CENTER
             c.border    = _BORDER_THIN
         r += 1
@@ -1688,7 +1688,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "طريقة التكلفة — Cost Approach"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -1705,7 +1705,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=1)
             c.value     = f"  {label}"
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -1788,7 +1788,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "رأسمالة الدخل — Income Capitalization"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -1805,7 +1805,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=1)
             c.value     = f"  {label}"
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -1877,7 +1877,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "توفيق النتائج — Reconciliation of Value Indications"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -1894,7 +1894,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=ci)
             c.value     = hdr
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=10)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=10)
             c.alignment = _ALIGN_CENTER
             c.border    = _BORDER_THIN
         r += 1
@@ -1944,7 +1944,7 @@ class ExcelReportBuilder:
         nh           = ws.cell(row=r, column=2)
         nh.value     = "  ملاحظات التوفيق"
         nh.fill      = _FILL_INPUT_SECT
-        nh.font      = Font(bold=True, color="FFFFFF", size=11)
+        nh.font      = Font(bold=True, color=_Palette.WHITE, size=11)
         nh.alignment = Alignment(horizontal="right", vertical="center")
         ws.row_dimensions[r].height = 20
         r += 1
@@ -1977,7 +1977,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "محددات التقييم — Valuation Parameters & Limiting Conditions"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -1994,7 +1994,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=1)
             c.value     = f"  {label}"
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -2069,7 +2069,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "شهادة المقيم — Appraiser Certification"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -2123,7 +2123,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "مصادر البيانات والمنهجية — Data Sources & Methodology"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -2140,7 +2140,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=1)
             c.value     = f"  {label}"
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -2222,7 +2222,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "DCF — التدفقات النقدية المخصومة"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -2239,7 +2239,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=1)
             c.value     = f"  {label}"
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -2369,7 +2369,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "الإيجار مقابل الشراء — Rent vs Buy Analysis"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -2384,7 +2384,7 @@ class ExcelReportBuilder:
             c           = ws.cell(row=r, column=ci)
             c.value     = hdr
             c.fill      = _FILL_INPUT_SECT
-            c.font      = Font(bold=True, color="FFFFFF", size=11)
+            c.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             c.alignment = _ALIGN_CENTER
             c.border    = _BORDER_THIN
         r += 1
@@ -2444,7 +2444,7 @@ class ExcelReportBuilder:
         b           = ws["A1"]
         b.value     = "أفضل وأعلى استخدام — Highest & Best Use (HABU)"
         b.fill      = _FILL_HEADER
-        b.font      = Font(bold=True, color="FFFFFF", size=14)
+        b.font      = Font(bold=True, color=_Palette.WHITE, size=14)
         b.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 32
 
@@ -2474,7 +2474,7 @@ class ExcelReportBuilder:
             ch           = ws.cell(row=r, column=2)
             ch.value     = crit
             ch.fill      = _FILL_INPUT_SECT
-            ch.font      = Font(bold=True, color="FFFFFF", size=11)
+            ch.font      = Font(bold=True, color=_Palette.WHITE, size=11)
             ch.alignment = Alignment(horizontal="right", vertical="center")
             ws.row_dimensions[r].height = 20
             r += 1
@@ -2512,7 +2512,7 @@ class ExcelReportBuilder:
         ch           = ws.cell(row=r, column=2)
         ch.value     = "  خلاصة أفضل وأعلى استخدام"
         ch.fill      = _FILL_INPUT_SECT
-        ch.font      = Font(bold=True, color="FFFFFF", size=11)
+        ch.font      = Font(bold=True, color=_Palette.WHITE, size=11)
         ch.alignment = Alignment(horizontal="right", vertical="center")
         ws.row_dimensions[r].height = 20
         r += 1
@@ -2558,7 +2558,7 @@ class ExcelReportBuilder:
         tc.value     = f"{ar_title}  —  {en_title}"
         tc.font      = _FONT_TITLE
         tc.fill      = _FILL_HEADER
-        tc.font      = Font(bold=True, color="FFFFFF", size=13)
+        tc.font      = Font(bold=True, color=_Palette.WHITE, size=13)
         tc.alignment = _ALIGN_CENTER
         ws.row_dimensions[1].height = 26
 

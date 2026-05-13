@@ -9912,7 +9912,7 @@ try:
     )
     from government.audit_trail import (
         GovernmentAuditTrail as _GovAudit,
-        AuditAction as _AuditAction,
+        AuditAction as _GovAuditAction,
     )
     from government.government_portal import GovernmentPortalManager as _GovPortal
 
@@ -9982,7 +9982,7 @@ def api_government_compliance_check():
                 result = _gov_compliance.check_compliance(property_data, std)
                 results[std_str] = result.to_dict()
                 _gov_audit.record(
-                    _AuditAction.COMPLIANCE_CHECK,
+                    _GovAuditAction.COMPLIANCE_CHECK,
                     entity_id=property_data.get("property_id", "unknown"),
                     entity_type="property",
                     details={"standard": std_str, "level": result.compliance_level.value},
@@ -10020,7 +10020,7 @@ def api_government_tax_calculate():
             years_held=int(years_held) if years_held is not None else None,
         )
         _gov_audit.record(
-            _AuditAction.TAX_CALCULATION,
+            _GovAuditAction.TAX_CALCULATION,
             entity_id=property_id,
             entity_type="property",
             details={"classification": classification_str, "total_tax": result.total_estimated_tax},
@@ -10066,7 +10066,7 @@ def api_government_forms_generate():
 
         from datetime import datetime as _dt32
         _gov_audit.record(
-            _AuditAction.FORM_GENERATED,
+            _GovAuditAction.FORM_GENERATED,
             entity_id=property_data.get("property_id", "unknown"),
             entity_type="form",
             details={"form_type": form_type_str},

@@ -35,3 +35,8 @@ qdrant-client
 python-dotenv
 watchdog
 requests
+
+# PDF generation (reports engine)
+fpdf2
+arabic-reshaper
+python-bidi

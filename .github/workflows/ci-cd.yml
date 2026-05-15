@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.13"
   IMAGE_NAME: expert-smart/api
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install --no-cache-dir -r requirements.txt pytest pytest-cov
+        run: pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
 
       - name: Run tests
         run: |

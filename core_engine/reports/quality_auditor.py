@@ -2,7 +2,10 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from adapters.asset import AssetValuationResult
+try:
+    from adapters.asset import AssetValuationResult
+except ImportError:
+    AssetValuationResult = None  # type: ignore[assignment,misc]
 
 
 # EGVS disclosures that must appear on any court-grade valuation report

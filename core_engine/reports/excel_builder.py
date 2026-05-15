@@ -5,7 +5,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.utils import get_column_letter
 
-from adapters.asset import AssetValuationResult
+try:
+    from adapters.asset import AssetValuationResult
+except ImportError:
+    AssetValuationResult = None  # type: ignore[assignment,misc]
 from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, Palette as _Palette, get_fill as _gf
 
 

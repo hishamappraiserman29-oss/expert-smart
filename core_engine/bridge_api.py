@@ -53,29 +53,45 @@ from engines.comparative import ComparativeEngine
 from engines.cost import CostEngine
 from engines.income import IncomeEngine
 
-# ── Phase 5 adapters ─────────────────────────────────────────────────────────
-from adapters.market_value import MarketValueAdapter
-from adapters.mortgage import MortgageValueAdapter
-from adapters.insurance import InsuranceValueAdapter
-from adapters.ifrs_13 import IFRS13FairValueAdapter
+# ── Phase 5 adapters (optional — absent on main until R3 is merged) ──────────
+try:
+    from adapters.market_value import MarketValueAdapter
+    from adapters.mortgage import MortgageValueAdapter
+    from adapters.insurance import InsuranceValueAdapter
+    from adapters.ifrs_13 import IFRS13FairValueAdapter
+except ImportError:
+    MarketValueAdapter = MortgageValueAdapter = InsuranceValueAdapter = IFRS13FairValueAdapter = None  # type: ignore[assignment,misc]
 
 # ── Phase 6 asset adapters + Excel report builder ────────────────────────────
-from adapters.residential import ResidentialAdapter
-from adapters.commercial import CommercialAdapter
+try:
+    from adapters.residential import ResidentialAdapter
+    from adapters.commercial import CommercialAdapter
+except ImportError:
+    ResidentialAdapter = CommercialAdapter = None  # type: ignore[assignment,misc]
 from reports.excel_builder import ExcelReportBuilder
 
 # ── Phase 7 land adapter + quality auditor ────────────────────────────────────
-from adapters.land import LandAdapter
+try:
+    from adapters.land import LandAdapter
+except ImportError:
+    LandAdapter = None  # type: ignore[assignment,misc]
 from reports.quality_auditor import ReportQualityAuditor
 
-# ── Phase 15 enterprise features ──────────────────────────────────────────────
-from adapters.enterprise import (
-    TenantManager              as _TenantManager,
-    TenantRole                 as _TenantRole,
-    EnterpriseLicenseValidator as _LicenseValidator,
-)
-from database.audit_log import AuditLog as _AuditLog, AuditAction as _AuditAction, AuditEvent as _AuditEvent
-_tenant_manager = _TenantManager()
+# ── Phase 15 enterprise features (optional — absent on main until R3 is merged)
+try:
+    from adapters.enterprise import (
+        TenantManager              as _TenantManager,
+        TenantRole                 as _TenantRole,
+        EnterpriseLicenseValidator as _LicenseValidator,
+    )
+    from database.audit_log import AuditLog as _AuditLog, AuditAction as _AuditAction, AuditEvent as _AuditEvent
+    _tenant_manager = _TenantManager()
+    _ENTERPRISE_AVAILABLE = True
+except ImportError:
+    _TenantManager = _TenantRole = _LicenseValidator = None  # type: ignore[assignment,misc]
+    _AuditLog = _AuditAction = _AuditEvent = None  # type: ignore[assignment,misc]
+    _tenant_manager = None
+    _ENTERPRISE_AVAILABLE = False
 
 # ── Phase 8: database layer (lazy — psycopg2 optional) ────────────────────────
 try:

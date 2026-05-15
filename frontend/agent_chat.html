@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expert Smart — Agent Chat</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e0e0e0; height: 100vh; display: flex; flex-direction: column; }
+  header { background: #1a1d27; border-bottom: 1px solid #2d3048; padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+  header h1 { font-size: 1.1rem; font-weight: 600; color: #fff; }
+  header span { font-size: 0.75rem; background: #2a4a7f; color: #7eb3ff; padding: 3px 10px; border-radius: 12px; }
+  #log { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .bubble { max-width: 72%; padding: 10px 14px; border-radius: 12px; line-height: 1.5; font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; }
+  .bubble.user   { align-self: flex-end; background: #2a4a7f; color: #dce8ff; border-bottom-right-radius: 3px; }
+  .bubble.agent  { align-self: flex-start; background: #1e2130; border: 1px solid #2d3048; color: #cdd6f4; border-bottom-left-radius: 3px; }
+  .bubble.agent.error { border-color: #c0392b; color: #f5b7b1; }
+  .meta { font-size: 0.7rem; color: #555; margin-top: 4px; }
+  #composer { background: #1a1d27; border-top: 1px solid #2d3048; padding: 14px 20px; display: flex; gap: 10px; }
+  #input { flex: 1; background: #0f1117; border: 1px solid #2d3048; border-radius: 8px; color: #e0e0e0; padding: 10px 14px; font-size: 0.9rem; outline: none; resize: none; height: 44px; line-height: 1.4; transition: border-color .2s; }
+  #input:focus { border-color: #4a6fa5; }
+  #send { background: #2a4a7f; color: #fff; border: none; border-radius: 8px; padding: 0 20px; cursor: pointer; font-size: 0.9rem; transition: background .2s; }
+  #send:hover { background: #3a5f9f; }
+  #send:disabled { opacity: .4; cursor: default; }
+  .ws-bar { background: #1a1d27; border-bottom: 1px solid #2d3048; padding: 8px 20px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #888; }
+  .ws-bar input { background: transparent; border: 1px solid #2d3048; border-radius: 6px; padding: 4px 10px; color: #ccc; font-size: 0.8rem; width: 280px; outline: none; }
+  .ws-bar input:focus { border-color: #4a6fa5; }
+  .empty-hint { text-align: center; color: #444; font-size: 0.85rem; margin: auto; }
+  .empty-hint code { background: #1e2130; border-radius: 4px; padding: 2px 6px; color: #7eb3ff; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Expert Smart Agent</h1>
+  <span>Phase 21 — Chat UI</span>
+</header>
+<div class="ws-bar">
+  <label for="wsid">Workspace ID:</label>
+  <input id="wsid" type="text" placeholder="paste workspace_id here (optional)">
+</div>
+<div id="log">
+  <div class="empty-hint">
+    Type a command below or <code>help</code> to see what's available.
+  </div>
+</div>
+<div id="composer">
+  <textarea id="input" placeholder="e.g. list workspaces  |  run pipeline  |  help" rows="1"></textarea>
+  <button id="send">Send</button>
+</div>
+
+<script>
+const log   = document.getElementById('log');
+const input = document.getElementById('input');
+const send  = document.getElementById('send');
+const wsid  = document.getElementById('wsid');
+
+function addBubble(text, cls, meta) {
+  const hint = log.querySelector('.empty-hint');
+  if (hint) hint.remove();
+  const wrap = document.createElement('div');
+  const b = document.createElement('div');
+  b.className = `bubble ${cls}`;
+  b.textContent = text;
+  wrap.appendChild(b);
+  if (meta) {
+    const m = document.createElement('div');
+    m.className = 'meta';
+    m.textContent = meta;
+    m.style.textAlign = cls === 'user' ? 'right' : 'left';
+    wrap.appendChild(m);
+  }
+  log.appendChild(wrap);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+  addBubble(text, 'user');
+  input.value = '';
+  input.style.height = '44px';
+  send.disabled = true;
+
+  const payload = { message: text };
+  const ws = wsid.value.trim();
+  if (ws) payload.workspace_id = ws;
+
+  try {
+    const r = await fetch('/api/agent/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    const cls = d.success ? 'agent' : 'agent error';
+    addBubble(d.message || '(no message)', cls, `intent: ${d.intent || '—'}`);
+  } catch (e) {
+    addBubble(`Network error: ${e.message}`, 'agent error');
+  } finally {
+    send.disabled = false;
+    input.focus();
+  }
+}
+
+send.addEventListener('click', sendMessage);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+input.addEventListener('input', () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+});
+</script>
+</body>
+</html>

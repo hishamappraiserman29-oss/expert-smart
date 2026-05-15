@@ -1,0 +1,38 @@
+/* style_rtl.css — Phase 23 RTL/LTR Layout Support */
+
+body.rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+body.ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+/* Navigation */
+body.rtl nav { flex-direction: row-reverse; }
+body.rtl .nav-item { margin-left: 0; margin-right: 1rem; }
+body.ltr .nav-item { margin-right: 1rem; margin-left: 0; }
+
+/* Form labels */
+body.rtl label { float: right; margin-left: 1rem; margin-right: 0; }
+body.ltr label { float: left;  margin-right: 1rem; margin-left: 0; }
+
+/* Buttons */
+body.rtl button, body.rtl .btn { float: left; }
+body.ltr button, body.ltr .btn { float: right; }
+
+/* Tables */
+body.rtl table { text-align: right; }
+body.ltr table { text-align: left;  }
+
+/* Lists */
+body.rtl ul, body.rtl ol { padding-right: 2rem; padding-left: 0; }
+body.ltr ul, body.ltr ol { padding-left: 2rem;  padding-right: 0; }
+
+/* Utilities */
+.text-right { text-align: right; }
+.text-left  { text-align: left;  }
+body.rtl .text-align-auto { text-align: right; }
+body.ltr .text-align-auto { text-align: left;  }

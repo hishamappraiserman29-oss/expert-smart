@@ -1,0 +1,41 @@
+[flake8]
+max-line-length = 120
+max-complexity = 20
+
+# Files/dirs to skip
+exclude =
+    .git,
+    __pycache__,
+    .mypy_cache,
+    .pytest_cache,
+    venv,
+    env,
+    build,
+    dist,
+    *.egg-info,
+    core_engine/database/schema.sql
+
+# Per-file ignores
+per-file-ignores =
+    # bridge_api.py: huge file — ignore long-line and complexity warnings
+    core_engine/bridge_api.py: E501, C901, W503, W504, E402
+    # test files: allow longer lines and bare asserts
+    core_engine/tests/*.py: E501, S101, W503
+    # __init__.py: allow unused imports (re-exports)
+    */__init__.py: F401
+
+# Codes to ignore globally
+ignore =
+    # W503/W504: line break before/after binary operator — black handles this
+    W503,
+    W504,
+    # E203: whitespace before ':' — black uses this style
+    E203,
+    # E402: module level import not at top — some files need runtime imports
+    E402
+
+# Report format
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+count = True
+show-source = False
+statistics = True

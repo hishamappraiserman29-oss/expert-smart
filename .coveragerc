@@ -1,0 +1,45 @@
+[run]
+source =
+    core_engine/agents
+    core_engine/mcp_bridge.py
+    core_engine/mcp_setup.py
+
+omit =
+    core_engine/tests/*
+    core_engine/bridge_api.py
+    */__pycache__/*
+    */venv/*
+
+branch = True
+parallel = False
+relative_files = True
+
+[report]
+precision = 1
+show_missing = True
+skip_covered = False
+skip_empty = True
+sort = Cover
+
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    # Abstract methods
+    raise NotImplementedError
+    # Type-checking blocks
+    if TYPE_CHECKING:
+    # Debug/unreachable
+    if __name__ == .__main__.:
+    \.\.\.
+
+[html]
+directory = htmlcov
+title = Expert Smart — Coverage Report
+
+[json]
+output = ph2_coverage.json
+pretty_print = True
+
+[paths]
+source =
+    core_engine/

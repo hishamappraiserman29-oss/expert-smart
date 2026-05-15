@@ -1,0 +1,71 @@
+[MASTER]
+jobs=1
+unsafe-load-any-extension=no
+extension-pkg-whitelist=
+
+[MESSAGES CONTROL]
+# Disable rules that are too noisy for a large legacy codebase or irrelevant here
+disable=
+    C0103,  # invalid-name — short vars (e, i, f, wm …) are fine
+    C0114,  # missing-module-docstring
+    C0115,  # missing-class-docstring
+    C0116,  # missing-function-docstring
+    C0301,  # line-too-long — handled by flake8
+    C0302,  # too-many-lines — bridge_api.py is intentionally large
+    C0411,  # wrong-import-order — handled by isort
+    C0412,  # ungrouped-imports
+    C0413,  # wrong-import-position
+    C0415,  # import-outside-toplevel — some modules use deferred imports
+    R0801,  # duplicate-code
+    R0902,  # too-many-instance-attributes
+    R0903,  # too-few-public-methods — dataclasses/enums
+    R0904,  # too-many-public-methods
+    R0911,  # too-many-return-statements
+    R0912,  # too-many-branches
+    R0913,  # too-many-arguments — API handlers legitimately have many args
+    R0914,  # too-many-locals
+    R0915,  # too-many-statements
+    W0105,  # pointless-string-statement — used as section dividers
+    W0212,  # protected-access — agents access internal state intentionally
+    W0511,  # fixme/todo — tracked separately
+    W0612,  # unused-variable — common in unpacking
+    W0613,  # unused-argument — Flask view decorators
+    W0703,  # broad-except — intentional in pipeline/webhook error isolation
+    W1514,  # unspecified-encoding — we explicitly pass encoding everywhere new
+    E1101,  # generated-members — openpyxl, SQLAlchemy dynamic attrs
+    I0001   # raw-checker-failed
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[DESIGN]
+max-args=12
+max-attributes=16
+max-bool-expr=6
+max-branches=20
+max-locals=20
+max-returns=8
+max-statements=60
+min-public-methods=1
+
+[SIMILARITIES]
+min-similarity-lines=8
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+
+[VARIABLES]
+dummy-variables-rgx=_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+$)|dummy|^ignored_|^unused_
+callbacks=cb_,_cb
+
+[TYPECHECK]
+ignore-mixin-members=yes
+ignored-modules=openpyxl,sqlalchemy,flask,waitress,fastmcp,httpx,numpy,pandas
+ignored-classes=SQLObject,optparse.Values,thread._local,_thread._local
+
+[REPORTS]
+output-format=text
+reports=no
+score=yes
+msg-template={path}:{line}:{column}: {msg_id} ({symbol}) {msg}

@@ -1,0 +1,67 @@
+[tool.black]
+line-length = 120
+target-version = ["py311", "py312", "py313"]
+skip-string-normalization = true  # keep single quotes
+extend-exclude = '''
+/(
+    \.git
+  | __pycache__
+  | \.mypy_cache
+  | venv
+  | env
+  | build
+  | dist
+  | core_engine/bridge_api\.py   # large legacy file — format separately
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["agents", "adapters", "database", "engines", "reports"]
+known_third_party = [
+    "flask", "flask_cors", "openpyxl", "sqlalchemy",
+    "httpx", "fastmcp", "waitress", "numpy", "pandas"
+]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+force_sort_within_sections = true
+combine_as_imports = true
+skip_glob = ["**/bridge_api.py"]   # large legacy — isort separately
+
+[tool.pytest.ini_options]
+testpaths = ["core_engine/tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+ignore_missing_imports = true
+no_strict_optional = false
+check_untyped_defs = false           # gradual — don't fail on untyped legacy
+disallow_untyped_defs = false        # new files only (overridden per-module)
+show_error_codes = true
+pretty = true
+exclude = [
+    "core_engine/bridge_api\\.py",   # too large for strict checking now
+    "venv/",
+    "build/",
+]
+
+# Stricter settings for new agent modules
+[[tool.mypy.overrides]]
+module = [
+    "agents.workspace_manager",
+    "agents.file_scanner",
+    "agents.pipeline_orchestrator",
+    "agents.supervised_agent",
+    "agents.file_watcher",
+    "agents.command_parser",
+    "agents.chat_agent",
+    "mcp_bridge",
+    "mcp_setup",
+]
+disallow_untyped_defs = true
+warn_return_any = true

@@ -1,0 +1,27 @@
+[bandit]
+# Targets
+targets = core_engine
+
+# Exclude test files and migrations from security scan
+exclude_dirs = core_engine/tests,core_engine/database/schema.sql
+
+# Skip tests that produce too many false positives for this project
+skips =
+    # B101: assert statements — fine in internal logic
+    B101,
+    # B311: random — not used for crypto, only for mock IDs
+    B311,
+    # B324: md5/sha1 — only used for checksums, not passwords
+    B324,
+    # B404: subprocess — used only in mcp_setup.py for prerequisite checks
+    B404,
+    # B603/B607: subprocess call — same as above
+    B603,
+    B607,
+    # B608: SQL injection — we use parameterised queries / ORM
+    B608
+
+# Severity/confidence thresholds to report
+# MEDIUM+ severity and MEDIUM+ confidence to reduce noise
+level = MEDIUM
+confidence = MEDIUM

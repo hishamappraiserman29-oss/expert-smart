@@ -80,3 +80,13 @@ make_invalid_test.py!core_engine/reports/**
 
 # EXPERT_SMART report database (Phase 7c)
 core_engine/reports/db/data/
+
+# Generated quality-run artifacts
+ph*_report.json
+ph*_coverage*.json
+
+# Personal notes
+journal.txt
+
+# Node dependencies
+node_modules/

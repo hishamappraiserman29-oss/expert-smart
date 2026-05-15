@@ -1,0 +1,138 @@
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: expert-smart-api
+  namespace: expert-smart
+  labels:
+    app: expert-smart
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: expert-smart
+      component: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: expert-smart
+        component: api
+    spec:
+      serviceAccountName: expert-smart-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: expert-smart/api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: expert-smart-secrets
+                  key: database-url
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: expert-smart-secrets
+                  key: secret-key
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: expert-smart-config
+                  key: redis-url
+            - name: OLLAMA_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: expert-smart-config
+                  key: ollama-host
+            - name: FLASK_ENV
+              value: production
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: expert-smart-uploads-pvc
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: expert-smart-api
+  namespace: expert-smart
+  labels:
+    app: expert-smart
+    component: api
+spec:
+  selector:
+    app: expert-smart
+    component: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5000
+  type: ClusterIP
+
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: expert-smart-api-hpa
+  namespace: expert-smart
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: expert-smart-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

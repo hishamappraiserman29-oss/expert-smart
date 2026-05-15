@@ -47,14 +47,49 @@ Prerequisites before re-review:
 
 ---
 
-## R3.2+ — Pending
+## R3.2 — Gate Decision (2026-05-16)
 
-All other WIP subsystems not yet reviewed:
+Feature branch: `feature/r3-2-government-banking-funds-review`
+Merge commit: `f8c89c3`
+Full suite after merge: 665/665 passed
+
+### `core_engine/government/` — MERGED
+
+Files: 7 / ~1,691 lines | Tests: 49 ✅
+Fix applied before merge: `digital_signature.py` — removed hardcoded HMAC fallback
+`"expert_smart_gov_default_key"`. Now requires `secret_key` arg or
+`GOVERNMENT_SIGNATURE_SECRET` env var; raises `ValueError` if neither provided.
+Module-level singleton `digital_signature_manager = DigitalSignatureManager()`
+removed (bridge_api never used it). Commit: `ae4884d`.
+
+### `core_engine/banking/` — MERGED
+
+Files: 10 / ~2,195 lines | Tests: 64 ✅
+No changes required. 5 files use `datetime.utcnow()` (deprecated Python 3.12+)
+— warnings only, no failures. To be cleaned up in a follow-up.
+
+### `core_engine/funds/` — MERGED
+
+Files: 11 / ~2,123 lines | Tests: 70 ✅
+Cleanup applied before merge: converted absolute `from funds.X import` to
+relative `from .X import` in `__init__.py`, `fund_dashboard.py`,
+`valuation_hierarchy.py`. Commit: `ae4884d`.
+
+---
+
+## R3.3+ — Pending
+
+WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
 - `agents/`
 - `analytics/`
 - `banking_expert/`
 - `ml/`
+- `government/` ✅ merged
+- `banking/` ✅ merged
+- `funds/` ✅ merged
+- `database/` deferred
+- `security/` ✅ merged (R3.1)
 - (others as identified on WIP)
 
-Review to be scheduled in separate sessions after R3.1 is fully closed.
+Review to be scheduled in separate sessions.

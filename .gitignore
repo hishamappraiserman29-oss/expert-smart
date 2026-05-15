@@ -90,3 +90,6 @@ journal.txt
 
 # Node dependencies
 node_modules/
+
+# Root-level ad-hoc test scripts (depend on WIP subsystems not yet on main)
+/_test*.py

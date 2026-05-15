@@ -6,7 +6,7 @@ All methods are stateless class methods — no instantiation required for
 simple use, but an instance may be created and reused.
 
 Classes:
-    ValidationResult  — outcome of a single validation check
+    SanitisationResult  — outcome of a single validation check
     InputValidator    — collection of validators for common field types
 """
 
@@ -57,11 +57,11 @@ _CONTROL_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]')
 
 
 # ---------------------------------------------------------------------------
-# ValidationResult
+# SanitisationResult
 # ---------------------------------------------------------------------------
 
 @dataclass
-class ValidationResult:
+class SanitisationResult:
     """Outcome of a single validation check."""
 
     field_name: str
@@ -93,19 +93,19 @@ class InputValidator:
     # -- UUID -----------------------------------------------------------------
 
     @staticmethod
-    def validate_uuid(value: Any, field_name: str = 'id') -> ValidationResult:
+    def validate_uuid(value: Any, field_name: str = 'id') -> SanitisationResult:
         """Validate that *value* is a well-formed UUID string."""
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         stripped = value.strip()
         if not stripped:
-            return ValidationResult(field_name, False, error='Must not be empty')
+            return SanitisationResult(field_name, False, error='Must not be empty')
         if not _UUID_RE.match(stripped):
-            return ValidationResult(
+            return SanitisationResult(
                 field_name, False,
                 error='Invalid UUID format (expected xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
             )
-        return ValidationResult(field_name, True, value=stripped.lower())
+        return SanitisationResult(field_name, True, value=stripped.lower())
 
     # -- File path ------------------------------------------------------------
 
@@ -115,7 +115,7 @@ class InputValidator:
         field_name: str = 'path',
         must_exist: bool = False,
         allowed_extensions: Optional[List[str]] = None,
-    ) -> ValidationResult:
+    ) -> SanitisationResult:
         """
         Validate a file path string.
 
@@ -126,116 +126,116 @@ class InputValidator:
         Optionally checks existence and extension whitelist.
         """
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         stripped = value.strip()
         if not stripped:
-            return ValidationResult(field_name, False, error='Must not be empty')
+            return SanitisationResult(field_name, False, error='Must not be empty')
         if '\x00' in stripped:
-            return ValidationResult(field_name, False, error='Null byte in path')
+            return SanitisationResult(field_name, False, error='Null byte in path')
 
         try:
             p = Path(stripped)
         except Exception:
-            return ValidationResult(field_name, False, error='Invalid path syntax')
+            return SanitisationResult(field_name, False, error='Invalid path syntax')
 
         # Reject traversal
         for part in p.parts:
             if part in _TRAVERSAL_PARTS:
-                return ValidationResult(field_name, False, error='Path traversal detected (..)')
+                return SanitisationResult(field_name, False, error='Path traversal detected (..)')
 
         if allowed_extensions:
             exts = [e.lower().lstrip('.') for e in allowed_extensions]
             if p.suffix.lower().lstrip('.') not in exts:
-                return ValidationResult(
+                return SanitisationResult(
                     field_name, False,
                     error=f'Extension not allowed; permitted: {allowed_extensions}',
                 )
 
         if must_exist and not p.exists():
-            return ValidationResult(field_name, False, error=f'Path does not exist: {stripped}')
+            return SanitisationResult(field_name, False, error=f'Path does not exist: {stripped}')
 
-        return ValidationResult(field_name, True, value=str(p))
+        return SanitisationResult(field_name, True, value=str(p))
 
     # -- Property type --------------------------------------------------------
 
     @staticmethod
-    def validate_property_type(value: Any, field_name: str = 'property_type') -> ValidationResult:
+    def validate_property_type(value: Any, field_name: str = 'property_type') -> SanitisationResult:
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         normalised = value.strip().lower()
         if normalised not in _VALID_PROPERTY_TYPES:
-            return ValidationResult(
+            return SanitisationResult(
                 field_name, False,
                 error=f'Unknown property type; valid: {sorted(_VALID_PROPERTY_TYPES)}',
             )
-        return ValidationResult(field_name, True, value=normalised)
+        return SanitisationResult(field_name, True, value=normalised)
 
     # -- Area -----------------------------------------------------------------
 
     @staticmethod
-    def validate_area(value: Any, field_name: str = 'area_sqm') -> ValidationResult:
+    def validate_area(value: Any, field_name: str = 'area_sqm') -> SanitisationResult:
         try:
             num = float(value)
         except (TypeError, ValueError):
-            return ValidationResult(field_name, False, error='Must be a numeric value')
+            return SanitisationResult(field_name, False, error='Must be a numeric value')
         if num < _MIN_AREA_SQM:
-            return ValidationResult(field_name, False, error=f'Area must be >= {_MIN_AREA_SQM} m²')
+            return SanitisationResult(field_name, False, error=f'Area must be >= {_MIN_AREA_SQM} m²')
         if num > _MAX_AREA_SQM:
-            return ValidationResult(field_name, False, error=f'Area must be <= {_MAX_AREA_SQM:,} m²')
-        return ValidationResult(field_name, True, value=round(num, 4))
+            return SanitisationResult(field_name, False, error=f'Area must be <= {_MAX_AREA_SQM:,} m²')
+        return SanitisationResult(field_name, True, value=round(num, 4))
 
     # -- Location string ------------------------------------------------------
 
     @staticmethod
-    def validate_location(value: Any, field_name: str = 'location') -> ValidationResult:
+    def validate_location(value: Any, field_name: str = 'location') -> SanitisationResult:
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         stripped = value.strip()
         if not stripped:
-            return ValidationResult(field_name, False, error='Must not be empty')
+            return SanitisationResult(field_name, False, error='Must not be empty')
         if len(stripped) > _MAX_STRING_LEN:
-            return ValidationResult(
+            return SanitisationResult(
                 field_name, False,
                 error=f'Exceeds maximum length of {_MAX_STRING_LEN}',
             )
         if _CONTROL_RE.search(stripped):
-            return ValidationResult(field_name, False, error='Contains invalid control characters')
-        return ValidationResult(field_name, True, value=stripped)
+            return SanitisationResult(field_name, False, error='Contains invalid control characters')
+        return SanitisationResult(field_name, True, value=stripped)
 
     # -- Execution mode -------------------------------------------------------
 
     @staticmethod
-    def validate_execution_mode(value: Any, field_name: str = 'execution_mode') -> ValidationResult:
+    def validate_execution_mode(value: Any, field_name: str = 'execution_mode') -> SanitisationResult:
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         normalised = value.strip().lower()
         if normalised not in _VALID_EXECUTION_MODES:
-            return ValidationResult(
+            return SanitisationResult(
                 field_name, False,
                 error=f'Invalid mode; valid: {sorted(_VALID_EXECUTION_MODES)}',
             )
-        return ValidationResult(field_name, True, value=normalised)
+        return SanitisationResult(field_name, True, value=normalised)
 
     # -- Purpose --------------------------------------------------------------
 
     @staticmethod
-    def validate_purpose(value: Any, field_name: str = 'purpose') -> ValidationResult:
+    def validate_purpose(value: Any, field_name: str = 'purpose') -> SanitisationResult:
         if not isinstance(value, str):
-            return ValidationResult(field_name, False, error='Must be a string')
+            return SanitisationResult(field_name, False, error='Must be a string')
         normalised = value.strip().lower()
         if normalised not in _VALID_PURPOSES:
-            return ValidationResult(
+            return SanitisationResult(
                 field_name, False,
                 error=f'Invalid purpose; valid: {sorted(_VALID_PURPOSES)}',
             )
-        return ValidationResult(field_name, True, value=normalised)
+        return SanitisationResult(field_name, True, value=normalised)
 
     # -- Batch validation -----------------------------------------------------
 
     @staticmethod
-    def validate_batch(checks: List[ValidationResult]) -> Dict[str, Any]:
+    def validate_batch(checks: List[SanitisationResult]) -> Dict[str, Any]:
         """
-        Aggregate multiple ValidationResult objects into a single summary dict.
+        Aggregate multiple SanitisationResult objects into a single summary dict.
 
         Returns:
             {

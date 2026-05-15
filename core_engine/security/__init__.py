@@ -7,13 +7,13 @@ Modules:
     secrets_scanner  — scan source files for accidental credential leaks
 """
 
-from .input_validator import InputValidator, ValidationResult
+from .input_validator import InputValidator, SanitisationResult
 from .rate_limiter import RateLimiter, RateLimitResult
 from .secrets_scanner import SecretsScanner, SecretFinding
 
 __all__ = [
     "InputValidator",
-    "ValidationResult",
+    "SanitisationResult",
     "RateLimiter",
     "RateLimitResult",
     "SecretsScanner",

@@ -21,7 +21,7 @@ import pytest
 # Make security importable from core_engine/
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from security.input_validator import InputValidator, ValidationResult
+from security.input_validator import InputValidator, SanitisationResult
 from security.rate_limiter import RateLimiter, RateLimitResult
 from security.secrets_scanner import SecretsScanner, SecretFinding
 

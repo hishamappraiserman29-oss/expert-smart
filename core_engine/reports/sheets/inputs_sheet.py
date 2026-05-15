@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
 """
-assumptions_inputs_sheet.py — Builder for شيت "الافتراضات والمدخلات"
+inputs_sheet.py — Builder for شيت "الافتراضات والمدخلات"
 (Assumptions & Inputs, Classic Office Blue theme).
+
+استخدام:
+    from core_engine.reports.sheets.inputs_sheet import apply_inputs_sheet
+
+    wb = Workbook()
+    ws = wb.create_sheet("الافتراضات والمدخلات")
+    locs = apply_inputs_sheet(ws, inputs_dict, profile_key="legacy")
+    # locs: dict[str, tuple[int, int]] — خريطة field_key → (row, col)
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Mapping
 
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.worksheet.worksheet import Worksheet
@@ -38,23 +46,44 @@ _FMT_CURRENCY = _NF.CURRENCY_2DP
 _FMT_PCT      = _NF.PERCENT_DETAILED
 
 
-def apply_assumptions_inputs_sheet(
+def apply_inputs_sheet(
     ws: Worksheet,
-    result: Optional[Any] = None,
-    report_date: str = "",
-) -> None:
-    """Build شيت 'الافتراضات والمدخلات' (Assumptions & Inputs)."""
+    inputs: Mapping[str, Any],
+    *,
+    profile_key: str = "legacy",
+) -> dict[str, tuple[int, int]]:
+    """
+    Build شيت الافتراضات والمدخلات.
+
+    Args:
+        ws: الشيت المراد تعديله (يجب أن يكون فارغاً).
+        inputs: قاموس يحتوى بيانات التقرير والعقار والتقييم. المفاتيح المعترَف
+                بها موثّقة فى المصدر أدناه — أى مفتاح غير موجود يُعامَل كـ "—".
+        profile_key: "legacy" فقط مدعوم حالياً (محفوظ للتوسع مستقبلاً).
+
+    Returns:
+        dict[str, tuple[int, int]] — خريطة field_key → (row, col) لموقع خلية
+        القيمة لكل حقل مُتتبَّع.
+    """
     ws.sheet_view.rightToLeft = True
     ws.column_dimensions["A"].width = 4
     ws.column_dimensions["B"].width = 34
     ws.column_dimensions["C"].width = 28
     ws.column_dimensions["D"].width = 22
 
-    md = result.metadata if result else {}
-    fv = float(result.primary_value) if result and result.primary_value else 0
-    w  = result.weights_applied if result else {}
+    # ── Flatten inputs ────────────────────────────────────────────────────────
+    fv          = float(inputs.get("primary_value") or 0)
+    report_date = str(inputs.get("report_date") or "")
 
-    # Banner
+    # Weights: support both nested {"weights": {"comparable": ...}} and flat keys
+    _w          = inputs.get("weights") or {}
+    w_comp      = float(_w.get("comparable", inputs.get("weights_comparable", 0)))
+    w_cost      = float(_w.get("cost",       inputs.get("weights_cost", 0)))
+    w_income    = float(_w.get("income",     inputs.get("weights_income", 0)))
+
+    locs: dict[str, tuple[int, int]] = {}
+
+    # ── Banner ────────────────────────────────────────────────────────────────
     ws.merge_cells("A1:D1")
     t           = ws["A1"]
     t.value     = "الافتراضات والمدخلات — Assumptions & Inputs"
@@ -82,7 +111,7 @@ def apply_assumptions_inputs_sheet(
         r += 1
 
     def _inp(label: str, value: Any, note: str = "", is_calc: bool = False,
-             fmt: str = "") -> None:
+             fmt: str = "", key: str = "") -> None:
         nonlocal r
         fill = _FILL_CALC_CELL if is_calc else _FILL_INPUT_CELL
         lc           = ws.cell(row=r, column=2)
@@ -108,56 +137,71 @@ def apply_assumptions_inputs_sheet(
             nc.fill      = fill
             nc.border    = _BORDER_THIN
 
+        if key:
+            locs[key] = (r, 3)
+
         ws.row_dimensions[r].height = 18
         r += 1
 
     # ── Section 1: بيانات التقرير ─────────────────────────────────────────────
     _sect("بيانات التقرير", "Report Data")
-    _inp("رقم التقرير",     md.get("report_id") or "—")
-    _inp("تاريخ التقييم",  md.get("valuation_date") or report_date)
-    _inp("تاريخ المعاينة", md.get("inspection_date") or "—")
-    _inp("غرض التقييم",    result.primary_purpose if result else "—")
+    _inp("رقم التقرير",     inputs.get("report_id") or "—",          key="report_id")
+    _inp("تاريخ التقييم",  inputs.get("valuation_date") or report_date, key="valuation_date")
+    _inp("تاريخ المعاينة", inputs.get("inspection_date") or "—",     key="inspection_date")
+    _inp("غرض التقييم",    inputs.get("primary_purpose", "—"),        key="primary_purpose")
     _inp("أساس القيمة",    "القيمة السوقية")
     r += 1
 
     # ── Section 2: بيانات العميل والمقيم ─────────────────────────────────────
     _sect("بيانات العميل والمقيم", "Client & Appraiser")
-    _inp("اسم العميل",    md.get("client_name") or md.get("borrower_name") or "—")
-    _inp("اسم المقيم",   md.get("appraiser_name") or md.get("reviewer_name") or "—")
-    _inp("رقم الترخيص",  md.get("license_no") or "—")
-    _inp("الجهة المعينة", md.get("instructed_by") or "—")
+    _inp("اسم العميل",
+         inputs.get("client_name") or inputs.get("borrower_name") or "—",
+         key="client_name")
+    _inp("اسم المقيم",
+         inputs.get("appraiser_name") or inputs.get("reviewer_name") or "—",
+         key="appraiser_name")
+    _inp("رقم الترخيص",  inputs.get("license_no") or "—",   key="license_no")
+    _inp("الجهة المعينة", inputs.get("instructed_by") or "—", key="instructed_by")
     r += 1
 
     # ── Section 3: بيانات العقار ──────────────────────────────────────────────
     _sect("بيانات العقار", "Property Data")
-    _inp("نوع الأصل",         result.asset_type if result else "—")
-    _inp("الموقع / العنوان",  md.get("location") or md.get("address") or "—")
-    _inp("المساحة (م²)",      md.get("area") or md.get("floor_area_m2") or "—")
-    _inp("سنة الإنشاء",      md.get("year_built") or "—")
-    _inp("الحالة",            md.get("condition") or "—")
+    _inp("نوع الأصل",
+         inputs.get("asset_type", "—"),                               key="asset_type")
+    _inp("الموقع / العنوان",
+         inputs.get("location") or inputs.get("address") or "—",     key="location")
+    _inp("المساحة (م²)",
+         inputs.get("area") or inputs.get("floor_area_m2") or "—",   key="area")
+    _inp("سنة الإنشاء",  inputs.get("year_built") or "—",            key="year_built")
+    _inp("الحالة",       inputs.get("condition") or "—",             key="condition")
     r += 1
 
     # ── Section 4: بيانات السوق ───────────────────────────────────────────────
     _sect("بيانات السوق", "Market Data")
-    _inp("متوسط سعر السوق (EGP/م²)", md.get("market_avg_price_sqm") or "—")
-    _inp("معدل الرسملة",  md.get("cap_rate") or "—")
-    _inp("معدل الشاغر",  md.get("vacancy_rate") or "—")
-    _inp("عدد المقارنات", md.get("comparables_count") or
-         len(md.get("comparables") or []) or "—")
+    _inp("متوسط سعر السوق (EGP/م²)",
+         inputs.get("market_avg_price_sqm") or "—",                  key="market_avg_price_sqm")
+    _inp("معدل الرسملة",  inputs.get("cap_rate") or "—",             key="cap_rate")
+    _inp("معدل الشاغر",  inputs.get("vacancy_rate") or "—",          key="vacancy_rate")
+    _inp("عدد المقارنات",
+         inputs.get("comparables_count") or
+         len(inputs.get("comparables") or []) or "—",                key="comparables_count")
     r += 1
 
     # ── Section 5: افتراضات التقييم ───────────────────────────────────────────
     _sect("افتراضات التقييم", "Valuation Assumptions")
-    comp = float(md.get("comparable") or 0)
-    cost = float(md.get("cost")       or 0)
-    inc  = float(md.get("income")     or 0)
+    comp = float(inputs.get("comparable") or 0)
+    cost = float(inputs.get("cost")       or 0)
+    inc  = float(inputs.get("income")     or 0)
 
-    _inp("القيمة — المقارنة البيعية (EGP)", comp, is_calc=True, fmt=_FMT_CURRENCY)
-    _inp("الوزن — المقارنة",               w.get("comparable", 0), fmt=_FMT_PCT)
-    _inp("القيمة — طريقة التكلفة (EGP)",   cost, is_calc=True, fmt=_FMT_CURRENCY)
-    _inp("الوزن — التكلفة",                w.get("cost", 0), fmt=_FMT_PCT)
-    _inp("القيمة — رأسمالة الدخل (EGP)",   inc,  is_calc=True, fmt=_FMT_CURRENCY)
-    _inp("الوزن — الدخل",                  w.get("income", 0), fmt=_FMT_PCT)
+    _inp("القيمة — المقارنة البيعية (EGP)", comp, is_calc=True, fmt=_FMT_CURRENCY,
+         key="comparable_value")
+    _inp("الوزن — المقارنة",               w_comp, fmt=_FMT_PCT, key="weight_comparable")
+    _inp("القيمة — طريقة التكلفة (EGP)",   cost, is_calc=True, fmt=_FMT_CURRENCY,
+         key="cost_value")
+    _inp("الوزن — التكلفة",                w_cost, fmt=_FMT_PCT, key="weight_cost")
+    _inp("القيمة — رأسمالة الدخل (EGP)",   inc,  is_calc=True, fmt=_FMT_CURRENCY,
+         key="income_value")
+    _inp("الوزن — الدخل",                  w_income, fmt=_FMT_PCT, key="weight_income")
     r += 1
 
     # Final value banner
@@ -169,6 +213,7 @@ def apply_assumptions_inputs_sheet(
     fv_cell.alignment = Alignment(horizontal="center", vertical="center")
     fv_cell.border    = _BORDER_MEDIUM
     ws.row_dimensions[r].height = 24
+    locs["primary_value"] = (r, 2)
     r += 2
 
     # ── Section 6: حدود ومحددات الاستخدام ────────────────────────────────────
@@ -191,7 +236,7 @@ def apply_assumptions_inputs_sheet(
     # ── Section 7: إعدادات التقرير ────────────────────────────────────────────
     _sect("إعدادات التقرير", "Report Settings")
     _inp("نمط التقرير",      "Legacy — أساسي")
-    _inp("مستوى الثقة",     result.confidence if result else "—")
+    _inp("مستوى الثقة",     inputs.get("confidence", "—"), key="confidence")
     _inp("المعايير المطبقة", "EGVS / IFRS 13")
     r += 2
 
@@ -214,3 +259,4 @@ def apply_assumptions_inputs_sheet(
         r += 1
 
     ws.freeze_panes = "B3"
+    return locs

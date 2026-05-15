@@ -2,10 +2,21 @@
 """
 main_report_sheet.py — Builder for شيت "التقرير"
 (Executive Main Report, Classic Office Blue theme).
+
+استخدام:
+    from core_engine.reports.sheets.main_report_sheet import apply_main_report_sheet
+
+    apply_main_report_sheet(
+        ws,
+        appraiser        = {"appraiser_name": "..."},
+        property_info    = {"asset_type": "شقة", "location": "...", ...},
+        valuation_results= {"primary_value": 4_900_000, "comparable": ..., ...},
+        profile_key      = "legacy",
+    )
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Mapping
 
 from openpyxl.styles import Alignment, Border, Font, Side
 from openpyxl.worksheet.worksheet import Worksheet
@@ -41,10 +52,25 @@ _FMT_PCT      = _NF.PERCENT_DETAILED
 
 def apply_main_report_sheet(
     ws: Worksheet,
-    result: Optional[Any] = None,
-    report_date: str = "",
+    *,
+    appraiser: Mapping[str, Any],
+    property_info: Mapping[str, Any],
+    valuation_results: Mapping[str, Any],
+    profile_key: str = "legacy",
 ) -> None:
-    """Build شيت 'التقرير' (Executive Main Report)."""
+    """
+    Build شيت التقرير الرئيسى.
+
+    Args:
+        ws: الشيت المراد تعديله (يجب أن يكون فارغاً).
+        appraiser: بيانات المُقيِّم (appraiser_name, license_id, ...).
+        property_info: بيانات العقار والتقرير (asset_type, location, confidence,
+                       primary_purpose, valuation_date, report_date).
+        valuation_results: نتائج التقييم (primary_value, comparable, cost, income,
+                           weights dict).
+        profile_key: "legacy" (default) | "detailed" | "professional".
+                     للـ detailed/professional يُضاف قسم مؤشرات الأداء الرئيسية.
+    """
     ws.sheet_view.rightToLeft = True
     ws.column_dimensions["A"].width = 4
     ws.column_dimensions["B"].width = 30
@@ -52,12 +78,20 @@ def apply_main_report_sheet(
     ws.column_dimensions["D"].width = 16
     ws.column_dimensions["E"].width = 16
 
-    md   = result.metadata if result else {}
-    fv   = float(result.primary_value) if result and result.primary_value else 0
-    comp = float(md.get("comparable") or 0)
-    cost = float(md.get("cost")       or 0)
-    inc  = float(md.get("income")     or 0)
-    w    = result.weights_applied if result else {}
+    # ── Unpack dicts ──────────────────────────────────────────────────────────
+    asset_type  = str(property_info.get("asset_type", "—"))
+    confidence  = str(property_info.get("confidence", "—"))
+    report_date = str(property_info.get("report_date", ""))
+    location    = (property_info.get("location") or
+                   property_info.get("address") or "—")
+    purpose     = str(property_info.get("primary_purpose", "—"))
+    val_date    = str(property_info.get("valuation_date") or report_date)
+
+    fv   = float(valuation_results.get("primary_value") or 0)
+    comp = float(valuation_results.get("comparable") or 0)
+    cost = float(valuation_results.get("cost")        or 0)
+    inc  = float(valuation_results.get("income")      or 0)
+    w    = valuation_results.get("weights") or {}
 
     # ── Title block ───────────────────────────────────────────────────────────
     ws.merge_cells("A1:E1")
@@ -75,8 +109,6 @@ def apply_main_report_sheet(
     ws["A2"].alignment = _ALIGN_CENTER
     ws.row_dimensions[2].height = 22
 
-    asset_type = result.asset_type if result else "—"
-    confidence = result.confidence if result else "—"
     ws.merge_cells("A3:E3")
     ws["A3"].value     = (f"تاريخ التقرير: {report_date}  |  "
                           f"نوع الأصل: {asset_type}  |  الثقة: {confidence}")
@@ -137,9 +169,9 @@ def apply_main_report_sheet(
     # ── Property basics ───────────────────────────────────────────────────────
     _section_hd("بيانات العقار الأساسية")
     _kv("نوع الأصل",      asset_type)
-    _kv("الموقع",         md.get("location") or md.get("address") or "—", alt=True)
-    _kv("غرض التقييم",   result.primary_purpose if result else "—")
-    _kv("تاريخ التقييم", md.get("valuation_date") or report_date, alt=True)
+    _kv("الموقع",         location,  alt=True)
+    _kv("غرض التقييم",   purpose)
+    _kv("تاريخ التقييم", val_date,  alt=True)
     _kv("مستوى الثقة",   confidence)
     r += 1
 
@@ -209,6 +241,25 @@ def apply_main_report_sheet(
     ws.row_dimensions[r].height = 22
     r += 2
 
+    # ── KPI dashboard — detailed / professional only ──────────────────────────
+    if profile_key in ("detailed", "professional"):
+        _section_hd("مؤشرات الأداء الرئيسية")
+        _kv("القيمة التقديرية النهائية (EGP)", fv, currency=True)
+        _kv("مستوى الثقة", confidence, alt=True)
+        r += 1
+
+    # ── Appraiser footer (shown when appraiser dict is provided) ──────────────
+    name = (appraiser.get("appraiser_name") or
+            appraiser.get("reviewer_name") or "")
+    if name:
+        ws.merge_cells(f"B{r}:E{r}")
+        ac           = ws.cell(row=r, column=2)
+        ac.value     = f"المُقيِّم: {name}"
+        ac.font      = Font(italic=True, size=9, color=_BP.MUTED)
+        ac.alignment = Alignment(horizontal="right", vertical="center")
+        ws.row_dimensions[r].height = 16
+        r += 1
+
     # ── Simple bar chart ──────────────────────────────────────────────────────
     chart_data_row = r
     for col, hdr in enumerate(("الأسلوب", "القيمة"), 2):
@@ -221,9 +272,9 @@ def apply_main_report_sheet(
         ("الدخل",    inc),
         ("النهائية", fv),
     ):
-        ws.cell(row=r, column=2).value          = lbl
-        ws.cell(row=r, column=3).value          = val
-        ws.cell(row=r, column=3).number_format  = _FMT_CURRENCY
+        ws.cell(row=r, column=2).value         = lbl
+        ws.cell(row=r, column=3).value         = val
+        ws.cell(row=r, column=3).number_format = _FMT_CURRENCY
         r += 1
     chart_last_row = r - 1
 

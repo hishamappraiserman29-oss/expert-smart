@@ -2372,6 +2372,68 @@
         </div>
     </div>
 
+    <!-- ══ سجل التقارير المحفوظة — Report History Panel (FE.1 + FE.2) ══════════ -->
+    <div class="action-card" id="es-reports-panel" style="margin-bottom:2rem;border-color:rgba(212,175,55,0.5);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <h3 style="color:var(--gold);margin:0;font-size:1.1rem;">
+                <i class="fas fa-archive" style="font-size:1.1rem;margin-left:8px;display:inline;"></i>سجل التقارير المحفوظة
+            </h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="es-reports-filter-profile" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
+                    <option value="">الكل</option>
+                    <option value="legacy">التقرير التقليدي</option>
+                    <option value="detailed">التقرير التفصيلي</option>
+                    <option value="professional_template">التقرير الاحترافي بالقالب</option>
+                </select>
+                <select id="es-reports-filter-status" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
+                    <option value="">الكل</option>
+                    <option value="draft">draft</option>
+                    <option value="final">final</option>
+                    <option value="archived">archived</option>
+                </select>
+                <button class="btn-main" style="padding:8px 16px;font-size:0.85rem;background:var(--gold);color:#000;display:inline-flex;" onclick="esReportsLoad()">
+                    <i class="fas fa-sync-alt" style="font-size:0.85rem;display:inline;"></i>&nbsp;تحديث السجل
+                </button>
+            </div>
+        </div>
+        <div id="es-reports-state" style="color:#9ca3af;padding:12px 0;text-align:center;font-size:0.9rem;">
+            اضغط "تحديث السجل" لتحميل التقارير المحفوظة
+        </div>
+        <div id="es-reports-table-wrap" style="display:none;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.84rem;">
+                <thead>
+                    <tr style="background:rgba(212,175,55,0.1);color:var(--gold-light);">
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">المعرّف</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع العقار</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الموقع</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">القيمة السوقية</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">التاريخ</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الحالة</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع التقرير</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);font-weight:600;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="es-reports-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ Detail Overlay (FE.1 — عرض التفاصيل) ════════════════════════════════ -->
+    <div id="es-report-detail-overlay"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1050;overflow-y:auto;padding:20px;"
+         onclick="esReportsCloseDetail(event)">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);max-width:780px;margin:40px auto;padding:28px;position:relative;"
+             onclick="event.stopPropagation()">
+            <button onclick="esReportsCloseDetail()"
+                    style="position:absolute;top:12px;left:14px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;line-height:1;padding:0;"
+                    aria-label="إغلاق">&times;</button>
+            <h3 style="color:var(--gold);margin:0 0 18px;font-size:1.05rem;">
+                <i class="fas fa-file-alt" style="font-size:1rem;margin-left:8px;display:inline;"></i>تفاصيل التقرير
+            </h3>
+            <div id="es-report-detail-body" style="font-size:0.87rem;line-height:1.9;"></div>
+        </div>
+    </div>
+
     <div id="reportModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -5089,6 +5151,223 @@ function _showIndexToast(msg, type) {
             '</div>';
     }
 
+
+
+
+
+
+    // ══ سجل التقارير المحفوظة — Report History + PDF Export (FE.1 + FE.2) ════
+    //
+    // API base URL: reuses _maApiUrl() which reads #api-url input and strips
+    // /api/valuation → http://127.0.0.1:5000  (same pattern as mass-appraisal).
+    // No application-level auth gate — infrastructure auth assumed (same as
+    // /api/valuation). History panel does NOT auto-load on page start; it only
+    // fetches when the user clicks "تحديث السجل".
+
+    function _esReportsApiBase() {
+        return typeof _maApiUrl === 'function' ? _maApiUrl() : '';
+    }
+
+    function _esReportsFmt(v) {
+        if (v === null || v === undefined || String(v) === '') return '—';
+        return escapeHtml(String(v));
+    }
+
+    function _esReportsFmtMV(v) {
+        if (v === null || v === undefined) return '—';
+        try { return Number(v).toLocaleString('ar-EG') + ' ج.م'; }
+        catch (e) { return String(v) + ' ج.م'; }
+    }
+
+    function _esReportsProfileLabel(key) {
+        var map = {
+            'legacy':                'تقليدي',
+            'detailed':              'تفصيلي',
+            'professional_template': 'احترافي'
+        };
+        return map[key] ? escapeHtml(map[key]) : _esReportsFmt(key);
+    }
+
+    // FE.1 — Fetch and render the saved reports list
+    async function esReportsLoad() {
+        var stateEl   = document.getElementById('es-reports-state');
+        var tableWrap = document.getElementById('es-reports-table-wrap');
+        var tbody     = document.getElementById('es-reports-tbody');
+        if (!stateEl || !tbody) return;
+
+        stateEl.style.display = 'block';
+        stateEl.style.color   = '#9ca3af';
+        stateEl.textContent   = 'جاري تحميل سجل التقارير…';
+        tableWrap.style.display = 'none';
+        tbody.innerHTML = '';
+
+        var profile = (document.getElementById('es-reports-filter-profile') || {}).value || '';
+        var status  = (document.getElementById('es-reports-filter-status')  || {}).value || '';
+        var qs = 'limit=20&offset=0';
+        if (profile) qs += '&profile_key=' + encodeURIComponent(profile);
+        if (status)  qs += '&status='      + encodeURIComponent(status);
+
+        try {
+            var base = _esReportsApiBase();
+            var resp = await fetch(base + '/api/reports?' + qs);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            var data = await resp.json();
+            if (data.status !== 'success') throw new Error(data.message || 'استجابة غير صحيحة');
+
+            var reports = Array.isArray(data.reports) ? data.reports : [];
+
+            if (reports.length === 0) {
+                stateEl.textContent = 'لا توجد تقارير محفوظة حالياً';
+                return;
+            }
+
+            reports.forEach(function(r) {
+                var id  = r.report_db_id || '';
+                var row = document.createElement('tr');
+                row.style.borderBottom = '1px solid rgba(212,175,55,0.1)';
+                row.innerHTML =
+                    '<td style="padding:7px 10px;font-size:0.78rem;color:#9ca3af;direction:ltr;">' + _esReportsFmt(id) + '</td>' +
+                    '<td style="padding:7px 10px;">' + _esReportsFmt(r.property_type) + '</td>' +
+                    '<td style="padding:7px 10px;">' + _esReportsFmt(r.location) + '</td>' +
+                    '<td style="padding:7px 10px;direction:ltr;text-align:right;">' + _esReportsFmtMV(r.market_value) + '</td>' +
+                    '<td style="padding:7px 10px;">' + _esReportsFmt(r.report_date) + '</td>' +
+                    '<td style="padding:7px 10px;">' + _esReportsFmt(r.status) + '</td>' +
+                    '<td style="padding:7px 10px;">' + _esReportsProfileLabel(r.profile_key) + '</td>' +
+                    '<td style="padding:7px 10px;text-align:center;white-space:nowrap;">' +
+                        '<button class="btn-main" ' +
+                            'style="display:inline-flex;padding:5px 10px;font-size:0.78rem;' +
+                                   'background:rgba(212,175,55,0.12);color:var(--gold-light);' +
+                                   'border:1px solid var(--border);margin-left:4px;" ' +
+                            'onclick="esReportsViewDetail(' + JSON.stringify(id) + ')">' +
+                            'عرض التفاصيل</button>' +
+                        '<button class="btn-main" ' +
+                            'style="display:inline-flex;padding:5px 10px;font-size:0.78rem;' +
+                                   'background:rgba(16,185,129,0.12);color:#10b981;' +
+                                   'border:1px solid rgba(16,185,129,0.35);" ' +
+                            'onclick="esReportsDownloadPdf(' + JSON.stringify(id) + ', this)">' +
+                            'تحميل PDF</button>' +
+                    '</td>';
+                tbody.appendChild(row);
+            });
+
+            stateEl.style.display   = 'none';
+            tableWrap.style.display = 'block';
+
+        } catch (e) {
+            stateEl.style.color   = '#ef4444';
+            stateEl.textContent   = 'تعذّر تحميل سجل التقارير';
+            console.error('[es-reports] load error:', e);
+        }
+    }
+
+    // FE.1 — Show full report detail in the detail overlay
+    async function esReportsViewDetail(reportId) {
+        var overlay = document.getElementById('es-report-detail-overlay');
+        var body    = document.getElementById('es-report-detail-body');
+        if (!overlay || !body) return;
+
+        body.innerHTML = '<div style="color:#9ca3af;text-align:center;padding:24px;">جاري تحميل التفاصيل…</div>';
+        overlay.style.display = 'block';
+
+        try {
+            var base = _esReportsApiBase();
+            var resp = await fetch(base + '/api/reports/' + encodeURIComponent(reportId));
+            if (resp.status === 404) {
+                body.innerHTML = '<div style="color:#ef4444;">التقرير غير موجود</div>';
+                return;
+            }
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            var data = await resp.json();
+            var r  = data.report         || {};
+            var d  = r.data              || {};
+            var pi = d.property_info     || {};
+            var vr = d.valuation_results || {};
+            var ap = d.appraiser         || {};
+
+            var mvDisplay = (vr.market_value !== undefined && vr.market_value !== null)
+                ? _esReportsFmtMV(vr.market_value) : '—';
+
+            body.innerHTML =
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:14px;">' +
+                    _esDetailRow('المعرّف',        r.report_db_id) +
+                    _esDetailRow('نوع التقرير',   r.profile_key) +
+                    _esDetailRow('الحالة',          r.status) +
+                    _esDetailRow('تاريخ الإنشاء', r.created_at) +
+                    _esDetailRow('آخر تحديث',       r.updated_at) +
+                '</div>' +
+                '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:14px;">' +
+                    _esDetailRow('نوع العقار',    pi.type) +
+                    _esDetailRow('الموقع',        pi.address) +
+                    _esDetailRow('المساحة (م²)',   pi.area) +
+                    _esDetailRow('القيمة السوقية', mvDisplay) +
+                    _esDetailRow('السعر/م²',       vr.price_per_sqm) +
+                    _esDetailRow('مستوى الثقة',   vr.confidence) +
+                '</div>' +
+                '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;">' +
+                    _esDetailRow('المُقيّم',    ap.name) +
+                    _esDetailRow('تاريخ التقييم', ap.date) +
+                '</div>';
+
+        } catch (e) {
+            body.innerHTML = '<div style="color:#ef4444;">تعذّر تحميل التفاصيل: ' + escapeHtml(e.message || '') + '</div>';
+            console.error('[es-reports] detail error:', e);
+        }
+    }
+
+    function _esDetailRow(label, value) {
+        var val = (value === null || value === undefined || String(value) === '') ? '—' : escapeHtml(String(value));
+        return '<div style="min-width:0;">' +
+               '<div style="color:#9ca3af;font-size:0.78rem;">' + escapeHtml(label) + '</div>' +
+               '<div style="color:var(--text);font-weight:600;margin-top:2px;word-break:break-all;">' + val + '</div>' +
+               '</div>';
+    }
+
+    // Close overlay — works for button click (no event) and backdrop click
+    function esReportsCloseDetail(event) {
+        if (event && event.target !== document.getElementById('es-report-detail-overlay')) return;
+        document.getElementById('es-report-detail-overlay').style.display = 'none';
+    }
+
+    // FE.2 — Download PDF using fetch + Blob (avoids window.location, handles errors)
+    async function esReportsDownloadPdf(reportId, btn) {
+        var origText = btn ? btn.textContent : '';
+        if (btn) { btn.textContent = '...'; btn.disabled = true; }
+
+        try {
+            var base = _esReportsApiBase();
+            var resp = await fetch(base + '/api/reports/' + encodeURIComponent(reportId) + '/pdf');
+
+            if (resp.status === 404) {
+                alert('التقرير غير موجود');
+                return;
+            }
+            if (!resp.ok) {
+                alert('تعذّر توليد ملف PDF');
+                return;
+            }
+
+            var blob = await resp.blob();
+            var url  = URL.createObjectURL(blob);
+            var a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'report_' + reportId + '.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+
+        } catch (e) {
+            alert('تعذّر توليد ملف PDF');
+            console.error('[es-reports] pdf error:', e);
+        } finally {
+            if (btn) { btn.textContent = origText; btn.disabled = false; }
+        }
+    }
+
+    // ══ End: سجل التقارير ══════════════════════════════════════════════════════
 </script>
+
 </body>
 </html>

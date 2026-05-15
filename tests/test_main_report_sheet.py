@@ -90,14 +90,23 @@ def test_apply_skips_appraiser_when_empty():
 
 
 def test_apply_kpi_dashboard_only_for_pro_profile():
-    """'مؤشرات الأداء الرئيسية' section only appears for professional/detailed."""
-    ws_pro     = _build(profile_key="professional")
-    ws_detail  = _build(profile_key="detailed")
-    for ws, label in ((ws_pro, "professional"), (ws_detail, "detailed")):
+    """'مؤشرات الأداء الرئيسية' section appears for professional_template and detailed."""
+    ws_pro    = _build(profile_key="professional_template")
+    ws_detail = _build(profile_key="detailed")
+    for ws, label in ((ws_pro, "professional_template"), (ws_detail, "detailed")):
         vals = _all_values(ws)
         assert any("مؤشرات الأداء" in v for v in vals), \
             f"KPI section missing for profile_key='{label}'"
     print("✓ test_apply_kpi_dashboard_only_for_pro_profile")
+
+
+def test_apply_kpi_absent_for_unknown_profile():
+    """'مؤشرات الأداء الرئيسية' must NOT appear for the old 'professional' key."""
+    ws   = _build(profile_key="professional")
+    vals = _all_values(ws)
+    assert not any("مؤشرات الأداء الرئيسية" in v for v in vals), \
+        "KPI section must be absent for the non-canonical 'professional' key"
+    print("✓ test_apply_kpi_absent_for_unknown_profile")
 
 
 def test_apply_skips_kpi_for_legacy():

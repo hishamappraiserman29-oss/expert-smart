@@ -241,8 +241,8 @@ def apply_main_report_sheet(
     ws.row_dimensions[r].height = 22
     r += 2
 
-    # ── KPI dashboard — detailed / professional only ──────────────────────────
-    if profile_key in ("detailed", "professional"):
+    # ── KPI dashboard — detailed / professional_template only ────────────────
+    if profile_key in ("detailed", "professional_template"):
         _section_hd("مؤشرات الأداء الرئيسية")
         _kv("القيمة التقديرية النهائية (EGP)", fv, currency=True)
         _kv("مستوى الثقة", confidence, alt=True)

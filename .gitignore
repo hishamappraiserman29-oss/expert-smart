@@ -77,3 +77,6 @@ mass_run_enriched_test.json
 mass_appraisal_template_test.xlsx
 mass_appraisal_invalid_test.xlsx
 make_invalid_test.py!core_engine/reports/**
+
+# EXPERT_SMART report database (Phase 7c)
+core_engine/reports/db/data/

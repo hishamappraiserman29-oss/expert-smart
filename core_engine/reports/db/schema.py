@@ -6,6 +6,7 @@ SCHEMA_VERSION: int = 1
 
 CREATE_TABLES_SQL: str = """
 CREATE TABLE IF NOT EXISTS schema_version (
+    id       INTEGER PRIMARY KEY CHECK (id = 1),   -- single-row guarantee
     version  INTEGER NOT NULL
 );
 

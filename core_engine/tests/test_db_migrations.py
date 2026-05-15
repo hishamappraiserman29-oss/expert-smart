@@ -150,3 +150,29 @@ class TestMigrateFunction:
         finally:
             conn_a.close()
             conn_b.close()
+
+
+class TestSingleRowGuarantee:
+    def test_MIG18_schema_version_rejects_second_row(self, tmp_path):
+        """CHECK(id=1) must forbid any row with id != 1."""
+        conn = sqlite3.connect(str(tmp_path / "sg.db"))
+        try:
+            migrate(conn)
+            with pytest.raises(sqlite3.IntegrityError):
+                conn.execute(
+                    "INSERT INTO schema_version (id, version) VALUES (2, 99)"
+                )
+        finally:
+            conn.close()
+
+    def test_MIG19_schema_version_stays_single_row_after_repeated_migrate(self, tmp_path):
+        """Running migrate() multiple times never produces more than one row."""
+        conn = sqlite3.connect(str(tmp_path / "sr.db"))
+        try:
+            migrate(conn)
+            migrate(conn)
+            migrate(conn)
+            count = conn.execute("SELECT COUNT(*) FROM schema_version").fetchone()[0]
+            assert count == 1
+        finally:
+            conn.close()

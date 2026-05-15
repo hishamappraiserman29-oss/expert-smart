@@ -20,9 +20,11 @@ def current_version(conn: sqlite3.Connection) -> int:
 def _apply_v1(conn: sqlite3.Connection) -> None:
     """Create all v1 tables/indexes and record version=1."""
     conn.executescript(CREATE_TABLES_SQL)
-    # Seed version row only when table is empty.
-    if not conn.execute("SELECT 1 FROM schema_version LIMIT 1").fetchone():
-        conn.execute("INSERT INTO schema_version (version) VALUES (?)", (1,))
+    # INSERT OR REPLACE with fixed id=1 guarantees exactly one row always.
+    conn.execute(
+        "INSERT OR REPLACE INTO schema_version (id, version) VALUES (1, ?)",
+        (1,),
+    )
     conn.commit()
 
 

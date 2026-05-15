@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from funds.fund_engine import FundValuationResult
+from .fund_engine import FundValuationResult
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """funds — FRA / Funds & Fair Value Pilot Package"""
 
-from funds.fair_value_calculator import (
+from .fair_value_calculator import (
     FairValueCalculator,
     FairValueAssessment,
     ValuationLevel,
@@ -9,48 +9,48 @@ from funds.fair_value_calculator import (
     ValuationInput,
     fair_value_calculator,
 )
-from funds.nav_calculator import (
+from .nav_calculator import (
     NAVCalculator,
     NAVCalculationResult,
     FundAsset,
     FundLiability,
     nav_calculator,
 )
-from funds.fund_engine import (
+from .fund_engine import (
     FundValuationEngine,
     FundValuationResult,
     FundType,
     FundStrategy,
     fund_engine,
 )
-from funds.fra_compliance import (
+from .fra_compliance import (
     FRAComplianceEngine,
     FRAComplianceCheckResult,
     fra_compliance_engine,
 )
-from funds.portfolio_manager import (
+from .portfolio_manager import (
     PortfolioManager,
     PortfolioSnapshot,
     AllocationTarget,
     portfolio_manager,
 )
-from funds.valuation_hierarchy import (
+from .valuation_hierarchy import (
     ValuationHierarchyManager,
     HierarchySummary,
     valuation_hierarchy,
 )
-from funds.benchmark_system import (
+from .benchmark_system import (
     BenchmarkSystem,
     BenchmarkIndex,
     BenchmarkComparison,
     benchmark_system,
 )
-from funds.fund_dashboard import (
+from .fund_dashboard import (
     FundDashboard,
     FundDashboardMetrics,
     fund_dashboard,
 )
-from funds.risk_analytics import (
+from .risk_analytics import (
     RiskAnalytics,
     VaRResult,
     RiskProfile,

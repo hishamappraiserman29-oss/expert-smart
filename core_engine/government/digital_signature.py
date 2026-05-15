@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -55,7 +56,13 @@ class DigitalSignatureManager:
     """Sign and verify government documents using HMAC-SHA256."""
 
     def __init__(self, secret_key: Optional[str] = None) -> None:
-        self._secret = (secret_key or "expert_smart_gov_default_key").encode("utf-8")
+        key = secret_key or os.getenv("GOVERNMENT_SIGNATURE_SECRET")
+        if not key:
+            raise ValueError(
+                "DigitalSignatureManager requires a secret key. "
+                "Pass secret_key= or set the GOVERNMENT_SIGNATURE_SECRET environment variable."
+            )
+        self._secret = key.encode("utf-8")
 
     def _compute_hash(self, content: str) -> str:
         return hashlib.sha256(content.encode("utf-8")).hexdigest()
@@ -139,4 +146,3 @@ class DigitalSignatureManager:
         )
 
 
-digital_signature_manager = DigitalSignatureManager()

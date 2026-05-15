@@ -11,7 +11,7 @@ import threading
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from funds.fair_value_calculator import ValuationLevel
+from .fair_value_calculator import ValuationLevel
 
 logger = logging.getLogger(__name__)
 

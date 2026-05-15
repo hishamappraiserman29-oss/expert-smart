@@ -862,6 +862,10 @@
         #mass-appraisal-workflow #mass-appraisal-basic .mass-duplicate-card-action {
             display: none !important;
         }
+
+
+
+
     </style>
 </head>
 <body>
@@ -1104,6 +1108,51 @@
         </div>
     </div>
 
+    <div class="actions-grid">
+        <div class="action-card">
+            <i class="fas fa-file-invoice-dollar" style="color: var(--gold);"></i>
+            <h3 style="color: var(--gold);">الغرض من التقييم (مسارات منطقية)</h3>
+            <select class="select-full" id="val-purpose" onchange="runSimulatedConsole(this.value); togglePurposeInputs(this.value);">
+                <option value="fair_market_value">البيع والشراء — القيمة السوقية العادلة (Market Value)</option>
+                <option value="acquisition">الاستحواذ والاندماج — القيمة الاستثمارية (Investment Value)</option>
+                <option value="bank_financing">الرهن والتمويل البنكي — القيمة السوقية لأغراض التمويل (×0.95)</option>
+                <option value="judicial_liquidation">التصفية الإجبارية — القيمة التصفوية (Liquidation Value ×0.82)</option>
+                <option value="insurance">التأمين — قيمة إعادة الإنشاء (Reinstatement Value ×1.08)</option>
+                <option value="investment_analysis">التحليل الاستثماري — IRR / NPV / DCF</option>
+                <option value="rental_arbitration">تحديد الأجرة — القيمة الإيجارية العادلة (Rental Value)</option>
+                <option value="tax_assessment">الضرائب — القيمة للأغراض الضريبية / الضريبة العقارية</option>
+                <option value="financial_reporting">التقارير المالية والمحاسبية — القيمة العادلة (Fair Value — IFRS 13)</option>
+                <option value="usufruct">حق الانتفاع — تقييم حقوق المنفعة العقارية (Usufruct Right)</option>
+                <option value="uncertainty_valuation">التقييم في حالة عدم اليقين (Valuation Under Uncertainty)</option>
+                <option value="highest_and_best_use">تحليل أعلى وأفضل استغلال (Highest and Best Use Analysis)</option>
+                <option value="investment_funds">التقييم لأغراض الصناديق الاستثمارية (Valuation for Investment Funds / REITs)</option>
+                <option value="environmental_impact_assessment">تقييم الأثر البيئي (Environmental Impact Assessment — EIA)</option>
+            </select>
+        </div>
+        <div class="action-card">
+            <i class="fas fa-building"></i>
+            <h3>نوع الأصل العقاري</h3>
+            <select class="select-full" id="asset-type" onchange="toggleAssetInputs(this.value);">
+                <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
+                <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
+                <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
+                <option value="أرض فضاء">أرض فضاء (مطورة / خام)</option>
+                <option value="مصنع">صناعي / مستودع / لوجستي</option>
+                <option value="أرض زراعية">أرض زراعية</option>
+                <option value="فندق">فنادق ومنتجعات سياحية</option>
+                <option value="محل تجاري">تجزئة (محلات / مولات)</option>
+                <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
+                <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
+                <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
+                <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
+                <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
+                <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
+                <option value="historical">العقارات التاريخية</option>
+                <option value="heritage">العقارات ذات التراث المعماري المتميز</option>
+            </select>
+        </div>
+    </div>
+
     <div class="ai-section">
         <div class="quality-header-bar">
             <div style="font-weight:bold; color:var(--gold-light);">الوصف الفني ومحددات الأصل:</div>
@@ -1334,51 +1383,6 @@
         
         <div style="margin-top: 20px; font-size: 0.85rem; color: var(--gold-light); text-align: center; border-top: 1px dashed rgba(212,175,55,0.2); padding-top: 15px;">
             <i class="fas fa-microchip"></i> <b>نصيحة الخبير:</b> النظام لا يتوقف عن التعلم؛ فهو يمسح دورياً أحدث ممارسات التقييم عالمياً، مع الحفاظ على صفوة النماذج وأكثرها تطوراً لضمان دقة تحاكي أفضل المعايير الدولية.
-        </div>
-    </div>
-
-    <div class="actions-grid">
-        <div class="action-card">
-            <i class="fas fa-building"></i>
-            <h3>نوع الأصل العقاري</h3>
-            <select class="select-full" id="asset-type" onchange="toggleAssetInputs(this.value);">
-                <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
-                <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
-                <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
-                <option value="أرض فضاء">أرض فضاء (مطورة / خام)</option>
-                <option value="مصنع">صناعي / مستودع / لوجستي</option>
-                <option value="أرض زراعية">أرض زراعية</option>
-                <option value="فندق">فنادق ومنتجعات سياحية</option>
-                <option value="محل تجاري">تجزئة (محلات / مولات)</option>
-                <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
-                <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
-                <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
-                <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
-                <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
-                <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
-                <option value="historical">العقارات التاريخية</option>
-                <option value="heritage">العقارات ذات التراث المعماري المتميز</option>
-            </select>
-        </div>
-        <div class="action-card">
-            <i class="fas fa-file-invoice-dollar" style="color: var(--gold);"></i>
-            <h3 style="color: var(--gold);">الغرض من التقييم (مسارات منطقية)</h3>
-            <select class="select-full" id="val-purpose" onchange="runSimulatedConsole(this.value); togglePurposeInputs(this.value);">
-                <option value="fair_market_value">البيع والشراء — القيمة السوقية العادلة (Market Value)</option>
-                <option value="acquisition">الاستحواذ والاندماج — القيمة الاستثمارية (Investment Value)</option>
-                <option value="bank_financing">الرهن والتمويل البنكي — القيمة السوقية لأغراض التمويل (×0.95)</option>
-                <option value="judicial_liquidation">التصفية الإجبارية — القيمة التصفوية (Liquidation Value ×0.82)</option>
-                <option value="insurance">التأمين — قيمة إعادة الإنشاء (Reinstatement Value ×1.08)</option>
-                <option value="investment_analysis">التحليل الاستثماري — IRR / NPV / DCF</option>
-                <option value="rental_arbitration">تحديد الأجرة — القيمة الإيجارية العادلة (Rental Value)</option>
-                <option value="tax_assessment">الضرائب — القيمة للأغراض الضريبية / الضريبة العقارية</option>
-                <option value="financial_reporting">التقارير المالية والمحاسبية — القيمة العادلة (Fair Value — IFRS 13)</option>
-                <option value="usufruct">حق الانتفاع — تقييم حقوق المنفعة العقارية (Usufruct Right)</option>
-                <option value="uncertainty_valuation">التقييم في حالة عدم اليقين (Valuation Under Uncertainty)</option>
-                <option value="highest_and_best_use">تحليل أعلى وأفضل استغلال (Highest and Best Use Analysis)</option>
-                <option value="investment_funds">التقييم لأغراض الصناديق الاستثمارية (Valuation for Investment Funds / REITs)</option>
-                <option value="environmental_impact_assessment">تقييم الأثر البيئي (Environmental Impact Assessment — EIA)</option>
-            </select>
         </div>
     </div>
 
@@ -1662,7 +1666,11 @@
         </div>
     </div>
 
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <section id="mass-appraisal-workflow" class="mass-workflow-shell" dir="rtl">
+
+
       <div class="mass-workspace-header">
         <div>
           <h2 class="mass-workspace-title">مساحة عمل التقييم الجماعي</h2>

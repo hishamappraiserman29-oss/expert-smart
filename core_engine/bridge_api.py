@@ -5265,6 +5265,35 @@ def handle_valuation():
         report_style = payload.get("report_style", "legacy")
         _valid_styles = ("legacy", "detailed", "professional_template")
         _style_used  = report_style if report_style in _valid_styles else "legacy"
+
+        # ── Validation Gate — opt-in via "validate": true in payload (Wave BA.2) ──
+        # Runs ONLY when the caller opts in; zero effect on any existing request.
+        # ERRORs block generation (HTTP 422); warnings are attached but do not block.
+        _validation_result: dict | None = None
+        if payload.get("validate"):
+            try:
+                from reports.report_pipeline import validate_report_data as _vrd
+                _vr = _vrd(full, profile_key=_style_used)
+                _validation_result = {
+                    "is_valid": _vr.is_valid,
+                    "issues": [
+                        {
+                            "code":       i.code,
+                            "severity":   i.severity.value,
+                            "message_ar": i.message_ar,
+                            "message_en": i.message_en,
+                        }
+                        for i in (_vr.errors + _vr.warnings)
+                    ],
+                }
+                if not _vr.is_valid:
+                    return jsonify({
+                        "status":     "validation_error",
+                        "validation": _validation_result,
+                    }), 422
+            except Exception as _val_err:
+                print(f"{_ts()} [VALIDATION] gate skipped: {_val_err}")
+        # ── (end validation gate) ─────────────────────────────────────────────
         _tpl_used    = False
         _fallback    = False
         _fb_reason   = ""
@@ -5355,6 +5384,25 @@ def handle_valuation():
                 "template_used":          _tpl_used,
                 "fallback_used":          _fallback,
                 "fallback_reason":        _fb_reason if _fallback else ""}
+        if _validation_result:
+            resp["validation"] = _validation_result
+        # ── Persist Gate — opt-in via "persist": true in payload (Wave BA.3) ──
+        # Non-fatal (P1): a DB failure adds persist_error but does NOT return 500.
+        # The user still receives their Excel report.
+        if payload.get("persist"):
+            try:
+                from reports.report_pipeline import persist_report_data as _prd
+                _ps = str(payload.get("report_status") or "draft")
+                _ps = _ps if _ps in ("draft", "final", "archived") else "draft"
+                _db_id = _prd(full, profile_key=_style_used, status=_ps)
+                resp["report_db_id"]  = _db_id
+                resp["persisted"]     = True
+                resp["persist_error"] = ""
+            except Exception as _persist_err:
+                print(f"{_ts()} [PERSIST] save_report failed: {_persist_err}")
+                resp["persisted"]     = False
+                resp["persist_error"] = str(_persist_err)
+        # ── (end persist gate) ────────────────────────────────────────────────
         if _avm_decision is not None:
             resp["avm"] = {
                 "applied":     _avm_decision.get("applied"),
@@ -11465,6 +11513,115 @@ def mi41_info():
         ],
         "note": "Data is representative sample values. TODO: live market data collector.",
     })
+
+# ════════════════════════════════════════════════════════════════════════════
+# BA.4a — Report History Endpoints
+#
+# Read-only endpoints backed by the reports SQLite DB (reports.db).
+# No application-level auth gate — infrastructure auth is assumed,
+# consistent with the existing /api/valuation endpoint.
+# ════════════════════════════════════════════════════════════════════════════
+
+@app.route("/api/reports", methods=["GET"])
+def reports_list():
+    """List persisted reports — summary fields, newest first.
+
+    Query params (all optional):
+      limit        int  max records to return (default 20, capped at 100)
+      offset       int  records to skip (default 0)
+      profile_key  str  filter by profile ('legacy'/'detailed'/'professional_template')
+      status       str  filter by status  ('draft'/'final'/'archived')
+
+    Response 200:
+      {"status":"success","count":<int>,"reports":[...]}
+    Response 500:
+      {"status":"error","message":"<detail>"}
+    """
+    try:
+        limit  = min(int(request.args.get("limit",  20)), 100)
+        offset = max(int(request.args.get("offset",  0)),   0)
+    except (TypeError, ValueError):
+        limit  = 20
+        offset = 0
+
+    profile_key = request.args.get("profile_key") or None
+    status      = request.args.get("status")      or None
+
+    try:
+        from reports.report_pipeline import fetch_reports as _fetch_reports
+        result = _fetch_reports(
+            profile_key=profile_key,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+        return jsonify({"status": "success", **result})
+    except Exception as _hist_err:
+        return jsonify({"status": "error", "message": str(_hist_err)}), 500
+
+
+@app.route("/api/reports/<report_id>", methods=["GET"])
+def reports_get(report_id: str):
+    """Return the full stored DTO for a single persisted report.
+
+    Returns 404 when report_id is not found in the database.
+    No application-level auth gate — infrastructure auth is assumed.
+
+    Response 200:
+      {"status":"success","report":{...}}
+    Response 404:
+      {"status":"not_found","message":"Report <id> not found"}
+    Response 500:
+      {"status":"error","message":"<detail>"}
+    """
+    try:
+        from reports.report_pipeline import fetch_report as _fetch_report
+        record = _fetch_report(report_id)
+        if record is None:
+            return jsonify({
+                "status":  "not_found",
+                "message": f"Report {report_id} not found",
+            }), 404
+        return jsonify({"status": "success", "report": record})
+    except Exception as _hist_err:
+        return jsonify({"status": "error", "message": str(_hist_err)}), 500
+
+
+@app.route("/api/reports/<report_id>/pdf", methods=["GET"])
+def reports_pdf(report_id: str):
+    """Export a stored report as a PDF file.
+
+    Fetches the report DTO from the DB and streams a generated PDF.
+    No application-level auth gate — infrastructure auth is assumed,
+    consistent with /api/valuation and the other /api/reports endpoints.
+
+    Response 200: application/pdf stream; Content-Disposition names the file.
+    Response 404: {"status":"not_found","message":"Report <id> not found"}
+    Response 500: {"status":"error","message":"<detail>"}
+    """
+    try:
+        from reports.report_pipeline import export_report_pdf as _export_pdf
+        pdf_bytes = _export_pdf(report_id)
+        if pdf_bytes is None:
+            return jsonify({
+                "status":  "not_found",
+                "message": f"Report {report_id} not found",
+            }), 404
+        # Sanitise report_id for use as a filename (keep alphanumeric + hyphen/underscore)
+        safe_name = "".join(
+            c if (c.isalnum() or c in "-_") else "_" for c in report_id
+        )
+        buf = io.BytesIO(pdf_bytes)
+        buf.seek(0)
+        return send_file(
+            buf,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"{safe_name}.pdf",
+        )
+    except Exception as _pdf_err:
+        return jsonify({"status": "error", "message": str(_pdf_err)}), 500
+
 
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")

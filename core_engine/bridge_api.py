@@ -44,8 +44,15 @@ for _utf8_stream in (sys.stdout, sys.stderr):
 del _utf8_stream
 # ═══════════════════════════════════════════════════════════════════════════════
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, g, jsonify, request, send_file
 from flask_cors import CORS
+
+# ── Auth (Wave S2 — foundation only, no enforcement) ─────────────────────────
+try:
+    from auth.tokens import AuthError as _AuthError, verify_token as _verify_token
+    _AUTH_AVAILABLE = True
+except ImportError:
+    _AUTH_AVAILABLE = False
 
 # ── Phase 4 engines ──────────────────────────────────────────────────────────
 from engines.comparable_search import ComparableSearchEngine
@@ -483,6 +490,32 @@ def _cors(r):
     r.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
     r.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
     return r
+
+
+@app.before_request
+def _attach_user_from_token():
+    """Wave S2 — read Bearer token silently; never reject a request.
+
+    Sets g.user_id to the token subject when a valid JWT is present.
+    Missing header, malformed header, or invalid/expired token all
+    result in g.user_id = None without raising or returning a response.
+    Enforcement is Wave S3's responsibility.
+    """
+    g.user_id = None
+    if not _AUTH_AVAILABLE:
+        return
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return
+    token = auth_header[len("Bearer "):].strip()
+    if not token:
+        return
+    try:
+        payload = _verify_token(token)
+        g.user_id = payload.get("sub")
+    except _AuthError:
+        g.user_id = None
+
 
 @app.route("/api/<path:p>", methods=["OPTIONS"])
 def _pre(p): return jsonify({}), 200

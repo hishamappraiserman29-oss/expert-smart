@@ -18,3 +18,4 @@ class ReportRecord:
     created_at:     str              # ISO 8601
     updated_at:     str              # ISO 8601
     data:           dict[str, Any]   # full report DTO, round-trip identical
+    owner_user_id:  str = "__system__"  # placed last so existing callers need no change

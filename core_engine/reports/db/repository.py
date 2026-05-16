@@ -69,13 +69,14 @@ def _extract_index_fields(data: dict[str, Any]) -> tuple[str | None, float | Non
 def _row_to_record(row: tuple) -> ReportRecord:
     """Convert a DB row tuple into a ReportRecord (deserializing data_json)."""
     (report_id, profile_key, status, appraiser_name,
-     market_value, created_at, updated_at, data_json) = row
+     market_value, owner_user_id, created_at, updated_at, data_json) = row
     return ReportRecord(
         report_id=report_id,
         profile_key=profile_key,
         status=status,
         appraiser_name=appraiser_name,
         market_value=market_value,
+        owner_user_id=owner_user_id,
         created_at=created_at,
         updated_at=updated_at,
         data=json.loads(data_json),
@@ -84,7 +85,7 @@ def _row_to_record(row: tuple) -> ReportRecord:
 
 _SELECT_COLUMNS = (
     "report_id, profile_key, status, appraiser_name, "
-    "market_value, created_at, updated_at, data_json"
+    "market_value, owner_user_id, created_at, updated_at, data_json"
 )
 
 
@@ -103,6 +104,7 @@ class ReportRepository:
         data: dict[str, Any],
         status: str = "draft",
         report_id: str | None = None,
+        owner_user_id: str | None = None,
     ) -> str:
         """Insert a new report record. Returns the report_id.
 
@@ -112,6 +114,7 @@ class ReportRepository:
             status: One of VALID_STATUSES (default 'draft').
             report_id: Optional caller-provided id; a UUID4 is
                        generated when omitted.
+            owner_user_id: Owner identifier; None → '__system__' (legacy).
 
         Raises:
             ValueError: status not in VALID_STATUSES.
@@ -127,26 +130,42 @@ class ReportRepository:
         rid = report_id or str(uuid.uuid4())
         data_json = _serialize(data)
         appraiser_name, market_value = _extract_index_fields(data)
+        owner = owner_user_id if owner_user_id else "__system__"
         now = _utc_now_iso()
 
         self._conn.execute(
             "INSERT INTO reports "
             "(report_id, profile_key, status, appraiser_name, "
-            " market_value, created_at, updated_at, data_json) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            " market_value, owner_user_id, created_at, updated_at, data_json) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (rid, profile_key, status, appraiser_name,
-             market_value, now, now, data_json),
+             market_value, owner, now, now, data_json),
         )
         self._conn.commit()
         return rid
 
     # ── Read ────────────────────────────────────────────────────────
 
-    def get(self, report_id: str) -> ReportRecord | None:
-        """Return the record for report_id, or None if not found."""
+    def get(
+        self,
+        report_id: str,
+        *,
+        owner_user_id: str | None = None,
+    ) -> ReportRecord | None:
+        """Return the record for report_id, or None if not found.
+
+        owner_user_id: when provided, only returns the record if it
+        belongs to that owner (IDOR prevention).  None = no filter.
+        """
+        params: list[Any] = [report_id]
+        owner_clause = ""
+        if owner_user_id is not None:
+            owner_clause = " AND owner_user_id = ?"
+            params.append(owner_user_id)
         cur = self._conn.execute(
-            f"SELECT {_SELECT_COLUMNS} FROM reports WHERE report_id = ?",
-            (report_id,),
+            f"SELECT {_SELECT_COLUMNS} FROM reports "
+            f"WHERE report_id = ?{owner_clause}",
+            params,
         )
         row = cur.fetchone()
         return _row_to_record(row) if row is not None else None
@@ -156,12 +175,14 @@ class ReportRepository:
         *,
         profile_key: str | None = None,
         status: str | None = None,
+        owner_user_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[ReportRecord]:
-        """Return records filtered by profile_key and/or status.
+        """Return records filtered by profile_key, status, and/or owner.
 
         Ordered by created_at DESC (newest first). limit/offset paginate.
+        owner_user_id=None means no filter (all owners returned).
         """
         clauses: list[str] = []
         params: list[Any] = []
@@ -171,6 +192,9 @@ class ReportRepository:
         if status is not None:
             clauses.append("status = ?")
             params.append(status)
+        if owner_user_id is not None:
+            clauses.append("owner_user_id = ?")
+            params.append(owner_user_id)
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
         params.extend([limit, offset])
 
@@ -186,6 +210,7 @@ class ReportRepository:
         *,
         profile_key: str | None = None,
         status: str | None = None,
+        owner_user_id: str | None = None,
     ) -> int:
         """Return the number of records matching the filters."""
         clauses: list[str] = []
@@ -196,6 +221,9 @@ class ReportRepository:
         if status is not None:
             clauses.append("status = ?")
             params.append(status)
+        if owner_user_id is not None:
+            clauses.append("owner_user_id = ?")
+            params.append(owner_user_id)
         where = f" WHERE {' AND '.join(clauses)}" if clauses else ""
         cur = self._conn.execute(
             f"SELECT COUNT(*) FROM reports{where}", params
@@ -210,18 +238,20 @@ class ReportRepository:
         *,
         data: dict[str, Any] | None = None,
         status: str | None = None,
+        owner_user_id: str | None = None,
     ) -> bool:
-        """Update data and/or status for an existing report.
+        """Update data, status, and/or owner for an existing report.
 
         Returns True if a row was updated, False if report_id not found
         or nothing to update.
         created_at is preserved; only updated_at changes (modification #4).
+        owner_user_id is only updated when explicitly provided (not None).
 
         Raises:
             ValueError: status provided but not in VALID_STATUSES.
             TypeError: data provided but not JSON-serializable.
         """
-        if data is None and status is None:
+        if data is None and status is None and owner_user_id is None:
             return False
         if status is not None and status not in VALID_STATUSES:
             raise ValueError(
@@ -238,6 +268,9 @@ class ReportRepository:
         if status is not None:
             sets.append("status = ?")
             params.append(status)
+        if owner_user_id is not None:
+            sets.append("owner_user_id = ?")
+            params.append(owner_user_id)
 
         sets.append("updated_at = ?")
         params.append(_utc_now_iso())
@@ -252,10 +285,25 @@ class ReportRepository:
 
     # ── Delete ──────────────────────────────────────────────────────
 
-    def delete(self, report_id: str) -> bool:
-        """Delete a report. Returns True if deleted, False if not found."""
+    def delete(
+        self,
+        report_id: str,
+        *,
+        owner_user_id: str | None = None,
+    ) -> bool:
+        """Delete a report. Returns True if deleted, False if not found.
+
+        owner_user_id: when provided, only deletes if the row belongs to
+        that owner (prevents unauthorized deletion).  None = no filter.
+        """
+        params: list[Any] = [report_id]
+        owner_clause = ""
+        if owner_user_id is not None:
+            owner_clause = " AND owner_user_id = ?"
+            params.append(owner_user_id)
         cur = self._conn.execute(
-            "DELETE FROM reports WHERE report_id = ?", (report_id,)
+            f"DELETE FROM reports WHERE report_id = ?{owner_clause}",
+            params,
         )
         self._conn.commit()
         return cur.rowcount > 0

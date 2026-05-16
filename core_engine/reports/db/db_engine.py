@@ -55,6 +55,7 @@ def save_report(
     profile_key: str,
     status: str = "draft",
     report_id: str | None = None,
+    owner_user_id: str | None = None,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> str:
     """Persist a report and return its report_id.
@@ -64,6 +65,7 @@ def save_report(
         profile_key: 'legacy' / 'detailed' / 'professional'.
         status: One of the valid statuses (default 'draft').
         report_id: Optional caller id; a UUID4 is generated if omitted.
+        owner_user_id: Owner identifier; None → '__system__' (legacy).
         db_path: SQLite file path (default DEFAULT_DB_PATH).
 
     Raises:
@@ -76,6 +78,7 @@ def save_report(
         return ReportRepository(conn).save(
             profile_key=profile_key, data=data,
             status=status, report_id=report_id,
+            owner_user_id=owner_user_id,
         )
     finally:
         conn.close()
@@ -84,12 +87,16 @@ def save_report(
 def get_report(
     report_id: str,
     *,
+    owner_user_id: str | None = None,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> ReportRecord | None:
-    """Return the report with report_id, or None if not found."""
+    """Return the report with report_id, or None if not found.
+
+    owner_user_id: when provided, only returns if owner matches.  None = no filter.
+    """
     conn = _connect(db_path)
     try:
-        return ReportRepository(conn).get(report_id)
+        return ReportRepository(conn).get(report_id, owner_user_id=owner_user_id)
     finally:
         conn.close()
 
@@ -98,15 +105,20 @@ def list_reports(
     *,
     profile_key: str | None = None,
     status: str | None = None,
+    owner_user_id: str | None = None,
     limit: int = 50,
     offset: int = 0,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> list[ReportRecord]:
-    """Return reports filtered by profile_key/status, newest first."""
+    """Return reports filtered by profile_key/status/owner, newest first.
+
+    owner_user_id=None means no filter (all owners returned).
+    """
     conn = _connect(db_path)
     try:
         return ReportRepository(conn).list(
             profile_key=profile_key, status=status,
+            owner_user_id=owner_user_id,
             limit=limit, offset=offset,
         )
     finally:
@@ -118,9 +130,10 @@ def update_report(
     *,
     data: dict[str, Any] | None = None,
     status: str | None = None,
+    owner_user_id: str | None = None,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> bool:
-    """Update data and/or status. Returns True if a row changed,
+    """Update data, status, and/or owner. Returns True if a row changed,
     False if report_id not found.
 
     Raises:
@@ -131,6 +144,7 @@ def update_report(
     try:
         return ReportRepository(conn).update(
             report_id, data=data, status=status,
+            owner_user_id=owner_user_id,
         )
     finally:
         conn.close()
@@ -139,12 +153,16 @@ def update_report(
 def delete_report(
     report_id: str,
     *,
+    owner_user_id: str | None = None,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> bool:
-    """Delete a report. Returns True if deleted, False if not found."""
+    """Delete a report. Returns True if deleted, False if not found.
+
+    owner_user_id: when provided, only deletes if owner matches.  None = no filter.
+    """
     conn = _connect(db_path)
     try:
-        return ReportRepository(conn).delete(report_id)
+        return ReportRepository(conn).delete(report_id, owner_user_id=owner_user_id)
     finally:
         conn.close()
 
@@ -153,6 +171,7 @@ def count_reports(
     *,
     profile_key: str | None = None,
     status: str | None = None,
+    owner_user_id: str | None = None,
     db_path: Path | str = DEFAULT_DB_PATH,
 ) -> int:
     """Return the number of reports matching the filters."""
@@ -160,6 +179,7 @@ def count_reports(
     try:
         return ReportRepository(conn).count(
             profile_key=profile_key, status=status,
+            owner_user_id=owner_user_id,
         )
     finally:
         conn.close()

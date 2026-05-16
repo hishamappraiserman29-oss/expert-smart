@@ -26,7 +26,7 @@ class TestSchemaConstants:
         assert SCHEMA_VERSION >= 1
 
     def test_S02_schema_version_is_currently_one(self):
-        assert SCHEMA_VERSION == 1
+        assert SCHEMA_VERSION == 2
 
     def test_S03_create_tables_sql_is_nonempty_string(self):
         assert isinstance(CREATE_TABLES_SQL, str)

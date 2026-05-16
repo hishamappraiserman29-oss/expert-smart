@@ -28,8 +28,31 @@ def _apply_v1(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _migrate_to_v2(conn: sqlite3.Connection) -> None:
+    """v2: add owner_user_id column + index (auth foundation).
+
+    Existing rows get '__system__' as owner via column DEFAULT.
+    Idempotent via PRAGMA table_info check.
+    """
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(reports)")}
+    if "owner_user_id" not in cols:
+        conn.execute(
+            "ALTER TABLE reports ADD COLUMN owner_user_id "
+            "TEXT NOT NULL DEFAULT '__system__'"
+        )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_reports_owner "
+        "ON reports(owner_user_id)"
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO schema_version (id, version) VALUES (1, 2)"
+    )
+    conn.commit()
+
+
 _MIGRATIONS: dict[int, object] = {
     1: _apply_v1,
+    2: _migrate_to_v2,
 }
 
 

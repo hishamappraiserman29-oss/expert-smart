@@ -121,3 +121,38 @@ def fetch_audit_logs(
         return [dict(zip(cols, row)) for row in cur.fetchall()]
     finally:
         conn.close()
+
+
+def purge_audit_logs(
+    *,
+    older_than_iso: str,
+    db_path: Path | str | None = None,
+) -> int:
+    """Delete audit rows with created_at < older_than_iso.
+
+    Returns the number of rows deleted.
+
+    Args:
+        older_than_iso: cutoff timestamp (ISO 8601). Rows strictly older are deleted.
+        db_path: defaults via _resolve_db_path (AUDIT_DB_PATH env or DEFAULT_DB_PATH).
+
+    Raises:
+        ValueError: if older_than_iso is empty or not a string.
+        sqlite3.Error: re-raised if connection / SQL fails (caller decides).
+
+    NOTE: Maintenance operation; intended for batch retention enforcement only.
+    NOT exposed via HTTP.
+    """
+    if not older_than_iso or not isinstance(older_than_iso, str):
+        raise ValueError("older_than_iso must be a non-empty ISO timestamp")
+
+    conn = _open(_resolve_db_path(db_path))
+    try:
+        cur = conn.execute(
+            "DELETE FROM report_access_log WHERE created_at < ?",
+            (older_than_iso,),
+        )
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()

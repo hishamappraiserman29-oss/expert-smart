@@ -147,3 +147,65 @@ class TestIsEnabled:
     def test_AU12_false_disables(self, monkeypatch):
         monkeypatch.setenv("AUDIT_ENABLED", "false")
         assert is_enabled() is False
+
+
+# ── AU13–AU16: purge_audit_logs ───────────────────────────────────────────────
+
+from audit_log import purge_audit_logs  # noqa: E402
+
+
+class TestPurgeAuditLogs:
+    def test_AU13_deletes_rows_before_cutoff(self, db):
+        import sqlite3 as _sqlite3
+        # seed a recent row via log_access
+        log_access(user_id="alice", endpoint="/x", method="GET",
+                   status=200, db_path=db)
+        # manually insert an old row (backdated)
+        conn = _sqlite3.connect(db)
+        conn.execute(
+            "INSERT INTO report_access_log "
+            "(user_id, endpoint, method, status, created_at) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("old-user", "/x", "GET", 200, "2020-01-01T00:00:00+00:00"),
+        )
+        conn.commit()
+        conn.close()
+
+        n = purge_audit_logs(
+            older_than_iso="2025-01-01T00:00:00+00:00",
+            db_path=db,
+        )
+        assert n == 1
+        rows = fetch_audit_logs(db_path=db)
+        assert all(r["user_id"] != "old-user" for r in rows)
+
+    def test_AU14_empty_cutoff_raises_value_error(self, db):
+        with pytest.raises(ValueError):
+            purge_audit_logs(older_than_iso="", db_path=db)
+
+    def test_AU15_no_match_returns_zero(self, db):
+        n = purge_audit_logs(
+            older_than_iso="1900-01-01T00:00:00+00:00",
+            db_path=db,
+        )
+        assert n == 0
+
+    def test_AU16_multiple_old_rows_all_deleted(self, db):
+        import sqlite3 as _sqlite3
+        conn = _sqlite3.connect(db)
+        for i in range(5):
+            conn.execute(
+                "INSERT INTO report_access_log "
+                "(user_id, endpoint, method, status, created_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (f"u{i}", "/x", "GET", 200, "2019-01-01T00:00:00+00:00"),
+            )
+        conn.commit()
+        conn.close()
+
+        n = purge_audit_logs(
+            older_than_iso="2025-01-01T00:00:00+00:00",
+            db_path=db,
+        )
+        assert n == 5
+        assert fetch_audit_logs(db_path=db) == []

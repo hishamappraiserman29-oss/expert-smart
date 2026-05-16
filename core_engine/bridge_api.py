@@ -57,6 +57,9 @@ try:
 except ImportError:
     _AUTH_AVAILABLE = False
 
+# ── Admin authorization (Followup S5.1) ──────────────────────────────────────
+from admin import require_admin as _require_admin
+
 # ── Phase 4 engines ──────────────────────────────────────────────────────────
 from engines.comparable_search import ComparableSearchEngine
 from engines.comparative import ComparativeEngine
@@ -536,7 +539,7 @@ def _cors(r):
 
 # ── Audit Logging (Wave S5) ───────────────────────────────────────────────────
 
-_AUDITED_PREFIXES = ("/api/reports",)
+_AUDITED_PREFIXES = ("/api/reports", "/api/admin")
 
 
 @app.after_request
@@ -11765,6 +11768,63 @@ def reports_pdf(report_id: str):
         )
     except Exception as _pdf_err:
         return jsonify({"status": "error", "message": str(_pdf_err)}), 500
+
+
+# ── Admin Audit Endpoint (Followup S5.1) ─────────────────────────────────────
+
+@app.route("/api/admin/audit", methods=["GET"])
+@_require_admin
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
+def admin_audit_endpoint():
+    """List audit log entries. Admin-only.
+
+    Query params (all optional):
+      user_id   str  filter by audited user
+      since     str  created_at >= since (ISO date/datetime)
+      until     str  created_at <= until (ISO date/datetime)
+      limit     int  max records (default 100, capped at 500)
+      offset    int  pagination offset (default 0)
+
+    Response 200:
+      {"count":<int>,"filters":{...},"records":[...]}
+    Response 400:
+      {"status":"bad_request","message":"limit/offset must be integers"}
+    Response 401:
+      {"status":"unauthorized","message":"Authentication required"}
+    Response 403:
+      {"status":"forbidden","message":"Admin access required"}
+    """
+    user_id_filter = request.args.get("user_id") or None
+    since = request.args.get("since") or None
+    until = request.args.get("until") or None
+    try:
+        limit = min(int(request.args.get("limit", 100)), 500)
+        offset = max(int(request.args.get("offset", 0)), 0)
+    except (TypeError, ValueError):
+        return jsonify({
+            "status": "bad_request",
+            "message": "limit/offset must be integers",
+        }), 400
+
+    from audit_log import fetch_audit_logs as _fetch_audit_logs
+    records = _fetch_audit_logs(
+        user_id=user_id_filter,
+        since=since,
+        until=until,
+        limit=limit,
+        offset=offset,
+    )
+    return jsonify({
+        "count": len(records),
+        "filters": {
+            "user_id": user_id_filter,
+            "since": since,
+            "until": until,
+            "limit": limit,
+            "offset": offset,
+        },
+        "records": records,
+    })
 
 
 if __name__ == "__main__":

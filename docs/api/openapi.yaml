@@ -1,0 +1,318 @@
+openapi: "3.1.0"
+info:
+  title: EXPERT_SMART API
+  version: "1.0.0"
+  description: |
+    Egyptian real estate valuation API. Wraps validation, generation,
+    persistence, and retrieval of property appraisal reports.
+
+    **Note:** This spec documents the core report-workflow endpoints.
+    The full API surface (181 routes) includes market-feed, advisor, mass-appraisal,
+    banking, government, funds, and more — see `bridge_api.py` for the complete list.
+
+servers:
+  - url: http://localhost:5000
+    description: Local development
+
+tags:
+  - name: valuation
+    description: Generate and download valuation reports
+  - name: reports
+    description: Persist, list, and retrieve saved reports
+
+paths:
+  /api/valuation:
+    post:
+      tags: [valuation]
+      summary: Generate a valuation report
+      description: |
+        Generates an Excel report. Optional boolean flags control additional behaviour:
+        - `validate: true` — run validation; ERROR severity returns 422.
+        - `persist: true` — auto-save to report DB; `report_db_id` returned.
+        - `pdf: true` — generate a PDF alongside the Excel file.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValuationRequest'
+            example:
+              profile_key: professional_template
+              validate: true
+              persist: false
+              pdf: false
+              data:
+                property_id: PROP-001
+                appraiser_name: Mohamed Hassan
+      responses:
+        '200':
+          description: Successful generation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValuationResponse'
+        '422':
+          description: Validation error (when validate=true and ERROR-severity issues exist)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/reports:
+    get:
+      tags: [reports]
+      summary: List saved reports
+      description: Returns an array of report records from the SQLite report DB. Supports optional filtering and pagination.
+      parameters:
+        - name: profile_key
+          in: query
+          description: Filter by report profile
+          schema:
+            type: string
+            enum: [legacy, detailed, professional_template]
+        - name: status
+          in: query
+          description: Filter by report status
+          schema:
+            type: string
+            enum: [draft, final, archived]
+        - name: limit
+          in: query
+          description: Maximum records to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - name: offset
+          in: query
+          description: Number of records to skip (for pagination)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Array of report records (data field omitted from list view)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportRecord'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/reports/{report_id}:
+    get:
+      tags: [reports]
+      summary: Retrieve a single saved report
+      description: Returns the full record including the `data` DTO for the given report ID.
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: UUID of the report
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Full report record including data DTO
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportRecord'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/reports/{report_id}/pdf:
+    get:
+      tags: [reports]
+      summary: Download a saved report as PDF
+      description: |
+        Streams the PDF binary for the given report. The PDF is generated on-demand
+        from the persisted data DTO using the same profile as when the report was saved.
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          description: UUID of the report
+          schema:
+            type: string
+      responses:
+        '200':
+          description: PDF binary stream
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    ValuationRequest:
+      type: object
+      required: [profile_key, data]
+      properties:
+        profile_key:
+          type: string
+          enum: [legacy, detailed, professional_template]
+          description: Selects the report template and formatting profile
+        data:
+          type: object
+          description: Full report DTO — property info, comparables, adjustments, reconciliation
+        validate:
+          type: boolean
+          default: false
+          description: Run validation engine before generation; ERROR severity → 422
+        persist:
+          type: boolean
+          default: false
+          description: Save report to SQLite DB; returns report_db_id on success
+        pdf:
+          type: boolean
+          default: false
+          description: Generate PDF alongside Excel using fpdf2 + Arabic shaping
+
+    ValuationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        report_path:
+          type: string
+          example: /tmp/report_professional_template_20260516.xlsx
+        report_db_id:
+          type: string
+          nullable: true
+          description: Set when persist=true and save succeeded
+        persist_error:
+          type: string
+          nullable: true
+          description: Non-fatal error message when persist=true but save failed
+        pdf_path:
+          type: string
+          nullable: true
+          description: Absolute path to generated PDF when pdf=true
+        validation:
+          $ref: '#/components/schemas/ValidationBlock'
+          description: Present when validate=true
+
+    ValidationBlock:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: True when no ERROR-severity issues found
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationIssue'
+
+    ValidationIssue:
+      type: object
+      required: [field, severity, code, message_ar, message_en]
+      properties:
+        field:
+          type: string
+          description: Dot-notation field path (e.g. "reconciliation.weights_sum")
+        severity:
+          type: string
+          enum: [error, warning, info]
+        code:
+          type: string
+          example: WEIGHTS_SUM_MISMATCH
+          description: Stable machine-readable code for programmatic handling
+        message_ar:
+          type: string
+          description: Human-readable message in Arabic
+        message_en:
+          type: string
+          description: Human-readable message in English
+
+    ValidationError:
+      type: object
+      description: Returned with HTTP 422 when validate=true and ERROR issues exist
+      properties:
+        status:
+          type: string
+          example: validation_error
+        validation:
+          $ref: '#/components/schemas/ValidationBlock'
+
+    ReportRecord:
+      type: object
+      required: [report_id, profile_key, status, created_at, updated_at]
+      properties:
+        report_id:
+          type: string
+          description: UUID primary key
+        profile_key:
+          type: string
+          enum: [legacy, detailed, professional_template]
+        status:
+          type: string
+          enum: [draft, final, archived]
+        appraiser_name:
+          type: string
+          nullable: true
+        market_value:
+          type: number
+          nullable: true
+          description: Extracted top-level market value for quick display
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        data:
+          type: object
+          description: Full DTO (omitted in list responses, present in single-record GET)
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Report not found

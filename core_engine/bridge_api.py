@@ -47,6 +47,8 @@ del _utf8_stream
 
 from flask import Flask, g, jsonify, request, send_file
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.errors import RateLimitExceeded
 
 # ── Auth (Wave S2 — foundation only, no enforcement) ─────────────────────────
 try:
@@ -353,6 +355,45 @@ app = Flask(__name__,
             static_folder=_FRONTEND_DIR,
             static_url_path="/static")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# ── Rate Limiting (Wave S4) ───────────────────────────────────────────────────
+
+def _rate_limit_key() -> str:
+    """Key by authenticated user_id; fall back to IP for unauthenticated."""
+    user_id = getattr(g, "user_id", None)
+    if user_id:
+        return f"user:{user_id}"
+    return f"ip:{request.remote_addr or 'unknown'}"
+
+
+def _rate_limit_disabled() -> bool:
+    """Returns True when rate limiting should be skipped.
+
+    Tests set RATE_LIMIT_ENABLED=false (via conftest.py) so @limiter.limit
+    decorators become no-ops without any code changes to existing tests.
+    """
+    return os.environ.get("RATE_LIMIT_ENABLED", "true").lower() != "true"
+
+
+limiter = Limiter(
+    key_func=_rate_limit_key,
+    app=app,
+    storage_uri="memory://",
+    default_limits=[],
+    headers_enabled=True,
+)
+
+
+@app.errorhandler(RateLimitExceeded)
+def _rate_limit_handler(e: RateLimitExceeded):
+    response = jsonify({
+        "status": "rate_limited",
+        "message": "Too many requests. Please try again later.",
+        "limit": str(e.description),
+    })
+    response.status_code = 429
+    return response
+
 
 # ── Phase 4 engine singletons (lazy-loaded on first request) ─────────────────
 _comparable_search_engine = None
@@ -11587,6 +11628,7 @@ def mi41_info():
 
 @app.route("/api/reports", methods=["GET"])
 @require_auth
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
 def reports_list():
     """List persisted reports — summary fields, newest first.
 
@@ -11629,6 +11671,7 @@ def reports_list():
 
 @app.route("/api/reports/<report_id>", methods=["GET"])
 @require_auth
+@limiter.limit("60/minute", exempt_when=_rate_limit_disabled)
 def reports_get(report_id: str):
     """Return the full stored DTO for a single persisted report.
 
@@ -11659,6 +11702,7 @@ def reports_get(report_id: str):
 
 @app.route("/api/reports/<report_id>/pdf", methods=["GET"])
 @require_auth
+@limiter.limit("10/minute", exempt_when=_rate_limit_disabled)
 def reports_pdf(report_id: str):
     """Export a stored report as a PDF file.
 

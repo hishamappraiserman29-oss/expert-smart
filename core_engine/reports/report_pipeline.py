@@ -237,22 +237,21 @@ def fetch_reports(
     status: str | None = None,
     limit: int = 20,
     offset: int = 0,
+    owner_user_id: str | None = None,
     db_path: "Path | str" = DEFAULT_DB_PATH,
 ) -> dict[str, Any]:
-    """Bridge API integration point — history list (Wave BA.4a).
+    """Bridge API integration point — history list (Wave BA.4a / S3).
 
     Returns a summary list of persisted reports plus the total count
     matching the applied filters. Pagination is caller-controlled.
 
-    No application-level auth at this layer — infrastructure auth is
-    assumed (same policy as /api/valuation).
-
     Args:
-        profile_key: Filter to one profile ('legacy'/'detailed'/'professional_template').
-        status:      Filter to one status ('draft'/'final'/'archived').
-        limit:       Max records returned (default 20).
-        offset:      Skip first N records (default 0).
-        db_path:     DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
+        profile_key:   Filter to one profile ('legacy'/'detailed'/'professional_template').
+        status:        Filter to one status ('draft'/'final'/'archived').
+        limit:         Max records returned (default 20).
+        offset:        Skip first N records (default 0).
+        owner_user_id: When provided, only returns reports owned by this user (S3).
+        db_path:       DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
 
     Returns:
         {"count": <int>, "reports": [<summary>, ...]}
@@ -264,11 +263,13 @@ def fetch_reports(
         status=status,
         limit=limit,
         offset=offset,
+        owner_user_id=owner_user_id,
         db_path=db_path,
     )
     total = _db_count(
         profile_key=profile_key,
         status=status,
+        owner_user_id=owner_user_id,
         db_path=db_path,
     )
     summaries = [
@@ -289,24 +290,23 @@ def fetch_reports(
 def fetch_report(
     report_id: str,
     *,
+    owner_user_id: str | None = None,
     db_path: "Path | str" = DEFAULT_DB_PATH,
 ) -> dict[str, Any] | None:
-    """Bridge API integration point — history single (Wave BA.4a).
+    """Bridge API integration point — history single (Wave BA.4a / S3).
 
     Returns the full stored DTO for one report, or None when the ID
-    is not in the database.
-
-    No application-level auth at this layer — infrastructure auth is
-    assumed (same policy as /api/valuation).
+    is not in the database or owner does not match.
 
     Args:
-        report_id: The report_db_id assigned at persist time.
-        db_path:   DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
+        report_id:     The report_db_id assigned at persist time.
+        owner_user_id: When provided, only returns if owner matches (S3 IDOR guard).
+        db_path:       DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
 
     Returns:
-        Full record dict, or None if not found.
+        Full record dict, or None if not found / owner mismatch.
     """
-    record = _db_get(report_id, db_path=db_path)
+    record = _db_get(report_id, owner_user_id=owner_user_id, db_path=db_path)
     if record is None:
         return None
     return {
@@ -324,30 +324,29 @@ def fetch_report(
 def export_report_pdf(
     report_id: str,
     *,
+    owner_user_id: str | None = None,
     db_path: "Path | str" = DEFAULT_DB_PATH,
 ) -> bytes | None:
-    """Bridge API integration point — PDF export for a stored report (Wave BA.4b).
+    """Bridge API integration point — PDF export for a stored report (Wave BA.4b / S3).
 
-    Fetches the stored DTO from the DB, renders a PDF via the PDF engine into
-    a temp file, reads the bytes, cleans up the temp file, and returns the raw
-    PDF bytes. Returns None when the report_id is not in the database.
-
-    No application-level auth at this layer — infrastructure auth is assumed
-    (same policy as /api/valuation and the history endpoints).
+    Fetches the stored DTO from the DB (owner-filtered), renders a PDF via the
+    PDF engine into a temp file, reads the bytes, cleans up, and returns raw PDF
+    bytes. Returns None when the report_id is not found or owner does not match.
 
     Args:
-        report_id: The report_db_id as stored at persist time.
-        db_path:   DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
+        report_id:     The report_db_id as stored at persist time.
+        owner_user_id: When provided, only proceeds if owner matches (S3 IDOR guard).
+        db_path:       DB path (tests pass tmp_path; prod uses DEFAULT_DB_PATH).
 
     Returns:
-        PDF bytes (begins with b'%PDF'), or None if report_id not found.
+        PDF bytes (begins with b'%PDF'), or None if report_id not found / owner mismatch.
 
     Raises:
         Any exception from _pdf_generate (e.g. ValueError for bad profile_key,
         OSError for I/O failure) propagates to the caller so the route can
         return a controlled 500 response.
     """
-    record = _db_get(report_id, db_path=db_path)
+    record = _db_get(report_id, owner_user_id=owner_user_id, db_path=db_path)
     if record is None:
         return None
 

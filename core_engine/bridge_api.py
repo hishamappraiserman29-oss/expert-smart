@@ -12,6 +12,7 @@ bridge_api.py  —  Expert_Smart Valuation Engine
 
 import sys, io, os, math, uuid, shutil, traceback, statistics, tempfile, gc, time
 from datetime import datetime
+from functools import wraps
 from typing import Optional, List, Dict, Any, Tuple
 
 def _ts():
@@ -515,6 +516,19 @@ def _attach_user_from_token():
         g.user_id = payload.get("sub")
     except _AuthError:
         g.user_id = None
+
+
+def require_auth(fn):
+    """Wave S3 — reject requests without a verified token (g.user_id unset)."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not getattr(g, "user_id", None):
+            return jsonify({
+                "status": "unauthorized",
+                "message": "Authentication required",
+            }), 401
+        return fn(*args, **kwargs)
+    return wrapper
 
 
 @app.route("/api/<path:p>", methods=["OPTIONS"])
@@ -11572,6 +11586,7 @@ def mi41_info():
 # ════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/reports", methods=["GET"])
+@require_auth
 def reports_list():
     """List persisted reports — summary fields, newest first.
 
@@ -11583,6 +11598,8 @@ def reports_list():
 
     Response 200:
       {"status":"success","count":<int>,"reports":[...]}
+    Response 401:
+      {"status":"unauthorized","message":"Authentication required"}
     Response 500:
       {"status":"error","message":"<detail>"}
     """
@@ -11603,6 +11620,7 @@ def reports_list():
             status=status,
             limit=limit,
             offset=offset,
+            owner_user_id=g.user_id,
         )
         return jsonify({"status": "success", **result})
     except Exception as _hist_err:
@@ -11610,14 +11628,17 @@ def reports_list():
 
 
 @app.route("/api/reports/<report_id>", methods=["GET"])
+@require_auth
 def reports_get(report_id: str):
     """Return the full stored DTO for a single persisted report.
 
-    Returns 404 when report_id is not found in the database.
-    No application-level auth gate — infrastructure auth is assumed.
+    Returns 404 when report_id is not found or owner does not match (IDOR
+    prevention — no enumeration of IDs across users).
 
     Response 200:
       {"status":"success","report":{...}}
+    Response 401:
+      {"status":"unauthorized","message":"Authentication required"}
     Response 404:
       {"status":"not_found","message":"Report <id> not found"}
     Response 500:
@@ -11625,7 +11646,7 @@ def reports_get(report_id: str):
     """
     try:
         from reports.report_pipeline import fetch_report as _fetch_report
-        record = _fetch_report(report_id)
+        record = _fetch_report(report_id, owner_user_id=g.user_id)
         if record is None:
             return jsonify({
                 "status":  "not_found",
@@ -11637,20 +11658,21 @@ def reports_get(report_id: str):
 
 
 @app.route("/api/reports/<report_id>/pdf", methods=["GET"])
+@require_auth
 def reports_pdf(report_id: str):
     """Export a stored report as a PDF file.
 
-    Fetches the report DTO from the DB and streams a generated PDF.
-    No application-level auth gate — infrastructure auth is assumed,
-    consistent with /api/valuation and the other /api/reports endpoints.
+    Fetches the report DTO from the DB (owner-filtered) and streams a PDF.
+    Returns 404 when report_id is not found or owner does not match.
 
     Response 200: application/pdf stream; Content-Disposition names the file.
+    Response 401: {"status":"unauthorized","message":"Authentication required"}
     Response 404: {"status":"not_found","message":"Report <id> not found"}
     Response 500: {"status":"error","message":"<detail>"}
     """
     try:
         from reports.report_pipeline import export_report_pdf as _export_pdf
-        pdf_bytes = _export_pdf(report_id)
+        pdf_bytes = _export_pdf(report_id, owner_user_id=g.user_id)
         if pdf_bytes is None:
             return jsonify({
                 "status":  "not_found",

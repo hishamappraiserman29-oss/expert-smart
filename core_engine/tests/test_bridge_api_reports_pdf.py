@@ -40,7 +40,7 @@ _REPORT_ID  = "ES-20260515-ABCD"
 _FAKE_PDF   = b"%PDF-1.4 fake-pdf-content-for-testing"
 
 
-# ── Fixture ───────────────────────────────────────────────────────────────────
+# ── Fixtures ──────────────────────────────────────────────────────────────────
 
 @pytest.fixture()
 def client():
@@ -49,83 +49,90 @@ def client():
         yield c
 
 
+@pytest.fixture()
+def auth_header(monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", "test-secret-s3-pdf")
+    from auth.tokens import generate_token
+    return lambda user_id="test-user": {"Authorization": f"Bearer {generate_token(user_id)}"}
+
+
 # ── PX01–PX03: Successful PDF export ─────────────────────────────────────────
 
 class TestPdfExportSuccess:
-    def test_PX01_returns_200(self, client):
+    def test_PX01_returns_200(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.status_code == 200
 
-    def test_PX02_mimetype_is_application_pdf(self, client):
+    def test_PX02_mimetype_is_application_pdf(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.mimetype == "application/pdf"
 
-    def test_PX03_response_bytes_start_with_pdf_header(self, client):
+    def test_PX03_response_bytes_start_with_pdf_header(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.data.startswith(b"%PDF")
 
-    def test_PX04_content_disposition_is_attachment(self, client):
+    def test_PX04_content_disposition_is_attachment(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         cd = r.headers.get("Content-Disposition", "")
         assert "attachment" in cd
 
-    def test_PX05_content_disposition_includes_filename(self, client):
+    def test_PX05_content_disposition_includes_filename(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         cd = r.headers.get("Content-Disposition", "")
         assert ".pdf" in cd
 
-    def test_PX06_returned_bytes_match_engine_output(self, client):
+    def test_PX06_returned_bytes_match_engine_output(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.data == _FAKE_PDF
 
 
 # ── PX07–PX09: Not-found behaviour ───────────────────────────────────────────
 
 class TestPdfExportNotFound:
-    def test_PX07_missing_report_returns_404(self, client):
+    def test_PX07_missing_report_returns_404(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=None):
-            r = client.get("/api/reports/NONEXISTENT-ID/pdf")
+            r = client.get("/api/reports/NONEXISTENT-ID/pdf", headers=auth_header())
         assert r.status_code == 404
 
-    def test_PX08_missing_report_status_is_not_found(self, client):
+    def test_PX08_missing_report_status_is_not_found(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=None):
-            data = client.get("/api/reports/NONEXISTENT-ID/pdf").get_json()
+            data = client.get("/api/reports/NONEXISTENT-ID/pdf", headers=auth_header()).get_json()
         assert data["status"] == "not_found"
 
-    def test_PX09_missing_report_message_contains_id(self, client):
+    def test_PX09_missing_report_message_contains_id(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=None):
-            data = client.get("/api/reports/NONEXISTENT-ID/pdf").get_json()
+            data = client.get("/api/reports/NONEXISTENT-ID/pdf", headers=auth_header()).get_json()
         assert "NONEXISTENT-ID" in data["message"]
 
 
 # ── PX10–PX11: Exception handling ────────────────────────────────────────────
 
 class TestPdfExportExceptions:
-    def test_PX10_db_exception_returns_500(self, client):
+    def test_PX10_db_exception_returns_500(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    side_effect=RuntimeError("disk full")):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.status_code == 500
 
-    def test_PX11_db_exception_status_is_error(self, client):
+    def test_PX11_db_exception_status_is_error(self, client, auth_header):
         with patch("reports.report_pipeline.export_report_pdf",
                    side_effect=RuntimeError("disk full")):
-            data = client.get(f"/api/reports/{_REPORT_ID}/pdf").get_json()
+            data = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header()).get_json()
         assert data["status"] == "error"
         assert data["message"]
 
@@ -133,12 +140,12 @@ class TestPdfExportExceptions:
 # ── PX12: professional_template profile ──────────────────────────────────────
 
 class TestPdfExportProfiles:
-    def test_PX12_professional_template_returns_200(self, client):
+    def test_PX12_professional_template_returns_200(self, client, auth_header):
         """export_report_pdf handles professional_template profile internally;
         the route is profile-agnostic — it delegates to the pipeline."""
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            r = client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            r = client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         assert r.status_code == 200
         assert r.mimetype == "application/pdf"
 
@@ -146,21 +153,21 @@ class TestPdfExportProfiles:
 # ── PX13–PX14: No production DB file created ─────────────────────────────────
 
 class TestNoProdDB:
-    def test_PX13_no_db_created_on_success(self, client):
+    def test_PX13_no_db_created_on_success(self, client, auth_header):
         """Mocking export_report_pdf ensures the real DB is never opened."""
         prod_db = Path(_CORE) / "reports" / "db" / "data" / "reports.db"
         existed_before = prod_db.exists()
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=_FAKE_PDF):
-            client.get(f"/api/reports/{_REPORT_ID}/pdf")
+            client.get(f"/api/reports/{_REPORT_ID}/pdf", headers=auth_header())
         if not existed_before:
             assert not prod_db.exists()
 
-    def test_PX14_no_db_created_on_not_found(self, client):
+    def test_PX14_no_db_created_on_not_found(self, client, auth_header):
         prod_db = Path(_CORE) / "reports" / "db" / "data" / "reports.db"
         existed_before = prod_db.exists()
         with patch("reports.report_pipeline.export_report_pdf",
                    return_value=None):
-            client.get("/api/reports/MISSING/pdf")
+            client.get("/api/reports/MISSING/pdf", headers=auth_header())
         if not existed_before:
             assert not prod_db.exists()

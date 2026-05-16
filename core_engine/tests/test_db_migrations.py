@@ -72,7 +72,7 @@ class TestMigrateFunction:
         migrate(fresh_conn)
         row = fresh_conn.execute("SELECT version FROM schema_version").fetchone()
         assert row is not None
-        assert row[0] == 2
+        assert row[0] == 3
 
     def test_MIG09_idempotent_called_twice(self, fresh_conn):
         v1 = migrate(fresh_conn)

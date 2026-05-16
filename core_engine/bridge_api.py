@@ -534,6 +534,35 @@ def _cors(r):
     return r
 
 
+# ── Audit Logging (Wave S5) ───────────────────────────────────────────────────
+
+_AUDITED_PREFIXES = ("/api/reports",)
+
+
+@app.after_request
+def _audit_protected_endpoints(response):
+    """Log every access to /api/reports* endpoints. Best-effort."""
+    path = request.path
+    if not any(path.startswith(p) for p in _AUDITED_PREFIXES):
+        return response
+    try:
+        from audit_log import log_access as _log_access
+        report_id = None
+        if request.view_args:
+            report_id = request.view_args.get("report_id")
+        _log_access(
+            user_id=getattr(g, "user_id", None),
+            endpoint=path,
+            method=request.method,
+            status=response.status_code,
+            report_id=report_id,
+            ip=request.remote_addr,
+        )
+    except Exception:
+        pass  # best-effort: never break the response
+    return response
+
+
 @app.before_request
 def _attach_user_from_token():
     """Wave S2 — read Bearer token silently; never reject a request.

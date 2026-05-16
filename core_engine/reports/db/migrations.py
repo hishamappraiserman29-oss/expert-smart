@@ -50,9 +50,38 @@ def _migrate_to_v2(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _migrate_to_v3(conn: sqlite3.Connection) -> None:
+    """v3: report_access_log table for audit trail (auth wave S5). Idempotent."""
+    cursor = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='report_access_log'"
+    )
+    if cursor.fetchone() is None:
+        conn.executescript("""
+            CREATE TABLE report_access_log (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id     TEXT,
+                endpoint    TEXT NOT NULL,
+                method      TEXT NOT NULL,
+                status      INTEGER NOT NULL,
+                report_id   TEXT,
+                ip          TEXT,
+                created_at  TEXT NOT NULL
+            );
+            CREATE INDEX idx_access_log_user_time
+                ON report_access_log(user_id, created_at);
+            CREATE INDEX idx_access_log_time
+                ON report_access_log(created_at);
+        """)
+    conn.execute(
+        "INSERT OR REPLACE INTO schema_version (id, version) VALUES (1, 3)"
+    )
+    conn.commit()
+
+
 _MIGRATIONS: dict[int, object] = {
     1: _apply_v1,
     2: _migrate_to_v2,
+    3: _migrate_to_v3,
 }
 
 

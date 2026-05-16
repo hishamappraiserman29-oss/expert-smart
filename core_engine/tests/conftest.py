@@ -1,4 +1,4 @@
-"""Pytest configuration — disable rate limiting by default for the test suite."""
+"""Pytest configuration — disable rate limiting and audit logging by default."""
 import os
 import pytest
 
@@ -11,3 +11,13 @@ def _disable_rate_limit(monkeypatch):
     which runs after this autouse fixture and overrides the value.
     """
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "false")
+
+
+@pytest.fixture(autouse=True)
+def _disable_audit(monkeypatch):
+    """All tests run with audit logging OFF unless they opt in.
+
+    Audit tests set AUDIT_ENABLED=true via their own fixture,
+    which runs after this autouse fixture and overrides the value.
+    """
+    monkeypatch.setenv("AUDIT_ENABLED", "false")

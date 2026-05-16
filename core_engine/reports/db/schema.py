@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-SCHEMA_VERSION: int = 2
+SCHEMA_VERSION: int = 3
 
 CREATE_TABLES_SQL: str = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -27,6 +27,22 @@ CREATE INDEX IF NOT EXISTS idx_reports_status    ON reports(status);
 CREATE INDEX IF NOT EXISTS idx_reports_appraiser ON reports(appraiser_name);
 CREATE INDEX IF NOT EXISTS idx_reports_created   ON reports(created_at);
 CREATE INDEX IF NOT EXISTS idx_reports_owner     ON reports(owner_user_id);
+
+CREATE TABLE IF NOT EXISTS report_access_log (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     TEXT,
+    endpoint    TEXT NOT NULL,
+    method      TEXT NOT NULL,
+    status      INTEGER NOT NULL,
+    report_id   TEXT,
+    ip          TEXT,
+    created_at  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_access_log_user_time
+    ON report_access_log(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_access_log_time
+    ON report_access_log(created_at);
 """
 
 VALID_STATUSES: frozenset[str] = frozenset({"draft", "final", "archived"})

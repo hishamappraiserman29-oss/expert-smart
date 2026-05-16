@@ -91,7 +91,7 @@ class TestOwnerColumn:
 
         migrate(conn)
 
-        assert current_version(conn) == 2
+        assert current_version(conn) == 3
         owner = conn.execute(
             "SELECT owner_user_id FROM reports WHERE report_id='old-1'"
         ).fetchone()[0]

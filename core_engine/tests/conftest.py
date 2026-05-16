@@ -2,6 +2,11 @@
 import os
 import pytest
 
+# Allow asyncio.run() to be called even when Playwright's sync API leaves
+# a running event loop in the thread (nest_asyncio patches the stdlib loop).
+import nest_asyncio
+nest_asyncio.apply()
+
 
 @pytest.fixture(autouse=True)
 def _disable_rate_limit(monkeypatch):

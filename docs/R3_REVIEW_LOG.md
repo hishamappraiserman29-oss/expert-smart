@@ -110,16 +110,62 @@ Note: No model binary files in repo (all pure Python, largest commit 121K).
 
 ---
 
-## R3.4+ — Pending
+## R3.4 — Gate Decision (2026-05-17)
+
+Cherry-picks onto: `main`
+Full suite after all merges: **1,227 / 1,227 passed ✅**
+
+### Prerequisite: `mcp_bridge` + `mcp_setup` + `market_indicators` — MERGED
+
+Commit cherry-picked: `7e3ec3b` → landed as `2db154c`
+Files: 5 (`mcp_bridge.py`, `mcp_setup.py`, `market_indicators.py`, `test_phase_16_e2e.py`, `test_phase_16_1_e2e.py`)
+Required by: agents test files import `from mcp_bridge import APIResponse`
+Tests: 20 / 20 ✅
+
+### `core_engine/agents/` — MERGED
+
+Commit cherry-picked: `4f9cc8a` → landed as `6c64b8a`
+Files: 14 (7 modules + __init__ + 6 test files), ~2,190 source lines | Tests: 94 ✅
+Dependencies: **100% stdlib** — no LLM provider, no network
+Modules: `workspace_manager`, `file_scanner`, `file_watcher`, `pipeline_orchestrator`, `supervised_agent`, `command_parser`, `chat_agent`
+Endpoints unlocked: chat UI + `/api/agent/chat` — guard `_CHAT_OK` was already wired in `bridge_api.py`
+
+### `core_engine/knowledge/` — MERGED
+
+Commit cherry-picked: `cac0d0d` → landed as `46b5e2f`
+Files: 12 (10 modules + __init__ + 2 test files), ~2,350 source lines | Tests: 92 ✅
+Dependencies: pure stdlib; Qdrant/Ollama optional (graceful HTTP fallback to empty list)
+All tests use `auto_embed=False` — no network calls at test time
+
+### `core_engine/integrations/` — MERGED
+
+Commit cherry-picked: `9d29696` → landed as `d7136c2`
+Files: 11 (9 modules + connectors/bank_connector + 1 test file), ~1,273 source lines | Tests: 54 ✅
+Dependencies: `requests` (optional guard `_REQUESTS_OK`); OAuth/webhook stdlib HMAC
+Tests use `http://localhost:19999` (intentionally unreachable) — all verify graceful offline behavior
+
+### Cross-cutting notes
+
+- Zero inter-subsystem dependencies (agents ↔ knowledge ↔ integrations = independent)
+- No LLM provider packages anywhere in the three subsystems
+- No hardcoded API keys or secrets
+- **Test infrastructure fix**: `nest-asyncio` added to `requirements-dev.txt`; `core_engine/tests/conftest.py` applies `nest_asyncio.apply()` at session start. Root cause: `pytest-playwright` leaves the C-level asyncio TSS running-loop pointer set after its session teardown, causing `asyncio.run()` to raise in later tests. `nest_asyncio` patches the stdlib loop to allow nested calls. The WIP branch's 1,606-test baseline never exhibited this because the `e2e/` Playwright tests were added to `main` AFTER the WIP branch was cut.
+- No env vars required for any of the three subsystems
+
+---
+
+## R3.5+ — Pending
 
 WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
-- `agents/`
 - `banking_expert/`
 - `database/` deferred (see R3.1 deferral above)
 - (others as identified on WIP)
 
 Previously merged:
+- `agents/` ✅ merged (R3.4)
+- `knowledge/` ✅ merged (R3.4)
+- `integrations/` ✅ merged (R3.4)
 - `analytics/` ✅ merged (R3.3)
 - `search/` ✅ merged (R3.3)
 - `ml/` ✅ merged (R3.3)

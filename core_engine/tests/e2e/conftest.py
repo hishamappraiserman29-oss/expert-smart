@@ -96,3 +96,5 @@ def browser_context_args(browser_context_args):
         **browser_context_args,
         "viewport": {"width": 1280, "height": 800},
     }
+
+

@@ -77,19 +77,55 @@ relative `from .X import` in `__init__.py`, `fund_dashboard.py`,
 
 ---
 
-## R3.3+ — Pending
+## R3.3 — Gate Decision (2026-05-17)
+
+Branch reviewed: `wip/r3-subsystems-checkpoint`
+Cherry-picks onto: `main`
+Full suite after all three merges: **967 / 967 passed ✅**
+
+### `core_engine/analytics/` — MERGED
+
+Commit cherry-picked: `fa4afe6` → landed as `64657f3`
+Files: 7 / ~1,009 lines | Tests: 50 ✅
+Dependencies: pure stdlib
+Modules: `analytics_engine`, `dashboard_system`, `forecasting`, `market_intelligence`, `portfolio_risk`
+Endpoints unlocked: 8 (`/api/analytics/*`) — guard `_ANALYTICS_OK` was already wired in `bridge_api.py`
+
+### `core_engine/search/` — MERGED
+
+Commit cherry-picked: `e5b1d4e` → landed as `b8bc953`
+Files: 5 / ~742 lines | Tests: 34 ✅
+Dependencies: pure stdlib — no dependency on `analytics/` or `ml/`
+Modules: `comparable_search`, `similarity_matcher`, `adjustment_factors`
+Endpoints unlocked: 4 (`/api/search/*`) — guard `_SEARCH_OK` was already wired in `bridge_api.py`
+
+### `core_engine/ml/` — MERGED
+
+Commit cherry-picked: `086fdc8` → landed as `0434a9d`
+Files: 8 / ~1,550 lines | Tests: 52 ✅
+Dependencies: `numpy`, `pandas`, `scikit-learn`, `joblib` (all installed); XGBoost optional (guarded internally)
+Modules: `avm_predictor`, `data_processor`, `feature_engineer`, `model_registry`, `model_trainer`, `model_validator`
+Endpoints unlocked: 3 (`/api/ml/*`) — guard `_ML_OK` was already wired in `bridge_api.py`
+Note: No model binary files in repo (all pure Python, largest commit 121K).
+
+---
+
+## R3.4+ — Pending
 
 WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
 - `agents/`
-- `analytics/`
 - `banking_expert/`
-- `ml/`
-- `government/` ✅ merged
-- `banking/` ✅ merged
-- `funds/` ✅ merged
-- `database/` deferred
-- `security/` ✅ merged (R3.1)
+- `database/` deferred (see R3.1 deferral above)
 - (others as identified on WIP)
+
+Previously merged:
+- `analytics/` ✅ merged (R3.3)
+- `search/` ✅ merged (R3.3)
+- `ml/` ✅ merged (R3.3)
+- `government/` ✅ merged (R3.2)
+- `banking/` ✅ merged (R3.2)
+- `funds/` ✅ merged (R3.2)
+- `security/` ✅ merged (R3.1)
 
 Review to be scheduled in separate sessions.

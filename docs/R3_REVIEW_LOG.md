@@ -359,7 +359,100 @@ Previously merged (R3.1–R3.8):
 - `analytics/` ✅ merged (R3.3)
 - `search/` ✅ merged (R3.3)
 - `ml/` ✅ merged (R3.3)
-- `government/` ✅ merged (R3.2)
-- `banking/` ✅ merged (R3.2)
-- `funds/` ✅ merged (R3.2)
+- `government/` ✅ merged (R3.2) — hotfix applied R3.9
+- `banking/` ✅ merged (R3.2) — NOTE comments added R3.9
+- `funds/` ✅ merged (R3.2) — hotfix applied R3.9
 - `security/` ✅ merged (R3.1)
+
+---
+
+## R3.9 — 2026-05-17 — banking + funds + government (FINAL R3 WAVE)
+
+All three subsystems were already on main (merged R3.2 without formal gate);
+this wave was a quality audit + targeted hotfixes.
+
+### Decisions
+
+- **banking:** KEEP — 64/64 tests pass, no secrets, no live APIs.
+  Basel III LGD formula and CBE collateral discounts are **approximations**.
+  Inline NOTE comments added to `collateral_engine.py`, `ltv_calculator.py`,
+  `risk_assessment.py` pointing to required domain review.
+  Queued for د. عبد الرؤوف review.
+
+- **funds:** KEEP + HOTFIX — 70/70 tests pass.
+  `RISK_FREE_RATE = 0.08` was hardcoded, corrupting all Sharpe ratio outputs.
+  Hotfix: `risk_free_rate` now a required explicit parameter; `ValueError` when
+  called without it (no silent fallback). See Commit 2.
+
+- **government:** KEEP + HOTFIX — 49/49 tests pass.
+  HMAC signing had a hardcoded default key `"expert_smart_gov_default_key"`.
+  Hotfix: `DigitalSignatureManager` now reads `GOVT_SIGNING_KEY` env var;
+  `ValueError` raised if unset. Tests use `monkeypatch` fixture. See Commit 3.
+  Tax rate constants: NOTE comments added requiring Tax Authority expert review.
+  Audit trail DB persistence: blocked by `database/` subsystem deferral.
+
+### Follow-up items (post-R3.9)
+
+- [ ] funds: establish domain policy for risk-free rate source (CBE overnight rate? T-bill?)
+- [ ] government: Egyptian Tax Authority expert review of all tax rate constants in `tax_calculator.py`
+- [ ] banking: د. عبد الرؤوف review — Basel LGD formula, CBE collateral discount %, CBE risk-weight tiers
+- [ ] government: audit trail DB persistence (blocked by `database/` deferral — tracked above)
+- [ ] government: PDP 151/2020 data subject rights (consent, retention, deletion) before production
+- [ ] all three: `owner_user_id` isolation review if any endpoint exposes these modules multi-tenant
+
+---
+
+# R3 SERIES — FINAL SUMMARY
+
+Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R3.8 → R3.9
+
+Total subsystems reviewed: 24 / 24
+Final test count on main: **1,577** (post all hotfixes)
+
+### Merged to main (20 subsystems)
+
+| Subsystem | Wave | Commit on main |
+|---|---|---|
+| security/ | R3.1 | 6b35448 |
+| government/ | R3.2 | f8c89c3 + hotfix R3.9 |
+| banking/ | R3.2 | f8c89c3 + notes R3.9 |
+| funds/ | R3.2 | f8c89c3 + hotfix R3.9 |
+| analytics/ | R3.3 | 64657f3 |
+| search/ | R3.3 | b8bc953 |
+| ml/ | R3.3 | 0434a9d |
+| mcp_bridge / mcp_setup / market_indicators | R3.4 prereq | 2db154c |
+| agents/ | R3.4 | 6c64b8a |
+| knowledge/ | R3.4 | 46b5e2f |
+| integrations/ | R3.4 | d7136c2 |
+| marketplace/ + plugins/ | R3.5 | 5e8f44c |
+| performance/ | R3.6 | aae8af5 |
+| deployment/ | R3.6 | 34aae58 |
+| scripts/ | R3.6 | e731001 |
+| i18n/ | R3.7 | 01f79e2 |
+| standards/ | R3.7 | e4a3f6a |
+| scenarios/ | R3.7 | 0a9538f |
+| api/ | R3.8 | 837d150 |
+| adapters/ (source only) | R3.8 | 303ea99 |
+
+### Deferred (remain on wip/r3-subsystems-checkpoint)
+
+| Item | Blocker |
+|---|---|
+| database/ | No tests; missing sqlalchemy/psycopg2; AuditLog naming collision |
+| saas/ | Blocked by database/audit_log.py (B2) + tenant_id bridge undocumented (B3) |
+| mobile/ | Separate React Native/TypeScript ecosystem; requires dedicated mobile review gate |
+| E2E bundle (229fc3c) | Hard top-level `from database.*` imports — collection error without database/ |
+
+### Outstanding cross-cutting follow-ups
+
+- [ ] Domain expert (د. عبد الرؤوف): banking math, standards USPAP content, tax rates
+- [ ] Audit trail persistence for government endpoints (blocked by database/)
+- [ ] PII encryption-at-rest strategy (government National ID flows)
+- [ ] mobile/ extraction path decision (separate repo / monorepo / archive-only)
+- [ ] E2E bundle re-enable strategy (selective pytest marks once database/ lands)
+- [ ] `GOVT_SIGNING_KEY` added to production PROD_READINESS_CHECKLIST.md (Section 1: Security)
+
+### WIP branch fate: KEEP AS ARCHIVE (recommended)
+
+`wip/r3-subsystems-checkpoint` preserves the original checkpoint including all
+deferred items. Do not delete until database/ and saas/ resolution paths are clear.

@@ -57,6 +57,11 @@ class TaxValuationResult:
 class TaxCalculator:
     """Calculate tax valuations per Egyptian Tax Authority standards."""
 
+    # NOTE: All tax rate constants below are PLACEHOLDERS requiring expert verification.
+    # They must be reviewed against current Egyptian Tax Authority law before any
+    # client-facing output. Source law: قانون الضريبة على الدخل رقم 91 لسنة 2005
+    # and subsequent amendments. Queued for domain review by Tax Authority expert.
+
     # Annual property tax rates by classification
     _PROPERTY_TAX_RATES: Dict[TaxClassification, float] = {
         TaxClassification.RESIDENTIAL:  0.005,   # 0.5%
@@ -77,8 +82,8 @@ class TaxCalculator:
         TaxClassification.VACANT_LAND:  0.03,    # 3%
     }
 
-    CAPITAL_GAINS_RATE = 0.25          # 25% of realised gain
-    CAPITAL_GAINS_EXEMPT_YEARS = 5     # exempt if held >= 5 years
+    CAPITAL_GAINS_RATE = 0.25          # 25% of realised gain — requires Tax Authority verification
+    CAPITAL_GAINS_EXEMPT_YEARS = 5     # exempt if held >= 5 years — requires Tax Authority verification
 
     def calculate_tax_valuation(
         self,

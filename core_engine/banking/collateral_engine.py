@@ -166,6 +166,9 @@ class CollateralValuationEngine:
         condition_factor = self._CONDITION_FACTORS.get(condition_key, 1.0)
         appraised = base * condition_factor
 
+        # NOTE: CBE collateral discount percentages (13% quick-sale, 35% distressed-sale)
+        # are market approximations — pending verification by د. عبد الرؤوف against
+        # current CBE Circular 5/2019 (collateral valuation guidelines).
         conservative = appraised * 0.87   # 13% quick-sale discount
         forced_sale  = appraised * 0.65   # 35% distressed-sale discount
 

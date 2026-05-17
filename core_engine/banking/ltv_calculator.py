@@ -181,6 +181,10 @@ class LTVCalculator:
 
         dp = max(0.5, min(99.0, dp))
 
+        # NOTE: LGD formula below is a custom approximation, not standard Basel III.
+        # Basel III standardised approach uses fixed LGD = 45% for senior unsecured,
+        # or ~35% for real-estate collateral. Current formula uses ltv_ratio * 0.2
+        # as a proxy — pending domain review by د. عبد الرؤوف against CBE guidelines.
         # Loss Given Default: approximate shortfall if collateral < loan
         lgd = max(0.0, ltv_ratio - 100.0) if ltv_ratio > 100 else max(0.0, ltv_ratio * 0.2)
         if ltv_ratio > 90:

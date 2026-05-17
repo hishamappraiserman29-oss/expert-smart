@@ -182,6 +182,10 @@ class PropertyRiskAnalyzer:
 
         overall = sum(f.weighted_score for f in factors)
 
+        # NOTE: Basel III risk-weight tier thresholds below are simplified heuristics.
+        # Standard Basel III (CBE Basel III circular) uses a more granular matrix
+        # (property type × LTV × occupancy). RW_75 applied broadly to LTV<=100 is
+        # an approximation — pending domain review by د. عبد الرؤوف.
         # Basel risk weight
         if ltv_ratio <= 80 and property_type == "residential_property":
             rw = BaselRiskWeight.RW_35

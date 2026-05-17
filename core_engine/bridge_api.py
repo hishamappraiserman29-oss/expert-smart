@@ -7276,10 +7276,9 @@ def _ma_units(body: dict) -> list:
     return out
 
 
-@app.route("/api/mass-appraisal/preview", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/preview", methods=["POST"])
+@require_auth
 def handle_mass_appraisal_preview():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from mass_appraisal import run_mass_appraisal
     except Exception:
@@ -7311,10 +7310,9 @@ def handle_mass_appraisal_preview():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/run", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/run", methods=["POST"])
+@require_auth
 def handle_mass_appraisal_run():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from mass_appraisal import run_mass_appraisal
     except Exception:
@@ -7343,10 +7341,9 @@ def handle_mass_appraisal_run():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/export-xlsx", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/export-xlsx", methods=["POST"])
+@require_auth
 def handle_mass_appraisal_export_xlsx():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from mass_appraisal_excel import build_mass_appraisal_workbook
     except Exception:
@@ -7456,10 +7453,9 @@ def handle_mass_appraisal_export_xlsx():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/sales/verify", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/sales/verify", methods=["POST"])
+@require_auth
 def handle_mass_sales_verify():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from sales_verification import verify_sales_records
     except Exception:
@@ -7478,10 +7474,9 @@ def handle_mass_sales_verify():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/sales/time-adjust", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/sales/time-adjust", methods=["POST"])
+@require_auth
 def handle_mass_sales_time_adjust():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from sales_time_adjustment import adjust_sales_for_time
     except Exception:
@@ -7501,10 +7496,9 @@ def handle_mass_sales_time_adjust():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/sales/adjust", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/sales/adjust", methods=["POST"])
+@require_auth
 def handle_mass_sales_adjust():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from sales_adjustments import apply_sales_adjustments
     except Exception:
@@ -7524,10 +7518,9 @@ def handle_mass_sales_adjust():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/ratio-study/run", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/ratio-study/run", methods=["POST"])
+@require_auth
 def handle_mass_ratio_study():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from ratio_studies import run_ratio_study
     except Exception:
@@ -7547,10 +7540,9 @@ def handle_mass_ratio_study():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/calibration/preview", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/calibration/preview", methods=["POST"])
+@require_auth
 def handle_mass_calibration_preview():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from model_calibration import preview_calibration
     except Exception:
@@ -7571,10 +7563,9 @@ def handle_mass_calibration_preview():
         return _safe_err(e)
 
 
-@app.route("/api/mass-appraisal/calibration/sandbox", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/calibration/sandbox", methods=["POST"])
+@require_auth
 def handle_mass_calibration_sandbox():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from calibration_sandbox import apply_calibration_sandbox
     except Exception:
@@ -7624,14 +7615,13 @@ _MA_IMPORT_MAX_BYTES   = 10 * 1024 * 1024   # 10 MB per-route limit
 _MA_IMPORT_ALLOWED_EXT = {".xlsx"}           # strict: no .xls / .csv / .zip
 
 # ── Phase 3.12 — Mass Appraisal Excel Import Parse Preview ───────────────────
-@app.route("/api/mass-appraisal/import-xlsx", methods=["POST", "OPTIONS"])
+@app.route("/api/mass-appraisal/import-xlsx", methods=["POST"])
+@require_auth
 def handle_mass_appraisal_import_xlsx():
     """
     Parse an uploaded Mass Appraisal template .xlsx and return normalized JSON preview.
     No valuation is executed. No files are saved to disk.
     """
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
 
     # ── 1. File field present ─────────────────────────────────────────────────
     if "file" not in request.files:
@@ -7842,7 +7832,8 @@ def _purpose_result_to_dict(result):
     }
 
 
-@app.route("/api/valuation/full", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/full", methods=["POST"])
+@require_auth
 def api_valuation_full():
     """
     Full valuation pipeline: Phase 4 engines → Phase 5 purpose adapters.
@@ -8015,7 +8006,8 @@ _ASSET_ADAPTER_MAP = {
 }
 
 
-@app.route("/api/valuation/report", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/report", methods=["POST"])
+@require_auth
 def api_valuation_report():
     """
     Generate an EGVS-compliant 8-sheet Excel report for an asset valuation.
@@ -8259,7 +8251,8 @@ def api_valuation_report_download(filename: str):
 
 # ── Phase 7 routes ────────────────────────────────────────────────────────────
 
-@app.route("/api/valuation/land", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/land", methods=["POST"])
+@require_auth
 def api_valuation_land():
     """
     Land valuation pipeline: Phase 4 engines → Phase 5 market adapter → Phase 7 LandAdapter.
@@ -8445,7 +8438,8 @@ def api_valuation_land():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/valuation/audit", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/audit", methods=["POST"])
+@require_auth
 def api_valuation_audit():
     """
     Quality audit endpoint: run ReportQualityAuditor on any Phase 5-7 result JSON.
@@ -8542,7 +8536,8 @@ def api_valuation_audit():
 
 # ── Phase 11: Portfolio Analysis ─────────────────────────────────────────────
 
-@app.route("/api/valuation/portfolio", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/portfolio", methods=["POST"])
+@require_auth
 def api_valuation_portfolio():
     """
     Portfolio valuation endpoint (Phase 11).
@@ -8599,7 +8594,8 @@ def api_valuation_portfolio():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/valuation/portfolio/performance", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/portfolio/performance", methods=["POST"])
+@require_auth
 def api_valuation_portfolio_performance():
     """
     Portfolio performance + scenario analysis endpoint (Phase 11.2).
@@ -8663,7 +8659,8 @@ def api_valuation_portfolio_performance():
 
 # ── Phase 12: Batch Valuation ────────────────────────────────────────────────
 
-@app.route("/api/valuation/batch", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/batch", methods=["POST"])
+@require_auth
 def api_valuation_batch():
     """
     Batch valuation endpoint (Phase 12.1).
@@ -8800,7 +8797,8 @@ def api_valuation_batch():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/valuation/batch/<batch_id>", methods=["GET", "OPTIONS"])
+@app.route("/api/valuation/batch/<batch_id>", methods=["GET"])
+@require_auth
 def api_valuation_batch_status(batch_id: str):
     """
     Retrieve a stored batch report by batch_id (Phase 12.3).
@@ -8835,7 +8833,8 @@ def api_valuation_batch_status(batch_id: str):
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/valuation/batch", methods=["GET", "OPTIONS"])
+@app.route("/api/valuation/batch", methods=["GET"])
+@require_auth
 def api_valuation_batch_list():
     """
     List recent batches from the in-memory registry (Phase 12.3).
@@ -9738,6 +9737,7 @@ except Exception as _ml_err:
 
 
 @app.route("/api/valuation/avm", methods=["POST"])
+@require_auth
 def api_avm_valuation():
     if not _ML_OK:
         return jsonify({"error": "AVM model not available"}), 503
@@ -9765,6 +9765,7 @@ def api_avm_valuation():
 
 
 @app.route("/api/valuation/avm/batch", methods=["POST"])
+@require_auth
 def api_avm_batch_valuation():
     if not _ML_OK:
         return jsonify({"error": "AVM model not available"}), 503

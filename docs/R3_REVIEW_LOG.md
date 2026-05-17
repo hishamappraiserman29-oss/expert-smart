@@ -154,15 +154,61 @@ Tests use `http://localhost:19999` (intentionally unreachable) — all verify gr
 
 ---
 
-## R3.5+ — Pending
+## R3.5 — Gate Decision (2026-05-17)
+
+Cherry-picks onto: `main`
+
+### `core_engine/marketplace/` + `core_engine/plugins/` — MERGED
+
+Commit cherry-picked: `9170ebd` → landed as `5e8f44c`
+Files: 7 source + 1 test (8 total), ~757 source lines | Tests: 53 ✅
+Dependencies: pure stdlib; `stripe` optional (guarded try/except ImportError in example plugin only)
+Modules: `marketplace` (catalog, listings, reviews, installations), `plugins` (plugin_system, plugin_registry, StripePlugin example)
+Endpoints unlocked: 7 (`/api/marketplace/*` + `/api/integrations/plugins/*`) — guard `_MARKETPLACE_OK` was already wired in `bridge_api.py`
+
+Security notes:
+- Zero hardcoded secrets; no `sk_live_*` / `sk_test_*` anywhere
+- Plugin mechanism: static registry only — no `exec`/`eval`/`importlib` dynamic loading
+- Payment tests (F01–F06) use `PaymentProvider.MOCK` only — no live Stripe calls
+
+### `core_engine/saas/` — DEFERRED
+
+Decision: **DEFER**
+Date: 2026-05-17
+
+Files: 6 source + 4 test files | Tests: 103 ✅ (on WIP)
+Source modules are clean and ready. Deferral is due to test dependencies.
+
+Reasons for deferral:
+1. `test_phase39_saas.py` imports from `scripts/` module (WIP commit `cb4b5d4`, not on main).
+2. `test_phase_15_2_e2e.py` imports from `database.audit_log` (AuditAction, AuditEvent, AuditLog)
+   — the `database/` module was deferred in R3.1; selective extraction of one file risks
+   partial subsystem merge and future naming conflicts.
+3. `tenant_id` / `owner_user_id` bridge is undocumented (two parallel identity models).
+4. `scripts/` deferred to R3.6 or separate approval.
+
+Prerequisites before re-review:
+- `database/audit_log.py` naming/design resolved and standalone extraction approved, OR
+  full `database/` deferred blockers closed (tests + sqlalchemy + AuditLog collision)
+- `scripts/` reviewed in R3.6 or separately approved
+- `tenant_id` / `owner_user_id` bridge documented in security ADR
+
+Security check: clean ✅ — no hardcoded secrets, no payment provider calls, pure in-memory billing
+
+---
+
+## R3.6+ — Pending
 
 WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
 - `banking_expert/`
-- `database/` deferred (see R3.1 deferral above)
+- `scripts/` — deferred, candidate for R3.6
+- `database/` deferred (see R3.1 deferral above; prerequisite for saas/)
+- `saas/` deferred (see R3.5 deferral above)
 - (others as identified on WIP)
 
 Previously merged:
+- `marketplace/` + `plugins/` ✅ merged (R3.5)
 - `agents/` ✅ merged (R3.4)
 - `knowledge/` ✅ merged (R3.4)
 - `integrations/` ✅ merged (R3.4)

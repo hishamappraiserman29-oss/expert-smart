@@ -5945,6 +5945,7 @@ def tune_get_profile(profile_id):
 
 
 @app.route("/api/tune/profiles/<profile_id>", methods=["DELETE"])
+@_require_admin
 def tune_delete_profile(profile_id):
     """يحذف ملف أسلوب"""
     ok = _tune_delete(profile_id)
@@ -5952,14 +5953,14 @@ def tune_delete_profile(profile_id):
                     "deleted": ok})
 
 
-@app.route("/api/tune/apply", methods=["POST", "OPTIONS"])
+@app.route("/api/tune/apply", methods=["POST"])
+@_require_admin
 def tune_apply_prompt():
     """
     يُطبّق بصمة أسلوب على موجّه أساسي ويُعيد الموجّه المُعزَّز.
 
     Body: { "prompt": "...", "profile_id": "abc123" }
     """
-    if request.method == "OPTIONS": return jsonify({}), 200
     try:
         payload    = request.get_json(silent=True) or {}
         prompt     = str(payload.get("prompt", ""))
@@ -6070,6 +6071,7 @@ def library_get(record_id):
 
 
 @app.route("/api/library/<record_id>", methods=["DELETE"])
+@_require_admin
 def library_delete(record_id):
     """يحذف وثيقة من المكتبة"""
     ok = _lib_delete(record_id)
@@ -6608,6 +6610,7 @@ def price_excel_table():
 
 
 @app.route("/api/price/cache/clear", methods=["POST"])
+@_require_admin
 def price_cache_clear():
     """يمسح كاش بروتوكول الرصد اللحظي."""
     return jsonify(_price_intel.clear_cache())
@@ -6635,11 +6638,10 @@ def _save_upload(file_obj) -> tuple[str, str]:
     return dest, orig
 
 
-@app.route("/api/ingest", methods=["POST", "OPTIONS"])
+@app.route("/api/ingest", methods=["POST"])
+@require_auth
 def ingest_file():
     """استقبال ملفات Excel / PDF / Word / CSV وتخزينها للمعالجة."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     if "file" not in request.files:
         return jsonify({"status": "error", "message": "لم يتم إرسال ملف"}), 400
     f = request.files["file"]
@@ -6659,11 +6661,10 @@ def ingest_file():
         return _safe_err(e)
 
 
-@app.route("/api/upload", methods=["POST", "OPTIONS"])
+@app.route("/api/upload", methods=["POST"])
+@require_auth
 def upload_image():
     """استقبال صور العقارات وتخزينها."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     if "file" not in request.files:
         return jsonify({"status": "error", "message": "لم يتم إرسال صورة"}), 400
     f = request.files["file"]
@@ -6894,6 +6895,7 @@ def assets_dashboard():
 
 
 @app.route("/api/assets/<asset_id>", methods=["DELETE"])
+@require_auth
 def assets_delete(asset_id: str):
     """DELETE /api/assets/<id> — حذف عقار من المحفظة."""
     return jsonify(_am_delete(asset_id))
@@ -9897,6 +9899,7 @@ def api_integrations_list_plugins():
 
 
 @app.route("/api/integrations/plugins/<plugin_id>/install", methods=["POST"])
+@_require_admin
 def api_integrations_install_plugin(plugin_id):
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -11378,6 +11381,7 @@ def api38_info():
 
 
 @app.route("/api/hardening/api-keys/generate", methods=["POST"])
+@_require_admin
 def api38_generate_key():
     if not _API38_OK:
         return jsonify({"error": "API Hardening module unavailable"}), 503
@@ -11407,6 +11411,7 @@ def api38_generate_key():
 
 
 @app.route("/api/hardening/api-keys/validate", methods=["POST"])
+@_require_admin
 def api38_validate_key():
     if not _API38_OK:
         return jsonify({"error": "API Hardening module unavailable"}), 503

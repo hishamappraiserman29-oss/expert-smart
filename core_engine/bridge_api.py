@@ -60,6 +60,22 @@ except ImportError:
 # ── Admin authorization (Followup S5.1) ──────────────────────────────────────
 from admin import require_admin as _require_admin
 
+
+# ── SEC-004: safe error helper ────────────────────────────────────────────────
+import traceback as _traceback
+
+
+def _safe_err(exc: Exception) -> tuple:
+    """Log exc server-side and return a generic 500 without leaking details."""
+    print(f"[INTERNAL ERROR] {type(exc).__name__}: {exc}")
+    print(_traceback.format_exc())
+    return jsonify({
+        "status": "error",
+        "message": "Internal server error",
+        "code": "internal_error",
+    }), 500
+
+
 # ── Phase 4 engines ──────────────────────────────────────────────────────────
 from engines.comparable_search import ComparableSearchEngine
 from engines.comparative import ComparativeEngine
@@ -5586,7 +5602,7 @@ def handle_valuation():
         return jsonify(resp)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status":"error","message":str(e)}), 500
+        return _safe_err(e)
 
 @app.route("/api/download/<filename>")
 @require_auth
@@ -5679,7 +5695,7 @@ def market_feed_post():
         })
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/market-feed", methods=["GET"])
@@ -5752,7 +5768,7 @@ def market_feed_get():
         return jsonify(response)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/market-feed/<record_id>", methods=["DELETE"])
@@ -5767,7 +5783,7 @@ def market_feed_delete(record_id):
                         "deleted": before - len(feed),
                         "remaining": len(feed)})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -5832,7 +5848,7 @@ def advisor_endpoint():
         })
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/advisor/health", methods=["GET"])
@@ -5885,7 +5901,7 @@ def tune_analyze():
         })
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/tune/profiles", methods=["GET"])
@@ -5894,7 +5910,7 @@ def tune_list_profiles():
     try:
         return jsonify({"status": "success", "profiles": _tune_list()})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/tune/profiles/<profile_id>", methods=["GET"])
@@ -5929,7 +5945,7 @@ def tune_apply_prompt():
         enhanced   = _tune_apply(prompt, profile_id)
         return jsonify({"status": "success", "enhanced_prompt": enhanced})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -5962,7 +5978,7 @@ def library_list():
             "stats":   stats,
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/library/scan", methods=["POST", "OPTIONS"])
@@ -5991,7 +6007,7 @@ def library_scan():
         })
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/library/add", methods=["POST", "OPTIONS"])
@@ -6019,7 +6035,7 @@ def library_add_manual():
         return jsonify({"status": result["status"], "record": result["record"]})
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/library/<record_id>", methods=["GET"])
@@ -6261,7 +6277,7 @@ def radar_start():
         return jsonify({"status": "success", **result})
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/radar/stop", methods=["POST", "OPTIONS"])
@@ -6271,7 +6287,7 @@ def radar_stop():
     try:
         return jsonify({"status": "success", **_radar.stop()})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/radar/status", methods=["GET"])
@@ -6280,7 +6296,7 @@ def radar_status():
     try:
         return jsonify({"status": "success", "radar": _radar.status()})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/radar/data", methods=["GET"])
@@ -6313,7 +6329,7 @@ def radar_data():
         })
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/radar/parse", methods=["POST", "OPTIONS"])
@@ -6333,7 +6349,7 @@ def radar_parse_text():
             return jsonify({"status": "success", "record": rec})
         return jsonify({"status": "no_data", "message": "لم يُستخرج بيانات عقارية كافية"}), 422
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/radar/heatmap", methods=["GET"])
@@ -6347,7 +6363,7 @@ def radar_heatmap():
         data       = _radar.get_heatmap_data(asset_type=asset_type)
         return jsonify({"status": "success", "count": len(data), "zones": data})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -6394,7 +6410,7 @@ def iaao_compute():
         return jsonify({"status": "success", "report": report})
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/iaao/health", methods=["GET"])
@@ -6434,7 +6450,7 @@ def training_register():
             "meta":    _training_registry,
         })
     except Exception as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/training/status", methods=["GET"])
@@ -6491,7 +6507,7 @@ def price_intelligence_search():
         return jsonify(result)
 
     except Exception as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/price/trend", methods=["GET"])
@@ -6513,7 +6529,7 @@ def price_trend():
                         "count": len(signals), "as_of": datetime.now().isoformat()
                         if 'datetime' in dir() else ""})
     except Exception as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/price/excel-table", methods=["POST"])
@@ -6566,7 +6582,7 @@ def price_excel_table():
         })
 
     except Exception as exc:
-        return jsonify({"status": "error", "message": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/price/cache/clear", methods=["POST"])
@@ -6618,7 +6634,7 @@ def ingest_file():
             "saved_as": os.path.basename(dest),
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/upload", methods=["POST", "OPTIONS"])
@@ -6644,7 +6660,7 @@ def upload_image():
             "saved_as": os.path.basename(dest),
         })
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -6688,7 +6704,7 @@ def fraud_detect():
         result["status"] = "success"
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ── 2. التحليل الجيوتقني والقانوني (Geo Risk Engine) ─────────────────────
@@ -6726,7 +6742,7 @@ def geo_risk():
         result["status"] = "success"
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ── 3. رادار الهجرة العقارية (Demographic Flow) ───────────────────────────
@@ -6764,7 +6780,7 @@ def demographic_flow():
         result["status"] = "success"
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ── 4. إدارة الأصول الذكية (Asset Manager) ───────────────────────────────
@@ -6819,7 +6835,7 @@ def assets_register():
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/assets/<asset_id>", methods=["GET"])
@@ -6845,7 +6861,7 @@ def assets_update(asset_id: str):
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/assets/dashboard", methods=["GET"])
@@ -7031,7 +7047,7 @@ def image_analyze():
         return jsonify(resp)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -7086,7 +7102,7 @@ def handle_eia_assess():
         return jsonify({"status": "error", "message": str(ve)}), 400
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -7127,7 +7143,7 @@ def handle_hbu_analyze():
         return jsonify({"status": "error", "message": str(ve)}), 400
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -7168,7 +7184,7 @@ def handle_reit_nav():
         return jsonify({"status": "error", "message": str(ve)}), 400
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 
@@ -7214,7 +7230,7 @@ def handle_price_index():
         return jsonify(result)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Mass Appraisal Routes — Phase 3 (Limited Backend Route Restore)
@@ -7268,7 +7284,7 @@ def handle_mass_appraisal_preview():
         return jsonify(preview)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/run", methods=["POST", "OPTIONS"])
@@ -7300,7 +7316,7 @@ def handle_mass_appraisal_run():
         return jsonify(result)
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/export-xlsx", methods=["POST", "OPTIONS"])
@@ -7413,7 +7429,7 @@ def handle_mass_appraisal_export_xlsx():
         )
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/sales/verify", methods=["POST", "OPTIONS"])
@@ -7435,7 +7451,7 @@ def handle_mass_sales_verify():
         return jsonify(verify_sales_records(records, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/sales/time-adjust", methods=["POST", "OPTIONS"])
@@ -7458,7 +7474,7 @@ def handle_mass_sales_time_adjust():
         return jsonify(adjust_sales_for_time(records, valuation_date, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/sales/adjust", methods=["POST", "OPTIONS"])
@@ -7481,7 +7497,7 @@ def handle_mass_sales_adjust():
         return jsonify(apply_sales_adjustments(records, adjustment_profile, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/ratio-study/run", methods=["POST", "OPTIONS"])
@@ -7504,7 +7520,7 @@ def handle_mass_ratio_study():
         return jsonify(run_ratio_study(subject_rows, sale_records, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/calibration/preview", methods=["POST", "OPTIONS"])
@@ -7528,7 +7544,7 @@ def handle_mass_calibration_preview():
         return jsonify(preview_calibration(subject_rows, sale_records, ratio_study, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 @app.route("/api/mass-appraisal/calibration/sandbox", methods=["POST", "OPTIONS"])
@@ -7551,7 +7567,7 @@ def handle_mass_calibration_sandbox():
         return jsonify(apply_calibration_sandbox(subject_rows, calibration_preview, options))
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ── Phase 3.12 — Mass Appraisal Excel Template Download ──────────────────────
@@ -7576,7 +7592,7 @@ def handle_mass_appraisal_template_xlsx():
         )
     except Exception as e:
         print(traceback.format_exc())
-        return jsonify({"status": "error", "message": str(e)}), 500
+        return _safe_err(e)
 
 
 # ── Phase 3.13 P3 — Import-xlsx hardening constants ──────────────────────────
@@ -9183,7 +9199,7 @@ def knowledge_enhance():
         result = _rag22.enhance_valuation_context(property_type, location, purpose)
         return jsonify(result), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/stats", methods=["GET"])
@@ -9194,7 +9210,7 @@ def knowledge_stats():
     try:
         return jsonify(_kb22.get_statistics()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ── API Hardening — Resilience, Idempotency, Observability ───────────────────
@@ -9299,7 +9315,7 @@ def scenarios_run():
         results = sb.build_all()
         return jsonify({"scenarios": [r.to_dict() for r in results]}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/scenarios/monte_carlo", methods=["POST"])
@@ -9324,7 +9340,7 @@ def scenarios_monte_carlo():
         result = engine.run(base_value, volatility=volatility)
         return jsonify(result.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/scenarios/sensitivity", methods=["POST"])
@@ -9351,7 +9367,7 @@ def scenarios_sensitivity():
         )
         return jsonify(result.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/scenarios/stress_test", methods=["POST"])
@@ -9370,7 +9386,7 @@ def scenarios_stress_test():
     try:
         return jsonify(_STS24().summary(base_value)), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ── Phase 23 — i18n / Localization ───────────────────────────────────────────
@@ -9408,7 +9424,7 @@ def set_language(language_code: str):
             "direction": _loc23.get_ui_direction(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/language/strings", methods=["GET"])
@@ -9425,7 +9441,7 @@ def get_language_strings():
             "strings": _loc23.translations.get(lang, {}),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/language/detect", methods=["POST"])
@@ -9442,7 +9458,7 @@ def detect_language():
             "direction": _loc23.get_ui_direction(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ===========================================================================
@@ -9495,7 +9511,7 @@ def saas_create_tenant():
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 409
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants", methods=["GET"])
@@ -9511,7 +9527,7 @@ def saas_list_tenants():
             "count": len(tenants),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>", methods=["GET"])
@@ -9525,7 +9541,7 @@ def saas_get_tenant(tenant_id):
             return jsonify({"error": "Tenant not found"}), 404
         return jsonify({"status": "success", "tenant": tenant.to_dict()}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/users", methods=["POST"])
@@ -9545,7 +9561,7 @@ def saas_add_user(tenant_id):
     except (KeyError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/subscription", methods=["PUT"])
@@ -9573,7 +9589,7 @@ def saas_update_subscription(tenant_id):
     except (KeyError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/suspend", methods=["POST"])
@@ -9589,7 +9605,7 @@ def saas_suspend_tenant(tenant_id):
     except KeyError as exc:
         return jsonify({"error": str(exc)}), 404
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/reactivate", methods=["POST"])
@@ -9603,7 +9619,7 @@ def saas_reactivate_tenant(tenant_id):
     except KeyError as exc:
         return jsonify({"error": str(exc)}), 404
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/billing/usage", methods=["POST"])
@@ -9621,7 +9637,7 @@ def saas_record_usage(tenant_id):
     except (KeyError, ValueError) as exc:
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/billing/invoice", methods=["POST"])
@@ -9635,7 +9651,7 @@ def saas_generate_invoice(tenant_id):
     except KeyError as exc:
         return jsonify({"error": str(exc)}), 404
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/tenants/<tenant_id>/dashboard", methods=["GET"])
@@ -9649,7 +9665,7 @@ def saas_tenant_dashboard(tenant_id):
     except KeyError as exc:
         return jsonify({"error": str(exc)}), 404
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/saas/stats", methods=["GET"])
@@ -9661,7 +9677,7 @@ def saas_platform_stats():
         stats = _dashboard26.get_platform_stats()
         return jsonify({"status": "success", "stats": stats}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ===========================================================================
@@ -9721,7 +9737,7 @@ def api_avm_valuation():
             return jsonify({"error": result.get("error", "Prediction failed")}), 500
         return jsonify(result), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/valuation/avm/batch", methods=["POST"])
@@ -9740,7 +9756,7 @@ def api_avm_batch_valuation():
         result = _avm_predictor_instance.predict_batch(properties)
         return jsonify(result), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/avm/info", methods=["GET"])
@@ -9756,7 +9772,7 @@ def api_avm_info():
             "registry": stats,
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ===========================================================================
@@ -9835,7 +9851,7 @@ def api_marketplace_add_review(listing_id):
             return jsonify({"error": "Invalid rating (must be 1–5) or listing not found"}), 400
         return jsonify({"review": review.to_dict(), "message": "Review added"}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/marketplace/trending", methods=["GET"])
@@ -9875,7 +9891,7 @@ def api_integrations_install_plugin(plugin_id):
         _mp_marketplace.record_installation(tenant_id, plugin_id)
         return jsonify({"plugin": instance.to_dict(), "message": "Plugin installed"}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/integrations/webhooks", methods=["GET"])
@@ -9914,7 +9930,7 @@ def api_integrations_create_webhook():
         webhook = _mp_webhook_manager.register_webhook(tenant_id, url, events)
         return jsonify({"webhook": webhook.to_dict(), "message": "Webhook created"}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/integrations/webhooks/<webhook_id>", methods=["DELETE"])
@@ -10026,7 +10042,7 @@ def api_standards_validate():
             "frameworks": [fw.value for fw in frameworks],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/standards/uspap/generate", methods=["POST"])
@@ -10114,7 +10130,7 @@ def api_uspap_generate():
             ),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ===========================================================================
@@ -10222,7 +10238,7 @@ def api_government_compliance_check():
             "total_standards_checked": len(results),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/government/tax/calculate", methods=["POST"])
@@ -10257,7 +10273,7 @@ def api_government_tax_calculate():
             "report": _gov_tax.get_tax_report(result),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/government/forms/generate", methods=["POST"])
@@ -10304,7 +10320,7 @@ def api_government_forms_generate():
             "generated_at": _dt32.utcnow().isoformat(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/government/portal/create", methods=["POST"])
@@ -10322,7 +10338,7 @@ def api_government_portal_create():
         portal = _gov_portal.create_portal(agency_name, contact_person, contact_email)
         return jsonify(portal.get_dashboard_summary()), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ===========================================================================
@@ -10427,7 +10443,7 @@ def api_banking_collateral_value():
             "valuation": result.to_dict(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/banking/ltv/calculate", methods=["POST"])
@@ -10456,7 +10472,7 @@ def api_banking_ltv_calculate():
             "risk_assessment": risk.to_dict(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/banking/collateral/register", methods=["POST"])
@@ -10482,7 +10498,7 @@ def api_banking_collateral_register():
         )
         return jsonify({"registered": entry.to_dict()}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/banking/dashboard/<bank_id>", methods=["GET"])
@@ -10499,7 +10515,7 @@ def api_banking_dashboard(bank_id: str):
             "metrics": metrics.to_dict(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/banking/compliance/check", methods=["POST"])
@@ -10523,7 +10539,7 @@ def api_banking_compliance_check():
         )
         return jsonify(status.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -10623,7 +10639,7 @@ def api_funds_fair_value_assess():
             "disclosure": _fv_calc.generate_ifrs13_disclosure(assessment),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/funds/nav/calculate", methods=["POST"])
@@ -10664,7 +10680,7 @@ def api_funds_nav_calculate():
             "report": _nav_calc.generate_nav_report(result),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/funds/value", methods=["POST"])
@@ -10699,7 +10715,7 @@ def api_funds_value():
         )
         return jsonify(result.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/funds/compliance/check", methods=["POST"])
@@ -10719,7 +10735,7 @@ def api_funds_compliance_check():
             "report": _fra_eng.generate_compliance_report(result),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/funds/dashboard/<manager_id>", methods=["GET"])
@@ -10737,7 +10753,7 @@ def api_funds_dashboard(manager_id: str):
             "report": _fund_dash.generate_summary_report(snap),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ---------------------------------------------------------------------------
@@ -10831,7 +10847,7 @@ def api_knowledge_search():
             "suggestions": _smart_search.get_search_suggestions(query),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/standards", methods=["GET"])
@@ -10846,7 +10862,7 @@ def api_knowledge_standards_list():
             "standards": [s.to_dict() for s in standards],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/standards/compatible", methods=["POST"])
@@ -10863,7 +10879,7 @@ def api_knowledge_standards_compatible():
         matrix = _std_registry.get_compatibility_matrix(asset_type, country)
         return jsonify(matrix), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/courses", methods=["GET"])
@@ -10879,7 +10895,7 @@ def api_knowledge_courses_list():
         ]
         return jsonify({"courses_count": len(courses), "courses": courses}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/courses/<course_id>/enroll", methods=["POST"])
@@ -10897,7 +10913,7 @@ def api_knowledge_enroll(course_id: str):
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 404
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/regulatory/updates", methods=["GET"])
@@ -10913,7 +10929,7 @@ def api_knowledge_regulatory_updates():
             "updates": [u.to_dict() for u in updates],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/regulatory/deadlines", methods=["GET"])
@@ -10929,7 +10945,7 @@ def api_knowledge_regulatory_deadlines():
             "deadlines": [d.to_dict() for d in deadlines],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/knowledge/statistics", methods=["GET"])
@@ -10946,7 +10962,7 @@ def api_knowledge_statistics():
             "regulatory_updates_count": _bp_library.count_updates(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ── Phase 36: Advanced Analytics & Business Intelligence ──────────────────────
@@ -10980,7 +10996,7 @@ def analytics_info():
             "status": "operational",
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/metrics/<metric_id>/record", methods=["POST"])
@@ -11011,7 +11027,7 @@ def analytics_record_metric(metric_id):
             return jsonify({"error": "Failed to record data point"}), 400
         return jsonify({"status": "recorded", "metric_id": metric_id, "value": value}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/metrics/<metric_id>/statistics", methods=["GET"])
@@ -11024,7 +11040,7 @@ def analytics_metric_statistics(metric_id):
             return jsonify({"error": "Metric not found"}), 404
         return jsonify(stats), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/metrics/<metric_id>/timeseries", methods=["GET"])
@@ -11040,7 +11056,7 @@ def analytics_metric_timeseries(metric_id):
         series = _analytics_engine.get_time_series(metric_id=metric_id, granularity=granularity)
         return jsonify({"metric_id": metric_id, "granularity": granularity_str, "series": series}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/dashboards", methods=["GET"])
@@ -11063,7 +11079,7 @@ def analytics_list_dashboards():
                 dashboards = list(_dashboard_system.dashboards.values())
         return jsonify({"dashboards": [d.to_dict() for d in dashboards], "total": len(dashboards)}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/dashboards/<dashboard_id>", methods=["GET"])
@@ -11077,7 +11093,7 @@ def analytics_get_dashboard(dashboard_id):
             return jsonify({"error": "Dashboard not found"}), 404
         return jsonify(dashboard.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/risk/portfolio/<portfolio_id>", methods=["POST"])
@@ -11101,7 +11117,7 @@ def analytics_portfolio_risk(portfolio_id):
         )
         return jsonify(result.to_dict()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/analytics/market/trends", methods=["GET"])
@@ -11129,7 +11145,7 @@ def analytics_market_trends():
             "summary": summary,
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ── Phase 37: Comparable Search Enhancement ───────────────────────────────────
@@ -11167,7 +11183,7 @@ def search_info():
             "search_statistics": stats,
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/search/properties/register", methods=["POST"])
@@ -11204,7 +11220,7 @@ def search_register_property():
         _cs_engine.register_property(property_id=property_id, property_data=property_data)
         return jsonify({"property_id": property_id, "status": "registered_for_search"}), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/search/comparables", methods=["POST"])
@@ -11259,7 +11275,7 @@ def search_comparables():
             "results": [r.to_dict() for r in results],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/search/match", methods=["POST"])
@@ -11289,7 +11305,7 @@ def search_match_properties():
             "matches": [m.to_dict() for m in matches],
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 # ── Phase 38: API Hardening & External Integration Readiness ──────────────────
@@ -11336,7 +11352,7 @@ def api38_info():
             "integrations": _integ_fw.get_integration_statistics(),
         }), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/hardening/api-keys/generate", methods=["POST"])
@@ -11365,7 +11381,7 @@ def api38_generate_key():
             "note": "Store key_secret securely — it cannot be retrieved later",
         }), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/hardening/api-keys/validate", methods=["POST"])
@@ -11383,7 +11399,7 @@ def api38_validate_key():
             return jsonify({"valid": False, "reason": "Invalid credentials or inactive key"}), 401
         return jsonify({"valid": True, "key_info": api_key.to_dict()}), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/hardening/integrations/register", methods=["POST"])
@@ -11415,7 +11431,7 @@ def api38_register_integration():
         )
         return jsonify(integ.to_dict()), 201
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/hardening/integrations/stats", methods=["GET"])
@@ -11425,7 +11441,7 @@ def api38_integration_stats():
     try:
         return jsonify(_integ_fw.get_integration_statistics()), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 @app.route("/api/docs/openapi.json", methods=["GET"])
@@ -11460,7 +11476,7 @@ def api38_openapi_spec():
         }
         return jsonify(spec), 200
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _safe_err(exc)
 
 
 

@@ -236,7 +236,63 @@ Full suite after merge: **1,349 / 1,349 passed ✅** (no new tests — scripts/ 
 
 ---
 
-## R3.7+ — Pending
+## R3.7 — Gate Decision (2026-05-17)
+
+Cherry-picks onto: `main`
+Full suite after all three merges: **1,491 / 1,491 passed ✅**
+
+### `core_engine/i18n/` — MERGED
+
+Commit cherry-picked: `d288d0d` → landed as `01f79e2`
+Files: 4 source + 1 __init__ + 1 test (6 total), ~539 source lines | Tests: 56 ✅
+Dependencies: pure stdlib (no external deps)
+Modules: `localization` (Language enum, Localization class, date/currency/number formatters), `translations` (63-key EN/AR/FR dict parity), `arabic_support` (ArabicSupport — Arabic numerals, dates, currency, RTL detection), `language_detector` (LanguageDetector — text/header/browser/preference detection)
+Overlap notes:
+  - `arabic_support.py` vs `pdf_arabic.py`: complementary layers — `arabic_support` = business data formatting; `pdf_arabic` = PDF glyph rendering (reshape+bidi). No unification needed.
+  - `multilingual_builder.py` on main had dangling top-level `from i18n.localization import ...` — merging i18n satisfies it.
+  - `frontend/localization.js` on main consumes `/api/language/strings` — now live.
+Full suite after merge: **1,405 / 1,405 passed ✅**
+
+Follow-up items:
+- [ ] Confirm `pdf_arabic.py` and `arabic_support.py` coexist without confusion — no unification needed unless a future refactor ticket is opened
+
+### `core_engine/standards/` — MERGED
+
+Commit cherry-picked: `c72bafd` → landed as `e4a3f6a`
+Files: 2 source + 1 __init__ + 1 test (4 total), ~526 source lines | Tests: 40 ✅
+Dependencies: pure stdlib (no external deps)
+Modules: `uspap` (USPAPCompliance, USPAPReport, USPAPComplianceChecker, USPAPComplianceAddenum — USPAP-oriented disclosure framework), `standards_manager` (StandardsManager — EGVS/IVSC/USPAP/IFRS13/CBE registry)
+Notes:
+  - All 5 frameworks: `calculation_impact: False` — valuation engines untouched
+  - AVM/mass-appraisal USPAP compliance level guards (blocks APPRAISER_CERTIFIED)
+  - `datetime.utcnow()` deprecation warnings in tests — advisory only, no failures
+  - USPAP text is English-only; no Egyptian Law 148/2001 coverage
+  - USPAP edition year not stated in addendum text
+Full suite after merge: **1,445 / 1,445 passed ✅**
+
+Follow-up items (content review required before production use):
+- [ ] Domain expert (د. عبد الرؤوف) review: USPAP edition year, Egyptian Law 148/2001 coverage, Arabic compliance text for Egyptian audience
+- [ ] Add `USPAP_EDITION = "2024"` constant to `standards_manager.py` before production use
+
+### `core_engine/scenarios/` — MERGED
+
+Commit cherry-picked: `b573098` → landed as `0a9538f`
+Files: 4 source + 1 __init__ + 1 test (6 total), ~607 source lines | Tests: 46 ✅
+Dependencies: pure stdlib (`random`, `math` only — no ml/, no validation/)
+Modules: `scenario_builder` (ScenarioBuilder, Optimistic/Base/Pessimistic/Custom), `monte_carlo` (MonteCarloEngine, 10K iterations default, `seed` config), `sensitivity_matrix` (SensitivityMatrix, 2-variable grid), `stress_test` (StressTestSuite, 5 built-in EG market scenarios + custom extensibility)
+Notes:
+  - Zero ml/ dependency — pure Python stochastic simulation
+  - 5 Egypt-specific stress scenarios: COVID, CBE rate hike, EGP devaluation, market crash, recovery
+  - `MonteCarloConfig.seed = None` by default (non-reproducible); `seed=42` in tests for reproducibility
+  - 10K iterations runs < 1s — no timeout concern
+Full suite after merge: **1,491 / 1,491 passed ✅**
+
+Follow-up items:
+- [ ] Document random seed policy: `seed=None` is intentional for non-reproducible API use; callers needing reproducibility must pass explicit seed
+
+---
+
+## R3.8+ — Pending
 
 WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
@@ -246,6 +302,9 @@ WIP subsystems not yet reviewed:
 - (others as identified on WIP)
 
 Previously merged:
+- `i18n/` ✅ merged (R3.7)
+- `standards/` ✅ merged (R3.7)
+- `scenarios/` ✅ merged (R3.7)
 - `performance/` ✅ merged (R3.6)
 - `deployment/` ✅ merged (R3.6)
 - `scripts/` ✅ merged (R3.6)

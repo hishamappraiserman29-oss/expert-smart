@@ -52,17 +52,22 @@ class SignedDocument:
         }
 
 
+def _get_signing_key() -> str:
+    key = os.environ.get("GOVT_SIGNING_KEY", "").strip()
+    if not key:
+        raise ValueError(
+            "GOVT_SIGNING_KEY environment variable is required. "
+            "Production deployments must set a strong random key. "
+            "Test environments must set it via monkeypatch."
+        )
+    return key
+
+
 class DigitalSignatureManager:
     """Sign and verify government documents using HMAC-SHA256."""
 
-    def __init__(self, secret_key: Optional[str] = None) -> None:
-        key = secret_key or os.getenv("GOVERNMENT_SIGNATURE_SECRET")
-        if not key:
-            raise ValueError(
-                "DigitalSignatureManager requires a secret key. "
-                "Pass secret_key= or set the GOVERNMENT_SIGNATURE_SECRET environment variable."
-            )
-        self._secret = key.encode("utf-8")
+    def __init__(self) -> None:
+        self._secret = _get_signing_key().encode("utf-8")
 
     def _compute_hash(self, content: str) -> str:
         return hashlib.sha256(content.encode("utf-8")).hexdigest()

@@ -442,8 +442,10 @@ class TestGovernmentAuditTrail:
 
 class TestDigitalSignatureManager:
 
-    def setup_method(self):
-        self.mgr = DigitalSignatureManager(secret_key="test_secret_key")
+    @pytest.fixture(autouse=True)
+    def set_signing_key(self, monkeypatch):
+        monkeypatch.setenv("GOVT_SIGNING_KEY", "test-signing-key-for-unit-tests-only")
+        self.mgr = DigitalSignatureManager()
 
     def test_E01_sign_document_returns_signed_document(self):
         doc = self.mgr.sign_document("Hello Government", document_type="cbe_101")
@@ -486,6 +488,11 @@ class TestDigitalSignatureManager:
         assert doc.document_type == "valuation_report"
         assert doc.metadata.get("property_id") == "PROP-X"
         assert doc.signer_id == "cbe_system"
+
+    def test_E07_missing_signing_key_raises(self, monkeypatch):
+        monkeypatch.delenv("GOVT_SIGNING_KEY")
+        with pytest.raises(ValueError, match="GOVT_SIGNING_KEY"):
+            DigitalSignatureManager()
 
 
 # ===========================================================================

@@ -5352,9 +5352,9 @@ def _augment_payload_for_uncertainty(payload: dict) -> None:
         pass
 
 
-@app.route("/api/valuation", methods=["POST","OPTIONS"])
+@app.route("/api/valuation", methods=["POST"])
+@require_auth
 def handle_valuation():
-    if request.method == "OPTIONS": return jsonify({}), 200
     try:
         payload = request.get_json(silent=True) or {}
 
@@ -5813,7 +5813,8 @@ def market_feed_delete(record_id):
 # POST /api/advisor  { question, location?, property_type?, use_web? }
 # GET  /api/advisor/health
 # ═══════════════════════════════════════════════════════════════════════════
-@app.route("/api/advisor", methods=["POST", "OPTIONS"])
+@app.route("/api/advisor", methods=["POST"])
+@require_auth
 def advisor_endpoint():
     """
     المستشار العقاري الذكي — يُجيب على الأسئلة العقارية العامة
@@ -5839,8 +5840,6 @@ def advisor_endpoint():
       "elapsed_s":  4.2
     }
     """
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         payload       = request.get_json(silent=True) or {}
         question      = str(payload.get("question", "")).strip()
@@ -6394,7 +6393,8 @@ def radar_heatmap():
 #  v37 — IAAO Standards Endpoint
 # ══════════════════════════════════════════════════════════════════════════════
 
-@app.route("/api/iaao", methods=["POST", "OPTIONS"])
+@app.route("/api/iaao", methods=["POST"])
+@require_auth
 def iaao_compute():
     """
     يحسب مقاييس IAAO (ASR / COD / PRD / PRB) وإشارات المرور.
@@ -6407,7 +6407,6 @@ def iaao_compute():
       { "comparables": [{price, area, location}, ...],
         "assessed_ppm": 25000, "sector": "residential", "location": "..." }
     """
-    if request.method == "OPTIONS": return jsonify({}), 200
     try:
         p = request.get_json(silent=True) or {}
 
@@ -6491,6 +6490,7 @@ def training_status():
 # ══════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/price/intelligence", methods=["POST"])
+@require_auth
 def price_intelligence_search():
     """
     البحث الكامل عن أسعار منطقة محددة.
@@ -7715,11 +7715,10 @@ def _engine_result_to_dict(result):
     }
 
 
-@app.route("/api/comparables/search", methods=["POST", "OPTIONS"])
+@app.route("/api/comparables/search", methods=["POST"])
+@require_auth
 def api_comparable_search():
     """Search comparables: PostgreSQL first, JSON search engine fallback."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         data    = request.get_json(force=True) or {}
         subject = data.get("subject_property", {})
@@ -7748,11 +7747,10 @@ def api_comparable_search():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/engines/comparative", methods=["POST", "OPTIONS"])
+@app.route("/api/engines/comparative", methods=["POST"])
+@require_auth
 def api_engine_comparative():
     """Sales Comparison Approach — applies area/age adjustments to ranked comparables."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         data   = request.get_json(force=True) or {}
         engine = get_comparative_engine()
@@ -7762,11 +7760,10 @@ def api_engine_comparative():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/engines/cost", methods=["POST", "OPTIONS"])
+@app.route("/api/engines/cost", methods=["POST"])
+@require_auth
 def api_engine_cost():
     """Cost Approach — Replacement Cost New minus depreciation plus land value."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         data   = request.get_json(force=True) or {}
         engine = get_cost_engine()
@@ -7776,11 +7773,10 @@ def api_engine_cost():
         return jsonify({"status": "error", "message": str(e)}), 400
 
 
-@app.route("/api/engines/income", methods=["POST", "OPTIONS"])
+@app.route("/api/engines/income", methods=["POST"])
+@require_auth
 def api_engine_income():
     """Income Approach — Direct Capitalization (NOI / Cap Rate)."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         data   = request.get_json(force=True) or {}
         engine = get_income_engine()
@@ -8880,7 +8876,8 @@ def api_valuation_batch_list():
 
 # ── Phase 10: DCF Income Valuation ───────────────────────────────────────────
 
-@app.route("/api/valuation/dcf", methods=["POST", "OPTIONS"])
+@app.route("/api/valuation/dcf", methods=["POST"])
+@require_auth
 def api_valuation_dcf():
     """
     DCF income valuation endpoint (Phase 10).
@@ -8888,8 +8885,6 @@ def api_valuation_dcf():
     Accepts multi-year cash flow projections and optional sensitivity analysis.
     Returns NPV-based property value + optional scenario comparison.
     """
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from adapters.dcf_model import DCFModel as _DCFModel
         from adapters.dcf_sensitivity import DCFSensitivityAnalysis as _DCFSens
@@ -9208,6 +9203,7 @@ def knowledge_search():
 
 
 @app.route("/api/knowledge/enhance", methods=["POST"])
+@require_auth
 def knowledge_enhance():
     """
     POST /api/knowledge/enhance
@@ -9315,6 +9311,7 @@ except Exception as _sc24_err:
 
 
 @app.route("/api/scenarios/run", methods=["POST"])
+@require_auth
 def scenarios_run():
     """
     POST /api/scenarios/run
@@ -9344,6 +9341,7 @@ def scenarios_run():
 
 
 @app.route("/api/scenarios/monte_carlo", methods=["POST"])
+@require_auth
 def scenarios_monte_carlo():
     """
     POST /api/scenarios/monte_carlo
@@ -9369,6 +9367,7 @@ def scenarios_monte_carlo():
 
 
 @app.route("/api/scenarios/sensitivity", methods=["POST"])
+@require_auth
 def scenarios_sensitivity():
     """
     POST /api/scenarios/sensitivity
@@ -9396,6 +9395,7 @@ def scenarios_sensitivity():
 
 
 @app.route("/api/scenarios/stress_test", methods=["POST"])
+@require_auth
 def scenarios_stress_test():
     """
     POST /api/scenarios/stress_test
@@ -9430,6 +9430,7 @@ except Exception as _i18n_err:
 
 
 @app.route("/api/language/set/<language_code>", methods=["POST"])
+@require_auth
 def set_language(language_code: str):
     """POST /api/language/set/<ar|en|fr> — switch active language."""
     if not _I18N_OK or _loc23 is None:
@@ -10057,6 +10058,7 @@ def api_standards_list_frameworks():
 
 
 @app.route("/api/standards/validate", methods=["POST"])
+@require_auth
 def api_standards_validate():
     if not _USPAP_OK:
         return jsonify({"error": "Standards module not available"}), 503

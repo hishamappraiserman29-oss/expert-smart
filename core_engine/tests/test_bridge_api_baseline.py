@@ -29,9 +29,25 @@ for _p in (str(_CORE), str(_ROOT)):
 os.chdir(str(_CORE))
 
 from bridge_api import app  # noqa: E402
+from auth.tokens import generate_token  # noqa: E402
+
+_USER        = "baseline-test-user"
+_TEST_SECRET = "test-secret-for-baseline"
+
+
+def _auth() -> dict:
+    """Return a valid Authorization header for the baseline JWT secret."""
+    return {"Authorization": f"Bearer {generate_token(_USER)}"}
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def env(monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", _TEST_SECRET)
+    monkeypatch.setenv("ADMIN_USER_IDS", "admin-baseline")
+    monkeypatch.delenv("JWT_TTL_SECONDS", raising=False)
+
 
 @pytest.fixture()
 def client():
@@ -84,7 +100,7 @@ class TestValuationBaseline:
     # ── Status / HTTP ─────────────────────────────────────────────────────────
 
     def test_BL04_minimal_payload_returns_200(self, client):
-        assert client.post("/api/valuation", json=_MINIMAL).status_code == 200
+        assert client.post("/api/valuation", json=_MINIMAL, headers=_auth()).status_code == 200
 
     def test_BL05_options_returns_200(self, client):
         assert client.options("/api/valuation").status_code == 200
@@ -92,7 +108,7 @@ class TestValuationBaseline:
     # ── Required response keys ────────────────────────────────────────────────
 
     def test_BL06_success_response_has_required_keys(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
         assert data["status"] == "success"
         required = (
             "market_value",
@@ -107,17 +123,17 @@ class TestValuationBaseline:
             assert key in data, f"Missing key in response: {key!r}"
 
     def test_BL07_market_value_is_positive_number(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
         assert isinstance(data["market_value"], (int, float))
         assert data["market_value"] > 0
 
     def test_BL08_excel_url_is_http_string(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
         assert isinstance(data["excel_url"], str)
         assert data["excel_url"].startswith("http")
 
     def test_BL09_template_and_fallback_are_booleans(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
         assert isinstance(data["template_used"], bool)
         assert isinstance(data["fallback_used"], bool)
         assert isinstance(data["fallback_reason"], str)
@@ -126,21 +142,24 @@ class TestValuationBaseline:
 
     def test_BL10_style_legacy(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "report_style": "legacy"}).get_json()
+                           json={**_MINIMAL, "report_style": "legacy"},
+                           headers=_auth()).get_json()
         assert data["report_style_requested"] == "legacy"
         assert data["report_style_used"] == "legacy"
         assert data["template_used"] is False
 
     def test_BL11_style_detailed(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "report_style": "detailed"}).get_json()
+                           json={**_MINIMAL, "report_style": "detailed"},
+                           headers=_auth()).get_json()
         assert data["report_style_requested"] == "detailed"
         assert data["report_style_used"] == "detailed"
         assert data["template_used"] is False
 
     def test_BL12_invalid_style_falls_back_to_legacy(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "report_style": "bogus_style"}).get_json()
+                           json={**_MINIMAL, "report_style": "bogus_style"},
+                           headers=_auth()).get_json()
         assert data["report_style_requested"] == "bogus_style"
         assert data["report_style_used"] == "legacy"
 
@@ -148,7 +167,7 @@ class TestValuationBaseline:
 
     def test_BL13_empty_payload_returns_structured_json(self, client):
         """An empty payload must never cause an unstructured crash response."""
-        r = client.post("/api/valuation", json={})
+        r = client.post("/api/valuation", json={}, headers=_auth())
         assert r.status_code in (200, 400, 422, 500)
         data = r.get_json()
         assert data is not None

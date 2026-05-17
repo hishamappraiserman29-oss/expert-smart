@@ -197,17 +197,58 @@ Security check: clean ✅ — no hardcoded secrets, no payment provider calls, p
 
 ---
 
-## R3.6+ — Pending
+## R3.6 — Gate Decision (2026-05-17)
+
+Cherry-picks onto: `main`
+Full suite after all three merges: **1,349 / 1,349 passed ✅**
+
+### `core_engine/performance/` — MERGED
+
+Commit cherry-picked: `41c0b16` → landed as `aae8af5`
+Files: 4 source + 1 test (5 total), ~692 source lines | Tests: 35 ✅
+Dependencies: pure stdlib (no external deps)
+Modules: `cache` (TTLCache, @cached decorator), `paginator` (Paginator, PageRequest, PageResult), `profiler` (PerformanceProfiler, @timed decorator)
+Full suite after merge: **1,315 / 1,315 passed ✅**
+
+### `core_engine/deployment/` — MERGED
+
+Commit cherry-picked: `8ee22b5` → landed as `34aae58`
+Files: 3 source + 1 __init__ + 1 test (5 total), ~794 source lines | Tests: 34 ✅
+Dependencies: pure stdlib; `python-dotenv` optional (guarded)
+Modules: `config` (AppConfig dataclass, ConfigValidator, load_config()), `health` (HealthChecker, per-check timeout threading), `startup` (StartupValidator, pre-flight checks)
+Security notes: `secret_key` redacted in `config.to_dict()` output; no hardcoded secrets; `EXPERT_SMART_*` env-var namespace
+Full suite after merge: **1,349 / 1,349 passed ✅**
+
+### `core_engine/scripts/` — MERGED
+
+Commit cherry-picked: `cb4b5d4` → landed as `e731001`
+Files: 11 CLI scripts, 0 test files
+Dependencies: `boto3` optional (S3 upload guarded); `pg_dump` subprocess (external, not packaged); `requests` optional
+Modules: `backup_manager`, `api_health_check`, `health_check`, `loadtest`, `saas_readiness_check`, `saas_operations`, `sync_runner`, `evaluate_avm_model`, `train_avm_model`, `populate_knowledge_base`, `install_plugin`
+Security notes: `PGPASSWORD` extracted from `DATABASE_URL` env var via `_extract_password()`; never hardcoded; `cleanup_old_backups()` scoped to backup dir only
+Full suite after merge: **1,349 / 1,349 passed ✅** (no new tests — scripts/ contains no test files)
+
+### saas/ blocker update
+
+- **B1** (`test_phase39_saas.py` needs `scripts/` module): ✅ **RESOLVED** — `scripts/` is now on main
+- **B2** (`test_phase_15_2_e2e.py` needs `database.audit_log`): ❌ **STILL OPEN** — `database/` deferred (R3.1)
+- saas/ remains **DEFERRED** until B2 is resolved
+
+---
+
+## R3.7+ — Pending
 
 WIP subsystems not yet reviewed:
 - `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
 - `banking_expert/`
-- `scripts/` — deferred, candidate for R3.6
 - `database/` deferred (see R3.1 deferral above; prerequisite for saas/)
-- `saas/` deferred (see R3.5 deferral above)
+- `saas/` deferred (see R3.5 deferral above; B1 resolved, B2 still open)
 - (others as identified on WIP)
 
 Previously merged:
+- `performance/` ✅ merged (R3.6)
+- `deployment/` ✅ merged (R3.6)
+- `scripts/` ✅ merged (R3.6)
 - `marketplace/` + `plugins/` ✅ merged (R3.5)
 - `agents/` ✅ merged (R3.4)
 - `knowledge/` ✅ merged (R3.4)

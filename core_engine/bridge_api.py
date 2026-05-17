@@ -8946,6 +8946,7 @@ def api_valuation_dcf():
 # ── Phase 15: Enterprise API routes ──────────────────────────────────────────
 
 @app.route("/api/enterprise/tenant", methods=["POST"])
+@_require_admin
 def api_enterprise_create_tenant():
     """POST /api/enterprise/tenant — create a new tenant organization."""
     try:
@@ -8981,6 +8982,7 @@ def api_enterprise_create_tenant():
 
 
 @app.route("/api/enterprise/tenant/<tenant_id>", methods=["GET"])
+@_require_admin
 def api_enterprise_get_tenant(tenant_id: str):
     """GET /api/enterprise/tenant/<tenant_id> — fetch tenant summary."""
     summary = _tenant_manager.get_tenant_summary(tenant_id)
@@ -8990,6 +8992,7 @@ def api_enterprise_get_tenant(tenant_id: str):
 
 
 @app.route("/api/enterprise/tenant/<tenant_id>/user", methods=["POST"])
+@_require_admin
 def api_enterprise_add_user(tenant_id: str):
     """POST /api/enterprise/tenant/<tenant_id>/user — add a user to a tenant."""
     try:
@@ -9035,6 +9038,7 @@ def api_enterprise_add_user(tenant_id: str):
 
 
 @app.route("/api/enterprise/tenant/<tenant_id>/license", methods=["GET"])
+@_require_admin
 def api_enterprise_license(tenant_id: str):
     """GET /api/enterprise/tenant/<tenant_id>/license — validate subscription."""
     tenant = _tenant_manager.get_tenant(tenant_id)
@@ -9045,6 +9049,7 @@ def api_enterprise_license(tenant_id: str):
 
 
 @app.route("/api/enterprise/tenant/<tenant_id>/audit", methods=["GET"])
+@_require_admin
 def api_enterprise_audit(tenant_id: str):
     """GET /api/enterprise/tenant/<tenant_id>/audit — fetch audit trail."""
     if not _tenant_manager.get_tenant(tenant_id):
@@ -9472,6 +9477,7 @@ except Exception as _saas_err:
 
 
 @app.route("/api/saas/tenants", methods=["POST"])
+@_require_admin
 def saas_create_tenant():
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9493,6 +9499,7 @@ def saas_create_tenant():
 
 
 @app.route("/api/saas/tenants", methods=["GET"])
+@_require_admin
 def saas_list_tenants():
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9508,6 +9515,7 @@ def saas_list_tenants():
 
 
 @app.route("/api/saas/tenants/<tenant_id>", methods=["GET"])
+@_require_admin
 def saas_get_tenant(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9521,6 +9529,7 @@ def saas_get_tenant(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/users", methods=["POST"])
+@_require_admin
 def saas_add_user(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9540,6 +9549,7 @@ def saas_add_user(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/subscription", methods=["PUT"])
+@_require_admin
 def saas_update_subscription(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9567,6 +9577,7 @@ def saas_update_subscription(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/suspend", methods=["POST"])
+@_require_admin
 def saas_suspend_tenant(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9582,6 +9593,7 @@ def saas_suspend_tenant(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/reactivate", methods=["POST"])
+@_require_admin
 def saas_reactivate_tenant(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9595,6 +9607,7 @@ def saas_reactivate_tenant(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/billing/usage", methods=["POST"])
+@_require_admin
 def saas_record_usage(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9612,6 +9625,7 @@ def saas_record_usage(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/billing/invoice", methods=["POST"])
+@_require_admin
 def saas_generate_invoice(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9625,6 +9639,7 @@ def saas_generate_invoice(tenant_id):
 
 
 @app.route("/api/saas/tenants/<tenant_id>/dashboard", methods=["GET"])
+@_require_admin
 def saas_tenant_dashboard(tenant_id):
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503
@@ -9638,6 +9653,7 @@ def saas_tenant_dashboard(tenant_id):
 
 
 @app.route("/api/saas/stats", methods=["GET"])
+@_require_admin
 def saas_platform_stats():
     if not _SAAS_OK:
         return jsonify({"error": "SaaS module not available"}), 503

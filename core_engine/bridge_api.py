@@ -5589,8 +5589,24 @@ def handle_valuation():
         return jsonify({"status":"error","message":str(e)}), 500
 
 @app.route("/api/download/<filename>")
-def download(filename):
-    return send_file(os.path.join(OUTPUTS, filename), as_attachment=True)
+@require_auth
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
+def download(filename: str):
+    # Layer 1 — reject any path separators; filename must be a plain name
+    if "/" in filename or "\\" in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 2 — basename strip (handles remaining edge-case path components)
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 3 — realpath containment (absolute guarantee against traversal)
+    abs_outputs = os.path.realpath(OUTPUTS)
+    filepath = os.path.realpath(os.path.join(OUTPUTS, safe_name))
+    if not filepath.startswith(abs_outputs + os.sep):
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not os.path.isfile(filepath):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+    return send_file(filepath, as_attachment=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: Market Feed — استقبال وعرض البيانات الخارجية

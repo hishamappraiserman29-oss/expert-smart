@@ -273,12 +273,13 @@ class TestNAVCalculator:
 
 class TestFundValuationEngine:
 
-    def _base_fund(self, eng, fid="F1", ytd=0.12, vol=0.08):
+    def _base_fund(self, eng, fid="F1", ytd=0.12, vol=0.08, rfr=0.08):
         return eng.value_fund(
             fund_id=fid, fund_name="Test REIT",
             fund_type=FundType.REIT, strategy=FundStrategy.COMMERCIAL,
             aum=100_000_000, nav=90_000_000, shares_outstanding=9_000_000,
             ytd_return=ytd, volatility=vol, fra_registered=True,
+            risk_free_rate=rfr if vol > 0 else None,
         )
 
     def test_C01_nav_per_share(self, fund_eng):
@@ -286,8 +287,8 @@ class TestFundValuationEngine:
         assert result.nav_per_share == pytest.approx(10.0)
 
     def test_C02_sharpe_ratio(self, fund_eng):
-        result = self._base_fund(fund_eng, ytd=0.12, vol=0.08)
-        expected = (0.12 - FundValuationEngine.RISK_FREE_RATE) / 0.08
+        result = self._base_fund(fund_eng, ytd=0.12, vol=0.08, rfr=0.08)
+        expected = (0.12 - 0.08) / 0.08
         assert result.sharpe_ratio == pytest.approx(expected)
 
     def test_C03_max_drawdown(self, fund_eng):
@@ -298,7 +299,7 @@ class TestFundValuationEngine:
         result = fund_eng.value_fund(
             "F4", "Test Fund", FundType.REIT, FundStrategy.RESIDENTIAL,
             50_000_000, 10_000_000, 1_000_000, 0.10, 0.05,
-            dividend_per_share=0.5,
+            dividend_per_share=0.5, risk_free_rate=0.08,
         )
         # nav_per_share = 10; yield = 0.5/10 * 100 = 5%
         assert result.dividend_yield == pytest.approx(5.0)
@@ -332,6 +333,7 @@ class TestFundValuationEngine:
             result = fund_eng.value_fund(
                 f"F-{ft.value}", "Fund", ft, FundStrategy.MIXED,
                 1_000_000, 1_000_000, 100_000, 0.10, 0.05,
+                risk_free_rate=0.08,
             )
             assert result.fund_type == ft
 
@@ -340,8 +342,17 @@ class TestFundValuationEngine:
             result = fund_eng.value_fund(
                 f"F-{fs.value}", "Fund", FundType.REIT, fs,
                 1_000_000, 1_000_000, 100_000, 0.10, 0.05,
+                risk_free_rate=0.08,
             )
             assert result.strategy == fs
+
+    def test_C11_missing_risk_free_rate_raises(self, fund_eng):
+        with pytest.raises(ValueError, match="risk_free_rate is required"):
+            fund_eng.value_fund(
+                "F11", "Bad Fund", FundType.REIT, FundStrategy.MIXED,
+                1_000_000, 1_000_000, 100_000, 0.10, 0.05,
+                # risk_free_rate omitted — volatility=0.05 > 0, must raise
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -539,11 +550,11 @@ class TestFundDashboard:
         r1 = fund_eng.value_fund("FA", "Fund A", FundType.REIT,
                                  FundStrategy.COMMERCIAL, 100_000_000,
                                  90_000_000, 9_000_000, 0.15, 0.08,
-                                 fra_registered=True)
+                                 fra_registered=True, risk_free_rate=0.08)
         r2 = fund_eng.value_fund("FB", "Fund B", FundType.OPEN_ENDED,
                                  FundStrategy.RESIDENTIAL, 50_000_000,
                                  45_000_000, 4_500_000, 0.05, 0.04,
-                                 fra_registered=True)
+                                 fra_registered=True, risk_free_rate=0.08)
         return [r1, r2]
 
     def test_H01_total_aum(self, fd, fund_eng):

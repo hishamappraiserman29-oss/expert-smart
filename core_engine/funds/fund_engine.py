@@ -83,7 +83,6 @@ class FundValuationResult:
 class FundValuationEngine:
     """Value real estate funds and compute risk metrics."""
 
-    RISK_FREE_RATE = 0.08
     MARKET_RISK_PREMIUM = 0.07
 
     def value_fund(
@@ -101,17 +100,24 @@ class FundValuationEngine:
         fra_registered: bool = True,
         valuation_date: Optional[date] = None,
         currency: str = "EGP",
+        risk_free_rate: Optional[float] = None,
     ) -> FundValuationResult:
         if shares_outstanding <= 0:
             raise ValueError("shares_outstanding must be positive")
         if volatility < 0:
             raise ValueError("volatility cannot be negative")
+        if volatility > 0 and risk_free_rate is None:
+            raise ValueError(
+                "risk_free_rate is required for Sharpe ratio computation. "
+                "Production callers must supply the current approved risk-free "
+                "rate (e.g., CBE policy rate). No safe default exists."
+            )
 
         val_date = valuation_date or date.today()
         nav_per_share = nav / shares_outstanding
 
         sharpe = (
-            (ytd_return - self.RISK_FREE_RATE) / volatility
+            (ytd_return - risk_free_rate) / volatility
             if volatility > 0
             else 0.0
         )

@@ -9862,6 +9862,7 @@ def api_marketplace_plugin_detail(listing_id):
 
 
 @app.route("/api/marketplace/plugins/<listing_id>/reviews", methods=["POST"])
+@require_auth
 def api_marketplace_add_review(listing_id):
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -9891,6 +9892,7 @@ def api_marketplace_trending():
 
 
 @app.route("/api/integrations/plugins", methods=["GET"])
+@require_auth
 def api_integrations_list_plugins():
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -9923,6 +9925,7 @@ def api_integrations_install_plugin(plugin_id):
 
 
 @app.route("/api/integrations/webhooks", methods=["GET"])
+@require_auth
 def api_integrations_list_webhooks():
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -9934,6 +9937,7 @@ def api_integrations_list_webhooks():
 
 
 @app.route("/api/integrations/webhooks", methods=["POST"])
+@require_auth
 def api_integrations_create_webhook():
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -9962,6 +9966,7 @@ def api_integrations_create_webhook():
 
 
 @app.route("/api/integrations/webhooks/<webhook_id>", methods=["DELETE"])
+@require_auth
 def api_integrations_delete_webhook(webhook_id):
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -9971,6 +9976,7 @@ def api_integrations_delete_webhook(webhook_id):
 
 
 @app.route("/api/integrations/oauth/<service>/authorize", methods=["GET"])
+@require_auth
 def api_oauth_authorize(service):
     if not _MARKETPLACE_OK:
         return jsonify({"error": "Marketplace not available"}), 503
@@ -11042,6 +11048,7 @@ def analytics_info():
 
 
 @app.route("/api/analytics/metrics/<metric_id>/record", methods=["POST"])
+@require_auth
 def analytics_record_metric(metric_id):
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11073,6 +11080,7 @@ def analytics_record_metric(metric_id):
 
 
 @app.route("/api/analytics/metrics/<metric_id>/statistics", methods=["GET"])
+@require_auth
 def analytics_metric_statistics(metric_id):
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11086,6 +11094,7 @@ def analytics_metric_statistics(metric_id):
 
 
 @app.route("/api/analytics/metrics/<metric_id>/timeseries", methods=["GET"])
+@require_auth
 def analytics_metric_timeseries(metric_id):
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11102,6 +11111,7 @@ def analytics_metric_timeseries(metric_id):
 
 
 @app.route("/api/analytics/dashboards", methods=["GET"])
+@require_auth
 def analytics_list_dashboards():
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11125,6 +11135,7 @@ def analytics_list_dashboards():
 
 
 @app.route("/api/analytics/dashboards/<dashboard_id>", methods=["GET"])
+@require_auth
 def analytics_get_dashboard(dashboard_id):
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11139,6 +11150,7 @@ def analytics_get_dashboard(dashboard_id):
 
 
 @app.route("/api/analytics/risk/portfolio/<portfolio_id>", methods=["POST"])
+@require_auth
 def analytics_portfolio_risk(portfolio_id):
     if not _ANALYTICS_OK:
         return jsonify({"error": "Analytics module unavailable"}), 503
@@ -11447,6 +11459,7 @@ def api38_validate_key():
 
 
 @app.route("/api/hardening/integrations/register", methods=["POST"])
+@_require_admin
 def api38_register_integration():
     if not _API38_OK:
         return jsonify({"error": "API Hardening module unavailable"}), 503
@@ -11479,6 +11492,7 @@ def api38_register_integration():
 
 
 @app.route("/api/hardening/integrations/stats", methods=["GET"])
+@_require_admin
 def api38_integration_stats():
     if not _API38_OK:
         return jsonify({"error": "API Hardening module unavailable"}), 503
@@ -11575,6 +11589,7 @@ def integ40_info():
 
 
 @app.route("/api/integrations/sync", methods=["POST"])
+@_require_admin
 def integ40_sync():
     """Trigger connector synchronisation."""
     if not _INTEG40_OK:
@@ -11589,6 +11604,7 @@ def integ40_sync():
 
 
 @app.route("/api/integrations/partners", methods=["POST"])
+@_require_admin
 def integ40_create_partner():
     """Create a new integration partner account."""
     if not _INTEG40_OK:
@@ -11608,6 +11624,7 @@ def integ40_create_partner():
 
 
 @app.route("/api/integrations/partners/<partner_id>/dashboard", methods=["GET"])
+@_require_admin
 def integ40_partner_dashboard(partner_id):
     """Get partner dashboard overview."""
     if not _INTEG40_OK:
@@ -11619,6 +11636,7 @@ def integ40_partner_dashboard(partner_id):
 
 
 @app.route("/api/integrations/connector-webhooks", methods=["POST"])
+@_require_admin
 def integ40_register_webhook():
     """Register a connector-level webhook endpoint."""
     if not _INTEG40_OK:

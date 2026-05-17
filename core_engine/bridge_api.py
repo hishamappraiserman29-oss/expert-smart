@@ -6278,7 +6278,8 @@ def price_map():
 #  v37 — Market Radar Endpoints
 # ══════════════════════════════════════════════════════════════════════════════
 
-@app.route("/api/radar/start", methods=["POST", "OPTIONS"])
+@app.route("/api/radar/start", methods=["POST"])
+@_require_admin
 def radar_start():
     """
     يُشغِّل محرك رادار السوق في الخلفية.
@@ -6289,7 +6290,6 @@ def radar_start():
       "wa_groups": ["مجموعة عقارات القاهرة"]
     }
     """
-    if request.method == "OPTIONS": return jsonify({}), 200
     try:
         p = request.get_json(silent=True) or {}
         result = _radar.start(
@@ -6304,10 +6304,10 @@ def radar_start():
         return _safe_err(e)
 
 
-@app.route("/api/radar/stop", methods=["POST", "OPTIONS"])
+@app.route("/api/radar/stop", methods=["POST"])
+@_require_admin
 def radar_stop():
     """يُوقِف محرك رادار السوق."""
-    if request.method == "OPTIONS": return jsonify({}), 200
     try:
         return jsonify({"status": "success", **_radar.stop()})
     except Exception as e:
@@ -6448,6 +6448,7 @@ def iaao_health():
 _training_registry: dict = {}   # latest registered master template per session
 
 @app.route("/api/training/register", methods=["POST"])
+@_require_admin
 def training_register():
     """Receives the master template metadata from the frontend Training Clip."""
     try:
@@ -6830,6 +6831,7 @@ except Exception as _am_err:
 
 
 @app.route("/api/assets", methods=["GET"])
+@require_auth
 def assets_list():
     """GET /api/assets?market=egypt&limit=50 — قائمة الأصول."""
     market = request.args.get("market")
@@ -6837,11 +6839,10 @@ def assets_list():
     return jsonify({"status": "success", "assets": _am_list(market=market, limit=limit)})
 
 
-@app.route("/api/assets/register", methods=["POST", "OPTIONS"])
+@app.route("/api/assets/register", methods=["POST"])
+@require_auth
 def assets_register():
     """POST /api/assets/register — تسجيل عقار جديد في المحفظة."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         b = request.get_json(force=True) or {}
         result = _am_register(
@@ -6862,16 +6863,16 @@ def assets_register():
 
 
 @app.route("/api/assets/<asset_id>", methods=["GET"])
+@require_auth
 def assets_get(asset_id: str):
     """GET /api/assets/<id> — بيانات عقار + سجله التاريخي."""
     return jsonify(_am_get(asset_id))
 
 
-@app.route("/api/assets/<asset_id>/update", methods=["PUT", "POST", "OPTIONS"])
+@app.route("/api/assets/<asset_id>/update", methods=["PUT", "POST"])
+@require_auth
 def assets_update(asset_id: str):
     """PUT /api/assets/<id>/update — تحديث قيمة العقار."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         b = request.get_json(force=True) or {}
         result = _am_update(
@@ -6888,6 +6889,7 @@ def assets_update(asset_id: str):
 
 
 @app.route("/api/assets/dashboard", methods=["GET"])
+@require_auth
 def assets_dashboard():
     """GET /api/assets/dashboard?market=egypt — لوحة أداء المحفظة."""
     market = request.args.get("market")
@@ -10232,6 +10234,7 @@ def api_government_info():
 
 
 @app.route("/api/government/compliance/check", methods=["POST"])
+@require_auth
 def api_government_compliance_check():
     """Check property data against one or more Egyptian government standards."""
     if not _GOVERNMENT_OK:
@@ -10268,6 +10271,7 @@ def api_government_compliance_check():
 
 
 @app.route("/api/government/tax/calculate", methods=["POST"])
+@require_auth
 def api_government_tax_calculate():
     """Calculate property tax per Egyptian Tax Authority standards."""
     if not _GOVERNMENT_OK:
@@ -10303,6 +10307,7 @@ def api_government_tax_calculate():
 
 
 @app.route("/api/government/forms/generate", methods=["POST"])
+@require_auth
 def api_government_forms_generate():
     """Generate an official government valuation form."""
     if not _GOVERNMENT_OK:
@@ -10350,6 +10355,7 @@ def api_government_forms_generate():
 
 
 @app.route("/api/government/portal/create", methods=["POST"])
+@_require_admin
 def api_government_portal_create():
     """Register a new government agency portal."""
     if not _GOVERNMENT_OK:
@@ -10435,6 +10441,7 @@ def api_banking_info():
 
 
 @app.route("/api/banking/collateral/value", methods=["POST"])
+@require_auth
 def api_banking_collateral_value():
     """Value a property as bank collateral (appraised, conservative, forced-sale)."""
     if not _BANKING_OK:
@@ -10473,6 +10480,7 @@ def api_banking_collateral_value():
 
 
 @app.route("/api/banking/ltv/calculate", methods=["POST"])
+@require_auth
 def api_banking_ltv_calculate():
     """Calculate LTV ratio and credit risk assessment."""
     if not _BANKING_OK:
@@ -10502,6 +10510,7 @@ def api_banking_ltv_calculate():
 
 
 @app.route("/api/banking/collateral/register", methods=["POST"])
+@require_auth
 def api_banking_collateral_register():
     """Register collateral in the central registry."""
     if not _BANKING_OK:
@@ -10528,6 +10537,7 @@ def api_banking_collateral_register():
 
 
 @app.route("/api/banking/dashboard/<bank_id>", methods=["GET"])
+@_require_admin
 def api_banking_dashboard(bank_id: str):
     """Get bank portfolio dashboard and metrics."""
     if not _BANKING_OK:
@@ -10545,6 +10555,7 @@ def api_banking_dashboard(bank_id: str):
 
 
 @app.route("/api/banking/compliance/check", methods=["POST"])
+@require_auth
 def api_banking_compliance_check():
     """Check CBE regulatory compliance for a loan."""
     if not _BANKING_OK:
@@ -10625,6 +10636,7 @@ def api_funds_info():
 
 
 @app.route("/api/funds/fair-value/assess", methods=["POST"])
+@require_auth
 def api_funds_fair_value_assess():
     """Assess IFRS 13 fair value for an asset."""
     if not _FUNDS_OK:
@@ -10669,6 +10681,7 @@ def api_funds_fair_value_assess():
 
 
 @app.route("/api/funds/nav/calculate", methods=["POST"])
+@require_auth
 def api_funds_nav_calculate():
     """Calculate NAV and NAV per share for a fund."""
     if not _FUNDS_OK:
@@ -10710,6 +10723,7 @@ def api_funds_nav_calculate():
 
 
 @app.route("/api/funds/value", methods=["POST"])
+@require_auth
 def api_funds_value():
     """Value a fund and compute risk metrics."""
     if not _FUNDS_OK:
@@ -10745,6 +10759,7 @@ def api_funds_value():
 
 
 @app.route("/api/funds/compliance/check", methods=["POST"])
+@require_auth
 def api_funds_compliance_check():
     """Check FRA regulatory compliance for a fund."""
     if not _FUNDS_OK:
@@ -10765,6 +10780,7 @@ def api_funds_compliance_check():
 
 
 @app.route("/api/funds/dashboard/<manager_id>", methods=["GET"])
+@require_auth
 def api_funds_dashboard(manager_id: str):
     """Get cached fund manager dashboard metrics."""
     if not _FUNDS_OK:

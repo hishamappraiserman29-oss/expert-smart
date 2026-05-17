@@ -292,16 +292,60 @@ Follow-up items:
 
 ---
 
-## R3.8+ — Pending
+## R3.8 — Gate Decision (2026-05-17)
 
-WIP subsystems not yet reviewed:
-- `adapters/` (market_value, mortgage, insurance, ifrs_13, residential, commercial, land, enterprise, asset)
-- `banking_expert/`
-- `database/` deferred (see R3.1 deferral above; prerequisite for saas/)
-- `saas/` deferred (see R3.5 deferral above; B1 resolved, B2 still open)
-- (others as identified on WIP)
+Cherry-picks onto: `main`
+Full suite after all merges: **1,575 / 1,575 passed ✅**
 
-Previously merged:
+### `core_engine/api/` — MERGED
+
+Commit cherry-picked: `857b94f` → landed as `837d150`
+Files: 12 source + 2 test (14 total), ~2,380 source lines | Tests: 84 ✅
+Dependencies: pure stdlib only (`hmac`, `secrets`, `gzip`, `threading`, `json`, `uuid`, `time`)
+Modules: `resilience` (RetryPolicy, CircuitBreaker, TimeoutHandler), `request_deduplication` (idempotency), `response_formatter` (StandardResponse envelope), `error_handler` (APIError hierarchy), `observability` (StructuredLogger, track_request), `security_layer` (APISecurityLayer, rate-limit tiers), `request_validation` (schema-based validation), `error_standardizer`, `integration_framework` (IntegrationFramework, 6 event types), `performance_optimizer` (TTL cache + gzip), `connection_manager` (thread-safe pool, _MockConnection fallback)
+`datetime.utcnow()` deprecation warnings in tests/source — advisory only, no failures
+Full suite after merge: **1,575 / 1,575 passed ✅**
+
+### `core_engine/adapters/` — MERGED (source only)
+
+Commit cherry-picked: `519fd57` → landed as `303ea99`
+Files: 21 source (0 test files), ~4,422 source lines | Tests: 0 (no bundled tests)
+Dependencies: `from engines.base import AuditEntry, ValidationIssue` — `engines/` is on main ✅; all other imports are intra-package or stdlib
+Modules: `base` (PurposeAdapter, PurposeResult, Adjustment), `reconciliation`, `market_value`, `mortgage`, `insurance`, `ifrs_13`, `asset`, `residential`, `commercial`, `land`, `dcf_model`, `dcf_sensitivity`, `enterprise` (TenantManager, TenantRole, RBAC), `batch_processor`, `batch_registry`, `portfolio`, `portfolio_performance`, `cross_border`, `ivsc`, `webhook_dispatcher`
+Import verification: all 21 modules + 14 public symbols load cleanly on main
+Full suite after merge: **1,575 / 1,575 passed ✅** (count unchanged — no test files in this commit)
+
+⚠️ **TECHNICAL DEBT NOTE:**
+`adapters/` merged source-only. E2E tests remain deferred because commit `229fc3c` is
+blocked by `database/`:
+  - `test_phase_8_e2e.py`  → hard top-level import `from database.models import ...` (no guard)
+  - `test_phase_13_e2e.py` → hard top-level import `from database.batch_store import ...` (no guard)
+Merging `229fc3c` without `database/` would cause pytest collection errors on main.
+**96 E2E tests (phases 8–14) remain untested on main until `database/` is resolved.**
+Adapters themselves verified by import check; functional E2E coverage is deferred.
+
+### Deferred / Blocked Items (still open after R3.8)
+
+| Item | Commit | Status | Blocker |
+|---|---|---|---|
+| E2E test bundle (phases 8–14) | `229fc3c` | ⏸ DEFERRED | `test_phase_8/13` → hard `database.*` imports; collection error without `database/` |
+| `database/` | `e75b654` | ⏸ DEFERRED (R3.1) | No tests, missing sqlalchemy/psycopg2, AuditLog naming collision |
+| `saas/` | `b78d4b1` | ⏸ DEFERRED (R3.5) | B2: `test_phase_15_2_e2e.py` → hard `from database.audit_log import ...`; B3: tenant_id/owner_user_id bridge undocumented |
+| `mobile/` | `99c78e6` | ⏸ DEFERRED | Separate React Native/TypeScript ecosystem; requires dedicated mobile review gate |
+
+---
+
+## R3 Complete — No Further WIP Items
+
+All reviewable WIP content has been processed.
+`wip/r3-subsystems-checkpoint` vs `main` remaining delta is fully accounted for:
+- Deferred items blocked by `database/` (see above)
+- Modified files (M): main is more advanced in all cases — no cherry-picks needed
+- `mobile/` requires dedicated mobile review gate
+
+Previously merged (R3.1–R3.8):
+- `api/` ✅ merged (R3.8)
+- `adapters/` ✅ merged (R3.8, source only — E2E tests deferred)
 - `i18n/` ✅ merged (R3.7)
 - `standards/` ✅ merged (R3.7)
 - `scenarios/` ✅ merged (R3.7)
@@ -319,5 +363,3 @@ Previously merged:
 - `banking/` ✅ merged (R3.2)
 - `funds/` ✅ merged (R3.2)
 - `security/` ✅ merged (R3.1)
-
-Review to be scheduled in separate sessions.

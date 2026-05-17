@@ -55,8 +55,11 @@ core_engine/outputsreports/
 core_engine/uploads/
 core_engine/out.txt
 
-# Secrets
-core_engine/service_account.json
+# Secrets — Google credentials and service-account keys
+# These must NEVER be committed. core_engine/.gitignore also covers the subtree.
+service_account.json
+credentials.json
+token.json
 # Local / generated / backup artifacts
 .claude/settings.local.json
 core_engine/inputs_case_json/

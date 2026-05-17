@@ -15,7 +15,7 @@ All tests mock:
   - bridge_api._remove_legacy_advanced_sheets
   - reports.report_pipeline.persist_report_data (control DB result)
 
-Tests: PA01–PA15
+Tests: PA01–PA20
 """
 from __future__ import annotations
 
@@ -36,6 +36,17 @@ os.chdir(str(_CORE))
 
 from bridge_api import app                          # noqa: E402
 from reports.report_pipeline import PipelineResult  # noqa: E402
+from auth.tokens import generate_token              # noqa: E402
+
+# ── Auth helpers ──────────────────────────────────────────────────────────────
+
+_USER        = "persist-test-user"
+_TEST_SECRET = "test-secret-for-persist"
+
+
+def _auth() -> dict:
+    return {"Authorization": f"Bearer {generate_token(_USER)}"}
+
 
 # ── Shared constants ──────────────────────────────────────────────────────────
 
@@ -70,6 +81,13 @@ _VAL_FAIL = PipelineResult(is_valid=False, errors=(_FakeError(),), warnings=())
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
+@pytest.fixture(autouse=True)
+def env(monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", _TEST_SECRET)
+    monkeypatch.setenv("ADMIN_USER_IDS", "admin-persist")
+    monkeypatch.delenv("JWT_TTL_SECONDS", raising=False)
+
+
 @pytest.fixture()
 def client():
     app.config["TESTING"] = True
@@ -83,34 +101,37 @@ def _mock_io():
         yield
 
 
-# ── PA01–PA02: No persist → baseline preserved ───────────────────────────────
+# ── PA01–PA04: No persist → baseline preserved ───────────────────────────────
 
 class TestNoPersist:
     def test_PA01_missing_persist_key_returns_200(self, client):
-        r = client.post("/api/valuation", json=_MINIMAL)
+        r = client.post("/api/valuation", json=_MINIMAL, headers=_auth())
         assert r.status_code == 200
         assert r.get_json()["status"] == "success"
 
     def test_PA02_no_persist_response_lacks_persistence_keys(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL,
+                           headers=_auth()).get_json()
         assert "report_db_id"  not in data
         assert "persisted"     not in data
         assert "persist_error" not in data
 
     def test_PA03_persist_false_same_as_absent(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": False}).get_json()
+                           json={**_MINIMAL, "persist": False},
+                           headers=_auth()).get_json()
         assert data["status"] == "success"
         assert "report_db_id" not in data
 
     def test_PA04_existing_keys_intact_without_persist(self, client):
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL,
+                           headers=_auth()).get_json()
         for key in ("market_value", "excel_url",
                     "report_style_requested", "report_style_used"):
             assert key in data, f"Key missing: {key!r}"
 
 
-# ── PA05–PA08: persist=true + DB success ─────────────────────────────────────
+# ── PA05–PA10: persist=true + DB success ─────────────────────────────────────
 
 class TestPersistSuccess:
     @pytest.fixture(autouse=True)
@@ -122,37 +143,43 @@ class TestPersistSuccess:
 
     def test_PA05_persist_true_returns_200(self, client):
         assert client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).status_code == 200
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).status_code == 200
 
     def test_PA06_persist_true_report_db_id_present(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert "report_db_id" in data
         assert data["report_db_id"] == _PERSIST_ID
 
     def test_PA07_persist_true_persisted_is_true(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert data["persisted"] is True
 
     def test_PA08_persist_true_persist_error_is_empty_string(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert data["persist_error"] == ""
 
     def test_PA09_persist_true_excel_url_still_present(self, client):
         """Generation must not be blocked — excel_url must survive."""
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert "excel_url" in data
         assert data["excel_url"].startswith("http")
 
     def test_PA10_persist_called_exactly_once(self, client):
-        client.post("/api/valuation", json={**_MINIMAL, "persist": True})
+        client.post("/api/valuation", json={**_MINIMAL, "persist": True},
+                    headers=_auth())
         self._mock.assert_called_once()
 
 
-# ── PA11–PA13: persist=true + DB failure (P1: non-fatal) ─────────────────────
+# ── PA11–PA15: persist=true + DB failure (P1: non-fatal) ─────────────────────
 
 class TestPersistFailure:
     @pytest.fixture(autouse=True)
@@ -163,29 +190,34 @@ class TestPersistFailure:
 
     def test_PA11_db_failure_still_returns_200(self, client):
         """P1: DB failure must not prevent the user from getting their Excel."""
-        r = client.post("/api/valuation", json={**_MINIMAL, "persist": True})
+        r = client.post("/api/valuation", json={**_MINIMAL, "persist": True},
+                        headers=_auth())
         assert r.status_code == 200
 
     def test_PA12_db_failure_persisted_is_false(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert data["persisted"] is False
 
     def test_PA13_db_failure_persist_error_nonempty(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert isinstance(data["persist_error"], str)
         assert data["persist_error"]
 
     def test_PA14_db_failure_no_report_db_id(self, client):
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert "report_db_id" not in data or data.get("report_db_id") is None
 
     def test_PA15_db_failure_excel_url_still_present(self, client):
         """Excel report delivered despite DB failure."""
         data = client.post("/api/valuation",
-                           json={**_MINIMAL, "persist": True}).get_json()
+                           json={**_MINIMAL, "persist": True},
+                           headers=_auth()).get_json()
         assert "excel_url" in data
         assert data["status"] == "success"
 
@@ -202,7 +234,8 @@ class TestValidateAndPersist:
                   return_value=_PERSIST_ID),
         ):
             payload = {**_MINIMAL, "validate": True, "persist": True}
-            data = client.post("/api/valuation", json=payload).get_json()
+            data = client.post("/api/valuation", json=payload,
+                               headers=_auth()).get_json()
         assert data["status"] == "success"
         assert data["validation"]["is_valid"] is True
         assert data["report_db_id"] == _PERSIST_ID
@@ -217,12 +250,12 @@ class TestValidateAndPersist:
                   return_value=_PERSIST_ID) as mock_prd,
         ):
             payload = {**_MINIMAL, "validate": True, "persist": True}
-            r = client.post("/api/valuation", json=payload)
+            r = client.post("/api/valuation", json=payload, headers=_auth())
         assert r.status_code == 422
         mock_prd.assert_not_called()
 
 
-# ── PA18–PA19: profile_key forwarding ────────────────────────────────────────
+# ── PA18: profile_key forwarding ──────────────────────────────────────────────
 
 class TestProfileKeyForwarding:
     @pytest.mark.parametrize("style,expected", [
@@ -237,7 +270,7 @@ class TestProfileKeyForwarding:
         with patch("reports.report_pipeline.persist_report_data",
                    return_value=_PERSIST_ID) as mock_prd:
             payload = {**_MINIMAL, "persist": True, "report_style": style}
-            client.post("/api/valuation", json=payload)
+            client.post("/api/valuation", json=payload, headers=_auth())
         kw = mock_prd.call_args.kwargs
         assert kw.get("profile_key") == expected
 
@@ -249,7 +282,7 @@ class TestReportStatusForwarding:
         with patch("reports.report_pipeline.persist_report_data",
                    return_value=_PERSIST_ID) as mock_prd:
             payload = {**_MINIMAL, "persist": True, "report_status": "final"}
-            client.post("/api/valuation", json=payload)
+            client.post("/api/valuation", json=payload, headers=_auth())
         kw = mock_prd.call_args.kwargs
         assert kw.get("status") == "final"
 
@@ -257,6 +290,6 @@ class TestReportStatusForwarding:
         with patch("reports.report_pipeline.persist_report_data",
                    return_value=_PERSIST_ID) as mock_prd:
             payload = {**_MINIMAL, "persist": True, "report_status": "invalid"}
-            client.post("/api/valuation", json=payload)
+            client.post("/api/valuation", json=payload, headers=_auth())
         kw = mock_prd.call_args.kwargs
         assert kw.get("status") == "draft"

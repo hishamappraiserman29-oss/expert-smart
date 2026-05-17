@@ -380,7 +380,7 @@ class TestUnrelatedEndpointsUnaffected:
         assert resp.status_code == 200
 
     def test_valuation_still_accessible(self, client):
-        # POST /api/valuation — no auth required, just needs valid body
+        # POST /api/valuation — requires auth (SEC-002e)
         resp = client.post(
             "/api/valuation",
             json={
@@ -389,6 +389,6 @@ class TestUnrelatedEndpointsUnaffected:
                 "property_type": "شقة سكنية",
                 "price_per_meter": 10000,
             },
+            headers=_auth(_NON_ADMIN),
         )
-        assert resp.status_code != 401
-        assert resp.status_code != 403
+        assert resp.status_code not in (401, 403)

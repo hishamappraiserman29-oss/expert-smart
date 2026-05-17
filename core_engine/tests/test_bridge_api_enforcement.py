@@ -149,16 +149,16 @@ class TestIDORPrevention:
 # ── EN11–EN12: Unprotected endpoints unchanged ────────────────────────────────
 
 class TestUnprotectedEndpointsUnchanged:
-    """POST /api/valuation must remain open in S3 — no token required."""
+    """POST /api/valuation now requires auth (SEC-002e). Unauthenticated → 401."""
 
-    def test_EN11_valuation_post_no_token_not_401(self, client):
+    def test_EN11_valuation_post_no_token_returns_401(self, client):
         payload = {
             "profile": "legacy",
             "property_info": {"type": "شقة سكنية", "area": 100, "address": "القاهرة"},
             "market_data": {"price_per_sqm": 10000},
         }
         resp = client.post("/api/valuation", json=payload)
-        assert resp.status_code != 401
+        assert resp.status_code == 401
 
     def test_EN12_advisor_health_no_token_not_401(self, client):
         resp = client.get("/api/advisor/health")

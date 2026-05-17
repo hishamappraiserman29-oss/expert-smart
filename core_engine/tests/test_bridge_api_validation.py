@@ -14,7 +14,7 @@ All tests mock:
   - bridge_api._remove_legacy_advanced_sheets
   - reports.report_pipeline.validate_report_data  (control validation result)
 
-Tests: VA01–VA17  (+ PL23–PL25 in test_report_pipeline.py)
+Tests: VA01–VA24
 """
 from __future__ import annotations
 
@@ -35,6 +35,17 @@ os.chdir(str(_CORE))
 
 from bridge_api import app                          # noqa: E402
 from reports.report_pipeline import PipelineResult  # noqa: E402
+from auth.tokens import generate_token              # noqa: E402
+
+
+# ── Auth helpers ──────────────────────────────────────────────────────────────
+
+_USER        = "validation-test-user"
+_TEST_SECRET = "test-secret-for-validation"
+
+
+def _auth() -> dict:
+    return {"Authorization": f"Bearer {generate_token(_USER)}"}
 
 
 # ── Helpers: fake validation issues ──────────────────────────────────────────
@@ -75,6 +86,13 @@ _MINIMAL = {
 }
 
 
+@pytest.fixture(autouse=True)
+def env(monkeypatch):
+    monkeypatch.setenv("JWT_SECRET", _TEST_SECRET)
+    monkeypatch.setenv("ADMIN_USER_IDS", "admin-validation")
+    monkeypatch.delenv("JWT_TTL_SECONDS", raising=False)
+
+
 @pytest.fixture()
 def client():
     app.config["TESTING"] = True
@@ -88,24 +106,25 @@ def _mock_io():
         yield
 
 
-# ── VA01–VA02: No validation → baseline preserved ────────────────────────────
+# ── VA01–VA04: No validation → baseline preserved ────────────────────────────
 
 class TestNoValidation:
     def test_VA01_missing_validate_key_returns_200(self, client):
         """No "validate" in payload → response identical to pre-BA.2 baseline."""
-        r = client.post("/api/valuation", json=_MINIMAL)
+        r = client.post("/api/valuation", json=_MINIMAL, headers=_auth())
         assert r.status_code == 200
         data = r.get_json()
         assert data["status"] == "success"
 
     def test_VA02_no_validate_response_lacks_validation_key(self, client):
         """When validate is absent the response must NOT contain "validation"."""
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL,
+                           headers=_auth()).get_json()
         assert "validation" not in data
 
     def test_VA03_validate_false_same_as_absent(self, client):
         payload = {**_MINIMAL, "validate": False}
-        r = client.post("/api/valuation", json=payload)
+        r = client.post("/api/valuation", json=payload, headers=_auth())
         assert r.status_code == 200
         data = r.get_json()
         assert data["status"] == "success"
@@ -113,7 +132,8 @@ class TestNoValidation:
 
     def test_VA04_existing_keys_intact_without_validate(self, client):
         """Core response shape must remain unchanged when validate is absent."""
-        data = client.post("/api/valuation", json=_MINIMAL).get_json()
+        data = client.post("/api/valuation", json=_MINIMAL,
+                           headers=_auth()).get_json()
         for key in ("market_value", "excel_url",
                     "report_style_requested", "report_style_used",
                     "template_used", "fallback_used", "fallback_reason"):
@@ -132,32 +152,37 @@ class TestValidatePassThrough:
 
     def test_VA05_validate_true_valid_data_returns_200(self, client):
         payload = {**_MINIMAL, "validate": True}
-        assert client.post("/api/valuation", json=payload).status_code == 200
+        assert client.post("/api/valuation", json=payload,
+                           headers=_auth()).status_code == 200
 
     def test_VA06_validate_true_response_has_validation_key(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert "validation" in data
 
     def test_VA07_validate_true_is_valid_true(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert data["validation"]["is_valid"] is True
 
     def test_VA08_validate_true_generation_proceeds(self, client):
         """Excel URL must be present — generation was not blocked."""
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert "excel_url" in data
         assert data["excel_url"].startswith("http")
 
     def test_VA09_validate_true_issues_is_list(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert isinstance(data["validation"]["issues"], list)
 
 
-# ── VA10–VA13: validate=true + ERRORs → 422 (blocking) ──────────────────────
+# ── VA10–VA14: validate=true + ERRORs → 422 (blocking) ──────────────────────
 
 class TestValidateBlocking:
     @pytest.fixture(autouse=True)
@@ -168,32 +193,37 @@ class TestValidateBlocking:
 
     def test_VA10_errors_return_422(self, client):
         payload = {**_MINIMAL, "validate": True}
-        assert client.post("/api/valuation", json=payload).status_code == 422
+        assert client.post("/api/valuation", json=payload,
+                           headers=_auth()).status_code == 422
 
     def test_VA11_422_status_is_validation_error(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert data["status"] == "validation_error"
 
     def test_VA12_422_has_validation_key(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert "validation" in data
 
     def test_VA13_422_issues_is_non_empty_list(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert isinstance(data["validation"]["issues"], list)
         assert len(data["validation"]["issues"]) > 0
 
     def test_VA14_422_no_excel_url_in_response(self, client):
         """Generation must be blocked — no excel_url should appear."""
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert "excel_url" not in data
 
 
-# ── VA15–VA17: issue shape and bilingual messages ─────────────────────────────
+# ── VA15–VA19: issue shape and bilingual messages ─────────────────────────────
 
 class TestIssueShape:
     @pytest.fixture(autouse=True)
@@ -204,31 +234,36 @@ class TestIssueShape:
 
     def test_VA15_issue_has_required_keys(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         issue = data["validation"]["issues"][0]
         for key in ("code", "severity", "message_ar", "message_en"):
             assert key in issue, f"Issue missing key: {key!r}"
 
     def test_VA16_issue_code_is_string(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert isinstance(data["validation"]["issues"][0]["code"], str)
 
     def test_VA17_message_ar_is_nonempty_string(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         msg_ar = data["validation"]["issues"][0]["message_ar"]
         assert isinstance(msg_ar, str) and msg_ar
 
     def test_VA18_message_en_is_nonempty_string(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         msg_en = data["validation"]["issues"][0]["message_en"]
         assert isinstance(msg_en, str) and msg_en
 
     def test_VA19_severity_is_string(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert isinstance(data["validation"]["issues"][0]["severity"], str)
 
 
@@ -243,17 +278,20 @@ class TestWarningsPassThrough:
 
     def test_VA20_warnings_only_returns_200(self, client):
         payload = {**_MINIMAL, "validate": True}
-        assert client.post("/api/valuation", json=payload).status_code == 200
+        assert client.post("/api/valuation", json=payload,
+                           headers=_auth()).status_code == 200
 
     def test_VA21_warnings_generation_proceeds(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert data["status"] == "success"
         assert "excel_url" in data
 
     def test_VA22_warnings_appear_in_issues(self, client):
         payload = {**_MINIMAL, "validate": True}
-        data = client.post("/api/valuation", json=payload).get_json()
+        data = client.post("/api/valuation", json=payload,
+                           headers=_auth()).get_json()
         assert data["validation"]["is_valid"] is True
         assert len(data["validation"]["issues"]) == 1
         assert data["validation"]["issues"][0]["severity"] == "WARNING"
@@ -272,7 +310,7 @@ class TestProfileKeyForwarding:
         with patch("reports.report_pipeline.validate_report_data",
                    return_value=_PASS) as mock_vrd:
             payload = {**_MINIMAL, "validate": True, "report_style": style}
-            client.post("/api/valuation", json=payload)
+            client.post("/api/valuation", json=payload, headers=_auth())
         _kw = mock_vrd.call_args.kwargs
         assert _kw.get("profile_key") == expected_key
 
@@ -285,7 +323,7 @@ class TestGateFallThrough:
         with patch("reports.report_pipeline.validate_report_data",
                    side_effect=RuntimeError("engine unavailable")):
             payload = {**_MINIMAL, "validate": True}
-            r = client.post("/api/valuation", json=payload)
+            r = client.post("/api/valuation", json=payload, headers=_auth())
         assert r.status_code == 200
         data = r.get_json()
         assert data["status"] == "success"

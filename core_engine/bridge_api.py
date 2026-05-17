@@ -8182,6 +8182,8 @@ def api_valuation_report():
 
 
 @app.route("/api/valuation/report/download/<filename>", methods=["GET"])
+@require_auth
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
 def api_valuation_report_download(filename: str):
     """
     Download a previously generated Excel valuation report.
@@ -8189,13 +8191,22 @@ def api_valuation_report_download(filename: str):
     <filename> must be the UUID-based name returned by POST /api/valuation/report.
     The file is served as an attachment with MIME type application/vnd.openxmlformats.
     """
-    # Reject path traversal attempts
+    # Layer 1 — reject any path separators; filename must be a plain name
+    if "/" in filename or "\\" in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 2 — basename normalization + extension allow-list
     safe_name = os.path.basename(filename)
-    if not safe_name.endswith(".xlsx") or safe_name != filename:
+    if not safe_name or safe_name != filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not (safe_name.endswith(".xlsx") or safe_name.endswith(".xlsm")):
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 3 — realpath containment (absolute guarantee against traversal)
+    abs_report_dir = os.path.realpath(_REPORT_DIR)
+    filepath = os.path.realpath(os.path.join(_REPORT_DIR, safe_name))
+    if not filepath.startswith(abs_report_dir + os.sep):
         return jsonify({"status": "error", "message": "Invalid filename"}), 400
 
-    filepath = os.path.join(_REPORT_DIR, safe_name)
-    if not os.path.exists(filepath):
+    if not os.path.isfile(filepath):
         return jsonify({"status": "error", "message": "Report not found or expired"}), 404
 
     return send_file(

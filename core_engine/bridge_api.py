@@ -373,7 +373,15 @@ _FRONTEND_DIR = os.path.join(_ROOT, "frontend")
 app = Flask(__name__,
             static_folder=_FRONTEND_DIR,
             static_url_path="/static")
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+# SEC-006: CORS origins controlled via ALLOWED_ORIGINS env var.
+# Production must set ALLOWED_ORIGINS to an explicit comma-separated list.
+# If unset, only safe local-development origins are allowed — never "*".
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if o.strip()
+] or ["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"]
+CORS(app, resources={r"/api/*": {"origins": _CORS_ORIGINS}})
 
 # ── Rate Limiting (Wave S4) ───────────────────────────────────────────────────
 
@@ -547,7 +555,11 @@ def _search_db_comparables(subject: dict, filters: dict, limit: int) -> list | N
 
 @app.after_request
 def _cors(r):
-    r.headers["Access-Control-Allow-Origin"]  = "*"
+    # SEC-006: reflect only explicitly allowed origins; never echo "*".
+    origin = request.headers.get("Origin", "")
+    if origin and origin in _CORS_ORIGINS:
+        r.headers["Access-Control-Allow-Origin"] = origin
+        r.headers["Vary"] = "Origin"
     r.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
     r.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
     return r
@@ -555,7 +567,15 @@ def _cors(r):
 
 # ── Audit Logging (Wave S5) ───────────────────────────────────────────────────
 
-_AUDITED_PREFIXES = ("/api/reports", "/api/admin")
+_AUDITED_PREFIXES = (
+    "/api/reports",                    # existing — report access
+    "/api/admin",                      # existing — admin audit endpoint
+    "/api/download",                   # SEC-001 — auth-gated file downloads
+    "/api/valuation/report/download",  # SEC-005 — auth-gated Excel reports
+    "/api/enterprise",                 # SEC-003 — tenant management
+    "/api/saas",                       # SEC-003 — SaaS tenant management
+    "/api/market-feed",                # SEC-007 — market data writes (admin-gated)
+)
 
 
 @app.after_request
@@ -5627,7 +5647,8 @@ def download(filename: str):
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: Market Feed — استقبال وعرض البيانات الخارجية
 # ═══════════════════════════════════════════════════════════════════════════
-@app.route("/api/market-feed", methods=["POST", "OPTIONS"])
+@app.route("/api/market-feed", methods=["POST"])
+@_require_admin
 def market_feed_post():
     """
     يُضيف سجل بيانات سوقية جديد من أي مصدر خارجي.
@@ -5772,6 +5793,7 @@ def market_feed_get():
 
 
 @app.route("/api/market-feed/<record_id>", methods=["DELETE"])
+@_require_admin
 def market_feed_delete(record_id):
     """يحذف سجلاً بعينه من قاعدة البيانات"""
     try:

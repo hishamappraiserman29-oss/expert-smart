@@ -15,7 +15,12 @@
 | Private key content in any tracked file | ✅ Not present (CI secret guard verified) |
 | CI secret guard scans for credential files on every push | ✅ Active (`ci-cd.yml` test job) |
 
-### Manual Cloud Action — PENDING ⚠️ PRODUCTION BLOCKER
+### Manual Cloud Action — DEFERRED ⚠️ WAIVED TEMPORARILY
+
+> **Formal waiver on file:** `docs/PH3_KEY_ROTATION_WAIVER.md` (Waiver ID: PH3-GCP-SA-KEY-ROTATION)
+>
+> PH.3 manual rotation is covered by this waiver until project owner access is restored
+> or the key is confirmed rotated, deleted, or unused.
 
 The old service account key for:
 
@@ -26,7 +31,7 @@ appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com
 has **not** been rotated or deleted. This is a manual Google Cloud Console action that cannot
 be completed from within the repository.
 
-**Current blockers (as of 2026-05-18):**
+**Current blockers (as of 2026-05-19):**
 
 | Blocker | Detail |
 |---|---|
@@ -62,11 +67,12 @@ be completed from within the repository.
 |---|---|
 | Repo credential hygiene | ✅ CONDITIONAL-GO |
 | CI pipeline | ✅ CONDITIONAL-GO |
-| Production dry-run final sign-off | ❌ BLOCKED — pending key rotation or formal waiver |
-| `v1.1.0` release tag | ❌ BLOCKED — pending key rotation or formal waiver |
-| Public production release | ❌ BLOCKED — pending key rotation or formal waiver |
+| Production dry-run (conditional) | ⚠️ CONDITIONAL — waiver `PH3-GCP-SA-KEY-ROTATION` must be acknowledged by project owner |
+| `v1.1.0` release tag | ❌ BLOCKED — requires key rotation/deletion confirmed, or explicit written risk acceptance |
+| Public production release | ❌ BLOCKED — same as above |
 
 > CI hardening is **not** blocked by this item. Only the final production release gate is held.
+> See `docs/PH3_KEY_ROTATION_WAIVER.md` for closure conditions and sign-off fields.
 
 ### Waiver Path
 

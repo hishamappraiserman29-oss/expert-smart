@@ -32,13 +32,18 @@
 |---|---|
 | `service_account.json` / `credentials.json` tracked in Git | ✅ Not tracked — `.gitignore` hardened |
 | Private key content in any tracked file | ✅ Not present — CI secret guard active |
-| Manual key rotation on GCP | ⚠️ **PENDING BLOCKER** |
+| Repo-side remediation | ✅ DONE |
+| Manual key rotation on GCP | ⚠️ **WAIVED TEMPORARILY** — Waiver ID: `PH3-GCP-SA-KEY-ROTATION` |
 
-**Manual rotation blocked by:** MFA / 2-Step Verification not completed + missing IAM permissions
-(`iam.serviceAccounts.list`, `resourcemanager.projects.get`) on project `gleaming-terra-487414-f4`.
+**Waiver reason:** MFA / 2-Step Verification setup could not be completed; current account lacks
+`iam.serviceAccounts.list` and `resourcemanager.projects.get` on project `gleaming-terra-487414-f4`.
 
-**Gate impact:** `v1.1.0` tag and production release are blocked until rotation is completed or formally
-waived. See `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status` for the full waiver path.
+**Gate impact (updated 2026-05-19):**
+- Production dry-run: ⚠️ CONDITIONAL — allowed with project owner's explicit acknowledgement of waiver.
+- `v1.1.0` release tag: ⚠️ CONDITIONAL — **allowed as conditional release**; waiver decision recorded 2026-05-19 by project owner (Hisham Elmahdy). See waiver document for recommended tag annotation.
+- Full unconditional production release: ❌ PENDING — requires PH.3 waiver closure (key rotated/deleted/confirmed unused).
+
+**Waiver document:** `docs/PH3_KEY_ROTATION_WAIVER.md` — contains closure conditions, compensating controls, and owner sign-off fields.
 
 ---
 

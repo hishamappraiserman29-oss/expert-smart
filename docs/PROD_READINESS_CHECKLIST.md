@@ -2,10 +2,10 @@
 
 Run this checklist **before** any production deployment. Each item is binary (✅ ready / ❌ blocker).
 
-**Last reviewed:** 2026-05-18
+**Last reviewed:** 2026-05-19
 **Reviewer:** Hisham Elmahdy + Claude CLI
 **Target environment:** staging / production
-**Overall status:** CONDITIONAL-GO for repo security and CI — NO FINAL RELEASE TAG pending PH.3 key rotation
+**Overall status:** CONDITIONAL-GO — `v1.1.0` tag allowed as conditional release (waiver `PH3-GCP-SA-KEY-ROTATION` accepted). Full unconditional production GO pending PH.3 key rotation/deletion.
 
 ---
 
@@ -21,7 +21,10 @@ Run this checklist **before** any production deployment. Each item is binary (�
 - [ ] `pip-audit` / `safety check` clean on pinned dependencies
 - [ ] `gitleaks` scan — no leaked secrets in git history
 - [ ] Audit log populated for all sensitive endpoints
-- [ ] **Google service account key rotation completed** — `appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com` ⚠️ **PENDING BLOCKER** — see `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status`
+- [ ] **Google service account key rotation completed** — `appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com`
+  ⚠️ **CONDITIONAL WAIVER REQUIRED** — Waiver `PH3-GCP-SA-KEY-ROTATION` on file at `docs/PH3_KEY_ROTATION_WAIVER.md`.
+  Production dry-run may proceed only as a **conditional dry-run** if project owner acknowledges the waiver.
+  `v1.1.0` final release tag remains blocked until: (A) key rotation/deletion is confirmed, OR (B) waiver is approved by project owner with explicit written risk acceptance.
 
 ## 2. Reliability 🛡️
 
@@ -141,19 +144,22 @@ Sections 1 (Security), 2 (Reliability), and 4 (Data) must each be ≥ 80%.
 - Re-run the checklist for any significant environment change (new region,
   k8s upgrade, major dependency bump, auth system change).
 - Current known open items (as of 2026-05-18):
-  - Section 1: **Google service account key rotation PENDING** (PH.3) — blocks v1.1.0 tag and production release
-    - Blocker: MFA / 2-Step Verification not completed + missing IAM permissions
-    - See `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status` for full details and waiver path
+  - Section 1: **Google service account key rotation WAIVED TEMPORARILY** (PH.3, waiver `PH3-GCP-SA-KEY-ROTATION`)
+    - Repo cleanup: DONE. Cloud rotation: deferred — MFA not completed + missing IAM permissions
+    - Conditional dry-run: ALLOWED with owner acknowledgement
+    - `v1.1.0` tag: CONDITIONAL — allowed with waiver annotation (decision recorded 2026-05-19)
+    - Full unconditional production GO: pending key rotation/deletion or formal closure
+    - See `docs/PH3_KEY_ROTATION_WAIVER.md` for decision text, closure conditions, and sign-off fields
   - Section 1: Authentication hardened on `/api/reports*` + `/api/valuation` (SEC-002e complete); remaining endpoints deferred pending SEC-002 full rollout
   - Section 7: Playwright E2E smoke tests added and passing (Followup #11 resolved)
   - Section 3: No performance baseline yet (Followup #12)
 
-### Production Gate Summary (2026-05-18)
+### Production Gate Summary (2026-05-19)
 
-| Gate | Status | Blocker |
+| Gate | Status | Notes |
 |---|---|---|
-| Repo credential hygiene | ✅ CONDITIONAL-GO | — |
-| CI pipeline (test + lint + build) | ✅ CONDITIONAL-GO | — |
-| Production dry-run final sign-off | ❌ BLOCKED | PH.3 key rotation pending |
-| `v1.1.0` release tag | ❌ BLOCKED | PH.3 key rotation pending |
-| Public production release | ❌ BLOCKED | PH.3 key rotation + remaining SEC items |
+| Repo credential hygiene | ✅ GO | No credentials tracked; CI secret guard active |
+| CI pipeline (test + lint + build) | ✅ GO | 1851 tests passing; all CI jobs green |
+| Production dry-run (conditional) | ⚠️ CONDITIONAL | Owner must acknowledge waiver `PH3-GCP-SA-KEY-ROTATION` before proceeding |
+| `v1.1.0` release tag | ⚠️ CONDITIONAL | **Allowed** — conditional release with waiver annotation; decision recorded 2026-05-19 |
+| Full unconditional production release | ❌ PENDING | Requires PH.3 waiver closure (key rotation/deletion confirmed) + remaining SEC items |

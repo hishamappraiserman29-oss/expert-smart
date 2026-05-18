@@ -7,4 +7,4 @@ pytest-playwright
 # Async test compatibility (pytest-playwright leaves a running asyncio loop
 # that breaks asyncio.run() in subsequent tests; nest-asyncio patches the loop
 # to allow nested calls so the full suite runs clean)
-nest-asyncio
+nest-asyncio>=1.6.0,<2.0

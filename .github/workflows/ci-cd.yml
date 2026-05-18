@@ -29,7 +29,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
+        run: |
+          pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
+          pip install -r ../requirements-dev.txt
 
       - name: Secret guard — reject committed credentials
         working-directory: ${{ github.workspace }}

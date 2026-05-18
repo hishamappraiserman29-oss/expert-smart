@@ -35,7 +35,16 @@ def test_page_loads_without_console_errors(page: Page, live_server: str) -> None
 
     page.goto(live_server, wait_until="networkidle")
 
-    assert errors == [], f"Console errors detected on page load: {errors}"
+    # SEC-002 auth hardening makes protected API calls (e.g. /api/radar/start)
+    # return 401 for anonymous page load; the browser logs these as resource-load
+    # errors. This is expected until a login flow is wired into E2E.
+    # TypeError, ReferenceError, SyntaxError, 5xx errors, failed JS/CSS assets,
+    # and uncaught exceptions are NOT filtered and will still fail this test.
+    real_errors = [
+        e for e in errors
+        if not ("Failed to load resource" in e and "401" in e)
+    ]
+    assert real_errors == [], f"Console errors detected on page load: {real_errors}"
 
 
 def test_reports_panel_visible(page: Page, live_server: str) -> None:

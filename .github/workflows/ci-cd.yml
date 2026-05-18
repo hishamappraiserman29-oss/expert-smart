@@ -31,9 +31,64 @@ jobs:
       - name: Install dependencies
         run: pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
 
+      - name: Secret guard — reject committed credentials
+        working-directory: ${{ github.workspace }}
+        shell: python
+        run: |
+          import sys, pathlib, re, subprocess
+
+          FAIL = False
+          # File names that must never be tracked
+          FORBIDDEN_NAMES = {"service_account.json", "credentials.json"}
+          # PEM private key: header MUST be followed by a newline (real keys have this;
+          # regex pattern strings stored in .py files do not — avoids false positives
+          # from secrets_scanner.py which stores detection regexes as source code).
+          PEM_RE = re.compile(
+              r"-----BEGIN (RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----[\r\n]"
+          )
+          # service_account type field — scan .json files only
+          SA_TYPE_RE = re.compile(r'"type"\s*:\s*"service_account"')
+          TEXT_EXTS = {".py", ".txt", ".md", ".yml", ".yaml", ".toml", ".cfg", ".sh"}
+
+          tracked = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          for path_str in tracked:
+              p = pathlib.Path(path_str)
+              if p.name in FORBIDDEN_NAMES:
+                  print(f"FAIL: credential file tracked: {path_str}")
+                  FAIL = True
+                  continue
+              if p.name.startswith(".env") and p.name != ".env.example":
+                  print(f"FAIL: .env file tracked: {path_str}")
+                  FAIL = True
+                  continue
+              if p.suffix == ".db" and "data" in path_str:
+                  print(f"FAIL: .db file tracked in data dir: {path_str}")
+                  FAIL = True
+                  continue
+              if p.suffix in TEXT_EXTS:
+                  try:
+                      content = p.read_text(encoding="utf-8", errors="ignore")
+                      if PEM_RE.search(content):
+                          print(f"FAIL: PEM private key material in {path_str}")
+                          FAIL = True
+                  except Exception:
+                      pass
+              if p.suffix == ".json":
+                  try:
+                      content = p.read_text(encoding="utf-8", errors="ignore")
+                      if SA_TYPE_RE.search(content):
+                          print(f"FAIL: service_account type field in {path_str}")
+                          FAIL = True
+                  except Exception:
+                      pass
+          if FAIL:
+              sys.exit(1)
+          print("Secret guard passed — no credentials detected in tracked files.")
+
       - name: Run tests
         run: |
           python -m pytest tests/ -q --tb=short \
+            --ignore=tests/e2e \
             --cov=. --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage

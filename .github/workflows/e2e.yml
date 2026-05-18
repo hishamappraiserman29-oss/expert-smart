@@ -12,6 +12,10 @@ jobs:
     name: Playwright Smoke Tests
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Dummy secret so bridge_api.py auth middleware initialises cleanly.
+      # E2E tests only exercise the UI (health check + DOM); no JWT is issued.
+      JWT_SECRET: ci-test-secret-for-e2e-workflow
 
     steps:
       - uses: actions/checkout@v4

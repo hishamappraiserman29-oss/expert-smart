@@ -1,5 +1,87 @@
 # Google Cloud Credentials — Setup & Security Policy
 
+---
+
+## PH.3 Status — Service Account Key Rotation
+
+### Repo Cleanup — DONE ✅
+
+| Item | Status |
+|---|---|
+| `service_account.json` tracked in Git | ✅ Not tracked |
+| `credentials.json` tracked in Git | ✅ Not tracked |
+| `.gitignore` blocks all credential file patterns | ✅ Hardened (root + `core_engine/`) |
+| `.env.example` documents `GOOGLE_APPLICATION_CREDENTIALS` | ✅ Placeholder only — no real value |
+| Private key content in any tracked file | ✅ Not present (CI secret guard verified) |
+| CI secret guard scans for credential files on every push | ✅ Active (`ci-cd.yml` test job) |
+
+### Manual Cloud Action — PENDING ⚠️ PRODUCTION BLOCKER
+
+The old service account key for:
+
+```
+appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com
+```
+
+has **not** been rotated or deleted. This is a manual Google Cloud Console action that cannot
+be completed from within the repository.
+
+**Current blockers (as of 2026-05-18):**
+
+| Blocker | Detail |
+|---|---|
+| MFA / 2-Step Verification not completed | The owning Google account requires 2-Step Verification before IAM operations can be performed. |
+| Missing IAM permission: `iam.serviceAccounts.list` | Required to list service accounts in the project. |
+| Missing IAM permission: `resourcemanager.projects.get` | Required to access project `gleaming-terra-487414-f4`. |
+
+### Required Manual Steps to Close PH.3
+
+1. Sign in to [Google Cloud Console](https://console.cloud.google.com) with the Google account
+   that **owns or can administer** project `gleaming-terra-487414-f4`.
+2. Complete **MFA / 2-Step Verification** setup for that account.
+3. Request or obtain at minimum these IAM roles on the project:
+   - `roles/iam.serviceAccountKeyAdmin` — to delete / create keys
+   - `roles/viewer` or `roles/iam.securityReviewer` — to list service accounts
+4. Navigate to: **IAM & Admin → Service Accounts**
+5. Locate: `appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com`
+6. Open the **Keys** tab.
+7. **Delete** any existing key(s) that are no longer needed or are of unknown provenance.
+8. If a new key is required for local development or staging:
+   a. Click **Add Key → Create new key → JSON**.
+   b. Download to a safe path **outside** the repository tree (e.g., `~/.secrets/`).
+   c. Update `GOOGLE_APPLICATION_CREDENTIALS` in your local `.env` and in all deployment environments.
+   d. Test the application with the new key before deleting the old one.
+9. Confirm no key file has entered the repository:
+   ```bash
+   git ls-files | grep -Ei "service_account|credentials"
+   ```
+
+### Production Gate
+
+| Gate | Status |
+|---|---|
+| Repo credential hygiene | ✅ CONDITIONAL-GO |
+| CI pipeline | ✅ CONDITIONAL-GO |
+| Production dry-run final sign-off | ❌ BLOCKED — pending key rotation or formal waiver |
+| `v1.1.0` release tag | ❌ BLOCKED — pending key rotation or formal waiver |
+| Public production release | ❌ BLOCKED — pending key rotation or formal waiver |
+
+> CI hardening is **not** blocked by this item. Only the final production release gate is held.
+
+### Waiver Path
+
+If the project owner can confirm the key is already deleted, expired, or was never used in
+production, this blocker may be formally waived. Record the decision here:
+
+| Field | Value |
+|---|---|
+| Owner name | _______________ |
+| Date confirmed | _______________ |
+| Confirmation method | GCP Console screenshot / email / verbal |
+| Decision | ☐ Rotated and tested  ☐ Deleted (unused)  ☐ Formally waived — reason: ___ |
+
+---
+
 ## Rule 1 — Never commit credential files
 
 `service_account.json`, `credentials.json`, and `token.json` are blocked

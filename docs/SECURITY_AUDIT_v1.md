@@ -7,6 +7,41 @@
 
 ---
 
+## Post-Audit Status (as of 2026-05-18)
+
+| Finding | Severity | Status | Notes |
+|---|---|---|---|
+| SEC-001 Path traversal `/api/download` | Critical | ✅ Fixed | `@require_auth` + `basename` + containment check added |
+| SEC-002 ~75 unauthenticated endpoints | High | 🔄 In Progress | `/api/valuation` + `/api/reports*` hardened; remaining endpoints tracked |
+| SEC-003 Unauthenticated enterprise mgmt | High | ✅ Fixed | `@require_admin` applied to all `/api/enterprise/*` routes |
+| SEC-004 `str(e)` exception disclosure | High | 🔄 Deferred | Tracked; not yet replaced |
+| SEC-005 Unauthenticated report download | High | ✅ Fixed | `@require_auth` added |
+| SEC-006 CORS wildcard | Medium | 🔄 Deferred | Tracked; not yet restricted |
+| SEC-007 Unauthenticated market-feed write | Medium | 🔄 Deferred | Tracked |
+| SEC-008 Audit coverage gap | Medium | 🔄 Deferred | Tracked |
+| SEC-009 `.env.example` missing | Medium | ✅ Fixed | `.env.example` created with all required vars |
+| SEC-010 Disconnected `security_layer.py` | Low | 🔄 Deferred | Tracked |
+| SEC-011 Silent auth-import failure | Low | 🔄 Deferred | Tracked |
+| SEC-012 Decorator order `@require_auth`/`@limiter` | Low | 🔄 Deferred | Tracked |
+| SEC-013 TODO in production response | Informational | 🔄 Deferred | Tracked |
+| SEC-014 `datetime.utcnow()` deprecated | Informational | 🔄 Deferred | Tracked |
+
+### PH.3 — Google Credentials (Post-Audit Finding)
+
+| Item | Status |
+|---|---|
+| `service_account.json` / `credentials.json` tracked in Git | ✅ Not tracked — `.gitignore` hardened |
+| Private key content in any tracked file | ✅ Not present — CI secret guard active |
+| Manual key rotation on GCP | ⚠️ **PENDING BLOCKER** |
+
+**Manual rotation blocked by:** MFA / 2-Step Verification not completed + missing IAM permissions
+(`iam.serviceAccounts.list`, `resourcemanager.projects.get`) on project `gleaming-terra-487414-f4`.
+
+**Gate impact:** `v1.1.0` tag and production release are blocked until rotation is completed or formally
+waived. See `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status` for the full waiver path.
+
+---
+
 ## Executive Summary
 
 | Severity      | Count |

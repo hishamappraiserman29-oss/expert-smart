@@ -2,9 +2,10 @@
 
 Run this checklist **before** any production deployment. Each item is binary (✅ ready / ❌ blocker).
 
-**Last reviewed:** [TBD]
-**Reviewer:** [name]
-**Target environment:** [staging / production]
+**Last reviewed:** 2026-05-18
+**Reviewer:** Hisham Elmahdy + Claude CLI
+**Target environment:** staging / production
+**Overall status:** CONDITIONAL-GO for repo security and CI — NO FINAL RELEASE TAG pending PH.3 key rotation
 
 ---
 
@@ -20,6 +21,7 @@ Run this checklist **before** any production deployment. Each item is binary (�
 - [ ] `pip-audit` / `safety check` clean on pinned dependencies
 - [ ] `gitleaks` scan — no leaked secrets in git history
 - [ ] Audit log populated for all sensitive endpoints
+- [ ] **Google service account key rotation completed** — `appraiser-sync@gleaming-terra-487414-f4.iam.gserviceaccount.com` ⚠️ **PENDING BLOCKER** — see `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status`
 
 ## 2. Reliability 🛡️
 
@@ -138,7 +140,20 @@ Sections 1 (Security), 2 (Reliability), and 4 (Data) must each be ≥ 80%.
 - Items marked ❌ should generate follow-up tasks with an owner and deadline.
 - Re-run the checklist for any significant environment change (new region,
   k8s upgrade, major dependency bump, auth system change).
-- Current known open items (as of 2026-05-16):
-  - Section 1: No authentication on report endpoints yet (Followup #7)
-  - Section 7: No automated E2E tests yet (Followup #11)
+- Current known open items (as of 2026-05-18):
+  - Section 1: **Google service account key rotation PENDING** (PH.3) — blocks v1.1.0 tag and production release
+    - Blocker: MFA / 2-Step Verification not completed + missing IAM permissions
+    - See `docs/GOOGLE_CREDENTIALS_SETUP.md § PH.3 Status` for full details and waiver path
+  - Section 1: Authentication hardened on `/api/reports*` + `/api/valuation` (SEC-002e complete); remaining endpoints deferred pending SEC-002 full rollout
+  - Section 7: Playwright E2E smoke tests added and passing (Followup #11 resolved)
   - Section 3: No performance baseline yet (Followup #12)
+
+### Production Gate Summary (2026-05-18)
+
+| Gate | Status | Blocker |
+|---|---|---|
+| Repo credential hygiene | ✅ CONDITIONAL-GO | — |
+| CI pipeline (test + lint + build) | ✅ CONDITIONAL-GO | — |
+| Production dry-run final sign-off | ❌ BLOCKED | PH.3 key rotation pending |
+| `v1.1.0` release tag | ❌ BLOCKED | PH.3 key rotation pending |
+| Public production release | ❌ BLOCKED | PH.3 key rotation + remaining SEC items |

@@ -8,3 +8,7 @@ pytest-playwright
 # that breaks asyncio.run() in subsequent tests; nest-asyncio patches the loop
 # to allow nested calls so the full suite runs clean)
 nest-asyncio>=1.6.0,<2.0
+
+# MCP bridge tests (test_ph2_coverage_gaps, test_phase_16/18/19/21_e2e)
+# import mcp_bridge.py which depends on fastmcp at the top level.
+fastmcp>=3.0.0,<4.0

@@ -448,6 +448,44 @@ E2E bundle (`229fc3c`) unblocked:
 
 ---
 
+## R3.11 — Gate Decision (2026-05-19)
+
+Cherry-picks onto: `main`
+Commit cherry-picked: `b78d4b1` (from `wip/r3-subsystems-checkpoint`)
+Commit on main: `b99187c`
+Full suite after merge: **1,973 / 1,973 passed ✅** (+105 new tests)
+
+### `core_engine/saas/` — MERGED (with test auth fix)
+
+Decision: **MERGE-with-fix** (approved 2026-05-19)
+
+Files: 6 source + 4 test (10 total) / 2,153 lines | Tests: 105/105 ✅
+
+Resolution of R3.5 deferral blockers:
+
+| R3.5 Blocker | Resolution |
+|---|---|
+| B1: `test_phase39_saas.py` needs `scripts/` | ✅ RESOLVED — `scripts/` merged R3.6 |
+| B2: `test_phase_15_2_e2e.py` needs `database.audit_log` | ✅ RESOLVED — `database/` merged R3.10 |
+| B3: `tenant_id` / `owner_user_id` bridge undocumented | ⏸ DEFERRED — orthogonal models, no bridge needed in this wave |
+
+Fix applied before merge:
+- `test_phase_15_e2e.py` and `test_phase_15_2_e2e.py` had `_post`/`_get` helpers without auth headers (written before SEC-003 added `@_require_admin` to enterprise endpoints)
+- Fix: shared `os.environ.setdefault("JWT_SECRET", "test-secret-saas-suite")` + `os.environ.setdefault("ADMIN_USER_IDS", "test-admin-saas")` in both files; identical user ID avoids cross-file contamination via pytest module load order
+
+Source modules (all pure stdlib, zero network):
+- `tenant_manager.py`: TenantManager + enums + TIER_LIMITS, thread-safe CRUD
+- `tenant_isolation.py`: TenantIsolationValidator, `require_tenant_context` decorator; `TenantAwareQuery` stub (DB optional, `try/except`)
+- `billing_engine.py`: UsageMetric, BillingEngine (in-memory metering, mock payment)
+- `subscription_manager.py`: trial/paid/upgrade/downgrade/suspend/cancel/expire lifecycle
+- `dashboard.py`: TenantDashboard — overview, usage analytics, billing, platform stats
+
+Endpoints unlocked: 11 `/api/saas/*` — all `@_require_admin` (SEC-003) + in `_AUDITED_PREFIXES` (SEC-008). `_SAAS_OK` guard already wired in `bridge_api.py`.
+
+B3 context: `owner_user_id` = JWT `sub` (individual report owner); `tenant_id` = SaaS org grouping. Orthogonal — no bridge needed until multi-tenant report isolation is scoped. `TenantAwareQuery` stub raises `NotImplementedError` only if called; no production path calls it.
+
+---
+
 # R3 SERIES — FINAL SUMMARY
 
 Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R3.8 → R3.9
@@ -484,7 +522,6 @@ Final test count on main: **1,577** (post all hotfixes)
 
 | Item | Blocker |
 |---|---|
-| saas/ | B3: tenant_id/owner_user_id bridge undocumented (B2 resolved by R3.10) |
 | mobile/ | Separate React Native/TypeScript ecosystem; requires dedicated mobile review gate |
 | E2E bundle (229fc3c) | Unblocked by R3.10 — requires its own Gate before merge |
 

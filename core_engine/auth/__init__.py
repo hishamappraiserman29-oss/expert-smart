@@ -9,6 +9,6 @@ Future waves:
 - S4: rate limiting
 - S5: audit logging
 """
-from core_engine.auth.tokens import AuthError, generate_token, verify_token
+from .tokens import AuthError, generate_token, verify_token
 
 __all__ = ["AuthError", "generate_token", "verify_token"]

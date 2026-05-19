@@ -54,8 +54,9 @@ from flask_limiter.errors import RateLimitExceeded
 try:
     from auth.tokens import AuthError as _AuthError, verify_token as _verify_token
     _AUTH_AVAILABLE = True
-except ImportError:
+except ImportError as _auth_import_err:
     _AUTH_AVAILABLE = False
+    print(f"{_ts()} [CRITICAL] Auth subsystem unavailable: {_auth_import_err} — all protected endpoints will return 401")
 
 # ── Admin authorization (Followup S5.1) ──────────────────────────────────────
 from admin import require_admin as _require_admin

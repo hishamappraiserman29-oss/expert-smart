@@ -12,6 +12,52 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and [Semant
 
 ---
 
+## [1.1.2] — 2026-05-20 — Conditional Release (R3 final closure)
+
+**Type:** CONDITIONAL — PH.3 GCP key rotation still pending.  
+**Tag:** `v1.1.2` (not yet created — pending approval).  
+**Handoff:** `docs/FINAL_RELEASE_HANDOFF_v1.1.2.md`  
+**Base:** builds on `v1.1.1` (Frontend Auth #7b + PH.3 runbook).
+
+### Added
+
+#### database/ subsystem (R3.10 — commit `d94a847`)
+- `database/models.py` — SQLAlchemy ORM models: `Comparable`, `Valuation`, `QualityAudit`, `ActivityLog` (renamed from `AuditLog` to avoid collision with enterprise audit log).
+- `database/connection.py` — lazy engine factory, `SessionLocal` proxy, `get_db()`, `ping_db()`, `init_db()`.
+- `database/audit_log.py` — SQLite enterprise audit log: `AuditAction` enum (8 actions), `AuditEvent` dataclass, `AuditLog` class (record/get/count/filter).
+- `database/batch_store.py` — SQLite-backed batch result persistence.
+- `database/webhook_log.py` — SQLite webhook delivery log.
+- `database/__init__.py` — exports `Base`, `Comparable`, `Valuation`, `QualityAudit`, `ActivityLog`.
+- 74 new tests (ORM integration + audit log unit).
+
+#### saas/ subsystem (R3.11 — commit `b99187c`)
+- `saas/tenant_manager.py` — in-memory multi-tenant registry with `TenantStatus`, `UserRole`, `SubscriptionTier` enums and `TIER_LIMITS`.
+- `saas/billing_engine.py` — usage metering (`UsageMetric`), invoice generation (no live payment).
+- `saas/subscription_manager.py` — full lifecycle: trial/paid/upgrade/downgrade/suspend/cancel/expire.
+- `saas/tenant_isolation.py` — `TenantIsolationValidator`, `require_tenant_context` decorator.
+- `saas/dashboard.py` — `TenantDashboard`: overview, analytics, billing summary, platform stats.
+- 11 new enterprise API endpoints (`/api/enterprise/*`) — all `@_require_admin` (SEC-003).
+- Enterprise audit trail: tenant creation and user add events auto-recorded.
+- 105 new tests (API integration + unit: `test_phase_15_e2e.py`, `test_phase_15_2_e2e.py`, `test_phase39_saas.py`, `test_saas_readiness.py`).
+
+#### E2E test bundle (R3.12 — commit `3ec8de5`)
+- `test_phase_8_e2e.py` — SQLite/SQLAlchemy ORM writes + 3 valuation API calls (15 tests).
+- `test_phase_10_e2e.py` — DCF model math + 2 DCF API calls (6 tests).
+- `test_phase_11_e2e.py` — Portfolio performance scenarios + 2 API calls + sheet builder (17 tests).
+- `test_phase_11_complete.py` — Portfolio E2E pipeline + 2 API calls (10 tests).
+- `test_phase_12_e2e.py` — BatchProcessor + 8 batch API calls + report builder + registry (21 tests).
+- `test_phase_13_e2e.py` — BatchStore SQLite persistence + 3 API calls (11 tests).
+- `test_phase_14_e2e.py` — WebhookDispatcher + WebhookLog + 1 async webhook API call (12 tests).
+
+### Fixed
+- **CI dependency gap (commit `f20160f`):** `SQLAlchemy>=2.0,<3.0` added to `core_engine/requirements.txt`. `database/models.py` imports SQLAlchemy at module load time; the package was installed ad-hoc on developer machines but absent from requirements, causing `ModuleNotFoundError` during pytest collection in CI.
+
+### Tests
+- Full suite: **2,076 tests, all passing** (up from 1,858 at v1.1.0 / 1,971 at v1.1.1).
+- GitHub Actions CI: green.
+
+---
+
 ## [1.1.0] — 2026-05-19 — Conditional Release
 
 **Type:** CONDITIONAL — see `docs/PH3_KEY_ROTATION_WAIVER.md`.  
@@ -148,6 +194,7 @@ engines, full Bridge API integration, and a frontend history panel.
 
 ---
 
-[Unreleased]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.1...v1.1.2
 [1.1.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.1.0
 [1.0.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.0.0

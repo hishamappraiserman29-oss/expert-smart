@@ -533,7 +533,7 @@ Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R
 Total subsystems reviewed: 24 / 24 + E2E bundle
 Final test count on main: **2,076** (post all merges)
 
-### Merged to main (20 subsystems)
+### Merged to main (23 subsystems + E2E bundle + CI fix)
 
 | Subsystem | Wave | Commit on main |
 |---|---|---|
@@ -557,6 +557,10 @@ Final test count on main: **2,076** (post all merges)
 | scenarios/ | R3.7 | 0a9538f |
 | api/ | R3.8 | 837d150 |
 | adapters/ (source only) | R3.8 | 303ea99 |
+| **database/** | **R3.10** | **d94a847** |
+| **saas/** | **R3.11** | **b99187c** |
+| **E2E bundle (phases 8/10–14)** | **R3.12** | **3ec8de5** |
+| fix(deps): SQLAlchemy>=2.0 CI fix | post-R3.12 | f20160f |
 
 ### Deferred (remain on wip/r3-subsystems-checkpoint)
 
@@ -567,13 +571,16 @@ Final test count on main: **2,076** (post all merges)
 ### Outstanding cross-cutting follow-ups
 
 - [ ] Domain expert (د. عبد الرؤوف): banking math, standards USPAP content, tax rates
-- [ ] Audit trail persistence for government endpoints (blocked by database/)
+- [x] Audit trail persistence for government endpoints — ✅ UNBLOCKED (`database/` merged R3.10)
 - [ ] PII encryption-at-rest strategy (government National ID flows)
 - [ ] mobile/ extraction path decision (separate repo / monorepo / archive-only)
 - [ ] `GOVT_SIGNING_KEY` added to production PROD_READINESS_CHECKLIST.md (Section 1: Security)
 - [ ] B3 (R3.11): tenant_id ↔ owner_user_id bridge — P2, non-blocking, scope when multi-tenant report isolation is needed
+- [ ] **PH.3 closure** — GCP service account key rotation/delete/disable; blocks Full Production GO (waiver expires 2026-06-19)
+- [ ] **v1.1.2 tag** — pending owner approval; all docs committed and CI green
 
 ### WIP branch fate: KEEP AS ARCHIVE (recommended)
 
 `wip/r3-subsystems-checkpoint` preserves the original checkpoint including all
-deferred items. Do not delete until database/ and saas/ resolution paths are clear.
+deferred items. `database/` and `saas/` are now resolved. `mobile/` is the only
+remaining open deferral.

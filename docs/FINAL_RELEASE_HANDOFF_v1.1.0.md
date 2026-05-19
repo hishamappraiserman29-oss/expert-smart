@@ -160,22 +160,21 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 
 ## 10. Deferred Items (Not Blocking v1.1.0)
 
+> **Note (2026-05-20):** `database/` and `saas/` have since been merged in v1.1.2.
+> See `docs/FINAL_RELEASE_HANDOFF_v1.1.2.md` for the updated status.
+
 ### `database/` subsystem
-- **Status:** DEFERRED
-- Requires `psycopg2` and a live PostgreSQL instance; not in `requirements.txt` intentionally
-- Contains a naming collision: `database/models.py` (SQLAlchemy ORM `AuditLog`) vs `database/audit_log.py` (SQLite dataclass `AuditLog`) — both export `AuditLog`
-- All `bridge_api.py` references to `database/` are guarded with `try/except`
-- **Next step:** Resolve `AuditLog` collision, add PostgreSQL integration tests, undefer
+- **Status at v1.1.0:** DEFERRED *(merged in v1.1.2 — commit `d94a847`)*
+- ~~Contains a naming collision: `AuditLog` in both `database/models.py` and `database/audit_log.py`~~
+- **Resolution:** `database/models.py` class renamed `ActivityLog`; collision eliminated (R3.10)
 
 ### `saas/` subsystem
-- **Status:** DEFERRED — blocked by `database/` deferred status
-- B1 blocker (`scripts/` module dependency) resolved
-- B2 blocker (`test_phase_15_2_e2e.py` needs `database.audit_log`) still open
-- **Next step:** Unblocked automatically when `database/` is resolved
+- **Status at v1.1.0:** DEFERRED *(merged in v1.1.2 — commit `b99187c`)*
+- **Resolution:** B1 (scripts/) and B2 (database.audit_log) blockers resolved; merged R3.11
 
 ### `mobile/`
 - **Status:** On WIP branch (`wip/r3-subsystems-checkpoint`), not merged to `main`
-- Not part of the v1.1.0 release scope
+- Not part of v1.1.0 or v1.1.2 scope
 - **Next step:** Review and merge when mobile sprint is complete
 
 ### Frontend Auth — Followup #7b
@@ -204,7 +203,7 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 |---|---|---|
 | P0 | **PH.3 closure** — complete GCP key rotation or confirm key deleted/unused | Main blocker for Full Production GO; waiver expires 2026-06-19 |
 | P1 | **Frontend/auth follow-ups after SEC-002** — gate background calls (`/api/radar/start`, `/api/price-index`) behind token/admin state; optionally migrate from token-paste `localStorage` to real login provider or `HttpOnly` cookie | SEC-002 itself is complete; these are post-#7b hardening steps |
-| P2 | **`database/` resolution** — resolve `AuditLog` collision, add PG integration tests | Unblocks `saas/` and enables PostgreSQL production path |
+| ~~P2~~ | ~~**`database/` resolution**~~ | ✅ DONE in v1.1.2 (R3.10 + R3.11) |
 | P3 | **Full Production GO review** — re-run gate after P0 is closed | Produces unconditional production release |
 | P4 | **Performance baseline** (Followup #12) | Required for regression alerts; currently deferred |
 
@@ -223,7 +222,7 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 | SEC-011 runtime auth import | ✅ GO (fixed this release) |
 | PH.3 GCP key rotation | ⚠️ WAIVED TEMPORARILY |
 | Frontend auth (#7b) — MVP login modal + esFetch | ✅ IMPLEMENTED (post-tag) |
-| `database/` / `saas/` subsystems | ⚠️ DEFERRED |
+| `database/` / `saas/` subsystems | ✅ MERGED in v1.1.2 |
 | `mobile/` | ⚠️ WIP BRANCH |
 | **v1.1.0 CONDITIONAL release** | ✅ **ALLOWED** |
 | **Full unconditional production GO** | ❌ **PENDING** — PH.3 closure (main blocker) |

@@ -1,17 +1,34 @@
 # Frontend Auth Flow — EXPERT SMART (Auth Wave #7b)
 
 **Date:** 2026-05-19  
-**Commits:** `d8c9d5d` (backend) · `0db6f4b` (frontend)  
+**Commits:** `d8c9d5d` (backend) · `0db6f4b` (frontend) · `<commit-3>` (E2E + docs)  
 **Status:** MVP — admin-only, pre-existing JWT, `localStorage`
+
+---
+
+## 0. L1 Auth Policy (Governing Decisions)
+
+| Decision | Value |
+|---|---|
+| Auth level | **L1 — Admin-only, single role** |
+| Login method | **Pre-existing JWT paste only** — no username/password form, no user store |
+| Token origin | Issued out-of-band by admin via `generate_token()` or CLI |
+| Token storage | `localStorage` (key: `es_auth`) |
+| Token validation | `GET /api/auth/verify` — server validates signature + expiry |
+| Protected calls | `esFetch` wrapper attaches `Authorization: Bearer <token>` |
+| 401 on expired/missing | Modal re-prompt; session cleared; no silent retry |
+| 403 (non-admin) | Inline admin-required message; no modal |
+| Background calls | `/api/radar/start` and `/api/price-index` use plain `fetch` — must not trigger modal on page load |
+| Future upgrade path | L2: real login provider / user store (see §8) |
 
 ---
 
 ## 1. Overview
 
 EXPERT SMART uses **JWT Bearer tokens** for all protected API calls. The frontend
-does **not** implement username/password authentication. Tokens are generated
-out-of-band by an administrator using `generate_token()` or the CLI, then pasted
-into the login modal by the user.
+does **not** implement username/password authentication and maintains **no server-side
+user store**. Tokens are generated out-of-band by an administrator using
+`generate_token()` or the CLI, then pasted into the login modal by the user.
 
 ```
 Admin CLI                    Browser                         Bridge API
@@ -147,8 +164,10 @@ production, implement a token revocation list (e.g. Redis blocklist).
 | HTTPS only | P0 | Never send Bearer tokens over plain HTTP |
 | Strict CSP | P1 | Prevents XSS exfiltration of `localStorage` token |
 | Token revocation list | P1 | Redis/DB blocklist for logout-before-expiry |
-| HttpOnly cookie session | P2 | Eliminates XSS token exposure entirely |
+| HttpOnly cookie session | P2 | Eliminates XSS token exposure; replaces `localStorage` approach |
 | Full SEC-002 rollout | P2 | Extend `@require_auth` to remaining unprotected endpoints |
+| Real login provider / user store | P2 | Replace token-paste flow with proper auth provider (e.g. OAuth2, LDAP); add server-side user store |
+| Gate background calls | P3 | `/api/radar/start` and `/api/price-index` are currently unauthenticated; gate behind auth/admin state in a future wave |
 | Refresh tokens | P3 | Long-lived refresh + short-lived access token pair |
 
 ---

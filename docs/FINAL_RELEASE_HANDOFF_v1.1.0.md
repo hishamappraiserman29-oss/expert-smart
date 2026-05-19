@@ -77,9 +77,12 @@ All 14 findings (SEC-001 through SEC-014) were addressed. See `docs/SECURITY_AUD
 
 **SEC-002e complete:** `/api/reports*` and `/api/valuation` now require a valid JWT (`@require_auth`). Owner isolation enforced via `owner_user_id` filter. Rate limiting active per user.
 
-**Remaining (deferred — not a blocker for v1.1.0):**
-- Full SEC-002 rollout to remaining endpoints (`/api/market-feed`, `/api/banking/*`, etc.) — deferred to next sprint
-- Frontend auth integration (Followup #7b) — UI does not yet pass JWT tokens; users without a token see 401 on protected calls
+**SEC-002 complete** (SEC-002a through SEC-002e, all test-aligned). No further SEC-002 rollout is pending.
+
+**Post-#7b frontend/auth follow-ups (deferred — not a blocker for v1.1.0):**
+- ~~Frontend auth integration (Followup #7b)~~ — **IMPLEMENTED** (commits `d8c9d5d`, `0db6f4b`): JWT login modal + esFetch wrapper; protected calls now send `Authorization: Bearer <token>`. See `docs/AUTH_FLOW.md`.
+- Background calls (`/api/radar/start`, `/api/price-index`) are currently unauthenticated; should later be gated behind token/admin state.
+- Optional migration from token-paste `localStorage` flow to a real login provider or `HttpOnly` cookie session.
 
 ---
 
@@ -176,10 +179,18 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 - **Next step:** Review and merge when mobile sprint is complete
 
 ### Frontend Auth — Followup #7b
-- **Status:** OPEN
-- SEC-002e hardened the backend (`@require_auth` on protected endpoints). The frontend (`frontend/index.html`) does not yet obtain or send JWT tokens. Users see 401 on protected API calls from the browser UI.
-- E2E tests pass because they filter the expected 401 from `POST /api/radar/start`
-- **Next step:** Implement login flow in the frontend; pass `Authorization: Bearer <token>` on protected fetch calls
+- **Status:** IMPLEMENTED (commits `d8c9d5d` backend · `0db6f4b` frontend)
+- JWT login modal added to `frontend/index.html`. User pastes a pre-existing JWT (no username/password, no user store). Modal calls `GET /api/auth/verify` to validate, then stores `{token, user_id, is_admin}` in `localStorage` under key `es_auth`.
+- `esFetch` wrapper attaches `Authorization: Bearer <token>` on 4 protected calls: valuation form, `esReportsLoad`, `esReportsViewDetail`, `esReportsDownloadPdf`.
+- 401 → session cleared + login modal re-prompt. 403 → inline admin-required message.
+- Logged-in bar (top-right) shows `user_id [مسؤول]` badge when authenticated.
+- E2E coverage added: 7 `TestAuthUI` tests in `test_frontend_smoke.py`.
+- 401 filter in E2E narrowed to only `/api/radar/start` and `/api/price-index` (surgical, with URL-absent fallback).
+- **Remaining follow-ups (deferred to next sprint):**
+  - Replace token-paste flow with a real login provider / user store when needed
+  - Migrate from `localStorage` to `HttpOnly` cookie session (eliminates XSS exposure)
+  - Gate `/api/radar/start` and `/api/price-index` behind auth/admin state in a future wave
+  - See `docs/AUTH_FLOW.md §8` for full hardening path
 
 ### E2E bundle
 - **Status:** RESOLVED — green as of commit `234dc6a`
@@ -191,12 +202,11 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 
 | Priority | Item | Rationale |
 |---|---|---|
-| P0 | **PH.3 closure** — complete GCP key rotation or confirm key deleted/unused | Converts CONDITIONAL release to Full Production GO; waiver expires 2026-06-19 |
-| P1 | **Frontend Auth (#7b)** — login flow + JWT in browser requests | Users currently cannot access protected endpoints from the UI |
-| P2 | **Full SEC-002 rollout** — extend `@require_auth` to remaining unprotected endpoints | Completes the auth hardening started in SEC-002e |
-| P3 | **`database/` resolution** — resolve `AuditLog` collision, add PG integration tests | Unblocks `saas/` and enables PostgreSQL production path |
-| P4 | **Full Production GO review** — re-run gate after P0+P1+P2 are closed | Produces unconditional production release |
-| P5 | **Performance baseline** (Followup #12) | Required for regression alerts; currently deferred |
+| P0 | **PH.3 closure** — complete GCP key rotation or confirm key deleted/unused | Main blocker for Full Production GO; waiver expires 2026-06-19 |
+| P1 | **Frontend/auth follow-ups after SEC-002** — gate background calls (`/api/radar/start`, `/api/price-index`) behind token/admin state; optionally migrate from token-paste `localStorage` to real login provider or `HttpOnly` cookie | SEC-002 itself is complete; these are post-#7b hardening steps |
+| P2 | **`database/` resolution** — resolve `AuditLog` collision, add PG integration tests | Unblocks `saas/` and enables PostgreSQL production path |
+| P3 | **Full Production GO review** — re-run gate after P0 is closed | Produces unconditional production release |
+| P4 | **Performance baseline** (Followup #12) | Required for regression alerts; currently deferred |
 
 ---
 
@@ -212,11 +222,11 @@ The Google service account key (`appraiser-sync@gleaming-terra-487414-f4.iam.gse
 | SEC-002 auth hardening (key endpoints) | ✅ GO |
 | SEC-011 runtime auth import | ✅ GO (fixed this release) |
 | PH.3 GCP key rotation | ⚠️ WAIVED TEMPORARILY |
-| Frontend auth (#7b) | ⚠️ DEFERRED |
+| Frontend auth (#7b) — MVP login modal + esFetch | ✅ IMPLEMENTED (post-tag) |
 | `database/` / `saas/` subsystems | ⚠️ DEFERRED |
 | `mobile/` | ⚠️ WIP BRANCH |
 | **v1.1.0 CONDITIONAL release** | ✅ **ALLOWED** |
-| **Full unconditional production GO** | ❌ **PENDING** — PH.3 + #7b + SEC-002 full rollout |
+| **Full unconditional production GO** | ❌ **PENDING** — PH.3 closure (main blocker) |
 
 ---
 

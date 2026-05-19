@@ -9,12 +9,13 @@
 
 ## Verdict
 
-> **NO-GO**
+> **GO** *(updated after SEC-011 fix + methodology fixes — see Appendices A and B)*
 >
-> SEC-011 (auth module import failure) is a **critical production blocker**.  
-> All protected endpoints return 401 to all users regardless of token validity.  
-> The application is non-functional for authenticated users in the current state.  
-> Fix SEC-011 and re-run dry-run before any production or staging deployment.
+> All 10 HTTP probes pass. All 21 checks pass. Auth is fully functional.  
+> Remaining open item before unconditional production release: PH.3 GCP key rotation waiver  
+> (see `docs/PH3_KEY_ROTATION_WAIVER.md`).
+>
+> ~~**NO-GO** — SEC-011 auth import failure blocked all protected endpoints.~~ *(resolved)*
 
 ---
 
@@ -249,6 +250,45 @@ GET /api/reports with no token or bad token correctly returns 401 — but becaus
 4. Re-run dry-run orchestrator — expect 10/10 probes to pass
 5. Re-run Docker build with Docker Desktop running
 6. After clean dry-run: re-assess `v1.1.0` conditional release gate
+
+---
+
+## Appendix B — Dry-Run Methodology Fixes (2026-05-19)
+
+**Context:** After SEC-011 was fixed, two probes still failed due to dry-run orchestrator issues (not production bugs). Both were resolved in `tools/production_dry_run.py`.
+
+### Probe #9 — Audit rows
+
+**Root cause:** The temp orchestrator set `REPORTS_DB_PATH` but not `AUDIT_DB_PATH`. The `audit_log.py` module resolves its DB path via (1) `db_path` kwarg, (2) `AUDIT_DB_PATH` env var, (3) `DEFAULT_DB_PATH`. Without `AUDIT_DB_PATH`, audit writes went to the production default DB, not the temp dry-run DB. The probe queried the temp DB and found no rows.
+
+**Fix:** Added `"AUDIT_DB_PATH": str(DR_AUDIT_DB)` to the subprocess env dict (pointing to the same temp DB as `REPORTS_DB_PATH`).
+
+**Result:** Probe #9 now finds `report_access_log` table with 37 rows — PASS.
+
+### Probe #10 — POST /api/valuation timeout
+
+**Root cause:** The `http()` helper defaulted to `timeout=8s`. The `/api/valuation` endpoint makes an LLM call (OpenAI) that takes more than 8 seconds. The probe got `ERR:timed out` even though the endpoint is functional.
+
+**Fix:** Probe #10 now passes `timeout=30` — a realistic production value for an LLM-backed endpoint.
+
+**Result:** Endpoint returned 200 within 30s — PASS.
+
+### Tooling improvement: `tools/production_dry_run.py`
+
+The orchestrator was promoted from a temp script to `tools/production_dry_run.py`:
+- Paths derived from `__file__` (no hardcoded Windows paths)
+- `AUDIT_DB_PATH` added to env dict
+- Probe #10 uses `timeout=30`
+- Env check for `AUDIT_DB_PATH` added (7 env checks, was 6)
+- Total checks: 21 (was 20)
+
+### Final dry-run result
+
+| Metric | Before SEC-011 fix | After SEC-011 fix | After methodology fix |
+|---|---|---|---|
+| Probes | 3/10 | 8/10 | **10/10** |
+| Total checks | 13/20 | 18/20 | **21/21** |
+| Verdict | NO-GO | CONDITIONAL GO | **GO** |
 
 ---
 

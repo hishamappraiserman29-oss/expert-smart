@@ -402,6 +402,52 @@ this wave was a quality audit + targeted hotfixes.
 
 ---
 
+## R3.10 — Gate Decision (2026-05-19)
+
+Cherry-picks onto: `main`
+Commit cherry-picked: `e75b654` (from `wip/r3-subsystems-checkpoint`)
+Full suite after merge: **1,868 / 1,868 passed ✅**
+
+### `core_engine/database/` — MERGED (with ActivityLog rename)
+
+Decision: **MERGE-with-rename** (approved 2026-05-19)
+
+Files: 10 / 1,904 lines | Tests: 1,868/1,868 (zero regression, no net new test files)
+
+Resolution of R3.1 deferral blockers:
+
+| R3.1 Blocker | Resolution |
+|---|---|
+| No unit/integration tests | Accepted: database/ is infrastructure; coverage via adapters E2E + future integration tests |
+| `sqlalchemy` + `psycopg2` missing from requirements.txt | Requirements wiring deferred — import guards in `bridge_api.py` already present |
+| AuditLog naming collision (models.py vs audit_log.py) | **RESOLVED** — `models.py:AuditLog` renamed to `ActivityLog`; `__tablename__="audit_logs"` unchanged |
+
+Rename details:
+- `database/models.py`: `class AuditLog(Base):` → `class ActivityLog(Base):` (PostgreSQL ORM request/activity log)
+- `database/__init__.py`: export updated to `ActivityLog`
+- `database/audit_log.py:AuditLog` — **UNTOUCHED** (SQLite enterprise audit trail, saas-tier tenant events)
+- `core_engine/audit_log.py` — **UNTOUCHED** (S5 HTTP access log, frozen file)
+- Table name `"audit_logs"` — **UNCHANGED** (zero schema/migration impact)
+
+Three-way naming separation confirmed:
+
+| Symbol | File | Backend | Purpose |
+|---|---|---|---|
+| `ActivityLog` | `database/models.py` | PostgreSQL | ORM request/activity log |
+| `AuditLog` | `database/audit_log.py` | SQLite | Enterprise tenant event audit trail (saas) |
+| `log_access()` | `core_engine/audit_log.py` | File/stderr | S5 HTTP access log |
+
+saas B2 blocker resolved:
+- `test_phase_15_2_e2e.py:30`: `from database.audit_log import AuditAction, AuditEvent, AuditLog` — **PASSES** ✅
+- saas/ merge still requires its own Gate (B3: tenant_id/owner_user_id bridge undocumented)
+
+E2E bundle (`229fc3c`) unblocked:
+- `test_phase_8_e2e.py` → `from database.models import ...` — now resolvable
+- `test_phase_13_e2e.py` → `from database.batch_store import ...` — now resolvable
+- Merging `229fc3c` requires separate Gate
+
+---
+
 # R3 SERIES — FINAL SUMMARY
 
 Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R3.8 → R3.9
@@ -438,10 +484,9 @@ Final test count on main: **1,577** (post all hotfixes)
 
 | Item | Blocker |
 |---|---|
-| database/ | No tests; missing sqlalchemy/psycopg2; AuditLog naming collision |
-| saas/ | Blocked by database/audit_log.py (B2) + tenant_id bridge undocumented (B3) |
+| saas/ | B3: tenant_id/owner_user_id bridge undocumented (B2 resolved by R3.10) |
 | mobile/ | Separate React Native/TypeScript ecosystem; requires dedicated mobile review gate |
-| E2E bundle (229fc3c) | Hard top-level `from database.*` imports — collection error without database/ |
+| E2E bundle (229fc3c) | Unblocked by R3.10 — requires its own Gate before merge |
 
 ### Outstanding cross-cutting follow-ups
 

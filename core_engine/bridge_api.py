@@ -59,7 +59,7 @@ except ImportError as _auth_import_err:
     print(f"{_ts()} [CRITICAL] Auth subsystem unavailable: {_auth_import_err} — all protected endpoints will return 401")
 
 # ── Admin authorization (Followup S5.1) ──────────────────────────────────────
-from admin import require_admin as _require_admin
+from admin import require_admin as _require_admin, is_admin as _is_admin
 
 
 # ── SEC-004: safe error helper ────────────────────────────────────────────────
@@ -576,6 +576,7 @@ _AUDITED_PREFIXES = (
     "/api/enterprise",                 # SEC-003 — tenant management
     "/api/saas",                       # SEC-003 — SaaS tenant management
     "/api/market-feed",                # SEC-007 — market data writes (admin-gated)
+    "/api/auth",                       # auth-wave — token verify calls logged
 )
 
 
@@ -639,6 +640,22 @@ def require_auth(fn):
             }), 401
         return fn(*args, **kwargs)
     return wrapper
+
+
+@app.route("/api/auth/verify", methods=["GET"])
+@require_auth
+def auth_verify():
+    """Verify a Bearer token and return the authenticated identity.
+
+    Used by the frontend to validate a pasted JWT before storing it.
+    Returns user_id and admin status so the UI can adapt accordingly.
+    Returns 401 for missing/invalid/expired tokens (via @require_auth).
+    """
+    return jsonify({
+        "status": "ok",
+        "user_id": g.user_id,
+        "is_admin": _is_admin(g.user_id),
+    })
 
 
 @app.route("/api/<path:p>", methods=["OPTIONS"])

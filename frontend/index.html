@@ -866,6 +866,92 @@
 
 
 
+
+    /* ══ Auth #7b — Login Modal + Logged-in Bar ══════════════════════════ */
+    #es-login-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.65);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+    #es-login-modal.es-active { display: flex; }
+    #es-login-box {
+        background: #0f172a;
+        border: 1px solid #c9a227;
+        border-radius: 10px;
+        padding: 2rem 2.5rem;
+        width: min(90vw, 420px);
+        color: #f1f5f9;
+        font-family: Cairo, sans-serif;
+        direction: rtl;
+    }
+    #es-login-box h3 { margin: 0 0 0.75rem; color: #c9a227; font-size: 1.1rem; }
+    #es-login-box p  { font-size: 0.82rem; color: #94a3b8; margin: 0 0 1rem; line-height: 1.6; }
+    #es-token-input {
+        width: 100%;
+        box-sizing: border-box;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 6px;
+        color: #f1f5f9;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.78rem;
+        font-family: monospace;
+        resize: vertical;
+        min-height: 72px;
+        direction: ltr;
+    }
+    #es-token-input:focus { outline: none; border-color: #c9a227; }
+    #es-login-error { display: none; color: #f87171; font-size: 0.8rem; margin-top: 0.5rem; }
+    #es-login-submit {
+        margin-top: 0.75rem;
+        width: 100%;
+        background: #c9a227;
+        color: #0f172a;
+        border: none;
+        border-radius: 6px;
+        padding: 0.6rem;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: Cairo, sans-serif;
+        font-size: 0.9rem;
+    }
+    #es-login-submit:hover    { background: #e6b800; }
+    #es-login-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    #es-logged-in-bar {
+        display: none;
+        position: fixed;
+        top: 0; right: 0;
+        background: #0f172a;
+        border-bottom-left-radius: 8px;
+        border: 1px solid #c9a227;
+        border-top: none; border-right: none;
+        padding: 0.35rem 0.9rem;
+        font-size: 0.75rem;
+        color: #c9a227;
+        z-index: 9998;
+        font-family: Cairo, sans-serif;
+        direction: rtl;
+        gap: 0.75rem;
+        align-items: center;
+    }
+    #es-logged-in-bar.es-visible { display: flex; }
+    #es-logout-btn {
+        background: none;
+        border: 1px solid #475569;
+        border-radius: 4px;
+        color: #94a3b8;
+        font-size: 0.7rem;
+        padding: 0.15rem 0.45rem;
+        cursor: pointer;
+        font-family: Cairo, sans-serif;
+    }
+    #es-logout-btn:hover { color: #f87171; border-color: #f87171; }
+    /* ══ End Auth #7b ═══════════════════════════════════════════════════ */
+
     </style>
 </head>
 <body>
@@ -2629,7 +2715,7 @@
             // Asset-type specific fields (intangible, partial interest, construction, quarry)
             Object.assign(basePayload, collectAssetTypePayload(basePayload.property_type));
 
-            const response = await fetch(apiUrl, {
+            const response = await esFetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(basePayload)
@@ -5217,7 +5303,7 @@ function _showIndexToast(msg, type) {
 
         try {
             var base = _esReportsApiBase();
-            var resp = await fetch(base + '/api/reports?' + qs);
+            var resp = await esFetch(base + '/api/reports?' + qs);
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
             var data = await resp.json();
             if (data.status !== 'success') throw new Error(data.message || 'استجابة غير صحيحة');
@@ -5279,7 +5365,7 @@ function _showIndexToast(msg, type) {
 
         try {
             var base = _esReportsApiBase();
-            var resp = await fetch(base + '/api/reports/' + encodeURIComponent(reportId));
+            var resp = await esFetch(base + '/api/reports/' + encodeURIComponent(reportId));
             if (resp.status === 404) {
                 body.innerHTML = '<div style="color:#ef4444;">التقرير غير موجود</div>';
                 return;
@@ -5345,7 +5431,7 @@ function _showIndexToast(msg, type) {
 
         try {
             var base = _esReportsApiBase();
-            var resp = await fetch(base + '/api/reports/' + encodeURIComponent(reportId) + '/pdf');
+            var resp = await esFetch(base + '/api/reports/' + encodeURIComponent(reportId) + '/pdf');
 
             if (resp.status === 404) {
                 alert('التقرير غير موجود');
@@ -5375,6 +5461,152 @@ function _showIndexToast(msg, type) {
     }
 
     // ══ End: سجل التقارير ══════════════════════════════════════════════════════
+</script>
+
+<!-- ══ Auth #7b — Login Modal ══════════════════════════════════════════ -->
+<div id="es-login-modal" role="dialog" aria-modal="true" aria-labelledby="es-login-title">
+  <div id="es-login-box">
+    <h3 id="es-login-title">تسجيل الدخول — EXPERT SMART</h3>
+    <p>الصق رمز JWT الخاص بك (يُنشئه المسؤول عبر <code>generate_token()</code> أو واجهة الأوامر).</p>
+    <textarea id="es-token-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+    <div id="es-login-error"></div>
+    <button id="es-login-submit" type="button">دخول</button>
+  </div>
+</div>
+<!-- Logged-in indicator bar (top-right corner) -->
+<div id="es-logged-in-bar">
+  <span id="es-logged-in-label"></span>
+  <button id="es-logout-btn" type="button">خروج</button>
+</div>
+
+<script>
+// ══ Auth #7b — esFetch wrapper + login modal ═════════════════════════
+(function () {
+    'use strict';
+
+    var LS_KEY = 'es_auth';
+
+    function esGetSession() {
+        try { return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { return null; }
+    }
+    function esSaveSession(tok, userId, isAdmin) {
+        localStorage.setItem(LS_KEY, JSON.stringify({ token: tok, user_id: userId, is_admin: isAdmin }));
+    }
+    function esClearSession() { localStorage.removeItem(LS_KEY); }
+
+    window.esGetSession = esGetSession;
+
+    // ── esFetch: attaches Bearer token; handles 401 (re-prompt) and 403 ──
+    window.esFetch = async function esFetch(url, opts) {
+        opts = opts || {};
+        var sess = esGetSession();
+        if (sess && sess.token) {
+            var hdrs = new Headers(opts.headers || {});
+            hdrs.set('Authorization', 'Bearer ' + sess.token);
+            opts = Object.assign({}, opts, { headers: hdrs });
+        }
+        var resp = await fetch(url, opts);
+        if (resp.status === 401) {
+            esClearSession();
+            esUpdateBar();
+            esShowLoginModal('انتهت صلاحية الجلسة أو الرمز غير صالح.');
+            throw new Error('ES_AUTH_401');
+        }
+        if (resp.status === 403) {
+            var errEl = document.getElementById('es-login-error');
+            if (errEl) { errEl.textContent = 'هذه العملية تتطلب صلاحيات المسؤول.'; errEl.style.display = 'block'; }
+            throw new Error('ES_AUTH_403');
+        }
+        return resp;
+    };
+
+    // ── Modal show/hide ───────────────────────────────────────────────
+    function esShowLoginModal(errText) {
+        var modal = document.getElementById('es-login-modal');
+        var errEl = document.getElementById('es-login-error');
+        var inp   = document.getElementById('es-token-input');
+        if (errText && errEl) { errEl.textContent = errText; errEl.style.display = 'block'; }
+        else if (errEl)       { errEl.style.display = 'none'; }
+        if (inp)   inp.value = '';
+        if (modal) modal.classList.add('es-active');
+    }
+    window.esShowLoginModal = esShowLoginModal;
+
+    function esHideLoginModal() {
+        var modal = document.getElementById('es-login-modal');
+        if (modal) modal.classList.remove('es-active');
+    }
+
+    // ── Logged-in bar ─────────────────────────────────────────────────
+    function esUpdateBar() {
+        var bar   = document.getElementById('es-logged-in-bar');
+        var label = document.getElementById('es-logged-in-label');
+        var sess  = esGetSession();
+        if (sess && sess.token) {
+            if (label) label.textContent = sess.user_id + (sess.is_admin ? ' [مسؤول]' : '');
+            if (bar)   bar.classList.add('es-visible');
+        } else {
+            if (bar) bar.classList.remove('es-visible');
+        }
+    }
+
+    // ── Login submit ──────────────────────────────────────────────────
+    async function esHandleLogin() {
+        var inp  = document.getElementById('es-token-input');
+        var btn  = document.getElementById('es-login-submit');
+        var errEl = document.getElementById('es-login-error');
+        var tok  = (inp ? inp.value : '').trim();
+
+        if (!tok) {
+            if (errEl) { errEl.textContent = 'يرجى إدخال رمز JWT.'; errEl.style.display = 'block'; }
+            return;
+        }
+        if (btn)  { btn.disabled = true; btn.textContent = '...'; }
+        if (errEl) errEl.style.display = 'none';
+
+        try {
+            var origin = window.location.origin || 'http://localhost:5000';
+            var verifyResp = await fetch(origin + '/api/auth/verify',
+                { headers: { 'Authorization': 'Bearer ' + tok } });
+            if (verifyResp.status === 401) {
+                if (errEl) { errEl.textContent = 'الرمز غير صالح أو منتهي الصلاحية.'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!verifyResp.ok) {
+                if (errEl) { errEl.textContent = 'خطأ في التحقق (HTTP ' + verifyResp.status + ').'; errEl.style.display = 'block'; }
+                return;
+            }
+            var body = await verifyResp.json();
+            esSaveSession(tok, body.user_id, body.is_admin === true);
+            esHideLoginModal();
+            esUpdateBar();
+        } catch (e) {
+            if (errEl) { errEl.textContent = 'تعذّر الاتصال بالخادم.'; errEl.style.display = 'block'; }
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = 'دخول'; }
+        }
+    }
+
+    // ── Logout ────────────────────────────────────────────────────────
+    window.esHandleLogout = function esHandleLogout() {
+        esClearSession();
+        esUpdateBar();
+    };
+
+    // ── Wire up on DOM ready ──────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        var submitBtn  = document.getElementById('es-login-submit');
+        var logoutBtn  = document.getElementById('es-logout-btn');
+        var tokenInput = document.getElementById('es-token-input');
+        if (submitBtn)  submitBtn.addEventListener('click', esHandleLogin);
+        if (logoutBtn)  logoutBtn.addEventListener('click', window.esHandleLogout);
+        if (tokenInput) tokenInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); esHandleLogin(); }
+        });
+        esUpdateBar();
+    });
+}());
+// ══ End Auth #7b ═════════════════════════════════════════════════════
 </script>
 
 </body>

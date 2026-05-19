@@ -8,6 +8,45 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and [Semant
 
 ## [Unreleased]
 
+*(no unreleased changes)*
+
+---
+
+## [1.1.0] — 2026-05-19 — Conditional Release
+
+**Type:** CONDITIONAL — see `docs/PH3_KEY_ROTATION_WAIVER.md`.  
+**Tag:** `v1.1.0` on commit `8671de5`.  
+**Handoff:** `docs/FINAL_RELEASE_HANDOFF_v1.1.0.md`
+
+### Security
+- **SEC-011 fixed:** `auth/__init__.py` changed to relative import (`from .tokens import ...`).
+  Resolves silent auth-import failure that caused `_AUTH_AVAILABLE = False` in all deployment
+  modes (subprocess, waitress, Docker), returning 401 to all users regardless of token.
+- **SEC-002e complete:** `@require_auth` enforced on `/api/reports*` and `/api/valuation`.
+  Owner isolation via `owner_user_id`. Rate limiting active per user.
+- **SEC-001–SEC-009:** All security audit findings remediated.
+- **Startup warning:** `CRITICAL` log emitted if auth module fails to import in future.
+- **PH.3 waiver:** Google service account key rotation formally waived (pending MFA).
+  Repo contains no credential key material. Waiver ID: `PH3-GCP-SA-KEY-ROTATION`.
+
+### CI / Testing
+- `nest_asyncio` and `fastmcp` pinned in `requirements-dev.txt` — fixes two CI import failures.
+- Docker GHCR push gated to `workflow_dispatch` — prevents permission errors on normal CI pushes.
+- E2E test updated to filter expected auth 401 from `POST /api/radar/start`.
+- 7 new regression tests: `core_engine/tests/test_auth_import_paths.py` (IP01–IP07).
+- Test suite: **1858 tests, all passing**.
+
+### Tooling
+- `tools/production_dry_run.py` — versioned dry-run orchestrator (no hardcoded paths).
+  Fixes: `AUDIT_DB_PATH` env var + `timeout=30` for valuation probe. Result: **21/21 checks pass**.
+
+### Documentation
+- `docs/SECURITY_AUDIT_v1.md` — post-audit status table (SEC-001–SEC-014 + PH.3).
+- `docs/PROD_READINESS_CHECKLIST.md` — gate summary updated to CONDITIONAL-GO.
+- `docs/PH3_KEY_ROTATION_WAIVER.md` — formal waiver with three closure options.
+- `docs/PRODUCTION_DRY_RUN.md` — full dry-run report; verdict GO (21/21).
+- `docs/FINAL_RELEASE_HANDOFF_v1.1.0.md` — release handoff (this release).
+
 ### Added
 
 #### R3.2 — Government, Banking, Funds Pilot Subsystems
@@ -109,5 +148,6 @@ engines, full Bridge API integration, and a frontend history panel.
 
 ---
 
-[Unreleased]: https://github.com/HishamElmahdy/expert_smart/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/HishamElmahdy/expert_smart/releases/tag/v1.0.0
+[Unreleased]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.1.0
+[1.0.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.0.0

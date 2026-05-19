@@ -486,12 +486,52 @@ B3 context: `owner_user_id` = JWT `sub` (individual report owner); `tenant_id` =
 
 ---
 
+## R3.12 — Gate Decision (2026-05-20)
+
+Cherry-picks onto: `main`
+Commit cherry-picked: `229fc3c` (from `wip/r3-subsystems-checkpoint`)
+Commit on main: `3ec8de5`
+Full suite after merge: **2,076 / 2,076 passed ✅** (+92 new tests from bundle, +7 runner wrappers collected by pytest)
+
+### E2E Bundle (phases 8, 10, 11, 11-complete, 12, 13, 14) — MERGED (with fixes)
+
+Decision: **MERGE-with-fix** (approved 2026-05-20)
+
+Files: 7 test files / 2,313 lines | Bundle tests: 92/92 ✅
+
+Resolution of deferral blockers:
+
+| Blocker | Resolution |
+|---|---|
+| B1: `test_phase_15_2_e2e.py` needs `database.audit_log` | ✅ RESOLVED — `database/` merged R3.10 |
+| B2: `scripts/` needed for saas tests that share env | ✅ RESOLVED — `scripts/` merged R3.6 |
+
+Fixes applied before merge:
+
+| ID | File | Issue | Fix |
+|---|---|---|---|
+| F1 | `test_phase_8_e2e.py` | Imported `AuditLog` from `database.models` — renamed to `ActivityLog` in R3.10 | Import + 3 body references renamed to `ActivityLog` |
+| F2 | All 7 files | API calls missing `Authorization` header — `@require_auth` (SEC-002) added to `/api/valuation/*` + `/api/comparables/*` post-WIP | `os.environ.setdefault("JWT_SECRET", "test-secret-e2e-bundle")` + `_AUTH_HDR` module-level + `headers=_AUTH_HDR` on every API call |
+
+No cross-file contamination risk: all 7 files use `setdefault` with `"test-secret-e2e-bundle"` / `"test-user-e2e"` — different from saas suite keys; `setdefault` load-order safe.
+
+Files in bundle:
+- `test_phase_8_e2e.py`: SQLite/SQLAlchemy ORM writes (Valuation, QualityAudit, ActivityLog) + 3 API calls
+- `test_phase_10_e2e.py`: DCF model math + 2 API calls (`/api/valuation/dcf`)
+- `test_phase_11_e2e.py`: Portfolio performance scenarios + 2 API calls + sheet tests
+- `test_phase_11_complete.py`: Portfolio E2E pipeline + 2 API calls (`/api/valuation/portfolio`)
+- `test_phase_12_e2e.py`: BatchProcessor + 8 API calls (`/api/valuation/batch`) + report builder + registry
+- `test_phase_13_e2e.py`: BatchStore SQLite persistence + 3 API calls
+- `test_phase_14_e2e.py`: WebhookDispatcher + WebhookLog + 1 API call (async webhook)
+
+---
+
 # R3 SERIES — FINAL SUMMARY
 
-Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R3.8 → R3.9
+Waves executed: R3.1 → R3.2 → R3.3 → R3.4 → R3.5 → R3.6 → R3.7 → R3.8 → R3.9 → R3.10 → R3.11 → R3.12
 
-Total subsystems reviewed: 24 / 24
-Final test count on main: **1,577** (post all hotfixes)
+Total subsystems reviewed: 24 / 24 + E2E bundle
+Final test count on main: **2,076** (post all merges)
 
 ### Merged to main (20 subsystems)
 
@@ -523,7 +563,6 @@ Final test count on main: **1,577** (post all hotfixes)
 | Item | Blocker |
 |---|---|
 | mobile/ | Separate React Native/TypeScript ecosystem; requires dedicated mobile review gate |
-| E2E bundle (229fc3c) | Unblocked by R3.10 — requires its own Gate before merge |
 
 ### Outstanding cross-cutting follow-ups
 
@@ -531,8 +570,8 @@ Final test count on main: **1,577** (post all hotfixes)
 - [ ] Audit trail persistence for government endpoints (blocked by database/)
 - [ ] PII encryption-at-rest strategy (government National ID flows)
 - [ ] mobile/ extraction path decision (separate repo / monorepo / archive-only)
-- [ ] E2E bundle re-enable strategy (selective pytest marks once database/ lands)
 - [ ] `GOVT_SIGNING_KEY` added to production PROD_READINESS_CHECKLIST.md (Section 1: Security)
+- [ ] B3 (R3.11): tenant_id ↔ owner_user_id bridge — P2, non-blocking, scope when multi-tenant report isolation is needed
 
 ### WIP branch fate: KEEP AS ARCHIVE (recommended)
 

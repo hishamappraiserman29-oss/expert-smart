@@ -134,9 +134,9 @@ No new security findings. All findings from v1.1.0 remain in their prior state.
 ## 7. What Remains Deferred
 
 ### `mobile/`
-- On `wip/r3-subsystems-checkpoint`, not merged to `main`
-- React Native / TypeScript ecosystem — requires a dedicated mobile review gate
-- Not blocking any backend release
+- **Status:** ✅ MERGED to `main` — commit `5e996f5` (post-v1.1.2, included in v1.1.3)
+- 44/44 Jest tests pass; TypeScript clean
+- P3 follow-up: add `.github/workflows/mobile.yml` for CI coverage
 
 ### PH.3 — GCP Service Account Key Rotation
 - Still pending (waiver ID: `PH3-GCP-SA-KEY-ROTATION`)
@@ -164,7 +164,7 @@ No new security findings. All findings from v1.1.0 remain in their prior state.
 | SQLAlchemy CI fix | ✅ MERGED |
 | R3 review series (R3.1–R3.12) | ✅ COMPLETE |
 | PH.3 GCP key rotation | ⚠️ WAIVED TEMPORARILY |
-| mobile/ | ⚠️ DEFERRED (dedicated gate needed) |
+| mobile/ | ✅ MERGED — `5e996f5` (v1.1.3) |
 | **v1.1.2 CONDITIONAL release** | ✅ **ALLOWED** |
 | **Full unconditional production GO** | ❌ **PENDING** — PH.3 closure only |
 
@@ -178,7 +178,8 @@ No new security findings. All findings from v1.1.0 remain in their prior state.
 | **P1** | **Full Production GO review** — re-run production gate after PH.3 is closed. Issues an unconditional release. |
 | **P2** | **B3 bridge** — `tenant_id` ↔ `owner_user_id` link for multi-tenant report isolation (R3.11 non-blocking deferral). |
 | **P2** | **Frontend auth follow-ups** — gate `/api/radar/start` and `/api/price-index` behind auth/admin state; optionally migrate from `localStorage` to `HttpOnly` cookie session. |
-| **P3** | **mobile/ gate** — dedicated React Native review when mobile sprint is complete. |
+| ~~**P3**~~ | ~~**mobile/ gate**~~ | ✅ DONE — merged `5e996f5` |
+| **P3** | **Mobile CI workflow** — add `.github/workflows/mobile.yml` so `npm test` runs on push. |
 
 ---
 

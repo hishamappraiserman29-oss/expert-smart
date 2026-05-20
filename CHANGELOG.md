@@ -12,10 +12,38 @@ This project follows [Keep a Changelog](https://keepachangelog.com/) and [Semant
 
 ---
 
+## [1.1.3] — 2026-05-20 — Conditional Release (mobile/ gate)
+
+**Type:** CONDITIONAL — PH.3 GCP key rotation still pending.  
+**Tag:** `v1.1.3` (not yet created — pending approval).  
+**Handoff:** see `docs/FINAL_RELEASE_HANDOFF_v1.1.2.md` (updated).  
+**Base:** `v1.1.2` (R3 final closure).
+
+### Added
+
+#### mobile/ subsystem — React Native Field Mode (commit `5e996f5`)
+- `mobile/app/OfflineStorage.ts` — SQLite wrapper: valuations + sync\_queue tables, offline-first CRUD
+- `mobile/app/SyncEngine.ts` — conflict resolution via completeness scoring; drain queue on reconnect
+- `mobile/app/FieldTools.ts` — Camera (photo + gallery), GPS (watch/one-shot), Voice notes
+- `mobile/api/FieldApiClient.ts` — Axios client with offline fallback + auto-sync on `offline→online`
+- `mobile/app/FieldValuation.tsx` — React Native appraisal screen (form, photos, voice, sync status)
+- `mobile/__mocks__/` — 11-file mock suite (SQLite, Geolocation, NetInfo, Voice, Camera, Axios, UUID)
+- `mobile/package.json` + `package-lock.json` — React Native 0.73; Jest + ts-jest; 772 packages
+
+### Tests
+- Mobile suite: **44/44 PASS** (OfflineStorage 14, SyncEngine 8, FieldTools 8, FieldApiClient 8, Integration 6)
+- Python suite: **2,076/2,076** — unaffected (no backend files touched)
+
+### Notes
+- P3 follow-up: add `.github/workflows/mobile.yml` so `npm test` runs in CI
+- `FieldApiClient.baseURL` (`https://api.expert-smart.com`) should move to env config before production mobile release
+
+---
+
 ## [1.1.2] — 2026-05-20 — Conditional Release (R3 final closure)
 
 **Type:** CONDITIONAL — PH.3 GCP key rotation still pending.  
-**Tag:** `v1.1.2` (not yet created — pending approval).  
+**Tag:** `v1.1.2` — tagged at commit `3ed3413`.  
 **Handoff:** `docs/FINAL_RELEASE_HANDOFF_v1.1.2.md`  
 **Base:** builds on `v1.1.1` (Frontend Auth #7b + PH.3 runbook).
 
@@ -194,7 +222,8 @@ engines, full Bridge API integration, and a frontend history panel.
 
 ---
 
-[Unreleased]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/hishamappraiserman29-oss/expert-smart/compare/v1.1.1...v1.1.2
 [1.1.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.1.0
 [1.0.0]: https://github.com/hishamappraiserman29-oss/expert-smart/releases/tag/v1.0.0

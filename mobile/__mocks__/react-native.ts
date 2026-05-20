@@ -1,0 +1,10 @@
+export const Alert = { alert: jest.fn() };
+export const View = 'View';
+export const Text = 'Text';
+export const ScrollView = 'ScrollView';
+export const TouchableOpacity = 'TouchableOpacity';
+export const Image = 'Image';
+export const ActivityIndicator = 'ActivityIndicator';
+export const StyleSheet = { create: (s: any) => s };
+export const TextInput = 'TextInput';
+export default { Alert, View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, StyleSheet, TextInput };

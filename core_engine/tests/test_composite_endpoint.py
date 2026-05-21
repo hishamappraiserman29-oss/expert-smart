@@ -150,6 +150,13 @@ EXPECTED_BASELINE_SNAPSHOT = {
             "is applied in Wave 7, not here."
         ),
     },
+    "aggregation": {
+        "total_baseline": 20_500_000.0,
+        "total_adjusted_before_synergy": 19_500_000.0,
+        "synergy_adjustment_percent": 0.0,
+        "synergy_adjustment_amount": 0.0,
+        "total_adjusted_after_synergy": 19_500_000.0,
+    },
 }
 
 _ENDPOINT = "/api/valuation/composite"
@@ -431,3 +438,116 @@ class TestSummary:
         note = resp.get_json()["summary"]["note"]
         assert "Wave 7" in note
         assert "NAIVE" in note
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Aggregation block (Wave 7A)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestAggregation:
+    """Integration tests for the Wave 7A 'aggregation' response block."""
+
+    # ── key presence ─────────────────────────────────────────────────
+
+    def test_aggregation_key_present(self, client, auth):
+        data = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert "aggregation" in data
+
+    def test_aggregation_has_all_five_fields(self, client, auth):
+        agg = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()["aggregation"]
+        for key in (
+            "total_baseline",
+            "total_adjusted_before_synergy",
+            "synergy_adjustment_percent",
+            "synergy_adjustment_amount",
+            "total_adjusted_after_synergy",
+        ):
+            assert key in agg, f"Missing field: {key!r}"
+
+    # ── zero synergy (default — no synergy_adjustment_percent in body) ────
+
+    def test_default_zero_synergy_percent(self, client, auth):
+        agg = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()["aggregation"]
+        assert agg["synergy_adjustment_percent"] == 0.0
+
+    def test_default_zero_synergy_amount(self, client, auth):
+        agg = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()["aggregation"]
+        assert agg["synergy_adjustment_amount"] == 0.0
+
+    def test_default_zero_after_equals_before(self, client, auth):
+        agg = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()["aggregation"]
+        assert agg["total_adjusted_after_synergy"] == agg["total_adjusted_before_synergy"]
+
+    # ── arithmetic snapshot (zero synergy) ───────────────────────────
+
+    def test_aggregation_arithmetic_snapshot(self, client, auth):
+        """
+        Manual verification (same as golden snapshot comment):
+          airport:     100 × 5000 × 1.00  =   500_000 baseline / adjusted
+          residential: 10000 × 2000 × 0.95 = 19_000_000 adjusted
+          total_baseline  = 500_000 + 20_000_000 = 20_500_000
+          total_before    = 500_000 + 19_000_000 = 19_500_000
+          synergy_pct     = 0.0  →  amount = 0.0
+          total_after     = 19_500_000
+        """
+        agg = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()["aggregation"]
+        assert agg["total_baseline"] == 20_500_000.0
+        assert agg["total_adjusted_before_synergy"] == 19_500_000.0
+        assert agg["synergy_adjustment_percent"] == 0.0
+        assert agg["synergy_adjustment_amount"] == 0.0
+        assert agg["total_adjusted_after_synergy"] == 19_500_000.0
+
+    # ── positive synergy ─────────────────────────────────────────────
+
+    def test_positive_synergy_increases_after_total(self, client, auth):
+        """
+        total_adjusted_before = 19_500_000
+        synergy 5% → amount = 975_000 → after = 20_475_000
+        """
+        body = {**_SNAPSHOT_INPUT, "synergy_adjustment_percent": 5.0}
+        agg = client.post(_ENDPOINT, json=body, headers=auth).get_json()["aggregation"]
+        assert agg["synergy_adjustment_percent"] == 5.0
+        assert agg["synergy_adjustment_amount"] == pytest.approx(975_000.0)
+        assert agg["total_adjusted_after_synergy"] == pytest.approx(20_475_000.0)
+        assert agg["total_adjusted_after_synergy"] > agg["total_adjusted_before_synergy"]
+
+    # ── negative synergy ─────────────────────────────────────────────
+
+    def test_negative_synergy_decreases_after_total(self, client, auth):
+        """
+        total_adjusted_before = 19_500_000
+        synergy -10% → amount = -1_950_000 → after = 17_550_000
+        """
+        body = {**_SNAPSHOT_INPUT, "synergy_adjustment_percent": -10.0}
+        agg = client.post(_ENDPOINT, json=body, headers=auth).get_json()["aggregation"]
+        assert agg["synergy_adjustment_percent"] == -10.0
+        assert agg["synergy_adjustment_amount"] == pytest.approx(-1_950_000.0)
+        assert agg["total_adjusted_after_synergy"] == pytest.approx(17_550_000.0)
+        assert agg["total_adjusted_after_synergy"] < agg["total_adjusted_before_synergy"]
+
+    # ── invalid synergy input → 422 ──────────────────────────────────
+
+    def test_string_synergy_returns_422(self, client, auth):
+        body = {**_SNAPSHOT_INPUT, "synergy_adjustment_percent": "five"}
+        resp = client.post(_ENDPOINT, json=body, headers=auth)
+        assert resp.status_code == 422
+
+    def test_bool_synergy_returns_422(self, client, auth):
+        body = {**_SNAPSHOT_INPUT, "synergy_adjustment_percent": True}
+        resp = client.post(_ENDPOINT, json=body, headers=auth)
+        assert resp.status_code == 422
+
+    # ── summary block backward-compat ────────────────────────────────
+
+    def test_summary_total_baseline_value_unchanged(self, client, auth):
+        """summary.total_baseline_value must equal aggregation.total_baseline."""
+        data = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert data["summary"]["total_baseline_value"] == data["aggregation"]["total_baseline"]
+
+    def test_summary_total_adjusted_value_unchanged(self, client, auth):
+        """summary.total_adjusted_value must equal aggregation.total_adjusted_before_synergy."""
+        data = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert (
+            data["summary"]["total_adjusted_value"]
+            == data["aggregation"]["total_adjusted_before_synergy"]
+        )

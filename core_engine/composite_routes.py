@@ -18,6 +18,7 @@ from typing import Any
 from flask import jsonify, request
 
 from valuation_engines.composite_engine import ASSET_TYPES, CompositeEngine, CompositeEngineError
+from valuation_engines.composite_aggregator import aggregate as _aggregate, CompositeAggregatorError
 from adapters.purpose_adapter import PURPOSE_RULES, PurposeComplianceAdapter, PurposeAdapterError
 from validation.composite_rules import CompositeValidator
 
@@ -194,9 +195,22 @@ def register(app, require_auth) -> None:
                 "message": str(exc),
             }), 422
 
-        # ── 7. Build response ─────────────────────────────────────────
-        total_baseline = round(sum(v.baseline_value for v in valuations), 2)
-        total_adjusted = round(sum(a.adjusted_value for a in adjusted), 2)
+        # ── 7. Read optional synergy (Wave 7A) ───────────────────────
+        synergy_pct = data.get("synergy_adjustment_percent", 0.0)
+        if isinstance(synergy_pct, bool) or not isinstance(synergy_pct, (int, float)):
+            return jsonify({
+                "status": "error",
+                "message": "'synergy_adjustment_percent' must be a number",
+            }), 422
+
+        # ── 8. Aggregate (Wave 7A) ────────────────────────────────────
+        try:
+            agg = _aggregate(adjusted, synergy_adjustment_percent=synergy_pct)
+        except CompositeAggregatorError as exc:
+            return jsonify({
+                "status": "error",
+                "message": str(exc),
+            }), 422
 
         return jsonify({
             "composite_api_version": COMPOSITE_API_VERSION,
@@ -205,12 +219,19 @@ def register(app, require_auth) -> None:
             "components": [_jsonify_obj(a) for a in adjusted],
             "summary": {
                 "component_count": len(adjusted),
-                "total_baseline_value": total_baseline,
-                "total_adjusted_value": total_adjusted,
+                "total_baseline_value": agg.total_baseline,
+                "total_adjusted_value": agg.total_adjusted_before_synergy,
                 "note": (
                     "totals are a NAIVE sum — synergy / portfolio aggregation "
                     "is applied in Wave 7, not here."
                 ),
+            },
+            "aggregation": {
+                "total_baseline": agg.total_baseline,
+                "total_adjusted_before_synergy": agg.total_adjusted_before_synergy,
+                "synergy_adjustment_percent": agg.synergy_adjustment_percent,
+                "synergy_adjustment_amount": agg.synergy_adjustment_amount,
+                "total_adjusted_after_synergy": agg.total_adjusted_after_synergy,
             },
         }), 200
 

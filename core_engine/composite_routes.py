@@ -17,8 +17,8 @@ from typing import Any
 
 from flask import jsonify, request
 
-from valuation_engines.composite_engine import CompositeEngine, CompositeEngineError
-from adapters.purpose_adapter import PurposeComplianceAdapter, PurposeAdapterError
+from valuation_engines.composite_engine import ASSET_TYPES, CompositeEngine, CompositeEngineError
+from adapters.purpose_adapter import PURPOSE_RULES, PurposeComplianceAdapter, PurposeAdapterError
 from validation.composite_rules import CompositeValidator
 
 COMPOSITE_API_VERSION = 1
@@ -45,8 +45,47 @@ def _jsonify_obj(obj: Any) -> Any:
     return obj
 
 
+def _type_name(typ: type) -> str:
+    """Serialize a Python type object to a stable string name."""
+    return getattr(typ, "__name__", str(typ))
+
+
+def _build_schema_payload() -> dict:
+    """Build the composite schema from the single-source-of-truth catalogs.
+
+    Does NOT redeclare ASSET_TYPES or PURPOSE_RULES.
+    """
+    asset_types = [
+        {
+            "name": type_name,
+            "attributes": [
+                {"name": attr, "type": _type_name(typ)}
+                for attr, typ in attr_spec.items()
+            ],
+        }
+        for type_name, attr_spec in ASSET_TYPES.items()
+    ]
+    purposes = [
+        {
+            "name": name,
+            "multiplier": float(rule["multiplier"]),
+            "deep": bool(rule.get("deep", False)),
+        }
+        for name, rule in PURPOSE_RULES.items()
+    ]
+    return {
+        "composite_api_version": COMPOSITE_API_VERSION,
+        "asset_types": asset_types,
+        "purposes": purposes,
+    }
+
+
 def register(app, require_auth) -> None:
-    """Register POST /api/valuation/composite on *app*.
+    """Register composite routes on *app*.
+
+    Routes registered:
+      POST /api/valuation/composite        — Wave 4 value endpoint
+      GET  /api/valuation/composite/schema — Wave 5a schema endpoint
 
     Called once from bridge_api.py with its own require_auth.
     """
@@ -174,3 +213,10 @@ def register(app, require_auth) -> None:
                 ),
             },
         }), 200
+
+    # ── Wave 5a — schema endpoint ─────────────────────────────────────
+
+    @app.route("/api/valuation/composite/schema", methods=["GET"])
+    @require_auth
+    def composite_schema():
+        return jsonify(_build_schema_payload()), 200

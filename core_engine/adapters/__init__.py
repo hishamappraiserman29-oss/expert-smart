@@ -29,4 +29,17 @@ __all__ = [
     "ResidentialAdapter",
     "CommercialAdapter",
     "LandAdapter",
+    # Wave 2 — Composite Purpose Adapter
+    "PURPOSE_RULES",
+    "PurposeComplianceAdapter",
+    "PurposeAdapterError",
+    "AdjustedValuation",
 ]
+
+# Wave 2 — Composite Property Architecture
+from .purpose_adapter import (  # noqa: E402
+    PURPOSE_RULES,
+    PurposeComplianceAdapter,
+    PurposeAdapterError,
+    AdjustedValuation,
+)

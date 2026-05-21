@@ -2045,6 +2045,7 @@ class ExcelReportBuilder:
     def build(self, filename: str, ivsc_disclosure=None,
               cross_border_disclosure=None, portfolio_summary=None,
               portfolio_performance=None,
+              composite_valuations=None, composite_validation=None,
               report_style: str = "legacy") -> str:
         """Build all sheets and save to filename. Returns the filename."""
         # ── Try professional template export (individual valuation) ───────────
@@ -2190,5 +2191,8 @@ class ExcelReportBuilder:
             self.sheet_portfolio_summary(portfolio_summary)
         if portfolio_performance is not None:
             self.sheet_portfolio_performance(portfolio_performance)
+        if composite_valuations is not None:
+            from reports.sheets.composite_sheet import build_composite_sheet as _bcs
+            _bcs(self.workbook, composite_valuations, validation=composite_validation)
         self.workbook.save(filename)
         return filename

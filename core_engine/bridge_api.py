@@ -11968,6 +11968,9 @@ def admin_audit_endpoint():
     })
 
 
+from composite_routes import register as _register_composite  # Wave 4
+_register_composite(app, require_auth)
+
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")
     print(f"Outputs  : {OUTPUTS}")

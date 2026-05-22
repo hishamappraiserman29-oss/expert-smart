@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expert_Smart | التقييم المركب</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg:       #030712;
+    --bg-card:  rgba(17,24,39,0.98);
+    --gold:     #d4af37;
+    --gold-lt:  #f1d592;
+    --text:     #f9fafb;
+    --border:   rgba(212,175,55,0.4);
+    --radius:   14px;
+    --ok:       #10b981;
+    --err:      #ef4444;
+}
+*,*::before,*::after { box-sizing: border-box; }
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    direction: rtl;
+    line-height: 1.6;
+    padding-bottom: 80px;
+}
+a { color: inherit; }
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+/* ── Header ── */
+.cv-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.8rem;
+}
+.logo { font-size: 1.8rem; font-weight: 900; }
+.logo span { color: var(--gold); }
+.btn-back {
+    color: var(--gold);
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 6px 16px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+.btn-back:hover { background: rgba(212,175,55,0.1); }
+
+/* ── Auth bar ── */
+#cv-auth-bar {
+    background: rgba(212,175,55,0.07);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.88rem;
+}
+#cv-auth-bar.visible { display: flex; }
+#cv-auth-user { color: var(--gold); font-weight: 700; flex: 1; }
+.btn-sm {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--gold-lt);
+    padding: 4px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.8rem;
+    transition: 0.2s;
+}
+.btn-sm:hover { background: rgba(212,175,55,0.12); }
+
+/* ── No-auth prompt ── */
+#cv-no-auth {
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    display: none;
+}
+#cv-no-auth p { margin: 0 0 0.5rem; }
+#cv-no-auth p:first-child { color: var(--err); font-size: 1.1rem; font-weight: 700; }
+#cv-no-auth p:last-of-type { color: #aaa; margin-bottom: 1.2rem; }
+
+/* ── Cards ── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.section-title {
+    color: var(--gold);
+    font-size: 1rem;
+    font-weight: 900;
+    margin: 0 0 1.2rem;
+    border-bottom: 1px solid rgba(212,175,55,0.18);
+    padding-bottom: 0.5rem;
+}
+
+/* ── Form controls ── */
+label {
+    color: var(--gold-lt);
+    font-size: 0.88rem;
+    display: block;
+    margin-bottom: 5px;
+}
+input[type=text],
+input[type=number],
+select {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: 0.2s;
+}
+input:focus, select:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.14);
+}
+select option { background: #1a1f2e; }
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+.field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Component card ── */
+.comp-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(212,175,55,0.18);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+}
+.comp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.comp-label { color: var(--gold); font-weight: 700; font-size: 0.9rem; }
+.btn-del {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.35);
+    color: var(--err);
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.78rem;
+    transition: 0.2s;
+}
+.btn-del:hover { background: rgba(239,68,68,0.2); }
+
+.attrs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.attrs-label {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 0.5rem;
+    grid-column: 1 / -1;
+}
+
+/* ── Override row ── */
+.override-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+.override-row input[type=checkbox] {
+    width: 16px; height: 16px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.override-row label { color: #aaa; margin: 0; cursor: pointer; font-size: 0.85rem; }
+.override-purpose-wrap { margin-top: 0.7rem; display: none; }
+
+/* ── Buttons ── */
+.btn {
+    background: rgba(212,175,55,0.1);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    padding: 9px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    transition: 0.2s;
+}
+.btn:hover { background: rgba(212,175,55,0.2); }
+.btn-primary {
+    background: var(--gold);
+    color: #000;
+    font-weight: 900;
+    font-size: 1rem;
+    padding: 13px 36px;
+    border-color: var(--gold);
+}
+.btn-primary:hover { background: var(--gold-lt); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Feedback boxes ── */
+.error-box {
+    background: rgba(239,68,68,0.09);
+    border: 1px solid rgba(239,68,68,0.28);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    color: var(--err);
+    font-size: 0.9rem;
+    margin-top: 0.8rem;
+}
+.note-box {
+    background: rgba(212,175,55,0.06);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    color: var(--gold-lt);
+    margin-top: 5px;
+}
+.issue-blocking { background: rgba(239,68,68,0.1); color: var(--err); }
+.issue-advisory { background: rgba(212,175,55,0.07); color: var(--gold-lt); }
+.val-issue {
+    font-size: 0.82rem;
+    padding: 4px 10px;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+/* ── Results ── */
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+@media (max-width: 600px) { .result-grid { grid-template-columns: 1fr; } }
+.result-summary {
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 10px;
+    padding: 1.2rem;
+}
+.result-value { font-size: 1.7rem; font-weight: 900; color: var(--ok); }
+.result-value.gold { color: var(--gold); }
+.result-meta { color: #888; font-size: 0.82rem; }
+.comps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.comp-result {
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 1rem;
+}
+.cr-name { font-weight: 700; color: var(--gold-lt); margin-bottom: 0.5rem; font-size: 0.9rem; }
+.cr-row { display: flex; justify-content: space-between; font-size: 0.83rem; color: #bbb; margin-bottom: 2px; }
+.cr-row span:last-child { color: var(--text); font-weight: 600; }
+.cr-row .gold { color: var(--gold); }
+
+/* ── Loading spinner ── */
+.spin { animation: spin 0.85s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+#cv-loading { text-align: center; padding: 2.5rem; color: #888; }
+#cv-loading .big { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="cv-header">
+    <div class="logo">Expert<span>_Smart</span> | التقييم المركب</div>
+    <a href="/" class="btn-back">← الرئيسية</a>
+  </header>
+
+  <!-- ── Auth bar ───────────────────────────────────────────────────────── -->
+  <div id="cv-auth-bar">
+    <span id="cv-auth-user"></span>
+    <button class="btn-sm" onclick="cvLogout()">تسجيل الخروج</button>
+  </div>
+
+  <!-- ── No-auth prompt ─────────────────────────────────────────────────── -->
+  <div id="cv-no-auth">
+    <p>⚠ يلزم تسجيل الدخول</p>
+    <p>يرجى تسجيل الدخول أولاً من الصفحة الرئيسية.</p>
+    <a href="/" class="btn">← العودة إلى الصفحة الرئيسية</a>
+  </div>
+
+  <!-- ── Main (shown after auth check) ──────────────────────────────────── -->
+  <div id="cv-main" style="display:none;">
+
+    <!-- Loading spinner (visible while schema is fetching) -->
+    <div class="card" id="cv-loading">
+      <span class="big spin">⬡</span>
+      جارٍ تحميل مخطط التقييم المركب…
+    </div>
+
+    <!-- Form (revealed once schema is loaded) -->
+    <div id="cv-form" style="display:none;">
+
+      <!-- Global Purpose -->
+      <div class="card">
+        <div class="section-title">غرض التقييم العام</div>
+        <div class="field-group">
+          <label for="cv-global-purpose">
+            غرض التقييم — يطبَّق على جميع المكوّنات ما لم يُخصَّص لكل مكوّن
+          </label>
+          <select id="cv-global-purpose"></select>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div class="card">
+        <div class="section-title">مكوّنات العقار</div>
+        <div id="cv-components-list"></div>
+        <button class="btn" id="cv-add-btn" onclick="cvAddComponent()">+ إضافة مكوّن</button>
+      </div>
+
+      <!-- Submit -->
+      <div style="text-align:center;">
+        <button class="btn btn-primary" id="cv-submit-btn" onclick="cvSubmit()">
+          ⬡ احسب القيمة المركبة
+        </button>
+        <div id="cv-submit-error" class="error-box" style="display:none;"></div>
+      </div>
+
+    </div><!-- /#cv-form -->
+  </div><!-- /#cv-main -->
+
+  <!-- ── Results ────────────────────────────────────────────────────────── -->
+  <div id="cv-results" class="card" style="display:none; margin-top:2rem;">
+    <div class="section-title">نتائج التقييم المركب</div>
+    <div id="cv-results-body"></div>
+  </div>
+
+</div><!-- /.container -->
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// esFetch mirror — same contract as window.esFetch in index.html
+// Reads JWT from localStorage['es_auth'], attaches Authorization header.
+// On 401: shows auth prompt and hides main content.
+// ─────────────────────────────────────────────────────────────────────────────
+function cvEsFetch(url, opts) {
+    opts = opts || {};
+    var sess = null;
+    try { sess = JSON.parse(localStorage.getItem('es_auth') || 'null'); } catch (e) {}
+    var hdrs = new Headers(opts.headers || {});
+    if (sess && sess.token) {
+        hdrs.set('Authorization', 'Bearer ' + sess.token);
+    }
+    if (!hdrs.has('Content-Type') && opts.body) {
+        hdrs.set('Content-Type', 'application/json');
+    }
+    return fetch(url, Object.assign({}, opts, { headers: hdrs })).then(function (r) {
+        if (r.status === 401) {
+            document.getElementById('cv-auth-bar').classList.remove('visible');
+            document.getElementById('cv-main').style.display = 'none';
+            document.getElementById('cv-no-auth').style.display = 'block';
+        }
+        return r;
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function cvGetSession() {
+    try { return JSON.parse(localStorage.getItem('es_auth') || 'null'); } catch (e) { return null; }
+}
+
+function cvLogout() {
+    localStorage.removeItem('es_auth');
+    window.location.href = '/';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────────────────────
+var _schema = null;   // schema payload from GET /api/valuation/composite/schema
+var _compSeq = 0;     // monotonically increasing component ID counter
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Boot — check session, then load schema
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    var sess = cvGetSession();
+    if (!sess || !sess.token) {
+        document.getElementById('cv-no-auth').style.display = 'block';
+        return;
+    }
+    var bar = document.getElementById('cv-auth-bar');
+    bar.classList.add('visible');
+    document.getElementById('cv-auth-user').textContent =
+        sess.user_id + (sess.is_admin ? ' [مسؤول]' : '');
+    document.getElementById('cv-main').style.display = 'block';
+    cvLoadSchema();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Schema loading
+// ─────────────────────────────────────────────────────────────────────────────
+function cvLoadSchema() {
+    cvEsFetch('/api/valuation/composite/schema')
+        .then(function (r) { return r.json(); })
+        .then(function (schema) {
+            _schema = schema;
+            cvPopulateGlobalPurpose(schema.purposes);
+            document.getElementById('cv-loading').style.display = 'none';
+            document.getElementById('cv-form').style.display = 'block';
+            cvAddComponent();  // start with one blank component
+        })
+        .catch(function (err) {
+            document.getElementById('cv-loading').innerHTML =
+                '<div class="error-box">فشل تحميل مخطط التقييم: ' + err + '</div>';
+        });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Global purpose dropdown
+// ─────────────────────────────────────────────────────────────────────────────
+function cvPopulateGlobalPurpose(purposes) {
+    var sel = document.getElementById('cv-global-purpose');
+    sel.innerHTML = '';
+    purposes.forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component management
+// ─────────────────────────────────────────────────────────────────────────────
+function cvAddComponent() {
+    var idx = _compSeq++;
+    var wrap = document.createElement('div');
+    wrap.className = 'comp-card';
+    wrap.id = 'cv-comp-' + idx;
+    wrap.innerHTML = cvCompHTML(idx);
+    document.getElementById('cv-components-list').appendChild(wrap);
+    cvPopulateAssetSelect(idx);
+    cvPopulatePurposeSelect(idx);
+}
+
+function cvRemoveComponent(idx) {
+    var el = document.getElementById('cv-comp-' + idx);
+    if (el) el.remove();
+}
+
+function cvCompHTML(idx) {
+    return (
+        '<div class="comp-header">' +
+            '<span class="comp-label">مكوّن #' + (idx + 1) + '</span>' +
+            '<button class="btn-del" onclick="cvRemoveComponent(' + idx + ')">✕ حذف</button>' +
+        '</div>' +
+        '<div class="field-row">' +
+            '<div class="field-group">' +
+                '<label>نوع الأصل *</label>' +
+                '<select id="cv-asset-type-' + idx + '" onchange="cvOnTypeChange(' + idx + ')"></select>' +
+            '</div>' +
+            '<div class="field-group">' +
+                '<label>الاسم (اختياري)</label>' +
+                '<input type="text" id="cv-name-' + idx + '" placeholder="مثال: برج أ - الطابق 3">' +
+            '</div>' +
+        '</div>' +
+        '<div class="field-row">' +
+            '<div class="field-group">' +
+                '<label>المساحة (م²) *</label>' +
+                '<input type="number" id="cv-area-' + idx + '" min="0.01" step="0.01" placeholder="100">' +
+            '</div>' +
+            '<div class="field-group">' +
+                '<label>السعر الأساسي (ريال / م²) *</label>' +
+                '<input type="number" id="cv-rate-' + idx + '" min="0.01" step="0.01" placeholder="5000">' +
+            '</div>' +
+        '</div>' +
+        '<div id="cv-attrs-' + idx + '" style="display:none;"></div>' +
+        '<div class="override-row">' +
+            '<input type="checkbox" id="cv-override-chk-' + idx + '"' +
+                ' onchange="cvOnOverrideChange(' + idx + ')">' +
+            '<label for="cv-override-chk-' + idx + '">تخصيص غرض مختلف لهذا المكوّن</label>' +
+        '</div>' +
+        '<div class="override-purpose-wrap" id="cv-override-purpose-' + idx + '">' +
+            '<div class="field-group" style="margin-top:0.5rem;">' +
+                '<label>غرض مخصص لهذا المكوّن</label>' +
+                '<select id="cv-purpose-' + idx + '"></select>' +
+            '</div>' +
+        '</div>'
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Populate selects
+// ─────────────────────────────────────────────────────────────────────────────
+function cvPopulateAssetSelect(idx) {
+    var sel = document.getElementById('cv-asset-type-' + idx);
+    if (!sel || !_schema) return;
+    sel.innerHTML = '<option value="">-- اختر نوع الأصل --</option>';
+    _schema.asset_types.forEach(function (t) {
+        var opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+    });
+}
+
+function cvPopulatePurposeSelect(idx) {
+    var sel = document.getElementById('cv-purpose-' + idx);
+    if (!sel || !_schema) return;
+    sel.innerHTML = '';
+    _schema.purposes.forEach(function (p) {
+        var opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Asset type change → render schema-driven specific_attributes
+// ─────────────────────────────────────────────────────────────────────────────
+function cvOnTypeChange(idx) {
+    var sel = document.getElementById('cv-asset-type-' + idx);
+    var typeName = sel ? sel.value : '';
+    var attrsDiv = document.getElementById('cv-attrs-' + idx);
+    if (!attrsDiv) return;
+
+    if (!typeName || !_schema) {
+        attrsDiv.style.display = 'none';
+        attrsDiv.innerHTML = '';
+        return;
+    }
+    var typeSpec = _schema.asset_types.find(function (t) { return t.name === typeName; });
+    if (!typeSpec || typeSpec.attributes.length === 0) {
+        attrsDiv.style.display = 'none';
+        attrsDiv.innerHTML = '';
+        return;
+    }
+
+    var html = '<div class="attrs-grid"><div class="attrs-label">السمات الخاصة بنوع الأصل</div>';
+    typeSpec.attributes.forEach(function (attr) {
+        html += '<div class="field-group">';
+        html += '<label>' + attr.name +
+            ' <span style="color:#555;font-size:0.72rem;">(' + attr.type + ')</span></label>';
+        if (attr.type === 'bool') {
+            html += '<select id="cv-attr-' + idx + '-' + attr.name + '">' +
+                '<option value="true">نعم (true)</option>' +
+                '<option value="false">لا (false)</option>' +
+                '</select>';
+        } else {
+            var inputType = (attr.type === 'int' || attr.type === 'float') ? 'number' : 'text';
+            var step = attr.type === 'float' ? ' step="0.01"' : (attr.type === 'int' ? ' step="1"' : '');
+            html += '<input type="' + inputType + '"' + step +
+                ' id="cv-attr-' + idx + '-' + attr.name + '">';
+        }
+        html += '</div>';
+    });
+    html += '</div>';
+    attrsDiv.innerHTML = html;
+    attrsDiv.style.display = 'block';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Purpose override toggle
+// ─────────────────────────────────────────────────────────────────────────────
+function cvOnOverrideChange(idx) {
+    var chk = document.getElementById('cv-override-chk-' + idx);
+    var wrap = document.getElementById('cv-override-purpose-' + idx);
+    if (wrap) wrap.style.display = (chk && chk.checked) ? 'block' : 'none';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Build POST payload
+// Returns { payload } on success or { errors: string[] } on validation failure.
+// Purpose logic:
+//   override disabled → component.purpose = global purpose
+//   override enabled  → component.purpose = per-component purpose
+// ─────────────────────────────────────────────────────────────────────────────
+function cvBuildPayload() {
+    var globalPurpose = document.getElementById('cv-global-purpose').value;
+    var compDivs = document.querySelectorAll('[id^="cv-comp-"]');
+    var components = [];
+    var purposes = [];
+    var errors = [];
+
+    compDivs.forEach(function (div, pos) {
+        var idx = parseInt(div.id.replace('cv-comp-', ''), 10);
+        var label = 'المكوّن #' + (pos + 1);
+
+        var assetSel = document.getElementById('cv-asset-type-' + idx);
+        var assetType = assetSel ? assetSel.value : '';
+        var nameEl   = document.getElementById('cv-name-' + idx);
+        var areaEl   = document.getElementById('cv-area-' + idx);
+        var rateEl   = document.getElementById('cv-rate-' + idx);
+        var name     = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : (label);
+        var area     = areaEl ? parseFloat(areaEl.value) : NaN;
+        var rate     = rateEl ? parseFloat(rateEl.value) : NaN;
+
+        if (!assetType) {
+            errors.push(label + ': يجب اختيار نوع الأصل');
+            return;
+        }
+        if (isNaN(area) || area <= 0) {
+            errors.push(label + ': المساحة يجب أن تكون رقماً موجباً');
+            return;
+        }
+        if (isNaN(rate) || rate <= 0) {
+            errors.push(label + ': السعر الأساسي يجب أن تكون رقماً موجباً');
+            return;
+        }
+
+        // Schema-driven specific_attributes
+        var typeSpec = _schema ? _schema.asset_types.find(function (t) { return t.name === assetType; }) : null;
+        var specific = {};
+        if (typeSpec) {
+            typeSpec.attributes.forEach(function (attr) {
+                var el = document.getElementById('cv-attr-' + idx + '-' + attr.name);
+                var raw = el ? el.value.trim() : '';
+                if (raw !== '') {
+                    if (attr.type === 'int')   specific[attr.name] = parseInt(raw, 10);
+                    else if (attr.type === 'float') specific[attr.name] = parseFloat(raw);
+                    else if (attr.type === 'bool')  specific[attr.name] = (raw === 'true');
+                    else                             specific[attr.name] = raw;
+                }
+            });
+        }
+
+        // Purpose: per-component override or global
+        var chk = document.getElementById('cv-override-chk-' + idx);
+        var purposeSel = document.getElementById('cv-purpose-' + idx);
+        var purpose = (chk && chk.checked && purposeSel) ? purposeSel.value : globalPurpose;
+
+        components.push({
+            id: 'c' + idx,
+            name: name,
+            asset_type: assetType,
+            area_sqm: area,
+            base_rate_per_sqm: rate,
+            specific_attributes: specific,
+            purpose: purpose,
+        });
+        purposes.push(purpose);
+    });
+
+    if (errors.length > 0) return { errors: errors };
+    if (components.length === 0) return { errors: ['يجب إضافة مكوّن واحد على الأقل'] };
+    return { payload: { components: components, purposes: purposes } };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submit
+// ─────────────────────────────────────────────────────────────────────────────
+function cvSubmit() {
+    var errDiv = document.getElementById('cv-submit-error');
+    errDiv.style.display = 'none';
+    document.getElementById('cv-results').style.display = 'none';
+
+    var built = cvBuildPayload();
+    if (built.errors) {
+        errDiv.textContent = built.errors.join(' | ');
+        errDiv.style.display = 'block';
+        return;
+    }
+
+    var btn = document.getElementById('cv-submit-btn');
+    btn.disabled = true;
+    btn.textContent = '⬡ جارٍ الحساب…';
+
+    cvEsFetch('/api/valuation/composite', {
+        method: 'POST',
+        body: JSON.stringify(built.payload),
+    })
+    .then(function (r) {
+        return r.json().then(function (d) { return { status: r.status, data: d }; });
+    })
+    .then(function (res) {
+        btn.disabled = false;
+        btn.textContent = '⬡ احسب القيمة المركبة';
+        cvRenderResults(res.status, res.data);
+    })
+    .catch(function (err) {
+        btn.disabled = false;
+        btn.textContent = '⬡ احسب القيمة المركبة';
+        errDiv.textContent = 'خطأ في الاتصال: ' + err;
+        errDiv.style.display = 'block';
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Render results
+// ─────────────────────────────────────────────────────────────────────────────
+function cvRenderResults(httpStatus, data) {
+    var resultsDiv = document.getElementById('cv-results');
+    var body = document.getElementById('cv-results-body');
+    resultsDiv.style.display = 'block';
+    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    var html = '';
+
+    // Validation issues (advisories and blocking)
+    if (data.validation && data.validation.issues && data.validation.issues.length > 0) {
+        html += '<div style="margin-bottom:1rem;">';
+        html += '<div style="color:var(--gold-lt);font-size:0.85rem;font-weight:700;margin-bottom:0.4rem;">تنبيهات التحقق:</div>';
+        data.validation.issues.forEach(function (issue) {
+            html += '<div class="val-issue issue-' + issue.severity + '">' +
+                '[' + issue.code + '] ' + issue.message +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    if (data.status === 'rejected') {
+        html += '<div class="error-box">❌ رُفض الطلب — يوجد ' +
+            data.validation.blocking_count + ' خطأ حاجب. راجع تنبيهات التحقق أعلاه.</div>';
+        body.innerHTML = html;
+        return;
+    }
+
+    // Summary totals
+    if (data.summary) {
+        html += '<div class="result-grid">' +
+            '<div class="result-summary">' +
+                '<div class="result-meta">إجمالي القيمة الأساسية</div>' +
+                '<div class="result-value">' + cvFmt(data.summary.total_baseline_value) + '</div>' +
+                '<div class="result-meta">ريال سعودي</div>' +
+            '</div>' +
+            '<div class="result-summary" style="background:rgba(212,175,55,0.07);border-color:rgba(212,175,55,0.28);">' +
+                '<div class="result-meta">إجمالي القيمة المعدَّلة</div>' +
+                '<div class="result-value gold">' + cvFmt(data.summary.total_adjusted_value) + '</div>' +
+                '<div class="result-meta">ريال سعودي</div>' +
+            '</div>' +
+        '</div>';
+        if (data.summary.note) {
+            html += '<div class="note-box">⚠ ' + data.summary.note + '</div>';
+        }
+    }
+
+    // Per-component breakdown
+    if (data.components && data.components.length > 0) {
+        html += '<div style="margin-top:1.3rem;">' +
+            '<div style="color:var(--gold-lt);font-weight:700;font-size:0.9rem;margin-bottom:0.8rem;">' +
+            'تفاصيل المكوّنات (' + data.components.length + '):</div>' +
+            '<div class="comps-grid">';
+        data.components.forEach(function (c) {
+            html +=
+                '<div class="comp-result">' +
+                    '<div class="cr-name">' + _esc(c.name || c.component_id) + '</div>' +
+                    '<div class="cr-row"><span>نوع الأصل</span><span>' + _esc(c.asset_type) + '</span></div>' +
+                    '<div class="cr-row"><span>الغرض</span><span>' + _esc(c.purpose) + '</span></div>' +
+                    '<div class="cr-row"><span>القيمة الأساسية</span><span>' + cvFmt(c.baseline_value) + '</span></div>' +
+                    '<div class="cr-row"><span>المضاعف</span><span>' + c.multiplier_applied + '</span></div>' +
+                    '<div class="cr-row"><span>القيمة المعدَّلة</span><span class="gold">' + cvFmt(c.adjusted_value) + '</span></div>' +
+                    (c.deep_route_deferred ? '<div class="note-box">⏳ مسار DCF مؤجَّل — يُكمَل في Wave 6</div>' : '') +
+                    (c.notes && c.notes.length
+                        ? c.notes.map(function (n) { return '<div class="note-box">' + _esc(n) + '</div>'; }).join('')
+                        : '') +
+                '</div>';
+        });
+        html += '</div></div>';
+    }
+
+    body.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+function cvFmt(n) {
+    if (n == null || isNaN(n)) return '—';
+    return (+n).toLocaleString('ar-SA', { maximumFractionDigits: 2 });
+}
+
+function _esc(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

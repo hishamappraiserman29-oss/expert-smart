@@ -157,6 +157,28 @@ EXPECTED_BASELINE_SNAPSHOT = {
         "synergy_adjustment_amount": 0.0,
         "total_adjusted_after_synergy": 19_500_000.0,
     },
+    "uspap_reporting": {
+        "standards_applied": ["Standard 1", "Standard 2"],
+        "mass_appraisal_standards_present": False,
+        "components_count": 2,
+        "note": (
+            "USPAP-aware reporting markers, aggregated from per-component standards "
+            "produced by PurposeAdapter. Not a certified compliance statement."
+        ),
+    },
+    "iaao_reporting": {
+        "iaao_triggered_count": 0,
+        "deep_routes_deferred_count": 0,
+        "cod": None,
+        "prd": None,
+        "ratio_study_status": "not_computed",
+        "note": (
+            "COD/PRD are mass-appraisal population statistics requiring a "
+            "sales-ratio dataset; the composite endpoint accepts none, so they are "
+            "not computed. IAAO-style statistical support markers only — "
+            "not a certified compliance statement."
+        ),
+    },
 }
 
 _ENDPOINT = "/api/valuation/composite"
@@ -551,3 +573,56 @@ class TestAggregation:
             data["summary"]["total_adjusted_value"]
             == data["aggregation"]["total_adjusted_before_synergy"]
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reporting blocks (Wave 7B)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestReportingBlocks:
+    """Integration tests for the Wave 7B uspap_reporting / iaao_reporting blocks."""
+
+    def test_uspap_reporting_present_in_200(self, client, auth):
+        data = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert "uspap_reporting" in data
+
+    def test_iaao_reporting_present_in_200(self, client, auth):
+        data = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert "iaao_reporting" in data
+
+    def test_standards_applied_snapshot(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["uspap_reporting"]["standards_applied"] == ["Standard 1", "Standard 2"]
+
+    def test_mass_appraisal_false_for_non_tax_snapshot(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["uspap_reporting"]["mass_appraisal_standards_present"] is False
+
+    def test_cod_null_default(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["iaao_reporting"]["cod"] is None
+
+    def test_prd_null_default(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["iaao_reporting"]["prd"] is None
+
+    def test_iaao_triggered_count_zero_snapshot(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["iaao_reporting"]["iaao_triggered_count"] == 0
+
+    def test_deep_routes_deferred_count_zero_snapshot(self, client, auth):
+        r = client.post(_ENDPOINT, json=_SNAPSHOT_INPUT, headers=auth).get_json()
+        assert r["iaao_reporting"]["deep_routes_deferred_count"] == 0
+
+    def test_422_blocking_has_no_uspap_reporting(self, client, auth):
+        bad = {
+            "components": [
+                {"id": "b", "name": "b", "asset_type": "نوع غير معروف",
+                 "area_sqm": 100.0, "specific_attributes": {}}
+            ],
+            "purposes": [_MARKET_VALUE],
+        }
+        data = client.post(_ENDPOINT, json=bad, headers=auth).get_json()
+        assert data["status"] == "rejected"
+        assert "uspap_reporting" not in data
+        assert "iaao_reporting" not in data

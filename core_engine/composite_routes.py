@@ -19,6 +19,7 @@ from flask import jsonify, request
 
 from valuation_engines.composite_engine import ASSET_TYPES, CompositeEngine, CompositeEngineError
 from valuation_engines.composite_aggregator import aggregate as _aggregate, CompositeAggregatorError
+from valuation_engines.composite_reporter import build_reporting_blocks as _build_reporting
 from adapters.purpose_adapter import PURPOSE_RULES, PurposeComplianceAdapter, PurposeAdapterError
 from validation.composite_rules import CompositeValidator
 
@@ -212,6 +213,9 @@ def register(app, require_auth) -> None:
                 "message": str(exc),
             }), 422
 
+        # ── 9. Reporting blocks (Wave 7B) ─────────────────────────────
+        reporting = _build_reporting(adjusted)
+
         return jsonify({
             "composite_api_version": COMPOSITE_API_VERSION,
             "status": "ok",
@@ -233,6 +237,8 @@ def register(app, require_auth) -> None:
                 "synergy_adjustment_amount": agg.synergy_adjustment_amount,
                 "total_adjusted_after_synergy": agg.total_adjusted_after_synergy,
             },
+            "uspap_reporting": reporting["uspap_reporting"],
+            "iaao_reporting": reporting["iaao_reporting"],
         }), 200
 
     # ── Wave 5a — schema endpoint ─────────────────────────────────────

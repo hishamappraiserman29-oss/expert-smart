@@ -11971,6 +11971,13 @@ def admin_audit_endpoint():
 from composite_routes import register as _register_composite  # Wave 4
 _register_composite(app, require_auth)
 
+# ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
+try:
+    from dev_auth import register as _register_dev_auth   # DEV ONLY — see dev_auth.py
+    _register_dev_auth(app)
+except ImportError:
+    pass  # dev_auth.py absent in production deploys — silently skip
+
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")
     print(f"Outputs  : {OUTPUTS}")

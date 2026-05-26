@@ -1,0 +1,32 @@
+{
+  "asset_type": "residential",
+  "primary_purpose": "mortgage_lending",
+  "primary_value": "2500000",
+  "confidence": "high",
+  "weights_applied": {
+    "comparable": 0.50,
+    "cost": 0.25,
+    "income": 0.25
+  },
+  "alternative_values": {
+    "forced_sale": "2000000"
+  },
+  "metadata": {
+    "client_name": "Test Client",
+    "location": "Cairo, Nasr City",
+    "area": 120.0,
+    "valuation_date": "2026-01-01",
+    "appraiser_name": "Test Appraiser",
+    "comparable": 2450000,
+    "cost": 2600000,
+    "income": 2450000,
+    "comparables": [
+      {"address": "Comp 1", "area": 115, "price": 2400000, "adj_location": 0.02, "adj_condition": 0.0, "adj_area": -0.01},
+      {"address": "Comp 2", "area": 125, "price": 2550000, "adj_location": 0.0,  "adj_condition": -0.01, "adj_area": 0.01},
+      {"address": "Comp 3", "area": 118, "price": 2480000, "adj_location": 0.01, "adj_condition": 0.0,  "adj_area": 0.0}
+    ]
+  },
+  "audit_trail": [],
+  "issues": [],
+  "disclosures": []
+}

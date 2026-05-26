@@ -1,0 +1,34 @@
+{
+  "asset_type": "commercial",
+  "primary_purpose": "investment_analysis",
+  "primary_value": "8750000",
+  "confidence": "medium",
+  "weights_applied": {
+    "comparable": 0.30,
+    "cost": 0.20,
+    "income": 0.50
+  },
+  "alternative_values": {
+    "forced_sale": "7000000"
+  },
+  "metadata": {
+    "client_name": "Test Commercial Client",
+    "location": "Cairo, Downtown",
+    "area": 350.0,
+    "valuation_date": "2026-01-01",
+    "appraiser_name": "Test Appraiser",
+    "comparable": 8500000,
+    "cost": 9200000,
+    "income": 8800000,
+    "annual_rent": 700000,
+    "cap_rate": 0.08,
+    "comparables": [
+      {"address": "Comp 1", "area": 340, "price": 8400000, "adj_location": 0.01, "adj_condition": 0.0,  "adj_area": 0.01},
+      {"address": "Comp 2", "area": 360, "price": 8600000, "adj_location": 0.0,  "adj_condition": 0.01, "adj_area": -0.01},
+      {"address": "Comp 3", "area": 355, "price": 8550000, "adj_location": 0.02, "adj_condition": 0.0,  "adj_area": 0.0}
+    ]
+  },
+  "audit_trail": [],
+  "issues": [],
+  "disclosures": []
+}

@@ -161,10 +161,13 @@ def test_BL04_commercial_detailed_baseline(tmp_path):
 # ── BL05 — None result legacy ─────────────────────────────────────────────────
 
 def test_BL05_none_result_legacy_baseline(tmp_path):
-    """result=None with no portfolio/composite args: builder produces an empty
-    workbook and openpyxl raises IndexError on save (pre-existing behaviour).
-    This test locks that behaviour — if it stops raising, update this test AND
-    create a proper snapshot for the new graceful-empty-workbook output."""
+    """PINS PRE-EXISTING IndexError when result=None — fix is out of scope for
+    R1; this test must be updated when the bug is fixed.
+
+    Root cause: ExcelReportBuilder.build() adds no sheets when result=None and
+    no portfolio/composite kwargs are provided, so openpyxl raises IndexError
+    ("At least one sheet must be visible") on save. The behaviour is pinned
+    here so any silent regression or accidental fix is caught immediately."""
     with pytest.raises(IndexError, match="At least one sheet must be visible"):
         _build(None, tmp_path, "none_result_legacy", style="legacy")
 

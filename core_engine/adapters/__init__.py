@@ -34,6 +34,18 @@ __all__ = [
     "PurposeComplianceAdapter",
     "PurposeAdapterError",
     "AdjustedValuation",
+    # Phase 8A — Single-Property Requirements Matrix
+    "SUPPORTED_ASSET_TYPES",
+    "SUPPORTED_PURPOSES",
+    "SUPPORTED_PURPOSES_BY_ASSET_TYPE",
+    "REQUIREMENTS_MATRIX",
+    "FieldSpec",
+    "ValuationRequirements",
+    "RequirementsViolation",
+    "get_requirements",
+    "list_supported_asset_types",
+    "list_supported_purposes",
+    "validate_result",
 ]
 
 # Wave 2 — Composite Property Architecture
@@ -42,4 +54,19 @@ from .purpose_adapter import (  # noqa: E402
     PurposeComplianceAdapter,
     PurposeAdapterError,
     AdjustedValuation,
+)
+
+# Phase 8A — Single-Property Requirements Matrix
+from .valuation_requirements import (  # noqa: E402
+    SUPPORTED_ASSET_TYPES,
+    SUPPORTED_PURPOSES,
+    SUPPORTED_PURPOSES_BY_ASSET_TYPE,
+    REQUIREMENTS_MATRIX,
+    FieldSpec,
+    ValuationRequirements,
+    RequirementsViolation,
+    get_requirements,
+    list_supported_asset_types,
+    list_supported_purposes,
+    validate_result,
 )

@@ -1,0 +1,28 @@
+{
+  "asset_type": "land",
+  "primary_purpose": "market_value",
+  "primary_value": "3000000",
+  "confidence": "medium",
+  "weights_applied": {"comparable": 0.60, "cost": 0.00, "income": 0.40},
+  "alternative_values": {},
+  "metadata": {
+    "client_name": "Test Client",
+    "location": "Cairo, New Cairo",
+    "area": 500.0,
+    "valuation_date": "2026-01-01",
+    "appraiser_name": "Test Appraiser",
+    "comparable": 3000000.0,
+    "income": 2800000.0,
+    "hbu": "residential",
+    "location_desirability": "good",
+    "zoning": "unrestricted",
+    "comparables": [
+      {"address": "Plot A, New Cairo", "area_sqm": 480, "price_egp": 2900000, "adj_price_egp": 2950000},
+      {"address": "Plot B, New Cairo", "area_sqm": 520, "price_egp": 3100000, "adj_price_egp": 3050000},
+      {"address": "Plot C, New Cairo", "area_sqm": 490, "price_egp": 2980000, "adj_price_egp": 3000000}
+    ]
+  },
+  "audit_trail": [],
+  "issues": [],
+  "disclosures": []
+}

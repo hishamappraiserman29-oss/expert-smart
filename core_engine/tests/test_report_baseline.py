@@ -197,3 +197,23 @@ def test_BL07_two_runs_are_identical(tmp_path):
     cells2 = _extract_cells(out2)
 
     assert cells1 == cells2, "Two consecutive builds produced different cell values."
+
+
+# ── BL08 — land legacy ────────────────────────────────────────────────────────
+
+def test_BL08_land_legacy_baseline(tmp_path):
+    """Land result, legacy profile — all cell values match golden snapshot."""
+    result = _load_fixture("report_land.json")
+    out    = _build(result, tmp_path, "land_legacy", style="legacy")
+    cells  = _extract_cells(out)
+    _assert_or_generate("baseline_land_legacy", cells)
+
+
+# ── BL09 — land detailed ──────────────────────────────────────────────────────
+
+def test_BL09_land_detailed_baseline(tmp_path):
+    """Land result, detailed profile — all cell values match golden snapshot."""
+    result = _load_fixture("report_land.json")
+    out    = _build(result, tmp_path, "land_detailed", style="detailed")
+    cells  = _extract_cells(out)
+    _assert_or_generate("baseline_land_detailed", cells)

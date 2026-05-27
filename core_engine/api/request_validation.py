@@ -10,6 +10,8 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List, Tuple
 
+from adapters.valuation_requirements import SUPPORTED_ASSET_TYPES
+
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +67,7 @@ class RequestValidator:
                 "property_type": {
                     "type": DataType.STRING,
                     "validation": ValidationType.REQUIRED,
-                    "allowed_values": ["residential", "commercial", "industrial"],
+                    "allowed_values": sorted(SUPPORTED_ASSET_TYPES),
                 },
                 "distance_km": {
                     "type": DataType.FLOAT,

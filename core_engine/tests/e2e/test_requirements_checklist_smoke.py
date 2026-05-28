@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -10,9 +10,9 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS03 — Arabic section headings present; method codes and heading absent from entire panel
   CS04 — unsupported purpose → improved soft message shown
   CS05 — core valuation UI elements still intact
-  CS06 — "تجاري" (single commercial) calls API; title contains "تجاري", not composite
+  CS06 — "تجاري" (API-driven building_mixed) calls API; title contains "تجاري", not composite
   CS07 — land single mode: no method names appear anywhere in panel
-  CS08 — unsupported asset type → improved soft message shown
+  CS08 — null-mapped asset type (أصول معنوية) shows soft message with continuation guidance
   CS09 — section D is empty; no Arabic or raw method labels in single-mode panel
   CS10 — determinism: two reloads with same selection produce identical text
   CS11 — header nav link reads "تقييم أصل مركّب" with tooltip attribute
@@ -20,16 +20,27 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS13 — section D is empty after Phase 8E methods removal
   CS14 — residential single mode: composite link absent; title does not say "مركّب"
   CS15 — land single mode: composite link absent; title does not say "مركّب"
-  CS16 — "عمارة سكنية" shows composite guidance panel; title contains "أصل مركّب"
-  CS17 — composite panel has redirect link to composite_valuation.html
-  CS18 — composite panel shows grouped checklist sections (land/building/income)
-  CS19 — no raw registry codes in composite panel
+  CS16 — "عمارة سكنية" shows static building_full panel; title is "متطلبات تقييم عمارة سكنية"
+  CS17 — building_full panel has redirect link to composite_valuation.html
+  CS18 — building_full panel shows grouped checklist sections (land/building/income)
+  CS19 — no raw registry codes in building_full panel
   CS20 — "عمارة سكنية" does not call GET /api/valuation/requirements
   CS21 — residential single panel: section D empty, no methods section
   CS22 — residential single panel text: "مناهج التقييم المناسبة" absent
-  CS23 — composite panel text: "مناهج التقييم المناسبة" absent
-  CS24 — "تجاري" calls GET /api/valuation/requirements (not treated as composite)
-  CS25 — "مصنع" calls GET /api/valuation/requirements (not treated as composite)
+  CS23 — building_full panel text: "مناهج التقييم المناسبة" absent
+  CS24 — "تجاري" calls GET /api/valuation/requirements (API-driven building_mixed profile)
+  CS25 — "مصنع" is placeholder profile; must NOT call GET /api/valuation/requirements
+  CS26 — "شقة سكنية" calls GET /api/valuation/requirements (residential_unit API profile)
+  CS27 — "أرض فضاء" calls GET /api/valuation/requirements (land API profile)
+  CS28 — "عمارة سكنية" (Phase 8G framing): ZERO API calls, static path confirmed
+  CS29 — "عمارة سكنية" building_full panel contains floor-use rows (الدور الأرضي, الأدوار المتكررة)
+  CS30 — "فندق" → placeholder panel; ZERO API calls; title contains "فندق"; deferred notice shown
+  CS31 — "مصنع" → placeholder panel; ZERO API calls; deferred notice shown
+  CS32 — "مستشفى" → placeholder panel; ZERO API calls; deferred notice shown
+  CS33 — all placeholder asset types contain "قيد التطوير" notice
+  CS34 — placeholder panels contain NO ✦ bullet and NO "(مطلوب)" tag
+  CS35 — no raw English profile codes appear in placeholder panel text
+  CS36 — two consecutive renders of "عمارة سكنية" produce identical innerText
 """
 from __future__ import annotations
 
@@ -269,11 +280,11 @@ def test_CS07_land_panel_renders_no_methods_anywhere(page: Page, live_server: st
 # ── CS08 ──────────────────────────────────────────────────────────────────────
 
 def test_CS08_unsupported_asset_type_shows_improved_soft_message(page: Page, live_server: str) -> None:
-    """Asset type not in ASSET_TYPE_MAP shows improved soft message with continuation guidance."""
+    """Null-mapped asset type (أصول معنوية) shows soft message with continuation guidance."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
-    page.select_option("#asset-type", value="مستشفى")
+    page.select_option("#asset-type", value="أصول معنوية")
     page.select_option("#val-purpose", value="fair_market_value")
 
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
@@ -464,7 +475,7 @@ def test_CS15_land_single_mode_no_composite_banner(page: Page, live_server: str)
 # ── CS16 ──────────────────────────────────────────────────────────────────────
 
 def test_CS16_building_shows_composite_guidance_panel(page: Page, live_server: str) -> None:
-    """'عمارة سكنية' (composite mode): guidance panel shown; title contains 'أصل مركّب'."""
+    """'عمارة سكنية' (building_full static panel): title is 'متطلبات تقييم عمارة سكنية'."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -474,12 +485,12 @@ def test_CS16_building_shows_composite_guidance_panel(page: Page, live_server: s
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     title_text = page.locator("#es-req-title").inner_text()
-    assert "أصل مركّب" in title_text or "أصل مركب" in title_text, (
-        f"Title must contain 'أصل مركّب' for composite mode. Got: {title_text!r}"
+    assert "متطلبات تقييم عمارة سكنية" in title_text, (
+        f"Title must be 'متطلبات تقييم عمارة سكنية' for building_full static panel. Got: {title_text!r}"
     )
     panel_text = page.locator("#es-req-panel").inner_text()
     assert "سيتم التعامل معه" in panel_text or "يتكوّن" in panel_text, (
-        f"Composite system-decision explanation must appear in panel. Got: {panel_text!r}"
+        f"Building_full system-decision explanation must appear in panel. Got: {panel_text!r}"
     )
 
 
@@ -663,14 +674,13 @@ def test_CS24_tijari_not_composite_calls_api(page: Page, live_server: str) -> No
 
 # ── CS25 ──────────────────────────────────────────────────────────────────────
 
-def test_CS25_masna_not_composite_calls_api(page: Page, live_server: str) -> None:
-    """'مصنع' is NOT in _COMPOSITE_CODES; must call GET /api/valuation/requirements."""
+def test_CS25_masna_is_placeholder_no_api_call(page: Page, live_server: str) -> None:
+    """'مصنع' maps to factory placeholder profile — must NOT call GET /api/valuation/requirements."""
     api_calls: list[str] = []
 
     def intercept(route: Route) -> None:
         api_calls.append(route.request.url)
-        route.fulfill(status=200, content_type="application/json",
-                      body=__import__("json").dumps(_COMMERCIAL_RESPONSE))
+        route.continue_()
 
     page.route("**/api/valuation/requirements**", intercept)
     page.goto(live_server, wait_until="networkidle")
@@ -680,7 +690,285 @@ def test_CS25_masna_not_composite_calls_api(page: Page, live_server: str) -> Non
     page.select_option("#val-purpose", value="fair_market_value")
     page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
 
+    assert len(api_calls) == 0, (
+        f"GET /api/valuation/requirements must NOT be called for 'مصنع' (placeholder profile). "
+        f"Got {len(api_calls)} call(s): {api_calls}"
+    )
+
+
+# ── CS26 ──────────────────────────────────────────────────────────────────────
+
+def test_CS26_shaqqa_calls_requirements_api(page: Page, live_server: str) -> None:
+    """'شقة سكنية' is residential_unit API profile — must call GET /api/valuation/requirements."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.fulfill(status=200, content_type="application/json",
+                      body=json.dumps(_RESIDENTIAL_RESPONSE))
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
     assert len(api_calls) >= 1, (
-        f"GET /api/valuation/requirements MUST be called for 'مصنع' (single industrial). "
+        f"GET /api/valuation/requirements MUST be called for 'شقة سكنية' (residential_unit). "
         f"Got {len(api_calls)} call(s)."
+    )
+    assert "asset_type=residential" in api_calls[0], (
+        f"API call must use registry code 'residential'. URL: {api_calls[0]!r}"
+    )
+
+
+# ── CS27 ──────────────────────────────────────────────────────────────────────
+
+def test_CS27_land_calls_requirements_api(page: Page, live_server: str) -> None:
+    """'أرض فضاء' is land API profile — must call GET /api/valuation/requirements."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.fulfill(status=200, content_type="application/json",
+                      body=json.dumps(_LAND_RESPONSE))
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+    assert len(api_calls) >= 1, (
+        f"GET /api/valuation/requirements MUST be called for 'أرض فضاء' (land profile). "
+        f"Got {len(api_calls)} call(s)."
+    )
+    assert "asset_type=land" in api_calls[0], (
+        f"API call must use registry code 'land'. URL: {api_calls[0]!r}"
+    )
+
+
+# ── CS28 ──────────────────────────────────────────────────────────────────────
+
+def test_CS28_emara_static_path_zero_api_calls(page: Page, live_server: str) -> None:
+    """'عمارة سكنية' takes building_full static path (Phase 8G) — ZERO API calls."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.continue_()
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    assert len(api_calls) == 0, (
+        f"GET /api/valuation/requirements must NOT be called for 'عمارة سكنية' (static path). "
+        f"Got {len(api_calls)} call(s): {api_calls}"
+    )
+
+
+# ── CS29 ──────────────────────────────────────────────────────────────────────
+
+def test_CS29_emara_floor_use_section_present(page: Page, live_server: str) -> None:
+    """'عمارة سكنية' building_full panel shows floor-use informational rows."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "الدور الأرضي" in panel_text, (
+        f"Floor-use row 'الدور الأرضي' must appear in building_full panel. Got: {panel_text!r}"
+    )
+    assert "الأدوار المتكررة" in panel_text, (
+        f"Floor-use row 'الأدوار المتكررة' must appear in building_full panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS30 ──────────────────────────────────────────────────────────────────────
+
+def test_CS30_hotel_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
+    """'فندق' maps to hotel placeholder: ZERO API calls, title contains 'فندق', deferred notice."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.continue_()
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    assert len(api_calls) == 0, (
+        f"GET /api/valuation/requirements must NOT be called for 'فندق' (placeholder). "
+        f"Got {len(api_calls)} call(s): {api_calls}"
+    )
+    title_text = page.locator("#es-req-title").inner_text()
+    assert "فندق" in title_text, (
+        f"Title must contain 'فندق'. Got: {title_text!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "قيد التطوير" in panel_text, (
+        f"Deferred notice 'قيد التطوير' must appear in hotel placeholder panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS31 ──────────────────────────────────────────────────────────────────────
+
+def test_CS31_factory_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
+    """'مصنع' maps to factory placeholder: ZERO API calls, deferred notice shown."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.continue_()
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="مصنع")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    assert len(api_calls) == 0, (
+        f"GET /api/valuation/requirements must NOT be called for 'مصنع' (placeholder). "
+        f"Got {len(api_calls)} call(s): {api_calls}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "قيد التطوير" in panel_text, (
+        f"Deferred notice 'قيد التطوير' must appear in factory placeholder panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS32 ──────────────────────────────────────────────────────────────────────
+
+def test_CS32_hospital_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
+    """'مستشفى' maps to hospital placeholder: ZERO API calls, deferred notice shown."""
+    api_calls: list[str] = []
+
+    def intercept(route: Route) -> None:
+        api_calls.append(route.request.url)
+        route.continue_()
+
+    page.route("**/api/valuation/requirements**", intercept)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="مستشفى")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    assert len(api_calls) == 0, (
+        f"GET /api/valuation/requirements must NOT be called for 'مستشفى' (placeholder). "
+        f"Got {len(api_calls)} call(s): {api_calls}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "قيد التطوير" in panel_text, (
+        f"Deferred notice 'قيد التطوير' must appear in hospital placeholder panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS33 ──────────────────────────────────────────────────────────────────────
+
+def test_CS33_all_placeholder_types_have_deferred_notice(page: Page, live_server: str) -> None:
+    """All six placeholder asset types render a 'قيد التطوير' notice in the panel."""
+    placeholder_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+
+    for asset_type in placeholder_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert "قيد التطوير" in panel_text, (
+            f"Placeholder asset '{asset_type}' must show 'قيد التطوير'. Got: {panel_text!r}"
+        )
+
+
+# ── CS34 ──────────────────────────────────────────────────────────────────────
+
+def test_CS34_placeholder_panels_no_required_bullets(page: Page, live_server: str) -> None:
+    """Placeholder panels contain no ✦ bullet and no '(مطلوب)' required tag."""
+    placeholder_types = ["فندق", "مصنع", "مستشفى"]
+
+    for asset_type in placeholder_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert "✦" not in panel_text, (
+            f"Placeholder panel '{asset_type}' must not contain ✦ bullet. Got: {panel_text!r}"
+        )
+        assert "(مطلوب)" not in panel_text, (
+            f"Placeholder panel '{asset_type}' must not contain '(مطلوب)'. Got: {panel_text!r}"
+        )
+
+
+# ── CS35 ──────────────────────────────────────────────────────────────────────
+
+def test_CS35_no_raw_profile_codes_in_placeholder_panels(page: Page, live_server: str) -> None:
+    """No raw English profile codes appear in placeholder panel text."""
+    raw_codes = ("hotel", "factory", "retail", "hospital", "school", "mine",
+                 "building_full", "building_mixed", "residential_unit")
+
+    placeholder_types = ["فندق", "مصنع", "مستشفى"]
+
+    for asset_type in placeholder_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+        panel_text = page.locator("#es-req-panel").inner_text()
+        for code in raw_codes:
+            assert code not in panel_text, (
+                f"Raw profile code '{code}' must not appear in placeholder panel '{asset_type}'. "
+                f"Got: {panel_text!r}"
+            )
+
+
+# ── CS36 ──────────────────────────────────────────────────────────────────────
+
+def test_CS36_emara_two_renders_identical(page: Page, live_server: str) -> None:
+    """Two consecutive renders of 'عمارة سكنية' produce identical panel innerText."""
+    def _render_and_get_text() -> str:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value="عمارة سكنية")
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        return page.locator("#es-req-panel").inner_text()
+
+    text1 = _render_and_get_text()
+    text2 = _render_and_get_text()
+
+    assert text1 == text2, (
+        "Two consecutive renders of 'عمارة سكنية' produced different panel text.\n"
+        f"Run 1: {text1!r}\nRun 2: {text2!r}"
     )

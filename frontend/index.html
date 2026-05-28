@@ -5625,27 +5625,33 @@ function _showIndexToast(msg, type) {
 </script>
 
 <script>
-// ══ Phase 8B/8C — Requirements Checklist ════════════════════════════════════
+// ══ Phase 8B/8C/8G — Requirements Checklist ══════════════════════════════════
 (function () {
     'use strict';
 
-    // ── Asset-type mapping: frontend dropdown values → registry codes ─────────
-    // Absent key = unknown type (soft message).  No fallthrough to raw value.
-    var ASSET_TYPE_MAP = {
-        'شقة سكنية':    'residential',
-        'عمارة سكنية':  'commercial',   // 8C: income-producing multi-unit → commercial
-        'فيلا':         'residential',
-        'دوبلكس':       'residential',
-        'تاون هاوس':    'residential',
-        'استوديو':      'residential',
-        'مستودع':       'commercial',
-        'تجاري':        'commercial',
-        'مول تجاري':    'commercial',
-        'فندق':         'commercial',
-        'مصنع':         'commercial',
-        'محل تجاري':    'commercial',   // 8C: new entry
-        'أرض فضاء':     'land',
-        'أرض زراعية':   'land',
+    // ── Asset profile map: frontend dropdown values -> profile codes ──────────
+    // Absent key = unsupported (soft message).  null = explicitly unsupported.
+    var ASSET_PROFILE_MAP = {
+        'شقة سكنية':             'residential_unit',
+        'فيلا':                  'residential_unit',
+        'دوبلكس':                'residential_unit',
+        'تاون هاوس':             'residential_unit',
+        'استوديو':               'residential_unit',
+        'أرض فضاء':              'land',
+        'أرض زراعية':            'land',
+        'تجاري':                 'building_mixed',
+        'مستودع':                'building_mixed',
+        'مول تجاري':             'building_mixed',
+        'عمارة سكنية':           'building_full',
+        'فندق':                  'hotel',
+        'مصنع':                  'factory',
+        'محل تجاري':             'retail',
+        'مستشفى':                'hospital',
+        'مدرسة':                 'school',
+        'مناجم':                 'mine',
+        'أصول معنوية':           null,
+        'ملكيات جزئية':          null,
+        'استثمارات تحت الإنشاء': null,
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5717,11 +5723,35 @@ function _showIndexToast(msg, type) {
     };
     // Any field not in FIELD_GROUP is treated as 'optional' (enhancing metadata)
 
-    // ── Composite mode classifier ─────────────────────────────────────────────
-    // Raw dropdown values (assetTypeRaw) that represent multi-component assets.
-    // Checked against assetTypeRaw — NOT the registry code — so that single-unit
-    // commercial assets (تجاري, مصنع, فندق, محل تجاري) are not misclassified.
-    var _COMPOSITE_CODES = new Set(['عمارة سكنية']);
+    // ── API-driven profiles: profile code -> backend registry code ────────────
+    var _API_PROFILE_REGISTRY = {
+        'residential_unit': 'residential',
+        'land':             'land',
+        'building_mixed':   'commercial',
+    };
+
+    // ── Static profiles: profile code -> render config ────────────────────────
+    var _STATIC_PROFILES = {
+        'building_full': { type: 'full', titleAr: 'عمارة سكنية' },
+        'hotel':     { type: 'placeholder', titleAr: 'فندق / منتجع سياحي',
+                       headings: ['بيانات الأرض والمبنى', 'تصنيف الفندق وعدد الغرف والأجنحة',
+                                  'بيانات الإشغال والدخل التشغيلي', 'المستندات المطلوبة'] },
+        'factory':   { type: 'placeholder', titleAr: 'مصنع / صناعي / لوجستي',
+                       headings: ['بيانات الأرض الصناعية والمباني', 'خطوط الإنتاج والطاقة الإنتاجية',
+                                  'التراخيص الصناعية والمرافق', 'المستندات المطلوبة'] },
+        'retail':    { type: 'placeholder', titleAr: 'تجزئة / محلات تجارية',
+                       headings: ['بيانات الأرض والمبنى', 'المساحة القابلة للتأجير وعدد الوحدات',
+                                  'بيانات الإيجار والإشغال', 'المستندات المطلوبة'] },
+        'hospital':  { type: 'placeholder', titleAr: 'مستشفى / مركز طبي',
+                       headings: ['بيانات الأرض والمبنى', 'الأقسام الطبية والتراخيص',
+                                  'بيانات التشغيل والإشغال', 'المستندات المطلوبة'] },
+        'school':    { type: 'placeholder', titleAr: 'مدرسة / مرفق تعليمي',
+                       headings: ['بيانات الأرض والمبنى', 'عدد الفصول والسعة الطلابية',
+                                  'التراخيص التعليمية والإيرادات', 'المستندات المطلوبة'] },
+        'mine':      { type: 'placeholder', titleAr: 'منجم / آبار',
+                       headings: ['رخصة التعدين والموقع', 'الاحتياطي والإنتاج السنوي',
+                                  'البنية التحتية والالتزامات البيئية', 'المستندات والدراسات الفنية'] },
+    };
 
     // ── Section builder — heading + description paragraph + item rows ─────────
     function _sectionHTML(heading, headingColor, description, items, optTag) {
@@ -5825,8 +5855,8 @@ function _showIndexToast(msg, type) {
         panel.style.display = 'block';
     }
 
-    // ── Render composite-mode guidance panel (static, no API call) ────────────
-    function renderCompositePanel(assetTypeRaw) {
+    // ── Render static panel: building_full (full) or placeholder ─────────────
+    function renderStaticPanel(profile, config) {
         var panel   = document.getElementById('es-req-panel');
         var titleEl = document.getElementById('es-req-title');
         var softEl  = document.getElementById('es-req-soft-msg');
@@ -5838,54 +5868,91 @@ function _showIndexToast(msg, type) {
         var notesEl = document.getElementById('es-req-notes');
         if (!panel) return;
 
-        var assetType = ASSET_TYPE_MAP[assetTypeRaw] || 'commercial';
-        var assetLbl  = ASSET_LABELS[assetType] || assetTypeRaw;
-        if (titleEl) titleEl.textContent = 'متطلبات تقييم أصل مركّب — ' + assetLbl;
+        if (titleEl) titleEl.textContent = 'متطلبات تقييم ' + (config.titleAr || profile);
         if (softEl)  { softEl.textContent = ''; softEl.style.display = 'none'; }
         if (bodyEl)  bodyEl.style.display = '';
-        // Clear single-mode section D styling if left over from a prior render
-        if (s4El) { s4El.removeAttribute('data-es-section'); s4El.style.cssText = ''; }
+        if (s4El)    { s4El.removeAttribute('data-es-section'); s4El.style.cssText = ''; }
         if (notesEl) notesEl.textContent = '';
 
-        // Section 1 — composite explanation (system announces decision) + secondary link
-        if (s1El) s1El.innerHTML =
-            '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;margin-bottom:8px;">'
-            + 'هذا الأصل سيتم التعامل معه كتقييم مركب لأنه يتكوّن عادةً من أرض + مبنى + وحدات أو دخل.'
-            + '</div>'
-            + '<a id="es-req-composite-link" href="/composite_valuation.html"'
-            + ' style="display:inline-block;font-size:0.78rem;color:#d4af37;'
-            + 'border:1px solid rgba(212,175,55,0.4);padding:4px 12px;border-radius:6px;'
-            + 'text-decoration:none;margin-bottom:4px;">'
-            + 'فتح نموذج التقييم المركب التفصيلي ←'
-            + '</a>';
+        if (config.type === 'full') {
+            // building_full: s1 = explanation + link + land + building groups
+            if (s1El) s1El.innerHTML =
+                '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;margin-bottom:8px;">'
+                + 'هذا الأصل سيتم التعامل معه كتقييم مركب لأنه يتكوّن عادةً من أرض + مبنى + وحدات أو دخل.'
+                + '</div>'
+                + '<a id="es-req-composite-link" href="/composite_valuation.html"'
+                + ' style="display:inline-block;font-size:0.78rem;color:#d4af37;'
+                + 'border:1px solid rgba(212,175,55,0.4);padding:4px 12px;border-radius:6px;'
+                + 'text-decoration:none;margin-bottom:4px;">'
+                + 'فتح نموذج التقييم المركب التفصيلي ←'
+                + '</a>'
+                + _compositeGroupHTML('بيانات الأرض', '#d4af37', [
+                    'المساحة الأرضية (م²)', 'الموقع والتخطيط العمراني', 'أفضل استخدام (HBU)',
+                ])
+                + _compositeGroupHTML('بيانات المبنى', '#d4af37', [
+                    'إجمالي المساحة المبنية (م²)', 'عمر المبنى (سنة)',
+                    'عدد الطوابق', 'درجة الجودة الإنشائية',
+                ]);
 
-        // Section 2 — land + building data groups
-        if (s2El) s2El.innerHTML =
-            _compositeGroupHTML('بيانات الأرض', '#d4af37', [
-                'المساحة الأرضية (م²)', 'الموقع والتخطيط العمراني', 'أفضل استخدام (HBU)',
-            ])
-            + _compositeGroupHTML('بيانات المبنى', '#d4af37', [
-                'إجمالي المساحة المبنية (م²)', 'عمر المبنى (سنة)',
-                'عدد الطوابق', 'درجة الجودة الإنشائية',
-            ]);
+            // s2: floor-use informational table + units/occupancy + income groups
+            if (s2El) {
+                var floorRows = [
+                    ['البدروم',          'مواقف / مخازن / خدمات'],
+                    ['الدور الأرضي',     'محلات تجارية / نشاط تجاري'],
+                    ['الدور الأول',      'إداري / مكاتب'],
+                    ['الأدوار المتكررة', 'وحدات سكنية'],
+                    ['سطح / خدمات',     'مرافق أو استخدامات أخرى'],
+                ];
+                var floorHtml = '<div style="font-size:0.78rem;font-weight:600;color:#9ca3af;margin:8px 0 4px;">'
+                    + 'توزيع الاستخدام والترخيص حسب الأدوار (إرشادي)</div>';
+                floorRows.forEach(function (r) {
+                    floorHtml += '<div style="font-size:0.76rem;padding:2px 0;color:#9ca3af;">'
+                        + '<span style="display:inline-block;min-width:140px;color:#d1d5db;">' + r[0] + '</span>'
+                        + '<span style="color:#6b7280;">- ' + r[1] + '</span></div>';
+                });
+                s2El.innerHTML = floorHtml
+                    + _compositeGroupHTML('بيانات الوحدات أو الإشغال', '#9ca3af', [
+                        'عدد الوحدات', 'متوسط مساحة الوحدة (م²)', 'نسبة الإشغال',
+                    ])
+                    + _compositeGroupHTML('بيانات الدخل إن وجدت', '#9ca3af', [
+                        'الإيجار السنوي الإجمالي (ج.م.)', 'معدل الرسملة',
+                    ]);
+            }
 
-        // Section 3 — units/occupancy + income groups
-        if (s3El) s3El.innerHTML =
-            _compositeGroupHTML('بيانات الوحدات أو الإشغال', '#9ca3af', [
-                'عدد الوحدات', 'متوسط مساحة الوحدة (م²)', 'نسبة الإشغال',
-            ])
-            + _compositeGroupHTML('بيانات الدخل إن وجدت', '#9ca3af', [
-                'الإيجار السنوي الإجمالي (ج.م.)', 'معدل الرسملة',
-            ]);
+            if (s3El) s3El.innerHTML =
+                _compositeGroupHTML('المستندات المطلوبة', '#6b7280', [
+                    'عقد الملكية أو مستخرج التسجيل', 'الرسومات والمخططات المعتمدة',
+                ])
+                + _compositeGroupHTML('بيانات إضافية لتحسين الدقّة', '#6b7280', [
+                    'شهادة إتمام البناء', 'محضر المعاينة الميدانية', 'بيانات صفقات مقارنة',
+                ]);
 
-        // Section 4 — documents + optional accuracy-improving data
-        if (s4El) s4El.innerHTML =
-            _compositeGroupHTML('المستندات المطلوبة', '#6b7280', [
-                'عقد الملكية أو مستخرج التسجيل', 'الرسومات والمخططات المعتمدة',
-            ])
-            + _compositeGroupHTML('بيانات إضافية لتحسين الدقّة', '#6b7280', [
-                'شهادة إتمام البناء', 'محضر المعاينة الميدانية', 'بيانات صفقات مقارنة',
-            ]);
+            if (s4El) s4El.innerHTML =
+                _compositeGroupHTML('المناهج المقترحة لعمارة سكنية', '#d4af37', [
+                    METHOD_LABELS['comparable'],
+                    METHOD_LABELS['income'],
+                    METHOD_LABELS['cost'],
+                ]);
+        } else {
+            // Placeholder panel: description + section headings + deferred notice
+            var headings = config.headings || [];
+            if (s1El) s1El.innerHTML =
+                '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;margin-bottom:6px;">'
+                + 'هذا النوع من الأصول يتطلّب ملف تقييم متخصّص.'
+                + '</div>';
+            if (s2El) {
+                var hHtml = '';
+                headings.forEach(function (h) {
+                    hHtml += '<div style="font-size:0.76rem;padding:2px 0;color:#9ca3af;">◦ ' + h + '</div>';
+                });
+                s2El.innerHTML = hHtml;
+            }
+            if (s3El) s3El.innerHTML =
+                '<div style="font-size:0.73rem;color:#6b7280;font-style:italic;margin-top:8px;">'
+                + 'الملف التفصيلي لهذا النوع قيد التطوير.'
+                + '</div>';
+            if (s4El) s4El.innerHTML = '';
+        }
 
         panel.style.display = 'block';
     }
@@ -5894,15 +5961,26 @@ function _showIndexToast(msg, type) {
     var _SOFT_MSG = 'لا توجد قائمة متطلبات مخصّصة لهذا الاختيار حالياً. يمكنك متابعة التقييم، لكن قد لا تظهر إرشادات مخصّصة لهذا النوع أو الغرض.';
 
     function fetchChecklist(assetTypeRaw, purposeRaw) {
-        var assetType = ASSET_TYPE_MAP[assetTypeRaw];
-        var purpose   = PURPOSE_MAP[purposeRaw];
+        var profile = ASSET_PROFILE_MAP.hasOwnProperty(assetTypeRaw)
+                      ? ASSET_PROFILE_MAP[assetTypeRaw] : undefined;
+        var purpose = PURPOSE_MAP[purposeRaw];
 
-        if (!assetType) { showSoftMsg(_SOFT_MSG); return; }
-        if (_COMPOSITE_CODES.has(assetTypeRaw)) { renderCompositePanel(assetTypeRaw); return; }
-        if (!purpose)   { showSoftMsg(_SOFT_MSG); return; }
+        // null = explicitly unsupported; undefined = not in map
+        if (!profile) { showSoftMsg(_SOFT_MSG); return; }
+
+        // Static path: building_full or placeholder profiles
+        if (_STATIC_PROFILES.hasOwnProperty(profile)) {
+            renderStaticPanel(profile, _STATIC_PROFILES[profile]);
+            return;
+        }
+
+        // API path: residential_unit, land, building_mixed
+        var registryCode = _API_PROFILE_REGISTRY[profile];
+        if (!registryCode) { showSoftMsg(_SOFT_MSG); return; }
+        if (!purpose)      { showSoftMsg(_SOFT_MSG); return; }
 
         window.esFetch(
-            '/api/valuation/requirements?asset_type=' + encodeURIComponent(assetType)
+            '/api/valuation/requirements?asset_type=' + encodeURIComponent(registryCode)
                 + '&purpose=' + encodeURIComponent(purpose)
         ).then(function (resp) {
             if (!resp.ok) { showSoftMsg(_SOFT_MSG); return null; }
@@ -5930,7 +6008,7 @@ function _showIndexToast(msg, type) {
         if (purEl) purEl.addEventListener('change', onSelectionChange);
     });
 }());
-// ══ End Phase 8B/8C ══════════════════════════════════════════════════════════
+// ══ End Phase 8B/8C/8G ═══════════════════════════════════════════════════════
 </script>
 
 </body>

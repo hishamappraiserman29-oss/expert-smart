@@ -1240,6 +1240,18 @@
         </div>
     </div>
 
+    <!-- ── Phase 8B: Requirements Checklist Panel ──────────────────────── -->
+    <div id="es-req-panel" style="display:none; margin:12px 0; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
+        <div style="font-weight:bold; color:var(--gold-light); font-size:0.85rem; margin-bottom:8px;">
+            متطلبات التقييم <span id="es-req-badge" style="font-size:0.72rem; color:#9ca3af;"></span>
+        </div>
+        <div id="es-req-required" style="margin-bottom:6px;"></div>
+        <div id="es-req-optional"></div>
+        <div id="es-req-methods" style="margin-top:8px; font-size:0.78rem; color:#9ca3af;"></div>
+        <div id="es-req-notes" style="margin-top:4px; font-size:0.78rem; color:#f59e0b;"></div>
+    </div>
+    <!-- ── End Phase 8B ─────────────────────────────────────────────────── -->
+
     <div class="ai-section">
         <div class="quality-header-bar">
             <div style="font-weight:bold; color:var(--gold-light);">الوصف الفني ومحددات الأصل:</div>
@@ -5608,6 +5620,140 @@ function _showIndexToast(msg, type) {
     });
 }());
 // ══ End Auth #7b ═════════════════════════════════════════════════════
+</script>
+
+<script>
+// ══ Phase 8B — Requirements Checklist ═══════════════════════════════════════
+(function () {
+    'use strict';
+
+    var ASSET_TYPE_MAP = {
+        'شقة سكنية':          'residential',
+        'عمارة سكنية':         'residential',
+        'فيلا':               'residential',
+        'دوبلكس':             'residential',
+        'تاون هاوس':           'residential',
+        'استوديو':             'residential',
+        'مستودع':              'commercial',
+        'تجاري':               'commercial',
+        'مول تجاري':           'commercial',
+        'فندق':                'commercial',
+        'مصنع':                'commercial',
+        'أرض فضاء':            'land',
+        'أرض زراعية':          'land',
+    };
+
+    var PURPOSE_MAP = {
+        'fair_market_value':    'market_value',
+        'bank_financing':       'mortgage_lending',
+        'insurance':            'insurance',
+        'judicial_liquidation': 'liquidation',
+        'investment_analysis':  'investment_analysis',
+        'market_value':         'market_value',
+        'mortgage_lending':     'mortgage_lending',
+        'liquidation':          'liquidation',
+    };
+
+    var FIELD_LABELS = {
+        'comparable':             'نهج المقارنة (ج.م.)',
+        'income':                 'نهج الدخل (ج.م.)',
+        'cost':                   'نهج التكلفة (ج.م.)',
+        'client_name':            'اسم العميل',
+        'location':               'الموقع',
+        'area':                   'المساحة (م²)',
+        'valuation_date':         'تاريخ التقييم',
+        'appraiser_name':         'اسم المقيّم',
+        'comparables':            'عينات المقارنة',
+        'ownership_type':         'نوع الملكية',
+        'quality_tier':           'درجة الجودة',
+        'age_years':              'عمر المبنى (سنة)',
+        'annual_rent':            'الإيجار السنوي (ج.م.)',
+        'cap_rate':               'معدل الرسملة',
+        'development_stage':      'مرحلة التطوير',
+        'occupancy_rate':         'نسبة الإشغال',
+        'property_class':         'فئة المبنى',
+        'hbu':                    'أفضل استخدام (HBU)',
+        'location_desirability':  'جاذبية الموقع',
+        'zoning':                 'التخطيط العمراني',
+        'development_feasibility': 'جدوى التطوير',
+    };
+
+    function hidePanel() {
+        var p = document.getElementById('es-req-panel');
+        if (p) p.style.display = 'none';
+    }
+
+    function renderPanel(data) {
+        var panel      = document.getElementById('es-req-panel');
+        var badgeEl    = document.getElementById('es-req-badge');
+        var reqEl      = document.getElementById('es-req-required');
+        var optEl      = document.getElementById('es-req-optional');
+        var methodsEl  = document.getElementById('es-req-methods');
+        var notesEl    = document.getElementById('es-req-notes');
+        if (!panel) return;
+
+        var items = data.checklist_items || [];
+        var req   = items.filter(function (i) { return i.required; });
+        var opt   = items.filter(function (i) { return !i.required; });
+
+        if (badgeEl)   badgeEl.textContent = '(' + data.asset_type + ' / ' + data.purpose + ')';
+
+        if (reqEl) reqEl.innerHTML = req.length
+            ? '<div style="font-size:0.78rem;color:#ef4444;font-weight:600;margin-bottom:3px;">مطلوب:</div>'
+              + req.map(function (f) {
+                    return '<div style="font-size:0.76rem;padding:2px 0;">✦ '
+                        + (FIELD_LABELS[f.name] || f.name) + '</div>';
+                }).join('')
+            : '';
+
+        if (optEl) optEl.innerHTML = opt.length
+            ? '<div style="font-size:0.78rem;color:#9ca3af;font-weight:600;margin-bottom:3px;">اختياري:</div>'
+              + opt.map(function (f) {
+                    return '<div style="font-size:0.76rem;padding:2px 0;color:#d1d5db;">◦ '
+                        + (FIELD_LABELS[f.name] || f.name) + '</div>';
+                }).join('')
+            : '';
+
+        if (methodsEl) methodsEl.textContent = data.recommended_methods && data.recommended_methods.length
+            ? 'المناهج الموصى بها: ' + data.recommended_methods.join(' • ')
+            : '';
+
+        if (notesEl) notesEl.textContent = data.notes || '';
+
+        panel.style.display = 'block';
+    }
+
+    function fetchChecklist(assetTypeRaw, purposeRaw) {
+        var assetType = ASSET_TYPE_MAP[assetTypeRaw] || assetTypeRaw;
+        var purpose   = PURPOSE_MAP[purposeRaw]      || purposeRaw;
+        if (!assetType || !purpose) { hidePanel(); return; }
+
+        window.esFetch(
+            '/api/valuation/requirements?asset_type=' + encodeURIComponent(assetType)
+                + '&purpose=' + encodeURIComponent(purpose)
+        ).then(function (resp) {
+            if (!resp.ok) { hidePanel(); return null; }
+            return resp.json();
+        }).then(function (data) {
+            if (data && data.status === 'ok') { renderPanel(data); } else { hidePanel(); }
+        }).catch(function () { hidePanel(); });
+    }
+
+    function onSelectionChange() {
+        var atEl  = document.getElementById('asset-type');
+        var purEl = document.getElementById('val-purpose');
+        if (!atEl || !purEl) return;
+        fetchChecklist(atEl.value, purEl.value);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var atEl  = document.getElementById('asset-type');
+        var purEl = document.getElementById('val-purpose');
+        if (atEl)  atEl.addEventListener('change',  onSelectionChange);
+        if (purEl) purEl.addEventListener('change', onSelectionChange);
+    });
+}());
+// ══ End Phase 8B ═════════════════════════════════════════════════════════════
 </script>
 
 </body>

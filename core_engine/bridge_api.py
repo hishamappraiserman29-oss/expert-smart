@@ -107,6 +107,13 @@ except ImportError:
     LandAdapter = None  # type: ignore[assignment,misc]
 from reports.quality_auditor import ReportQualityAuditor
 
+# ── Phase 8B requirements registry ───────────────────────────────────────────
+from adapters.valuation_requirements import (
+    get_requirements,
+    SUPPORTED_ASSET_TYPES,
+    SUPPORTED_PURPOSES_BY_ASSET_TYPE,
+)
+
 # ── Phase 15 enterprise features (optional — absent on main until R3 is merged)
 try:
     from adapters.enterprise import (
@@ -8263,6 +8270,84 @@ def api_valuation_report_download(filename: str):
         as_attachment=True,
         download_name=f"valuation_report_{safe_name}",
     )
+
+
+# ── Phase 8B — Requirements Checklist ────────────────────────────────────────
+
+@app.route("/api/valuation/requirements", methods=["GET"])
+@require_auth
+def api_valuation_requirements():
+    """Return Requirements Matrix checklist for (?asset_type=&purpose=)."""
+    asset_type = request.args.get("asset_type", "").strip()
+    purpose    = request.args.get("purpose", "").strip()
+
+    if not asset_type or not purpose:
+        return jsonify({
+            "status":  "error",
+            "message": "Missing required query parameters: asset_type, purpose",
+        }), 400
+
+    if asset_type not in SUPPORTED_ASSET_TYPES:
+        return jsonify({
+            "status":  "error",
+            "message": (
+                f"Unknown asset_type '{asset_type}'. "
+                f"Supported: {sorted(SUPPORTED_ASSET_TYPES)}"
+            ),
+        }), 400
+
+    valid_purposes = SUPPORTED_PURPOSES_BY_ASSET_TYPE.get(asset_type, frozenset())
+    if purpose not in valid_purposes:
+        return jsonify({
+            "status":  "error",
+            "message": (
+                f"Purpose '{purpose}' not supported for asset_type '{asset_type}'. "
+                f"Supported: {sorted(valid_purposes)}"
+            ),
+        }), 400
+
+    reqs = get_requirements(asset_type, purpose)
+
+    checklist_items = [
+        {
+            "name":        f.name,
+            "required":    f.required,
+            "field_type":  f.field_type,
+            "description": f.description,
+            "valid_values": list(f.valid_values),
+        }
+        for f in reqs.metadata_fields
+    ]
+    dynamic_fields = [
+        {
+            "name":        f.name,
+            "field_type":  f.field_type,
+            "valid_values": list(f.valid_values),
+        }
+        for f in reqs.metadata_fields
+        if f.valid_values
+    ]
+
+    _methods: dict[str, list[str]] = {
+        "residential": ["comparable", "cost", "income"],
+        "commercial":  ["comparable", "cost", "income"],
+        "land":        ["comparable", "income"],
+    }
+    _notes: dict[tuple[str, str], str] = {
+        ("land",        "market_value"):        "Cost approach weight is 0 for unimproved land.",
+        ("land",        "investment_analysis"):  "Income approach via development/residual method.",
+        ("residential", "mortgage_lending"):    "LTV ratio required for Basel III compliance.",
+    }
+
+    return jsonify({
+        "status":              "ok",
+        "asset_type":          asset_type,
+        "purpose":             purpose,
+        "checklist_items":     checklist_items,
+        "dynamic_fields":      dynamic_fields,
+        "recommended_methods": _methods.get(asset_type, ["comparable"]),
+        "notes":               _notes.get((asset_type, purpose), ""),
+    })
 
 
 # ── Phase 7 routes ────────────────────────────────────────────────────────────

@@ -289,3 +289,272 @@ def test_RM22_enum_fieldspecs_have_valid_values():
     assert len(enum_fields) >= 1, "Expected at least one enum FieldSpec for residential"
     for spec in enum_fields:
         assert len(spec.valid_values) > 0
+
+
+# ══ Phase 8H.2A — enriched registry tests (RM23 – RM37) ═════════════════════
+
+# ── RM23 — FieldSpec carries Phase 8H.2A attributes ──────────────────────────
+
+def test_RM23_fieldspec_has_8h2a_attributes():
+    """FieldSpec exposes role / label_ar / group / ui_required with correct defaults."""
+    spec = FieldSpec("test_field", False, "str", "A test field")
+    assert hasattr(spec, "role"),        "FieldSpec must have 'role' attribute"
+    assert hasattr(spec, "label_ar"),    "FieldSpec must have 'label_ar' attribute"
+    assert hasattr(spec, "group"),       "FieldSpec must have 'group' attribute"
+    assert hasattr(spec, "ui_required"), "FieldSpec must have 'ui_required' attribute"
+    assert spec.role        == "user_input"
+    assert spec.label_ar    == ""
+    assert spec.group       == ""
+    assert spec.ui_required is False
+
+
+# ── RM24 — Engine-value fields carry role="engine_value" ─────────────────────
+
+def test_RM24_engine_value_fields_marked_correctly():
+    """comparable / cost / income / comparables have role='engine_value'."""
+    reqs = get_requirements("residential", "market_value")
+    field_map = {f.name: f for f in reqs.metadata_fields}
+
+    for name in ("comparable", "cost", "income", "comparables"):
+        assert name in field_map, f"Field '{name}' missing from residential"
+        assert field_map[name].role == "engine_value", (
+            f"Field '{name}' must have role='engine_value', got {field_map[name].role!r}"
+        )
+
+    # Land does not have cost but does have comparable / income / comparables
+    land_reqs = get_requirements("land", "market_value")
+    land_map = {f.name: f for f in land_reqs.metadata_fields}
+    for name in ("comparable", "income", "comparables"):
+        assert land_map[name].role == "engine_value", (
+            f"Land field '{name}' must have role='engine_value'"
+        )
+
+
+# ── RM25 — Residential user-input form fields present ────────────────────────
+
+def test_RM25_residential_user_input_fields_present():
+    """Residential registry contains the Phase 8H.2A user-facing form fields."""
+    reqs = get_requirements("residential", "market_value")
+    names = {f.name for f in reqs.metadata_fields}
+
+    expected = {
+        "area_sqm", "floor_number", "rooms_count", "finishing_level",
+        "building_age", "elevator_available", "parking_available",
+        "legal_status", "view_quality", "services_available",
+    }
+    for field_name in expected:
+        assert field_name in names, (
+            f"Residential registry missing expected user-input field '{field_name}'"
+        )
+
+
+# ── RM26 — Residential document fields present with group="document" ─────────
+
+def test_RM26_residential_document_fields_present():
+    """Residential registry contains document checklist items with group='document'."""
+    reqs = get_requirements("residential", "market_value")
+    doc_fields = {f.name for f in reqs.metadata_fields if f.group == "document"}
+
+    expected_docs = {
+        "ownership_document",
+        "site_croquis_or_location",
+        "recent_photos",
+        "nearby_sale_comparables_if_available",
+    }
+    for doc_name in expected_docs:
+        assert doc_name in doc_fields, (
+            f"Residential registry missing document field '{doc_name}'"
+        )
+    # All document fields must be bool type
+    for spec in reqs.metadata_fields:
+        if spec.group == "document":
+            assert spec.field_type == "bool", (
+                f"Document field '{spec.name}' must have field_type='bool', "
+                f"got {spec.field_type!r}"
+            )
+
+
+# ── RM27 — Land user-input form fields present ───────────────────────────────
+
+def test_RM27_land_user_input_fields_present():
+    """Land registry contains the Phase 8H.2A user-facing form fields."""
+    reqs = get_requirements("land", "market_value")
+    names = {f.name for f in reqs.metadata_fields}
+
+    expected = {
+        "land_area_sqm", "frontage_m", "street_width_m",
+        "zoning_type", "utilities_available", "buildability_status", "legal_status",
+    }
+    for field_name in expected:
+        assert field_name in names, (
+            f"Land registry missing expected user-input field '{field_name}'"
+        )
+
+
+# ── RM28 — Land document fields present with group="document" ────────────────
+
+def test_RM28_land_document_fields_present():
+    """Land registry contains document checklist items with group='document'."""
+    reqs = get_requirements("land", "market_value")
+    doc_fields = {f.name for f in reqs.metadata_fields if f.group == "document"}
+
+    expected_docs = {
+        "ownership_document",
+        "site_plan_or_croquis",
+        "area_statement",
+        "coordinates_or_map_location",
+        "site_photos",
+        "building_regulations_if_available",
+    }
+    for doc_name in expected_docs:
+        assert doc_name in doc_fields, (
+            f"Land registry missing document field '{doc_name}'"
+        )
+    for spec in reqs.metadata_fields:
+        if spec.group == "document":
+            assert spec.field_type == "bool", (
+                f"Document field '{spec.name}' must have field_type='bool'"
+            )
+
+
+# ── RM29 — finishing_level valid_values match spec ───────────────────────────
+
+def test_RM29_finishing_level_valid_values():
+    """finishing_level must have the four approved option codes."""
+    reqs = get_requirements("residential", "market_value")
+    spec = next(f for f in reqs.metadata_fields if f.name == "finishing_level")
+    expected = {"shell", "semi_finished", "standard_finished", "luxury_finished"}
+    assert set(spec.valid_values) == expected, (
+        f"finishing_level valid_values mismatch. Got: {set(spec.valid_values)}"
+    )
+
+
+# ── RM30 — legal_status valid_values match spec (residential) ────────────────
+
+def test_RM30_legal_status_valid_values_residential():
+    """residential legal_status must have the four approved option codes."""
+    reqs = get_requirements("residential", "market_value")
+    spec = next(f for f in reqs.metadata_fields if f.name == "legal_status")
+    expected = {"registered_title", "preliminary_contract", "allocation", "unknown"}
+    assert set(spec.valid_values) == expected, (
+        f"Residential legal_status valid_values mismatch. Got: {set(spec.valid_values)}"
+    )
+
+
+# ── RM31 — zoning_type valid_values match spec (land) ────────────────────────
+
+def test_RM31_zoning_type_valid_values_land():
+    """land zoning_type must have the six approved option codes."""
+    reqs = get_requirements("land", "market_value")
+    spec = next(f for f in reqs.metadata_fields if f.name == "zoning_type")
+    expected = {
+        "residential", "commercial", "administrative",
+        "mixed_use", "agricultural", "unknown",
+    }
+    assert set(spec.valid_values) == expected, (
+        f"Land zoning_type valid_values mismatch. Got: {set(spec.valid_values)}"
+    )
+
+
+# ── RM32 — All user_input fields have non-empty label_ar ─────────────────────
+
+def test_RM32_user_input_fields_have_label_ar():
+    """Every user_input field in residential and land has a non-empty label_ar."""
+    for asset_type in ("residential", "land"):
+        reqs = get_requirements(asset_type, "market_value")
+        for spec in reqs.metadata_fields:
+            if spec.role == "user_input":
+                assert spec.label_ar, (
+                    f"user_input field '{spec.name}' in {asset_type} "
+                    f"has empty label_ar"
+                )
+
+
+# ── RM33 — ui_required fields in residential match the approved set ───────────
+
+def test_RM33_residential_ui_required_fields():
+    """Residential ui_required=True fields match the approved set."""
+    reqs = get_requirements("residential", "market_value")
+    ui_req = {f.name for f in reqs.metadata_fields if f.ui_required}
+    expected = {"area_sqm", "floor_number", "rooms_count", "finishing_level", "legal_status"}
+    assert expected.issubset(ui_req), (
+        f"Some expected ui_required fields missing. "
+        f"Expected subset: {expected}. Got: {ui_req}"
+    )
+    # Engine-value fields must NOT be ui_required
+    for name in ("comparable", "cost", "income", "comparables"):
+        assert name not in ui_req, (
+            f"Engine-value field '{name}' must NOT be ui_required"
+        )
+
+
+# ── RM34 — ui_required fields in land match the approved set ─────────────────
+
+def test_RM34_land_ui_required_fields():
+    """Land ui_required=True fields match the approved set."""
+    reqs = get_requirements("land", "market_value")
+    ui_req = {f.name for f in reqs.metadata_fields if f.ui_required}
+    expected = {
+        "land_area_sqm", "frontage_m", "street_width_m",
+        "zoning_type", "buildability_status", "legal_status",
+    }
+    assert expected.issubset(ui_req), (
+        f"Some expected land ui_required fields missing. "
+        f"Expected subset: {expected}. Got: {ui_req}"
+    )
+    for name in ("comparable", "income", "comparables"):
+        assert name not in ui_req, (
+            f"Engine-value field '{name}' must NOT be ui_required in land"
+        )
+
+
+# ── RM35 — Residential dynamic_fields (enum fields) include new fields ────────
+
+def test_RM35_residential_enum_fields_include_new():
+    """Residential metadata_fields with valid_values include the new enum fields."""
+    reqs = get_requirements("residential", "market_value")
+    enum_names = {f.name for f in reqs.metadata_fields if f.valid_values}
+    for name in ("finishing_level", "legal_status", "elevator_available",
+                 "parking_available", "view_quality"):
+        assert name in enum_names, (
+            f"Residential new enum field '{name}' not found in fields with valid_values"
+        )
+
+
+# ── RM36 — Land dynamic_fields (enum fields) include new fields ───────────────
+
+def test_RM36_land_enum_fields_include_new():
+    """Land metadata_fields with valid_values include the new enum fields."""
+    reqs = get_requirements("land", "market_value")
+    enum_names = {f.name for f in reqs.metadata_fields if f.valid_values}
+    for name in ("zoning_type", "buildability_status", "legal_status", "utilities_available"):
+        assert name in enum_names, (
+            f"Land new enum field '{name}' not found in fields with valid_values"
+        )
+
+
+# ── RM37 — validate_result backward-compatible with pre-8H.2A fixtures ────────
+
+def test_RM37_validate_result_backward_compatible():
+    """Existing fixtures (engine-value fields only) produce zero error violations.
+
+    This confirms that the new required=False / ui_required=True fields do NOT
+    break validate_result() for valuation results produced before Phase 8H.2A.
+    """
+    # Residential: only the three engine-value fields present (legacy fixture)
+    res_result = _residential()   # provides comparable / cost / income only
+    violations = validate_result(res_result)
+    errors = [v for v in violations if v.severity == "error"]
+    assert errors == [], (
+        f"Residential legacy fixture must not produce errors after 8H.2A. "
+        f"Got: {errors}"
+    )
+
+    # Land: comparable + income only (legacy fixture)
+    land_result = _land()
+    violations = validate_result(land_result)
+    errors = [v for v in violations if v.severity == "error"]
+    assert errors == [], (
+        f"Land legacy fixture must not produce errors after 8H.2A. "
+        f"Got: {errors}"
+    )

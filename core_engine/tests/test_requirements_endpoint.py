@@ -110,7 +110,7 @@ def test_REQ05_unauthenticated(client):
 # ── REQ06 ─────────────────────────────────────────────────────────────────────
 
 def test_REQ06_residential_market_value(client):
-    """residential + market_value → 200 with correct structure."""
+    """residential + market_value → 200 with correct structure; enriched dynamic_fields."""
     resp = client.get(
         "/api/valuation/requirements?asset_type=residential&purpose=market_value",
         headers=_auth(),
@@ -127,12 +127,20 @@ def test_REQ06_residential_market_value(client):
     required_names = [i["name"] for i in data["checklist_items"] if i["required"]]
     assert "cost" in required_names
     assert "comparable" in required_names
+    # Phase 8H.2A: new enum fields must appear in dynamic_fields
+    dynamic_names = [f["name"] for f in data["dynamic_fields"]]
+    assert "finishing_level" in dynamic_names, (
+        f"finishing_level missing from residential dynamic_fields. Got: {dynamic_names}"
+    )
+    assert "legal_status" in dynamic_names, (
+        f"legal_status missing from residential dynamic_fields. Got: {dynamic_names}"
+    )
 
 
 # ── REQ07 ─────────────────────────────────────────────────────────────────────
 
 def test_REQ07_land_market_value_no_cost_method(client):
-    """land + market_value → 200; cost NOT in recommended_methods; notes mention cost."""
+    """land + market_value → 200; cost NOT in recommended_methods; enriched dynamic_fields."""
     resp = client.get(
         "/api/valuation/requirements?asset_type=land&purpose=market_value",
         headers=_auth(),
@@ -144,6 +152,17 @@ def test_REQ07_land_market_value_no_cost_method(client):
     assert "comparable" in data["recommended_methods"]
     assert "income" in data["recommended_methods"]
     assert "cost" in data["notes"].lower()
+    # Phase 8H.2A: new enum fields must appear in dynamic_fields
+    dynamic_names = [f["name"] for f in data["dynamic_fields"]]
+    assert "zoning_type" in dynamic_names, (
+        f"zoning_type missing from land dynamic_fields. Got: {dynamic_names}"
+    )
+    assert "buildability_status" in dynamic_names, (
+        f"buildability_status missing from land dynamic_fields. Got: {dynamic_names}"
+    )
+    assert "legal_status" in dynamic_names, (
+        f"legal_status missing from land dynamic_fields. Got: {dynamic_names}"
+    )
 
 
 # ── REQ08 ─────────────────────────────────────────────────────────────────────

@@ -8308,6 +8308,9 @@ def api_valuation_requirements():
 
     reqs = get_requirements(asset_type, purpose)
 
+    # Phase 8H.2C: checklist_items is the primary frontend contract — every
+    # field with role / label_ar / group / ui_required so the UI can filter,
+    # label, and classify controls without hardcoding anything.
     checklist_items = [
         {
             "name":        f.name,
@@ -8315,14 +8318,23 @@ def api_valuation_requirements():
             "field_type":  f.field_type,
             "description": f.description,
             "valid_values": list(f.valid_values),
+            "role":        f.role,
+            "label_ar":    f.label_ar,
+            "group":       f.group,
+            "ui_required": f.ui_required,
         }
         for f in reqs.metadata_fields
     ]
+    # dynamic_fields kept for backward compat; enriched with same metadata.
     dynamic_fields = [
         {
             "name":        f.name,
             "field_type":  f.field_type,
             "valid_values": list(f.valid_values),
+            "role":        f.role,
+            "label_ar":    f.label_ar,
+            "group":       f.group,
+            "ui_required": f.ui_required,
         }
         for f in reqs.metadata_fields
         if f.valid_values

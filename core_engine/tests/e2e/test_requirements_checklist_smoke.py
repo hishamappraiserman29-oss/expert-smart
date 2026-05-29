@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1 — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -15,7 +15,7 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS08 — null-mapped asset type (أصول معنوية) shows soft message with continuation guidance
   CS09 — section D is empty; no Arabic or raw method labels in single-mode panel
   CS10 — determinism: two reloads with same selection produce identical text
-  CS11 — header nav link reads "تقييم أصل مركّب" with tooltip attribute
+  CS11 — (8H.1) always-visible #cv-nav-link header link is absent; composite access is contextual only
   CS12 — sections A/B/C each have their descriptive paragraph
   CS13 — section D is empty after Phase 8E methods removal
   CS14 — residential single mode: composite link absent; title does not say "مركّب"
@@ -41,6 +41,9 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS34 — placeholder panels contain NO ✦ bullet and NO "(مطلوب)" tag
   CS35 — no raw English profile codes appear in placeholder panel text
   CS36 — two consecutive renders of "عمارة سكنية" produce identical innerText
+  CS37 — (8H.1) placeholder panel (فندق) has contextual composite CTA pointing to composite_valuation.html
+  CS38 — (8H.1) building_full panel s4 is empty; no method label text present
+  CS39 — (8H.1) all placeholder types show contextual composite CTA; residential/land do not
 """
 from __future__ import annotations
 
@@ -355,23 +358,13 @@ def test_CS10_determinism_two_reloads(page: Page, live_server: str) -> None:
 
 # ── CS11 ──────────────────────────────────────────────────────────────────────
 
-def test_CS11_nav_link_renamed_with_tooltip(page: Page, live_server: str) -> None:
-    """Header nav link reads 'تقييم أصل مركّب'; title attribute contains tooltip."""
+def test_CS11_always_visible_composite_nav_link_removed(page: Page, live_server: str) -> None:
+    """Phase 8H.1: always-visible #cv-nav-link header link removed; composite access is contextual only."""
     page.goto(live_server, wait_until="networkidle")
 
     link = page.locator("#cv-nav-link")
-    expect(link).to_be_visible()
-
-    link_text = link.inner_text().strip()
-    assert link_text == "تقييم أصل مركّب", (
-        f"Nav link text must be 'تقييم أصل مركّب'. Got: {link_text!r}"
-    )
-    title_attr = link.get_attribute("title") or ""
-    assert "استخدمه عند تقييم" in title_attr, (
-        f"Nav title must contain 'استخدمه عند تقييم'. Got: {title_attr!r}"
-    )
-    assert "أرض + مبنى" in title_attr, (
-        f"Nav title must mention component example 'أرض + مبنى'. Got: {title_attr!r}"
+    assert link.count() == 0 or not link.is_visible(), (
+        "Header #cv-nav-link must NOT be present/visible after Phase 8H.1 nav de-duplication"
     )
 
 
@@ -972,3 +965,92 @@ def test_CS36_emara_two_renders_identical(page: Page, live_server: str) -> None:
         "Two consecutive renders of 'عمارة سكنية' produced different panel text.\n"
         f"Run 1: {text1!r}\nRun 2: {text2!r}"
     )
+
+
+# ── CS37 ──────────────────────────────────────────────────────────────────────
+
+def test_CS37_placeholder_has_composite_cta(page: Page, live_server: str) -> None:
+    """Phase 8H.1: placeholder panel (فندق) shows contextual composite CTA pointing to composite_valuation.html."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    link = page.locator("#es-req-composite-link")
+    expect(link).to_be_visible()
+    href = link.get_attribute("href") or ""
+    assert "composite_valuation.html" in href, (
+        f"Placeholder CTA must point to composite_valuation.html. Got: {href!r}"
+    )
+    link_text = link.inner_text().strip()
+    assert "فتح نموذج التقييم المركب" in link_text, (
+        f"Placeholder CTA label must say 'فتح نموذج التقييم المركب'. Got: {link_text!r}"
+    )
+
+
+# ── CS38 ──────────────────────────────────────────────────────────────────────
+
+def test_CS38_building_full_s4_empty_no_method_labels(page: Page, live_server: str) -> None:
+    """Phase 8H.1: building_full panel s4 is empty; method label text is absent."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    s4_text = page.locator("#es-req-s4").inner_text().strip()
+    assert s4_text == "", (
+        f"Section D must be empty for building_full after Phase 8H.1. Got: {s4_text!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "نهج المقارنة" not in panel_text, (
+        f"Method label 'نهج المقارنة' must not appear in building_full panel. Got: {panel_text!r}"
+    )
+    assert "نهج الدخل" not in panel_text, (
+        f"Method label 'نهج الدخل' must not appear in building_full panel. Got: {panel_text!r}"
+    )
+    assert "المناهج المقترحة" not in panel_text, (
+        f"Methods heading 'المناهج المقترحة' must not appear in building_full panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS39 ──────────────────────────────────────────────────────────────────────
+
+def test_CS39_all_placeholder_types_have_composite_cta_residential_land_do_not(page: Page, live_server: str) -> None:
+    """Phase 8H.1: all placeholder types show composite CTA; residential_unit and land do not."""
+    placeholder_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+
+    for asset_type in placeholder_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+        link = page.locator("#es-req-composite-link")
+        assert link.count() >= 1 and link.is_visible(), (
+            f"Composite CTA must be visible in placeholder panel '{asset_type}'"
+        )
+        href = link.get_attribute("href") or ""
+        assert "composite_valuation.html" in href, (
+            f"Composite CTA must point to composite_valuation.html for '{asset_type}'. Got: {href!r}"
+        )
+
+    # Residential and land must NOT show composite CTA
+    for asset_type, mock_data in [("شقة سكنية", _RESIDENTIAL_RESPONSE), ("أرض فضاء", _LAND_RESPONSE)]:
+        _mock_req(page, mock_data)
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+        link = page.locator("#es-req-composite-link")
+        assert link.count() == 0 or not link.is_visible(), (
+            f"Composite CTA must NOT appear for '{asset_type}' (API-driven, not composite)"
+        )

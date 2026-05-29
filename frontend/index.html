@@ -960,7 +960,6 @@
     <header class="header">
         <div class="logo">Expert<span>_Smart</span></div>
         <div style="display:flex; align-items:center; gap:25px;">
-            <a href="/composite_valuation.html" id="cv-nav-link" style="color:var(--gold);font-size:0.9rem;text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:8px;white-space:nowrap;" title="استخدمه عند تقييم أصل يتكوّن من أكثر من مكوّن، مثل أرض + مبنى + وحدات.">تقييم أصل مركّب</a>
             <div id="validation-stamp" style="padding: 5px 15px; border: 2px dashed rgba(212,175,55,0.5); border-radius: 5px; color: var(--gold); font-weight: bold; font-family: monospace; letter-spacing: 1px;">
                 [ ختم الحالة الذكي: ⚠ غير مكتمل ]
             </div>
@@ -5625,7 +5624,7 @@ function _showIndexToast(msg, type) {
 </script>
 
 <script>
-// ══ Phase 8B/8C/8G — Requirements Checklist ══════════════════════════════════
+// ══ Phase 8B/8C/8G/8H.1 — Requirements Checklist ════════════════════════════
 (function () {
     'use strict';
 
@@ -5679,15 +5678,6 @@ function _showIndexToast(msg, type) {
         'insurance':           'التأمين',
         'liquidation':         'قيمة التصفية',
         'investment_analysis': 'التحليل الاستثماري',
-    };
-
-    // ── Display-only translation for recommended_methods (NOT checklist data) ─
-    var METHOD_LABELS = {
-        'comparable':          'نهج المقارنة السوقية',
-        'cost':                'نهج التكلفة',
-        'income':              'نهج الدخل',
-        'residual_land_value': 'طريقة القيمة المتبقية للأرض',
-        'investment_analysis': 'تحليل الاستثمار',
     };
 
     // ── Arabic labels for checklist_items field names ─────────────────────────
@@ -5927,19 +5917,20 @@ function _showIndexToast(msg, type) {
                     'شهادة إتمام البناء', 'محضر المعاينة الميدانية', 'بيانات صفقات مقارنة',
                 ]);
 
-            if (s4El) s4El.innerHTML =
-                _compositeGroupHTML('المناهج المقترحة لعمارة سكنية', '#d4af37', [
-                    METHOD_LABELS['comparable'],
-                    METHOD_LABELS['income'],
-                    METHOD_LABELS['cost'],
-                ]);
+            if (s4El) { s4El.innerHTML = ''; }
         } else {
             // Placeholder panel: description + section headings + deferred notice
             var headings = config.headings || [];
             if (s1El) s1El.innerHTML =
                 '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;margin-bottom:6px;">'
                 + 'هذا النوع من الأصول يتطلّب ملف تقييم متخصّص.'
-                + '</div>';
+                + '</div>'
+                + '<a id="es-req-composite-link" href="/composite_valuation.html"'
+                + ' style="display:inline-block;font-size:0.78rem;color:#d4af37;'
+                + 'border:1px solid rgba(212,175,55,0.4);padding:4px 12px;border-radius:6px;'
+                + 'text-decoration:none;margin-bottom:4px;">'
+                + 'فتح نموذج التقييم المركب التفصيلي ←'
+                + '</a>';
             if (s2El) {
                 var hHtml = '';
                 headings.forEach(function (h) {
@@ -6008,7 +5999,7 @@ function _showIndexToast(msg, type) {
         if (purEl) purEl.addEventListener('change', onSelectionChange);
     });
 }());
-// ══ End Phase 8B/8C/8G ═══════════════════════════════════════════════════════
+// ══ End Phase 8B/8C/8G/8H.1 ═════════════════════════════════════════════════
 </script>
 
 </body>

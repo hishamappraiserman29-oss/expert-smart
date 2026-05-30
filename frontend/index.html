@@ -5773,94 +5773,117 @@ function _showIndexToast(msg, type) {
         return html;
     }
 
-    // ── Build one form control from a FieldSpec (Phase 8H.2B) ────────────────
+    // ── Build one form control from a FieldSpec (Phase 8H.2D) ────────────────
     // Label comes from f.label_ar (backend — DRY). Control type from field_type/valid_values.
+    // _VALUE_DISPLAY maps universal backend codes to Arabic display strings (not per-field).
+    var _VALUE_DISPLAY = {
+        'yes': 'نعم', 'no': 'لا',
+        'electricity': 'كهرباء', 'water': 'مياه', 'sewage': 'صرف صحي',
+        'gas': 'غاز', 'paved_road': 'طريق ممهد'
+    };
+
     function _fieldControlHTML(f) {
-        var label     = f.label_ar || f.name;
-        var fid       = 'es-req-field-' + f.name;
-        var reqMark   = f.ui_required
+        var label    = f.label_ar || f.name;
+        var fid      = 'es-req-field-' + f.name;
+        var reqMark  = f.ui_required
             ? '<span style="color:#ef4444;margin-right:2px;">*</span>'
             : '';
-        var inputCss  = 'background:#1f2937;border:1px solid #374151;border-radius:4px;'
-            + 'padding:3px 6px;font-size:0.74rem;color:#f3f4f6;'
+        var inputCss = 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+            + 'padding:6px 10px;font-size:0.76rem;color:#f3f4f6;'
             + 'width:100%;box-sizing:border-box;';
-        var labelHtml = '<label for="' + fid + '" style="display:block;font-size:0.72rem;'
-            + 'color:#9ca3af;margin-bottom:2px;">' + reqMark + label + '</label>';
+        var labelHtml = '<label for="' + fid
+            + '" style="display:block;font-size:0.73rem;color:#9ca3af;margin-bottom:3px;">'
+            + reqMark + label + '</label>';
         var ctrlHtml;
 
-        // document checkbox
+        // document checkbox — card-row; preserve label[for=...] for test compat
         if (f.group === 'document') {
-            return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+            return '<div style="display:flex;align-items:center;gap:8px;'
+                + 'background:#1f2937;border:1px solid #374151;border-radius:6px;'
+                + 'padding:7px 10px;">'
                 + '<input type="checkbox" id="' + fid + '" name="' + f.name + '"'
                 + ' data-es-req-field="' + f.name + '"'
-                + ' style="accent-color:#d4af37;cursor:pointer;flex-shrink:0;">'
-                + '<label for="' + fid + '" style="font-size:0.74rem;color:#9ca3af;cursor:pointer;">'
+                + ' style="accent-color:#d4af37;cursor:pointer;flex-shrink:0;'
+                + 'width:15px;height:15px;">'
+                + '<label for="' + fid
+                + '" style="font-size:0.76rem;color:#9ca3af;cursor:pointer;">'
                 + label + '</label></div>';
         }
-        // bool (non-document) → yes/no select
+        // bool (non-doc) → yes/no select with Arabic labels
         if (f.field_type === 'bool') {
             ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
                 + ' data-es-req-field="' + f.name + '"'
                 + ' style="' + inputCss + '">'
-                + '<option value="">—</option>'
+                + '<option value="" disabled selected>اختر ' + label + '</option>'
                 + '<option value="yes">نعم</option>'
                 + '<option value="no">لا</option>'
                 + '</select>';
-            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+            return '<div>' + labelHtml + ctrlHtml + '</div>';
         }
-        // list + valid_values → checkbox group
+        // list + valid_values → styled chip group
         if (f.field_type === 'list' && f.valid_values && f.valid_values.length) {
-            var boxes = f.valid_values.map(function (v) {
-                return '<label style="display:flex;align-items:center;gap:3px;'
-                    + 'font-size:0.72rem;color:#9ca3af;cursor:pointer;">'
+            var chips = f.valid_values.map(function (v) {
+                var disp = _VALUE_DISPLAY[v] || v;
+                return '<label style="display:inline-flex;align-items:center;gap:5px;'
+                    + 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+                    + 'padding:4px 10px;cursor:pointer;font-size:0.73rem;color:#9ca3af;">'
                     + '<input type="checkbox" id="' + fid + '-' + v + '"'
                     + ' name="' + f.name + '" value="' + v + '"'
                     + ' data-es-req-field="' + f.name + '"'
                     + ' style="accent-color:#d4af37;cursor:pointer;">'
-                    + v + '</label>';
+                    + disp + '</label>';
             }).join('');
-            ctrlHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px 12px;">' + boxes + '</div>';
-            return '<div style="margin-bottom:6px;">'
-                + '<div style="font-size:0.72rem;color:#9ca3af;margin-bottom:3px;">'
+            return '<div>'
+                + '<div style="font-size:0.73rem;color:#9ca3af;margin-bottom:5px;">'
                 + reqMark + label + '</div>'
-                + ctrlHtml + '</div>';
+                + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div>'
+                + '</div>';
         }
-        // float / int → number input
+        // float / int → number input with generic placeholder
         if (f.field_type === 'float' || f.field_type === 'int' || f.field_type === 'number') {
             var stepAttr = f.field_type === 'float' ? ' step="any"' : '';
-            ctrlHtml = '<input type="number" id="' + fid + '" name="' + f.name + '"' + stepAttr
+            ctrlHtml = '<input type="number" id="' + fid + '" name="' + f.name + '"'
+                + stepAttr
                 + ' data-es-req-field="' + f.name + '"'
+                + ' placeholder="أدخل القيمة"'
                 + ' style="' + inputCss + '">';
-            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+            return '<div>' + labelHtml + ctrlHtml + '</div>';
         }
-        // str + valid_values → select dropdown
+        // str + valid_values → select; default option derived from label_ar
         if (f.valid_values && f.valid_values.length) {
-            var opts = '<option value="">—</option>'
+            var opts = '<option value="" disabled selected>اختر ' + label + '</option>'
                 + f.valid_values.map(function (v) {
-                    return '<option value="' + v + '">' + v + '</option>';
+                    return '<option value="' + v + '">' + (_VALUE_DISPLAY[v] || v) + '</option>';
                 }).join('');
             ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
                 + ' data-es-req-field="' + f.name + '"'
                 + ' style="' + inputCss + '">' + opts + '</select>';
-            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+            return '<div>' + labelHtml + ctrlHtml + '</div>';
         }
-        // default → text input
+        // default → text input with generic placeholder
         ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
             + ' data-es-req-field="' + f.name + '"'
+            + ' placeholder="أدخل القيمة"'
             + ' style="' + inputCss + '">';
-        return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+        return '<div>' + labelHtml + ctrlHtml + '</div>';
     }
 
-    // ── Section wrapper for structured form controls ───────────────────────────
+    // ── Section card wrapper for structured form controls (Phase 8H.2D) ────────
     function _sectionControlsHTML(heading, headingColor, description, fields) {
         if (!fields.length) return '';
-        var html = '<div style="font-size:0.78rem;font-weight:600;color:' + headingColor
-            + ';margin:8px 0 2px;">' + heading + '</div>';
+        var borderColor = headingColor === '#d4af37'
+            ? 'rgba(212,175,55,0.25)' : '#374151';
+        var html = '<div style="background:rgba(31,41,55,0.7);border:1px solid '
+            + borderColor + ';border-radius:8px;padding:12px 14px;">';
+        html += '<div style="font-size:0.8rem;font-weight:600;color:' + headingColor
+            + ';margin-bottom:4px;">' + heading + '</div>';
         if (description) {
-            html += '<div style="font-size:0.73rem;color:#6b7280;margin-bottom:5px;line-height:1.4;">'
+            html += '<div style="font-size:0.72rem;color:#6b7280;margin-bottom:10px;line-height:1.4;">'
                 + description + '</div>';
         }
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
         fields.forEach(function (f) { html += _fieldControlHTML(f); });
+        html += '</div></div>';
         return html;
     }
 
@@ -5956,7 +5979,7 @@ function _showIndexToast(msg, type) {
 
         if (s3El) s3El.innerHTML = _sectionControlsHTML(
             'المستندات المطلوبة', '#9ca3af',
-            'المستندات التي تساعد في التحقّق من الملكية والحالة القانونية للأصل.',
+            'علّم المستندات المتوفّرة لديك حالياً.',
             cItems);
 
         // Section D — reserved slot; always empty (methods are engine-internal)

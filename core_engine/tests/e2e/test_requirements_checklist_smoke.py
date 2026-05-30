@@ -465,7 +465,7 @@ def test_CS12_three_sections_have_descriptions(page: Page, live_server: str) -> 
     assert "ترفع جودة التقرير" in s2_text, (
         f"Section B description missing. Got: {s2_text!r}"
     )
-    assert "التحقّق من الملكية" in s3_text, (
+    assert "المستندات المتوفّرة" in s3_text, (
         f"Section C (documents) description missing. Got: {s3_text!r}"
     )
 
@@ -1408,3 +1408,109 @@ def test_CS55_no_console_errors_on_render(page: Page, live_server: str) -> None:
     assert not console_errors, (
         f"JavaScript console errors during land render: {console_errors}"
     )
+
+
+# ══ Phase 8H.2D — UX polish (CS56 – CS60) ════════════════════════════════════
+
+
+# ── CS56 ──────────────────────────────────────────────────────────────────────
+
+def test_CS56_select_first_option_is_ikhtaar_placeholder(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: select dropdowns render 'اختر ...' as the first (disabled) placeholder option."""
+    _load_residential(page, live_server)
+    first_text = page.locator("#es-req-field-finishing_level option").nth(0).inner_text()
+    assert "اختر" in first_text, (
+        f"First option of finishing_level must contain 'اختر'. Got: {first_text!r}"
+    )
+
+
+# ── CS57 ──────────────────────────────────────────────────────────────────────
+
+def test_CS57_select_default_option_derived_from_label_ar(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: default select option text is DERIVED from label_ar — DRY compliance."""
+    _load_residential(page, live_server)
+    # finishing_level label_ar in mock = "مستوى التشطيب"
+    first_text = page.locator("#es-req-field-finishing_level option").nth(0).inner_text()
+    assert "مستوى التشطيب" in first_text, (
+        f"Default option must contain label_ar 'مستوى التشطيب' (derived, not hardcoded). "
+        f"Got: {first_text!r}"
+    )
+    # land: zoning_type label_ar = "نوع التخطيط العمراني"
+    _load_land(page, live_server)
+    first_text2 = page.locator("#es-req-field-zoning_type option").nth(0).inner_text()
+    assert "نوع التخطيط" in first_text2, (
+        f"Default option for zoning_type must contain label_ar fragment. Got: {first_text2!r}"
+    )
+
+
+# ── CS58 ──────────────────────────────────────────────────────────────────────
+
+def test_CS58_yesno_field_renders_arabic_options(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: fields with yes/no valid_values display نعم / لا (not raw 'yes'/'no')."""
+    _load_residential(page, live_server)
+    sel = page.locator("#es-req-field-elevator_available")
+    assert sel.count() > 0, "elevator_available select must be present in residential panel"
+    opts_text = page.locator("#es-req-field-elevator_available option").all_inner_texts()
+    assert any("نعم" in t for t in opts_text), (
+        f"elevator_available must have a 'نعم' option. Got: {opts_text}"
+    )
+    assert any("لا" in t for t in opts_text), (
+        f"elevator_available must have a 'لا' option. Got: {opts_text}"
+    )
+
+
+# ── CS59 ──────────────────────────────────────────────────────────────────────
+
+def test_CS59_number_inputs_have_placeholder(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: number inputs carry a non-empty placeholder attribute."""
+    _load_residential(page, live_server)
+    ph = page.locator("#es-req-field-area_sqm").get_attribute("placeholder")
+    assert ph and len(ph) > 0, (
+        f"area_sqm must have a non-empty placeholder. Got: {ph!r}"
+    )
+    _load_land(page, live_server)
+    ph2 = page.locator("#es-req-field-frontage_m").get_attribute("placeholder")
+    assert ph2 and len(ph2) > 0, (
+        f"frontage_m must have a non-empty placeholder. Got: {ph2!r}"
+    )
+
+
+# ── CS60 ──────────────────────────────────────────────────────────────────────
+
+def test_CS60_three_section_headings_visible_in_residential_panel(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: all 3 section card headings are rendered inside the requirements panel."""
+    _load_residential(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "البيانات الأساسية المطلوبة" in panel_text, (
+        f"Section A heading missing from panel. Got: {panel_text!r}"
+    )
+    assert "بيانات إضافية لتحسين الدقّة" in panel_text, (
+        f"Section B heading missing from panel. Got: {panel_text!r}"
+    )
+    assert "المستندات المطلوبة" in panel_text, (
+        f"Section C heading missing from panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS61 ──────────────────────────────────────────────────────────────────────
+
+def test_CS61_utilities_available_shows_arabic_labels(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: utilities_available chip group shows Arabic labels, not raw backend codes."""
+    _load_land(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for arabic in ("كهرباء", "مياه", "صرف صحي", "غاز", "طريق ممهد"):
+        assert arabic in panel_text, (
+            f"utilities_available must show Arabic label '{arabic}'. Got: {panel_text!r}"
+        )
+
+
+# ── CS62 ──────────────────────────────────────────────────────────────────────
+
+def test_CS62_utilities_available_no_raw_backend_codes(page: Page, live_server: str) -> None:
+    """Phase 8H.2D: utilities_available chip group must NOT display raw backend codes."""
+    _load_land(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for raw in ("electricity", "water", "sewage", "gas", "paved_road"):
+        assert raw not in panel_text, (
+            f"Raw backend code '{raw}' must not appear in rendered panel. Got: {panel_text!r}"
+        )

@@ -5773,6 +5773,125 @@ function _showIndexToast(msg, type) {
         return html;
     }
 
+    // ── Build one form control from a FieldSpec (Phase 8H.2B) ────────────────
+    // Label comes from f.label_ar (backend — DRY). Control type from field_type/valid_values.
+    function _fieldControlHTML(f) {
+        var label     = f.label_ar || f.name;
+        var fid       = 'es-req-field-' + f.name;
+        var reqMark   = f.ui_required
+            ? '<span style="color:#ef4444;margin-right:2px;">*</span>'
+            : '';
+        var inputCss  = 'background:#1f2937;border:1px solid #374151;border-radius:4px;'
+            + 'padding:3px 6px;font-size:0.74rem;color:#f3f4f6;'
+            + 'width:100%;box-sizing:border-box;';
+        var labelHtml = '<label for="' + fid + '" style="display:block;font-size:0.72rem;'
+            + 'color:#9ca3af;margin-bottom:2px;">' + reqMark + label + '</label>';
+        var ctrlHtml;
+
+        // document checkbox
+        if (f.group === 'document') {
+            return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'
+                + '<input type="checkbox" id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-req-field="' + f.name + '"'
+                + ' style="accent-color:#d4af37;cursor:pointer;flex-shrink:0;">'
+                + '<label for="' + fid + '" style="font-size:0.74rem;color:#9ca3af;cursor:pointer;">'
+                + label + '</label></div>';
+        }
+        // bool (non-document) → yes/no select
+        if (f.field_type === 'bool') {
+            ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-req-field="' + f.name + '"'
+                + ' style="' + inputCss + '">'
+                + '<option value="">—</option>'
+                + '<option value="yes">نعم</option>'
+                + '<option value="no">لا</option>'
+                + '</select>';
+            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+        }
+        // list + valid_values → checkbox group
+        if (f.field_type === 'list' && f.valid_values && f.valid_values.length) {
+            var boxes = f.valid_values.map(function (v) {
+                return '<label style="display:flex;align-items:center;gap:3px;'
+                    + 'font-size:0.72rem;color:#9ca3af;cursor:pointer;">'
+                    + '<input type="checkbox" id="' + fid + '-' + v + '"'
+                    + ' name="' + f.name + '" value="' + v + '"'
+                    + ' data-es-req-field="' + f.name + '"'
+                    + ' style="accent-color:#d4af37;cursor:pointer;">'
+                    + v + '</label>';
+            }).join('');
+            ctrlHtml = '<div style="display:flex;flex-wrap:wrap;gap:4px 12px;">' + boxes + '</div>';
+            return '<div style="margin-bottom:6px;">'
+                + '<div style="font-size:0.72rem;color:#9ca3af;margin-bottom:3px;">'
+                + reqMark + label + '</div>'
+                + ctrlHtml + '</div>';
+        }
+        // float / int → number input
+        if (f.field_type === 'float' || f.field_type === 'int' || f.field_type === 'number') {
+            var stepAttr = f.field_type === 'float' ? ' step="any"' : '';
+            ctrlHtml = '<input type="number" id="' + fid + '" name="' + f.name + '"' + stepAttr
+                + ' data-es-req-field="' + f.name + '"'
+                + ' style="' + inputCss + '">';
+            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+        }
+        // str + valid_values → select dropdown
+        if (f.valid_values && f.valid_values.length) {
+            var opts = '<option value="">—</option>'
+                + f.valid_values.map(function (v) {
+                    return '<option value="' + v + '">' + v + '</option>';
+                }).join('');
+            ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-req-field="' + f.name + '"'
+                + ' style="' + inputCss + '">' + opts + '</select>';
+            return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+        }
+        // default → text input
+        ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
+            + ' data-es-req-field="' + f.name + '"'
+            + ' style="' + inputCss + '">';
+        return '<div style="margin-bottom:6px;">' + labelHtml + ctrlHtml + '</div>';
+    }
+
+    // ── Section wrapper for structured form controls ───────────────────────────
+    function _sectionControlsHTML(heading, headingColor, description, fields) {
+        if (!fields.length) return '';
+        var html = '<div style="font-size:0.78rem;font-weight:600;color:' + headingColor
+            + ';margin:8px 0 2px;">' + heading + '</div>';
+        if (description) {
+            html += '<div style="font-size:0.73rem;color:#6b7280;margin-bottom:5px;line-height:1.4;">'
+                + description + '</div>';
+        }
+        fields.forEach(function (f) { html += _fieldControlHTML(f); });
+        return html;
+    }
+
+    // ── Attach change listeners to collect draft values locally (debug-only) ──
+    // Values are written to window.esRequirementDraft and NEVER submitted to API.
+    function _attachDraftCollector() {
+        window.esRequirementDraft = {};
+        var panel = document.getElementById('es-req-panel');
+        if (!panel) return;
+        panel.querySelectorAll('[data-es-req-field]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                var fn  = el.getAttribute('data-es-req-field');
+                if (el.type === 'checkbox') {
+                    if (!Array.isArray(window.esRequirementDraft[fn])) {
+                        window.esRequirementDraft[fn] = [];
+                    }
+                    var arr = window.esRequirementDraft[fn];
+                    var val = el.value || true;
+                    if (el.checked) {
+                        if (arr.indexOf(val) === -1) arr.push(val);
+                    } else {
+                        var idx = arr.indexOf(val);
+                        if (idx !== -1) arr.splice(idx, 1);
+                    }
+                } else {
+                    window.esRequirementDraft[fn] = el.value;
+                }
+            });
+        });
+    }
+
     // ── Show soft message (unsupported type/purpose or API 400) ───────────────
     function showSoftMsg(msg) {
         var panel   = document.getElementById('es-req-panel');
@@ -5813,36 +5932,39 @@ function _showIndexToast(msg, type) {
         if (softEl)  { softEl.textContent = ''; softEl.style.display = 'none'; }
         if (bodyEl)  bodyEl.style.display = '';
 
-        var items  = data.checklist_items || [];
-        // A: required items (البيانات الأساسية)
-        var aItems = items.filter(function (f) { return f.required; });
-        // B: optional items in FIELD_GROUP 'report' (المستندات)
-        var bItems = items.filter(function (f) { return !f.required && FIELD_GROUP[f.name] === 'report'; });
-        // C: optional items NOT in FIELD_GROUP (بيانات إضافية)
-        var cItems = items.filter(function (f) { return !f.required && FIELD_GROUP[f.name] !== 'report'; });
+        var items = data.checklist_items || [];
+        // Phase 8H.2B: classify using backend metadata (role / ui_required / group).
+        // Engine-value fields (comparable/cost/income/comparables) are role="engine_value"
+        // and are intentionally excluded — never rendered as user-facing inputs.
+        var userItems = items.filter(function (f) { return f.role === 'user_input'; });
+        // A: essential fields (ui_required=true, not a document)
+        var aItems = userItems.filter(function (f) { return f.ui_required && f.group !== 'document'; });
+        // B: optional data fields (ui_required=false, not a document)
+        var bItems = userItems.filter(function (f) { return !f.ui_required && f.group !== 'document'; });
+        // C: document checklist (group="document")
+        var cItems = userItems.filter(function (f) { return f.group === 'document'; });
 
-        if (s1El) s1El.innerHTML = _sectionHTML(
+        if (s1El) s1El.innerHTML = _sectionControlsHTML(
             'البيانات الأساسية المطلوبة', '#d4af37',
             'هذه البيانات ضرورية لبناء التقرير وتشغيل نموذج التقييم.',
-            aItems, null);
+            aItems);
 
-        if (s2El) s2El.innerHTML = _sectionHTML(
+        if (s2El) s2El.innerHTML = _sectionControlsHTML(
+            'بيانات إضافية لتحسين الدقّة', '#6b7280',
+            'هذه البيانات ليست إلزامية، لكنها ترفع جودة التقرير ودقّة النتائج.',
+            bItems);
+
+        if (s3El) s3El.innerHTML = _sectionControlsHTML(
             'المستندات المطلوبة', '#9ca3af',
-            'هذه المستندات تساعد في التحقّق من الملكية والموقع وحالة الأصل.',
-            bItems, 'اختياري');
+            'المستندات التي تساعد في التحقّق من الملكية والحالة القانونية للأصل.',
+            cItems);
 
-        if (s3El) s3El.innerHTML = cItems.length
-            ? _sectionHTML(
-                'بيانات إضافية لتحسين الدقّة', '#6b7280',
-                'هذه البيانات ليست إلزامية دائماً، لكنها ترفع جودة التقرير ودقّة النتائج.',
-                cItems, 'مفيد')
-            : '';
-
-        // Section D — reserved slot; methods are internal to the engine, not user inputs
+        // Section D — reserved slot; always empty (methods are engine-internal)
         if (s4El) { s4El.removeAttribute('data-es-section'); s4El.style.cssText = ''; s4El.innerHTML = ''; }
 
         if (notesEl) notesEl.textContent = data.notes || '';
         panel.style.display = 'block';
+        _attachDraftCollector();
     }
 
     // ── Render static panel: building_full (full) or placeholder ─────────────

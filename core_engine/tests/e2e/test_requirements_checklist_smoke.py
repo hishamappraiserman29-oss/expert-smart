@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1 — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -54,14 +54,59 @@ from playwright.sync_api import Page, Route, expect
 _LS_KEY       = "es_auth"
 _MOCK_SESSION = json.dumps({"token": "mock-token-cs", "user_id": "smoke-user", "is_admin": False})
 
+# Phase 8H.2C enriched mock responses — carry role/label_ar/group/ui_required
+# so the Phase 8H.2B renderer can classify and build real controls.
+# Engine fields use role="engine_value" and must NOT be rendered.
+
+def _ei(name, ft, desc, vv=None, *, role="engine_value", label_ar="", group="", ui_req=False):
+    """Shorthand: engine / non-user field factory."""
+    return {"name": name, "required": True, "field_type": ft, "description": desc,
+            "valid_values": vv or [], "role": role, "label_ar": label_ar,
+            "group": group, "ui_required": ui_req}
+
+def _ui(name, ft, desc, vv=None, *, label_ar, group="", ui_req=False):
+    """Shorthand: user_input field factory."""
+    return {"name": name, "required": False, "field_type": ft, "description": desc,
+            "valid_values": vv or [], "role": "user_input", "label_ar": label_ar,
+            "group": group, "ui_required": ui_req}
+
+def _doc(name, label_ar):
+    """Shorthand: document (bool) field factory."""
+    return {"name": name, "required": False, "field_type": "bool", "description": label_ar,
+            "valid_values": [], "role": "user_input", "label_ar": label_ar,
+            "group": "document", "ui_required": False}
+
+
 _RESIDENTIAL_RESPONSE = {
     "status": "ok", "asset_type": "residential", "purpose": "market_value",
     "checklist_items": [
-        {"name": "comparable",  "required": True,  "field_type": "float", "description": "Comparable value", "valid_values": []},
-        {"name": "cost",        "required": True,  "field_type": "float", "description": "Cost value",       "valid_values": []},
-        {"name": "income",      "required": True,  "field_type": "float", "description": "Income value",     "valid_values": []},
-        {"name": "client_name", "required": False, "field_type": "str",   "description": "Client name",      "valid_values": []},
-        {"name": "location",    "required": False, "field_type": "str",   "description": "Location",         "valid_values": []},
+        # engine_value — must NOT render
+        _ei("comparable", "float", "Comparable-sales approach value (EGP)"),
+        _ei("cost",       "float", "Cost-approach value (EGP)"),
+        _ei("income",     "float", "Income-capitalization approach value (EGP)"),
+        _ei("comparables","list",  "List of comparable sales dicts"),
+        # Section A — ui_required=True
+        _ui("area_sqm",       "float", "Floor area (sqm)",                  label_ar="المساحة (م²)",        ui_req=True),
+        _ui("floor_number",   "int",   "Floor number within the building",   label_ar="رقم الطابق",           ui_req=True),
+        _ui("rooms_count",    "int",   "Number of rooms",                    label_ar="عدد الغرف",            ui_req=True),
+        _ui("finishing_level","str",   "Finishing level of the unit",
+            ["shell", "semi_finished", "standard_finished", "luxury_finished"],
+            label_ar="مستوى التشطيب", ui_req=True),
+        _ui("legal_status",   "str",   "Legal / title status",
+            ["registered_title", "preliminary_contract", "allocation", "unknown"],
+            label_ar="الحالة القانونية", ui_req=True),
+        # Section B — ui_required=False, non-document
+        _ui("client_name",    "str",   "Client or borrower name",            label_ar="اسم العميل"),
+        _ui("location",       "str",   "Property address or location",       label_ar="الموقع"),
+        _ui("elevator_available","str","Elevator available",
+            ["yes", "no"],                                                    label_ar="يوجد مصعد"),
+        _ui("parking_available","str", "Parking available",
+            ["yes", "no"],                                                    label_ar="يوجد موقف سيارة"),
+        # Section C — documents
+        _doc("ownership_document",            "سند الملكية"),
+        _doc("recent_photos",                 "صور حديثة للعقار"),
+        _doc("site_croquis_or_location",      "كروكي الموقع"),
+        _doc("nearby_sale_comparables_if_available", "مقارنات بيع قريبة (إن وجدت)"),
     ],
     "dynamic_fields": [],
     "recommended_methods": ["comparable", "cost", "income"],
@@ -71,12 +116,12 @@ _RESIDENTIAL_RESPONSE = {
 _COMMERCIAL_RESPONSE = {
     "status": "ok", "asset_type": "commercial", "purpose": "market_value",
     "checklist_items": [
-        {"name": "comparable",    "required": True,  "field_type": "float", "description": "Comparable", "valid_values": []},
-        {"name": "cost",          "required": True,  "field_type": "float", "description": "Cost",       "valid_values": []},
-        {"name": "income",        "required": True,  "field_type": "float", "description": "Income",     "valid_values": []},
-        {"name": "client_name",   "required": False, "field_type": "str",   "description": "Client",     "valid_values": []},
-        {"name": "annual_rent",   "required": False, "field_type": "float", "description": "Rent",       "valid_values": []},
-        {"name": "cap_rate",      "required": False, "field_type": "float", "description": "Cap rate",   "valid_values": []},
+        _ei("comparable", "float", "Comparable value"),
+        _ei("cost",       "float", "Cost value"),
+        _ei("income",     "float", "Income value"),
+        _ui("client_name",  "str",   "Client name",        label_ar="اسم العميل"),
+        _ui("annual_rent",  "float", "Annual rental income", label_ar="الإيجار السنوي (ج.م.)"),
+        _ui("cap_rate",     "float", "Capitalization rate",  label_ar="معدل الرسملة"),
     ],
     "dynamic_fields": [],
     "recommended_methods": ["comparable", "cost", "income"],
@@ -86,13 +131,41 @@ _COMMERCIAL_RESPONSE = {
 _LAND_RESPONSE = {
     "status": "ok", "asset_type": "land", "purpose": "market_value",
     "checklist_items": [
-        {"name": "comparable",  "required": True,  "field_type": "float", "description": "Comparable", "valid_values": []},
-        {"name": "income",      "required": True,  "field_type": "float", "description": "Income",     "valid_values": []},
-        {"name": "client_name", "required": False, "field_type": "str",   "description": "Client",     "valid_values": []},
-        {"name": "hbu",         "required": False, "field_type": "str",   "description": "HBU",
-         "valid_values": ["residential", "commercial", "mixed_use"]},
+        # engine_value — must NOT render
+        _ei("comparable",  "float", "Comparable-sales approach value (EGP)"),
+        _ei("income",      "float", "Income-capitalization approach value (EGP)"),
+        _ei("comparables", "list",  "List of comparable sales dicts"),
+        # Section A — ui_required=True
+        _ui("land_area_sqm",    "float", "Land area (sqm)",           label_ar="مساحة الأرض (م²)",        ui_req=True),
+        _ui("frontage_m",       "float", "Street frontage width (m)", label_ar="واجهة الأرض (م)",          ui_req=True),
+        _ui("street_width_m",   "float", "Adjacent street width (m)", label_ar="عرض الشارع (م)",           ui_req=True),
+        _ui("zoning_type",      "str",   "Zoning classification",
+            ["residential", "commercial", "administrative", "mixed_use", "agricultural", "unknown"],
+            label_ar="نوع التخطيط العمراني", ui_req=True),
+        _ui("buildability_status","str", "Buildability and planning constraints",
+            ["buildable", "needs_verification", "planning_restrictions", "unknown"],
+            label_ar="حالة قابلية البناء", ui_req=True),
+        _ui("legal_status",     "str",   "Legal / title status",
+            ["registered_title", "preliminary_contract", "allocation", "unknown"],
+            label_ar="الحالة القانونية", ui_req=True),
+        # Section B — ui_required=False, non-document
+        _ui("client_name",      "str",   "Client name",                label_ar="اسم العميل"),
+        _ui("hbu",              "str",   "Highest-and-best-use",
+            ["residential", "commercial", "mixed_use", "industrial", "agricultural", "speculative"],
+            label_ar="أفضل استخدام (HBU)"),
+        _ui("utilities_available","list","Available utilities on the plot",
+            ["electricity", "water", "sewage", "gas", "paved_road"],
+            label_ar="الخدمات المتاحة"),
+        # Section C — documents
+        _doc("ownership_document",         "سند الملكية"),
+        _doc("site_plan_or_croquis",       "كروكي المخطط"),
+        _doc("site_photos",                "صور الموقع"),
     ],
-    "dynamic_fields": [{"name": "hbu", "field_type": "str", "valid_values": ["residential", "commercial"]}],
+    "dynamic_fields": [
+        {"name": "zoning_type", "field_type": "str",
+         "valid_values": ["residential", "commercial", "administrative", "mixed_use", "agricultural", "unknown"],
+         "role": "user_input", "label_ar": "نوع التخطيط العمراني", "group": "", "ui_required": True},
+    ],
     "recommended_methods": ["comparable", "income"],
     "notes": "Cost approach weight is 0 for unimproved land.",
 }
@@ -152,9 +225,9 @@ def test_CS02_panel_title_arabic_and_section_descriptions_present(page: Page, li
     assert "ضرورية لبناء التقرير" in s1_text, (
         f"Section A description missing. Got: {s1_text!r}"
     )
-    # Section B description (client_name/location go to B via FIELD_GROUP='report')
+    # Section B description (Phase 8H.2B: optional data fields, ui_required=False)
     s2_text = page.locator("#es-req-s2").inner_text()
-    assert "التحقّق من الملكية" in s2_text, (
+    assert "ترفع جودة التقرير" in s2_text, (
         f"Section B description missing. Got: {s2_text!r}"
     )
 
@@ -388,11 +461,12 @@ def test_CS12_three_sections_have_descriptions(page: Page, live_server: str) -> 
     assert "ضرورية لبناء التقرير" in s1_text, (
         f"Section A description missing. Got: {s1_text!r}"
     )
-    assert "التحقّق من الملكية" in s2_text, (
+    # Phase 8H.2B: s2 is now "بيانات إضافية" (optional data), s3 is documents
+    assert "ترفع جودة التقرير" in s2_text, (
         f"Section B description missing. Got: {s2_text!r}"
     )
-    assert "ترفع جودة التقرير" in s3_text, (
-        f"Section C description missing. Got: {s3_text!r}"
+    assert "التحقّق من الملكية" in s3_text, (
+        f"Section C (documents) description missing. Got: {s3_text!r}"
     )
 
 
@@ -1054,3 +1128,283 @@ def test_CS39_all_placeholder_types_have_composite_cta_residential_land_do_not(p
         assert link.count() == 0 or not link.is_visible(), (
             f"Composite CTA must NOT appear for '{asset_type}' (API-driven, not composite)"
         )
+
+
+# ══ Phase 8H.2B — structured form controls (CS40 – CS55) ════════════════════
+
+
+def _load_residential(page: Page, live_server: str) -> None:
+    """Helper: navigate to live_server, inject session, select residential + market value."""
+    _mock_req(page, _RESIDENTIAL_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+
+def _load_land(page: Page, live_server: str) -> None:
+    """Helper: navigate to live_server, inject session, select land + market value."""
+    _mock_req(page, _LAND_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS40 ──────────────────────────────────────────────────────────────────────
+
+def test_CS40_residential_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: residential panel renders real input/select/checkbox elements, not text-only."""
+    _load_residential(page, live_server)
+    panel = page.locator("#es-req-panel")
+    # At least one input or select must exist inside the panel
+    inputs  = panel.locator("input, select")
+    assert inputs.count() > 0, (
+        "Residential panel must contain real form controls after Phase 8H.2B"
+    )
+
+
+# ── CS41 ──────────────────────────────────────────────────────────────────────
+
+def test_CS41_residential_area_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: area_sqm renders as <input type='number'> in residential panel."""
+    _load_residential(page, live_server)
+    field = page.locator("#es-req-field-area_sqm")
+    assert field.count() > 0, "area_sqm input must be present in residential panel"
+    assert field.get_attribute("type") == "number", (
+        f"area_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS42 ──────────────────────────────────────────────────────────────────────
+
+def test_CS42_residential_floor_number_number_input(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: floor_number (int) renders as <input type='number'> in residential panel."""
+    _load_residential(page, live_server)
+    field = page.locator("#es-req-field-floor_number")
+    assert field.count() > 0, "floor_number input must be present in residential panel"
+    assert field.get_attribute("type") == "number", (
+        f"floor_number must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS43 ──────────────────────────────────────────────────────────────────────
+
+def test_CS43_residential_finishing_level_select_with_options(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: finishing_level renders as <select> with at least 4 options."""
+    _load_residential(page, live_server)
+    sel = page.locator("#es-req-field-finishing_level")
+    assert sel.count() > 0, "finishing_level select must be present"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"finishing_level must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-finishing_level option")
+    assert opts.count() >= 4, (
+        f"finishing_level must have ≥4 options. Got: {opts.count()}"
+    )
+
+
+# ── CS44 ──────────────────────────────────────────────────────────────────────
+
+def test_CS44_residential_legal_status_select(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: legal_status renders as <select> in residential panel."""
+    _load_residential(page, live_server)
+    sel = page.locator("#es-req-field-legal_status")
+    assert sel.count() > 0, "legal_status select must be present in residential panel"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"legal_status must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-legal_status option")
+    assert opts.count() >= 4, (
+        f"legal_status must have ≥4 options. Got: {opts.count()}"
+    )
+
+
+# ── CS45 ──────────────────────────────────────────────────────────────────────
+
+def test_CS45_residential_document_checkboxes(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: document fields render as checkboxes with Arabic labels in section C."""
+    _load_residential(page, live_server)
+    # ownership_document is a document checkbox
+    cb = page.locator("#es-req-field-ownership_document")
+    assert cb.count() > 0, "ownership_document checkbox must be present"
+    assert cb.get_attribute("type") == "checkbox", (
+        f"ownership_document must be type='checkbox'. Got: {cb.get_attribute('type')!r}"
+    )
+    # Its label must contain the Arabic label_ar value
+    label = page.locator("label[for='es-req-field-ownership_document']")
+    assert label.count() > 0, "Label for ownership_document must be present"
+    label_text = label.inner_text()
+    assert "سند الملكية" in label_text, (
+        f"ownership_document label must contain 'سند الملكية'. Got: {label_text!r}"
+    )
+    # recent_photos must also be a checkbox
+    cb2 = page.locator("#es-req-field-recent_photos")
+    assert cb2.count() > 0, "recent_photos checkbox must be present"
+    assert cb2.get_attribute("type") == "checkbox"
+
+
+# ── CS46 ──────────────────────────────────────────────────────────────────────
+
+def test_CS46_land_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: land panel renders real input/select/checkbox elements, not text-only."""
+    _load_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    inputs = panel.locator("input, select")
+    assert inputs.count() > 0, (
+        "Land panel must contain real form controls after Phase 8H.2B"
+    )
+
+
+# ── CS47 ──────────────────────────────────────────────────────────────────────
+
+def test_CS47_land_land_area_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: land_area_sqm renders as <input type='number'> in land panel."""
+    _load_land(page, live_server)
+    field = page.locator("#es-req-field-land_area_sqm")
+    assert field.count() > 0, "land_area_sqm input must be present in land panel"
+    assert field.get_attribute("type") == "number", (
+        f"land_area_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS48 ──────────────────────────────────────────────────────────────────────
+
+def test_CS48_land_frontage_m_number_input(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: frontage_m renders as <input type='number'> in land panel."""
+    _load_land(page, live_server)
+    field = page.locator("#es-req-field-frontage_m")
+    assert field.count() > 0, "frontage_m input must be present in land panel"
+    assert field.get_attribute("type") == "number", (
+        f"frontage_m must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS49 ──────────────────────────────────────────────────────────────────────
+
+def test_CS49_land_zoning_type_select_with_options(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: zoning_type renders as <select> with at least 6 options in land panel."""
+    _load_land(page, live_server)
+    sel = page.locator("#es-req-field-zoning_type")
+    assert sel.count() > 0, "zoning_type select must be present in land panel"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"zoning_type must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-zoning_type option")
+    assert opts.count() >= 6, (
+        f"zoning_type must have ≥6 options. Got: {opts.count()}"
+    )
+
+
+# ── CS50 ──────────────────────────────────────────────────────────────────────
+
+def test_CS50_land_utilities_available_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: utilities_available (list+valid_values) renders as a checkbox group."""
+    _load_land(page, live_server)
+    checkboxes = page.locator("[name='utilities_available']")
+    assert checkboxes.count() >= 5, (
+        f"utilities_available must have ≥5 checkboxes (one per valid value). "
+        f"Got: {checkboxes.count()}"
+    )
+    # Every element in the group must be a checkbox
+    for i in range(checkboxes.count()):
+        cb = checkboxes.nth(i)
+        assert cb.get_attribute("type") == "checkbox", (
+            f"utilities_available item {i} must be type='checkbox'"
+        )
+
+
+# ── CS51 ──────────────────────────────────────────────────────────────────────
+
+def test_CS51_land_buildability_status_select(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: buildability_status renders as <select> in land panel."""
+    _load_land(page, live_server)
+    sel = page.locator("#es-req-field-buildability_status")
+    assert sel.count() > 0, "buildability_status select must be present in land panel"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"buildability_status must be a <select>. Got: {tag!r}"
+
+
+# ── CS52 ──────────────────────────────────────────────────────────────────────
+
+def test_CS52_land_document_checkboxes(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: document fields render as checkboxes with Arabic labels in land section C."""
+    _load_land(page, live_server)
+    cb = page.locator("#es-req-field-ownership_document")
+    assert cb.count() > 0, "ownership_document checkbox must be present in land panel"
+    assert cb.get_attribute("type") == "checkbox"
+    label = page.locator("label[for='es-req-field-ownership_document']")
+    assert label.count() > 0, "Label for land ownership_document must be present"
+    label_text = label.inner_text()
+    assert "سند الملكية" in label_text, (
+        f"Land ownership_document label must contain 'سند الملكية'. Got: {label_text!r}"
+    )
+    cb2 = page.locator("#es-req-field-site_photos")
+    assert cb2.count() > 0, "site_photos checkbox must be present in land panel"
+    assert cb2.get_attribute("type") == "checkbox"
+
+
+# ── CS53 ──────────────────────────────────────────────────────────────────────
+
+def test_CS53_engine_fields_not_rendered(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: engine_value fields (comparable/cost/income/comparables) must NOT render."""
+    _load_residential(page, live_server)
+    for engine_field in ("comparable", "cost", "income", "comparables"):
+        el = page.locator(f"[data-es-req-field='{engine_field}']")
+        assert el.count() == 0, (
+            f"Engine field '{engine_field}' must NOT be rendered as a form control. "
+            f"Found {el.count()} element(s)."
+        )
+
+
+# ── CS54 ──────────────────────────────────────────────────────────────────────
+
+def test_CS54_field_label_comes_from_label_ar(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: the visible label for area_sqm comes from label_ar ('المساحة (م²)'), not hardcoded."""
+    _load_residential(page, live_server)
+    label = page.locator("label[for='es-req-field-area_sqm']")
+    assert label.count() > 0, "Label for area_sqm must be present"
+    label_text = label.inner_text()
+    assert "المساحة" in label_text, (
+        f"area_sqm label must contain Arabic text from label_ar 'المساحة (م²)'. "
+        f"Got: {label_text!r}"
+    )
+    # Confirm the same DRY property for a land field
+    _load_land(page, live_server)
+    label2 = page.locator("label[for='es-req-field-land_area_sqm']")
+    assert label2.count() > 0, "Label for land_area_sqm must be present"
+    label2_text = label2.inner_text()
+    assert "مساحة" in label2_text, (
+        f"land_area_sqm label must contain Arabic text from label_ar. Got: {label2_text!r}"
+    )
+
+
+# ── CS55 ──────────────────────────────────────────────────────────────────────
+
+def test_CS55_no_console_errors_on_render(page: Page, live_server: str) -> None:
+    """Phase 8H.2B: rendering residential and land panels produces zero JS console errors.
+
+    Network-level 401s that occur before session injection are pre-existing expected
+    behaviour and are excluded from this assertion.
+    """
+    def _is_js_error(msg) -> bool:
+        """True only for real JavaScript errors; ignore network/auth noise."""
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    console_errors: list[str] = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+
+    _load_residential(page, live_server)
+    assert not console_errors, (
+        f"JavaScript console errors during residential render: {console_errors}"
+    )
+
+    console_errors.clear()
+    _load_land(page, live_server)
+    assert not console_errors, (
+        f"JavaScript console errors during land render: {console_errors}"
+    )

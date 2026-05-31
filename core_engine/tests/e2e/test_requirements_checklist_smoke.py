@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -20,9 +20,9 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS13 — section D is empty after Phase 8E methods removal
   CS14 — residential single mode: composite link absent; title does not say "مركّب"
   CS15 — land single mode: composite link absent; title does not say "مركّب"
-  CS16 — "عمارة سكنية" shows static building_full panel; title is "متطلبات تقييم عمارة سكنية"
-  CS17 — building_full panel has redirect link to composite_valuation.html
-  CS18 — building_full panel shows grouped checklist sections (land/building/income)
+  CS16 — "عمارة سكنية" shows inline building_full form; "بيانات الأرض" present; old static text absent
+  CS17 — building_full panel has NO composite_valuation.html link (Phase 8J removes it)
+  CS18 — building_full panel shows بيانات الأرض + بيانات المبنى + توزيع الاستخدام (no بيانات الدخل)
   CS19 — no raw registry codes in building_full panel
   CS20 — "عمارة سكنية" does not call GET /api/valuation/requirements
   CS21 — residential single panel: section D empty, no methods section
@@ -87,6 +87,25 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS76 — (8I) selection change فندق → شقة سكنية updates explainer from قيد التطوير to مدعوم
   CS77 — (8I) <optgroup> elements present inside #asset-type
   CS78 — (8I) all 16 original option values still present in #asset-type unchanged
+
+  CS79 — (8J) عمارة سكنية renders real form controls (inputs/selects)
+  CS80 — (8J) #es-req-field-site_land_area_sqm number input present
+  CS81 — (8J) #es-req-field-total_built_area_sqm number input present
+  CS82 — (8J) #es-req-field-structural_condition select with Arabic options (جيدة, متوسطة, تحتاج صيانة)
+  CS83 — (8J) #es-bf-floor-table tbody has ≥5 rows
+  CS84 — (8J) [data-bf-field='licensed_use'] selects count ≥5
+  CS85 — (8J) [data-bf-field='actual_use'] selects count ≥5
+  CS86 — (8J) [data-bf-field='floor_area_sqm'] inputs count ≥5
+  CS87 — (8J) [data-bf-field='occupancy_status'] selects count ≥5
+  CS88 — (8J) floor labels present: بدروم, الدور الأرضي, الدور الأول, الأدوار المتكررة, سطح / خدمات
+  CS89 — (8J) #es-req-field-bf_ownership_doc checkbox with label 'سند الملكية'
+  CS90 — (8J) building_full panel has no link to /composite_valuation.html
+  CS91 — (8J) building_full panel has no 'مناهج التقييم المناسبة' text
+  CS92 — (8J) building_full panel has no 'إرشادي' text
+  CS93 — (8J) residential controls unchanged: #es-req-field-area_sqm still present
+  CS94 — (8J) land controls unchanged: #es-req-field-land_area_sqm still present
+  CS95 — (8J) no JS console errors on building_full render
+  CS96 — (8J) placeholder panels (فندق) still show composite CTA link
 """
 from __future__ import annotations
 
@@ -584,8 +603,8 @@ def test_CS15_land_single_mode_no_composite_banner(page: Page, live_server: str)
 
 # ── CS16 ──────────────────────────────────────────────────────────────────────
 
-def test_CS16_building_shows_composite_guidance_panel(page: Page, live_server: str) -> None:
-    """'عمارة سكنية' (building_full static panel): title is 'متطلبات تقييم عمارة سكنية'."""
+def test_CS16_building_shows_inline_form_panel(page: Page, live_server: str) -> None:
+    """'عمارة سكنية' (building_full inline form): title correct; 'بيانات الأرض' present; old static text absent."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -596,18 +615,21 @@ def test_CS16_building_shows_composite_guidance_panel(page: Page, live_server: s
 
     title_text = page.locator("#es-req-title").inner_text()
     assert "متطلبات تقييم عمارة سكنية" in title_text, (
-        f"Title must be 'متطلبات تقييم عمارة سكنية' for building_full static panel. Got: {title_text!r}"
+        f"Title must be 'متطلبات تقييم عمارة سكنية' for building_full form. Got: {title_text!r}"
     )
     panel_text = page.locator("#es-req-panel").inner_text()
-    assert "سيتم التعامل معه" in panel_text or "يتكوّن" in panel_text, (
-        f"Building_full system-decision explanation must appear in panel. Got: {panel_text!r}"
+    assert "بيانات الأرض" in panel_text, (
+        f"Inline form must contain 'بيانات الأرض'. Got: {panel_text!r}"
+    )
+    assert "سيتم التعامل معه" not in panel_text, (
+        f"Old static-text phrase 'سيتم التعامل معه' must NOT appear in Phase 8J form. Got: {panel_text!r}"
     )
 
 
 # ── CS17 ──────────────────────────────────────────────────────────────────────
 
-def test_CS17_composite_panel_has_redirect_link(page: Page, live_server: str) -> None:
-    """Composite guidance panel contains a visible link to /composite_valuation.html."""
+def test_CS17_building_full_has_no_composite_redirect_link(page: Page, live_server: str) -> None:
+    """Phase 8J: building_full inline form has NO redirect link to composite_valuation.html."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -616,22 +638,21 @@ def test_CS17_composite_panel_has_redirect_link(page: Page, live_server: str) ->
 
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
+    # The composite link must not exist (or not be visible) in the building_full panel
     link = page.locator("#es-req-composite-link")
-    expect(link).to_be_visible()
-    href = link.get_attribute("href") or ""
-    assert "composite_valuation.html" in href, (
-        f"Composite link must point to composite_valuation.html. Got: {href!r}"
+    assert link.count() == 0 or not link.is_visible(), (
+        "building_full inline form must NOT show the composite redirect link (Phase 8J removed it)"
     )
-    link_text = link.inner_text().strip()
-    assert "فتح نموذج التقييم المركب" in link_text, (
-        f"Composite link label must say 'فتح نموذج التقييم المركب'. Got: {link_text!r}"
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "composite_valuation.html" not in panel_text, (
+        f"composite_valuation.html URL must not appear in building_full panel text. Got: {panel_text!r}"
     )
 
 
 # ── CS18 ──────────────────────────────────────────────────────────────────────
 
-def test_CS18_composite_panel_shows_grouped_checklist_sections(page: Page, live_server: str) -> None:
-    """Composite panel shows building-specific grouped sections for all required data types."""
+def test_CS18_building_full_inline_form_sections(page: Page, live_server: str) -> None:
+    """Phase 8J: building_full inline form shows بيانات الأرض + بيانات المبنى + توزيع الاستخدام; no بيانات الدخل."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -642,13 +663,16 @@ def test_CS18_composite_panel_shows_grouped_checklist_sections(page: Page, live_
 
     panel_text = page.locator("#es-req-panel").inner_text()
     assert "بيانات الأرض" in panel_text, (
-        f"Composite panel must contain 'بيانات الأرض'. Got: {panel_text!r}"
+        f"Inline form must contain 'بيانات الأرض'. Got: {panel_text!r}"
     )
     assert "بيانات المبنى" in panel_text, (
-        f"Composite panel must contain 'بيانات المبنى'. Got: {panel_text!r}"
+        f"Inline form must contain 'بيانات المبنى'. Got: {panel_text!r}"
     )
-    assert "بيانات الدخل" in panel_text, (
-        f"Composite panel must contain 'بيانات الدخل'. Got: {panel_text!r}"
+    assert "توزيع الاستخدام" in panel_text, (
+        f"Inline form must contain 'توزيع الاستخدام' floor-table heading. Got: {panel_text!r}"
+    )
+    assert "بيانات الدخل" not in panel_text, (
+        f"Old 'بيانات الدخل' section heading must NOT appear in Phase 8J form. Got: {panel_text!r}"
     )
 
 
@@ -1855,3 +1879,264 @@ def test_CS78_all_original_option_values_unchanged(page: Page, live_server: str)
             f"Original option value '{v}' must still be present in #asset-type. "
             f"Got values: {actual_values}"
         )
+
+
+# ══ Phase 8J — building_full inline structured form (CS79 – CS96) ═══════════
+
+
+def _load_building_full(page: Page, live_server: str) -> None:
+    """Helper: navigate to live_server, inject session, select عمارة سكنية + market value."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS79 ──────────────────────────────────────────────────────────────────────
+
+def test_CS79_building_full_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8J: عمارة سكنية renders real form inputs/selects, not static text-only."""
+    _load_building_full(page, live_server)
+    panel = page.locator("#es-req-panel")
+    inputs = panel.locator("input, select")
+    assert inputs.count() > 0, (
+        "building_full panel must contain real form controls after Phase 8J"
+    )
+
+
+# ── CS80 ──────────────────────────────────────────────────────────────────────
+
+def test_CS80_building_full_site_land_area_sqm_input(page: Page, live_server: str) -> None:
+    """Phase 8J: #es-req-field-site_land_area_sqm number input present in building_full form."""
+    _load_building_full(page, live_server)
+    field = page.locator("#es-req-field-site_land_area_sqm")
+    assert field.count() > 0, "#es-req-field-site_land_area_sqm must be present"
+    assert field.get_attribute("type") == "number", (
+        f"site_land_area_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS81 ──────────────────────────────────────────────────────────────────────
+
+def test_CS81_building_full_total_built_area_input(page: Page, live_server: str) -> None:
+    """Phase 8J: #es-req-field-total_built_area_sqm number input present in building_full form."""
+    _load_building_full(page, live_server)
+    field = page.locator("#es-req-field-total_built_area_sqm")
+    assert field.count() > 0, "#es-req-field-total_built_area_sqm must be present"
+    assert field.get_attribute("type") == "number", (
+        f"total_built_area_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS82 ──────────────────────────────────────────────────────────────────────
+
+def test_CS82_building_full_structural_condition_arabic_options(page: Page, live_server: str) -> None:
+    """Phase 8J: #es-req-field-structural_condition select has Arabic options جيدة, متوسطة, تحتاج صيانة."""
+    _load_building_full(page, live_server)
+    sel = page.locator("#es-req-field-structural_condition")
+    assert sel.count() > 0, "#es-req-field-structural_condition select must be present"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"structural_condition must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-structural_condition option").all_inner_texts()
+    for arabic in ("جيدة", "متوسطة", "تحتاج صيانة"):
+        assert any(arabic in t for t in opts), (
+            f"structural_condition must have Arabic option '{arabic}'. Got: {opts}"
+        )
+    for raw in ("good", "average", "needs_maintenance"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be the displayed text in structural_condition. Got: {opts}"
+        )
+
+
+# ── CS83 ──────────────────────────────────────────────────────────────────────
+
+def test_CS83_building_full_floor_table_has_five_rows(page: Page, live_server: str) -> None:
+    """Phase 8J: #es-bf-floor-table tbody contains ≥5 rows (one per floor definition)."""
+    _load_building_full(page, live_server)
+    tbody_rows = page.locator("#es-bf-floor-table tbody tr")
+    assert tbody_rows.count() >= 5, (
+        f"Floor table must have ≥5 rows. Got: {tbody_rows.count()}"
+    )
+
+
+# ── CS84 ──────────────────────────────────────────────────────────────────────
+
+def test_CS84_floor_licensed_use_selects_count(page: Page, live_server: str) -> None:
+    """Phase 8J: [data-bf-field='licensed_use'] selects present for each floor row (≥5)."""
+    _load_building_full(page, live_server)
+    sels = page.locator("[data-bf-field='licensed_use']")
+    assert sels.count() >= 5, (
+        f"[data-bf-field='licensed_use'] selects must be ≥5. Got: {sels.count()}"
+    )
+
+
+# ── CS85 ──────────────────────────────────────────────────────────────────────
+
+def test_CS85_floor_actual_use_selects_count(page: Page, live_server: str) -> None:
+    """Phase 8J: [data-bf-field='actual_use'] selects present for each floor row (≥5)."""
+    _load_building_full(page, live_server)
+    sels = page.locator("[data-bf-field='actual_use']")
+    assert sels.count() >= 5, (
+        f"[data-bf-field='actual_use'] selects must be ≥5. Got: {sels.count()}"
+    )
+
+
+# ── CS86 ──────────────────────────────────────────────────────────────────────
+
+def test_CS86_floor_area_sqm_inputs_count(page: Page, live_server: str) -> None:
+    """Phase 8J: [data-bf-field='floor_area_sqm'] number inputs present for each floor (≥5)."""
+    _load_building_full(page, live_server)
+    inputs = page.locator("[data-bf-field='floor_area_sqm']")
+    assert inputs.count() >= 5, (
+        f"[data-bf-field='floor_area_sqm'] inputs must be ≥5. Got: {inputs.count()}"
+    )
+
+
+# ── CS87 ──────────────────────────────────────────────────────────────────────
+
+def test_CS87_floor_occupancy_status_selects_count(page: Page, live_server: str) -> None:
+    """Phase 8J: [data-bf-field='occupancy_status'] selects present for each floor row (≥5)."""
+    _load_building_full(page, live_server)
+    sels = page.locator("[data-bf-field='occupancy_status']")
+    assert sels.count() >= 5, (
+        f"[data-bf-field='occupancy_status'] selects must be ≥5. Got: {sels.count()}"
+    )
+
+
+# ── CS88 ──────────────────────────────────────────────────────────────────────
+
+def test_CS88_floor_labels_present_in_panel(page: Page, live_server: str) -> None:
+    """Phase 8J: all five floor labels are visible in the building_full panel."""
+    _load_building_full(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for label in ("بدروم", "الدور الأرضي", "الدور الأول", "الأدوار المتكررة", "سطح / خدمات"):
+        assert label in panel_text, (
+            f"Floor label '{label}' must appear in building_full panel. Got: {panel_text!r}"
+        )
+
+
+# ── CS89 ──────────────────────────────────────────────────────────────────────
+
+def test_CS89_bf_ownership_doc_checkbox_with_arabic_label(page: Page, live_server: str) -> None:
+    """Phase 8J: #es-req-field-bf_ownership_doc checkbox present with label 'سند الملكية'."""
+    _load_building_full(page, live_server)
+    cb = page.locator("#es-req-field-bf_ownership_doc")
+    assert cb.count() > 0, "#es-req-field-bf_ownership_doc checkbox must be present"
+    assert cb.get_attribute("type") == "checkbox", (
+        f"bf_ownership_doc must be type='checkbox'. Got: {cb.get_attribute('type')!r}"
+    )
+    label = page.locator("label[for='es-req-field-bf_ownership_doc']")
+    assert label.count() > 0, "Label for bf_ownership_doc must be present"
+    assert "سند الملكية" in label.inner_text(), (
+        f"bf_ownership_doc label must contain 'سند الملكية'. Got: {label.inner_text()!r}"
+    )
+
+
+# ── CS90 ──────────────────────────────────────────────────────────────────────
+
+def test_CS90_building_full_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8J: building_full panel has no link to /composite_valuation.html."""
+    _load_building_full(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "building_full inline form must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in building_full panel HTML"
+    )
+
+
+# ── CS91 ──────────────────────────────────────────────────────────────────────
+
+def test_CS91_building_full_no_methods_heading(page: Page, live_server: str) -> None:
+    """Phase 8J: building_full panel has no 'مناهج التقييم المناسبة' text."""
+    _load_building_full(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "مناهج التقييم المناسبة" not in panel_text, (
+        f"'مناهج التقييم المناسبة' must NOT appear in building_full panel. Got: {panel_text!r}"
+    )
+
+
+# ── CS92 ──────────────────────────────────────────────────────────────────────
+
+def test_CS92_building_full_no_irshadi_text(page: Page, live_server: str) -> None:
+    """Phase 8J: building_full panel has no 'إرشادي' (old static hint text) anywhere."""
+    _load_building_full(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "إرشادي" not in panel_text, (
+        f"Old static hint text 'إرشادي' must NOT appear in Phase 8J building_full form. Got: {panel_text!r}"
+    )
+
+
+# ── CS93 ──────────────────────────────────────────────────────────────────────
+
+def test_CS93_residential_controls_unchanged(page: Page, live_server: str) -> None:
+    """Phase 8J: residential panel controls unchanged — #es-req-field-area_sqm still present."""
+    _load_residential(page, live_server)
+    field = page.locator("#es-req-field-area_sqm")
+    assert field.count() > 0, (
+        "#es-req-field-area_sqm must still be present in residential panel after Phase 8J"
+    )
+    assert field.get_attribute("type") == "number", (
+        f"area_sqm must still be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS94 ──────────────────────────────────────────────────────────────────────
+
+def test_CS94_land_controls_unchanged(page: Page, live_server: str) -> None:
+    """Phase 8J: land panel controls unchanged — #es-req-field-land_area_sqm still present."""
+    _load_land(page, live_server)
+    field = page.locator("#es-req-field-land_area_sqm")
+    assert field.count() > 0, (
+        "#es-req-field-land_area_sqm must still be present in land panel after Phase 8J"
+    )
+    assert field.get_attribute("type") == "number", (
+        f"land_area_sqm must still be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS95 ──────────────────────────────────────────────────────────────────────
+
+def test_CS95_no_js_console_errors_on_building_full_render(page: Page, live_server: str) -> None:
+    """Phase 8J: no real JavaScript errors when rendering building_full inline form.
+
+    Pre-existing 401/UNAUTHORIZED network noise is excluded (same as CS55).
+    """
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    _load_building_full(page, live_server)
+    assert len(errors) == 0, (
+        f"JS console errors must be absent on building_full render. Got: {errors}"
+    )
+
+
+# ── CS96 ──────────────────────────────────────────────────────────────────────
+
+def test_CS96_placeholder_panels_still_show_composite_cta(page: Page, live_server: str) -> None:
+    """Phase 8J: placeholder panels (e.g. فندق) still show composite CTA link unchanged."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    link = page.locator("#es-req-composite-link")
+    assert link.count() >= 1 and link.is_visible(), (
+        "Placeholder panel (فندق) must still show composite CTA link after Phase 8J"
+    )
+    href = link.get_attribute("href") or ""
+    assert "composite_valuation.html" in href, (
+        f"Placeholder CTA must still point to composite_valuation.html. Got: {href!r}"
+    )

@@ -249,12 +249,15 @@ def test_submit_sends_post_with_auth_header(page: Page, live_server: str) -> Non
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_navigation_link_present_in_index(page: Page, live_server: str) -> None:
-    """Phase 8H.1: composite link is contextual; appears inside building_full panel after selection."""
+    """Phase 8H.1/8J: composite CTA link is contextual; appears in placeholder panels (فندق).
+
+    Phase 8J removed the link from building_full (عمارة سكنية); placeholder profiles retain it.
+    """
     page.goto(live_server, wait_until="networkidle")
-    # Static profiles render without auth — select building_full to trigger contextual CTA
-    page.select_option("#asset-type", value="عمارة سكنية")
+    # Placeholder profiles render without auth and retain the composite CTA link
+    page.select_option("#asset-type", value="فندق")
     page.select_option("#val-purpose", value="fair_market_value")
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
     link = page.locator("a[href='/composite_valuation.html']")
-    assert link.count() >= 1, "Contextual composite CTA link not found after selecting عمارة سكنية"
+    assert link.count() >= 1, "Contextual composite CTA link not found after selecting فندق (placeholder)"
     expect(link.first).to_be_visible()

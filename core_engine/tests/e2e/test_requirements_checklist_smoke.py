@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -34,16 +34,16 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS27 — "أرض فضاء" calls GET /api/valuation/requirements (land API profile)
   CS28 — "عمارة سكنية" (Phase 8G framing): ZERO API calls, static path confirmed
   CS29 — "عمارة سكنية" building_full panel contains floor-use rows (الدور الأرضي, الأدوار المتكررة)
-  CS30 — "فندق" → placeholder panel; ZERO API calls; title contains "فندق"; deferred notice shown
-  CS31 — "مصنع" → placeholder panel; ZERO API calls; deferred notice shown
-  CS32 — "مستشفى" → placeholder panel; ZERO API calls; deferred notice shown
-  CS33 — all placeholder asset types contain "قيد التطوير" notice
+  CS30 — (8K) "فندق" → form type; ZERO API calls; title contains "فندق"; form controls rendered
+  CS31 — (8K) "مصنع" → form type; ZERO API calls; form controls rendered
+  CS32 — (8K) "مستشفى" → form type; ZERO API calls; form controls rendered
+  CS33 — (8K) all 6 form-type asset types render input/select controls
   CS34 — placeholder panels contain NO ✦ bullet and NO "(مطلوب)" tag
   CS35 — no raw English profile codes appear in placeholder panel text
   CS36 — two consecutive renders of "عمارة سكنية" produce identical innerText
-  CS37 — (8H.1) placeholder panel (فندق) has contextual composite CTA pointing to composite_valuation.html
+  CS37 — (8K) فندق is now a form type; composite CTA absent; form controls rendered
   CS38 — (8H.1) building_full panel s4 is empty; no method label text present
-  CS39 — (8H.1) all placeholder types show contextual composite CTA; residential/land do not
+  CS39 — (8K) all 6 form-type profiles have NO composite CTA; residential/land also do not
 
   CS40 — (8H.2B) residential panel renders real form controls
   CS41 — (8H.2B) area_sqm renders as number input
@@ -82,9 +82,9 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS71 — (8I) #es-profile-explainer hidden on initial page load
   CS72 — (8I) selecting residential → explainer visible, badge contains مدعوم
   CS73 — (8I) selecting عمارة سكنية (building_full) → badge contains نموذج مركّب
-  CS74 — (8I) selecting فندق (placeholder) → badge contains قيد التطوير
+  CS74 — (8K) selecting فندق (form profile) → badge contains نموذج محلي
   CS75 — (8I) selecting unsupported type → badge contains غير مدعوم
-  CS76 — (8I) selection change فندق → شقة سكنية updates explainer from قيد التطوير to مدعوم
+  CS76 — (8K) selection change فندق → شقة سكنية updates explainer from نموذج محلي to مدعوم
   CS77 — (8I) <optgroup> elements present inside #asset-type
   CS78 — (8I) all 16 original option values still present in #asset-type unchanged
 
@@ -105,7 +105,30 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS93 — (8J) residential controls unchanged: #es-req-field-area_sqm still present
   CS94 — (8J) land controls unchanged: #es-req-field-land_area_sqm still present
   CS95 — (8J) no JS console errors on building_full render
-  CS96 — (8J) placeholder panels (فندق) still show composite CTA link
+  CS96 — (8K) فندق form renders form controls; composite CTA absent
+
+  CS97  — (8K) hotel form renders input/select controls
+  CS98  — (8K) factory form renders input/select controls
+  CS99  — (8K) hospital form renders input/select controls
+  CS100 — (8K) school form renders input/select controls
+  CS101 — (8K) retail form renders input/select controls
+  CS102 — (8K) mine form renders input/select controls
+  CS103 — (8K) hotel ht_land_area_sqm renders as number input
+  CS104 — (8K) factory fc_land_area_sqm renders as number input
+  CS105 — (8K) hospital ho_total_beds renders as number input
+  CS106 — (8K) school sc_classrooms_count renders as number input
+  CS107 — (8K) retail rt_gla_sqm renders as number input
+  CS108 — (8K) mine mn_concession_area_sqkm renders as number input
+  CS109 — (8K) hotel documents section shows upload hint text
+  CS110 — (8K) factory documents section shows upload hint text
+  CS111 — (8K) hospital documents section shows upload hint text
+  CS112 — (8K) school documents section shows upload hint text
+  CS113 — (8K) retail documents section shows upload hint text
+  CS114 — (8K) mine documents section shows upload hint text
+  CS115 — (8K) all 6 form profiles show 'نموذج محلي' badge
+  CS116 — (8K) building_full floor table still intact (regression)
+  CS117 — (8K) no JS console errors on hotel form render
+  CS118 — (8K) no composite CTA in any of the 6 converted form profiles
 """
 from __future__ import annotations
 
@@ -933,8 +956,8 @@ def test_CS29_emara_floor_use_section_present(page: Page, live_server: str) -> N
 
 # ── CS30 ──────────────────────────────────────────────────────────────────────
 
-def test_CS30_hotel_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
-    """'فندق' maps to hotel placeholder: ZERO API calls, title contains 'فندق', deferred notice."""
+def test_CS30_hotel_is_form_type_zero_api_renders_controls(page: Page, live_server: str) -> None:
+    """'فندق' maps to hotel form type (Phase 8K): ZERO API calls, title contains 'فندق', form controls rendered."""
     api_calls: list[str] = []
 
     def intercept(route: Route) -> None:
@@ -950,23 +973,23 @@ def test_CS30_hotel_is_placeholder_zero_api_deferred_notice(page: Page, live_ser
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     assert len(api_calls) == 0, (
-        f"GET /api/valuation/requirements must NOT be called for 'فندق' (placeholder). "
+        f"GET /api/valuation/requirements must NOT be called for 'فندق' (form type). "
         f"Got {len(api_calls)} call(s): {api_calls}"
     )
     title_text = page.locator("#es-req-title").inner_text()
     assert "فندق" in title_text, (
         f"Title must contain 'فندق'. Got: {title_text!r}"
     )
-    panel_text = page.locator("#es-req-panel").inner_text()
-    assert "قيد التطوير" in panel_text, (
-        f"Deferred notice 'قيد التطوير' must appear in hotel placeholder panel. Got: {panel_text!r}"
+    control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert control_count > 0, (
+        f"Hotel form must render input/select controls. Got {control_count} controls."
     )
 
 
 # ── CS31 ──────────────────────────────────────────────────────────────────────
 
-def test_CS31_factory_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
-    """'مصنع' maps to factory placeholder: ZERO API calls, deferred notice shown."""
+def test_CS31_factory_is_form_type_zero_api_renders_controls(page: Page, live_server: str) -> None:
+    """'مصنع' maps to factory form type (Phase 8K): ZERO API calls, form controls rendered."""
     api_calls: list[str] = []
 
     def intercept(route: Route) -> None:
@@ -982,19 +1005,19 @@ def test_CS31_factory_is_placeholder_zero_api_deferred_notice(page: Page, live_s
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     assert len(api_calls) == 0, (
-        f"GET /api/valuation/requirements must NOT be called for 'مصنع' (placeholder). "
+        f"GET /api/valuation/requirements must NOT be called for 'مصنع' (form type). "
         f"Got {len(api_calls)} call(s): {api_calls}"
     )
-    panel_text = page.locator("#es-req-panel").inner_text()
-    assert "قيد التطوير" in panel_text, (
-        f"Deferred notice 'قيد التطوير' must appear in factory placeholder panel. Got: {panel_text!r}"
+    control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert control_count > 0, (
+        f"Factory form must render input/select controls. Got {control_count} controls."
     )
 
 
 # ── CS32 ──────────────────────────────────────────────────────────────────────
 
-def test_CS32_hospital_is_placeholder_zero_api_deferred_notice(page: Page, live_server: str) -> None:
-    """'مستشفى' maps to hospital placeholder: ZERO API calls, deferred notice shown."""
+def test_CS32_hospital_is_form_type_zero_api_renders_controls(page: Page, live_server: str) -> None:
+    """'مستشفى' maps to hospital form type (Phase 8K): ZERO API calls, form controls rendered."""
     api_calls: list[str] = []
 
     def intercept(route: Route) -> None:
@@ -1010,22 +1033,22 @@ def test_CS32_hospital_is_placeholder_zero_api_deferred_notice(page: Page, live_
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     assert len(api_calls) == 0, (
-        f"GET /api/valuation/requirements must NOT be called for 'مستشفى' (placeholder). "
+        f"GET /api/valuation/requirements must NOT be called for 'مستشفى' (form type). "
         f"Got {len(api_calls)} call(s): {api_calls}"
     )
-    panel_text = page.locator("#es-req-panel").inner_text()
-    assert "قيد التطوير" in panel_text, (
-        f"Deferred notice 'قيد التطوير' must appear in hospital placeholder panel. Got: {panel_text!r}"
+    control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert control_count > 0, (
+        f"Hospital form must render input/select controls. Got {control_count} controls."
     )
 
 
 # ── CS33 ──────────────────────────────────────────────────────────────────────
 
-def test_CS33_all_placeholder_types_have_deferred_notice(page: Page, live_server: str) -> None:
-    """All six placeholder asset types render a 'قيد التطوير' notice in the panel."""
-    placeholder_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+def test_CS33_all_form_type_assets_render_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: all six form-type asset types render input/select controls in the panel."""
+    form_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
 
-    for asset_type in placeholder_types:
+    for asset_type in form_types:
         page.goto(live_server, wait_until="networkidle")
         _inject_session(page)
 
@@ -1033,9 +1056,10 @@ def test_CS33_all_placeholder_types_have_deferred_notice(page: Page, live_server
         page.select_option("#val-purpose", value="fair_market_value")
         page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
-        panel_text = page.locator("#es-req-panel").inner_text()
-        assert "قيد التطوير" in panel_text, (
-            f"Placeholder asset '{asset_type}' must show 'قيد التطوير'. Got: {panel_text!r}"
+        control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert control_count > 0, (
+            f"Form-type asset '{asset_type}' must render input/select controls. "
+            f"Got {control_count} controls."
         )
 
 
@@ -1110,8 +1134,8 @@ def test_CS36_emara_two_renders_identical(page: Page, live_server: str) -> None:
 
 # ── CS37 ──────────────────────────────────────────────────────────────────────
 
-def test_CS37_placeholder_has_composite_cta(page: Page, live_server: str) -> None:
-    """Phase 8H.1: placeholder panel (فندق) shows contextual composite CTA pointing to composite_valuation.html."""
+def test_CS37_hotel_form_type_no_composite_cta(page: Page, live_server: str) -> None:
+    """Phase 8K: فندق is now a form type; composite CTA absent; form controls rendered."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -1120,14 +1144,12 @@ def test_CS37_placeholder_has_composite_cta(page: Page, live_server: str) -> Non
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     link = page.locator("#es-req-composite-link")
-    expect(link).to_be_visible()
-    href = link.get_attribute("href") or ""
-    assert "composite_valuation.html" in href, (
-        f"Placeholder CTA must point to composite_valuation.html. Got: {href!r}"
+    assert link.count() == 0 or not link.is_visible(), (
+        "فندق form type must NOT show composite CTA link (Phase 8K converts all placeholders to forms)"
     )
-    link_text = link.inner_text().strip()
-    assert "فتح نموذج التقييم المركب" in link_text, (
-        f"Placeholder CTA label must say 'فتح نموذج التقييم المركب'. Got: {link_text!r}"
+    control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert control_count > 0, (
+        f"فندق form must render input/select controls. Got {control_count} controls."
     )
 
 
@@ -1160,11 +1182,11 @@ def test_CS38_building_full_s4_empty_no_method_labels(page: Page, live_server: s
 
 # ── CS39 ──────────────────────────────────────────────────────────────────────
 
-def test_CS39_all_placeholder_types_have_composite_cta_residential_land_do_not(page: Page, live_server: str) -> None:
-    """Phase 8H.1: all placeholder types show composite CTA; residential_unit and land do not."""
-    placeholder_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+def test_CS39_all_form_type_profiles_no_composite_cta_residential_land_unchanged(page: Page, live_server: str) -> None:
+    """Phase 8K: all 6 form-type profiles have NO composite CTA; residential/land also do not."""
+    form_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
 
-    for asset_type in placeholder_types:
+    for asset_type in form_types:
         page.goto(live_server, wait_until="networkidle")
         _inject_session(page)
 
@@ -1173,15 +1195,11 @@ def test_CS39_all_placeholder_types_have_composite_cta_residential_land_do_not(p
         page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
         link = page.locator("#es-req-composite-link")
-        assert link.count() >= 1 and link.is_visible(), (
-            f"Composite CTA must be visible in placeholder panel '{asset_type}'"
-        )
-        href = link.get_attribute("href") or ""
-        assert "composite_valuation.html" in href, (
-            f"Composite CTA must point to composite_valuation.html for '{asset_type}'. Got: {href!r}"
+        assert link.count() == 0 or not link.is_visible(), (
+            f"Form-type profile '{asset_type}' must NOT show composite CTA (Phase 8K)"
         )
 
-    # Residential and land must NOT show composite CTA
+    # Residential and land must also NOT show composite CTA (unchanged from 8H/8J)
     for asset_type, mock_data in [("شقة سكنية", _RESIDENTIAL_RESPONSE), ("أرض فضاء", _LAND_RESPONSE)]:
         _mock_req(page, mock_data)
         page.goto(live_server, wait_until="networkidle")
@@ -1779,8 +1797,8 @@ def test_CS73_building_full_selection_shows_composite_badge(page: Page, live_ser
 
 # ── CS74 ──────────────────────────────────────────────────────────────────────
 
-def test_CS74_placeholder_selection_shows_in_development_badge(page: Page, live_server: str) -> None:
-    """Phase 8I: selecting فندق (placeholder profile) shows 'قيد التطوير' badge."""
+def test_CS74_form_profile_selection_shows_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8K: selecting فندق (form profile) shows 'نموذج محلي' badge."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
     page.select_option("#asset-type", value="فندق")
@@ -1790,8 +1808,8 @@ def test_CS74_placeholder_selection_shows_in_development_badge(page: Page, live_
     explainer = page.locator("#es-profile-explainer")
     assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting فندق"
     badge_text = page.locator("#es-profile-badge").inner_text()
-    assert "قيد التطوير" in badge_text, (
-        f"Badge must contain 'قيد التطوير' for placeholder profile. Got: {badge_text!r}"
+    assert "نموذج محلي" in badge_text, (
+        f"Badge must contain 'نموذج محلي' for form profile. Got: {badge_text!r}"
     )
 
 
@@ -1816,18 +1834,18 @@ def test_CS75_unsupported_selection_shows_unsupported_badge(page: Page, live_ser
 # ── CS76 ──────────────────────────────────────────────────────────────────────
 
 def test_CS76_explainer_updates_on_selection_change(page: Page, live_server: str) -> None:
-    """Phase 8I: changing selection فندق → شقة سكنية updates badge from قيد التطوير to مدعوم."""
+    """Phase 8K: changing selection فندق → شقة سكنية updates badge from نموذج محلي to مدعوم."""
     _mock_req(page, _RESIDENTIAL_RESPONSE)
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
-    # First selection: فندق → قيد التطوير
+    # First selection: فندق → نموذج محلي
     page.select_option("#asset-type", value="فندق")
     page.select_option("#val-purpose", value="fair_market_value")
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
     badge_text_1 = page.locator("#es-profile-badge").inner_text()
-    assert "قيد التطوير" in badge_text_1, (
-        f"First selection (فندق) must show 'قيد التطوير'. Got: {badge_text_1!r}"
+    assert "نموذج محلي" in badge_text_1, (
+        f"First selection (فندق) must show 'نموذج محلي'. Got: {badge_text_1!r}"
     )
 
     # Second selection: شقة سكنية → مدعوم
@@ -1837,8 +1855,8 @@ def test_CS76_explainer_updates_on_selection_change(page: Page, live_server: str
     assert "مدعوم" in badge_text_2, (
         f"After changing to شقة سكنية, badge must show 'مدعوم'. Got: {badge_text_2!r}"
     )
-    assert "قيد التطوير" not in badge_text_2, (
-        f"'قيد التطوير' must NOT appear in badge after switching to residential. Got: {badge_text_2!r}"
+    assert "نموذج محلي" not in badge_text_2, (
+        f"'نموذج محلي' must NOT appear in badge after switching to residential. Got: {badge_text_2!r}"
     )
 
 
@@ -2124,8 +2142,8 @@ def test_CS95_no_js_console_errors_on_building_full_render(page: Page, live_serv
 
 # ── CS96 ──────────────────────────────────────────────────────────────────────
 
-def test_CS96_placeholder_panels_still_show_composite_cta(page: Page, live_server: str) -> None:
-    """Phase 8J: placeholder panels (e.g. فندق) still show composite CTA link unchanged."""
+def test_CS96_hotel_form_renders_controls_no_composite_cta(page: Page, live_server: str) -> None:
+    """Phase 8K: فندق form renders form controls; composite CTA is absent (all placeholders converted)."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
     page.select_option("#asset-type", value="فندق")
@@ -2133,10 +2151,321 @@ def test_CS96_placeholder_panels_still_show_composite_cta(page: Page, live_serve
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     link = page.locator("#es-req-composite-link")
-    assert link.count() >= 1 and link.is_visible(), (
-        "Placeholder panel (فندق) must still show composite CTA link after Phase 8J"
+    assert link.count() == 0 or not link.is_visible(), (
+        "فندق form must NOT show composite CTA link after Phase 8K conversion"
     )
-    href = link.get_attribute("href") or ""
-    assert "composite_valuation.html" in href, (
-        f"Placeholder CTA must still point to composite_valuation.html. Got: {href!r}"
+    control_count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert control_count > 0, (
+        f"فندق form must render input/select controls. Got {control_count} controls."
     )
+
+
+# ══ Phase 8K — specialized form controls (CS97 – CS118) ═════════════════════
+
+
+def _load_hotel(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_factory(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مصنع")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_hospital(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مستشفى")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_school(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مدرسة")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_retail(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="محل تجاري")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_mine(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مناجم")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS97 ──────────────────────────────────────────────────────────────────────
+
+def test_CS97_hotel_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: hotel form renders input/select controls in the requirements panel."""
+    _load_hotel(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"Hotel form must render input/select controls. Got {count} controls."
+
+
+# ── CS98 ──────────────────────────────────────────────────────────────────────
+
+def test_CS98_factory_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: factory form renders input/select controls in the requirements panel."""
+    _load_factory(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"Factory form must render input/select controls. Got {count} controls."
+
+
+# ── CS99 ──────────────────────────────────────────────────────────────────────
+
+def test_CS99_hospital_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: hospital form renders input/select controls in the requirements panel."""
+    _load_hospital(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"Hospital form must render input/select controls. Got {count} controls."
+
+
+# ── CS100 ─────────────────────────────────────────────────────────────────────
+
+def test_CS100_school_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: school form renders input/select controls in the requirements panel."""
+    _load_school(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"School form must render input/select controls. Got {count} controls."
+
+
+# ── CS101 ─────────────────────────────────────────────────────────────────────
+
+def test_CS101_retail_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: retail form renders input/select controls in the requirements panel."""
+    _load_retail(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"Retail form must render input/select controls. Got {count} controls."
+
+
+# ── CS102 ─────────────────────────────────────────────────────────────────────
+
+def test_CS102_mine_form_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8K: mine form renders input/select controls in the requirements panel."""
+    _load_mine(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, f"Mine form must render input/select controls. Got {count} controls."
+
+
+# ── CS103 ─────────────────────────────────────────────────────────────────────
+
+def test_CS103_hotel_land_area_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: hotel form ht_land_area_sqm renders as a number input."""
+    _load_hotel(page, live_server)
+    inp = page.locator("#es-req-field-ht_land_area_sqm")
+    assert inp.count() == 1, "#es-req-field-ht_land_area_sqm not found in hotel form"
+    assert inp.get_attribute("type") == "number", (
+        f"ht_land_area_sqm must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS104 ─────────────────────────────────────────────────────────────────────
+
+def test_CS104_factory_land_area_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: factory form fc_land_area_sqm renders as a number input."""
+    _load_factory(page, live_server)
+    inp = page.locator("#es-req-field-fc_land_area_sqm")
+    assert inp.count() == 1, "#es-req-field-fc_land_area_sqm not found in factory form"
+    assert inp.get_attribute("type") == "number", (
+        f"fc_land_area_sqm must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS105 ─────────────────────────────────────────────────────────────────────
+
+def test_CS105_hospital_total_beds_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: hospital form ho_total_beds renders as a number input."""
+    _load_hospital(page, live_server)
+    inp = page.locator("#es-req-field-ho_total_beds")
+    assert inp.count() == 1, "#es-req-field-ho_total_beds not found in hospital form"
+    assert inp.get_attribute("type") == "number", (
+        f"ho_total_beds must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS106 ─────────────────────────────────────────────────────────────────────
+
+def test_CS106_school_classrooms_count_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: school form sc_classrooms_count renders as a number input."""
+    _load_school(page, live_server)
+    inp = page.locator("#es-req-field-sc_classrooms_count")
+    assert inp.count() == 1, "#es-req-field-sc_classrooms_count not found in school form"
+    assert inp.get_attribute("type") == "number", (
+        f"sc_classrooms_count must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS107 ─────────────────────────────────────────────────────────────────────
+
+def test_CS107_retail_gla_sqm_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: retail form rt_gla_sqm renders as a number input."""
+    _load_retail(page, live_server)
+    inp = page.locator("#es-req-field-rt_gla_sqm")
+    assert inp.count() == 1, "#es-req-field-rt_gla_sqm not found in retail form"
+    assert inp.get_attribute("type") == "number", (
+        f"rt_gla_sqm must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS108 ─────────────────────────────────────────────────────────────────────
+
+def test_CS108_mine_concession_area_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8K: mine form mn_concession_area_sqkm renders as a number input."""
+    _load_mine(page, live_server)
+    inp = page.locator("#es-req-field-mn_concession_area_sqkm")
+    assert inp.count() == 1, "#es-req-field-mn_concession_area_sqkm not found in mine form"
+    assert inp.get_attribute("type") == "number", (
+        f"mn_concession_area_sqkm must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS109–CS114: upload hint text ─────────────────────────────────────────────
+
+_UPLOAD_HINT_TEXT = "ارفع المستندات من زر المرفقات"
+
+
+def test_CS109_hotel_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: hotel documents section contains upload guidance hint text."""
+    _load_hotel(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"Hotel panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+def test_CS110_factory_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: factory documents section contains upload guidance hint text."""
+    _load_factory(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"Factory panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+def test_CS111_hospital_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: hospital documents section contains upload guidance hint text."""
+    _load_hospital(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"Hospital panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+def test_CS112_school_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: school documents section contains upload guidance hint text."""
+    _load_school(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"School panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+def test_CS113_retail_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: retail documents section contains upload guidance hint text."""
+    _load_retail(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"Retail panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+def test_CS114_mine_documents_section_has_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8K: mine documents section contains upload guidance hint text."""
+    _load_mine(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert _UPLOAD_HINT_TEXT in panel_text, (
+        f"Mine panel must contain upload hint text. Got: {panel_text[:200]!r}"
+    )
+
+
+# ── CS115 ─────────────────────────────────────────────────────────────────────
+
+def test_CS115_all_six_form_profiles_show_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8K: all 6 form profiles display the 'نموذج محلي' badge in the explainer."""
+    form_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+    for asset_type in form_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        badge_text = page.locator("#es-profile-badge").inner_text()
+        assert "نموذج محلي" in badge_text, (
+            f"Form profile '{asset_type}' must show 'نموذج محلي' badge. Got: {badge_text!r}"
+        )
+
+
+# ── CS116 ─────────────────────────────────────────────────────────────────────
+
+def test_CS116_building_full_floor_table_regression(page: Page, live_server: str) -> None:
+    """Phase 8K regression: عمارة سكنية floor table still intact after 8K changes."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    assert page.locator("#es-bf-floor-table").count() == 1, (
+        "#es-bf-floor-table must still be present in building_full panel after Phase 8K"
+    )
+    row_count = page.locator("#es-bf-floor-table tbody tr").count()
+    assert row_count >= 5, (
+        f"Floor table must have ≥5 rows. Got {row_count} rows."
+    )
+
+
+# ── CS117 ─────────────────────────────────────────────────────────────────────
+
+def test_CS117_no_js_console_errors_on_hotel_form_render(page: Page, live_server: str) -> None:
+    """Phase 8K: no unexpected JS console errors when rendering the hotel form."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    console_errors: list[str] = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+
+    _load_hotel(page, live_server)
+    assert not console_errors, (
+        f"JavaScript console errors during hotel form render: {console_errors}"
+    )
+
+
+# ── CS118 ─────────────────────────────────────────────────────────────────────
+
+def test_CS118_no_composite_cta_in_any_form_profile(page: Page, live_server: str) -> None:
+    """Phase 8K: none of the 6 converted form profiles shows a composite CTA link."""
+    form_types = ["فندق", "مصنع", "محل تجاري", "مستشفى", "مدرسة", "مناجم"]
+    for asset_type in form_types:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=asset_type)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+        link = page.locator("#es-req-composite-link")
+        assert link.count() == 0 or not link.is_visible(), (
+            f"Form profile '{asset_type}' must NOT show composite CTA link (Phase 8K)"
+        )

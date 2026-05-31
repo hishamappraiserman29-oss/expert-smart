@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -44,6 +44,40 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS37 — (8H.1) placeholder panel (فندق) has contextual composite CTA pointing to composite_valuation.html
   CS38 — (8H.1) building_full panel s4 is empty; no method label text present
   CS39 — (8H.1) all placeholder types show contextual composite CTA; residential/land do not
+
+  CS40 — (8H.2B) residential panel renders real form controls
+  CS41 — (8H.2B) area_sqm renders as number input
+  CS42 — (8H.2B) floor_number renders as number input
+  CS43 — (8H.2B) finishing_level renders as select with ≥4 options
+  CS44 — (8H.2B) legal_status renders as select
+  CS45 — (8H.2B) document fields render as checkboxes with Arabic labels
+  CS46 — (8H.2B) land panel renders real form controls
+  CS47 — (8H.2B) land_area_sqm renders as number input
+  CS48 — (8H.2B) frontage_m renders as number input
+  CS49 — (8H.2B) zoning_type renders as select with ≥6 options
+  CS50 — (8H.2B) utilities_available renders as checkbox group
+  CS51 — (8H.2B) buildability_status renders as select
+  CS52 — (8H.2B) land document fields render as checkboxes
+  CS53 — (8H.2B) engine fields not rendered as form controls
+  CS54 — (8H.2B) field label comes from label_ar (DRY)
+  CS55 — (8H.2B) no JS console errors on render
+
+  CS56 — (8H.2D) select first option is 'اختر ...' placeholder
+  CS57 — (8H.2D) default option text derived from label_ar
+  CS58 — (8H.2D) yes/no fields show نعم/لا
+  CS59 — (8H.2D) number inputs carry non-empty placeholder
+  CS60 — (8H.2D) all 3 section headings visible in residential panel
+  CS61 — (8H.2D) utilities_available shows Arabic chip labels
+  CS62 — (8H.2D) utilities_available shows no raw backend codes
+
+  CS63 — (8H.2E) finishing_level options display Arabic translations
+  CS64 — (8H.2E) legal_status options display Arabic translations
+  CS65 — (8H.2E) parking_available select shows نعم/لا
+  CS66 — (8H.2E) zoning_type options display Arabic translations
+  CS67 — (8H.2E) buildability_status options display Arabic translations
+  CS68 — (8H.2E) hbu select options display Arabic translations
+  CS69 — (8H.2E) no raw enum codes in residential panel visible text
+  CS70 — (8H.2E) no raw enum codes in land panel visible text
 """
 from __future__ import annotations
 
@@ -1513,4 +1547,146 @@ def test_CS62_utilities_available_no_raw_backend_codes(page: Page, live_server: 
     for raw in ("electricity", "water", "sewage", "gas", "paved_road"):
         assert raw not in panel_text, (
             f"Raw backend code '{raw}' must not appear in rendered panel. Got: {panel_text!r}"
+        )
+
+
+# ══ Phase 8H.2E — dropdown options content fix (CS63 – CS70) ═════════════════
+
+
+# ── CS63 ──────────────────────────────────────────────────────────────────────
+
+def test_CS63_finishing_level_options_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: finishing_level select options display Arabic translations, not raw codes."""
+    _load_residential(page, live_server)
+    opts = page.locator("#es-req-field-finishing_level option").all_inner_texts()
+    for arabic in ("بدون تشطيب", "نصف تشطيب", "تشطيب عادي", "تشطيب فاخر"):
+        assert any(arabic in t for t in opts), (
+            f"finishing_level must have Arabic option '{arabic}'. Got opts: {opts}"
+        )
+    for raw in ("shell", "semi_finished", "standard_finished", "luxury_finished"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be the displayed text in finishing_level options. Got: {opts}"
+        )
+
+
+# ── CS64 ──────────────────────────────────────────────────────────────────────
+
+def test_CS64_legal_status_options_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: legal_status select options display Arabic translations, not raw codes."""
+    _load_residential(page, live_server)
+    opts = page.locator("#es-req-field-legal_status option").all_inner_texts()
+    for arabic in ("ملكية مسجلة", "عقد ابتدائي", "تخصيص", "غير محدد"):
+        assert any(arabic in t for t in opts), (
+            f"legal_status must have Arabic option '{arabic}'. Got opts: {opts}"
+        )
+    for raw in ("registered_title", "preliminary_contract", "allocation", "unknown"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be the displayed text in legal_status options. Got: {opts}"
+        )
+
+
+# ── CS65 ──────────────────────────────────────────────────────────────────────
+
+def test_CS65_parking_available_shows_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: parking_available select displays نعم/لا, not raw yes/no."""
+    _load_residential(page, live_server)
+    opts = page.locator("#es-req-field-parking_available option").all_inner_texts()
+    assert any("نعم" in t for t in opts), (
+        f"parking_available must have a 'نعم' option. Got: {opts}"
+    )
+    assert any("لا" in t for t in opts), (
+        f"parking_available must have a 'لا' option. Got: {opts}"
+    )
+    assert not any("yes" == t.strip() for t in opts), (
+        f"Raw 'yes' must not be the displayed text in parking_available. Got: {opts}"
+    )
+
+
+# ── CS66 ──────────────────────────────────────────────────────────────────────
+
+def test_CS66_zoning_type_options_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: zoning_type select options display Arabic translations, not raw codes."""
+    _load_land(page, live_server)
+    opts = page.locator("#es-req-field-zoning_type option").all_inner_texts()
+    for arabic in ("سكني", "تجاري", "إداري", "استخدام مختلط", "زراعي", "غير محدد"):
+        assert any(arabic in t for t in opts), (
+            f"zoning_type must have Arabic option '{arabic}'. Got opts: {opts}"
+        )
+    for raw in ("residential", "commercial", "administrative", "mixed_use", "agricultural"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be the displayed text in zoning_type options. Got: {opts}"
+        )
+
+
+# ── CS67 ──────────────────────────────────────────────────────────────────────
+
+def test_CS67_buildability_status_options_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: buildability_status select options display Arabic translations."""
+    _load_land(page, live_server)
+    opts = page.locator("#es-req-field-buildability_status option").all_inner_texts()
+    for arabic in ("قابل للبناء", "يحتاج تحقق", "قيود تخطيطية", "غير محدد"):
+        assert any(arabic in t for t in opts), (
+            f"buildability_status must have Arabic option '{arabic}'. Got opts: {opts}"
+        )
+    for raw in ("buildable", "needs_verification", "planning_restrictions"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be displayed text in buildability_status. Got: {opts}"
+        )
+
+
+# ── CS68 ──────────────────────────────────────────────────────────────────────
+
+def test_CS68_hbu_options_arabic(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: hbu select options display Arabic translations, not raw codes."""
+    _load_land(page, live_server)
+    opts = page.locator("#es-req-field-hbu option").all_inner_texts()
+    for arabic in ("سكني", "تجاري", "استخدام مختلط", "صناعي", "زراعي", "مضاربي"):
+        assert any(arabic in t for t in opts), (
+            f"hbu must have Arabic option '{arabic}'. Got opts: {opts}"
+        )
+    for raw in ("industrial", "speculative"):
+        assert not any(raw == t.strip() for t in opts), (
+            f"Raw code '{raw}' must not be the displayed text in hbu options. Got: {opts}"
+        )
+
+
+# ── CS69 ──────────────────────────────────────────────────────────────────────
+
+def test_CS69_residential_panel_no_raw_enum_codes(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: residential panel visible text contains no raw enum value codes."""
+    _load_residential(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    raw_codes = (
+        "shell", "semi_finished", "standard_finished", "luxury_finished",
+        "registered_title", "preliminary_contract", "allocation",
+        "owner_occupied", "rental",
+        "luxury", "economy", "heritage",
+        "ordinary", "premium",
+    )
+    for code in raw_codes:
+        assert code not in panel_text, (
+            f"Raw code '{code}' must not appear in residential panel visible text. "
+            f"Got: {panel_text!r}"
+        )
+
+
+# ── CS70 ──────────────────────────────────────────────────────────────────────
+
+def test_CS70_land_panel_no_raw_enum_codes(page: Page, live_server: str) -> None:
+    """Phase 8H.2E: land panel visible text contains no raw enum value codes."""
+    _load_land(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    raw_codes = (
+        "registered_title", "preliminary_contract", "allocation",
+        "buildable", "needs_verification", "planning_restrictions",
+        "mixed_use", "agricultural", "administrative",
+        "industrial", "speculative",
+        "prime", "secondary", "remote",
+        "unrestricted", "general_commercial", "residential_only", "restricted",
+        "ready_to_build", "feasible", "challenging", "very_difficult",
+    )
+    for code in raw_codes:
+        assert code not in panel_text, (
+            f"Raw code '{code}' must not appear in land panel visible text. "
+            f"Got: {panel_text!r}"
         )

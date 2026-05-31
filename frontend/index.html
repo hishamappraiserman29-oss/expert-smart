@@ -5777,9 +5777,38 @@ function _showIndexToast(msg, type) {
     // Label comes from f.label_ar (backend — DRY). Control type from field_type/valid_values.
     // _VALUE_DISPLAY maps universal backend codes to Arabic display strings (not per-field).
     var _VALUE_DISPLAY = {
+        // bool
         'yes': 'نعم', 'no': 'لا',
+        // utilities
         'electricity': 'كهرباء', 'water': 'مياه', 'sewage': 'صرف صحي',
-        'gas': 'غاز', 'paved_road': 'طريق ممهد'
+        'gas': 'غاز', 'paved_road': 'طريق ممهد',
+        // finishing_level
+        'shell': 'بدون تشطيب', 'semi_finished': 'نصف تشطيب',
+        'standard_finished': 'تشطيب عادي', 'luxury_finished': 'تشطيب فاخر',
+        // legal_status / ownership_type shared codes
+        'registered_title': 'ملكية مسجلة', 'preliminary_contract': 'عقد ابتدائي',
+        'allocation': 'تخصيص', 'unknown': 'غير محدد',
+        // ownership_type
+        'owner_occupied': 'مالك مقيم', 'rental': 'إيجار', 'mixed': 'مختلط',
+        // quality_tier
+        'luxury': 'فاخر', 'standard': 'عادي', 'economy': 'اقتصادي', 'heritage': 'تراثي',
+        // view_quality
+        'ordinary': 'عادية', 'good': 'جيدة', 'premium': 'مميزة',
+        // zoning_type / hbu / general land-use codes
+        'residential': 'سكني', 'commercial': 'تجاري', 'administrative': 'إداري',
+        'mixed_use': 'استخدام مختلط', 'agricultural': 'زراعي', 'industrial': 'صناعي',
+        'speculative': 'مضاربي',
+        // buildability_status
+        'buildable': 'قابل للبناء', 'needs_verification': 'يحتاج تحقق',
+        'planning_restrictions': 'قيود تخطيطية',
+        // location_desirability
+        'prime': 'متميز', 'secondary': 'ثانوي', 'remote': 'نائي',
+        // zoning (land)
+        'unrestricted': 'غير مقيد', 'general_commercial': 'تجاري عام',
+        'residential_only': 'سكني فقط', 'restricted': 'مقيد',
+        // development_feasibility
+        'ready_to_build': 'جاهز للبناء', 'feasible': 'ممكن',
+        'challenging': 'صعب', 'very_difficult': 'صعب جداً'
     };
 
     function _fieldControlHTML(f) {

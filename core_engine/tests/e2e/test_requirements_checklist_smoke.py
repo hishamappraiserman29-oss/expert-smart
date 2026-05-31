@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -78,6 +78,15 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS68 — (8H.2E) hbu select options display Arabic translations
   CS69 — (8H.2E) no raw enum codes in residential panel visible text
   CS70 — (8H.2E) no raw enum codes in land panel visible text
+
+  CS71 — (8I) #es-profile-explainer hidden on initial page load
+  CS72 — (8I) selecting residential → explainer visible, badge contains مدعوم
+  CS73 — (8I) selecting عمارة سكنية (building_full) → badge contains نموذج مركّب
+  CS74 — (8I) selecting فندق (placeholder) → badge contains قيد التطوير
+  CS75 — (8I) selecting unsupported type → badge contains غير مدعوم
+  CS76 — (8I) selection change فندق → شقة سكنية updates explainer from قيد التطوير to مدعوم
+  CS77 — (8I) <optgroup> elements present inside #asset-type
+  CS78 — (8I) all 16 original option values still present in #asset-type unchanged
 """
 from __future__ import annotations
 
@@ -1689,4 +1698,160 @@ def test_CS70_land_panel_no_raw_enum_codes(page: Page, live_server: str) -> None
         assert code not in panel_text, (
             f"Raw code '{code}' must not appear in land panel visible text. "
             f"Got: {panel_text!r}"
+        )
+
+
+# ══ Phase 8I — Asset Selector UX (CS71 – CS78) ═══════════════════════════════
+
+
+# ── CS71 ──────────────────────────────────────────────────────────────────────
+
+def test_CS71_profile_explainer_hidden_on_load(page: Page, live_server: str) -> None:
+    """Phase 8I: #es-profile-explainer is hidden on initial page load (no selection yet)."""
+    page.goto(live_server, wait_until="networkidle")
+    explainer = page.locator("#es-profile-explainer")
+    assert explainer.count() > 0, "#es-profile-explainer must exist in DOM"
+    assert not explainer.is_visible(), (
+        "#es-profile-explainer must be hidden before any asset-type selection"
+    )
+
+
+# ── CS72 ──────────────────────────────────────────────────────────────────────
+
+def test_CS72_residential_selection_shows_supported_badge(page: Page, live_server: str) -> None:
+    """Phase 8I: selecting شقة سكنية shows explainer with 'مدعوم' badge."""
+    _mock_req(page, _RESIDENTIAL_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+    explainer = page.locator("#es-profile-explainer")
+    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting شقة سكنية"
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "مدعوم" in badge_text, (
+        f"Badge must contain 'مدعوم' for residential selection. Got: {badge_text!r}"
+    )
+
+
+# ── CS73 ──────────────────────────────────────────────────────────────────────
+
+def test_CS73_building_full_selection_shows_composite_badge(page: Page, live_server: str) -> None:
+    """Phase 8I: selecting عمارة سكنية (building_full) shows 'نموذج مركّب' badge."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    explainer = page.locator("#es-profile-explainer")
+    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting عمارة سكنية"
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج مركّب" in badge_text, (
+        f"Badge must contain 'نموذج مركّب' for building_full. Got: {badge_text!r}"
+    )
+
+
+# ── CS74 ──────────────────────────────────────────────────────────────────────
+
+def test_CS74_placeholder_selection_shows_in_development_badge(page: Page, live_server: str) -> None:
+    """Phase 8I: selecting فندق (placeholder profile) shows 'قيد التطوير' badge."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    explainer = page.locator("#es-profile-explainer")
+    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting فندق"
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "قيد التطوير" in badge_text, (
+        f"Badge must contain 'قيد التطوير' for placeholder profile. Got: {badge_text!r}"
+    )
+
+
+# ── CS75 ──────────────────────────────────────────────────────────────────────
+
+def test_CS75_unsupported_selection_shows_unsupported_badge(page: Page, live_server: str) -> None:
+    """Phase 8I: selecting أصول معنوية (null-mapped, unsupported) shows 'غير مدعوم' badge."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أصول معنوية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+    explainer = page.locator("#es-profile-explainer")
+    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting unsupported type"
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "غير مدعوم" in badge_text, (
+        f"Badge must contain 'غير مدعوم' for unsupported type. Got: {badge_text!r}"
+    )
+
+
+# ── CS76 ──────────────────────────────────────────────────────────────────────
+
+def test_CS76_explainer_updates_on_selection_change(page: Page, live_server: str) -> None:
+    """Phase 8I: changing selection فندق → شقة سكنية updates badge from قيد التطوير to مدعوم."""
+    _mock_req(page, _RESIDENTIAL_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+
+    # First selection: فندق → قيد التطوير
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    badge_text_1 = page.locator("#es-profile-badge").inner_text()
+    assert "قيد التطوير" in badge_text_1, (
+        f"First selection (فندق) must show 'قيد التطوير'. Got: {badge_text_1!r}"
+    )
+
+    # Second selection: شقة سكنية → مدعوم
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    badge_text_2 = page.locator("#es-profile-badge").inner_text()
+    assert "مدعوم" in badge_text_2, (
+        f"After changing to شقة سكنية, badge must show 'مدعوم'. Got: {badge_text_2!r}"
+    )
+    assert "قيد التطوير" not in badge_text_2, (
+        f"'قيد التطوير' must NOT appear in badge after switching to residential. Got: {badge_text_2!r}"
+    )
+
+
+# ── CS77 ──────────────────────────────────────────────────────────────────────
+
+def test_CS77_optgroups_present_in_asset_type_select(page: Page, live_server: str) -> None:
+    """Phase 8I: #asset-type select contains <optgroup> elements for category grouping."""
+    page.goto(live_server, wait_until="networkidle")
+    optgroups = page.locator("#asset-type optgroup")
+    assert optgroups.count() >= 4, (
+        f"#asset-type must have ≥4 optgroup elements. Got: {optgroups.count()}"
+    )
+    labels = [optgroups.nth(i).get_attribute("label") for i in range(optgroups.count())]
+    assert any("سكن" in (lbl or "") for lbl in labels), (
+        f"Expected an optgroup with 'سكن' in label. Got labels: {labels}"
+    )
+    assert any("أراضٍ" in (lbl or "") or "أراض" in (lbl or "") for lbl in labels), (
+        f"Expected an optgroup for أراضٍ. Got labels: {labels}"
+    )
+
+
+# ── CS78 ──────────────────────────────────────────────────────────────────────
+
+def test_CS78_all_original_option_values_unchanged(page: Page, live_server: str) -> None:
+    """Phase 8I: all 16 original option values still present in #asset-type (values unchanged)."""
+    page.goto(live_server, wait_until="networkidle")
+    original_values = [
+        "شقة سكنية", "عمارة سكنية", "تجاري", "أرض فضاء", "مصنع",
+        "أرض زراعية", "فندق", "محل تجاري", "مستشفى", "مدرسة",
+        "أصول معنوية", "ملكيات جزئية", "مناجم", "استثمارات تحت الإنشاء",
+        "historical", "heritage",
+    ]
+    actual_values = page.locator("#asset-type option").evaluate_all(
+        "opts => opts.map(o => o.value)"
+    )
+    for v in original_values:
+        assert v in actual_values, (
+            f"Original option value '{v}' must still be present in #asset-type. "
+            f"Got values: {actual_values}"
         )

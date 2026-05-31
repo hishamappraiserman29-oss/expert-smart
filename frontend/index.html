@@ -1219,25 +1219,43 @@
             <i class="fas fa-building"></i>
             <h3>نوع الأصل العقاري</h3>
             <select class="select-full" id="asset-type" onchange="toggleAssetInputs(this.value);">
-                <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
-                <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
-                <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
-                <option value="أرض فضاء">أرض فضاء (مطورة / خام)</option>
-                <option value="مصنع">صناعي / مستودع / لوجستي</option>
-                <option value="أرض زراعية">أرض زراعية</option>
-                <option value="فندق">فنادق ومنتجعات سياحية</option>
-                <option value="محل تجاري">تجزئة (محلات / مولات)</option>
-                <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
-                <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
-                <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
-                <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
-                <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
-                <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
-                <option value="historical">العقارات التاريخية</option>
-                <option value="heritage">العقارات ذات التراث المعماري المتميز</option>
+                <option value="" disabled selected>— اختر نوع الأصل —</option>
+                <optgroup label="أصول سكنية">
+                    <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
+                    <option value="عمارة سكنية">عقار كامل (عمارة / مجمع سكني)</option>
+                </optgroup>
+                <optgroup label="أراضٍ">
+                    <option value="أرض فضاء">أرض فضاء (مطورة / خام)</option>
+                    <option value="أرض زراعية">أرض زراعية</option>
+                </optgroup>
+                <optgroup label="أصول تجارية وإدارية">
+                    <option value="تجاري">سكني / تجاري / إداري (مباني قائمة)</option>
+                </optgroup>
+                <optgroup label="أصول تشغيلية متخصصة">
+                    <option value="فندق">فنادق ومنتجعات سياحية</option>
+                    <option value="مصنع">صناعي / مستودع / لوجستي</option>
+                    <option value="محل تجاري">تجزئة (محلات / مولات)</option>
+                    <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
+                    <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
+                    <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
+                </optgroup>
+                <optgroup label="أصول خاصة / غير مدعومة حالياً">
+                    <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
+                    <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
+                    <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
+                    <option value="historical">العقارات التاريخية</option>
+                    <option value="heritage">العقارات ذات التراث المعماري المتميز</option>
+                </optgroup>
             </select>
         </div>
     </div>
+
+    <!-- ── Phase 8I: Profile Explainer ──────────────────────────────────── -->
+    <div id="es-profile-explainer" style="display:none; margin:8px 0 4px; padding:8px 12px; background:rgba(31,41,55,0.7); border:1px solid #374151; border-radius:7px; font-size:0.8rem; line-height:1.5;">
+        <span id="es-profile-badge" style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.72rem; font-weight:600; margin-left:8px; border:1px solid transparent;"></span>
+        <span id="es-profile-desc" style="color:#9ca3af;"></span>
+    </div>
+    <!-- ── End Phase 8I ──────────────────────────────────────────────────── -->
 
     <!-- ── Phase 8B/8C: Requirements Checklist Panel ──────────────────── -->
     <div id="es-req-panel" style="display:none; margin:12px 0; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
@@ -5743,6 +5761,36 @@ function _showIndexToast(msg, type) {
                                   'البنية التحتية والالتزامات البيئية', 'المستندات والدراسات الفنية'] },
     };
 
+    // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
+    var _PROFILE_EXPLAINER_MAP = {
+        'residential_unit': { badge: 'مدعوم', color: '#10b981', desc: 'وحدة سكنية — مدعوم بالكامل. المتطلبات والحقول تُجلَب مباشرة من API.' },
+        'land':             { badge: 'مدعوم', color: '#10b981', desc: 'أرض — مدعوم بالكامل. المتطلبات تُجلَب مباشرة من API.' },
+        'building_mixed':   { badge: 'مدعوم', color: '#10b981', desc: 'مبنى قائم (تجاري / سكني / إداري) — مدعوم بالكامل.' },
+        'building_full':    { badge: 'نموذج مركّب', color: '#d4af37', desc: 'عقار كامل — يستلزم نموذج التقييم المركّب المتخصص.' },
+        'hotel':    { badge: 'قيد التطوير', color: '#f59e0b', desc: 'فنادق ومنتجعات — المتطلبات قيد الإعداد.' },
+        'factory':  { badge: 'قيد التطوير', color: '#f59e0b', desc: 'مصانع ومنشآت صناعية — المتطلبات قيد الإعداد.' },
+        'retail':   { badge: 'قيد التطوير', color: '#f59e0b', desc: 'تجزئة ومحلات — المتطلبات قيد الإعداد.' },
+        'hospital': { badge: 'قيد التطوير', color: '#f59e0b', desc: 'مستشفيات ومراكز طبية — المتطلبات قيد الإعداد.' },
+        'school':   { badge: 'قيد التطوير', color: '#f59e0b', desc: 'مدارس ومرافق تعليمية — المتطلبات قيد الإعداد.' },
+        'mine':     { badge: 'قيد التطوير', color: '#f59e0b', desc: 'مناجم وآبار — المتطلبات قيد الإعداد.' },
+    };
+
+    function updateExplainer(profile) {
+        var el    = document.getElementById('es-profile-explainer');
+        var badge = document.getElementById('es-profile-badge');
+        var desc  = document.getElementById('es-profile-desc');
+        if (!el || !badge || !desc) return;
+        var cfg = (profile && _PROFILE_EXPLAINER_MAP[profile])
+                  ? _PROFILE_EXPLAINER_MAP[profile]
+                  : { badge: 'غير مدعوم حالياً', color: '#6b7280', desc: 'هذا النوع غير مدعوم حالياً في النظام.' };
+        badge.textContent       = cfg.badge;
+        badge.style.background  = cfg.color + '22';
+        badge.style.color       = cfg.color;
+        badge.style.borderColor = cfg.color + '55';
+        desc.textContent        = cfg.desc;
+        el.style.display        = 'block';
+    }
+
     // ── Section builder — heading + description paragraph + item rows ─────────
     function _sectionHTML(heading, headingColor, description, items, optTag) {
         if (!items.length) return '';
@@ -6129,6 +6177,9 @@ function _showIndexToast(msg, type) {
         var profile = ASSET_PROFILE_MAP.hasOwnProperty(assetTypeRaw)
                       ? ASSET_PROFILE_MAP[assetTypeRaw] : undefined;
         var purpose = PURPOSE_MAP[purposeRaw];
+
+        // Phase 8I: update explainer for every selection before any early return
+        updateExplainer(profile);
 
         // null = explicitly unsupported; undefined = not in map
         if (!profile) { showSoftMsg(_SOFT_MSG); return; }

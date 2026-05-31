@@ -987,6 +987,26 @@
     #es-profile-explainer { border-color: #4b5563; }
     /* ── End Phase 8K CSS ───────────────────────────────────────────────────── */
 
+    /* ── Phase 8L: Collapsible sections (scoped to #es-req-panel) ──────────── */
+    #es-req-panel details { margin-bottom: 10px; }
+    #es-req-panel details > summary {
+        cursor: pointer;
+        list-style: none;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-radius: 6px 6px 0 0;
+        background: rgba(31,41,55,0.85);
+        border: 1px solid #4b5563;
+        border-bottom: none;
+        outline: none;
+        user-select: none;
+    }
+    #es-req-panel details > summary::-webkit-details-marker { display: none; }
+    #es-req-panel details > summary::before { content: '▾ '; font-size: 0.65rem; opacity: 0.7; }
+    #es-req-panel details:not([open]) > summary::before { content: '▸ '; }
+    /* ── End Phase 8L CSS ───────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
@@ -5880,6 +5900,7 @@ function _showIndexToast(msg, type) {
         // development_feasibility
         'ready_to_build': 'جاهز للبناء', 'feasible': 'ممكن',
         'challenging': 'صعب', 'very_difficult': 'صعب جداً',
+        'excellent': 'ممتازة', 'poor': 'رديئة', 'unknown': 'غير محدد',
         'average': 'متوسطة', 'needs_maintenance': 'تحتاج صيانة',
         // hotel
         'one_star': 'نجمة واحدة', 'two_star': 'نجمتان', 'three_star': 'ثلاث نجوم',
@@ -5953,6 +5974,35 @@ function _showIndexToast(msg, type) {
                 + '</select>';
             return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
         }
+        // checkbox_group + options → chip group with inline Arabic labels (Phase 8L)
+        if (f.field_type === 'checkbox_group' && f.options && f.options.length) {
+            var chips = f.options.map(function (o) {
+                return '<label class="es-chip" style="display:inline-flex;align-items:center;gap:5px;'
+                    + 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+                    + 'padding:4px 10px;cursor:pointer;font-size:0.73rem;color:#9ca3af;">'
+                    + '<input type="checkbox" id="' + fid + '-' + o.value + '"'
+                    + ' name="' + f.name + '" value="' + o.value + '"'
+                    + ' data-es-req-field="' + f.name + '"'
+                    + ' style="accent-color:#d4af37;cursor:pointer;">'
+                    + o.label_ar + '</label>';
+            }).join('');
+            return '<div class="es-field">'
+                + '<div style="font-size:0.73rem;color:#9ca3af;margin-bottom:5px;">'
+                + reqMark + label + '</div>'
+                + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div>'
+                + '</div>';
+        }
+        // str/select + options → select with inline Arabic labels (Phase 8L)
+        if (f.options && f.options.length) {
+            var inlineOpts = '<option value="" disabled selected>اختر ' + label + '</option>'
+                + f.options.map(function (o) {
+                    return '<option value="' + o.value + '">' + o.label_ar + '</option>';
+                }).join('');
+            ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-req-field="' + f.name + '"'
+                + ' style="' + inputCss + '">' + inlineOpts + '</select>';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+        }
         // list + valid_values → styled chip group
         if (f.field_type === 'list' && f.valid_values && f.valid_values.length) {
             var chips = f.valid_values.map(function (v) {
@@ -6001,22 +6051,22 @@ function _showIndexToast(msg, type) {
         return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
     }
 
-    // ── Section card wrapper for structured form controls (Phase 8H.2D) ────────
+    // ── Section card wrapper for structured form controls (Phase 8H.2D/8L) ─────
     function _sectionControlsHTML(heading, headingColor, description, fields) {
         if (!fields.length) return '';
         var borderColor = headingColor === '#d4af37'
             ? 'rgba(212,175,55,0.25)' : '#374151';
-        var html = '<div class="es-form-section" style="background:rgba(31,41,55,0.7);border:1px solid '
-            + borderColor + ';border-radius:8px;padding:12px 14px;">';
-        html += '<div style="font-size:0.8rem;font-weight:600;color:' + headingColor
-            + ';margin-bottom:4px;">' + heading + '</div>';
+        var html = '<details open>';
+        html += '<summary style="color:' + headingColor + ';">' + heading + '</summary>';
+        html += '<div class="es-form-section" style="background:rgba(31,41,55,0.7);border:1px solid '
+            + borderColor + ';border-top:none;border-radius:0 0 8px 8px;padding:12px 14px;">';
         if (description) {
             html += '<div style="font-size:0.72rem;color:#6b7280;margin-bottom:10px;line-height:1.4;">'
                 + description + '</div>';
         }
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
         fields.forEach(function (f) { html += _fieldControlHTML(f); });
-        html += '</div></div>';
+        html += '</div></div></details>';
         return html;
     }
 
@@ -6243,8 +6293,14 @@ function _showIndexToast(msg, type) {
                 { name: 'ht_built_area_sqm',      field_type: 'float', label_ar: 'المساحة المبنية (م²)',       valid_values: [], group: '', ui_required: true },
                 { name: 'ht_floors_count',        field_type: 'int',   label_ar: 'عدد الطوابق',                valid_values: [], group: '', ui_required: true },
                 { name: 'ht_building_age',        field_type: 'int',   label_ar: 'عمر المبنى (سنة)',            valid_values: [], group: '', ui_required: false },
-                { name: 'ht_star_rating',         field_type: 'str',   label_ar: 'تصنيف النجوم',
-                  valid_values: ['one_star','two_star','three_star','four_star','five_star'], group: '', ui_required: true },
+                { name: 'ht_star_rating', field_type: 'str', label_ar: 'تصنيف النجوم',
+                  options: [
+                    { value: 'one_star',   label_ar: 'نجمة واحدة' },
+                    { value: 'two_star',   label_ar: 'نجمتان' },
+                    { value: 'three_star', label_ar: 'ثلاث نجوم' },
+                    { value: 'four_star',  label_ar: 'أربع نجوم' },
+                    { value: 'five_star',  label_ar: 'خمس نجوم' },
+                  ], valid_values: [], group: '', ui_required: true },
             ]},
             { heading: 'بيانات التشغيل', color: '#9ca3af', desc: '', fields: [
                 { name: 'ht_total_rooms',         field_type: 'int',   label_ar: 'إجمالي الغرف',               valid_values: [], group: '', ui_required: true },
@@ -6292,10 +6348,21 @@ function _showIndexToast(msg, type) {
                 { name: 'fc_building_age',         field_type: 'int',   label_ar: 'عمر المباني (سنة)',             valid_values: [], group: '', ui_required: false },
                 { name: 'fc_structural_condition', field_type: 'str',   label_ar: 'الحالة الإنشائية',
                   valid_values: ['good','average','needs_maintenance','unknown'], group: '', ui_required: false },
+                { name: 'fc_construction_system',  field_type: 'str',   label_ar: 'نظام الإنشاء الصناعي',
+                  options: [
+                    { value: 'steel_truss',      label_ar: 'جمالون حديد' },
+                    { value: 'rcc_frame',        label_ar: 'هيكل خرساني' },
+                    { value: 'steel_frame',      label_ar: 'هيكل معدني' },
+                    { value: 'precast_concrete', label_ar: 'خرسانة سابقة التجهيز' },
+                    { value: 'portal_frame',     label_ar: 'هيكل بوابي' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'fc_clear_height_m', field_type: 'float', label_ar: 'الارتفاع الصافي للمبنى (م)', valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'المعدات والآلات', color: '#9ca3af', desc: '', fields: [
-                { name: 'fc_machinery_value',      field_type: 'float', label_ar: 'قيمة الآلات والمعدات (ج.م.)', valid_values: [], group: '', ui_required: false },
-                { name: 'fc_machinery_included',   field_type: 'bool',  label_ar: 'هل المعدات مشمولة في التقييم؟', valid_values: [], group: '', ui_required: false },
+                { name: 'fc_machinery_value',    field_type: 'float', label_ar: 'قيمة الآلات والمعدات (ج.م.)',    valid_values: [], group: '', ui_required: false },
+                { name: 'fc_machinery_included', field_type: 'bool',  label_ar: 'هل المعدات مشمولة في التقييم؟', valid_values: [], group: '', ui_required: false },
+                { name: 'fc_has_crane',          field_type: 'bool',  label_ar: 'هل يوجد رافعة جسرية (كرين)؟',  valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
                 { name: 'fc_ownership_doc',        field_type: 'bool', label_ar: 'سند الملكية',              group: 'document', valid_values: [], ui_required: true },
@@ -6315,16 +6382,26 @@ function _showIndexToast(msg, type) {
                   valid_values: ['good','average','needs_maintenance','unknown'], group: '', ui_required: false },
             ]},
             { heading: 'الطاقة التشغيلية', color: '#9ca3af', desc: '', fields: [
-                { name: 'ho_total_beds',           field_type: 'int',   label_ar: 'إجمالي الأسرّة',            valid_values: [], group: '', ui_required: true },
-                { name: 'ho_icu_beds',             field_type: 'int',   label_ar: 'أسرّة العناية المركزة',      valid_values: [], group: '', ui_required: false },
-                { name: 'ho_operating_rooms',      field_type: 'int',   label_ar: 'عدد غرف العمليات',          valid_values: [], group: '', ui_required: false },
-                { name: 'ho_occupancy_rate_pct',   field_type: 'float', label_ar: 'نسبة الإشغال (%)',            valid_values: [], group: '', ui_required: false },
+                { name: 'ho_total_beds',         field_type: 'int',   label_ar: 'إجمالي الأسرّة',            valid_values: [], group: '', ui_required: true },
+                { name: 'ho_icu_beds',           field_type: 'int',   label_ar: 'أسرّة العناية المركزة',      valid_values: [], group: '', ui_required: false },
+                { name: 'ho_operating_rooms',    field_type: 'int',   label_ar: 'عدد غرف العمليات',          valid_values: [], group: '', ui_required: false },
+                { name: 'ho_occupancy_rate_pct', field_type: 'float', label_ar: 'نسبة الإشغال (%)',            valid_values: [], group: '', ui_required: false },
+                { name: 'ho_specialist_count',   field_type: 'int',   label_ar: 'عدد الأطباء المتخصصين',     valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'التراخيص والأقسام', color: '#9ca3af', desc: '', fields: [
-                { name: 'ho_license_status',       field_type: 'str',   label_ar: 'حالة الترخيص',
+                { name: 'ho_license_status', field_type: 'str', label_ar: 'حالة الترخيص',
                   valid_values: ['active','pending','expired'], group: '', ui_required: true },
-                { name: 'ho_departments',          field_type: 'list',  label_ar: 'الأقسام الطبية',
+                { name: 'ho_departments',    field_type: 'list', label_ar: 'الأقسام الطبية',
                   valid_values: ['emergency','icu','surgery','outpatient','radiology','lab'], group: '', ui_required: false },
+                { name: 'ho_technical_condition', field_type: 'str', label_ar: 'الحالة الفنية للمبنى',
+                  options: [
+                    { value: 'excellent',         label_ar: 'ممتازة' },
+                    { value: 'good',              label_ar: 'جيدة' },
+                    { value: 'average',           label_ar: 'متوسطة' },
+                    { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor',              label_ar: 'رديئة' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'الإيرادات والتشغيل', color: '#9ca3af', desc: '', fields: [
                 { name: 'ho_annual_revenue',       field_type: 'float', label_ar: 'الإيراد السنوي (ج.م.)',      valid_values: [], group: '', ui_required: false },
@@ -6341,18 +6418,28 @@ function _showIndexToast(msg, type) {
         ]},
         'school': { sections: [
             { heading: 'بيانات الأرض والمبنى', color: '#d4af37', desc: '', fields: [
-                { name: 'sc_land_area_sqm',        field_type: 'float', label_ar: 'المساحة الأرضية (م²)',      valid_values: [], group: '', ui_required: true },
-                { name: 'sc_built_area_sqm',       field_type: 'float', label_ar: 'المساحة المبنية (م²)',      valid_values: [], group: '', ui_required: true },
-                { name: 'sc_floors_count',         field_type: 'int',   label_ar: 'عدد الطوابق',               valid_values: [], group: '', ui_required: false },
-                { name: 'sc_building_age',         field_type: 'int',   label_ar: 'عمر المبنى (سنة)',            valid_values: [], group: '', ui_required: false },
-                { name: 'sc_structural_condition', field_type: 'str',   label_ar: 'الحالة الإنشائية',
+                { name: 'sc_land_area_sqm',  field_type: 'float', label_ar: 'المساحة الأرضية (م²)', valid_values: [], group: '', ui_required: true },
+                { name: 'sc_built_area_sqm', field_type: 'float', label_ar: 'المساحة المبنية (م²)', valid_values: [], group: '', ui_required: true },
+                { name: 'sc_floors_count',   field_type: 'int',   label_ar: 'عدد الطوابق',          valid_values: [], group: '', ui_required: false },
+                { name: 'sc_building_age',   field_type: 'int',   label_ar: 'عمر المبنى (سنة)',      valid_values: [], group: '', ui_required: false },
+                { name: 'sc_structural_condition', field_type: 'str', label_ar: 'الحالة الإنشائية',
                   valid_values: ['good','average','needs_maintenance','unknown'], group: '', ui_required: false },
+                { name: 'sc_technical_condition',  field_type: 'str', label_ar: 'الحالة الفنية للمبنى',
+                  options: [
+                    { value: 'excellent',         label_ar: 'ممتازة' },
+                    { value: 'good',              label_ar: 'جيدة' },
+                    { value: 'average',           label_ar: 'متوسطة' },
+                    { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor',              label_ar: 'رديئة' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'الطاقة التعليمية', color: '#9ca3af', desc: '', fields: [
-                { name: 'sc_classrooms_count',     field_type: 'int',   label_ar: 'عدد الفصول الدراسية',       valid_values: [], group: '', ui_required: true },
-                { name: 'sc_student_capacity',     field_type: 'int',   label_ar: 'السعة الطلابية',             valid_values: [], group: '', ui_required: true },
-                { name: 'sc_current_enrollment',   field_type: 'int',   label_ar: 'عدد الطلاب الحالي',         valid_values: [], group: '', ui_required: false },
-                { name: 'sc_staff_count',          field_type: 'int',   label_ar: 'عدد أعضاء هيئة التدريس',   valid_values: [], group: '', ui_required: false },
+                { name: 'sc_classrooms_count',   field_type: 'int',   label_ar: 'عدد الفصول الدراسية',     valid_values: [], group: '', ui_required: true },
+                { name: 'sc_student_capacity',   field_type: 'int',   label_ar: 'السعة الطلابية',           valid_values: [], group: '', ui_required: true },
+                { name: 'sc_current_enrollment', field_type: 'int',   label_ar: 'عدد الطلاب الحالي',       valid_values: [], group: '', ui_required: false },
+                { name: 'sc_staff_count',        field_type: 'int',   label_ar: 'عدد أعضاء هيئة التدريس', valid_values: [], group: '', ui_required: false },
+                { name: 'sc_sports_area_sqm',    field_type: 'float', label_ar: 'مساحة الملاعب الرياضية (م²)', valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'الخدمات والمرافق', color: '#9ca3af', desc: '', fields: [
                 { name: 'sc_facilities',           field_type: 'list',  label_ar: 'المرافق المتاحة',
@@ -6374,24 +6461,42 @@ function _showIndexToast(msg, type) {
         ]},
         'retail': { sections: [
             { heading: 'بيانات الموقع التجاري', color: '#d4af37', desc: '', fields: [
-                { name: 'rt_land_area_sqm',        field_type: 'float', label_ar: 'المساحة الأرضية (م²)',       valid_values: [], group: '', ui_required: true },
-                { name: 'rt_gla_sqm',              field_type: 'float', label_ar: 'المساحة القابلة للتأجير (م²)', valid_values: [], group: '', ui_required: true },
-                { name: 'rt_floor_level',          field_type: 'str',   label_ar: 'مستوى الطابق',
+                { name: 'rt_land_area_sqm', field_type: 'float', label_ar: 'المساحة الأرضية (م²)',          valid_values: [], group: '', ui_required: true },
+                { name: 'rt_gla_sqm',       field_type: 'float', label_ar: 'المساحة القابلة للتأجير (م²)',  valid_values: [], group: '', ui_required: true },
+                { name: 'rt_floor_level',   field_type: 'str',   label_ar: 'مستوى الطابق',
                   valid_values: ['ground_floor','first_floor','upper_floors','basement_floor'], group: '', ui_required: true },
-                { name: 'rt_frontage_m',           field_type: 'float', label_ar: 'واجهة المحل (م)',              valid_values: [], group: '', ui_required: false },
-                { name: 'rt_activity_type',        field_type: 'str',   label_ar: 'نوع النشاط التجاري',
+                { name: 'rt_frontage_m',    field_type: 'float', label_ar: 'واجهة المحل (م)',               valid_values: [], group: '', ui_required: false },
+                { name: 'rt_retail_type',   field_type: 'str',   label_ar: 'نوع المنفذ التجاري',
+                  options: [
+                    { value: 'street_shop', label_ar: 'محل شارع' },
+                    { value: 'mall_unit',   label_ar: 'وحدة مول' },
+                    { value: 'strip_mall',  label_ar: 'تجمع تجاري مفتوح' },
+                    { value: 'standalone',  label_ar: 'مستقل' },
+                    { value: 'kiosk',       label_ar: 'كيوسك' },
+                    { value: 'showroom',    label_ar: 'معرض' },
+                    { value: 'unknown',     label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rt_activity_type', field_type: 'str', label_ar: 'نوع النشاط التجاري',
                   valid_values: ['fashion','food_beverage','electronics','supermarket','services','entertainment'], group: '', ui_required: false },
             ]},
             { heading: 'التأجير والإشغال', color: '#9ca3af', desc: '', fields: [
-                { name: 'rt_occupancy_status',     field_type: 'str',   label_ar: 'حالة الإشغال',
+                { name: 'rt_occupancy_status',    field_type: 'str',   label_ar: 'حالة الإشغال',
                   valid_values: ['owner_occupied','rental','mixed','unknown'], group: '', ui_required: true },
-                { name: 'rt_annual_rent',          field_type: 'float', label_ar: 'الإيجار السنوي (ج.م.)',      valid_values: [], group: '', ui_required: false },
-                { name: 'rt_lease_remaining_yrs',  field_type: 'float', label_ar: 'المدة المتبقية من الإيجار (سنة)', valid_values: [], group: '', ui_required: false },
+                { name: 'rt_annual_rent',         field_type: 'float', label_ar: 'الإيجار السنوي (ج.م.)',        valid_values: [], group: '', ui_required: false },
+                { name: 'rt_lease_remaining_yrs', field_type: 'float', label_ar: 'المدة المتبقية من الإيجار (سنة)', valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'عوامل الجذب', color: '#9ca3af', desc: '', fields: [
-                { name: 'rt_attraction_factors',   field_type: 'list',  label_ar: 'عوامل الجذب',
+                { name: 'rt_attraction_factors', field_type: 'list', label_ar: 'عوامل الجذب',
                   valid_values: ['anchor_tenant','high_footfall','transport_hub','tourist_area'], group: '', ui_required: false },
-                { name: 'rt_parking_available',    field_type: 'bool',  label_ar: 'هل يوجد موقف سيارات؟',    valid_values: [], group: '', ui_required: false },
+                { name: 'rt_parking_available',  field_type: 'bool', label_ar: 'هل يوجد موقف سيارات؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rt_footfall_level',     field_type: 'str',  label_ar: 'مستوى الإقبال التجاري',
+                  options: [
+                    { value: 'very_high', label_ar: 'مرتفع جداً' },
+                    { value: 'high',      label_ar: 'مرتفع' },
+                    { value: 'medium',    label_ar: 'متوسط' },
+                    { value: 'low',       label_ar: 'منخفض' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
                 { name: 'rt_ownership_doc',        field_type: 'bool', label_ar: 'سند الملكية / عقد الإيجار', group: 'document', valid_values: [], ui_required: true },
@@ -6410,17 +6515,27 @@ function _showIndexToast(msg, type) {
                 { name: 'mn_license_expiry_year',  field_type: 'int',   label_ar: 'سنة انتهاء الترخيص',        valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'بيانات الاحتياطي والإنتاج', color: '#9ca3af', desc: '', fields: [
-                { name: 'mn_reserve_estimate_ton', field_type: 'float', label_ar: 'تقدير الاحتياطي (طن)',       valid_values: [], group: '', ui_required: false },
-                { name: 'mn_annual_production_ton',field_type: 'float', label_ar: 'الإنتاج السنوي (طن)',        valid_values: [], group: '', ui_required: false },
-                { name: 'mn_remaining_life_years', field_type: 'float', label_ar: 'العمر الإنتاجي المتبقي (سنة)', valid_values: [], group: '', ui_required: false },
+                { name: 'mn_proven_reserve_ton',    field_type: 'float', label_ar: 'الاحتياطي المثبت (طن)',       valid_values: [], group: '', ui_required: false },
+                { name: 'mn_probable_reserve_ton',  field_type: 'float', label_ar: 'الاحتياطي المحتمل (طن)',     valid_values: [], group: '', ui_required: false },
+                { name: 'mn_reserve_estimate_ton',  field_type: 'float', label_ar: 'إجمالي تقدير الاحتياطي (طن)', valid_values: [], group: '', ui_required: false },
+                { name: 'mn_annual_production_ton', field_type: 'float', label_ar: 'الإنتاج السنوي (طن)',         valid_values: [], group: '', ui_required: false },
+                { name: 'mn_remaining_life_years',  field_type: 'float', label_ar: 'العمر الإنتاجي المتبقي (سنة)', valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'التشغيل والمخاطر', color: '#9ca3af', desc: '', fields: [
-                { name: 'mn_operating_status',     field_type: 'bool',  label_ar: 'هل المنجم يعمل حالياً؟',   valid_values: [], group: '', ui_required: true },
-                { name: 'mn_infrastructure',       field_type: 'list',  label_ar: 'البنية التحتية',
+                { name: 'mn_operating_status',   field_type: 'bool', label_ar: 'هل المنجم يعمل حالياً؟',    valid_values: [], group: '', ui_required: true },
+                { name: 'mn_extraction_method',  field_type: 'str',  label_ar: 'طريقة الاستخراج',
+                  options: [
+                    { value: 'open_pit',    label_ar: 'حفر مكشوف' },
+                    { value: 'underground', label_ar: 'تعدين تحت الأرض' },
+                    { value: 'in_situ',     label_ar: 'معالجة في الموقع' },
+                    { value: 'dredging',    label_ar: 'كراءة بحرية' },
+                    { value: 'unknown',     label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'mn_infrastructure',     field_type: 'list', label_ar: 'البنية التحتية',
                   valid_values: ['road_access','rail_access','power_grid','water_supply'], group: '', ui_required: false },
-                { name: 'mn_environmental_risk',   field_type: 'str',   label_ar: 'مستوى المخاطر البيئية',
+                { name: 'mn_environmental_risk', field_type: 'str',  label_ar: 'مستوى المخاطر البيئية',
                   valid_values: ['low','average','high'], group: '', ui_required: false },
-                { name: 'mn_annual_revenue',       field_type: 'float', label_ar: 'الإيراد السنوي (ج.م.)',      valid_values: [], group: '', ui_required: false },
+                { name: 'mn_annual_revenue',     field_type: 'float', label_ar: 'الإيراد السنوي (ج.م.)',     valid_values: [], group: '', ui_required: false },
             ]},
             { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
                 { name: 'mn_concession_deed',      field_type: 'bool', label_ar: 'عقد الامتياز التعديني',    group: 'document', valid_values: [], ui_required: true },
@@ -6445,7 +6560,7 @@ function _showIndexToast(msg, type) {
         if (s1El) s1El.innerHTML = _sec(0);
         if (s2El) s2El.innerHTML = _sec(1) + _sec(2);
         if (s3El) s3El.innerHTML = _sec(3) + _sec(4);
-        if (s4El) s4El.innerHTML = '';
+        if (s4El) s4El.innerHTML = _sec(5) + _sec(6);
         _attachDraftCollector();
     }
 
@@ -6487,9 +6602,46 @@ function _showIndexToast(msg, type) {
                 { name: 'floors_count',          field_type: 'int',   label_ar: 'عدد الطوابق',                valid_values: [], group: '', ui_required: true },
                 { name: 'building_age',          field_type: 'int',   label_ar: 'عمر المبنى (سنة)',            valid_values: [], group: '', ui_required: false },
                 { name: 'structural_condition',  field_type: 'str',   label_ar: 'الحالة الإنشائية',
-                  valid_values: ['good','average','needs_maintenance','unknown'], group: '', ui_required: true },
+                  valid_values: ['excellent','good','average','needs_maintenance','poor','unknown'], group: '', ui_required: true },
                 { name: 'finishing_condition',   field_type: 'str',   label_ar: 'مستوى التشطيب',
                   valid_values: ['shell','semi_finished','standard_finished','luxury_finished','unknown'], group: '', ui_required: false },
+            ];
+            var secC = [
+                { name: 'bf_construction_system', field_type: 'str', label_ar: 'نظام الإنشاء',
+                  options: [
+                    { value: 'steel_truss',         label_ar: 'جمالون حديد' },
+                    { value: 'rcc_frame',            label_ar: 'هيكل خرساني' },
+                    { value: 'load_bearing_walls',   label_ar: 'حوائط حاملة' },
+                    { value: 'steel_frame',          label_ar: 'هيكل معدني' },
+                    { value: 'precast_concrete',     label_ar: 'خرسانة سابقة التجهيز' },
+                    { value: 'mixed_structure',      label_ar: 'إنشاء مختلط' },
+                    { value: 'traditional_masonry',  label_ar: 'مباني تقليدية' },
+                    { value: 'unknown',              label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'bf_roof_type', field_type: 'str', label_ar: 'نوع السقف',
+                  options: [
+                    { value: 'concrete_slab',    label_ar: 'سقف خرساني' },
+                    { value: 'steel_truss_roof', label_ar: 'سقف جمالون معدني' },
+                    { value: 'wooden_roof',      label_ar: 'سقف خشبي' },
+                    { value: 'mixed_roof',       label_ar: 'مختلط' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'bf_maintenance_level', field_type: 'str', label_ar: 'مستوى الصيانة',
+                  options: [
+                    { value: 'well_maintained', label_ar: 'جيد الصيانة' },
+                    { value: 'average',         label_ar: 'متوسط' },
+                    { value: 'neglected',       label_ar: 'مهمل' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'bf_visible_defects', field_type: 'checkbox_group', label_ar: 'العيوب الظاهرة',
+                  options: [
+                    { value: 'cracks',        label_ar: 'شروخ' },
+                    { value: 'dampness',      label_ar: 'رطوبة' },
+                    { value: 'settlement',    label_ar: 'هبوط' },
+                    { value: 'corrosion',     label_ar: 'صدأ/تآكل' },
+                    { value: 'leakage',       label_ar: 'تسريب' },
+                    { value: 'none_observed', label_ar: 'لا يوجد ظاهرياً' },
+                  ], valid_values: [], group: '', ui_required: false },
             ];
             var secD = [
                 { name: 'total_units_count',     field_type: 'int',   label_ar: 'إجمالي عدد الوحدات',            valid_values: [], group: '', ui_required: true },
@@ -6519,8 +6671,9 @@ function _showIndexToast(msg, type) {
                 + _buildingFloorTableHTML();
 
             if (s3El) s3El.innerHTML =
-                _sectionControlsHTML('بيانات الوحدات أو الإشغال', '#9ca3af', '', secD)
-                + _sectionControlsHTML('المستندات المطلوبة', '#6b7280', 'علّم المستندات المتوفّرة حالياً.', secE);
+                _sectionControlsHTML('بيانات الإنشاء والصيانة', '#9ca3af', '', secC)
+                + _sectionControlsHTML('بيانات الوحدات أو الإشغال', '#9ca3af', '', secD)
+                + _sectionControlsHTML('المستندات المطلوبة', '#6b7280', _UPLOAD_HINT, secE);
 
             if (s4El) { s4El.innerHTML = ''; }
             _attachBuildingFullDraft();

@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -129,6 +129,31 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS116 — (8K) building_full floor table still intact (regression)
   CS117 — (8K) no JS console errors on hotel form render
   CS118 — (8K) no composite CTA in any of the 6 converted form profiles
+
+  CS119 — (8L) building_full bf_construction_system select with Arabic options
+  CS120 — (8L) building_full bf_visible_defects checkbox_group chips
+  CS121 — (8L) building_full bf_maintenance_level select
+  CS122 — (8L) factory fc_construction_system select with Arabic options
+  CS123 — (8L) factory fc_has_crane bool field
+  CS124 — (8L) factory fc_clear_height_m number input
+  CS125 — (8L) hotel ht_star_rating select has Arabic options (options pattern)
+  CS126 — (8L) hotel ht_total_rooms still present after enrichment
+  CS127 — (8L) hotel ht_occupancy_rate_pct still present after enrichment
+  CS128 — (8L) hospital ho_total_beds still present after enrichment
+  CS129 — (8L) hospital ho_operating_rooms still present after enrichment
+  CS130 — (8L) hospital ho_license_status select still present
+  CS131 — (8L) school sc_classrooms_count still present after enrichment
+  CS132 — (8L) school sc_student_capacity still present after enrichment
+  CS133 — (8L) school sc_license_status select still present
+  CS134 — (8L) retail rt_retail_type select with Arabic options
+  CS135 — (8L) retail rt_frontage_m still present after enrichment
+  CS136 — (8L) retail rt_footfall_level select field
+  CS137 — (8L) mine mn_ore_type select still present
+  CS138 — (8L) mine mn_license_status select still present
+  CS139 — (8L) mine mn_proven_reserve_ton number input
+  CS140 — (8L) mine mn_extraction_method select with Arabic options
+  CS141 — (8L) upload hint present in all 7 local profiles incl. building_full
+  CS142 — (8L) no JS console errors on enriched building_full render
 """
 from __future__ import annotations
 
@@ -2469,3 +2494,331 @@ def test_CS118_no_composite_cta_in_any_form_profile(page: Page, live_server: str
         assert link.count() == 0 or not link.is_visible(), (
             f"Form profile '{asset_type}' must NOT show composite CTA link (Phase 8K)"
         )
+
+
+# ══ Phase 8L — enriched profiles (CS119 – CS142) ═════════════════════════════
+
+
+# ── CS119 ─────────────────────────────────────────────────────────────────────
+
+def test_CS119_building_full_construction_system_select(page: Page, live_server: str) -> None:
+    """Phase 8L: building_full has bf_construction_system select with Arabic options."""
+    _load_building_full(page, live_server)
+    sel = page.locator("#es-req-field-bf_construction_system")
+    assert sel.count() > 0, "#es-req-field-bf_construction_system not found in building_full"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"bf_construction_system must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-bf_construction_system option").all_inner_texts()
+    for arabic in ("جمالون حديد", "هيكل خرساني"):
+        assert any(arabic in t for t in opts), (
+            f"bf_construction_system must have Arabic option '{arabic}'. Got: {opts}"
+        )
+
+
+# ── CS120 ─────────────────────────────────────────────────────────────────────
+
+def test_CS120_building_full_visible_defects_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8L: building_full has bf_visible_defects rendered as checkbox chips."""
+    _load_building_full(page, live_server)
+    chips = page.locator("[data-es-req-field='bf_visible_defects']")
+    assert chips.count() > 0, "bf_visible_defects checkboxes not found in building_full"
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for arabic in ("شروخ", "رطوبة", "هبوط"):
+        assert arabic in panel_text, (
+            f"bf_visible_defects must show Arabic chip label '{arabic}'. Got: {panel_text[:400]!r}"
+        )
+
+
+# ── CS121 ─────────────────────────────────────────────────────────────────────
+
+def test_CS121_building_full_maintenance_level_select(page: Page, live_server: str) -> None:
+    """Phase 8L: building_full has bf_maintenance_level select with Arabic options."""
+    _load_building_full(page, live_server)
+    sel = page.locator("#es-req-field-bf_maintenance_level")
+    assert sel.count() > 0, "#es-req-field-bf_maintenance_level not found in building_full"
+    opts = page.locator("#es-req-field-bf_maintenance_level option").all_inner_texts()
+    assert any("جيد الصيانة" in t for t in opts), (
+        f"bf_maintenance_level must have 'جيد الصيانة' option. Got: {opts}"
+    )
+
+
+# ── CS122 ─────────────────────────────────────────────────────────────────────
+
+def test_CS122_factory_construction_system_select(page: Page, live_server: str) -> None:
+    """Phase 8L: factory form has fc_construction_system select with Arabic options."""
+    _load_factory(page, live_server)
+    sel = page.locator("#es-req-field-fc_construction_system")
+    assert sel.count() > 0, "#es-req-field-fc_construction_system not found in factory"
+    opts = page.locator("#es-req-field-fc_construction_system option").all_inner_texts()
+    assert any("جمالون حديد" in t for t in opts), (
+        f"fc_construction_system must have Arabic option 'جمالون حديد'. Got: {opts}"
+    )
+
+
+# ── CS123 ─────────────────────────────────────────────────────────────────────
+
+def test_CS123_factory_has_crane_bool_field(page: Page, live_server: str) -> None:
+    """Phase 8L: factory form has fc_has_crane bool select with نعم / لا options."""
+    _load_factory(page, live_server)
+    sel = page.locator("#es-req-field-fc_has_crane")
+    assert sel.count() > 0, "#es-req-field-fc_has_crane not found in factory"
+    opts = page.locator("#es-req-field-fc_has_crane option").all_inner_texts()
+    assert any("نعم" in t for t in opts), (
+        f"fc_has_crane must have 'نعم' option. Got: {opts}"
+    )
+    assert any("لا" in t for t in opts), (
+        f"fc_has_crane must have 'لا' option. Got: {opts}"
+    )
+
+
+# ── CS124 ─────────────────────────────────────────────────────────────────────
+
+def test_CS124_factory_clear_height_number_input(page: Page, live_server: str) -> None:
+    """Phase 8L: factory form has fc_clear_height_m as number input."""
+    _load_factory(page, live_server)
+    inp = page.locator("#es-req-field-fc_clear_height_m")
+    assert inp.count() > 0, "#es-req-field-fc_clear_height_m not found in factory"
+    assert inp.get_attribute("type") == "number", (
+        f"fc_clear_height_m must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS125 ─────────────────────────────────────────────────────────────────────
+
+def test_CS125_hotel_star_rating_arabic_options(page: Page, live_server: str) -> None:
+    """Phase 8L: hotel ht_star_rating select has self-contained Arabic options."""
+    _load_hotel(page, live_server)
+    sel = page.locator("#es-req-field-ht_star_rating")
+    assert sel.count() > 0, "#es-req-field-ht_star_rating not found in hotel"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"ht_star_rating must be a <select>. Got: {tag!r}"
+    opts = page.locator("#es-req-field-ht_star_rating option").all_inner_texts()
+    assert any("خمس نجوم" in t for t in opts), (
+        f"ht_star_rating must have Arabic option 'خمس نجوم'. Got: {opts}"
+    )
+    assert any("نجمة واحدة" in t for t in opts), (
+        f"ht_star_rating must have Arabic option 'نجمة واحدة'. Got: {opts}"
+    )
+
+
+# ── CS126 ─────────────────────────────────────────────────────────────────────
+
+def test_CS126_hotel_total_rooms_number_input(page: Page, live_server: str) -> None:
+    """Phase 8L: hotel ht_total_rooms number input still present after enrichment."""
+    _load_hotel(page, live_server)
+    inp = page.locator("#es-req-field-ht_total_rooms")
+    assert inp.count() > 0, "#es-req-field-ht_total_rooms not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"ht_total_rooms must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS127 ─────────────────────────────────────────────────────────────────────
+
+def test_CS127_hotel_occupancy_rate_number_input(page: Page, live_server: str) -> None:
+    """Phase 8L: hotel ht_occupancy_rate_pct number input still present after enrichment."""
+    _load_hotel(page, live_server)
+    inp = page.locator("#es-req-field-ht_occupancy_rate_pct")
+    assert inp.count() > 0, "#es-req-field-ht_occupancy_rate_pct not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"ht_occupancy_rate_pct must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS128 ─────────────────────────────────────────────────────────────────────
+
+def test_CS128_hospital_total_beds_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: hospital ho_total_beds still present after enrichment."""
+    _load_hospital(page, live_server)
+    inp = page.locator("#es-req-field-ho_total_beds")
+    assert inp.count() > 0, "#es-req-field-ho_total_beds not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"ho_total_beds must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS129 ─────────────────────────────────────────────────────────────────────
+
+def test_CS129_hospital_operating_rooms_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: hospital ho_operating_rooms still present after enrichment."""
+    _load_hospital(page, live_server)
+    inp = page.locator("#es-req-field-ho_operating_rooms")
+    assert inp.count() > 0, "#es-req-field-ho_operating_rooms not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"ho_operating_rooms must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS130 ─────────────────────────────────────────────────────────────────────
+
+def test_CS130_hospital_license_status_select(page: Page, live_server: str) -> None:
+    """Phase 8L: hospital ho_license_status select still present after enrichment."""
+    _load_hospital(page, live_server)
+    sel = page.locator("#es-req-field-ho_license_status")
+    assert sel.count() > 0, "#es-req-field-ho_license_status not found after Phase 8L enrichment"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"ho_license_status must be a <select>. Got: {tag!r}"
+
+
+# ── CS131 ─────────────────────────────────────────────────────────────────────
+
+def test_CS131_school_classrooms_count_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: school sc_classrooms_count still present after enrichment."""
+    _load_school(page, live_server)
+    inp = page.locator("#es-req-field-sc_classrooms_count")
+    assert inp.count() > 0, "#es-req-field-sc_classrooms_count not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"sc_classrooms_count must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS132 ─────────────────────────────────────────────────────────────────────
+
+def test_CS132_school_student_capacity_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: school sc_student_capacity still present after enrichment."""
+    _load_school(page, live_server)
+    inp = page.locator("#es-req-field-sc_student_capacity")
+    assert inp.count() > 0, "#es-req-field-sc_student_capacity not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"sc_student_capacity must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS133 ─────────────────────────────────────────────────────────────────────
+
+def test_CS133_school_license_status_select(page: Page, live_server: str) -> None:
+    """Phase 8L: school sc_license_status select still present after enrichment."""
+    _load_school(page, live_server)
+    sel = page.locator("#es-req-field-sc_license_status")
+    assert sel.count() > 0, "#es-req-field-sc_license_status not found after Phase 8L enrichment"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"sc_license_status must be a <select>. Got: {tag!r}"
+
+
+# ── CS134 ─────────────────────────────────────────────────────────────────────
+
+def test_CS134_retail_type_select_arabic_options(page: Page, live_server: str) -> None:
+    """Phase 8L: retail form has new rt_retail_type select with Arabic options."""
+    _load_retail(page, live_server)
+    sel = page.locator("#es-req-field-rt_retail_type")
+    assert sel.count() > 0, "#es-req-field-rt_retail_type not found in retail"
+    opts = page.locator("#es-req-field-rt_retail_type option").all_inner_texts()
+    assert any("محل شارع" in t for t in opts), (
+        f"rt_retail_type must have Arabic option 'محل شارع'. Got: {opts}"
+    )
+
+
+# ── CS135 ─────────────────────────────────────────────────────────────────────
+
+def test_CS135_retail_frontage_m_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: retail rt_frontage_m still present after enrichment."""
+    _load_retail(page, live_server)
+    inp = page.locator("#es-req-field-rt_frontage_m")
+    assert inp.count() > 0, "#es-req-field-rt_frontage_m not found after Phase 8L enrichment"
+    assert inp.get_attribute("type") == "number", (
+        f"rt_frontage_m must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS136 ─────────────────────────────────────────────────────────────────────
+
+def test_CS136_retail_footfall_level_select(page: Page, live_server: str) -> None:
+    """Phase 8L: retail form has new rt_footfall_level select field."""
+    _load_retail(page, live_server)
+    sel = page.locator("#es-req-field-rt_footfall_level")
+    assert sel.count() > 0, "#es-req-field-rt_footfall_level not found in retail"
+    opts = page.locator("#es-req-field-rt_footfall_level option").all_inner_texts()
+    assert any("مرتفع" in t for t in opts), (
+        f"rt_footfall_level must have Arabic option containing 'مرتفع'. Got: {opts}"
+    )
+
+
+# ── CS137 ─────────────────────────────────────────────────────────────────────
+
+def test_CS137_mine_ore_type_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: mine mn_ore_type select still present after enrichment."""
+    _load_mine(page, live_server)
+    sel = page.locator("#es-req-field-mn_ore_type")
+    assert sel.count() > 0, "#es-req-field-mn_ore_type not found after Phase 8L enrichment"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"mn_ore_type must be a <select>. Got: {tag!r}"
+
+
+# ── CS138 ─────────────────────────────────────────────────────────────────────
+
+def test_CS138_mine_license_status_still_present(page: Page, live_server: str) -> None:
+    """Phase 8L: mine mn_license_status select still present after enrichment."""
+    _load_mine(page, live_server)
+    sel = page.locator("#es-req-field-mn_license_status")
+    assert sel.count() > 0, "#es-req-field-mn_license_status not found after Phase 8L enrichment"
+    tag = sel.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "select", f"mn_license_status must be a <select>. Got: {tag!r}"
+
+
+# ── CS139 ─────────────────────────────────────────────────────────────────────
+
+def test_CS139_mine_proven_reserve_number_input(page: Page, live_server: str) -> None:
+    """Phase 8L: mine form has new mn_proven_reserve_ton number input."""
+    _load_mine(page, live_server)
+    inp = page.locator("#es-req-field-mn_proven_reserve_ton")
+    assert inp.count() > 0, "#es-req-field-mn_proven_reserve_ton not found in mine"
+    assert inp.get_attribute("type") == "number", (
+        f"mn_proven_reserve_ton must be type=number. Got: {inp.get_attribute('type')!r}"
+    )
+
+
+# ── CS140 ─────────────────────────────────────────────────────────────────────
+
+def test_CS140_mine_extraction_method_select(page: Page, live_server: str) -> None:
+    """Phase 8L: mine form has new mn_extraction_method select with Arabic options."""
+    _load_mine(page, live_server)
+    sel = page.locator("#es-req-field-mn_extraction_method")
+    assert sel.count() > 0, "#es-req-field-mn_extraction_method not found in mine"
+    opts = page.locator("#es-req-field-mn_extraction_method option").all_inner_texts()
+    assert any("حفر مكشوف" in t for t in opts), (
+        f"mn_extraction_method must have Arabic option 'حفر مكشوف'. Got: {opts}"
+    )
+
+
+# ── CS141 ─────────────────────────────────────────────────────────────────────
+
+def test_CS141_upload_hint_in_all_seven_profiles(page: Page, live_server: str) -> None:
+    """Phase 8L: all 7 local profiles (incl. building_full) show upload hint text."""
+    _HINT = "ارفع المستندات من زر المرفقات"
+    loaders_and_names = [
+        (_load_building_full, "عمارة سكنية"),
+        (_load_hotel,         "فندق"),
+        (_load_factory,       "مصنع"),
+        (_load_hospital,      "مستشفى"),
+        (_load_school,        "مدرسة"),
+        (_load_retail,        "محل تجاري"),
+        (_load_mine,          "مناجم"),
+    ]
+    for loader, name in loaders_and_names:
+        loader(page, live_server)
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert _HINT in panel_text, (
+            f"Profile '{name}' must show upload hint '{_HINT}'. "
+            f"Got: {panel_text[:300]!r}"
+        )
+
+
+# ── CS142 ─────────────────────────────────────────────────────────────────────
+
+def test_CS142_no_js_console_errors_building_full_enriched(page: Page, live_server: str) -> None:
+    """Phase 8L: no JS console errors when rendering enriched building_full form."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    _load_building_full(page, live_server)
+    assert len(errors) == 0, (
+        f"JS console errors during enriched building_full render: {errors}"
+    )

@@ -170,6 +170,31 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS155 — (8M) all 6 new profiles show upload guidance text
   CS156 — (8M) help_ar renders below ww_depth_m in water_well form
   CS157 — (8M) readability CSS es-field-unit and es-field-help rules present in HTML
+  CS158 — (8N) factory component section heading present
+  CS159 — (8N) factory renders 4 default component cards
+  CS160 — (8N) factory card[0] has construction_system select
+  CS161 — (8N) factory card[0] construction_system has stable option codes
+  CS162 — (8N) factory card[0] has built_area_sqm input
+  CS163 — (8N) factory card[0] has clear_height_m input
+  CS164 — (8N) factory card[0] has crane_available extra field
+  CS165 — (8N) factory card[0] visible_defects chip group with cracks option
+  CS166 — (8N) hotel renders 5 default component cards
+  CS167 — (8N) hotel card[0] has rooms_count extra field
+  CS168 — (8N) hospital card[0] has hvac_condition medical extra field
+  CS169 — (8N) school card[0] has classrooms_count extra field
+  CS170 — (8N) retail card[0] has leasable_area_sqm extra field
+  CS171 — (8N) mine component section uses operational heading not generic building
+  CS172 — (8N) mine card[0] has component_capacity (fields_override), no built_area_sqm
+  CS173 — (8N) water_well component section uses well heading
+  CS174 — (8N) water_well card[0] has component_condition from fields_override
+  CS175 — (8N) all 7 operational profiles render at least 1 component card
+  CS176 — (8N) factory add-component button present
+  CS177 — (8N) clicking add button increases card count by 1
+  CS178 — (8N) default cards have no remove button; added cards do
+  CS179 — (8N) #es-req-panel font-size >= 16px
+  CS180 — (8N) section summary font-size >= 19px
+  CS181 — (8N) factory component section has photo upload hint
+  CS182 — (8N) residential and land profiles have no component cards
 """
 from __future__ import annotations
 
@@ -3113,3 +3138,292 @@ def test_CS157_readability_css_classes_present(page: Page, live_server: str) -> 
     page_source = page.content()
     assert "es-field-unit" in page_source, "es-field-unit CSS rule must be in page source"
     assert "es-field-help" in page_source, "es-field-help CSS rule must be in page source"
+
+
+# ── CS158 ─────────────────────────────────────────────────────────────────────
+
+def test_CS158_factory_component_section_heading_present(page: Page, live_server: str) -> None:
+    """Phase 8N: factory panel contains the component section heading."""
+    _load_factory(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "مكوّنات الأصل" in panel_text, (
+        f"Factory panel must contain component section heading. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS159 ─────────────────────────────────────────────────────────────────────
+
+def test_CS159_factory_default_card_count_is_four(page: Page, live_server: str) -> None:
+    """Phase 8N: factory renders exactly 4 default component cards."""
+    _load_factory(page, live_server)
+    cards = page.locator("[data-es-comp-card]")
+    count = cards.count()
+    assert count == 4, (
+        f"Factory must render 4 default component cards. Got: {count}"
+    )
+
+
+# ── CS160 ─────────────────────────────────────────────────────────────────────
+
+def test_CS160_factory_card0_has_construction_system_select(page: Page, live_server: str) -> None:
+    """Phase 8N: factory card[0] contains a construction_system select."""
+    _load_factory(page, live_server)
+    sel = page.locator("[data-es-comp-card='0'] [data-es-comp-field='construction_system']")
+    assert sel.count() > 0, "Factory card[0] must have a construction_system select element."
+
+
+# ── CS161 ─────────────────────────────────────────────────────────────────────
+
+def test_CS161_factory_card0_construction_system_has_stable_codes(page: Page, live_server: str) -> None:
+    """Phase 8N: construction_system options use stable internal codes (steel_truss, rcc_frame, steel_frame)."""
+    _load_factory(page, live_server)
+    html = page.locator("[data-es-comp-card='0']").inner_html()
+    assert 'value="steel_truss"'  in html, "steel_truss option must exist in construction_system"
+    assert 'value="rcc_frame"'    in html, "rcc_frame option must exist in construction_system"
+    assert 'value="steel_frame"'  in html, "steel_frame option must exist in construction_system"
+
+
+# ── CS162 ─────────────────────────────────────────────────────────────────────
+
+def test_CS162_factory_card0_has_built_area_sqm_input(page: Page, live_server: str) -> None:
+    """Phase 8N: factory card[0] has a built_area_sqm number input."""
+    _load_factory(page, live_server)
+    inp = page.locator("[data-es-comp-card='0'] [data-es-comp-field='built_area_sqm']")
+    assert inp.count() > 0, "Factory card[0] must have built_area_sqm input."
+
+
+# ── CS163 ─────────────────────────────────────────────────────────────────────
+
+def test_CS163_factory_card0_has_clear_height_m_input(page: Page, live_server: str) -> None:
+    """Phase 8N: factory card[0] has a clear_height_m number input."""
+    _load_factory(page, live_server)
+    inp = page.locator("[data-es-comp-card='0'] [data-es-comp-field='clear_height_m']")
+    assert inp.count() > 0, "Factory card[0] must have clear_height_m input."
+
+
+# ── CS164 ─────────────────────────────────────────────────────────────────────
+
+def test_CS164_factory_card0_has_crane_available_extra_field(page: Page, live_server: str) -> None:
+    """Phase 8N: factory card[0] has the extra field crane_available."""
+    _load_factory(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='crane_available']")
+    assert fld.count() > 0, "Factory card[0] must have crane_available extra field."
+
+
+# ── CS165 ─────────────────────────────────────────────────────────────────────
+
+def test_CS165_factory_card0_visible_defects_chips_present(page: Page, live_server: str) -> None:
+    """Phase 8N: factory card[0] has visible_defects checkbox group with cracks option."""
+    _load_factory(page, live_server)
+    html = page.locator("[data-es-comp-card='0']").inner_html()
+    assert 'data-es-comp-field="visible_defects"' in html, (
+        "Factory card[0] must have visible_defects checkboxes."
+    )
+    assert 'value="cracks"' in html, "cracks checkbox must be present in visible_defects."
+
+
+# ── CS166 ─────────────────────────────────────────────────────────────────────
+
+def test_CS166_hotel_component_section_has_five_default_cards(page: Page, live_server: str) -> None:
+    """Phase 8N: hotel renders 5 default component cards."""
+    _load_hotel(page, live_server)
+    count = page.locator("[data-es-comp-card]").count()
+    assert count == 5, f"Hotel must render 5 default component cards. Got: {count}"
+
+
+# ── CS167 ─────────────────────────────────────────────────────────────────────
+
+def test_CS167_hotel_card0_has_rooms_count_input(page: Page, live_server: str) -> None:
+    """Phase 8N: hotel card[0] has extra field rooms_count."""
+    _load_hotel(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='rooms_count']")
+    assert fld.count() > 0, "Hotel card[0] must have rooms_count extra field."
+
+
+# ── CS168 ─────────────────────────────────────────────────────────────────────
+
+def test_CS168_hospital_component_section_has_hvac_condition(page: Page, live_server: str) -> None:
+    """Phase 8N: hospital card[0] has medical extra field hvac_condition."""
+    _load_hospital(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='hvac_condition']")
+    assert fld.count() > 0, "Hospital card[0] must have hvac_condition extra field."
+
+
+# ── CS169 ─────────────────────────────────────────────────────────────────────
+
+def test_CS169_school_component_section_has_classrooms_count(page: Page, live_server: str) -> None:
+    """Phase 8N: school card[0] has extra field classrooms_count."""
+    _load_school(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='classrooms_count']")
+    assert fld.count() > 0, "School card[0] must have classrooms_count extra field."
+
+
+# ── CS170 ─────────────────────────────────────────────────────────────────────
+
+def test_CS170_retail_component_section_has_leasable_area(page: Page, live_server: str) -> None:
+    """Phase 8N: retail card[0] has extra field leasable_area_sqm."""
+    _load_retail(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='leasable_area_sqm']")
+    assert fld.count() > 0, "Retail card[0] must have leasable_area_sqm extra field."
+
+
+# ── CS171 ─────────────────────────────────────────────────────────────────────
+
+def test_CS171_mine_component_section_uses_operational_heading(page: Page, live_server: str) -> None:
+    """Phase 8N: mine uses operational component heading, not generic building heading."""
+    _load_mine(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "مكوّنات التشغيل" in panel_text, (
+        f"Mine must show 'مكوّنات التشغيل' component heading. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS172 ─────────────────────────────────────────────────────────────────────
+
+def test_CS172_mine_card0_has_component_capacity_not_built_area(page: Page, live_server: str) -> None:
+    """Phase 8N: mine card[0] uses fields_override (component_capacity present, built_area_sqm absent)."""
+    _load_mine(page, live_server)
+    card_html = page.locator("[data-es-comp-card='0']").inner_html()
+    assert 'data-es-comp-field="component_capacity"' in card_html, (
+        "Mine card[0] must have component_capacity (fields_override applied)."
+    )
+    assert 'data-es-comp-field="built_area_sqm"' not in card_html, (
+        "Mine card[0] must NOT have built_area_sqm (fields_override replaces COMPONENT_FIELDS)."
+    )
+
+
+# ── CS173 ─────────────────────────────────────────────────────────────────────
+
+def test_CS173_water_well_component_section_uses_well_heading(page: Page, live_server: str) -> None:
+    """Phase 8N: water_well uses well-specific component heading, not generic building heading."""
+    _load_water_well(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "مكوّنات البئر" in panel_text, (
+        f"Water_well must show 'مكوّنات البئر' heading. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS174 ─────────────────────────────────────────────────────────────────────
+
+def test_CS174_water_well_card0_has_component_condition_field(page: Page, live_server: str) -> None:
+    """Phase 8N: water_well card[0] has component_condition from fields_override."""
+    _load_water_well(page, live_server)
+    fld = page.locator("[data-es-comp-card='0'] [data-es-comp-field='component_condition']")
+    assert fld.count() > 0, "Water_well card[0] must have component_condition field."
+
+
+# ── CS175 ─────────────────────────────────────────────────────────────────────
+
+def test_CS175_all_seven_profiles_render_component_cards(page: Page, live_server: str) -> None:
+    """Phase 8N: all 7 operational profiles render at least 1 component card."""
+    loaders = [
+        (_load_factory,   "factory"),
+        (_load_hotel,     "hotel"),
+        (_load_hospital,  "hospital"),
+        (_load_school,    "school"),
+        (_load_retail,    "retail"),
+        (_load_mine,      "mine"),
+        (_load_water_well,"water_well"),
+    ]
+    for loader, name in loaders:
+        loader(page, live_server)
+        count = page.locator("[data-es-comp-card]").count()
+        assert count >= 1, (
+            f"Profile '{name}' must render at least 1 component card. Got: {count}"
+        )
+
+
+# ── CS176 ─────────────────────────────────────────────────────────────────────
+
+def test_CS176_factory_add_component_button_present(page: Page, live_server: str) -> None:
+    """Phase 8N: factory panel has an add-component button."""
+    _load_factory(page, live_server)
+    btn = page.locator("#es-add-comp-btn-factory")
+    assert btn.count() > 0, "Factory must have an add-component button (#es-add-comp-btn-factory)."
+
+
+# ── CS177 ─────────────────────────────────────────────────────────────────────
+
+def test_CS177_factory_add_button_creates_new_card(page: Page, live_server: str) -> None:
+    """Phase 8N: clicking add button increases component card count by 1."""
+    _load_factory(page, live_server)
+    before = page.locator("[data-es-comp-card]").count()
+    page.locator("#es-add-comp-btn-factory").click()
+    after = page.locator("[data-es-comp-card]").count()
+    assert after == before + 1, (
+        f"Clicking add must increase card count by 1. Before: {before}, After: {after}"
+    )
+
+
+# ── CS178 ─────────────────────────────────────────────────────────────────────
+
+def test_CS178_default_cards_have_no_remove_button_added_cards_do(page: Page, live_server: str) -> None:
+    """Phase 8N: default cards have no remove button; user-added cards have a remove button."""
+    _load_factory(page, live_server)
+    # Default cards must not have remove button
+    for idx in range(4):
+        remove_in_default = page.locator(
+            f"[data-es-comp-card='{idx}'] .es-remove-comp-btn"
+        ).count()
+        assert remove_in_default == 0, (
+            f"Default card[{idx}] must not have a remove button."
+        )
+    # Add a card and confirm remove button is present
+    page.locator("#es-add-comp-btn-factory").click()
+    new_card_idx = page.locator("[data-es-comp-card]").count() - 1
+    remove_in_added = page.locator(
+        f"[data-es-comp-card='{new_card_idx}'] .es-remove-comp-btn"
+    ).count()
+    assert remove_in_added == 1, (
+        f"Added card[{new_card_idx}] must have exactly 1 remove button."
+    )
+
+
+# ── CS179 ─────────────────────────────────────────────────────────────────────
+
+def test_CS179_es_req_panel_font_size_at_least_16px(page: Page, live_server: str) -> None:
+    """Phase 8N: #es-req-panel computed font-size is at least 16px."""
+    _load_factory(page, live_server)
+    font_size = page.evaluate(
+        "() => parseFloat(getComputedStyle(document.getElementById('es-req-panel')).fontSize)"
+    )
+    assert font_size >= 16, (
+        f"#es-req-panel font-size must be >= 16px. Got: {font_size}px"
+    )
+
+
+# ── CS180 ─────────────────────────────────────────────────────────────────────
+
+def test_CS180_section_summary_font_size_at_least_19px(page: Page, live_server: str) -> None:
+    """Phase 8N: details summary computed font-size is at least 19px."""
+    _load_factory(page, live_server)
+    font_size = page.evaluate(
+        "() => { var el = document.querySelector('#es-req-panel details > summary');"
+        " return el ? parseFloat(getComputedStyle(el).fontSize) : 0; }"
+    )
+    assert font_size >= 19, (
+        f"details > summary font-size must be >= 19px. Got: {font_size}px"
+    )
+
+
+# ── CS181 ─────────────────────────────────────────────────────────────────────
+
+def test_CS181_factory_component_section_has_photo_hint(page: Page, live_server: str) -> None:
+    """Phase 8N: factory component section contains photo upload guidance."""
+    _load_factory(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "يفضل رفع صور" in panel_text, (
+        f"Factory component section must contain photo hint. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS182 ─────────────────────────────────────────────────────────────────────
+
+def test_CS182_residential_and_land_have_no_component_cards(page: Page, live_server: str) -> None:
+    """Phase 8N: residential and land profiles do not render any component cards."""
+    for loader, name in [(_load_residential, "residential"), (_load_land, "land")]:
+        loader(page, live_server)
+        count = page.locator("[data-es-comp-card]").count()
+        assert count == 0, (
+            f"Profile '{name}' must not render component cards. Got: {count}"
+        )

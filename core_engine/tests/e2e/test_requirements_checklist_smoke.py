@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -212,6 +212,16 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS196 — (8O) under_construction panel renders inline form controls
   CS197 — (8O) historical panel renders inline form controls
   CS198 — (8O) heritage panel renders inline form controls
+
+  CS199 — (8P) selecting land without valid session does NOT show login modal
+  CS200 — (8P) selecting residential_unit without valid session does NOT show login modal
+  CS201 — (8P) selecting building_mixed without valid session does NOT show login modal
+  CS202 — (8P) API 401 renders inline soft message inside #es-req-panel, not modal
+  CS203 — (8P) building_full selection does NOT show login modal
+  CS204 — (8P) factory selection does NOT show login modal
+  CS205 — (8P) intangible selection does NOT show login modal
+  CS206 — (8P) login modal remains in DOM (structure preservation)
+  CS207 — (8P) no composite_valuation.html link in panel (Phase 8O regression guard)
 """
 from __future__ import annotations
 
@@ -3704,4 +3714,168 @@ def test_CS198_heritage_panel_renders_inline_form(page: Page, live_server: str) 
     count = page.locator("#es-req-panel input, #es-req-panel select").count()
     assert count > 0, (
         f"heritage panel must render inline form controls. Got {count} controls."
+    )
+
+
+# ══ Phase 8P — Suppress Login/JWT Modal in Requirements Flow (CS199–CS207) ══
+
+
+def _mock_req_401(page: Page) -> None:
+    """Route /api/valuation/requirements to return 401 (expired/missing session)."""
+    def handle(route: Route) -> None:
+        route.fulfill(status=401, content_type="application/json",
+                      body='{"error":"unauthorized"}')
+    page.route("**/api/valuation/requirements**", handle)
+
+
+# ── CS199 ─────────────────────────────────────────────────────────────────────
+
+def test_CS199_land_no_session_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: selecting land with no valid session must NOT open the login modal."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    # Wait for the async fetch to settle (inline message or panel reaction)
+    page.locator("#es-req-soft-msg").wait_for(state="visible", timeout=5_000)
+    modal = page.locator("#es-login-modal")
+    assert not modal.is_visible(), (
+        "Login modal must NOT appear when selecting land without a valid session (Phase 8P)"
+    )
+
+
+# ── CS200 ─────────────────────────────────────────────────────────────────────
+
+def test_CS200_residential_no_session_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: selecting residential_unit with no valid session must NOT open the login modal."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-soft-msg").wait_for(state="visible", timeout=5_000)
+    modal = page.locator("#es-login-modal")
+    assert not modal.is_visible(), (
+        "Login modal must NOT appear when selecting residential_unit without a valid session (Phase 8P)"
+    )
+
+
+# ── CS201 ─────────────────────────────────────────────────────────────────────
+
+def test_CS201_building_mixed_no_session_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: selecting building_mixed ('تجاري') with no valid session must NOT open the login modal."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="تجاري")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-soft-msg").wait_for(state="visible", timeout=5_000)
+    modal = page.locator("#es-login-modal")
+    assert not modal.is_visible(), (
+        "Login modal must NOT appear when selecting تجاري without a valid session (Phase 8P)"
+    )
+
+
+# ── CS202 ─────────────────────────────────────────────────────────────────────
+
+def test_CS202_api_401_renders_inline_soft_message(page: Page, live_server: str) -> None:
+    """Phase 8P: when /api/valuation/requirements returns 401, panel shows inline message, not modal."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+
+    soft_msg = page.locator("#es-req-soft-msg")
+    soft_msg.wait_for(state="visible", timeout=5_000)
+
+    # Modal must be hidden
+    assert not page.locator("#es-login-modal").is_visible(), (
+        "Login modal must NOT appear on 401 from requirements endpoint"
+    )
+    # Panel must be visible with inline message
+    assert page.locator("#es-req-panel").is_visible(), (
+        "#es-req-panel must remain visible with inline message on 401"
+    )
+    msg_text = soft_msg.inner_text()
+    assert "تعذر تحميل متطلبات السجل" in msg_text, (
+        f"Inline 401 message must contain 'تعذر تحميل متطلبات السجل'. Got: {msg_text!r}"
+    )
+    assert "تسجيل الدخول لاحقاً" in msg_text or "تسجيل الدخول" in msg_text, (
+        f"Inline 401 message must mention login option. Got: {msg_text!r}"
+    )
+
+
+# ── CS203 ─────────────────────────────────────────────────────────────────────
+
+def test_CS203_building_full_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: building_full (static profile) never triggers the login modal."""
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert not page.locator("#es-login-modal").is_visible(), (
+        "Login modal must NOT appear for building_full (static path, no API call)"
+    )
+
+
+# ── CS204 ─────────────────────────────────────────────────────────────────────
+
+def test_CS204_factory_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: factory (static profile) never triggers the login modal."""
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="مصنع")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert not page.locator("#es-login-modal").is_visible(), (
+        "Login modal must NOT appear for factory (static path, no API call)"
+    )
+
+
+# ── CS205 ─────────────────────────────────────────────────────────────────────
+
+def test_CS205_intangible_does_not_show_login_modal(page: Page, live_server: str) -> None:
+    """Phase 8P: intangible (static profile) never triggers the login modal."""
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="أصول معنوية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert not page.locator("#es-login-modal").is_visible(), (
+        "Login modal must NOT appear for intangible (static path, no API call)"
+    )
+
+
+# ── CS206 ─────────────────────────────────────────────────────────────────────
+
+def test_CS206_login_modal_dom_structure_preserved(page: Page, live_server: str) -> None:
+    """Phase 8P: login modal DOM and structure remain intact (not removed by the fix)."""
+    page.goto(live_server, wait_until="networkidle")
+    modal = page.locator("#es-login-modal")
+    expect(modal).to_be_attached()
+    assert not modal.is_visible(), "Login modal should be hidden on load (no session)"
+    assert page.locator("#es-token-input").count() == 1, "#es-token-input must remain in DOM"
+    assert page.locator("#es-login-submit").count() == 1, "#es-login-submit must remain in DOM"
+    panel_text = page.locator("#es-login-modal").inner_text()
+    assert "تسجيل الدخول" in panel_text, (
+        f"Login modal must still contain 'تسجيل الدخول' text. Got: {panel_text!r}"
+    )
+
+
+# ── CS207 ─────────────────────────────────────────────────────────────────────
+
+def test_CS207_no_composite_link_regression(page: Page, live_server: str) -> None:
+    """Phase 8P: Phase 8O still holds — no composite_valuation.html link inside requirements panel."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-soft-msg").wait_for(state="visible", timeout=5_000)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html must not appear in requirements panel (Phase 8O regression)"
     )

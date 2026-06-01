@@ -5619,8 +5619,11 @@ function _showIndexToast(msg, type) {
     window.esGetSession = esGetSession;
 
     // ── esFetch: attaches Bearer token; handles 401 (re-prompt) and 403 ──
+    // Pass opts.suppressAuthModal = true to suppress the login modal on 401
+    // (used by requirements checklist flow — all other callers behave as before).
     window.esFetch = async function esFetch(url, opts) {
         opts = opts || {};
+        var suppressModal = opts.suppressAuthModal === true;
         var sess = esGetSession();
         if (sess && sess.token) {
             var hdrs = new Headers(opts.headers || {});
@@ -5631,7 +5634,9 @@ function _showIndexToast(msg, type) {
         if (resp.status === 401) {
             esClearSession();
             esUpdateBar();
-            esShowLoginModal('انتهت صلاحية الجلسة أو الرمز غير صالح.');
+            if (!suppressModal) {
+                esShowLoginModal('انتهت صلاحية الجلسة أو الرمز غير صالح.');
+            }
             throw new Error('ES_AUTH_401');
         }
         if (resp.status === 403) {
@@ -7548,7 +7553,8 @@ function _showIndexToast(msg, type) {
 
         window.esFetch(
             '/api/valuation/requirements?asset_type=' + encodeURIComponent(registryCode)
-                + '&purpose=' + encodeURIComponent(purpose)
+                + '&purpose=' + encodeURIComponent(purpose),
+            { suppressAuthModal: true }
         ).then(function (resp) {
             if (!resp.ok) { showSoftMsg(_SOFT_MSG); return null; }
             return resp.json();
@@ -7558,7 +7564,13 @@ function _showIndexToast(msg, type) {
             } else if (data !== null && data !== undefined) {
                 showSoftMsg(_SOFT_MSG);
             }
-        }).catch(function () { hidePanel(); });
+        }).catch(function (err) {
+            if (err && err.message === 'ES_AUTH_401') {
+                showSoftMsg('تعذر تحميل متطلبات السجل حالياً بسبب انتهاء الجلسة. يمكنك متابعة إدخال بيانات الأصل محلياً، أو تسجيل الدخول لاحقاً.');
+            } else {
+                hidePanel();
+            }
+        });
     }
 
     function onSelectionChange() {

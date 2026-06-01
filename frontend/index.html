@@ -7508,29 +7508,13 @@ function _showIndexToast(msg, type) {
             if (s4El) { s4El.innerHTML = ''; }
             _attachBuildingFullDraft();
         } else {
-            // Placeholder panel: description + section headings + deferred notice
-            var headings = config.headings || [];
+            // Fallback: unknown/unsupported static type — inline text only, no external link
             if (s1El) s1El.innerHTML =
-                '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;margin-bottom:6px;">'
-                + 'هذا النوع من الأصول يتطلّب ملف تقييم متخصّص.'
-                + '</div>'
-                + '<a id="es-req-composite-link" href="/composite_valuation.html"'
-                + ' style="display:inline-block;font-size:0.78rem;color:#d4af37;'
-                + 'border:1px solid rgba(212,175,55,0.4);padding:4px 12px;border-radius:6px;'
-                + 'text-decoration:none;margin-bottom:4px;">'
-                + 'فتح نموذج التقييم المركب التفصيلي ←'
-                + '</a>';
-            if (s2El) {
-                var hHtml = '';
-                headings.forEach(function (h) {
-                    hHtml += '<div style="font-size:0.76rem;padding:2px 0;color:#9ca3af;">◦ ' + h + '</div>';
-                });
-                s2El.innerHTML = hHtml;
-            }
-            if (s3El) s3El.innerHTML =
-                '<div style="font-size:0.73rem;color:#6b7280;font-style:italic;margin-top:8px;">'
+                '<div style="font-size:0.78rem;color:#6b7280;line-height:1.5;">'
                 + 'الملف التفصيلي لهذا النوع قيد التطوير.'
                 + '</div>';
+            if (s2El) s2El.innerHTML = '';
+            if (s3El) s3El.innerHTML = '';
             if (s4El) s4El.innerHTML = '';
         }
 

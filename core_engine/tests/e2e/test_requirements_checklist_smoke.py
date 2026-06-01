@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -195,6 +195,23 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS180 — (8N) section summary font-size >= 19px
   CS181 — (8N) factory component section has photo upload hint
   CS182 — (8N) residential and land profiles have no component cards
+
+  CS183 — (8O) all 15 profiles stay on index.html after selection (no navigation away)
+  CS184 — (8O) water_well panel: no #es-req-composite-link
+  CS185 — (8O) intangible panel: no #es-req-composite-link
+  CS186 — (8O) partial_interest panel: no #es-req-composite-link
+  CS187 — (8O) under_construction panel: no #es-req-composite-link
+  CS188 — (8O) historical panel: no #es-req-composite-link
+  CS189 — (8O) heritage panel: no #es-req-composite-link
+  CS190 — (8O) no 'فتح نموذج التقييم المركب التفصيلي' in panel for any static profile
+  CS191 — (8O) no 'يلزم تسجيل الدخول' in requirements panel for any static profile
+  CS192 — (8O) no 'يرجى تسجيل الدخول أولاً' in requirements panel for any static profile
+  CS193 — (8O) #es-req-panel inner HTML contains no href to /composite_valuation.html
+  CS194 — (8O) intangible panel renders inline form controls
+  CS195 — (8O) partial_interest panel renders inline form controls
+  CS196 — (8O) under_construction panel renders inline form controls
+  CS197 — (8O) historical panel renders inline form controls
+  CS198 — (8O) heritage panel renders inline form controls
 """
 from __future__ import annotations
 
@@ -3427,3 +3444,264 @@ def test_CS182_residential_and_land_have_no_component_cards(page: Page, live_ser
         assert count == 0, (
             f"Profile '{name}' must not render component cards. Got: {count}"
         )
+
+
+# ══ Phase 8O — Remove External Composite/Login Screen (CS183–CS198) ══════════
+
+
+# ── CS183 ─────────────────────────────────────────────────────────────────────
+
+def test_CS183_all_profiles_stay_on_index_page(page: Page, live_server: str) -> None:
+    """Phase 8O: selecting any of the 15 supported profiles does not navigate away from index.html."""
+    # (asset_type_value, needs_api_mock, mock_data)
+    static_profiles = [
+        ("عمارة سكنية", False, None),
+        ("فندق",        False, None),
+        ("مصنع",        False, None),
+        ("مستشفى",      False, None),
+        ("مدرسة",       False, None),
+        ("محل تجاري",   False, None),
+        ("مناجم",       False, None),
+        ("water_well",              False, None),
+        ("أصول معنوية",             False, None),
+        ("ملكيات جزئية",            False, None),
+        ("استثمارات تحت الإنشاء",   False, None),
+        ("historical",              False, None),
+        ("heritage",                False, None),
+    ]
+    api_profiles = [
+        ("شقة سكنية", _RESIDENTIAL_RESPONSE),
+        ("أرض فضاء",  _LAND_RESPONSE),
+    ]
+
+    for asset_val, needs_mock, mock_data in static_profiles:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=asset_val)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.wait_for_timeout(500)
+        assert page.url.startswith(live_server.rstrip("/")), (
+            f"Selecting '{asset_val}' must not navigate away from index. URL: {page.url!r}"
+        )
+
+    for asset_val, mock_data in api_profiles:
+        _mock_req(page, mock_data)
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=asset_val)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.wait_for_timeout(500)
+        assert page.url.startswith(live_server.rstrip("/")), (
+            f"Selecting '{asset_val}' must not navigate away from index. URL: {page.url!r}"
+        )
+
+
+# ── CS184 ─────────────────────────────────────────────────────────────────────
+
+def test_CS184_water_well_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: water_well panel contains no #es-req-composite-link element."""
+    _load_water_well(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "water_well panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in water_well panel HTML"
+    )
+
+
+# ── CS185 ─────────────────────────────────────────────────────────────────────
+
+def test_CS185_intangible_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: intangible panel contains no #es-req-composite-link element."""
+    _load_intangible(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "intangible panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in intangible panel HTML"
+    )
+
+
+# ── CS186 ─────────────────────────────────────────────────────────────────────
+
+def test_CS186_partial_interest_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: partial_interest panel contains no #es-req-composite-link element."""
+    _load_partial_interest(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "partial_interest panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in partial_interest panel HTML"
+    )
+
+
+# ── CS187 ─────────────────────────────────────────────────────────────────────
+
+def test_CS187_under_construction_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: under_construction panel contains no #es-req-composite-link element."""
+    _load_under_construction(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "under_construction panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in under_construction panel HTML"
+    )
+
+
+# ── CS188 ─────────────────────────────────────────────────────────────────────
+
+def test_CS188_historical_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: historical panel contains no #es-req-composite-link element."""
+    _load_historical(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "historical panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in historical panel HTML"
+    )
+
+
+# ── CS189 ─────────────────────────────────────────────────────────────────────
+
+def test_CS189_heritage_panel_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8O: heritage panel contains no #es-req-composite-link element."""
+    _load_heritage(page, live_server)
+    link = page.locator("#es-req-composite-link")
+    assert link.count() == 0 or not link.is_visible(), (
+        "heritage panel must NOT contain the composite redirect link"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "composite_valuation.html URL must not appear in heritage panel HTML"
+    )
+
+
+# ── CS190 ─────────────────────────────────────────────────────────────────────
+
+def test_CS190_no_composite_cta_text_in_any_static_profile(page: Page, live_server: str) -> None:
+    """Phase 8O: no static profile shows 'فتح نموذج التقييم المركب التفصيلي' in the panel."""
+    loaders = [
+        _load_intangible, _load_partial_interest, _load_under_construction,
+        _load_historical, _load_heritage, _load_water_well,
+        _load_factory, _load_hotel,
+    ]
+    for loader in loaders:
+        loader(page, live_server)
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert "فتح نموذج التقييم المركب التفصيلي" not in panel_text, (
+            f"Panel must NOT contain CTA text after Phase 8O fix. Got: {panel_text[:300]!r}"
+        )
+
+
+# ── CS191 ─────────────────────────────────────────────────────────────────────
+
+def test_CS191_no_login_required_text_in_panel(page: Page, live_server: str) -> None:
+    """Phase 8O: requirements panel never shows 'يلزم تسجيل الدخول' for any profile."""
+    loaders = [
+        _load_intangible, _load_partial_interest, _load_under_construction,
+        _load_historical, _load_heritage, _load_water_well,
+    ]
+    for loader in loaders:
+        loader(page, live_server)
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert "يلزم تسجيل الدخول" not in panel_text, (
+            f"Panel must NOT show 'يلزم تسجيل الدخول'. Got: {panel_text[:300]!r}"
+        )
+
+
+# ── CS192 ─────────────────────────────────────────────────────────────────────
+
+def test_CS192_no_please_login_text_in_panel(page: Page, live_server: str) -> None:
+    """Phase 8O: requirements panel never shows 'يرجى تسجيل الدخول أولاً' for any profile."""
+    loaders = [
+        _load_intangible, _load_partial_interest, _load_under_construction,
+        _load_historical, _load_heritage, _load_water_well,
+    ]
+    for loader in loaders:
+        loader(page, live_server)
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert "يرجى تسجيل الدخول أولاً" not in panel_text, (
+            f"Panel must NOT show 'يرجى تسجيل الدخول أولاً'. Got: {panel_text[:300]!r}"
+        )
+
+
+# ── CS193 ─────────────────────────────────────────────────────────────────────
+
+def test_CS193_panel_inner_html_no_composite_href(page: Page, live_server: str) -> None:
+    """Phase 8O: #es-req-panel inner HTML contains no href pointing to /composite_valuation.html."""
+    loaders = [
+        _load_intangible, _load_partial_interest, _load_under_construction,
+        _load_historical, _load_heritage, _load_water_well,
+        _load_factory, _load_hotel, _load_building_full,
+    ]
+    for loader in loaders:
+        loader(page, live_server)
+        panel_html = page.locator("#es-req-panel").inner_html()
+        assert "composite_valuation.html" not in panel_html, (
+            f"Panel inner HTML must NOT contain composite_valuation.html href. Got: {panel_html[:400]!r}"
+        )
+
+
+# ── CS194 ─────────────────────────────────────────────────────────────────────
+
+def test_CS194_intangible_panel_renders_inline_form(page: Page, live_server: str) -> None:
+    """Phase 8O: intangible panel renders inline form controls (not a redirect)."""
+    _load_intangible(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"intangible panel must render inline form controls. Got {count} controls."
+    )
+
+
+# ── CS195 ─────────────────────────────────────────────────────────────────────
+
+def test_CS195_partial_interest_panel_renders_inline_form(page: Page, live_server: str) -> None:
+    """Phase 8O: partial_interest panel renders inline form controls (not a redirect)."""
+    _load_partial_interest(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"partial_interest panel must render inline form controls. Got {count} controls."
+    )
+
+
+# ── CS196 ─────────────────────────────────────────────────────────────────────
+
+def test_CS196_under_construction_panel_renders_inline_form(page: Page, live_server: str) -> None:
+    """Phase 8O: under_construction panel renders inline form controls (not a redirect)."""
+    _load_under_construction(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"under_construction panel must render inline form controls. Got {count} controls."
+    )
+
+
+# ── CS197 ─────────────────────────────────────────────────────────────────────
+
+def test_CS197_historical_panel_renders_inline_form(page: Page, live_server: str) -> None:
+    """Phase 8O: historical panel renders inline form controls (not a redirect)."""
+    _load_historical(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"historical panel must render inline form controls. Got {count} controls."
+    )
+
+
+# ── CS198 ─────────────────────────────────────────────────────────────────────
+
+def test_CS198_heritage_panel_renders_inline_form(page: Page, live_server: str) -> None:
+    """Phase 8O: heritage panel renders inline form controls (not a redirect)."""
+    _load_heritage(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"heritage panel must render inline form controls. Got {count} controls."
+    )

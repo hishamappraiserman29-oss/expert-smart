@@ -1356,6 +1356,7 @@
             <div id="es-req-s2"></div>
             <div id="es-req-s3"></div>
             <div id="es-req-s4"></div>
+            <div id="es-req-supp"></div>
         </div>
         <div id="es-req-notes" style="margin-top:4px; font-size:0.78rem; color:#f59e0b;"></div>
     </div>
@@ -5750,7 +5751,7 @@ function _showIndexToast(msg, type) {
         'تاون هاوس':             'residential_unit',
         'استوديو':               'residential_unit',
         'أرض فضاء':              'land',
-        'أرض زراعية':            'land',
+        'أرض زراعية':            'agricultural_land',
         'تجاري':                 'building_mixed',
         'مستودع':                'building_mixed',
         'مول تجاري':             'building_mixed',
@@ -5767,6 +5768,7 @@ function _showIndexToast(msg, type) {
         'استثمارات تحت الإنشاء': 'under_construction',
         'historical':            'historical',
         'heritage':              'heritage',
+        'agricultural_land':     'agricultural_land',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5851,6 +5853,7 @@ function _showIndexToast(msg, type) {
         'under_construction': { type: 'form', titleAr: 'استثمارات تحت الإنشاء' },
         'historical':         { type: 'form', titleAr: 'عقارات تاريخية' },
         'heritage':           { type: 'form', titleAr: 'موروث ثقافي معماري' },
+        'agricultural_land':  { type: 'form', titleAr: 'أرض زراعية' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5871,6 +5874,7 @@ function _showIndexToast(msg, type) {
         'under_construction': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'historical':         { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'heritage':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'agricultural_land':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أرض زراعية — نموذج محلّي لتجميع بيانات الأصل (تربة، ري، محاصيل، تكاليف). لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -6473,6 +6477,7 @@ function _showIndexToast(msg, type) {
         if (notesEl) notesEl.textContent = data.notes || '';
         panel.style.display = 'block';
         _attachDraftCollector();
+        _renderSupplemental(data.asset_type);
     }
 
     // ── Building-full: floor-use table (Phase 8J) ────────────────────────────
@@ -7373,7 +7378,510 @@ function _showIndexToast(msg, type) {
                 { name: 'hr_management_plan',    field_type: 'bool', label_ar: 'خطة إدارة الموقع / الصيانة',  group: 'document', valid_values: [], ui_required: false },
             ]},
         ]},
+        // ── Phase 8Q: Agricultural land — independent local profile ──────────────
+        'agricultural_land': { sections: [
+            { heading: 'بيانات الأرض الزراعية', color: '#d4af37', desc: '', fields: [
+                { name: 'ag_area_feddan',          field_type: 'float', label_ar: 'مساحة الأرض (فدان)',  unit_ar: 'فدان', valid_values: [], group: '', ui_required: true },
+                { name: 'ag_area_sqm',             field_type: 'float', label_ar: 'مساحة الأرض (م²)',    unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'ag_soil_type',            field_type: 'str',   label_ar: 'نوع التربة',
+                  options: [
+                    { value: 'clay',       label_ar: 'طينية' },
+                    { value: 'sandy',      label_ar: 'رملية' },
+                    { value: 'loamy',      label_ar: 'طميية' },
+                    { value: 'calcareous', label_ar: 'جيرية' },
+                    { value: 'reclaimed',  label_ar: 'مستصلحة' },
+                    { value: 'mixed',      label_ar: 'مختلطة' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'ag_soil_fertility',  field_type: 'str', label_ar: 'خصوبة التربة',
+                  options: [
+                    { value: 'high',           label_ar: 'عالية' },
+                    { value: 'medium',         label_ar: 'متوسطة' },
+                    { value: 'low',            label_ar: 'منخفضة' },
+                    { value: 'needs_analysis', label_ar: 'تحتاج تحليل' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false,
+                  help_ar: 'تشير خصوبة التربة إلى قدرتها على دعم نمو المحاصيل وإنتاجية الأرض.' },
+                { name: 'ag_soil_analysis_available', field_type: 'bool', label_ar: 'يوجد تحليل تربة',  valid_values: [], group: '', ui_required: false },
+                { name: 'ag_salinity_level',    field_type: 'float', label_ar: 'مستوى الملوحة', unit_ar: 'ppm', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'مصادر المياه والري', color: '#9ca3af', desc: '', fields: [
+                { name: 'ag_water_source_type', field_type: 'str', label_ar: 'مصدر المياه الرئيسي',
+                  options: [
+                    { value: 'groundwater_well', label_ar: 'بئر جوفي' },
+                    { value: 'nile_canal',       label_ar: 'نيل / ترعة' },
+                    { value: 'rain',             label_ar: 'أمطار' },
+                    { value: 'treated_water',    label_ar: 'مياه معالجة' },
+                    { value: 'mixed',            label_ar: 'مختلط' },
+                    { value: 'none',             label_ar: 'لا يوجد' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'ag_well_available',      field_type: 'bool', label_ar: 'يوجد بئر',             valid_values: [], group: '', ui_required: false },
+                { name: 'ag_well_license_status', field_type: 'str',  label_ar: 'حالة ترخيص البئر',
+                  options: [
+                    { value: 'licensed',   label_ar: 'مرخّص' },
+                    { value: 'unlicensed', label_ar: 'غير مرخّص' },
+                    { value: 'pending',    label_ar: 'قيد الترخيص' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_irrigation_legal_status', field_type: 'str', label_ar: 'الوضع القانوني للري',
+                  options: [
+                    { value: 'compliant',          label_ar: 'ملتزم' },
+                    { value: 'needs_verification', label_ar: 'يحتاج تحقق' },
+                    { value: 'violation_exists',   label_ar: 'توجد مخالفة' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false,
+                  help_ar: 'تأكيد أن حقوق المياه والري متوافقة مع الأنظمة واللوائح السارية.' },
+                { name: 'ag_irrigation_system',   field_type: 'str', label_ar: 'نظام الري',
+                  options: [
+                    { value: 'flood',     label_ar: 'ري بالغمر' },
+                    { value: 'drip',      label_ar: 'ري بالتنقيط' },
+                    { value: 'sprinkler', label_ar: 'ري بالرش' },
+                    { value: 'pivot',     label_ar: 'ري محوري' },
+                    { value: 'mixed',     label_ar: 'مختلط' },
+                    { value: 'none',      label_ar: 'لا يوجد' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_irrigation_network_condition', field_type: 'str', label_ar: 'حالة شبكة الري',
+                  options: [
+                    { value: 'good',              label_ar: 'جيدة' },
+                    { value: 'average',           label_ar: 'متوسطة' },
+                    { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor',              label_ar: 'ضعيفة' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_water_availability_reliability', field_type: 'str', label_ar: 'موثوقية توفر المياه',
+                  options: [
+                    { value: 'high',     label_ar: 'عالية' },
+                    { value: 'medium',   label_ar: 'متوسطة' },
+                    { value: 'low',      label_ar: 'منخفضة' },
+                    { value: 'seasonal', label_ar: 'موسمية' },
+                    { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المحاصيل والملاءمة المناخية', color: '#9ca3af', desc: '', fields: [
+                { name: 'ag_current_crop_type',   field_type: 'str',   label_ar: 'نوع المحصول الحالي',    valid_values: [], group: '', ui_required: false },
+                { name: 'ag_target_crop_type',    field_type: 'str',   label_ar: 'المحصول المستهدف',      valid_values: [], group: '', ui_required: false },
+                { name: 'ag_crop_climate_suitability', field_type: 'str', label_ar: 'الملاءمة المناخية',
+                  options: [
+                    { value: 'suitable',            label_ar: 'مناسب' },
+                    { value: 'moderately_suitable', label_ar: 'مناسب جزئياً' },
+                    { value: 'unsuitable',          label_ar: 'غير مناسب' },
+                    { value: 'needs_study',         label_ar: 'يحتاج دراسة' },
+                    { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false,
+                  help_ar: 'مدى توافق نوع المحصول المستهدف مع المناخ السائد في موقع الأرض.' },
+                { name: 'ag_annual_yield_estimate', field_type: 'float', label_ar: 'تقدير الغلة السنوية', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_yield_unit',           field_type: 'str',   label_ar: 'وحدة الغلة',
+                  options: [
+                    { value: 'ton_per_feddan', label_ar: 'طن / فدان' },
+                    { value: 'kg_per_feddan',  label_ar: 'كجم / فدان' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_planting_cycle',       field_type: 'str', label_ar: 'دورة الزراعة',          valid_values: [], group: '', ui_required: false },
+                { name: 'ag_access_to_markets',    field_type: 'str', label_ar: 'سهولة الوصول للأسواق',
+                  options: [
+                    { value: 'good',    label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' },
+                    { value: 'poor',    label_ar: 'ضعيفة' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'تكاليف الزراعة والعمالة', color: '#9ca3af', desc: '', fields: [
+                { name: 'ag_annual_cultivation_cost',       field_type: 'float', label_ar: 'التكلفة السنوية للزراعة',      unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_labor_cost_annual',             field_type: 'float', label_ar: 'تكلفة العمالة السنوية',        unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_irrigation_cost_annual',        field_type: 'float', label_ar: 'تكلفة الري السنوية',           unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_fertilizer_cost_annual',        field_type: 'float', label_ar: 'تكلفة الأسمدة السنوية',        unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_expected_crop_revenue_annual',  field_type: 'float', label_ar: 'الإيراد المتوقع من المحصول',  unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_net_agricultural_income_annual',field_type: 'float', label_ar: 'صافي الدخل الزراعي السنوي',  unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'البنية الزراعية والمخاطر', color: '#9ca3af', desc: '', fields: [
+                { name: 'ag_farm_buildings_available', field_type: 'bool', label_ar: 'توجد مبانٍ زراعية',    valid_values: [], group: '', ui_required: false },
+                { name: 'ag_storage_available',        field_type: 'bool', label_ar: 'يوجد تخزين / مستودع', valid_values: [], group: '', ui_required: false },
+                { name: 'ag_road_access_quality',      field_type: 'str',  label_ar: 'جودة الوصول البري',
+                  options: [
+                    { value: 'good',    label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' },
+                    { value: 'poor',    label_ar: 'ضعيفة' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_drainage_condition',  field_type: 'str', label_ar: 'حالة الصرف',
+                  options: [
+                    { value: 'good',              label_ar: 'جيدة' },
+                    { value: 'average',           label_ar: 'متوسطة' },
+                    { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor',              label_ar: 'ضعيفة' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_flood_risk',          field_type: 'str', label_ar: 'خطر الفيضان',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' },
+                    { value: 'medium',  label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_pest_risk',           field_type: 'str', label_ar: 'خطر الآفات',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' },
+                    { value: 'medium',  label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ag_environmental_restrictions', field_type: 'str', label_ar: 'القيود البيئية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'مستندات الأرض الزراعية', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'ag_ownership_doc',       field_type: 'bool', label_ar: 'سند الملكية',                  group: 'document', valid_values: [], ui_required: true },
+                { name: 'ag_agricultural_tenure', field_type: 'bool', label_ar: 'الحيازة الزراعية',             group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_well_license',        field_type: 'bool', label_ar: 'ترخيص البئر (إن وجد)',         group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_soil_analysis',       field_type: 'bool', label_ar: 'تحليل تربة',                   group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_water_analysis',      field_type: 'bool', label_ar: 'تحليل مياه',                  group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_irrigation_map',      field_type: 'bool', label_ar: 'خريطة ري / صرف',              group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_production_data',     field_type: 'bool', label_ar: 'بيانات إنتاج / عقود توريد',   group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_recent_photos',       field_type: 'bool', label_ar: 'صور حديثة',                   group: 'document', valid_values: [], ui_required: false },
+                { name: 'ag_croquis',             field_type: 'bool', label_ar: 'كروكي / إحداثيات',             group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
     };
+
+    // ── Phase 8Q: Supplemental field renderer — uses data-es-supp-field (not data-es-req-field) ──
+    function _suppFieldControlHTML(f) {
+        var label    = f.label_ar || f.name;
+        var fid      = 'es-supp-field-' + f.name;
+        var reqMark  = f.ui_required
+            ? '<span style="color:#ef4444;margin-right:2px;">*</span>'
+            : '';
+        var inputCss = 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+            + 'padding:6px 10px;font-size:0.76rem;color:#f3f4f6;'
+            + 'width:100%;box-sizing:border-box;';
+        var labelHtml = '<label for="' + fid
+            + '" style="display:block;font-size:0.73rem;color:#9ca3af;margin-bottom:3px;">'
+            + reqMark + label + '</label>';
+        var ctrlHtml;
+        if (f.group === 'document') {
+            return '<div class="es-doc-row" style="display:flex;align-items:center;gap:8px;'
+                + 'background:#1f2937;border:1px solid #374151;border-radius:6px;'
+                + 'padding:7px 10px;">'
+                + '<input type="checkbox" id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-supp-field="' + f.name + '"'
+                + ' style="accent-color:#d4af37;cursor:pointer;flex-shrink:0;width:15px;height:15px;">'
+                + '<label for="' + fid + '" style="font-size:0.76rem;color:#9ca3af;cursor:pointer;">'
+                + label + '</label></div>';
+        }
+        if (f.field_type === 'bool') {
+            ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-supp-field="' + f.name + '" style="' + inputCss + '">'
+                + '<option value="" disabled selected>اختر ' + label + '</option>'
+                + '<option value="yes">نعم</option><option value="no">لا</option></select>';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+        }
+        if (f.field_type === 'checkbox_group' && f.options && f.options.length) {
+            var chips = f.options.map(function(o) {
+                return '<label class="es-chip" style="display:inline-flex;align-items:center;gap:5px;'
+                    + 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+                    + 'padding:4px 10px;cursor:pointer;font-size:0.73rem;color:#9ca3af;">'
+                    + '<input type="checkbox" id="' + fid + '-' + o.value + '"'
+                    + ' name="' + f.name + '" value="' + o.value + '"'
+                    + ' data-es-supp-field="' + f.name + '"'
+                    + ' style="accent-color:#d4af37;cursor:pointer;">'
+                    + o.label_ar + '</label>';
+            }).join('');
+            return '<div class="es-field"><div style="font-size:0.73rem;color:#9ca3af;margin-bottom:5px;">'
+                + reqMark + label + '</div>'
+                + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div></div>';
+        }
+        if (f.options && f.options.length) {
+            var inlineOpts = '<option value="" disabled selected>اختر ' + label + '</option>'
+                + f.options.map(function(o) {
+                    return '<option value="' + o.value + '">' + o.label_ar + '</option>';
+                }).join('');
+            ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-supp-field="' + f.name + '" style="' + inputCss + '">' + inlineOpts + '</select>';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+        }
+        if (f.field_type === 'list' && f.valid_values && f.valid_values.length) {
+            var listChips = f.valid_values.map(function(v) {
+                var disp = _VALUE_DISPLAY[v] || v;
+                return '<label class="es-chip" style="display:inline-flex;align-items:center;gap:5px;'
+                    + 'background:#1f2937;border:1px solid #4b5563;border-radius:6px;'
+                    + 'padding:4px 10px;cursor:pointer;font-size:0.73rem;color:#9ca3af;">'
+                    + '<input type="checkbox" id="' + fid + '-' + v + '"'
+                    + ' name="' + f.name + '" value="' + v + '"'
+                    + ' data-es-supp-field="' + f.name + '"'
+                    + ' style="accent-color:#d4af37;cursor:pointer;">'
+                    + disp + '</label>';
+            }).join('');
+            return '<div class="es-field"><div style="font-size:0.73rem;color:#9ca3af;margin-bottom:5px;">'
+                + reqMark + label + '</div>'
+                + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + listChips + '</div></div>';
+        }
+        if (f.field_type === 'float' || f.field_type === 'int' || f.field_type === 'number') {
+            var stepAttr = f.field_type === 'float' ? ' step="any"' : '';
+            var numInput = '<input type="number" id="' + fid + '" name="' + f.name + '"'
+                + stepAttr + ' data-es-supp-field="' + f.name + '"'
+                + ' placeholder="أدخل القيمة" style="' + inputCss + 'flex:1;">';
+            ctrlHtml = f.unit_ar
+                ? '<div style="display:flex;align-items:center;gap:6px;">' + numInput
+                  + '<span class="es-field-unit">' + f.unit_ar + '</span></div>'
+                : numInput;
+            var helpHtml = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtml + '</div>';
+        }
+        ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
+            + ' data-es-supp-field="' + f.name + '"'
+            + ' placeholder="أدخل القيمة" style="' + inputCss + '">';
+        var helpHtmlDef = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+        return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtmlDef + '</div>';
+    }
+
+    function _suppSectionControlsHTML(heading, headingColor, description, fields) {
+        if (!fields.length) return '';
+        var borderColor = headingColor === '#d4af37' ? 'rgba(212,175,55,0.25)' : '#374151';
+        var html = '<details open>';
+        html += '<summary style="color:' + headingColor + ';">' + heading + '</summary>';
+        html += '<div class="es-form-section" style="background:rgba(31,41,55,0.7);border:1px solid '
+            + borderColor + ';border-top:none;border-radius:0 0 8px 8px;padding:12px 14px;">';
+        if (description) {
+            html += '<div style="font-size:0.72rem;color:#6b7280;margin-bottom:10px;line-height:1.4;">'
+                + description + '</div>';
+        }
+        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">';
+        fields.forEach(function(f) { html += _suppFieldControlHTML(f); });
+        html += '</div></div></details>';
+        return html;
+    }
+
+    function _attachSupplementalDraftCollector() {
+        if (typeof window.esRequirementDraft === 'undefined') { window.esRequirementDraft = {}; }
+        window.esRequirementDraft.supplemental = {};
+        var suppEl = document.getElementById('es-req-supp');
+        if (!suppEl) return;
+        suppEl.querySelectorAll('[data-es-supp-field]').forEach(function(el) {
+            el.addEventListener('change', function() {
+                var fn = el.getAttribute('data-es-supp-field');
+                if (el.type === 'checkbox') {
+                    if (!Array.isArray(window.esRequirementDraft.supplemental[fn])) {
+                        window.esRequirementDraft.supplemental[fn] = [];
+                    }
+                    var arr = window.esRequirementDraft.supplemental[fn];
+                    var val = el.value || true;
+                    if (el.checked) {
+                        if (arr.indexOf(val) === -1) arr.push(val);
+                    } else {
+                        var idx = arr.indexOf(val);
+                        if (idx !== -1) arr.splice(idx, 1);
+                    }
+                } else {
+                    window.esRequirementDraft.supplemental[fn] = el.value;
+                }
+            });
+        });
+    }
+
+    // ── Phase 8Q: Supplemental schemas for API-driven profiles ──────────────────
+    // Keyed by registry code ('residential', 'land'). Never sent to API.
+    var _SUPPLEMENTAL_SCHEMAS = {
+        'residential': [
+            { heading: 'بيانات الوحدة التفصيلية', color: '#d4af37', desc: '', fields: [
+                { name: 'unit_type', field_type: 'str', label_ar: 'نوع الوحدة',
+                  options: [
+                    { value: 'apartment',  label_ar: 'شقة' },
+                    { value: 'villa',      label_ar: 'فيلا' },
+                    { value: 'duplex',     label_ar: 'دوبلكس' },
+                    { value: 'townhouse',  label_ar: 'تاون هاوس' },
+                    { value: 'studio',     label_ar: 'ستوديو' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'total_building_floors', field_type: 'int',  label_ar: 'إجمالي طوابق المبنى',          unit_ar: 'طابق', valid_values: [], group: '', ui_required: false },
+                { name: 'bedrooms_count',        field_type: 'int',  label_ar: 'عدد غرف النوم',                               valid_values: [], group: '', ui_required: false },
+                { name: 'bathrooms_count',       field_type: 'int',  label_ar: 'عدد الحمامات',                                valid_values: [], group: '', ui_required: false },
+                { name: 'reception_count',       field_type: 'int',  label_ar: 'عدد الصالات / الاستقبال',                    valid_values: [], group: '', ui_required: false },
+                { name: 'balconies_count',       field_type: 'int',  label_ar: 'عدد البلكونات',                               valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'خصائص الموقع والمبنى', color: '#6b7280', desc: '', fields: [
+                { name: 'building_type', field_type: 'str', label_ar: 'نوع المبنى / المشروع',
+                  options: [
+                    { value: 'standalone_building', label_ar: 'عمارة مستقلة' },
+                    { value: 'compound',            label_ar: 'كمبوند' },
+                    { value: 'gated_community',     label_ar: 'مجتمع مغلق' },
+                    { value: 'villa_zone',          label_ar: 'منطقة فيلات' },
+                    { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'orientation', field_type: 'str', label_ar: 'اتجاه الواجهة',
+                  options: [
+                    { value: 'north',   label_ar: 'شمال' },
+                    { value: 'south',   label_ar: 'جنوب' },
+                    { value: 'east',    label_ar: 'شرق' },
+                    { value: 'west',    label_ar: 'غرب' },
+                    { value: 'corner',  label_ar: 'ركني' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'private_garden_available',    field_type: 'bool', label_ar: 'يوجد حديقة خاصة',  valid_values: [], group: '', ui_required: false },
+                { name: 'roof_access_or_private_roof', field_type: 'bool', label_ar: 'وصول / سطح خاص',   valid_values: [], group: '', ui_required: false },
+                { name: 'security_available',          field_type: 'bool', label_ar: 'يوجد حراسة / أمن', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التشطيب والحالة الفنية', color: '#6b7280', desc: '', fields: [
+                { name: 'finishing_age_years', field_type: 'int', label_ar: 'عمر التشطيب الحالي', unit_ar: 'سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'maintenance_level', field_type: 'str', label_ar: 'مستوى الصيانة',
+                  options: [
+                    { value: 'well_maintained', label_ar: 'جيد الصيانة' },
+                    { value: 'average',         label_ar: 'متوسط' },
+                    { value: 'neglected',       label_ar: 'مهمل' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'visible_defects', field_type: 'checkbox_group', label_ar: 'العيوب الظاهرة',
+                  options: [
+                    { value: 'cracks',          label_ar: 'شروخ' },
+                    { value: 'dampness',        label_ar: 'رطوبة' },
+                    { value: 'leakage',         label_ar: 'تسريب' },
+                    { value: 'weak_finishing',  label_ar: 'تشطيب ضعيف' },
+                    { value: 'settlement',      label_ar: 'هبوط' },
+                    { value: 'none_observed',   label_ar: 'لا يوجد ظاهرياً' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'utilities_connected', field_type: 'checkbox_group', label_ar: 'المرافق المتوفرة',
+                  options: [
+                    { value: 'electricity', label_ar: 'كهرباء' },
+                    { value: 'water',       label_ar: 'مياه' },
+                    { value: 'sewage',      label_ar: 'صرف صحي' },
+                    { value: 'gas',         label_ar: 'غاز' },
+                    { value: 'internet',    label_ar: 'إنترنت' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الوضع التشغيلي والدخل', color: '#6b7280', desc: '', fields: [
+                { name: 'occupancy_status', field_type: 'str', label_ar: 'حالة الإشغال',
+                  options: [
+                    { value: 'vacant',             label_ar: 'شاغر' },
+                    { value: 'owner_occupied',     label_ar: 'مالك مقيم' },
+                    { value: 'tenant_occupied',    label_ar: 'مستأجر' },
+                    { value: 'partially_occupied', label_ar: 'مشغول جزئياً' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rental_income_monthly',   field_type: 'float', label_ar: 'الدخل الإيجاري الشهري', unit_ar: 'ج.م./شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'service_charges_monthly', field_type: 'float', label_ar: 'رسوم الخدمات الشهرية',  unit_ar: 'ج.م./شهر', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'مستندات إضافية', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'ru_building_permit',  field_type: 'bool', label_ar: 'رخصة البناء (إن وجدت)',       group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_receipt_alloc',    field_type: 'bool', label_ar: 'محضر استلام / تخصيص',         group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_utility_receipts', field_type: 'bool', label_ar: 'إيصالات المرافق',              group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_unit_plan',        field_type: 'bool', label_ar: 'مخطط الوحدة',                 group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_lease_contract',   field_type: 'bool', label_ar: 'عقد إيجار (إن وجد)',          group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_transaction_cert', field_type: 'bool', label_ar: 'شهادة تصرفات أو ما يعادلها', group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ],
+        'land': [
+            { heading: 'بيانات الأرض التفصيلية', color: '#d4af37', desc: '', fields: [
+                { name: 'land_area_feddan', field_type: 'float', label_ar: 'مساحة الأرض (فدان)', unit_ar: 'فدان', valid_values: [], group: '', ui_required: false },
+                { name: 'depth_meters',     field_type: 'float', label_ar: 'عمق قطعة الأرض',     unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+                { name: 'is_fenced',        field_type: 'bool',  label_ar: 'الأرض مسوّرة',        valid_values: [], group: '', ui_required: false },
+                { name: 'shape_regular', field_type: 'str', label_ar: 'شكل القطعة',
+                  options: [
+                    { value: 'regular',            label_ar: 'منتظمة' },
+                    { value: 'irregular',          label_ar: 'غير منتظمة' },
+                    { value: 'corner_plot',        label_ar: 'ركنية' },
+                    { value: 'multiple_frontage',  label_ar: 'متعددة الواجهات' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'topography', field_type: 'str', label_ar: 'تضاريس الأرض',
+                  options: [
+                    { value: 'flat',    label_ar: 'مستوية' },
+                    { value: 'sloped',  label_ar: 'منحدرة' },
+                    { value: 'uneven',  label_ar: 'غير متساوية' },
+                    { value: 'rocky',   label_ar: 'صخرية' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التصنيف العمراني التفصيلي', color: '#6b7280', desc: '', fields: [
+                { name: 'permitted_use',              field_type: 'str',   label_ar: 'الاستخدام المسموح',            valid_values: [], group: '', ui_required: false },
+                { name: 'building_ratio_allowed_pct', field_type: 'float', label_ar: 'نسبة البناء المسموح بها', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'far_ratio', field_type: 'float', label_ar: 'معامل استغلال الأرض (FAR)',
+                  valid_values: [], group: '', ui_required: false,
+                  help_ar: 'FAR = إجمالي المساحة المبنية ÷ مساحة الأرض. مثال: FAR = 2.5 يعني المجموع الكلي للطوابق = 2.5 × مساحة الأرض.' },
+                { name: 'max_height_allowed',   field_type: 'float', label_ar: 'الارتفاع الأقصى المسموح', unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'setback_requirements', field_type: 'str',   label_ar: 'اشتراطات الإرتدادات',
+                  valid_values: [], group: '', ui_required: false,
+                  help_ar: 'المسافة المطلوبة بين حدود القطعة وخط البناء (أمامية / جانبية / خلفية).' },
+                { name: 'regulatory_compliance', field_type: 'str', label_ar: 'الامتثال التنظيمي',
+                  options: [
+                    { value: 'compliant',          label_ar: 'ملتزم' },
+                    { value: 'needs_verification', label_ar: 'يحتاج تحقق' },
+                    { value: 'violation_exists',   label_ar: 'توجد مخالفة' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الطرق والوصول التفصيلي', color: '#6b7280', desc: '', fields: [
+                { name: 'main_street_width_m', field_type: 'float', label_ar: 'عرض الشارع الرئيسي', unit_ar: 'متر',
+                  valid_values: [], group: '', ui_required: false,
+                  help_ar: 'واجهة الأرض = ضلع الأرض المحاذي للشارع الرئيسي.' },
+                { name: 'side_street_width_m', field_type: 'float', label_ar: 'عرض الشارع الجانبي', unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'access_quality', field_type: 'str', label_ar: 'جودة الوصول',
+                  options: [
+                    { value: 'paved_road',       label_ar: 'طريق معبّد' },
+                    { value: 'unpaved_road',     label_ar: 'طريق ترابي' },
+                    { value: 'limited_access',   label_ar: 'وصول محدود' },
+                    { value: 'no_direct_access', label_ar: 'لا وصول مباشر' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'corner_plot',        field_type: 'bool', label_ar: 'قطعة ركنية',           valid_values: [], group: '', ui_required: false },
+                { name: 'visibility_quality', field_type: 'str',  label_ar: 'مستوى الرؤية / الظهور',
+                  options: [
+                    { value: 'high',    label_ar: 'عالية' },
+                    { value: 'medium',  label_ar: 'متوسطة' },
+                    { value: 'low',     label_ar: 'منخفضة' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'تكاليف تطوير البنية التحتية', color: '#6b7280', desc: '', fields: [
+                { name: 'infrastructure_development_cost', field_type: 'float', label_ar: 'تكلفة تطوير البنية التحتية',     unit_ar: 'ج.م.', valid_values: [], group: '', ui_required: false },
+                { name: 'grading_or_leveling_cost',        field_type: 'float', label_ar: 'تكلفة التسوية وتهيئة الأرض',   unit_ar: 'ج.م.', valid_values: [], group: '', ui_required: false },
+                { name: 'soil_improvement_cost',           field_type: 'float', label_ar: 'تكلفة تحسين التربة',            unit_ar: 'ج.م.', valid_values: [], group: '', ui_required: false },
+                { name: 'offsite_infrastructure_cost',     field_type: 'float', label_ar: 'تكلفة البنية التحتية الخارجية', unit_ar: 'ج.م.', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المخططات والتنظيم', color: '#6b7280', desc: '', fields: [
+                { name: 'master_plan_available',    field_type: 'bool', label_ar: 'يوجد مخطط رئيسي',  valid_values: [], group: '', ui_required: false },
+                { name: 'detailed_plan_available',  field_type: 'bool', label_ar: 'يوجد مخطط تفصيلي', valid_values: [], group: '', ui_required: false },
+                { name: 'planning_approval_status', field_type: 'str',  label_ar: 'حالة موافقة التخطيط',
+                  options: [
+                    { value: 'approved',    label_ar: 'معتمدة' },
+                    { value: 'pending',     label_ar: 'قيد المراجعة' },
+                    { value: 'unavailable', label_ar: 'غير متوفرة' },
+                    { value: 'unknown',     label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'area_regulatory_plan',     field_type: 'str', label_ar: 'المخطط التنظيمي للمنطقة',  valid_values: [], group: '', ui_required: false },
+                { name: 'nearby_development_stage', field_type: 'str', label_ar: 'مرحلة التطوير المحيط',
+                  options: [
+                    { value: 'developed',  label_ar: 'منطقة متطورة' },
+                    { value: 'developing', label_ar: 'قيد التطوير' },
+                    { value: 'raw_land',   label_ar: 'أرض خام' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'مستندات إضافية', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'ld_transaction_cert',   field_type: 'bool', label_ar: 'شهادة تصرفات',                  group: 'document', valid_values: [], ui_required: false },
+                { name: 'ld_regulatory_plan',    field_type: 'bool', label_ar: 'المخطط التنظيمي',               group: 'document', valid_values: [], ui_required: false },
+                { name: 'ld_planning_approval',  field_type: 'bool', label_ar: 'موافقة التخطيط (إن وجدت)',     group: 'document', valid_values: [], ui_required: false },
+                { name: 'ld_infrastructure_est', field_type: 'bool', label_ar: 'مقايسة بنية تحتية (إن وجدت)',  group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ],
+    };
+
+    function _renderSupplemental(registryCode) {
+        var suppEl = document.getElementById('es-req-supp');
+        if (!suppEl) return;
+        var schemas = _SUPPLEMENTAL_SCHEMAS[registryCode];
+        if (!schemas || !schemas.length) { suppEl.innerHTML = ''; return; }
+        var heading = registryCode === 'land'
+            ? 'بيانات تفصيلية تكميلية للأرض'
+            : 'بيانات تفصيلية تكميلية';
+        var html = '<div id="es-req-supp-header" style="border-top:1px solid #374151;margin-top:12px;padding-top:10px;">';
+        html += '<div style="font-size:0.78rem;font-weight:600;color:#9ca3af;margin-bottom:8px;">'
+            + heading
+            + '<span style="font-size:0.67rem;color:#6b7280;margin-right:8px;">(إدخال محلّي — لا تُرسَل للـ API)</span></div>';
+        schemas.forEach(function(sec) {
+            html += _suppSectionControlsHTML(sec.heading, sec.color || '#6b7280', sec.desc || '', sec.fields);
+        });
+        html += '</div>';
+        suppEl.innerHTML = html;
+        _attachSupplementalDraftCollector();
+    }
 
     // ── Phase 8K/8N: Generic renderer — distributes schema sections to panel slots ─
     function _renderProfileSections(profile, s1El, s2El, s3El, s4El) {
@@ -7417,6 +7925,8 @@ function _showIndexToast(msg, type) {
         if (bodyEl)  bodyEl.style.display = '';
         if (s4El)    { s4El.removeAttribute('data-es-section'); s4El.style.cssText = ''; }
         if (notesEl) notesEl.textContent = '';
+        var suppElS = document.getElementById('es-req-supp');
+        if (suppElS) suppElS.innerHTML = '';
 
         if (config.type === 'form') {
             // Phase 8K: structured inline form for specialized asset types

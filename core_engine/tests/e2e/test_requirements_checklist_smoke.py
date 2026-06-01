@@ -222,6 +222,60 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS205 — (8P) intangible selection does NOT show login modal
   CS206 — (8P) login modal remains in DOM (structure preservation)
   CS207 — (8P) no composite_valuation.html link in panel (Phase 8O regression guard)
+
+  CS208 — (8Q) أرض زراعية routes as static; badge shows 'نموذج محلي' (not API-driven)
+  CS209 — (8Q) أرض زراعية makes ZERO API calls to /api/valuation/requirements
+  CS210 — (8Q) أرض زراعية panel title contains 'أرض زراعية'
+  CS211 — (8Q) أرض زراعية panel renders inline form controls
+  CS212 — (8Q) أرض زراعية panel has no composite link
+  CS213 — (8Q) ag_area_sqm renders as number input in agricultural_land form
+  CS214 — (8Q) ag_soil_type select renders with Arabic options
+  CS215 — (8Q) ag_water_source_type select renders with Arabic options
+  CS216 — (8Q) ag_irrigation_system select renders with Arabic options
+  CS217 — (8Q) ag_annual_cultivation_cost renders as number input (unit ج.م./سنة)
+  CS218 — (8Q) agricultural_land form shows upload hint text
+  CS219 — (8Q) ag_farm_buildings_available renders as bool select (نعم/لا)
+  CS220 — (8Q) no JS console errors on agricultural_land render
+
+  CS221 — (8Q) شقة سكنية API panel: #es-req-supp receives supplemental sections
+  CS222 — (8Q) residential supp heading 'بيانات الوحدة التفصيلية' visible
+  CS223 — (8Q) es-supp-field-unit_type select renders with Arabic options
+  CS224 — (8Q) es-supp-field-bedrooms_count number input present in residential supp
+  CS225 — (8Q) es-supp-field-visible_defects checkbox group rendered (cracks option)
+  CS226 — (8Q) es-supp-field-utilities_connected checkbox group rendered
+  CS227 — (8Q) residential supp doc section shows upload hint text
+  CS228 — (8Q) es-supp-field-ru_building_permit document checkbox present
+  CS229 — (8Q) es-supp-field-occupancy_status select renders in residential supp
+  CS230 — (8Q) #es-req-supp only uses data-es-supp-field (no data-es-req-field) for residential
+  CS231 — (8Q) residential supp header shows '(إدخال محلّي — لا تُرسَل للـ API)' text
+  CS232 — (8Q) switching residential → factory clears #es-req-supp
+  CS233 — (8Q) es-supp-field-maintenance_level select renders in residential supp
+
+  CS234 — (8Q) أرض فضاء API panel: #es-req-supp receives land supplemental sections
+  CS235 — (8Q) land supp heading 'بيانات الأرض التفصيلية' visible
+  CS236 — (8Q) es-supp-field-land_area_feddan number input present
+  CS237 — (8Q) es-supp-field-shape_regular select renders in land supp
+  CS238 — (8Q) es-supp-field-far_ratio number input present in land supp
+  CS239 — (8Q) es-supp-field-main_street_width_m number input present
+  CS240 — (8Q) es-supp-field-regulatory_compliance select renders in land supp
+  CS241 — (8Q) es-supp-field-ld_transaction_cert document checkbox present
+  CS242 — (8Q) land #es-req-supp only uses data-es-supp-field (no data-es-req-field)
+  CS243 — (8Q) land supp header shows 'بيانات تفصيلية تكميلية للأرض'
+  CS244 — (8Q) es-supp-field-infrastructure_development_cost number input in land supp
+  CS245 — (8Q) land supp header shows '(إدخال محلّي)' text
+
+  CS246 — (8Q) عمارة سكنية (static) #es-req-supp is empty (no supplemental for static)
+  CS247 — (8Q) تجاري (commercial API) #es-req-supp is empty (no schema for commercial)
+  CS248 — (8Q) switching residential → عمارة سكنية clears #es-req-supp
+  CS249 — (8Q) switching land → مصنع clears #es-req-supp
+  CS250 — (8Q) residential supp has no es-supp-field-area_sqm (no API field duplication)
+  CS251 — (8Q) residential supp has no es-supp-field-floor_number (no API field duplication)
+  CS252 — (8Q) land supp has no es-supp-field-land_area_sqm (no API field duplication)
+  CS253 — (8Q) land supp has no es-supp-field-frontage_m (no API field duplication)
+  CS254 — (8Q) no data-es-req-field elements in #es-req-supp for residential
+  CS255 — (8Q) no data-es-req-field elements in #es-req-supp for land
+  CS256 — (8Q) agricultural_land shows 'مصادر المياه والري' section heading
+  CS257 — (8Q) ag_soil_fertility select renders with Arabic options in agricultural_land
 """
 from __future__ import annotations
 
@@ -3878,4 +3932,676 @@ def test_CS207_no_composite_link_regression(page: Page, live_server: str) -> Non
     panel_html = page.locator("#es-req-panel").inner_html()
     assert "composite_valuation.html" not in panel_html, (
         "composite_valuation.html must not appear in requirements panel (Phase 8O regression)"
+    )
+
+
+# ══ Phase 8Q — Agricultural Land Static Profile + Supplemental Local Intake (CS208–CS257) ══
+
+
+def _load_agricultural_land(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_residential_supp(page: Page, live_server: str) -> None:
+    """Load شقة سكنية with mocked API and valid session — populates #es-req-supp."""
+    _mock_req(page, _RESIDENTIAL_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+
+def _load_land_supp(page: Page, live_server: str) -> None:
+    """Load أرض فضاء with mocked API and valid session — populates #es-req-supp."""
+    _mock_req(page, _LAND_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS208 ─────────────────────────────────────────────────────────────────────
+
+def test_CS208_agricultural_land_routes_as_static_form(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض زراعية routes as static profile; badge shows 'نموذج محلي', not API-driven."""
+    _load_agricultural_land(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"أرض زراعية must show badge 'نموذج محلي'. Got: {badge.inner_text()!r}"
+    )
+
+
+# ── CS209 ─────────────────────────────────────────────────────────────────────
+
+def test_CS209_agricultural_land_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض زراعية must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"أرض زراعية must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS210 ─────────────────────────────────────────────────────────────────────
+
+def test_CS210_agricultural_land_title_contains_arabic_name(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض زراعية panel title contains 'أرض زراعية'."""
+    _load_agricultural_land(page, live_server)
+    title_text = page.locator("#es-req-title").inner_text()
+    assert "أرض زراعية" in title_text, (
+        f"agricultural_land title must contain 'أرض زراعية'. Got: {title_text!r}"
+    )
+
+
+# ── CS211 ─────────────────────────────────────────────────────────────────────
+
+def test_CS211_agricultural_land_renders_form_controls(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض زراعية panel renders inline input and select controls."""
+    _load_agricultural_land(page, live_server)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"agricultural_land panel must render form controls. Got {count} controls."
+    )
+
+
+# ── CS212 ─────────────────────────────────────────────────────────────────────
+
+def test_CS212_agricultural_land_has_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض زراعية panel has no composite_valuation.html link."""
+    _load_agricultural_land(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "agricultural_land panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS213 ─────────────────────────────────────────────────────────────────────
+
+def test_CS213_agricultural_land_ag_area_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_area_sqm renders as a number input in agricultural_land form."""
+    _load_agricultural_land(page, live_server)
+    field = page.locator("#es-req-field-ag_area_sqm")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"ag_area_sqm must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS214 ─────────────────────────────────────────────────────────────────────
+
+def test_CS214_agricultural_land_ag_soil_type_select_arabic(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_soil_type select renders with Arabic options."""
+    _load_agricultural_land(page, live_server)
+    sel = page.locator("#es-req-field-ag_soil_type")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("طيني" in o or "رملي" in o or "طمي" in o for o in opts), (
+        f"ag_soil_type must have Arabic soil type options. Got: {opts}"
+    )
+
+
+# ── CS215 ─────────────────────────────────────────────────────────────────────
+
+def test_CS215_agricultural_land_ag_water_source_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_water_source_type select renders with Arabic options."""
+    _load_agricultural_land(page, live_server)
+    sel = page.locator("#es-req-field-ag_water_source_type")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert len(opts) >= 3, (
+        f"ag_water_source_type must have ≥3 options. Got: {opts}"
+    )
+
+
+# ── CS216 ─────────────────────────────────────────────────────────────────────
+
+def test_CS216_agricultural_land_ag_irrigation_system_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_irrigation_system select renders with Arabic options."""
+    _load_agricultural_land(page, live_server)
+    sel = page.locator("#es-req-field-ag_irrigation_system")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("غمر" in o or "تنقيط" in o or "رش" in o for o in opts), (
+        f"ag_irrigation_system must have Arabic irrigation options. Got: {opts}"
+    )
+
+
+# ── CS217 ─────────────────────────────────────────────────────────────────────
+
+def test_CS217_agricultural_land_cultivation_cost_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_annual_cultivation_cost renders as number input; unit ج.م./سنة visible."""
+    _load_agricultural_land(page, live_server)
+    field = page.locator("#es-req-field-ag_annual_cultivation_cost")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"ag_annual_cultivation_cost must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ج.م." in panel_text, (
+        f"agricultural_land panel must show ج.م. unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS218 ─────────────────────────────────────────────────────────────────────
+
+def test_CS218_agricultural_land_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8Q: agricultural_land form shows upload hint text."""
+    _load_agricultural_land(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"agricultural_land panel must show upload hint. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS219 ─────────────────────────────────────────────────────────────────────
+
+def test_CS219_agricultural_land_farm_buildings_bool_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_farm_buildings_available renders as bool select with نعم/لا options."""
+    _load_agricultural_land(page, live_server)
+    sel = page.locator("#es-req-field-ag_farm_buildings_available")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("نعم" in o for o in opts), (
+        f"ag_farm_buildings_available must have 'نعم' option. Got: {opts}"
+    )
+    assert any("لا" in o for o in opts), (
+        f"ag_farm_buildings_available must have 'لا' option. Got: {opts}"
+    )
+
+
+# ── CS220 ─────────────────────────────────────────────────────────────────────
+
+def test_CS220_agricultural_land_no_js_console_errors(page: Page, live_server: str) -> None:
+    """Phase 8Q: no JS console errors when rendering agricultural_land form."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    _load_agricultural_land(page, live_server)
+    assert len(errors) == 0, (
+        f"JS console errors during agricultural_land render: {errors}"
+    )
+
+
+# ── CS221 ─────────────────────────────────────────────────────────────────────
+
+def test_CS221_residential_supp_section_rendered(page: Page, live_server: str) -> None:
+    """Phase 8Q: شقة سكنية API panel — #es-req-supp receives supplemental content."""
+    _load_residential_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    expect(supp).to_be_attached()
+    supp_html = supp.inner_html().strip()
+    assert supp_html != "", (
+        "شقة سكنية panel must populate #es-req-supp with supplemental content"
+    )
+
+
+# ── CS222 ─────────────────────────────────────────────────────────────────────
+
+def test_CS222_residential_supp_heading_unit_detail(page: Page, live_server: str) -> None:
+    """Phase 8Q: residential supp heading 'بيانات الوحدة التفصيلية' is visible."""
+    _load_residential_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "بيانات الوحدة التفصيلية" in supp_text, (
+        f"Residential supp must show heading 'بيانات الوحدة التفصيلية'. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS223 ─────────────────────────────────────────────────────────────────────
+
+def test_CS223_residential_supp_unit_type_select_arabic(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-unit_type select renders with Arabic options."""
+    _load_residential_supp(page, live_server)
+    sel = page.locator("#es-supp-field-unit_type")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("شقة" in o or "فيلا" in o or "ستوديو" in o for o in opts), (
+        f"unit_type supp select must have Arabic unit options. Got: {opts}"
+    )
+
+
+# ── CS224 ─────────────────────────────────────────────────────────────────────
+
+def test_CS224_residential_supp_bedrooms_count_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-bedrooms_count renders as number input in residential supp."""
+    _load_residential_supp(page, live_server)
+    field = page.locator("#es-supp-field-bedrooms_count")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"bedrooms_count supp field must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS225 ─────────────────────────────────────────────────────────────────────
+
+def test_CS225_residential_supp_visible_defects_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-visible_defects-cracks checkbox present in residential supp."""
+    _load_residential_supp(page, live_server)
+    field = page.locator("#es-supp-field-visible_defects-cracks")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "checkbox", (
+        f"visible_defects cracks chip must be checkbox. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS226 ─────────────────────────────────────────────────────────────────────
+
+def test_CS226_residential_supp_utilities_connected_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-utilities_connected checkbox group rendered in residential supp."""
+    _load_residential_supp(page, live_server)
+    field = page.locator("#es-supp-field-utilities_connected-electricity")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "checkbox", (
+        f"utilities_connected electricity chip must be checkbox. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS227 ─────────────────────────────────────────────────────────────────────
+
+def test_CS227_residential_supp_doc_section_shows_upload_hint(page: Page, live_server: str) -> None:
+    """Phase 8Q: residential supp document section shows upload hint text."""
+    _load_residential_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "ارفع المستندات" in supp_text, (
+        f"Residential supp must show upload hint. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS228 ─────────────────────────────────────────────────────────────────────
+
+def test_CS228_residential_supp_building_permit_doc_checkbox(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-ru_building_permit document checkbox present in residential supp."""
+    _load_residential_supp(page, live_server)
+    field = page.locator("#es-supp-field-ru_building_permit")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "checkbox", (
+        f"ru_building_permit supp field must be checkbox. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS229 ─────────────────────────────────────────────────────────────────────
+
+def test_CS229_residential_supp_occupancy_status_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-occupancy_status select renders in residential supp."""
+    _load_residential_supp(page, live_server)
+    sel = page.locator("#es-supp-field-occupancy_status")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("شاغر" in o or "مستأجر" in o for o in opts), (
+        f"occupancy_status supp select must have Arabic options. Got: {opts}"
+    )
+
+
+# ── CS230 ─────────────────────────────────────────────────────────────────────
+
+def test_CS230_residential_supp_uses_supp_field_attr_not_req_field(page: Page, live_server: str) -> None:
+    """Phase 8Q: #es-req-supp only has data-es-supp-field attrs (no data-es-req-field) for residential."""
+    _load_residential_supp(page, live_server)
+    supp_req_count = page.locator("#es-req-supp [data-es-req-field]").count()
+    supp_supp_count = page.locator("#es-req-supp [data-es-supp-field]").count()
+    assert supp_req_count == 0, (
+        f"#es-req-supp must have NO data-es-req-field attrs. Got {supp_req_count}."
+    )
+    assert supp_supp_count > 0, (
+        "#es-req-supp must have data-es-supp-field attrs present."
+    )
+
+
+# ── CS231 ─────────────────────────────────────────────────────────────────────
+
+def test_CS231_residential_supp_header_shows_local_input_label(page: Page, live_server: str) -> None:
+    """Phase 8Q: residential supp header shows '(إدخال محلّي — لا تُرسَل للـ API)' text."""
+    _load_residential_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلّي" in supp_text, (
+        f"Residential supp must show 'إدخال محلّي' label. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS232 ─────────────────────────────────────────────────────────────────────
+
+def test_CS232_switching_residential_to_factory_clears_supp(page: Page, live_server: str) -> None:
+    """Phase 8Q: switching from residential → factory clears #es-req-supp."""
+    _load_residential_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.inner_html().strip() != "", "Supp must be populated before switch"
+    page.select_option("#asset-type", value="مصنع")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp_html = supp.inner_html().strip()
+    assert supp_html == "", (
+        f"#es-req-supp must be empty after switching to factory. Got: {supp_html[:200]!r}"
+    )
+
+
+# ── CS233 ─────────────────────────────────────────────────────────────────────
+
+def test_CS233_residential_supp_maintenance_level_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-maintenance_level select renders in residential supp."""
+    _load_residential_supp(page, live_server)
+    sel = page.locator("#es-supp-field-maintenance_level")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("جيد" in o or "متوسط" in o or "مهمل" in o for o in opts), (
+        f"maintenance_level supp select must have Arabic options. Got: {opts}"
+    )
+
+
+# ── CS234 ─────────────────────────────────────────────────────────────────────
+
+def test_CS234_land_supp_section_rendered(page: Page, live_server: str) -> None:
+    """Phase 8Q: أرض فضاء API panel — #es-req-supp receives land supplemental sections."""
+    _load_land_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    expect(supp).to_be_attached()
+    supp_html = supp.inner_html().strip()
+    assert supp_html != "", (
+        "أرض فضاء panel must populate #es-req-supp with supplemental content"
+    )
+
+
+# ── CS235 ─────────────────────────────────────────────────────────────────────
+
+def test_CS235_land_supp_heading_land_detail(page: Page, live_server: str) -> None:
+    """Phase 8Q: land supp heading 'بيانات الأرض التفصيلية' is visible."""
+    _load_land_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "بيانات الأرض التفصيلية" in supp_text, (
+        f"Land supp must show heading 'بيانات الأرض التفصيلية'. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS236 ─────────────────────────────────────────────────────────────────────
+
+def test_CS236_land_supp_area_feddan_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-land_area_feddan renders as number input in land supp."""
+    _load_land_supp(page, live_server)
+    field = page.locator("#es-supp-field-land_area_feddan")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"land_area_feddan supp field must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS237 ─────────────────────────────────────────────────────────────────────
+
+def test_CS237_land_supp_shape_regular_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-shape_regular select renders in land supp."""
+    _load_land_supp(page, live_server)
+    sel = page.locator("#es-supp-field-shape_regular")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("منتظمة" in o or "ركنية" in o for o in opts), (
+        f"shape_regular supp select must have Arabic shape options. Got: {opts}"
+    )
+
+
+# ── CS238 ─────────────────────────────────────────────────────────────────────
+
+def test_CS238_land_supp_far_ratio_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-far_ratio renders as number input in land supp."""
+    _load_land_supp(page, live_server)
+    field = page.locator("#es-supp-field-far_ratio")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"far_ratio supp field must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS239 ─────────────────────────────────────────────────────────────────────
+
+def test_CS239_land_supp_main_street_width_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-main_street_width_m renders as number input in land supp."""
+    _load_land_supp(page, live_server)
+    field = page.locator("#es-supp-field-main_street_width_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"main_street_width_m supp field must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS240 ─────────────────────────────────────────────────────────────────────
+
+def test_CS240_land_supp_regulatory_compliance_select(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-regulatory_compliance select renders in land supp."""
+    _load_land_supp(page, live_server)
+    sel = page.locator("#es-supp-field-regulatory_compliance")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("ملتزم" in o or "مخالفة" in o for o in opts), (
+        f"regulatory_compliance supp select must have Arabic options. Got: {opts}"
+    )
+
+
+# ── CS241 ─────────────────────────────────────────────────────────────────────
+
+def test_CS241_land_supp_ld_transaction_cert_doc_checkbox(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-ld_transaction_cert document checkbox present in land supp."""
+    _load_land_supp(page, live_server)
+    field = page.locator("#es-supp-field-ld_transaction_cert")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "checkbox", (
+        f"ld_transaction_cert supp field must be checkbox. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS242 ─────────────────────────────────────────────────────────────────────
+
+def test_CS242_land_supp_uses_supp_field_attr_not_req_field(page: Page, live_server: str) -> None:
+    """Phase 8Q: land #es-req-supp only has data-es-supp-field attrs (no data-es-req-field)."""
+    _load_land_supp(page, live_server)
+    supp_req_count = page.locator("#es-req-supp [data-es-req-field]").count()
+    supp_supp_count = page.locator("#es-req-supp [data-es-supp-field]").count()
+    assert supp_req_count == 0, (
+        f"Land #es-req-supp must have NO data-es-req-field attrs. Got {supp_req_count}."
+    )
+    assert supp_supp_count > 0, (
+        "Land #es-req-supp must have data-es-supp-field attrs present."
+    )
+
+
+# ── CS243 ─────────────────────────────────────────────────────────────────────
+
+def test_CS243_land_supp_header_shows_land_supplemental_heading(page: Page, live_server: str) -> None:
+    """Phase 8Q: land supp header shows 'بيانات تفصيلية تكميلية للأرض'."""
+    _load_land_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "بيانات تفصيلية تكميلية للأرض" in supp_text, (
+        f"Land supp must show 'بيانات تفصيلية تكميلية للأرض'. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS244 ─────────────────────────────────────────────────────────────────────
+
+def test_CS244_land_supp_infrastructure_cost_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Q: es-supp-field-infrastructure_development_cost renders as number input."""
+    _load_land_supp(page, live_server)
+    field = page.locator("#es-supp-field-infrastructure_development_cost")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"infrastructure_development_cost supp field must be number input. "
+        f"Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS245 ─────────────────────────────────────────────────────────────────────
+
+def test_CS245_land_supp_header_shows_local_input_label(page: Page, live_server: str) -> None:
+    """Phase 8Q: land supp shows '(إدخال محلّي)' marker indicating local-only data."""
+    _load_land_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلّي" in supp_text, (
+        f"Land supp must show 'إدخال محلّي' label. Got: {supp_text[:400]!r}"
+    )
+
+
+# ── CS246 ─────────────────────────────────────────────────────────────────────
+
+def test_CS246_building_full_static_supp_is_empty(page: Page, live_server: str) -> None:
+    """Phase 8Q: عمارة سكنية (static profile) — #es-req-supp must be empty."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp_html = page.locator("#es-req-supp").inner_html().strip()
+    assert supp_html == "", (
+        f"عمارة سكنية (static) must not populate #es-req-supp. Got: {supp_html[:200]!r}"
+    )
+
+
+# ── CS247 ─────────────────────────────────────────────────────────────────────
+
+def test_CS247_commercial_api_supp_is_empty(page: Page, live_server: str) -> None:
+    """Phase 8Q: تجاري (commercial API) #es-req-supp is empty (no supplemental schema for commercial)."""
+    _mock_req(page, _COMMERCIAL_RESPONSE)
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="تجاري")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    supp_html = page.locator("#es-req-supp").inner_html().strip()
+    assert supp_html == "", (
+        f"تجاري (commercial) must not populate #es-req-supp. Got: {supp_html[:200]!r}"
+    )
+
+
+# ── CS248 ─────────────────────────────────────────────────────────────────────
+
+def test_CS248_switching_residential_to_building_full_clears_supp(page: Page, live_server: str) -> None:
+    """Phase 8Q: switching from residential → عمارة سكنية (static) clears #es-req-supp."""
+    _load_residential_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.inner_html().strip() != "", "Supp must be populated before switch"
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp_html = supp.inner_html().strip()
+    assert supp_html == "", (
+        f"#es-req-supp must be empty after switching to عمارة سكنية. Got: {supp_html[:200]!r}"
+    )
+
+
+# ── CS249 ─────────────────────────────────────────────────────────────────────
+
+def test_CS249_switching_land_to_factory_clears_supp(page: Page, live_server: str) -> None:
+    """Phase 8Q: switching from land (has supp) → مصنع (static) clears #es-req-supp."""
+    _load_land_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.inner_html().strip() != "", "Supp must be populated before switch"
+    page.select_option("#asset-type", value="مصنع")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp_html = supp.inner_html().strip()
+    assert supp_html == "", (
+        f"#es-req-supp must be empty after switching to مصنع. Got: {supp_html[:200]!r}"
+    )
+
+
+# ── CS250 ─────────────────────────────────────────────────────────────────────
+
+def test_CS250_residential_supp_no_duplicate_area_sqm(page: Page, live_server: str) -> None:
+    """Phase 8Q: residential supp must NOT contain es-supp-field-area_sqm (API field duplication guard)."""
+    _load_residential_supp(page, live_server)
+    count = page.locator("#es-supp-field-area_sqm").count()
+    assert count == 0, (
+        f"area_sqm must not appear as supp field (it's an API field). Got {count} occurrences."
+    )
+
+
+# ── CS251 ─────────────────────────────────────────────────────────────────────
+
+def test_CS251_residential_supp_no_duplicate_floor_number(page: Page, live_server: str) -> None:
+    """Phase 8Q: residential supp must NOT contain es-supp-field-floor_number (API field duplication guard)."""
+    _load_residential_supp(page, live_server)
+    count = page.locator("#es-supp-field-floor_number").count()
+    assert count == 0, (
+        f"floor_number must not appear as supp field (it's an API field). Got {count} occurrences."
+    )
+
+
+# ── CS252 ─────────────────────────────────────────────────────────────────────
+
+def test_CS252_land_supp_no_duplicate_land_area_sqm(page: Page, live_server: str) -> None:
+    """Phase 8Q: land supp must NOT contain es-supp-field-land_area_sqm (API field duplication guard)."""
+    _load_land_supp(page, live_server)
+    count = page.locator("#es-supp-field-land_area_sqm").count()
+    assert count == 0, (
+        f"land_area_sqm must not appear as supp field (it's an API field). Got {count} occurrences."
+    )
+
+
+# ── CS253 ─────────────────────────────────────────────────────────────────────
+
+def test_CS253_land_supp_no_duplicate_frontage_m(page: Page, live_server: str) -> None:
+    """Phase 8Q: land supp must NOT contain es-supp-field-frontage_m (API field duplication guard)."""
+    _load_land_supp(page, live_server)
+    count = page.locator("#es-supp-field-frontage_m").count()
+    assert count == 0, (
+        f"frontage_m must not appear as supp field (it's an API field). Got {count} occurrences."
+    )
+
+
+# ── CS254 ─────────────────────────────────────────────────────────────────────
+
+def test_CS254_residential_supp_no_data_es_req_field_in_supp(page: Page, live_server: str) -> None:
+    """Phase 8Q: no data-es-req-field elements in #es-req-supp for residential."""
+    _load_residential_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, (
+        f"#es-req-supp must not contain data-es-req-field attrs. Got {count}."
+    )
+
+
+# ── CS255 ─────────────────────────────────────────────────────────────────────
+
+def test_CS255_land_supp_no_data_es_req_field_in_supp(page: Page, live_server: str) -> None:
+    """Phase 8Q: no data-es-req-field elements in #es-req-supp for land."""
+    _load_land_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, (
+        f"Land #es-req-supp must not contain data-es-req-field attrs. Got {count}."
+    )
+
+
+# ── CS256 ─────────────────────────────────────────────────────────────────────
+
+def test_CS256_agricultural_land_water_section_heading(page: Page, live_server: str) -> None:
+    """Phase 8Q: agricultural_land panel shows 'مصادر المياه والري' section heading."""
+    _load_agricultural_land(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "مصادر المياه والري" in panel_text, (
+        f"agricultural_land must show 'مصادر المياه والري' heading. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS257 ─────────────────────────────────────────────────────────────────────
+
+def test_CS257_agricultural_land_soil_fertility_select_arabic(page: Page, live_server: str) -> None:
+    """Phase 8Q: ag_soil_fertility select renders with Arabic fertility options."""
+    _load_agricultural_land(page, live_server)
+    sel = page.locator("#es-req-field-ag_soil_fertility")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("عالية" in o or "متوسطة" in o or "منخفضة" in o for o in opts), (
+        f"ag_soil_fertility must have Arabic fertility options. Got: {opts}"
     )

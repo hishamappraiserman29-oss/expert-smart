@@ -1007,6 +1007,23 @@
     #es-req-panel details:not([open]) > summary::before { content: '▸ '; }
     /* ── End Phase 8L CSS ───────────────────────────────────────────────────── */
 
+    /* ── Phase 8M: Readability & unit/help polish (scoped) ─────────────────── */
+    #es-req-panel                                { font-size: 15px; }
+    #es-req-panel details > summary              { font-size: 1.05rem; font-weight: 700; }
+    #es-req-panel .es-field label                { font-size: 0.87rem; font-weight: 600; color: #e5e7eb; }
+    #es-req-panel .es-field input,
+    #es-req-panel .es-field select,
+    #es-req-panel .es-field textarea             { font-size: 0.88rem; color: #f3f4f6;
+                                                   border: 1px solid #6b7280; background: #0f172a; }
+    #es-req-panel .es-form-section               { background: rgba(15,23,42,0.95); border-color: #4b5563; }
+    #es-req-panel .es-chip                       { padding: 6px 10px; font-size: 0.82rem; }
+    #es-req-panel .es-field-unit                 { color: #9ca3af; font-size: 0.8rem;
+                                                   white-space: nowrap; flex-shrink: 0; }
+    #es-req-panel .es-field-help                 { color: #9ca3af; font-size: 0.8rem;
+                                                   margin-top: 3px; line-height: 1.4; }
+    #es-profile-explainer #es-profile-badge      { font-size: 0.75rem; letter-spacing: 0.02em; }
+    /* ── End Phase 8M CSS ───────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
@@ -1293,8 +1310,9 @@
                     <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
                     <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
                     <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
+                    <option value="water_well">بئر مياه / آبار جوفية</option>
                 </optgroup>
-                <optgroup label="أصول خاصة / غير مدعومة حالياً">
+                <optgroup label="أصول خاصة ومعقدة">
                     <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
                     <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
                     <option value="استثمارات تحت الإنشاء">استثمارات تحت الإنشاء (Investments Under Construction)</option>
@@ -5721,9 +5739,12 @@ function _showIndexToast(msg, type) {
         'مستشفى':                'hospital',
         'مدرسة':                 'school',
         'مناجم':                 'mine',
-        'أصول معنوية':           null,
-        'ملكيات جزئية':          null,
-        'استثمارات تحت الإنشاء': null,
+        'water_well':            'water_well',
+        'أصول معنوية':           'intangible',
+        'ملكيات جزئية':          'partial_interest',
+        'استثمارات تحت الإنشاء': 'under_construction',
+        'historical':            'historical',
+        'heritage':              'heritage',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5795,13 +5816,19 @@ function _showIndexToast(msg, type) {
 
     // ── Static profiles: profile code -> render config ────────────────────────
     var _STATIC_PROFILES = {
-        'building_full': { type: 'full', titleAr: 'عمارة سكنية' },
-        'hotel':     { type: 'form', titleAr: 'فندق / منتجع سياحي' },
-        'factory':   { type: 'form', titleAr: 'مصنع / صناعي / لوجستي' },
-        'retail':    { type: 'form', titleAr: 'تجزئة / محلات تجارية' },
-        'hospital':  { type: 'form', titleAr: 'مستشفى / مركز طبي' },
-        'school':    { type: 'form', titleAr: 'مدرسة / مرفق تعليمي' },
-        'mine':      { type: 'form', titleAr: 'منجم / آبار' },
+        'building_full':      { type: 'full', titleAr: 'عمارة سكنية' },
+        'hotel':              { type: 'form', titleAr: 'فندق / منتجع سياحي' },
+        'factory':            { type: 'form', titleAr: 'مصنع / صناعي / لوجستي' },
+        'retail':             { type: 'form', titleAr: 'تجزئة / محلات تجارية' },
+        'hospital':           { type: 'form', titleAr: 'مستشفى / مركز طبي' },
+        'school':             { type: 'form', titleAr: 'مدرسة / مرفق تعليمي' },
+        'mine':               { type: 'form', titleAr: 'منجم / آبار' },
+        'water_well':         { type: 'form', titleAr: 'بئر مياه / آبار جوفية' },
+        'intangible':         { type: 'form', titleAr: 'أصول معنوية' },
+        'partial_interest':   { type: 'form', titleAr: 'ملكيات جزئية' },
+        'under_construction': { type: 'form', titleAr: 'استثمارات تحت الإنشاء' },
+        'historical':         { type: 'form', titleAr: 'عقارات تاريخية' },
+        'heritage':           { type: 'form', titleAr: 'موروث ثقافي معماري' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5815,7 +5842,13 @@ function _showIndexToast(msg, type) {
         'retail':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'hospital': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'school':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'mine':     { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'mine':               { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'water_well':         { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'intangible':         { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'partial_interest':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'under_construction': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'historical':         { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'heritage':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -6022,15 +6055,20 @@ function _showIndexToast(msg, type) {
                 + '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + chips + '</div>'
                 + '</div>';
         }
-        // float / int → number input with generic placeholder
+        // float / int → number input with optional unit_ar suffix and help_ar hint (Phase 8M)
         if (f.field_type === 'float' || f.field_type === 'int' || f.field_type === 'number') {
             var stepAttr = f.field_type === 'float' ? ' step="any"' : '';
-            ctrlHtml = '<input type="number" id="' + fid + '" name="' + f.name + '"'
+            var numInput = '<input type="number" id="' + fid + '" name="' + f.name + '"'
                 + stepAttr
                 + ' data-es-req-field="' + f.name + '"'
                 + ' placeholder="أدخل القيمة"'
-                + ' style="' + inputCss + '">';
-            return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+                + ' style="' + inputCss + 'flex:1;">';
+            ctrlHtml = f.unit_ar
+                ? '<div style="display:flex;align-items:center;gap:6px;">' + numInput
+                  + '<span class="es-field-unit">' + f.unit_ar + '</span></div>'
+                : numInput;
+            var helpHtml8m = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtml8m + '</div>';
         }
         // str + valid_values → select; default option derived from label_ar
         if (f.valid_values && f.valid_values.length) {
@@ -6043,12 +6081,13 @@ function _showIndexToast(msg, type) {
                 + ' style="' + inputCss + '">' + opts + '</select>';
             return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
         }
-        // default → text input with generic placeholder
+        // default → text input with generic placeholder (help_ar supported, Phase 8M)
         ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
             + ' data-es-req-field="' + f.name + '"'
             + ' placeholder="أدخل القيمة"'
             + ' style="' + inputCss + '">';
-        return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+        var helpHtmlDefault = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+        return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtmlDefault + '</div>';
     }
 
     // ── Section card wrapper for structured form controls (Phase 8H.2D/8L) ─────
@@ -6543,6 +6582,404 @@ function _showIndexToast(msg, type) {
                 { name: 'mn_geological_report',    field_type: 'bool', label_ar: 'التقرير الجيولوجي',        group: 'document', valid_values: [], ui_required: false },
                 { name: 'mn_environmental_permit', field_type: 'bool', label_ar: 'التصريح البيئي',           group: 'document', valid_values: [], ui_required: false },
                 { name: 'mn_production_reports',   field_type: 'bool', label_ar: 'تقارير الإنتاج',           group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: water_well ──────────────────────────────────────────────
+        'water_well': { sections: [
+            { heading: 'الترخيص والموقع', color: '#6f82b3', desc: '', fields: [
+                { name: 'ww_license_number',  field_type: 'str',  label_ar: 'رقم الترخيص', valid_values: [], group: '', ui_required: true },
+                { name: 'ww_license_status',  field_type: 'str',  label_ar: 'حالة الترخيص',
+                  options: [
+                    { value: 'active',   label_ar: 'سارية' },
+                    { value: 'pending',  label_ar: 'قيد التجديد' },
+                    { value: 'expired',  label_ar: 'منتهية' },
+                    { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'ww_governorate',    field_type: 'str',  label_ar: 'المحافظة / المنطقة', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_coordinates',    field_type: 'str',  label_ar: 'الإحداثيات (GPS)', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_usage_type',     field_type: 'str',  label_ar: 'الاستخدام',
+                  options: [
+                    { value: 'drinking',    label_ar: 'شرب ومياه منزلية' },
+                    { value: 'irrigation',  label_ar: 'ري زراعي' },
+                    { value: 'industrial',  label_ar: 'صناعي' },
+                    { value: 'livestock',   label_ar: 'تربية ماشية' },
+                    { value: 'combined',    label_ar: 'متعدد الاستخدامات' },
+                    { value: 'unknown',     label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+            ]},
+            { heading: 'بيانات الإنتاج والأبعاد', color: '#6f82b3', desc: '', fields: [
+                { name: 'ww_depth_m',                 field_type: 'float', label_ar: 'عمق البئر',
+                  unit_ar: 'متر', help_ar: 'من منسوب سطح الأرض إلى قاع البئر',
+                  valid_values: [], group: '', ui_required: true },
+                { name: 'ww_diameter_m',              field_type: 'float', label_ar: 'قطر البئر',
+                  unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_daily_production_m3',     field_type: 'float', label_ar: 'الإنتاج اليومي',
+                  unit_ar: 'م³/يوم', valid_values: [], group: '', ui_required: true },
+                { name: 'ww_annual_production_m3',    field_type: 'float', label_ar: 'الإنتاج السنوي',
+                  unit_ar: 'م³/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_design_capacity_m3h',     field_type: 'float', label_ar: 'الطاقة التصميمية',
+                  unit_ar: 'م³/ساعة', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_static_water_level_m',    field_type: 'float', label_ar: 'منسوب المياه الساكن',
+                  unit_ar: 'متر', help_ar: 'العمق من السطح إلى سطح الماء بدون ضخ',
+                  valid_values: [], group: '', ui_required: false },
+                { name: 'ww_pumping_water_level_m',   field_type: 'float', label_ar: 'منسوب المياه عند الضخ',
+                  unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'جودة المياه', color: '#6f82b3', desc: '', fields: [
+                { name: 'ww_tds_ppm',                 field_type: 'float', label_ar: 'إجمالي المواد الذائبة (TDS)',
+                  unit_ar: 'ppm', help_ar: 'أقل من 500 ppm صالح للشرب',
+                  valid_values: [], group: '', ui_required: true },
+                { name: 'ww_water_quality_class',     field_type: 'str',  label_ar: 'تصنيف جودة المياه',
+                  options: [
+                    { value: 'potable',      label_ar: 'صالح للشرب' },
+                    { value: 'agricultural', label_ar: 'صالح للري' },
+                    { value: 'industrial',   label_ar: 'صناعي فقط' },
+                    { value: 'saline',       label_ar: 'مالح / مرتفع الأملاح' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'ww_last_analysis_date',      field_type: 'str',  label_ar: 'تاريخ آخر تحليل', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_chemical_analysis_avail', field_type: 'bool', label_ar: 'هل يتوفر تقرير التحليل الكيميائي؟', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المضخة والطاقة', color: '#6f82b3', desc: '', fields: [
+                { name: 'ww_pump_type',               field_type: 'str',  label_ar: 'نوع المضخة',
+                  options: [
+                    { value: 'submersible',  label_ar: 'غاطسة (Submersible)' },
+                    { value: 'surface',      label_ar: 'سطحية' },
+                    { value: 'turbine',      label_ar: 'توربينية' },
+                    { value: 'solar_pump',   label_ar: 'طاقة شمسية' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ww_pump_capacity_hp',        field_type: 'float', label_ar: 'طاقة المضخة',
+                  unit_ar: 'HP', valid_values: [], group: '', ui_required: false },
+                { name: 'ww_energy_source',           field_type: 'str',  label_ar: 'مصدر الطاقة',
+                  options: [
+                    { value: 'electricity_grid', label_ar: 'شبكة كهرباء' },
+                    { value: 'diesel',           label_ar: 'ديزل' },
+                    { value: 'solar',            label_ar: 'طاقة شمسية' },
+                    { value: 'hybrid',           label_ar: 'هجين' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ww_annual_operating_cost',   field_type: 'float', label_ar: 'تكلفة التشغيل السنوية',
+                  unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المخاطر والبيئة', color: '#6f82b3', desc: '', fields: [
+                { name: 'ww_salinity_risk',   field_type: 'str',  label_ar: 'خطر التملح',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' },
+                    { value: 'medium',  label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ww_depletion_risk',  field_type: 'str',  label_ar: 'خطر النضوب',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' },
+                    { value: 'medium',  label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'ww_legal_risk_notes', field_type: 'str', label_ar: 'ملاحظات قانونية / بيئية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'ww_well_permit',        field_type: 'bool', label_ar: 'رخصة حفر البئر',                group: 'document', valid_values: [], ui_required: true },
+                { name: 'ww_water_analysis_rpt', field_type: 'bool', label_ar: 'تقرير التحليل الكيميائي للمياه', group: 'document', valid_values: [], ui_required: true },
+                { name: 'ww_pump_specs',         field_type: 'bool', label_ar: 'مواصفات المضخة والمعدات',       group: 'document', valid_values: [], ui_required: false },
+                { name: 'ww_production_log',     field_type: 'bool', label_ar: 'سجلات الإنتاج',                 group: 'document', valid_values: [], ui_required: false },
+                { name: 'ww_ownership_deed',     field_type: 'bool', label_ar: 'وثيقة ملكية الأرض / العقد',    group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: intangible (أصول معنوية) ───────────────────────────────
+        'intangible': { sections: [
+            { heading: 'تفاصيل الأصل المعنوي', color: '#6f82b3', desc: '', fields: [
+                { name: 'it_asset_type',         field_type: 'str',  label_ar: 'نوع الأصل المعنوي',
+                  options: [
+                    { value: 'patent',       label_ar: 'براءة اختراع' },
+                    { value: 'trademark',    label_ar: 'علامة تجارية' },
+                    { value: 'franchise',    label_ar: 'امتياز تجاري' },
+                    { value: 'goodwill',     label_ar: 'شهرة المحل (Goodwill)' },
+                    { value: 'copyright',    label_ar: 'حقوق ملكية فكرية' },
+                    { value: 'database',     label_ar: 'قاعدة بيانات / رخصة برمجية' },
+                    { value: 'other',        label_ar: 'أخرى' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'it_asset_name',         field_type: 'str',  label_ar: 'اسم / وصف الأصل', valid_values: [], group: '', ui_required: true },
+                { name: 'it_owner_name',         field_type: 'str',  label_ar: 'اسم المالك / الجهة', valid_values: [], group: '', ui_required: false },
+                { name: 'it_registration_number',field_type: 'str',  label_ar: 'رقم التسجيل / البراءة', valid_values: [], group: '', ui_required: false },
+                { name: 'it_rights_duration_yr', field_type: 'float', label_ar: 'مدة الحقوق المتبقية',
+                  unit_ar: 'سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'it_expiry_date',        field_type: 'str',  label_ar: 'تاريخ انتهاء الحقوق', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الأساس القانوني والعائد', color: '#6f82b3', desc: '', fields: [
+                { name: 'it_legal_basis',         field_type: 'str',  label_ar: 'الأساس القانوني',
+                  options: [
+                    { value: 'registered_title', label_ar: 'ملكية مسجلة' },
+                    { value: 'contract',         label_ar: 'عقد أو اتفاقية' },
+                    { value: 'court_order',      label_ar: 'حكم قضائي' },
+                    { value: 'custom',           label_ar: 'عرف أو ممارسة' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'it_income_generating',   field_type: 'bool', label_ar: 'هل الأصل مُدرّ للدخل؟', valid_values: [], group: '', ui_required: false },
+                { name: 'it_annual_revenue',      field_type: 'float', label_ar: 'الإيرادات السنوية المقدرة',
+                  unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'it_valuation_method',    field_type: 'str',  label_ar: 'أسلوب التقييم المقترح',
+                  options: [
+                    { value: 'income',              label_ar: 'نهج الدخل' },
+                    { value: 'cost',                label_ar: 'نهج التكلفة' },
+                    { value: 'market',              label_ar: 'نهج المقارنة' },
+                    { value: 'relief_from_royalty', label_ar: 'إعفاء من الإتاوة' },
+                    { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'it_registration_cert', field_type: 'bool', label_ar: 'شهادة التسجيل / البراءة',   group: 'document', valid_values: [], ui_required: true },
+                { name: 'it_ownership_proof',   field_type: 'bool', label_ar: 'إثبات الملكية / العقد',     group: 'document', valid_values: [], ui_required: true },
+                { name: 'it_financial_records', field_type: 'bool', label_ar: 'سجلات مالية / إيرادات',    group: 'document', valid_values: [], ui_required: false },
+                { name: 'it_license_agreement', field_type: 'bool', label_ar: 'عقد الترخيص أو الامتياز', group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: partial_interest (ملكيات جزئية) ────────────────────────
+        'partial_interest': { sections: [
+            { heading: 'بيانات حصة الملكية', color: '#6f82b3', desc: '', fields: [
+                { name: 'pi_ownership_pct',      field_type: 'float', label_ar: 'نسبة الملكية',
+                  unit_ar: '%', help_ar: 'من 0 إلى 100',
+                  valid_values: [], group: '', ui_required: true },
+                { name: 'pi_interest_type',      field_type: 'str',  label_ar: 'نوع الحصة',
+                  options: [
+                    { value: 'joint_ownership',    label_ar: 'ملكية مشتركة' },
+                    { value: 'tenancy_in_common',  label_ar: 'شيوع' },
+                    { value: 'leasehold',          label_ar: 'حق انتفاع بالإيجار' },
+                    { value: 'usufruct',           label_ar: 'حق انتفاع' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'pi_total_owners_count', field_type: 'int',   label_ar: 'عدد الشركاء الإجمالي', valid_values: [], group: '', ui_required: false },
+                { name: 'pi_has_restrictions',   field_type: 'bool',  label_ar: 'هل توجد قيود على التصرف؟', valid_values: [], group: '', ui_required: false },
+                { name: 'pi_restriction_notes',  field_type: 'str',   label_ar: 'تفاصيل القيود', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'بيانات الأصل الأساسي', color: '#6f82b3', desc: '', fields: [
+                { name: 'pi_base_asset_type',  field_type: 'str',  label_ar: 'نوع الأصل الأساسي',
+                  options: [
+                    { value: 'residential_unit', label_ar: 'وحدة سكنية' },
+                    { value: 'land',             label_ar: 'أرض' },
+                    { value: 'commercial',       label_ar: 'تجاري' },
+                    { value: 'building',         label_ar: 'مبنى' },
+                    { value: 'other',            label_ar: 'أخرى' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'pi_base_asset_desc',  field_type: 'str',  label_ar: 'وصف الأصل الأساسي', valid_values: [], group: '', ui_required: false },
+                { name: 'pi_marketability',    field_type: 'str',  label_ar: 'قابلية التسويق',
+                  options: [
+                    { value: 'easy',     label_ar: 'سهلة' },
+                    { value: 'moderate', label_ar: 'متوسطة' },
+                    { value: 'difficult', label_ar: 'صعبة' },
+                    { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'pi_discount_notes',   field_type: 'str',  label_ar: 'ملاحظات خصم الحصة', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'pi_title_deed',        field_type: 'bool', label_ar: 'سند الملكية الأصلي',           group: 'document', valid_values: [], ui_required: true },
+                { name: 'pi_partition_deed',    field_type: 'bool', label_ar: 'وثيقة الحصة / القسمة',         group: 'document', valid_values: [], ui_required: true },
+                { name: 'pi_court_records',     field_type: 'bool', label_ar: 'سجلات المحكمة (إن وجدت)',      group: 'document', valid_values: [], ui_required: false },
+                { name: 'pi_owners_ids',        field_type: 'bool', label_ar: 'هويات جميع الشركاء',           group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: under_construction (استثمارات تحت الإنشاء) ─────────────
+        'under_construction': { sections: [
+            { heading: 'تفاصيل المشروع', color: '#6f82b3', desc: '', fields: [
+                { name: 'uc_project_type',     field_type: 'str',  label_ar: 'نوع المشروع',
+                  options: [
+                    { value: 'residential',  label_ar: 'سكني' },
+                    { value: 'commercial',   label_ar: 'تجاري' },
+                    { value: 'industrial',   label_ar: 'صناعي' },
+                    { value: 'mixed',        label_ar: 'مختلط' },
+                    { value: 'hotel',        label_ar: 'فندقي' },
+                    { value: 'other',        label_ar: 'أخرى' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'uc_project_name',     field_type: 'str',   label_ar: 'اسم المشروع', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_developer',        field_type: 'str',   label_ar: 'المطور / المقاول', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_total_area_sqm',   field_type: 'float', label_ar: 'المساحة الإجمالية',
+                  unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_location',         field_type: 'str',   label_ar: 'الموقع / الحي', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'حالة الإنجاز', color: '#6f82b3', desc: '', fields: [
+                { name: 'uc_completion_pct',   field_type: 'float', label_ar: 'نسبة الإنجاز',
+                  unit_ar: '%', help_ar: 'من 0 (لم يبدأ) إلى 100 (مكتمل)',
+                  valid_values: [], group: '', ui_required: true },
+                { name: 'uc_start_date',       field_type: 'str',   label_ar: 'تاريخ بدء الأعمال', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_expected_completion', field_type: 'str', label_ar: 'التاريخ المتوقع للإنجاز', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_current_stage',    field_type: 'str',   label_ar: 'المرحلة الحالية',
+                  options: [
+                    { value: 'foundation',    label_ar: 'أساسات' },
+                    { value: 'structure',     label_ar: 'هيكل' },
+                    { value: 'cladding',      label_ar: 'أعمال تكسية' },
+                    { value: 'finishing',     label_ar: 'تشطيبات' },
+                    { value: 'infrastructure',label_ar: 'بنية تحتية' },
+                    { value: 'handover',      label_ar: 'مرحلة التسليم' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التكاليف والتمويل', color: '#6f82b3', desc: '', fields: [
+                { name: 'uc_spent_cost',       field_type: 'float', label_ar: 'التكاليف المصروفة حتى الآن',
+                  unit_ar: 'جنيه', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_remaining_cost',   field_type: 'float', label_ar: 'التكاليف المتبقية للإنجاز',
+                  unit_ar: 'جنيه', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_financing_type',   field_type: 'str',   label_ar: 'نوع التمويل',
+                  options: [
+                    { value: 'self_funded',  label_ar: 'تمويل ذاتي' },
+                    { value: 'bank_loan',    label_ar: 'قرض بنكي' },
+                    { value: 'investor',     label_ar: 'تمويل مستثمرين' },
+                    { value: 'mixed',        label_ar: 'مختلط' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'uc_permits_obtained', field_type: 'bool',  label_ar: 'هل تم استخراج التصاريح اللازمة؟', valid_values: [], group: '', ui_required: false },
+                { name: 'uc_risk_notes',       field_type: 'str',   label_ar: 'مخاطر التأخير / تجاوز التكلفة', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'uc_building_permit',    field_type: 'bool', label_ar: 'رخصة البناء',                 group: 'document', valid_values: [], ui_required: true },
+                { name: 'uc_land_deed',          field_type: 'bool', label_ar: 'سند الأرض',                   group: 'document', valid_values: [], ui_required: true },
+                { name: 'uc_approved_drawings',  field_type: 'bool', label_ar: 'المخططات المعتمدة',            group: 'document', valid_values: [], ui_required: false },
+                { name: 'uc_progress_report',    field_type: 'bool', label_ar: 'تقرير تقدم الأعمال',          group: 'document', valid_values: [], ui_required: false },
+                { name: 'uc_cost_breakdown',     field_type: 'bool', label_ar: 'جدول التكاليف التفصيلي',      group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: historical (عقارات تاريخية) ────────────────────────────
+        'historical': { sections: [
+            { heading: 'بيانات العقار التاريخي', color: '#6f82b3', desc: '', fields: [
+                { name: 'hs_property_name',     field_type: 'str',   label_ar: 'اسم العقار / المبنى', valid_values: [], group: '', ui_required: false },
+                { name: 'hs_age_years',         field_type: 'int',   label_ar: 'العمر التقريبي',
+                  unit_ar: 'سنة', valid_values: [], group: '', ui_required: true },
+                { name: 'hs_original_use',      field_type: 'str',   label_ar: 'الاستخدام الأصلي',
+                  options: [
+                    { value: 'residential',   label_ar: 'سكني' },
+                    { value: 'commercial',    label_ar: 'تجاري' },
+                    { value: 'religious',     label_ar: 'ديني' },
+                    { value: 'governmental',  label_ar: 'حكومي / إداري' },
+                    { value: 'educational',   label_ar: 'تعليمي' },
+                    { value: 'military',      label_ar: 'عسكري' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hs_current_use',       field_type: 'str',   label_ar: 'الاستخدام الحالي',
+                  options: [
+                    { value: 'residential',   label_ar: 'سكني' },
+                    { value: 'commercial',    label_ar: 'تجاري' },
+                    { value: 'museum',        label_ar: 'متحف' },
+                    { value: 'heritage_site', label_ar: 'موقع تراثي' },
+                    { value: 'abandoned',     label_ar: 'مهجور' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hs_allowed_use',       field_type: 'str',   label_ar: 'الاستخدام المسموح به (حسب الترخيص)', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الحماية والقيود', color: '#6f82b3', desc: '', fields: [
+                { name: 'hs_protection_status', field_type: 'str',  label_ar: 'حالة الحماية',
+                  options: [
+                    { value: 'national_listed', label_ar: 'مدرج على القائمة الوطنية' },
+                    { value: 'local_listed',    label_ar: 'مدرج محلياً' },
+                    { value: 'proposed',        label_ar: 'مقترح للإدراج' },
+                    { value: 'not_listed',      label_ar: 'غير مدرج' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'hs_authority',         field_type: 'str',  label_ar: 'الجهة المشرفة على الحماية', valid_values: [], group: '', ui_required: false },
+                { name: 'hs_protection_grade',  field_type: 'str',  label_ar: 'درجة الحماية',
+                  options: [
+                    { value: 'grade_1', label_ar: 'درجة أولى (حماية كاملة)' },
+                    { value: 'grade_2', label_ar: 'درجة ثانية' },
+                    { value: 'grade_3', label_ar: 'درجة ثالثة' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hs_demolition_allowed',field_type: 'bool', label_ar: 'هل يُسمح بالهدم؟', valid_values: [], group: '', ui_required: false },
+                { name: 'hs_modification_level', field_type: 'str', label_ar: 'مستوى التعديل / الترميم المسموح',
+                  options: [
+                    { value: 'no_changes',      label_ar: 'لا يُسمح بأي تعديل' },
+                    { value: 'minor_repairs',   label_ar: 'إصلاحات طفيفة فقط' },
+                    { value: 'full_restoration',label_ar: 'ترميم كامل' },
+                    { value: 'adaptive_reuse',  label_ar: 'إعادة توظيف' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hs_construction_system', field_type: 'str', label_ar: 'نظام الإنشاء الأصلي',
+                  options: [
+                    { value: 'stone_masonry',  label_ar: 'حجارة طبيعية' },
+                    { value: 'brick',          label_ar: 'طوب' },
+                    { value: 'timber',         label_ar: 'خشب' },
+                    { value: 'rammed_earth',   label_ar: 'تراب مدكوك' },
+                    { value: 'mixed_historic', label_ar: 'مختلط تراثي' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hs_orig_elements_cond', field_type: 'str', label_ar: 'حالة العناصر الأصلية',
+                  options: [
+                    { value: 'excellent',         label_ar: 'ممتاز' },
+                    { value: 'good',              label_ar: 'جيد' },
+                    { value: 'average',           label_ar: 'متوسط' },
+                    { value: 'needs_maintenance', label_ar: 'يحتاج صيانة' },
+                    { value: 'poor',              label_ar: 'رديء' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'hs_title_deed',       field_type: 'bool', label_ar: 'سند الملكية',                   group: 'document', valid_values: [], ui_required: true },
+                { name: 'hs_heritage_cert',    field_type: 'bool', label_ar: 'شهادة أو قرار التسجيل التراثي', group: 'document', valid_values: [], ui_required: true },
+                { name: 'hs_historical_study', field_type: 'bool', label_ar: 'دراسة تاريخية / توثيق معماري',  group: 'document', valid_values: [], ui_required: false },
+                { name: 'hs_condition_survey', field_type: 'bool', label_ar: 'تقرير المسح والحالة الإنشائية', group: 'document', valid_values: [], ui_required: false },
+                { name: 'hs_restoration_plan', field_type: 'bool', label_ar: 'مخطط الترميم المعتمد',          group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ]},
+
+        // ── Phase 8M: heritage (موروث ثقافي معماري) ──────────────────────────
+        'heritage': { sections: [
+            { heading: 'البيانات الثقافية', color: '#6f82b3', desc: '', fields: [
+                { name: 'hr_cultural_category', field_type: 'str',  label_ar: 'تصنيف الموروث',
+                  options: [
+                    { value: 'architectural',     label_ar: 'معماري' },
+                    { value: 'archaeological',    label_ar: 'أثري' },
+                    { value: 'urban_landscape',   label_ar: 'منظر حضري تراثي' },
+                    { value: 'traditional_craft', label_ar: 'حرفة تقليدية' },
+                    { value: 'religious',         label_ar: 'ديني' },
+                    { value: 'other',             label_ar: 'أخرى' },
+                  ], valid_values: [], group: '', ui_required: true },
+                { name: 'hr_significance_desc',  field_type: 'str',  label_ar: 'وصف الأهمية الثقافية / التاريخية',
+                  help_ar: 'اشرح موجزاً لماذا يُعتبر هذا الموروث ذا قيمة',
+                  valid_values: [], group: '', ui_required: true },
+                { name: 'hr_age_period',         field_type: 'str',  label_ar: 'الحقبة الزمنية',
+                  help_ar: 'مثال: العصر الإسلامي، العصر العثماني، العصر الحديث',
+                  valid_values: [], group: '', ui_required: false },
+                { name: 'hr_geographic_scope',   field_type: 'str',  label_ar: 'النطاق الجغرافي للأهمية',
+                  options: [
+                    { value: 'building',    label_ar: 'مبنى واحد' },
+                    { value: 'district',    label_ar: 'حي / منطقة' },
+                    { value: 'urban_core',  label_ar: 'مركز مدني' },
+                    { value: 'region',      label_ar: 'إقليم / محافظة' },
+                    { value: 'national',    label_ar: 'وطني' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التصنيف الحمائي والاستخدام', color: '#6f82b3', desc: '', fields: [
+                { name: 'hr_protection_body',     field_type: 'str',  label_ar: 'هيئة الحماية / التسجيل', valid_values: [], group: '', ui_required: false },
+                { name: 'hr_international_status',field_type: 'str',  label_ar: 'التصنيف الدولي',
+                  options: [
+                    { value: 'unesco_wh',      label_ar: 'تراث عالمي يونسكو' },
+                    { value: 'tentative_list', label_ar: 'قائمة الترشيح اليونسكو' },
+                    { value: 'regional',       label_ar: 'إقليمي' },
+                    { value: 'national_only',  label_ar: 'وطني فقط' },
+                    { value: 'none',           label_ar: 'لا يوجد تصنيف دولي' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hr_demolition_restricted', field_type: 'bool', label_ar: 'هل توجد قيود على الهدم؟', valid_values: [], group: '', ui_required: false },
+                { name: 'hr_restoration_notes',    field_type: 'str',  label_ar: 'متطلبات الترميم والصيانة', valid_values: [], group: '', ui_required: false },
+                { name: 'hr_current_use',          field_type: 'str',  label_ar: 'الاستخدام الحالي',
+                  options: [
+                    { value: 'museum',        label_ar: 'متحف' },
+                    { value: 'heritage_site', label_ar: 'موقع تراثي مفتوح' },
+                    { value: 'residential',   label_ar: 'سكني' },
+                    { value: 'commercial',    label_ar: 'تجاري' },
+                    { value: 'abandoned',     label_ar: 'مهجور' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hr_allowed_use',          field_type: 'str',  label_ar: 'الاستخدام المسموح به', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'hr_title_deed',         field_type: 'bool', label_ar: 'سند الملكية',                  group: 'document', valid_values: [], ui_required: true },
+                { name: 'hr_heritage_listing',   field_type: 'bool', label_ar: 'قرار التسجيل كموروث ثقافي',    group: 'document', valid_values: [], ui_required: true },
+                { name: 'hr_cultural_study',     field_type: 'bool', label_ar: 'دراسة ثقافية / معمارية',       group: 'document', valid_values: [], ui_required: false },
+                { name: 'hr_condition_report',   field_type: 'bool', label_ar: 'تقرير الحالة الإنشائية',       group: 'document', valid_values: [], ui_required: false },
+                { name: 'hr_management_plan',    field_type: 'bool', label_ar: 'خطة إدارة الموقع / الصيانة',  group: 'document', valid_values: [], ui_required: false },
             ]},
         ]},
     };

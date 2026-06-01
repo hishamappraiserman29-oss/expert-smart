@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -12,7 +12,7 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS05 — core valuation UI elements still intact
   CS06 — "تجاري" (API-driven building_mixed) calls API; title contains "تجاري", not composite
   CS07 — land single mode: no method names appear anywhere in panel
-  CS08 — null-mapped asset type (أصول معنوية) shows soft message with continuation guidance
+  CS08 — (8M) intangible (أصول معنوية) now renders نموذج محلي form instead of unsupported message
   CS09 — section D is empty; no Arabic or raw method labels in single-mode panel
   CS10 — determinism: two reloads with same selection produce identical text
   CS11 — (8H.1) always-visible #cv-nav-link header link is absent; composite access is contextual only
@@ -83,7 +83,7 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS72 — (8I) selecting residential → explainer visible, badge contains مدعوم
   CS73 — (8I) selecting عمارة سكنية (building_full) → badge contains نموذج مركّب
   CS74 — (8K) selecting فندق (form profile) → badge contains نموذج محلي
-  CS75 — (8I) selecting unsupported type → badge contains غير مدعوم
+  CS75 — (8M) أصول معنوية is now a local form; badge shows 'نموذج محلي' not 'غير مدعوم'
   CS76 — (8K) selection change فندق → شقة سكنية updates explainer from نموذج محلي to مدعوم
   CS77 — (8I) <optgroup> elements present inside #asset-type
   CS78 — (8I) all 16 original option values still present in #asset-type unchanged
@@ -154,6 +154,22 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS140 — (8L) mine mn_extraction_method select with Arabic options
   CS141 — (8L) upload hint present in all 7 local profiles incl. building_full
   CS142 — (8L) no JS console errors on enriched building_full render
+
+  CS143 — (8M) water_well renders نموذج محلي form with structured sections
+  CS144 — (8M) water_well ww_license_number input present
+  CS145 — (8M) water_well ww_depth_m shows unit_ar 'متر'
+  CS146 — (8M) water_well ww_daily_production_m3 shows م³/يوم unit
+  CS147 — (8M) water_well ww_water_quality_class select renders with options
+  CS148 — (8M) water_well upload guidance present
+  CS149 — (8M) intangible form renders with it_asset_name field
+  CS150 — (8M) partial_interest form renders with pi_ownership_pct number input
+  CS151 — (8M) under_construction form renders with uc_completion_pct field
+  CS152 — (8M) historical form renders with hs_age_years number input
+  CS153 — (8M) heritage form renders with hr_cultural_category select
+  CS154 — (8M) all 6 new profiles show badge 'نموذج محلي'
+  CS155 — (8M) all 6 new profiles show upload guidance text
+  CS156 — (8M) help_ar renders below ww_depth_m in water_well form
+  CS157 — (8M) readability CSS es-field-unit and es-field-help rules present in HTML
 """
 from __future__ import annotations
 
@@ -465,8 +481,8 @@ def test_CS07_land_panel_renders_no_methods_anywhere(page: Page, live_server: st
 
 # ── CS08 ──────────────────────────────────────────────────────────────────────
 
-def test_CS08_unsupported_asset_type_shows_improved_soft_message(page: Page, live_server: str) -> None:
-    """Null-mapped asset type (أصول معنوية) shows soft message with continuation guidance."""
+def test_CS08_intangible_shows_local_form(page: Page, live_server: str) -> None:
+    """Phase 8M: intangible (أصول معنوية) now renders a نموذج محلي form, not an unsupported message."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
 
@@ -475,14 +491,16 @@ def test_CS08_unsupported_asset_type_shows_improved_soft_message(page: Page, liv
 
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
-    soft_msg = page.locator("#es-req-soft-msg")
-    expect(soft_msg).to_be_visible()
-    msg_text = soft_msg.inner_text()
-    assert "لا توجد" in msg_text, (
-        f"Soft message should contain 'لا توجد'. Got: {msg_text!r}"
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"intangible should show 'نموذج محلي' badge. Got: {badge.inner_text()!r}"
     )
-    assert _SOFT_MSG_FRAGMENT in msg_text, (
-        f"Soft message should contain continuation guidance '{_SOFT_MSG_FRAGMENT}'. Got: {msg_text!r}"
+    # Must NOT show the old "unsupported" soft message
+    soft_msg = page.locator("#es-req-soft-msg")
+    soft_text = soft_msg.inner_text().strip() if soft_msg.is_visible() else ""
+    assert "غير مدعوم" not in soft_text, (
+        f"intangible must not show unsupported message after 8M. Got: {soft_text!r}"
     )
 
 
@@ -1841,7 +1859,7 @@ def test_CS74_form_profile_selection_shows_local_form_badge(page: Page, live_ser
 # ── CS75 ──────────────────────────────────────────────────────────────────────
 
 def test_CS75_unsupported_selection_shows_unsupported_badge(page: Page, live_server: str) -> None:
-    """Phase 8I: selecting أصول معنوية (null-mapped, unsupported) shows 'غير مدعوم' badge."""
+    """Phase 8M: أصول معنوية is now a local form profile — badge shows 'نموذج محلي', not 'غير مدعوم'."""
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
     page.select_option("#asset-type", value="أصول معنوية")
@@ -1849,10 +1867,10 @@ def test_CS75_unsupported_selection_shows_unsupported_badge(page: Page, live_ser
     page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
 
     explainer = page.locator("#es-profile-explainer")
-    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting unsupported type"
+    assert explainer.is_visible(), "#es-profile-explainer must be visible after selecting أصول معنوية"
     badge_text = page.locator("#es-profile-badge").inner_text()
-    assert "غير مدعوم" in badge_text, (
-        f"Badge must contain 'غير مدعوم' for unsupported type. Got: {badge_text!r}"
+    assert "نموذج محلي" in badge_text, (
+        f"Badge must contain 'نموذج محلي' for intangible form. Got: {badge_text!r}"
     )
 
 
@@ -2822,3 +2840,276 @@ def test_CS142_no_js_console_errors_building_full_enriched(page: Page, live_serv
     assert len(errors) == 0, (
         f"JS console errors during enriched building_full render: {errors}"
     )
+
+
+# ── Phase 8M loaders ──────────────────────────────────────────────────────────
+
+def _load_water_well(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="water_well")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_intangible(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أصول معنوية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_partial_interest(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="ملكيات جزئية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_under_construction(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="استثمارات تحت الإنشاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_historical(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="historical")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_heritage(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS143 ─────────────────────────────────────────────────────────────────────
+
+def test_CS143_water_well_renders_local_form(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well renders نموذج محلي form with structured sections."""
+    _load_water_well(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"water_well must show 'نموذج محلي'. Got: {badge.inner_text()!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "الترخيص" in panel_text, (
+        f"water_well panel must contain 'الترخيص' section. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS144 ─────────────────────────────────────────────────────────────────────
+
+def test_CS144_water_well_license_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well ww_license_number input is rendered."""
+    _load_water_well(page, live_server)
+    field = page.locator("#es-req-field-ww_license_number")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "text", (
+        f"ww_license_number must be a text input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS145 ─────────────────────────────────────────────────────────────────────
+
+def test_CS145_water_well_depth_shows_unit_meter(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well ww_depth_m number input exists and unit 'متر' is visible."""
+    _load_water_well(page, live_server)
+    field = page.locator("#es-req-field-ww_depth_m")
+    expect(field).to_be_visible()
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"water_well panel must show unit 'متر' near depth field. Got: {panel_text[:600]!r}"
+    )
+
+
+# ── CS146 ─────────────────────────────────────────────────────────────────────
+
+def test_CS146_water_well_production_shows_m3_unit(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well ww_daily_production_m3 is present and م³ unit text visible."""
+    _load_water_well(page, live_server)
+    field = page.locator("#es-req-field-ww_daily_production_m3")
+    expect(field).to_be_visible()
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "م³" in panel_text, (
+        f"water_well panel must contain م³ unit text. Got: {panel_text[:600]!r}"
+    )
+
+
+# ── CS147 ─────────────────────────────────────────────────────────────────────
+
+def test_CS147_water_well_quality_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well ww_water_quality_class select renders with Arabic options."""
+    _load_water_well(page, live_server)
+    sel = page.locator("#es-req-field-ww_water_quality_class")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("صالح" in o for o in opts), (
+        f"ww_water_quality_class must have 'صالح' option. Got: {opts}"
+    )
+
+
+# ── CS148 ─────────────────────────────────────────────────────────────────────
+
+def test_CS148_water_well_upload_guidance_present(page: Page, live_server: str) -> None:
+    """Phase 8M: water_well panel shows upload guidance text."""
+    _load_water_well(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"water_well panel must show upload guidance. Got: {panel_text[:600]!r}"
+    )
+
+
+# ── CS149 ─────────────────────────────────────────────────────────────────────
+
+def test_CS149_intangible_renders_with_asset_name_field(page: Page, live_server: str) -> None:
+    """Phase 8M: intangible form renders and has it_asset_name text input."""
+    _load_intangible(page, live_server)
+    field = page.locator("#es-req-field-it_asset_name")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "text", (
+        f"it_asset_name must be text input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS150 ─────────────────────────────────────────────────────────────────────
+
+def test_CS150_partial_interest_ownership_pct_input(page: Page, live_server: str) -> None:
+    """Phase 8M: partial_interest form has pi_ownership_pct as a number input."""
+    _load_partial_interest(page, live_server)
+    field = page.locator("#es-req-field-pi_ownership_pct")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"pi_ownership_pct must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "%" in panel_text, (
+        f"partial_interest panel must show % unit. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS151 ─────────────────────────────────────────────────────────────────────
+
+def test_CS151_under_construction_completion_pct_field(page: Page, live_server: str) -> None:
+    """Phase 8M: under_construction form has uc_completion_pct and uc_spent_cost fields."""
+    _load_under_construction(page, live_server)
+    pct_field = page.locator("#es-req-field-uc_completion_pct")
+    expect(pct_field).to_be_visible()
+    cost_field = page.locator("#es-req-field-uc_spent_cost")
+    expect(cost_field).to_be_visible()
+
+
+# ── CS152 ─────────────────────────────────────────────────────────────────────
+
+def test_CS152_historical_age_years_input(page: Page, live_server: str) -> None:
+    """Phase 8M: historical form renders with hs_age_years number input."""
+    _load_historical(page, live_server)
+    field = page.locator("#es-req-field-hs_age_years")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"hs_age_years must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "الحماية" in panel_text, (
+        f"historical panel must contain 'الحماية' section. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS153 ─────────────────────────────────────────────────────────────────────
+
+def test_CS153_heritage_cultural_category_select(page: Page, live_server: str) -> None:
+    """Phase 8M: heritage form renders hr_cultural_category select with options."""
+    _load_heritage(page, live_server)
+    sel = page.locator("#es-req-field-hr_cultural_category")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("معماري" in o for o in opts), (
+        f"hr_cultural_category must have 'معماري' option. Got: {opts}"
+    )
+
+
+# ── CS154 ─────────────────────────────────────────────────────────────────────
+
+def test_CS154_all_six_new_profiles_show_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8M: all 6 new profiles show 'نموذج محلي' badge."""
+    loaders_and_names = [
+        (_load_water_well,        "water_well"),
+        (_load_intangible,        "intangible"),
+        (_load_partial_interest,  "partial_interest"),
+        (_load_under_construction,"under_construction"),
+        (_load_historical,        "historical"),
+        (_load_heritage,          "heritage"),
+    ]
+    for loader, name in loaders_and_names:
+        loader(page, live_server)
+        badge = page.locator("#es-profile-badge")
+        badge_text = badge.inner_text().strip() if badge.is_visible() else ""
+        assert badge_text == "نموذج محلي", (
+            f"Profile '{name}' must show 'نموذج محلي' badge. Got: {badge_text!r}"
+        )
+
+
+# ── CS155 ─────────────────────────────────────────────────────────────────────
+
+def test_CS155_all_six_new_profiles_show_upload_guidance(page: Page, live_server: str) -> None:
+    """Phase 8M: all 6 new profiles show upload guidance text."""
+    _HINT = "ارفع المستندات"
+    loaders_and_names = [
+        (_load_water_well,        "water_well"),
+        (_load_intangible,        "intangible"),
+        (_load_partial_interest,  "partial_interest"),
+        (_load_under_construction,"under_construction"),
+        (_load_historical,        "historical"),
+        (_load_heritage,          "heritage"),
+    ]
+    for loader, name in loaders_and_names:
+        loader(page, live_server)
+        panel_text = page.locator("#es-req-panel").inner_text()
+        assert _HINT in panel_text, (
+            f"Profile '{name}' must show upload hint. Got: {panel_text[:300]!r}"
+        )
+
+
+# ── CS156 ─────────────────────────────────────────────────────────────────────
+
+def test_CS156_help_ar_renders_below_depth_field(page: Page, live_server: str) -> None:
+    """Phase 8M: help_ar text renders below ww_depth_m in water_well form."""
+    _load_water_well(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "es-field-help" in panel_html, (
+        f"water_well panel must contain es-field-help element for help_ar. "
+        f"Got (first 800): {panel_html[:800]!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "من منسوب" in panel_text, (
+        f"help_ar text 'من منسوب' for ww_depth_m must be visible. Got: {panel_text[:600]!r}"
+    )
+
+
+# ── CS157 ─────────────────────────────────────────────────────────────────────
+
+def test_CS157_readability_css_classes_present(page: Page, live_server: str) -> None:
+    """Phase 8M: readability CSS classes es-field-unit and es-field-help are defined in the page."""
+    _load_water_well(page, live_server)
+    # Verify es-field-unit class appears in the rendered DOM (unit suffix present)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "es-field-unit" in panel_html, (
+        "es-field-unit class must appear in water_well rendered panel HTML"
+    )
+    assert "es-field-help" in panel_html, (
+        "es-field-help class must appear in water_well rendered panel HTML"
+    )
+    # Verify the CSS rule is present in the page source
+    page_source = page.content()
+    assert "es-field-unit" in page_source, "es-field-unit CSS rule must be in page source"
+    assert "es-field-help" in page_source, "es-field-help CSS rule must be in page source"

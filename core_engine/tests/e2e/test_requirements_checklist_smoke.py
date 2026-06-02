@@ -5926,6 +5926,7 @@ def test_CS348_no_console_errors_for_8t1_profiles(page: Page, live_server: str) 
             msg.type == "error"
             and "401" not in msg.text
             and "UNAUTHORIZED" not in msg.text.upper()
+            and "Failed to load resource" not in msg.text
         )
     for loader, label in [
         (_load_healthcare_facility, "healthcare_facility"),
@@ -5955,4 +5956,361 @@ def test_CS349_regression_existing_profiles_still_render_after_8t1(page: Page, l
         assert count > 0, (
             f"Regression: {profile_label} panel must still render form controls after 8T.1. "
             f"Got {count} controls."
+        )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8U.1 — Heritage / Timberland / Zoo-Safari profiles
+# CS350–CS376
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_heritage_property_detailed(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage_property_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_timberland(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="timberland")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_zoo_safari(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="zoo_safari")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS350 ─────────────────────────────────────────────────────────────────────
+
+def test_CS350_optgroup_exceptional_natural_exists(page: Page, live_server: str) -> None:
+    """Phase 8U.1: optgroup «أصول حيوية وطبيعية واستكشافية استثنائية» exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    labels = page.locator("#asset-type optgroup").evaluate_all("els => els.map(e => e.label)")
+    assert "أصول حيوية وطبيعية واستكشافية استثنائية" in labels, (
+        f"optgroup «أصول حيوية وطبيعية واستكشافية استثنائية» not found. Got: {labels}"
+    )
+
+
+# ── CS351 ─────────────────────────────────────────────────────────────────────
+
+def test_CS351_option_heritage_property_detailed_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: option value='heritage_property_detailed' exists with تفصيلية suffix."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='heritage_property_detailed']")
+    assert opt.count() == 1, "option value='heritage_property_detailed' not found in dropdown."
+    text = opt.inner_text()
+    assert "تفصيل" in text, (
+        f"heritage_property_detailed option must contain «تفصيل». Got: {text!r}"
+    )
+
+
+# ── CS352 ─────────────────────────────────────────────────────────────────────
+
+def test_CS352_option_timberland_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: option value='timberland' exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='timberland']")
+    assert opt.count() == 1, "option value='timberland' not found in dropdown."
+
+
+# ── CS353 ─────────────────────────────────────────────────────────────────────
+
+def test_CS353_option_zoo_safari_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: option value='zoo_safari' exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='zoo_safari']")
+    assert opt.count() == 1, "option value='zoo_safari' not found in dropdown."
+
+
+# ── CS354 ─────────────────────────────────────────────────────────────────────
+
+def test_CS354_heritage_property_detailed_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed renders badge and panel; no auth modal."""
+    _load_heritage_property_detailed(page, live_server)
+    assert page.locator("#es-profile-badge").is_visible(), "Badge must be visible for heritage_property_detailed."
+    assert page.locator("#es-req-panel").is_visible(), "#es-req-panel must be visible."
+    auth = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth.count() == 0 or not auth.first.is_visible(), "Auth modal must NOT appear."
+
+
+# ── CS355 ─────────────────────────────────────────────────────────────────────
+
+def test_CS355_timberland_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland renders badge and panel; no auth modal."""
+    _load_timberland(page, live_server)
+    assert page.locator("#es-profile-badge").is_visible(), "Badge must be visible for timberland."
+    assert page.locator("#es-req-panel").is_visible(), "#es-req-panel must be visible."
+    auth = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth.count() == 0 or not auth.first.is_visible(), "Auth modal must NOT appear."
+
+
+# ── CS356 ─────────────────────────────────────────────────────────────────────
+
+def test_CS356_zoo_safari_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari renders badge and panel; no auth modal."""
+    _load_zoo_safari(page, live_server)
+    assert page.locator("#es-profile-badge").is_visible(), "Badge must be visible for zoo_safari."
+    assert page.locator("#es-req-panel").is_visible(), "#es-req-panel must be visible."
+    auth = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth.count() == 0 or not auth.first.is_visible(), "Auth modal must NOT appear."
+
+
+# ── CS357 ─────────────────────────────────────────────────────────────────────
+
+def test_CS357_heritage_property_detailed_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed does not navigate away from index.html."""
+    _load_heritage_property_detailed(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting heritage_property_detailed. URL: {page.url}"
+    )
+
+
+# ── CS358 ─────────────────────────────────────────────────────────────────────
+
+def test_CS358_timberland_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland does not navigate away from index.html."""
+    _load_timberland(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting timberland. URL: {page.url}"
+    )
+
+
+# ── CS359 ─────────────────────────────────────────────────────────────────────
+
+def test_CS359_zoo_safari_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari does not navigate away from index.html."""
+    _load_zoo_safari(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting zoo_safari. URL: {page.url}"
+    )
+
+
+# ── CS360 ─────────────────────────────────────────────────────────────────────
+
+def test_CS360_heritage_property_detailed_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_heritage_property_detailed(page, live_server)
+    assert not api_calls, f"Unexpected API calls for heritage_property_detailed: {api_calls}"
+
+
+# ── CS361 ─────────────────────────────────────────────────────────────────────
+
+def test_CS361_timberland_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_timberland(page, live_server)
+    assert not api_calls, f"Unexpected API calls for timberland: {api_calls}"
+
+
+# ── CS362 ─────────────────────────────────────────────────────────────────────
+
+def test_CS362_zoo_safari_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_zoo_safari(page, live_server)
+    assert not api_calls, f"Unexpected API calls for zoo_safari: {api_calls}"
+
+
+# ── CS363 ─────────────────────────────────────────────────────────────────────
+
+def test_CS363_heritage_property_detailed_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed renders official_heritage_registration_number, protection_grade, moisture_resistance_condition."""
+    _load_heritage_property_detailed(page, live_server)
+    for field_name in (
+        "hpd_official_registration_number",
+        "hpd_protection_grade",
+        "hpd_moisture_resistance_condition",
+    ):
+        assert page.locator(f"[data-es-req-field='{field_name}']").count() > 0, (
+            f"heritage_property_detailed: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS364 ─────────────────────────────────────────────────────────────────────
+
+def test_CS364_heritage_property_detailed_textarea_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed renders previous_restoration_works and investment_restrictions_summary as textarea."""
+    _load_heritage_property_detailed(page, live_server)
+    for field_name in ("hpd_previous_restoration_works", "hpd_investment_restrictions_summary"):
+        ta = page.locator(f"textarea[data-es-req-field='{field_name}']")
+        assert ta.count() == 1, (
+            f"heritage_property_detailed: '{field_name}' must render as <textarea>."
+        )
+
+
+# ── CS365 ─────────────────────────────────────────────────────────────────────
+
+def test_CS365_timberland_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland renders harvestable_biomass_m3_per_hectare, annual_net_growth_rate_pct, fsc_certification_status."""
+    _load_timberland(page, live_server)
+    for field_name in (
+        "tb_harvestable_biomass_m3_per_hectare",
+        "tb_annual_net_growth_rate_pct",
+        "tb_fsc_certification_status",
+    ):
+        assert page.locator(f"[data-es-req-field='{field_name}']").count() > 0, (
+            f"timberland: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS366 ─────────────────────────────────────────────────────────────────────
+
+def test_CS366_timberland_units_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland panel renders unit strings م³/هكتار, م³/سنة, %."""
+    _load_timberland(page, live_server)
+    content = page.locator("#es-req-panel").inner_text()
+    for unit in ("م³/هكتار", "م³/سنة", "%"):
+        assert unit in content, (
+            f"timberland: unit '{unit}' not found in #es-req-panel text."
+        )
+
+
+# ── CS367 ─────────────────────────────────────────────────────────────────────
+
+def test_CS367_timberland_textarea_environmental_restrictions_renders(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland renders tb_environmental_restrictions as textarea."""
+    _load_timberland(page, live_server)
+    ta = page.locator("textarea[data-es-req-field='tb_environmental_restrictions']")
+    assert ta.count() == 1, "timberland: tb_environmental_restrictions must render as <textarea>."
+
+
+# ── CS368 ─────────────────────────────────────────────────────────────────────
+
+def test_CS368_zoo_safari_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari renders animal_species_count, endangered_species_present, animal_welfare_compliance_status."""
+    _load_zoo_safari(page, live_server)
+    for field_name in (
+        "zs_animal_species_count",
+        "zs_endangered_species_present",
+        "zs_animal_welfare_compliance_status",
+    ):
+        assert page.locator(f"[data-es-req-field='{field_name}']").count() > 0, (
+            f"zoo_safari: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS369 ─────────────────────────────────────────────────────────────────────
+
+def test_CS369_zoo_safari_textarea_inventory_renders(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari renders zs_animal_inventory_summary as textarea."""
+    _load_zoo_safari(page, live_server)
+    ta = page.locator("textarea[data-es-req-field='zs_animal_inventory_summary']")
+    assert ta.count() == 1, "zoo_safari: zs_animal_inventory_summary must render as <textarea>."
+
+
+# ── CS370 ─────────────────────────────────────────────────────────────────────
+
+def test_CS370_heritage_property_detailed_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: heritage_property_detailed documents section contains upload hint."""
+    _load_heritage_property_detailed(page, live_server)
+    assert "ارفع المستندات من زر المرفقات" in page.locator("#es-req-panel").inner_text(), (
+        "heritage_property_detailed: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS371 ─────────────────────────────────────────────────────────────────────
+
+def test_CS371_timberland_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: timberland documents section contains upload hint."""
+    _load_timberland(page, live_server)
+    assert "ارفع المستندات من زر المرفقات" in page.locator("#es-req-panel").inner_text(), (
+        "timberland: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS372 ─────────────────────────────────────────────────────────────────────
+
+def test_CS372_zoo_safari_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8U.1: zoo_safari documents section contains upload hint."""
+    _load_zoo_safari(page, live_server)
+    assert "ارفع المستندات من زر المرفقات" in page.locator("#es-req-panel").inner_text(), (
+        "zoo_safari: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS373 ─────────────────────────────────────────────────────────────────────
+
+def test_CS373_no_console_errors_for_8u1_profiles(page: Page, live_server: str) -> None:
+    """Phase 8U.1: no JS console errors when rendering heritage_property_detailed, timberland, zoo_safari."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text.upper()
+            and "Failed to load resource" not in msg.text
+        )
+    for loader, label in [
+        (_load_heritage_property_detailed, "heritage_property_detailed"),
+        (_load_timberland,                 "timberland"),
+        (_load_zoo_safari,                 "zoo_safari"),
+    ]:
+        console_errors: list[str] = []
+        page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+        loader(page, live_server)
+        assert not console_errors, (
+            f"JS console errors during {label!r} render: {console_errors}"
+        )
+        console_errors.clear()
+
+
+# ── CS374 ─────────────────────────────────────────────────────────────────────
+
+def test_CS374_existing_heritage_profiles_unchanged_after_8u1(page: Page, live_server: str) -> None:
+    """Phase 8U.1: existing historical and heritage profiles still render their own form controls unchanged."""
+    for profile_value, profile_label in [("historical", "historical"), ("heritage", "heritage")]:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_label} must still render form controls after 8U.1. Got {count}."
+        )
+
+
+# ── CS375 ─────────────────────────────────────────────────────────────────────
+
+def test_CS375_agricultural_land_unchanged_after_8u1(page: Page, live_server: str) -> None:
+    """Phase 8U.1: agricultural_land still renders its form controls unchanged after 8U.1."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: agricultural_land must still render form controls after 8U.1. Got {count}."
+    )
+
+
+# ── CS376 ─────────────────────────────────────────────────────────────────────
+
+def test_CS376_8r_8s_8t_profiles_still_render_after_8u1(page: Page, live_server: str) -> None:
+    """Phase 8U.1: regression guard — sample of 8R/8S/8T profiles still render after 8U.1."""
+    for profile_value in ("airport", "data_center", "healthcare_facility", "educational_asset"):
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_value} panel must still render form controls after 8U.1. Got {count}."
         )

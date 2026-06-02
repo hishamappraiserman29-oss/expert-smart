@@ -1344,6 +1344,11 @@
                     <option value="wellness_resort">منتجع استشفاء علاجي</option>
                     <option value="educational_asset">أصل تعليمي — تقييم تفصيلي</option>
                 </optgroup>
+                <optgroup label="أصول حيوية وطبيعية واستكشافية استثنائية">
+                    <option value="heritage_property_detailed">عقار تراثي/تاريخي — استمارة تقييم تفصيلية</option>
+                    <option value="timberland">غابات طبيعية وتجارية</option>
+                    <option value="zoo_safari">حديقة حيوان / متنزه بري</option>
+                </optgroup>
                 <optgroup label="أصول خاصة ومعقدة">
                     <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
                     <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
@@ -5790,9 +5795,12 @@ function _showIndexToast(msg, type) {
         'data_center':           'data_center',
         'cold_storage':          'cold_storage',
         'prefabricated_factory': 'prefabricated_factory',
-        'healthcare_facility':   'healthcare_facility',
-        'wellness_resort':       'wellness_resort',
-        'educational_asset':     'educational_asset',
+        'healthcare_facility':          'healthcare_facility',
+        'wellness_resort':              'wellness_resort',
+        'educational_asset':            'educational_asset',
+        'heritage_property_detailed':   'heritage_property_detailed',
+        'timberland':                   'timberland',
+        'zoo_safari':                   'zoo_safari',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5884,9 +5892,12 @@ function _showIndexToast(msg, type) {
         'data_center':           { type: 'form', titleAr: 'مركز بيانات (Data Center)' },
         'cold_storage':          { type: 'form', titleAr: 'مخزن تبريد / غرفة باردة' },
         'prefabricated_factory': { type: 'form', titleAr: 'مصنع جاهز / بريفاب' },
-        'healthcare_facility':   { type: 'form', titleAr: 'منشأة طبية — تقييم تفصيلي' },
-        'wellness_resort':       { type: 'form', titleAr: 'منتجع استشفاء علاجي' },
-        'educational_asset':     { type: 'form', titleAr: 'أصل تعليمي — تقييم تفصيلي' },
+        'healthcare_facility':          { type: 'form', titleAr: 'منشأة طبية — تقييم تفصيلي' },
+        'wellness_resort':              { type: 'form', titleAr: 'منتجع استشفاء علاجي' },
+        'educational_asset':            { type: 'form', titleAr: 'أصل تعليمي — تقييم تفصيلي' },
+        'heritage_property_detailed':   { type: 'form', titleAr: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية' },
+        'timberland':                   { type: 'form', titleAr: 'غابات طبيعية وتجارية' },
+        'zoo_safari':                   { type: 'form', titleAr: 'حديقة حيوان / متنزه بري' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5914,9 +5925,12 @@ function _showIndexToast(msg, type) {
         'data_center':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مركز بيانات — نموذج محلّي لتجميع بيانات السعة الكهربائية والتشغيل والترخيص. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'cold_storage':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مخزن تبريد — نموذج محلّي لتجميع بيانات درجات الحرارة والطاقة التخزينية والامتثال. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'prefabricated_factory': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مصنع جاهز / بريفاب — نموذج محلّي لتجميع بيانات الهيكل المعدني والألواح وقابلية النقل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'healthcare_facility':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منشأة طبية — نموذج محلّي لتجميع بيانات الترخيص الطبي والطاقة السريرية وعقود الإدارة. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'wellness_resort':       { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منتجع استشفاء علاجي — نموذج محلّي لتجميع بيانات التصنيف والخدمات العلاجية وعقد التشغيل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'educational_asset':     { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أصل تعليمي — نموذج محلّي لتجميع بيانات ترخيص وزارة التعليم والطاقة الاستيعابية والبيانات المالية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'healthcare_facility':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منشأة طبية — نموذج محلّي لتجميع بيانات الترخيص الطبي والطاقة السريرية وعقود الإدارة. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'wellness_resort':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منتجع استشفاء علاجي — نموذج محلّي لتجميع بيانات التصنيف والخدمات العلاجية وعقد التشغيل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'educational_asset':            { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أصل تعليمي — نموذج محلّي لتجميع بيانات ترخيص وزارة التعليم والطاقة الاستيعابية والبيانات المالية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'heritage_property_detailed':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية رسمية تشمل: رقم التسجيل الأثري، الحالة الإنشائية التفصيلية (أساس/رطوبة/تشقق)، تكاليف الترميم، والدخل الاقتصادي وقيود الاستثمار. مختلف عن «العقارات التاريخية» (بيانات موجزة) و«الموروث الثقافي» (تصنيف ثقافي/يونسكو). لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'timberland':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'غابات طبيعية وتجارية — نموذج محلّي لتجميع بيانات المساحة والكتلة الحيوية وشهادات FSC والإيرادات والمخاطر البيئية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'zoo_safari':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حديقة حيوان / متنزه بري — نموذج محلّي لتجميع بيانات مجموعة الحيوانات والتراخيص ومتطلبات CITES وإيرادات الزوار. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -8260,6 +8274,155 @@ function _showIndexToast(msg, type) {
         ]},
     ]},
     // ── End Phase 8T.1 ──────────────────────────────────────────────────────────
+    // ── Phase 8U.1 — Heritage / Timberland / Zoo ─────────────────────────────────
+    'heritage_property_detailed': { sections: [
+        { heading: 'التسجيل والحماية القانونية', color: '#d4af37', desc: '', fields: [
+            { name: 'hpd_official_registration_number',        field_type: 'str',   label_ar: 'رقم التسجيل الرسمي للأثر/التراث',          valid_values: [], group: '', ui_required: true  },
+            { name: 'hpd_registration_decision_doc_available', field_type: 'bool',  label_ar: 'قرار التسجيل متاح',                         valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_registration_authority',              field_type: 'str',   label_ar: 'الجهة المُسجِّلة',                           valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_registration_date',                   field_type: 'str',   label_ar: 'تاريخ التسجيل',                              valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_protection_grade',                    field_type: 'str',   label_ar: 'درجة الحماية',                               valid_values: [], group: '', ui_required: true,
+              options: [{value:'full_protection',label_ar:'حماية كاملة'},{value:'facade_only',label_ar:'واجهة فقط'},{value:'interior_modification_allowed',label_ar:'يُسمح بتعديل الداخل'},{value:'partial_protection',label_ar:'حماية جزئية'},{value:'needs_verification',label_ar:'يحتاج تحقق'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_demolition_restriction_status',       field_type: 'str',   label_ar: 'حالة تقييد الهدم',                           valid_values: [], group: '', ui_required: false,
+              options: [{value:'full_ban',label_ar:'حظر كامل'},{value:'partial_ban',label_ar:'حظر جزئي'},{value:'allowed_with_approval',label_ar:'مسموح بموافقة'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_permitted_adaptive_reuse',            field_type: 'str',   label_ar: 'إعادة التوظيف المسموح بها',                  valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الحالة الإنشائية والترميم', color: '#d4af37', desc: '', fields: [
+            { name: 'hpd_foundation_condition',                field_type: 'str',   label_ar: 'حالة الأساسات',                              valid_values: [], group: '', ui_required: false,
+              options: [{value:'good',label_ar:'جيد'},{value:'average',label_ar:'متوسط'},{value:'needs_repair',label_ar:'يحتاج إصلاح'},{value:'critical',label_ar:'حرج'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_moisture_resistance_condition',       field_type: 'str',   label_ar: 'مقاومة الرطوبة',                             valid_values: [], group: '', ui_required: false,
+              options: [{value:'good',label_ar:'جيد'},{value:'moderate',label_ar:'متوسط'},{value:'poor',label_ar:'رديء'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_weathering_exposure_level',           field_type: 'str',   label_ar: 'مستوى التعرض للعوامل الجوية',                valid_values: [], group: '', ui_required: false,
+              options: [{value:'low',label_ar:'منخفض'},{value:'medium',label_ar:'متوسط'},{value:'high',label_ar:'مرتفع'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_structural_cracks_present',           field_type: 'bool',  label_ar: 'توجد شقوق إنشائية',                          valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_previous_restoration_works',          field_type: 'textarea', label_ar: 'ملخص أعمال الترميم السابقة',              valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_restoration_cost_estimate',           field_type: 'float', label_ar: 'تقدير تكاليف الترميم',                       valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه' },
+            { name: 'hpd_conservation_specialist_report',      field_type: 'bool',  label_ar: 'تقرير متخصص ترميم/صون متاح',                 valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'القيود والاستخدام الاقتصادي', color: '#d4af37', desc: '', fields: [
+            { name: 'hpd_current_use',                         field_type: 'str',   label_ar: 'الاستخدام الحالي',                           valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_allowed_use_under_heritage_rules',    field_type: 'str',   label_ar: 'الاستخدام المسموح به (لوائح التراث)',         valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_revenue_generating_use_available',    field_type: 'bool',  label_ar: 'يوجد استخدام مُدرّ للدخل',                   valid_values: [], group: '', ui_required: false },
+            { name: 'hpd_annual_income_from_use',              field_type: 'float', label_ar: 'الدخل السنوي من الاستخدام',                  valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'hpd_tourism_or_cultural_value_level',     field_type: 'str',   label_ar: 'مستوى القيمة السياحية/الثقافية',             valid_values: [], group: '', ui_required: false,
+              options: [{value:'exceptional',label_ar:'استثنائي'},{value:'high',label_ar:'مرتفع'},{value:'medium',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'hpd_investment_restrictions_summary',     field_type: 'textarea', label_ar: 'ملخص قيود الاستثمار والتصرف',            valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'hpd_heritage_registration_decree',field_type: 'bool', label_ar: 'قرار التسجيل الأثري/التراثي',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_ownership_docs',               field_type: 'bool', label_ar: 'مستندات الملكية',                      group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_structural_condition_report',  field_type: 'bool', label_ar: 'تقرير الحالة الإنشائية',               group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_restoration_report',           field_type: 'bool', label_ar: 'تقرير ترميم/صيانة',                    group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_authority_approvals',          field_type: 'bool', label_ar: 'موافقات الجهة المختصة',                group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_facade_photos',                field_type: 'bool', label_ar: 'صور الواجهات والعناصر الأصلية',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_building_drawings',            field_type: 'bool', label_ar: 'مخططات المبنى',                        group: 'document', valid_values: [], ui_required: false },
+            { name: 'hpd_restoration_cost_estimate_doc',field_type: 'bool', label_ar: 'تقدير تكاليف الترميم',                 group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'timberland': { sections: [
+        { heading: 'بيانات الغابة والمساحة', color: '#d4af37', desc: '', fields: [
+            { name: 'tb_forest_area_hectares',           field_type: 'float', label_ar: 'مساحة الغابة',                              valid_values: [], group: '', ui_required: true,  unit_ar: 'هكتار' },
+            { name: 'tb_forest_type',                    field_type: 'str',   label_ar: 'نوع الغابة',                                valid_values: [], group: '', ui_required: true,
+              options: [{value:'natural_forest',label_ar:'غابة طبيعية'},{value:'commercial_plantation',label_ar:'مزرعة تجارية'},{value:'mixed',label_ar:'مختلطة'},{value:'protected_forest',label_ar:'غابة محمية'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_dominant_tree_species',          field_type: 'str',   label_ar: 'الأنواع السائدة من الأشجار',                valid_values: [], group: '', ui_required: false },
+            { name: 'tb_average_tree_age_years',         field_type: 'int',   label_ar: 'متوسط عمر الأشجار',                        valid_values: [], group: '', ui_required: false, unit_ar: 'سنة' },
+            { name: 'tb_tree_quality_grade',             field_type: 'str',   label_ar: 'تصنيف جودة الأشجار',                       valid_values: [], group: '', ui_required: false,
+              options: [{value:'high',label_ar:'عالية'},{value:'medium',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'mixed',label_ar:'مختلطة'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_access_roads_condition',         field_type: 'str',   label_ar: 'حالة طرق الوصول',                           valid_values: [], group: '', ui_required: false,
+              options: [{value:'paved',label_ar:'ممهدة/معبدة'},{value:'unpaved_good',label_ar:'غير معبدة — جيدة'},{value:'unpaved_poor',label_ar:'غير معبدة — رديئة'},{value:'no_access',label_ar:'لا يوجد وصول'},{value:'unknown',label_ar:'غير محدد'}] },
+        ]},
+        { heading: 'الكتلة الحيوية والحصاد', color: '#d4af37', desc: '', fields: [
+            { name: 'tb_harvestable_biomass_m3_per_hectare', field_type: 'float', label_ar: 'الكتلة الحيوية القابلة للحصاد',     valid_values: [], group: '', ui_required: false, unit_ar: 'م³/هكتار' },
+            { name: 'tb_immediately_harvestable_volume_m3',  field_type: 'float', label_ar: 'الحجم القابل للقطع فوراً',          valid_values: [], group: '', ui_required: false, unit_ar: 'م³' },
+            { name: 'tb_annual_net_growth_rate_pct',         field_type: 'float', label_ar: 'معدل النمو السنوي الصافي',          valid_values: [], group: '', ui_required: false, unit_ar: '%' },
+            { name: 'tb_sustainable_harvest_rate_m3_year',   field_type: 'float', label_ar: 'معدل الحصاد المستدام',              valid_values: [], group: '', ui_required: false, unit_ar: 'م³/سنة' },
+            { name: 'tb_logging_cost_per_m3',                field_type: 'float', label_ar: 'تكلفة القطع لكل م³',               valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/م³' },
+            { name: 'tb_logistics_cost_annual',              field_type: 'float', label_ar: 'تكلفة اللوجستيات السنوية',         valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+        ]},
+        { heading: 'الاستدامة والامتثال البيئي', color: '#d4af37', desc: '', fields: [
+            { name: 'tb_fsc_certification_status',       field_type: 'str',   label_ar: 'حالة شهادة FSC',                            valid_values: [], group: '', ui_required: false,
+              options: [{value:'certified',label_ar:'معتمد'},{value:'not_certified',label_ar:'غير معتمد'},{value:'in_progress',label_ar:'قيد الاعتماد'},{value:'expired',label_ar:'منتهية الصلاحية'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_environmental_restrictions',     field_type: 'textarea', label_ar: 'القيود البيئية والتشريعية',              valid_values: [], group: '', ui_required: false },
+            { name: 'tb_protected_species_present',      field_type: 'bool',  label_ar: 'توجد أنواع محمية داخل الغابة',              valid_values: [], group: '', ui_required: false },
+            { name: 'tb_reforestation_obligation_status',field_type: 'str',   label_ar: 'حالة التزام إعادة التشجير',                 valid_values: [], group: '', ui_required: false,
+              options: [{value:'required_and_compliant',label_ar:'مطلوب وملتزم'},{value:'required_non_compliant',label_ar:'مطلوب وغير ملتزم'},{value:'not_required',label_ar:'غير مطلوب'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_carbon_credit_potential',        field_type: 'str',   label_ar: 'إمكانية أرصدة الكربون',                    valid_values: [], group: '', ui_required: false,
+              options: [{value:'high',label_ar:'مرتفع'},{value:'medium',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'not_applicable',label_ar:'لا ينطبق'},{value:'unknown',label_ar:'غير محدد'}] },
+        ]},
+        { heading: 'الإيرادات والمخاطر', color: '#d4af37', desc: '', fields: [
+            { name: 'tb_annual_timber_revenue',          field_type: 'float', label_ar: 'الإيراد السنوي من الأخشاب',                 valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'tb_carbon_credit_revenue_annual',   field_type: 'float', label_ar: 'إيراد أرصدة الكربون السنوي',               valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'tb_fire_risk_level',                field_type: 'str',   label_ar: 'مستوى خطر الحريق',                         valid_values: [], group: '', ui_required: false,
+              options: [{value:'low',label_ar:'منخفض'},{value:'medium',label_ar:'متوسط'},{value:'high',label_ar:'مرتفع'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_pest_disease_risk_level',        field_type: 'str',   label_ar: 'مستوى خطر الآفات والأمراض',                valid_values: [], group: '', ui_required: false,
+              options: [{value:'low',label_ar:'منخفض'},{value:'medium',label_ar:'متوسط'},{value:'high',label_ar:'مرتفع'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'tb_climate_risk_level',             field_type: 'str',   label_ar: 'مستوى المخاطر المناخية',                    valid_values: [], group: '', ui_required: false,
+              options: [{value:'low',label_ar:'منخفض'},{value:'medium',label_ar:'متوسط'},{value:'high',label_ar:'مرتفع'},{value:'unknown',label_ar:'غير محدد'}] },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'tb_title_deed',              field_type: 'bool', label_ar: 'سند الملكية / حق الانتفاع',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_forest_maps',             field_type: 'bool', label_ar: 'خرائط الغابة',                     group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_biomass_survey',          field_type: 'bool', label_ar: 'مسح الأشجار والكتلة الحيوية',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_fsc_cert_doc',            field_type: 'bool', label_ar: 'شهادات FSC إن وجدت',               group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_logging_permits',         field_type: 'bool', label_ar: 'تصاريح القطع',                      group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_environmental_studies',   field_type: 'bool', label_ar: 'دراسات بيئية',                      group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_revenue_data',            field_type: 'bool', label_ar: 'بيانات الإيرادات',                  group: 'document', valid_values: [], ui_required: false },
+            { name: 'tb_site_photos',             field_type: 'bool', label_ar: 'صور ومخططات الموقع',               group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'zoo_safari': { sections: [
+        { heading: 'مجموعة الحيوانات والتصنيف', color: '#d4af37', desc: '', fields: [
+            { name: 'zs_animal_species_count',           field_type: 'int',   label_ar: 'عدد الأنواع الحيوانية',                     valid_values: [], group: '', ui_required: true  },
+            { name: 'zs_rare_or_endangered_species_count',field_type:'int',   label_ar: 'عدد الأنواع النادرة أو المهددة',            valid_values: [], group: '', ui_required: false },
+            { name: 'zs_endangered_species_present',     field_type: 'bool',  label_ar: 'توجد أنواع مهددة بالانقراض',                valid_values: [], group: '', ui_required: false },
+            { name: 'zs_animal_collection_quality',      field_type: 'str',   label_ar: 'جودة المجموعة الحيوانية',                   valid_values: [], group: '', ui_required: false,
+              options: [{value:'exceptional',label_ar:'استثنائية'},{value:'high',label_ar:'عالية'},{value:'medium',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_animal_inventory_summary',       field_type: 'textarea', label_ar: 'ملخص قائمة الحيوانات',                  valid_values: [], group: '', ui_required: false },
+            { name: 'zs_breeding_programs_available',    field_type: 'bool',  label_ar: 'توجد برامج تكاثر',                          valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإيواء والرعاية البيطرية', color: '#d4af37', desc: '', fields: [
+            { name: 'zs_enclosures_count',               field_type: 'int',   label_ar: 'عدد الأقفاص/الحظائر',                      valid_values: [], group: '', ui_required: false },
+            { name: 'zs_enclosure_condition',            field_type: 'str',   label_ar: 'حالة الأقفاص/الحظائر',                     valid_values: [], group: '', ui_required: false,
+              options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'needs_maintenance',label_ar:'تحتاج صيانة'},{value:'poor',label_ar:'رديئة'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_climate_controlled_enclosures_count', field_type: 'int', label_ar: 'عدد الأقفاص المتحكم بمناخها',          valid_values: [], group: '', ui_required: false },
+            { name: 'zs_veterinary_facility_available',  field_type: 'bool',  label_ar: 'توجد عيادة / مستشفى بيطري',                valid_values: [], group: '', ui_required: false },
+            { name: 'zs_quarantine_facility_available',  field_type: 'bool',  label_ar: 'توجد منشأة حجر صحي',                       valid_values: [], group: '', ui_required: false },
+            { name: 'zs_annual_veterinary_cost',         field_type: 'float', label_ar: 'تكلفة الرعاية البيطرية السنوية',            valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'zs_annual_feeding_cost',            field_type: 'float', label_ar: 'تكلفة التغذية السنوية',                    valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'zs_animal_welfare_condition',       field_type: 'str',   label_ar: 'مستوى رفاهية الحيوان',                     valid_values: [], group: '', ui_required: false,
+              options: [{value:'excellent',label_ar:'ممتاز'},{value:'good',label_ar:'جيد'},{value:'acceptable',label_ar:'مقبول'},{value:'needs_improvement',label_ar:'يحتاج تحسين'},{value:'unknown',label_ar:'غير محدد'}] },
+        ]},
+        { heading: 'الامتثال والتراخيص', color: '#d4af37', desc: '', fields: [
+            { name: 'zs_environment_ministry_license_status', field_type: 'str', label_ar: 'حالة رخصة وزارة البيئة',              valid_values: [], group: '', ui_required: true,
+              options: [{value:'licensed',label_ar:'مرخّص'},{value:'pending',label_ar:'قيد الإصدار'},{value:'expired',label_ar:'منتهية'},{value:'needs_verification',label_ar:'يحتاج تحقق'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_animal_welfare_compliance_status',    field_type: 'str', label_ar: 'حالة الامتثال لمعايير رفاهية الحيوان', valid_values: [], group: '', ui_required: false,
+              options: [{value:'fully_compliant',label_ar:'ملتزم كاملاً'},{value:'partially_compliant',label_ar:'ملتزم جزئياً'},{value:'non_compliant',label_ar:'غير ملتزم'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_cites_compliance_status',             field_type: 'str', label_ar: 'حالة الامتثال لاتفاقية CITES',         valid_values: [], group: '', ui_required: false,
+              options: [{value:'compliant',label_ar:'ملتزم'},{value:'partial',label_ar:'جزئي'},{value:'non_compliant',label_ar:'غير ملتزم'},{value:'not_applicable',label_ar:'لا ينطبق'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_international_zoo_association_membership', field_type: 'str', label_ar: 'عضوية رابطة حدائق الحيوان الدولية', valid_values: [], group: '', ui_required: false,
+              options: [{value:'waza',label_ar:'WAZA'},{value:'eaza',label_ar:'EAZA'},{value:'aza',label_ar:'AZA'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}] },
+            { name: 'zs_inspection_reports_available',        field_type: 'bool', label_ar: 'تقارير التفتيش متاحة',                 valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الزوار والإيرادات', color: '#d4af37', desc: '', fields: [
+            { name: 'zs_annual_visitors_count',           field_type: 'int',   label_ar: 'عدد الزوار السنوي',                        valid_values: [], group: '', ui_required: false },
+            { name: 'zs_average_ticket_price',            field_type: 'float', label_ar: 'متوسط سعر التذكرة',                        valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه' },
+            { name: 'zs_annual_ticket_revenue',           field_type: 'float', label_ar: 'إيراد التذاكر السنوي',                     valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'zs_food_retail_revenue_annual',      field_type: 'float', label_ar: 'إيراد المطاعم والبيع بالتجزئة',            valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'zs_education_events_revenue_annual', field_type: 'float', label_ar: 'إيراد الأنشطة التعليمية والفعاليات',       valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+            { name: 'zs_operating_expenses_annual',       field_type: 'float', label_ar: 'المصاريف التشغيلية السنوية',               valid_values: [], group: '', ui_required: false, unit_ar: 'جنيه/سنة' },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'zs_env_ministry_license',    field_type: 'bool', label_ar: 'رخصة وزارة البيئة',                 group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_animal_inventory_doc',    field_type: 'bool', label_ar: 'قائمة الحيوانات',                   group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_cites_certificates',      field_type: 'bool', label_ar: 'شهادات CITES إن وجدت',              group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_welfare_reports',         field_type: 'bool', label_ar: 'تقارير الرفق بالحيوان',             group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_vet_care_contracts',      field_type: 'bool', label_ar: 'عقود الرعاية البيطرية',             group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_visitor_revenue_data',    field_type: 'bool', label_ar: 'بيانات الزوار والإيرادات',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_enclosure_drawings',      field_type: 'bool', label_ar: 'مخططات الأقفاص والمبيت',            group: 'document', valid_values: [], ui_required: false },
+            { name: 'zs_site_photos',             field_type: 'bool', label_ar: 'صور ومخططات الموقع',                group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    // ── End Phase 8U.1 ──────────────────────────────────────────────────────────
     // ── End Phase 8S.1 ──────────────────────────────────────────────────────────
 };
 

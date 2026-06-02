@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P/8Q/8R.1 — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P/8Q/8R.1/8S.1 — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -5027,5 +5027,553 @@ def test_CS284_regression_existing_profiles_still_render(page: Page, live_server
         count = page.locator("#es-req-panel input, #es-req-panel select").count()
         assert count > 0, (
             f"Regression: {profile_label} panel must still render form controls after 8R.1. "
+            f"Got {count} controls."
+        )
+
+
+# ══ Phase 8S.1 — Tech / Logistics / Industrial: data_center / cold_storage / prefabricated_factory (CS285–CS321) ══
+
+
+def _load_data_center(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="data_center")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_cold_storage(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_prefabricated_factory(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="prefabricated_factory")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS285 ─────────────────────────────────────────────────────────────────────
+
+def test_CS285_tech_logistics_optgroup_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: optgroup 'أصول تكنولوجية ولوجستية وصناعية متقدمة' appears in #asset-type."""
+    page.goto(live_server, wait_until="networkidle")
+    optgroup_labels = page.locator("#asset-type optgroup").evaluate_all(
+        "els => els.map(e => e.getAttribute('label'))"
+    )
+    assert any("أصول تكنولوجية" in lbl for lbl in optgroup_labels), (
+        f"#asset-type must have optgroup 'أصول تكنولوجية ولوجستية وصناعية متقدمة'. "
+        f"Got: {optgroup_labels}"
+    )
+
+
+# ── CS286 ─────────────────────────────────────────────────────────────────────
+
+def test_CS286_data_center_option_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center option present with 'مركز بيانات' text."""
+    page.goto(live_server, wait_until="networkidle")
+    opt = page.locator("#asset-type option[value='data_center']")
+    expect(opt).to_be_attached()
+    opt_text = opt.inner_text()
+    assert "مركز بيانات" in opt_text, (
+        f"data_center option must contain 'مركز بيانات'. Got: {opt_text!r}"
+    )
+
+
+# ── CS287 ─────────────────────────────────────────────────────────────────────
+
+def test_CS287_cold_storage_option_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage option present with 'مخزن تبريد' text."""
+    page.goto(live_server, wait_until="networkidle")
+    opt = page.locator("#asset-type option[value='cold_storage']")
+    expect(opt).to_be_attached()
+    opt_text = opt.inner_text()
+    assert "مخزن تبريد" in opt_text, (
+        f"cold_storage option must contain 'مخزن تبريد'. Got: {opt_text!r}"
+    )
+
+
+# ── CS288 ─────────────────────────────────────────────────────────────────────
+
+def test_CS288_prefabricated_factory_option_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory option present with 'مصنع جاهز' text."""
+    page.goto(live_server, wait_until="networkidle")
+    opt = page.locator("#asset-type option[value='prefabricated_factory']")
+    expect(opt).to_be_attached()
+    opt_text = opt.inner_text()
+    assert "مصنع جاهز" in opt_text, (
+        f"prefabricated_factory option must contain 'مصنع جاهز'. Got: {opt_text!r}"
+    )
+
+
+# ── CS289 ─────────────────────────────────────────────────────────────────────
+
+def test_CS289_data_center_renders_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center shows 'نموذج محلي' badge and panel is visible."""
+    _load_data_center(page, live_server)
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge_text, (
+        f"data_center badge must contain 'نموذج محلي'. Got: {badge_text!r}"
+    )
+    expect(page.locator("#es-req-panel")).to_be_visible()
+
+
+# ── CS290 ─────────────────────────────────────────────────────────────────────
+
+def test_CS290_data_center_stays_on_index_html(page: Page, live_server: str) -> None:
+    """Phase 8S.1: selecting data_center does not navigate away from index.html."""
+    _load_data_center(page, live_server)
+    assert page.url.rstrip("/").endswith(("5000", "index.html")), (
+        f"data_center must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS291 ─────────────────────────────────────────────────────────────────────
+
+def test_CS291_cold_storage_renders_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage shows 'نموذج محلي' badge and panel is visible."""
+    _load_cold_storage(page, live_server)
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge_text, (
+        f"cold_storage badge must contain 'نموذج محلي'. Got: {badge_text!r}"
+    )
+    expect(page.locator("#es-req-panel")).to_be_visible()
+
+
+# ── CS292 ─────────────────────────────────────────────────────────────────────
+
+def test_CS292_cold_storage_stays_on_index_html(page: Page, live_server: str) -> None:
+    """Phase 8S.1: selecting cold_storage does not navigate away from index.html."""
+    _load_cold_storage(page, live_server)
+    assert page.url.rstrip("/").endswith(("5000", "index.html")), (
+        f"cold_storage must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS293 ─────────────────────────────────────────────────────────────────────
+
+def test_CS293_prefabricated_factory_renders_local_form_badge(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory shows 'نموذج محلي' badge and panel is visible."""
+    _load_prefabricated_factory(page, live_server)
+    badge_text = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge_text, (
+        f"prefabricated_factory badge must contain 'نموذج محلي'. Got: {badge_text!r}"
+    )
+    expect(page.locator("#es-req-panel")).to_be_visible()
+
+
+# ── CS294 ─────────────────────────────────────────────────────────────────────
+
+def test_CS294_prefabricated_factory_stays_on_index_html(page: Page, live_server: str) -> None:
+    """Phase 8S.1: selecting prefabricated_factory does not navigate away from index.html."""
+    _load_prefabricated_factory(page, live_server)
+    assert page.url.rstrip("/").endswith(("5000", "index.html")), (
+        f"prefabricated_factory must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS295 ─────────────────────────────────────────────────────────────────────
+
+def test_CS295_data_center_no_auth_modal(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center does not trigger auth modal."""
+    _load_data_center(page, live_server)
+    auth_visible = page.locator("#auth-modal, #login-modal, [id*='auth']").is_visible()
+    assert not auth_visible, "data_center must not trigger any auth modal"
+
+
+# ── CS296 ─────────────────────────────────────────────────────────────────────
+
+def test_CS296_data_center_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center panel has no composite_valuation.html link."""
+    _load_data_center(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "data_center panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS297 ─────────────────────────────────────────────────────────────────────
+
+def test_CS297_cold_storage_no_auth_modal(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage does not trigger auth modal."""
+    _load_cold_storage(page, live_server)
+    auth_visible = page.locator("#auth-modal, #login-modal, [id*='auth']").is_visible()
+    assert not auth_visible, "cold_storage must not trigger any auth modal"
+
+
+# ── CS298 ─────────────────────────────────────────────────────────────────────
+
+def test_CS298_cold_storage_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage panel has no composite_valuation.html link."""
+    _load_cold_storage(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "cold_storage panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS299 ─────────────────────────────────────────────────────────────────────
+
+def test_CS299_prefabricated_factory_no_auth_modal(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory does not trigger auth modal."""
+    _load_prefabricated_factory(page, live_server)
+    auth_visible = page.locator("#auth-modal, #login-modal, [id*='auth']").is_visible()
+    assert not auth_visible, "prefabricated_factory must not trigger any auth modal"
+
+
+# ── CS300 ─────────────────────────────────────────────────────────────────────
+
+def test_CS300_prefabricated_factory_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory panel has no composite_valuation.html link."""
+    _load_prefabricated_factory(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "prefabricated_factory panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS301 ─────────────────────────────────────────────────────────────────────
+
+def test_CS301_data_center_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="data_center")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"data_center must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS302 ─────────────────────────────────────────────────────────────────────
+
+def test_CS302_cold_storage_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"cold_storage must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS303 ─────────────────────────────────────────────────────────────────────
+
+def test_CS303_prefabricated_factory_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="prefabricated_factory")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"prefabricated_factory must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS304 ─────────────────────────────────────────────────────────────────────
+
+def test_CS304_data_center_power_capacity_number_input_with_mw_unit(page: Page, live_server: str) -> None:
+    """Phase 8S.1: dc_total_power_capacity_mw renders as number input; MW unit text visible."""
+    _load_data_center(page, live_server)
+    field = page.locator("#es-req-field-dc_total_power_capacity_mw")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"dc_total_power_capacity_mw must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "MW" in panel_text, (
+        f"data_center panel must show 'MW' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS305 ─────────────────────────────────────────────────────────────────────
+
+def test_CS305_data_center_tier_classification_select_with_tier_options(page: Page, live_server: str) -> None:
+    """Phase 8S.1: dc_tier_classification select renders with Tier I–IV options."""
+    _load_data_center(page, live_server)
+    sel = page.locator("#es-req-field-dc_tier_classification")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("Tier" in o for o in opts), (
+        f"dc_tier_classification must have Tier options. Got: {opts}"
+    )
+
+
+# ── CS306 ─────────────────────────────────────────────────────────────────────
+
+def test_CS306_data_center_pue_number_input_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: dc_pue renders as number input (PUE field)."""
+    _load_data_center(page, live_server)
+    field = page.locator("#es-req-field-dc_pue")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"dc_pue must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS307 ─────────────────────────────────────────────────────────────────────
+
+def test_CS307_cold_storage_temperature_ranges_checkbox_group_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_temperature_ranges_available checkbox group renders with expected options."""
+    _load_cold_storage(page, live_server)
+    chips = page.locator("[data-es-req-field='cs_temperature_ranges_available']")
+    expect(chips.first).to_be_visible()
+    freezer_chip = page.locator(
+        "[data-es-req-field='cs_temperature_ranges_available'][value='freezer']"
+    )
+    expect(freezer_chip).to_be_attached()
+
+
+# ── CS308 ─────────────────────────────────────────────────────────────────────
+
+def test_CS308_cold_storage_clear_height_number_input_with_meter_unit(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_clear_height_m renders as number input; متر unit visible."""
+    _load_cold_storage(page, live_server)
+    field = page.locator("#es-req-field-cs_clear_height_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"cs_clear_height_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"cold_storage panel must show 'متر' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS309 ─────────────────────────────────────────────────────────────────────
+
+def test_CS309_cold_storage_backup_refrigeration_bool_select(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_backup_refrigeration_available renders as yes/no select."""
+    _load_cold_storage(page, live_server)
+    sel = page.locator("#es-req-field-cs_backup_refrigeration_available")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("نعم" in o for o in opts) and any("لا" in o for o in opts), (
+        f"cs_backup_refrigeration_available must have نعم/لا options. Got: {opts}"
+    )
+
+
+# ── CS310 ─────────────────────────────────────────────────────────────────────
+
+def test_CS310_cold_storage_volume_m3_unit_visible(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_total_storage_volume_m3 number input present; م³ unit visible."""
+    _load_cold_storage(page, live_server)
+    field = page.locator("#es-req-field-cs_total_storage_volume_m3")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"cs_total_storage_volume_m3 must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "م³" in panel_text, (
+        f"cold_storage panel must show 'م³' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS311 ─────────────────────────────────────────────────────────────────────
+
+def test_CS311_cold_storage_floor_loading_capacity_with_ton_sqm_unit(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_floor_loading_capacity_ton_sqm number input present; طن/م² unit visible."""
+    _load_cold_storage(page, live_server)
+    field = page.locator("#es-req-field-cs_floor_loading_capacity_ton_sqm")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"cs_floor_loading_capacity_ton_sqm must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "طن/م²" in panel_text, (
+        f"cold_storage panel must show 'طن/م²' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS312 ─────────────────────────────────────────────────────────────────────
+
+def test_CS312_prefabricated_factory_clear_span_number_input_with_meter(page: Page, live_server: str) -> None:
+    """Phase 8S.1: pf_clear_span_m renders as number input; متر unit visible."""
+    _load_prefabricated_factory(page, live_server)
+    field = page.locator("#es-req-field-pf_clear_span_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"pf_clear_span_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"prefabricated_factory panel must show 'متر' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS313 ─────────────────────────────────────────────────────────────────────
+
+def test_CS313_prefabricated_factory_sandwich_panel_type_select_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: pf_sandwich_panel_type renders as select with Arabic options."""
+    _load_prefabricated_factory(page, live_server)
+    sel = page.locator("#es-req-field-pf_sandwich_panel_type")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("بولي" in o or "صوف" in o or "PIR" in o for o in opts), (
+        f"pf_sandwich_panel_type must have Arabic panel options. Got: {opts}"
+    )
+
+
+# ── CS314 ─────────────────────────────────────────────────────────────────────
+
+def test_CS314_prefabricated_factory_crane_capacity_number_input_with_ton(page: Page, live_server: str) -> None:
+    """Phase 8S.1: pf_overhead_crane_load_capacity_ton renders as number input; طن unit visible."""
+    _load_prefabricated_factory(page, live_server)
+    field = page.locator("#es-req-field-pf_overhead_crane_load_capacity_ton")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"pf_overhead_crane_load_capacity_ton must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "طن" in panel_text, (
+        f"prefabricated_factory panel must show 'طن' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS315 ─────────────────────────────────────────────────────────────────────
+
+def test_CS315_prefabricated_factory_is_separate_from_factory_profile(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory is an independent profile; existing factory still renders separately."""
+    # Load prefabricated_factory and verify its unique field is present
+    _load_prefabricated_factory(page, live_server)
+    pf_field = page.locator("#es-req-field-pf_clear_span_m")
+    expect(pf_field).to_be_visible()
+
+    # Now load factory and verify its unique field is present and pf_ field is absent
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مصنع")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    fc_field = page.locator("#es-req-field-fc_land_area_sqm")
+    expect(fc_field).to_be_visible()
+    pf_field_in_factory = page.locator("#es-req-field-pf_clear_span_m")
+    assert pf_field_in_factory.count() == 0, (
+        "factory panel must NOT contain pf_clear_span_m (prefabricated_factory field)"
+    )
+
+
+# ── CS316 ─────────────────────────────────────────────────────────────────────
+
+def test_CS316_data_center_tenant_contract_terms_renders_as_textarea(page: Page, live_server: str) -> None:
+    """Phase 8S.1: dc_tenant_contract_terms renders as <textarea>, not <input>."""
+    _load_data_center(page, live_server)
+    el = page.locator("[data-es-req-field='dc_tenant_contract_terms']")
+    expect(el).to_be_visible()
+    tag = el.evaluate("e => e.tagName.toLowerCase()")
+    assert tag == "textarea", (
+        f"dc_tenant_contract_terms must render as textarea. Got tag: {tag!r}"
+    )
+
+
+# ── CS317 ─────────────────────────────────────────────────────────────────────
+
+def test_CS317_cold_storage_major_tenant_contracts_renders_as_textarea(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cs_major_tenant_contracts renders as <textarea>, not <input>."""
+    _load_cold_storage(page, live_server)
+    el = page.locator("[data-es-req-field='cs_major_tenant_contracts']")
+    expect(el).to_be_visible()
+    tag = el.evaluate("e => e.tagName.toLowerCase()")
+    assert tag == "textarea", (
+        f"cs_major_tenant_contracts must render as textarea. Got tag: {tag!r}"
+    )
+
+
+# ── CS318 ─────────────────────────────────────────────────────────────────────
+
+def test_CS318_data_center_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: data_center document section shows upload hint text."""
+    _load_data_center(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"data_center panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS319 ─────────────────────────────────────────────────────────────────────
+
+def test_CS319_cold_storage_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: cold_storage document section shows upload hint text."""
+    _load_cold_storage(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"cold_storage panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS320 ─────────────────────────────────────────────────────────────────────
+
+def test_CS320_prefabricated_factory_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8S.1: prefabricated_factory document section shows upload hint text."""
+    _load_prefabricated_factory(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"prefabricated_factory panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS321 ─────────────────────────────────────────────────────────────────────
+
+def test_CS321_no_js_console_errors_on_8s1_profiles(page: Page, live_server: str) -> None:
+    """Phase 8S.1: no JS console errors when rendering data_center, cold_storage, or prefabricated_factory."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    for profile_value, loader in [
+        ("data_center", _load_data_center),
+        ("cold_storage", _load_cold_storage),
+        ("prefabricated_factory", _load_prefabricated_factory),
+    ]:
+        console_errors: list[str] = []
+        page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+        loader(page, live_server)
+        assert not console_errors, (
+            f"JavaScript console errors during {profile_value!r} render: {console_errors}"
+        )
+        console_errors.clear()
+
+
+# ── CS322 ─────────────────────────────────────────────────────────────────────
+
+def test_CS322_regression_existing_profiles_still_render_after_8s1(page: Page, live_server: str) -> None:
+    """Phase 8S.1: regression guard — فندق and مصنع still render form controls; not replaced by 8S.1 profiles."""
+    for profile_value, profile_label in [("فندق", "فندق"), ("مصنع", "مصنع")]:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_label} panel must still render form controls after 8S.1. "
             f"Got {count} controls."
         )

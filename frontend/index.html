@@ -1334,6 +1334,11 @@
                     <option value="seaport">ميناء بحري / أرصفة</option>
                     <option value="marina">مارينا يخوت وسياحة بحرية</option>
                 </optgroup>
+                <optgroup label="أصول تكنولوجية ولوجستية وصناعية متقدمة">
+                    <option value="data_center">مركز بيانات (Data Center)</option>
+                    <option value="cold_storage">مخزن تبريد / غرفة باردة</option>
+                    <option value="prefabricated_factory">مصنع جاهز / بريفاب</option>
+                </optgroup>
                 <optgroup label="أصول خاصة ومعقدة">
                     <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
                     <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
@@ -5777,6 +5782,9 @@ function _showIndexToast(msg, type) {
         'airport':               'airport',
         'seaport':               'seaport',
         'marina':                'marina',
+        'data_center':           'data_center',
+        'cold_storage':          'cold_storage',
+        'prefabricated_factory': 'prefabricated_factory',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5864,7 +5872,10 @@ function _showIndexToast(msg, type) {
         'agricultural_land':  { type: 'form', titleAr: 'أرض زراعية' },
         'airport':            { type: 'form', titleAr: 'مطار / حقل طيران' },
         'seaport':            { type: 'form', titleAr: 'ميناء بحري' },
-        'marina':             { type: 'form', titleAr: 'مارينا يخوت وسياحة بحرية' },
+        'marina':                { type: 'form', titleAr: 'مارينا يخوت وسياحة بحرية' },
+        'data_center':           { type: 'form', titleAr: 'مركز بيانات (Data Center)' },
+        'cold_storage':          { type: 'form', titleAr: 'مخزن تبريد / غرفة باردة' },
+        'prefabricated_factory': { type: 'form', titleAr: 'مصنع جاهز / بريفاب' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5888,7 +5899,10 @@ function _showIndexToast(msg, type) {
         'agricultural_land':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أرض زراعية — نموذج محلّي لتجميع بيانات الأصل (تربة، ري، محاصيل، تكاليف). لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'airport':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مطار / حقل طيران — نموذج محلّي لتجميع البيانات السيادية والتشغيلية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'seaport':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'ميناء بحري — نموذج محلّي لتجميع بيانات التشغيل والامتياز. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'marina':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مارينا يخوت وسياحة بحرية — نموذج محلّي لتجميع بيانات الأصل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'marina':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مارينا يخوت وسياحة بحرية — نموذج محلّي لتجميع بيانات الأصل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'data_center':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مركز بيانات — نموذج محلّي لتجميع بيانات السعة الكهربائية والتشغيل والترخيص. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'cold_storage':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مخزن تبريد — نموذج محلّي لتجميع بيانات درجات الحرارة والطاقة التخزينية والامتثال. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'prefabricated_factory': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مصنع جاهز / بريفاب — نموذج محلّي لتجميع بيانات الهيكل المعدني والألواح وقابلية النقل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -6120,6 +6134,16 @@ function _showIndexToast(msg, type) {
                 + ' data-es-req-field="' + f.name + '"'
                 + ' style="' + inputCss + '">' + opts + '</select>';
             return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+        }
+        // textarea → multi-line text (Phase 8S)
+        if (f.field_type === 'textarea') {
+            ctrlHtml = '<textarea id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-req-field="' + f.name + '"'
+                + ' placeholder="أدخل النص"'
+                + ' rows="4"'
+                + ' style="' + inputCss + 'resize:vertical;min-height:80px;"></textarea>';
+            var helpHtmlTa = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtmlTa + '</div>';
         }
         // default → text input with generic placeholder (help_ar supported, Phase 8M)
         ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
@@ -7798,6 +7822,306 @@ function _showIndexToast(msg, type) {
         ]},
     ]},
     // ── End Phase 8R.1 ──────────────────────────────────────────────────────────
+
+    // ── Phase 8S.1 — Tech / Logistics / Industrial ──────────────────────────────
+    'data_center': { sections: [
+        { heading: 'السعة الكهربائية والتشغيل', color: '#d4af37', desc: '', fields: [
+            { name: 'dc_total_power_capacity_mw', field_type: 'float', label_ar: 'إجمالي سعة الكهرباء',       unit_ar: 'MW',       valid_values: [], group: '', ui_required: true },
+            { name: 'dc_it_load_capacity_mw',     field_type: 'float', label_ar: 'حمل IT المصمم',             unit_ar: 'MW',       valid_values: [], group: '', ui_required: true },
+            { name: 'dc_available_power_mw',      field_type: 'float', label_ar: 'الطاقة المتاحة حالياً',     unit_ar: 'MW',       valid_values: [], group: '', ui_required: false },
+            { name: 'dc_utility_feed_redundancy', field_type: 'str',   label_ar: 'تكرار تغذية الشبكة',
+              options: [
+                { value: 'single',  label_ar: 'مفردة' },
+                { value: 'dual',    label_ar: 'مزدوجة' },
+                { value: 'ring',    label_ar: 'حلقي' },
+                { value: 'none',    label_ar: 'لا يوجد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'dc_backup_generators_count', field_type: 'int',   label_ar: 'عدد مولدات الطوارئ',                              valid_values: [], group: '', ui_required: false },
+            { name: 'dc_generator_capacity_mw',   field_type: 'float', label_ar: 'سعة المولدات الكلية',          unit_ar: 'MW',       valid_values: [], group: '', ui_required: false },
+            { name: 'dc_ups_redundancy_level',    field_type: 'str',   label_ar: 'مستوى تكرار UPS',
+              options: [
+                { value: 'N',       label_ar: 'N' },
+                { value: 'N+1',     label_ar: 'N+1' },
+                { value: '2N',      label_ar: '2N' },
+                { value: '2N+1',    label_ar: '2N+1' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التصنيف والاستمرارية', color: '#9ca3af', desc: '', fields: [
+            { name: 'dc_tier_classification', field_type: 'str', label_ar: 'تصنيف Tier',
+              options: [
+                { value: 'tier_1',  label_ar: 'Tier I' },
+                { value: 'tier_2',  label_ar: 'Tier II' },
+                { value: 'tier_3',  label_ar: 'Tier III' },
+                { value: 'tier_4',  label_ar: 'Tier IV' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: true },
+            { name: 'dc_uptime_sla_pct',    field_type: 'float', label_ar: 'نسبة وقت التشغيل المضمون',    unit_ar: '%',        valid_values: [], group: '', ui_required: false },
+            { name: 'dc_redundancy_design', field_type: 'str',   label_ar: 'تصميم التكرار',
+              options: [
+                { value: 'N',       label_ar: 'N (بدون تكرار)' },
+                { value: 'N+1',     label_ar: 'N+1 (تكرار جزئي)' },
+                { value: '2N',      label_ar: '2N (تكرار كامل)' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'dc_network_carriers_count',    field_type: 'int', label_ar: 'عدد مزودي الشبكة',                               valid_values: [], group: '', ui_required: false },
+            { name: 'dc_fiber_connectivity_status', field_type: 'str', label_ar: 'حالة ربط الألياف الضوئية',
+              options: [
+                { value: 'single_fiber',  label_ar: 'ألياف مفردة' },
+                { value: 'diverse_fiber', label_ar: 'ألياف متنوعة المسارات' },
+                { value: 'no_fiber',      label_ar: 'لا يوجد' },
+                { value: 'unknown',       label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'كفاءة الطاقة والتبريد', color: '#9ca3af', desc: '', fields: [
+            { name: 'dc_pue',                           field_type: 'float', label_ar: 'معامل كفاءة الطاقة (PUE)',                          help_ar: 'PUE = الاستهلاك الكلي ÷ حمل IT. أفضل قيمة 1.0.', valid_values: [], group: '', ui_required: false },
+            { name: 'dc_cooling_system_type',           field_type: 'str',   label_ar: 'نوع نظام التبريد',
+              options: [
+                { value: 'crac',          label_ar: 'وحدات CRAC' },
+                { value: 'crah',          label_ar: 'وحدات CRAH' },
+                { value: 'chilled_water', label_ar: 'مياه مبردة (Chilled Water)' },
+                { value: 'adiabatic',     label_ar: 'تبخيري / أدياباتيك' },
+                { value: 'free_cooling',  label_ar: 'تبريد طبيعي (Free Cooling)' },
+                { value: 'immersion',     label_ar: 'غمر (Immersion Cooling)' },
+                { value: 'unknown',       label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'dc_cooling_capacity_kw',           field_type: 'float', label_ar: 'سعة التبريد الكلية',              unit_ar: 'kW',       valid_values: [], group: '', ui_required: false },
+            { name: 'dc_annual_energy_consumption_kwh', field_type: 'float', label_ar: 'استهلاك الطاقة السنوي',            unit_ar: 'kWh/سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'dc_energy_cost_annual',            field_type: 'float', label_ar: 'تكلفة الطاقة السنوية',             unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المساحات والدخل', color: '#9ca3af', desc: '', fields: [
+            { name: 'dc_white_space_area_sqm',     field_type: 'float',    label_ar: 'المساحة البيضاء (White Space)',    unit_ar: 'م²',        valid_values: [], group: '', ui_required: false },
+            { name: 'dc_racks_count',              field_type: 'int',      label_ar: 'عدد الـ Racks الكلي',                                   valid_values: [], group: '', ui_required: false },
+            { name: 'dc_occupancy_rate',           field_type: 'float',    label_ar: 'نسبة الإشغال',                    unit_ar: '%',         valid_values: [], group: '', ui_required: false },
+            { name: 'dc_annual_colocation_income', field_type: 'float',    label_ar: 'الدخل السنوي من التعميش',          unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'dc_tenant_contract_terms',    field_type: 'textarea', label_ar: 'شروط عقود المستأجرين',                                   valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الأمن والامتثال', color: '#9ca3af', desc: '', fields: [
+            { name: 'dc_physical_security_level', field_type: 'str', label_ar: 'مستوى الأمن المادي',
+              options: [
+                { value: 'basic',    label_ar: 'أساسي' },
+                { value: 'standard', label_ar: 'قياسي' },
+                { value: 'high',     label_ar: 'عالي' },
+                { value: 'military', label_ar: 'عسكري / حساس' },
+                { value: 'unknown',  label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'dc_fire_suppression_system', field_type: 'str', label_ar: 'نظام إطفاء الحريق',
+              options: [
+                { value: 'fm200',     label_ar: 'FM-200' },
+                { value: 'co2',       label_ar: 'ثاني أكسيد الكربون CO₂' },
+                { value: 'novec',     label_ar: 'Novec 1230' },
+                { value: 'sprinkler', label_ar: 'رشاشات مياه' },
+                { value: 'none',      label_ar: 'لا يوجد' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'dc_compliance_certifications', field_type: 'checkbox_group', label_ar: 'شهادات الامتثال',
+              options: [
+                { value: 'iso27001',  label_ar: 'ISO 27001' },
+                { value: 'pci_dss',   label_ar: 'PCI-DSS' },
+                { value: 'soc2',      label_ar: 'SOC 2' },
+                { value: 'tier_cert', label_ar: 'Tier Certification' },
+                { value: 'local_ict', label_ar: 'ترخيص ICT محلي' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'dc_ownership_doc',        field_type: 'bool', label_ar: 'سند الملكية',              group: 'document', valid_values: [], ui_required: true },
+            { name: 'dc_building_permit',      field_type: 'bool', label_ar: 'رخصة البناء',              group: 'document', valid_values: [], ui_required: false },
+            { name: 'dc_electrical_license',   field_type: 'bool', label_ar: 'ترخيص الكهرباء',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'dc_data_center_license',  field_type: 'bool', label_ar: 'ترخيص مركز البيانات',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'dc_environmental_permit', field_type: 'bool', label_ar: 'تصريح بيئي',               group: 'document', valid_values: [], ui_required: false },
+            { name: 'dc_site_plan',            field_type: 'bool', label_ar: 'مخطط الموقع',              group: 'document', valid_values: [], ui_required: false },
+            { name: 'dc_financial_statements', field_type: 'bool', label_ar: 'القوائم المالية',           group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'cold_storage': { sections: [
+        { heading: 'نطاقات درجات الحرارة والسعة', color: '#d4af37', desc: '', fields: [
+            { name: 'cs_total_storage_area_sqm',       field_type: 'float', label_ar: 'إجمالي مساحة التخزين',              unit_ar: 'م²',       valid_values: [], group: '', ui_required: true },
+            { name: 'cs_total_storage_volume_m3',      field_type: 'float', label_ar: 'إجمالي حجم التخزين',                unit_ar: 'م³',       valid_values: [], group: '', ui_required: true },
+            { name: 'cs_freezer_area_sqm',             field_type: 'float', label_ar: 'مساحة التجميد',                     unit_ar: 'م²',       valid_values: [], group: '', ui_required: false },
+            { name: 'cs_chilled_area_sqm',             field_type: 'float', label_ar: 'مساحة التبريد',                     unit_ar: 'م²',       valid_values: [], group: '', ui_required: false },
+            { name: 'cs_dry_cold_area_sqm',            field_type: 'float', label_ar: 'مساحة التخزين الجاف البارد',         unit_ar: 'م²',       valid_values: [], group: '', ui_required: false },
+            { name: 'cs_temperature_ranges_available', field_type: 'checkbox_group', label_ar: 'نطاقات الحرارة المتاحة',
+              options: [
+                { value: 'deep_freeze',           label_ar: 'تجميد عميق (أقل من 18- درجة)' },
+                { value: 'freezer',               label_ar: 'تجميد (18- إلى 10- درجة)' },
+                { value: 'cold_storage',          label_ar: 'تبريد (2+ إلى 8+ درجة)' },
+                { value: 'controlled_atmosphere', label_ar: 'جو مضبوط (10+ إلى 15+ درجة)' },
+                { value: 'ambient',               label_ar: 'بيئة محكومة (15+ إلى 25+ درجة)' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المواصفات الرأسية والتخزين', color: '#9ca3af', desc: '', fields: [
+            { name: 'cs_pallet_positions_count',         field_type: 'int',   label_ar: 'عدد مواضع الباليت',                                    valid_values: [], group: '', ui_required: false },
+            { name: 'cs_clear_height_m',                 field_type: 'float', label_ar: 'الارتفاع الصافي',                   unit_ar: 'متر',      valid_values: [], group: '', ui_required: true },
+            { name: 'cs_racking_system_type',            field_type: 'str',   label_ar: 'نوع نظام الرفوف',
+              options: [
+                { value: 'selective',      label_ar: 'رفوف انتقائية' },
+                { value: 'drive_in',       label_ar: 'رفوف Drive-In' },
+                { value: 'push_back',      label_ar: 'رفوف Push-Back' },
+                { value: 'cantilever',     label_ar: 'رفوف ذراعية' },
+                { value: 'automated',      label_ar: 'نظام آلي AS/RS' },
+                { value: 'floor_stacking', label_ar: 'تخزين أرضي (بدون رفوف)' },
+                { value: 'unknown',        label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'cs_floor_loading_capacity_ton_sqm', field_type: 'float', label_ar: 'حمل الأرضية',                       unit_ar: 'طن/م²',    valid_values: [], group: '', ui_required: false },
+            { name: 'cs_loading_docks_count',            field_type: 'int',   label_ar: 'عدد منافذ التحميل',                                    valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التبريد والعزل', color: '#9ca3af', desc: '', fields: [
+            { name: 'cs_refrigeration_system_type',     field_type: 'str', label_ar: 'نوع نظام التبريد',
+              options: [
+                { value: 'ammonia_direct', label_ar: 'أمونيا مباشر' },
+                { value: 'freon_direct',   label_ar: 'فريون مباشر' },
+                { value: 'glycol',         label_ar: 'نظام جلايكول' },
+                { value: 'co2_cascade',    label_ar: 'CO₂ كاسكيد' },
+                { value: 'unknown',        label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'cs_backup_refrigeration_available', field_type: 'bool',  label_ar: 'هل يوجد تبريد احتياطي؟',            valid_values: [], group: '', ui_required: true },
+            { name: 'cs_backup_power_available',         field_type: 'bool',  label_ar: 'هل يوجد مولد احتياطي للكهرباء؟',    valid_values: [], group: '', ui_required: false },
+            { name: 'cs_insulation_panel_type',          field_type: 'str',   label_ar: 'نوع ألواح العزل',
+              options: [
+                { value: 'polyurethane', label_ar: 'بولي يوريثان (PU)' },
+                { value: 'polystyrene',  label_ar: 'بوليسترين (EPS)' },
+                { value: 'mineral_wool', label_ar: 'صوف معدني' },
+                { value: 'pir',          label_ar: 'PIR (بولي إيزوسيانيورات)' },
+                { value: 'unknown',      label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'cs_insulation_panel_thickness_mm',  field_type: 'float', label_ar: 'سُمك ألواح العزل',                  unit_ar: 'مم',       valid_values: [], group: '', ui_required: false },
+            { name: 'cs_temperature_monitoring_system',  field_type: 'bool',  label_ar: 'هل يوجد نظام مراقبة حرارة آلي؟',    valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التشغيل والدخل', color: '#9ca3af', desc: '', fields: [
+            { name: 'cs_annual_energy_consumption_kwh', field_type: 'float',    label_ar: 'استهلاك الطاقة السنوي',            unit_ar: 'kWh/سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'cs_occupancy_rate',                field_type: 'float',    label_ar: 'نسبة الإشغال',                    unit_ar: '%',        valid_values: [], group: '', ui_required: false },
+            { name: 'cs_annual_storage_income',         field_type: 'float',    label_ar: 'الدخل السنوي من التخزين',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'cs_major_tenant_contracts',        field_type: 'textarea', label_ar: 'عقود المستأجرين الرئيسيين',                            valid_values: [], group: '', ui_required: false },
+            { name: 'cs_food_safety_compliance_status', field_type: 'str',      label_ar: 'حالة الامتثال لسلامة الغذاء',
+              options: [
+                { value: 'fully_compliant',   label_ar: 'ممتثل بالكامل' },
+                { value: 'partial_compliant', label_ar: 'امتثال جزئي' },
+                { value: 'non_compliant',     label_ar: 'غير ممتثل' },
+                { value: 'not_applicable',    label_ar: 'لا ينطبق' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'cs_ownership_doc',            field_type: 'bool', label_ar: 'سند الملكية',               group: 'document', valid_values: [], ui_required: true },
+            { name: 'cs_building_permit',          field_type: 'bool', label_ar: 'رخصة البناء',               group: 'document', valid_values: [], ui_required: false },
+            { name: 'cs_cold_store_license',       field_type: 'bool', label_ar: 'ترخيص مخزن التبريد',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'cs_food_safety_certificate',  field_type: 'bool', label_ar: 'شهادة سلامة الغذاء',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'cs_refrigeration_inspection', field_type: 'bool', label_ar: 'تقرير فحص التبريد',         group: 'document', valid_values: [], ui_required: false },
+            { name: 'cs_site_plan',                field_type: 'bool', label_ar: 'مخطط الموقع',               group: 'document', valid_values: [], ui_required: false },
+            { name: 'cs_financial_statements',     field_type: 'bool', label_ar: 'القوائم المالية',            group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'prefabricated_factory': { sections: [
+        { heading: 'الهيكل والبحور المفتوحة', color: '#d4af37', desc: '', fields: [
+            { name: 'pf_clear_span_m',                     field_type: 'float', label_ar: 'البحر المفتوح الصافي',             unit_ar: 'متر',      valid_values: [], group: '', ui_required: true },
+            { name: 'pf_bay_spacing_m',                    field_type: 'float', label_ar: 'مسافة الأعمدة (Bay Spacing)',      unit_ar: 'متر',      valid_values: [], group: '', ui_required: false },
+            { name: 'pf_eaves_height_m',                   field_type: 'float', label_ar: 'ارتفاع الحافة (Eaves)',            unit_ar: 'متر',      valid_values: [], group: '', ui_required: true },
+            { name: 'pf_ridge_height_m',                   field_type: 'float', label_ar: 'ارتفاع القمة (Ridge)',             unit_ar: 'متر',      valid_values: [], group: '', ui_required: false },
+            { name: 'pf_steel_frame_type',                 field_type: 'str',   label_ar: 'نوع الهيكل المعدني',
+              options: [
+                { value: 'portal_frame',  label_ar: 'هيكل بوابي (Portal Frame)' },
+                { value: 'lattice_frame', label_ar: 'جمالون شبكي (Lattice)' },
+                { value: 'cold_rolled',   label_ar: 'حديد بارد التشكيل' },
+                { value: 'heavy_welded',  label_ar: 'هيكل ثقيل ملحوم' },
+                { value: 'unknown',       label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_steel_frame_condition', field_type: 'str', label_ar: 'حالة الهيكل المعدني',
+              options: [
+                { value: 'excellent', label_ar: 'ممتازة' },
+                { value: 'good',      label_ar: 'جيدة' },
+                { value: 'average',   label_ar: 'متوسطة' },
+                { value: 'poor',      label_ar: 'ضعيفة' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_overhead_crane_load_capacity_ton', field_type: 'float', label_ar: 'سعة الرافعة الجسرية',              unit_ar: 'طن',       valid_values: [], group: '', ui_required: false },
+            { name: 'pf_crane_beam_available',             field_type: 'bool',  label_ar: 'هل يوجد عتبة رافعة جسرية؟',       valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الألواح والعزل', color: '#9ca3af', desc: '', fields: [
+            { name: 'pf_sandwich_panel_type', field_type: 'str', label_ar: 'نوع الألواح الساندويتش',
+              options: [
+                { value: 'polyurethane', label_ar: 'بولي يوريثان (PU)' },
+                { value: 'mineral_wool', label_ar: 'صوف معدني' },
+                { value: 'eps',          label_ar: 'بوليسترين (EPS)' },
+                { value: 'pir',          label_ar: 'PIR' },
+                { value: 'unknown',      label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_panel_thickness_mm',       field_type: 'float', label_ar: 'سُمك الألواح',                    unit_ar: 'مم',       valid_values: [], group: '', ui_required: false },
+            { name: 'pf_roof_panel_condition',     field_type: 'str',   label_ar: 'حالة ألواح السقف',
+              options: [
+                { value: 'good',    label_ar: 'جيدة' },
+                { value: 'fair',    label_ar: 'مقبولة' },
+                { value: 'poor',    label_ar: 'ضعيفة' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_wall_panel_condition',     field_type: 'str',   label_ar: 'حالة ألواح الجدران',
+              options: [
+                { value: 'good',    label_ar: 'جيدة' },
+                { value: 'fair',    label_ar: 'مقبولة' },
+                { value: 'poor',    label_ar: 'ضعيفة' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_thermal_insulation_quality', field_type: 'str', label_ar: 'جودة العزل الحراري',
+              options: [
+                { value: 'high',    label_ar: 'عالية' },
+                { value: 'medium',  label_ar: 'متوسطة' },
+                { value: 'low',     label_ar: 'منخفضة' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'قابلية الفك والنقل', color: '#9ca3af', desc: '', fields: [
+            { name: 'pf_dismantling_reassembly_feasibility', field_type: 'str', label_ar: 'جدوى الفك وإعادة التركيب',
+              options: [
+                { value: 'full',         label_ar: 'ممكنة بالكامل' },
+                { value: 'partial',      label_ar: 'ممكنة جزئياً' },
+                { value: 'not_feasible', label_ar: 'غير ممكنة' },
+                { value: 'unknown',      label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_estimated_relocation_cost',     field_type: 'float', label_ar: 'التكلفة التقديرية للنقل',           unit_ar: 'جنيه',     valid_values: [], group: '', ui_required: false },
+            { name: 'pf_remaining_economic_life_years', field_type: 'int',   label_ar: 'العمر الاقتصادي المتبقى',           unit_ar: 'سنة',      valid_values: [], group: '', ui_required: false },
+            { name: 'pf_corrosion_protection_status',   field_type: 'str',   label_ar: 'حالة الحماية من الصدأ',
+              options: [
+                { value: 'good',     label_ar: 'جيدة (دهانات / جلفنة)' },
+                { value: 'moderate', label_ar: 'متوسطة' },
+                { value: 'poor',     label_ar: 'ضعيفة / صدأ ظاهر' },
+                { value: 'unknown',  label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التشغيل الصناعي', color: '#9ca3af', desc: '', fields: [
+            { name: 'pf_foundation_type', field_type: 'str', label_ar: 'نوع الأساسات',
+              options: [
+                { value: 'isolated', label_ar: 'أساسات منفردة' },
+                { value: 'raft',     label_ar: 'حصيرة خرسانية' },
+                { value: 'strip',    label_ar: 'أساسات شريطية' },
+                { value: 'pile',     label_ar: 'خوازيق' },
+                { value: 'unknown',  label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_built_area_sqm',                 field_type: 'float', label_ar: 'المساحة المبنية',                  unit_ar: 'م²',       valid_values: [], group: '', ui_required: true },
+            { name: 'pf_floor_loading_capacity_ton_sqm', field_type: 'float', label_ar: 'حمل الأرضية',                      unit_ar: 'طن/م²',    valid_values: [], group: '', ui_required: false },
+            { name: 'pf_utilities_available', field_type: 'checkbox_group', label_ar: 'الخدمات المتاحة',
+              options: [
+                { value: 'electricity', label_ar: 'كهرباء' },
+                { value: 'water',       label_ar: 'مياه' },
+                { value: 'sewage',      label_ar: 'صرف صحي' },
+                { value: 'gas',         label_ar: 'غاز' },
+                { value: 'paved_road',  label_ar: 'طريق معبد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'pf_industrial_license_status', field_type: 'str', label_ar: 'حالة الترخيص الصناعي',
+              options: [
+                { value: 'licensed',       label_ar: 'مرخص سارٍ' },
+                { value: 'expired',        label_ar: 'منتهي الصلاحية' },
+                { value: 'pending',        label_ar: 'قيد الإصدار' },
+                { value: 'not_applicable', label_ar: 'لا ينطبق' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'pf_ownership_doc',       field_type: 'bool', label_ar: 'سند الملكية',              group: 'document', valid_values: [], ui_required: true },
+            { name: 'pf_building_permit',     field_type: 'bool', label_ar: 'رخصة البناء',              group: 'document', valid_values: [], ui_required: false },
+            { name: 'pf_industrial_license',  field_type: 'bool', label_ar: 'الترخيص الصناعي',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'pf_structural_drawings', field_type: 'bool', label_ar: 'الرسومات الإنشائية',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'pf_supplier_specs',      field_type: 'bool', label_ar: 'مواصفات المورد / الكتالوج', group: 'document', valid_values: [], ui_required: false },
+            { name: 'pf_site_plan',           field_type: 'bool', label_ar: 'مخطط الموقع',               group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    // ── End Phase 8S.1 ──────────────────────────────────────────────────────────
 };
 
     // ── Phase 8Q: Supplemental field renderer — uses data-es-supp-field (not data-es-req-field) ──

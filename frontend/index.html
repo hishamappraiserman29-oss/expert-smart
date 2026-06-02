@@ -1329,6 +1329,11 @@
                     <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
                     <option value="water_well">بئر مياه / آبار جوفية</option>
                 </optgroup>
+                <optgroup label="أصول البنية التحتية والنقل السيادية">
+                    <option value="airport">مطار / حقل طيران</option>
+                    <option value="seaport">ميناء بحري / أرصفة</option>
+                    <option value="marina">مارينا يخوت وسياحة بحرية</option>
+                </optgroup>
                 <optgroup label="أصول خاصة ومعقدة">
                     <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
                     <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
@@ -5769,6 +5774,9 @@ function _showIndexToast(msg, type) {
         'historical':            'historical',
         'heritage':              'heritage',
         'agricultural_land':     'agricultural_land',
+        'airport':               'airport',
+        'seaport':               'seaport',
+        'marina':                'marina',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5854,6 +5862,9 @@ function _showIndexToast(msg, type) {
         'historical':         { type: 'form', titleAr: 'عقارات تاريخية' },
         'heritage':           { type: 'form', titleAr: 'موروث ثقافي معماري' },
         'agricultural_land':  { type: 'form', titleAr: 'أرض زراعية' },
+        'airport':            { type: 'form', titleAr: 'مطار / حقل طيران' },
+        'seaport':            { type: 'form', titleAr: 'ميناء بحري' },
+        'marina':             { type: 'form', titleAr: 'مارينا يخوت وسياحة بحرية' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5875,6 +5886,9 @@ function _showIndexToast(msg, type) {
         'historical':         { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'heritage':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'agricultural_land':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أرض زراعية — نموذج محلّي لتجميع بيانات الأصل (تربة، ري، محاصيل، تكاليف). لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'airport':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مطار / حقل طيران — نموذج محلّي لتجميع البيانات السيادية والتشغيلية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'seaport':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'ميناء بحري — نموذج محلّي لتجميع بيانات التشغيل والامتياز. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'marina':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مارينا يخوت وسياحة بحرية — نموذج محلّي لتجميع بيانات الأصل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -7541,7 +7555,250 @@ function _showIndexToast(msg, type) {
                 { name: 'ag_croquis',             field_type: 'bool', label_ar: 'كروكي / إحداثيات',             group: 'document', valid_values: [], ui_required: false },
             ]},
         ]},
-    };
+
+    // ── Phase 8R.1 — Sovereign Infrastructure / Transport ──────────────────────
+    'airport': { sections: [
+        { heading: 'بيانات التشغيل والحركة', color: '#d4af37', desc: '', fields: [
+            { name: 'ap_annual_passenger_traffic',   field_type: 'float', label_ar: 'حجم الركاب السنوي',              unit_ar: 'راكب/سنة',  valid_values: [], group: '', ui_required: true },
+            { name: 'ap_terminal_capacity',          field_type: 'float', label_ar: 'الطاقة الاستيعابية للصالات',    unit_ar: 'راكب/سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'ap_daily_takeoffs_landings',    field_type: 'int',   label_ar: 'الحركات اليومية (إقلاع/هبوط)',  unit_ar: 'حركة/يوم',  valid_values: [], group: '', ui_required: false },
+            { name: 'ap_scheduled_flights_count',    field_type: 'int',   label_ar: 'عدد الرحلات المجدولة',                                  valid_values: [], group: '', ui_required: false },
+            { name: 'ap_cargo_volume_tons',          field_type: 'float', label_ar: 'حجم الشحن الجوي السنوي',         unit_ar: 'طن/سنة',    valid_values: [], group: '', ui_required: false },
+            { name: 'ap_peak_hour_capacity',         field_type: 'int',   label_ar: 'الطاقة في ساعة الذروة',          unit_ar: 'راكب/ساعة', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المدارج والممرات الجوية', color: '#9ca3af', desc: '', fields: [
+            { name: 'ap_runways_count',                  field_type: 'int',   label_ar: 'عدد المدارج',                                    valid_values: [], group: '', ui_required: true },
+            { name: 'ap_main_runway_length_m',           field_type: 'float', label_ar: 'طول المدرج الرئيسي',          unit_ar: 'متر',       valid_values: [], group: '', ui_required: true },
+            { name: 'ap_main_runway_width_m',            field_type: 'float', label_ar: 'عرض المدرج الرئيسي',          unit_ar: 'متر',       valid_values: [], group: '', ui_required: false },
+            { name: 'ap_runway_pavement_classification', field_type: 'str',   label_ar: 'تصنيف رصف المدرج',                                valid_values: [], group: '', ui_required: false },
+            { name: 'ap_aircraft_capacity_class', field_type: 'str', label_ar: 'فئة الطائرات المستوعبة',
+              options: [
+                { value: 'narrow_body',    label_ar: 'ضيقة الجسم' },
+                { value: 'wide_body',      label_ar: 'واسعة الجسم' },
+                { value: 'jumbo_aircraft', label_ar: 'ضخمة / جامبو' },
+                { value: 'cargo_aircraft', label_ar: 'شحن جوي' },
+                { value: 'mixed',          label_ar: 'مختلطة' },
+                { value: 'unknown',        label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'ap_taxiways_condition', field_type: 'str', label_ar: 'حالة ممرات التاكسي',
+              options: [
+                { value: 'excellent', label_ar: 'ممتازة' },
+                { value: 'good',      label_ar: 'جيدة' },
+                { value: 'average',   label_ar: 'متوسطة' },
+                { value: 'poor',      label_ar: 'ضعيفة' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'ap_apron_area_sqm', field_type: 'float', label_ar: 'مساحة الساحة الجوية', unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التراخيص والامتثال السيادي', color: '#9ca3af', desc: '', fields: [
+            { name: 'ap_operating_license_status', field_type: 'str', label_ar: 'حالة رخصة التشغيل',
+              options: [
+                { value: 'valid',               label_ar: 'سارية' },
+                { value: 'renewal_in_progress', label_ar: 'قيد التجديد' },
+                { value: 'expired',             label_ar: 'منتهية' },
+                { value: 'suspended',           label_ar: 'موقوفة' },
+                { value: 'unknown',             label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: true },
+            { name: 'ap_license_issuing_authority',     field_type: 'str',   label_ar: 'جهة إصدار الرخصة',                               valid_values: [], group: '', ui_required: false },
+            { name: 'ap_icao_compliance_status', field_type: 'str', label_ar: 'حالة الامتثال ICAO',
+              options: [
+                { value: 'compliant',          label_ar: 'مستوفٍ' },
+                { value: 'partial_compliance', label_ar: 'امتثال جزئي' },
+                { value: 'needs_verification', label_ar: 'يحتاج تحقق' },
+                { value: 'non_compliant',      label_ar: 'غير مستوفٍ' },
+                { value: 'unknown',            label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'ap_security_clearance_status', field_type: 'str', label_ar: 'حالة التصاريح الأمنية',
+              options: [
+                { value: 'cleared',     label_ar: 'مُجاز' },
+                { value: 'pending',     label_ar: 'قيد المراجعة' },
+                { value: 'conditional', label_ar: 'مشروط' },
+                { value: 'not_cleared', label_ar: 'غير مُجاز' },
+                { value: 'unknown',     label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'ap_concession_or_state_agreement', field_type: 'str',   label_ar: 'عقد الامتياز / الاتفاقية السيادية',               valid_values: [], group: '', ui_required: false },
+            { name: 'ap_remaining_concession_years',    field_type: 'float', label_ar: 'السنوات المتبقية من الامتياز', unit_ar: 'سنة',     valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإيرادات والمخاطر', color: '#9ca3af', desc: '', fields: [
+            { name: 'ap_aeronautical_revenue_annual',     field_type: 'float', label_ar: 'الإيرادات الجوية السنوية',            unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'ap_non_aeronautical_revenue_annual', field_type: 'float', label_ar: 'الإيرادات غير الجوية السنوية',        unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'ap_retail_rental_income_annual',     field_type: 'float', label_ar: 'دخل الإيجارات التجارية السنوي',      unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'ap_fuel_services_income_annual',     field_type: 'float', label_ar: 'دخل خدمات الوقود السنوي',            unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'ap_operational_risk_level', field_type: 'str', label_ar: 'مستوى المخاطر التشغيلية',
+              options: [
+                { value: 'low',     label_ar: 'منخفض' },
+                { value: 'medium',  label_ar: 'متوسط' },
+                { value: 'high',    label_ar: 'مرتفع' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'ap_regulatory_risk_level', field_type: 'str', label_ar: 'مستوى المخاطر التنظيمية',
+              options: [
+                { value: 'low',     label_ar: 'منخفض' },
+                { value: 'medium',  label_ar: 'متوسط' },
+                { value: 'high',    label_ar: 'مرتفع' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { field_type: 'component_list', component_config: {
+            section_heading: 'صالات وأبنية المطار',
+            section_label: 'صالة / مبنى',
+            defaults: ['الصالة الرئيسية', 'صالة الوصول', 'الصالة الدولية', 'مبنى الشحن', 'مبنى الخدمات'],
+            fields_override: null,
+            extra_fields: [
+                { name: 'terminal_capacity_pax', field_type: 'int', label_ar: 'الطاقة الاستيعابية', unit_ar: 'راكب/سنة',
+                  valid_values: [], group: '', ui_required: false },
+                { name: 'terminal_condition', field_type: 'str', label_ar: 'حالة الصالة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good',    label_ar: 'جيدة' },
+                    { value: 'average',   label_ar: 'متوسطة' }, { value: 'poor',    label_ar: 'ضعيفة' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ],
+        }},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'ap_operating_license_doc',   field_type: 'bool', label_ar: 'رخصة التشغيل',           group: 'document', valid_values: [], ui_required: true },
+            { name: 'ap_icao_certificates',       field_type: 'bool', label_ar: 'شهادات الامتثال ICAO',    group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_runway_plans',            field_type: 'bool', label_ar: 'مخططات المدارج',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_passenger_traffic_data',  field_type: 'bool', label_ar: 'بيانات حركة الركاب',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_concession_contracts',    field_type: 'bool', label_ar: 'عقود الامتياز',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_safety_security_reports', field_type: 'bool', label_ar: 'تقارير السلامة والأمن',   group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_revenue_statements',      field_type: 'bool', label_ar: 'قوائم الإيرادات',         group: 'document', valid_values: [], ui_required: false },
+            { name: 'ap_site_photos_plans',       field_type: 'bool', label_ar: 'صور ومخططات الموقع',      group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+
+    'seaport': { sections: [
+        { heading: 'الطاقة الاستيعابية والتشغيل', color: '#d4af37', desc: '', fields: [
+            { name: 'sp_annual_container_capacity_teu',   field_type: 'float', label_ar: 'الطاقة السنوية للحاويات',         unit_ar: 'TEU/سنة', valid_values: [], group: '', ui_required: true },
+            { name: 'sp_actual_container_throughput_teu', field_type: 'float', label_ar: 'الحاويات المناولة الفعلية',       unit_ar: 'TEU/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'sp_bulk_cargo_tons_annual',          field_type: 'float', label_ar: 'البضائع السائبة الجافة السنوية', unit_ar: 'طن/سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'sp_liquid_bulk_tons_annual',         field_type: 'float', label_ar: 'البضائع السائبة السائلة السنوية',unit_ar: 'طن/سنة',  valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الأرصفة والبنية التحتية', color: '#9ca3af', desc: '', fields: [
+            { name: 'sp_berths_count',           field_type: 'int',   label_ar: 'عدد الأرصفة',                                         valid_values: [], group: '', ui_required: true },
+            { name: 'sp_quay_length_m',          field_type: 'float', label_ar: 'إجمالي طول الأرصفة',           unit_ar: 'متر',        valid_values: [], group: '', ui_required: false },
+            { name: 'sp_berth_draft_depth_m',    field_type: 'float', label_ar: 'عمق الغاطس عند الرصيف',        unit_ar: 'متر',        valid_values: [], group: '', ui_required: false },
+            { name: 'sp_harbor_basin_depth_m',   field_type: 'float', label_ar: 'عمق حوض الميناء',              unit_ar: 'متر',        valid_values: [], group: '', ui_required: false },
+            { name: 'sp_cranes_count',           field_type: 'int',   label_ar: 'عدد الرافعات',                                        valid_values: [], group: '', ui_required: false },
+            { name: 'sp_storage_yard_area_sqm',  field_type: 'float', label_ar: 'مساحة ساحة التخزين',           unit_ar: 'م²',         valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الامتياز والامتثال', color: '#9ca3af', desc: '', fields: [
+            { name: 'sp_concession_contract_type', field_type: 'str', label_ar: 'نوع عقد الامتياز',
+              options: [
+                { value: 'build_operate_transfer', label_ar: 'BOT — بناء تشغيل تحويل' },
+                { value: 'concession',             label_ar: 'امتياز تشغيل' },
+                { value: 'lease',                  label_ar: 'عقد إيجار' },
+                { value: 'joint_venture',          label_ar: 'مشروع مشترك' },
+                { value: 'state_owned',            label_ar: 'ملكية حكومية' },
+                { value: 'unknown',                label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'sp_remaining_concession_years',    field_type: 'float', label_ar: 'السنوات المتبقية من الامتياز', unit_ar: 'سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'sp_port_authority_license_status', field_type: 'str', label_ar: 'حالة ترخيص هيئة الموانئ',
+              options: [
+                { value: 'valid',               label_ar: 'سارية' },
+                { value: 'renewal_in_progress', label_ar: 'قيد التجديد' },
+                { value: 'expired',             label_ar: 'منتهية' },
+                { value: 'unknown',             label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'sp_environmental_compliance_status', field_type: 'str', label_ar: 'حالة الامتثال البيئي',
+              options: [
+                { value: 'compliant',          label_ar: 'مستوفٍ' },
+                { value: 'partial_compliance', label_ar: 'امتثال جزئي' },
+                { value: 'needs_verification', label_ar: 'يحتاج تحقق' },
+                { value: 'non_compliant',      label_ar: 'غير مستوفٍ' },
+                { value: 'unknown',            label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'sp_customs_zone_status', field_type: 'str', label_ar: 'حالة المنطقة الجمركية',
+              options: [
+                { value: 'free_zone',       label_ar: 'منطقة حرة' },
+                { value: 'bonded_zone',     label_ar: 'مستودع جمركي' },
+                { value: 'regular_customs', label_ar: 'جمارك عادية' },
+                { value: 'unknown',         label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { field_type: 'component_list', component_config: {
+            section_heading: 'الأرصفة والمراسي',
+            section_label: 'رصيف',
+            defaults: ['رصيف الحاويات الرئيسي', 'رصيف البضائع السائبة', 'رصيف الركاب', 'رصيف الخدمات'],
+            fields_override: null,
+            extra_fields: [
+                { name: 'berth_length_m',  field_type: 'float', label_ar: 'طول الرصيف', unit_ar: 'متر',
+                  valid_values: [], group: '', ui_required: false },
+                { name: 'berth_condition', field_type: 'str',   label_ar: 'حالة الرصيف',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتاز' }, { value: 'good',    label_ar: 'جيد' },
+                    { value: 'average',   label_ar: 'متوسط' }, { value: 'poor',    label_ar: 'ضعيف' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ],
+        }},
+        { heading: 'الإيرادات السنوية', color: '#9ca3af', desc: '', fields: [
+            { name: 'sp_annual_revenue', field_type: 'float', label_ar: 'إجمالي الإيرادات السنوية', unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'sp_concession_contract_doc', field_type: 'bool', label_ar: 'عقد الامتياز',               group: 'document', valid_values: [], ui_required: true },
+            { name: 'sp_operating_license_doc',   field_type: 'bool', label_ar: 'رخصة التشغيل',               group: 'document', valid_values: [], ui_required: true },
+            { name: 'sp_berth_plans',             field_type: 'bool', label_ar: 'مخططات الأرصفة',             group: 'document', valid_values: [], ui_required: false },
+            { name: 'sp_teu_throughput_data',     field_type: 'bool', label_ar: 'بيانات تداول الحاويات TEU',   group: 'document', valid_values: [], ui_required: false },
+            { name: 'sp_bulk_cargo_data',         field_type: 'bool', label_ar: 'بيانات البضائع السائبة',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'sp_depth_draft_reports',     field_type: 'bool', label_ar: 'تقارير الأعماق والغاطس',     group: 'document', valid_values: [], ui_required: false },
+            { name: 'sp_revenue_statements',      field_type: 'bool', label_ar: 'قوائم الإيرادات',             group: 'document', valid_values: [], ui_required: false },
+            { name: 'sp_safety_environment_docs', field_type: 'bool', label_ar: 'تقارير السلامة والبيئة',     group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+
+    'marina': { sections: [
+        { heading: 'الطاقة والاستيعاب', color: '#d4af37', desc: '', fields: [
+            { name: 'mr_wet_slips_count',          field_type: 'int',   label_ar: 'عدد مراسي الماء (Wet Slips)',                      valid_values: [], group: '', ui_required: true },
+            { name: 'mr_dry_storage_capacity',     field_type: 'int',   label_ar: 'طاقة التخزين الجاف',              unit_ar: 'يخت',  valid_values: [], group: '', ui_required: false },
+            { name: 'mr_max_yacht_loa_m',          field_type: 'float', label_ar: 'أقصى طول يخت مستوعَب (LOA)',      unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+            { name: 'mr_marina_draft_depth_m',     field_type: 'float', label_ar: 'عمق الغاطس في المارينا',          unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+            { name: 'mr_berthing_occupancy_rate',  field_type: 'float', label_ar: 'معدل إشغال المراسي',               unit_ar: '%',    valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإيرادات والخدمات', color: '#9ca3af', desc: '', fields: [
+            { name: 'mr_annual_berthing_income',       field_type: 'float', label_ar: 'دخل الرسو السنوي',               unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'mr_promenade_retail_area_sqm',    field_type: 'float', label_ar: 'مساحة تجزئة الكورنيش',          unit_ar: 'م²',        valid_values: [], group: '', ui_required: false },
+            { name: 'mr_restaurants_count',            field_type: 'int',   label_ar: 'عدد المطاعم والمقاهي',                                 valid_values: [], group: '', ui_required: false },
+            { name: 'mr_retail_lease_income_annual',   field_type: 'float', label_ar: 'دخل إيجار المحلات السنوي',     unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'mr_service_facilities_available', field_type: 'checkbox_group', label_ar: 'المرافق والخدمات المتاحة',
+              options: [
+                { value: 'fuel_station',   label_ar: 'محطة وقود' },
+                { value: 'maintenance',    label_ar: 'صيانة / إصلاح' },
+                { value: 'electricity',    label_ar: 'كهرباء' },
+                { value: 'water',          label_ar: 'مياه' },
+                { value: 'security',       label_ar: 'أمن وحراسة' },
+                { value: 'waste_disposal', label_ar: 'تصريف نفايات' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الترخيص والامتياز', color: '#9ca3af', desc: '', fields: [
+            { name: 'mr_marina_license_status', field_type: 'str', label_ar: 'حالة ترخيص المارينا',
+              options: [
+                { value: 'valid',               label_ar: 'سارية' },
+                { value: 'renewal_in_progress', label_ar: 'قيد التجديد' },
+                { value: 'expired',             label_ar: 'منتهية' },
+                { value: 'unknown',             label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: true },
+            { name: 'mr_waterfront_concession_status', field_type: 'str', label_ar: 'حالة امتياز الواجهة البحرية',
+              options: [
+                { value: 'active',       label_ar: 'سارٍ' },
+                { value: 'pending',      label_ar: 'قيد المراجعة' },
+                { value: 'expired',      label_ar: 'منتهٍ' },
+                { value: 'not_required', label_ar: 'غير مطلوب' },
+                { value: 'unknown',      label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'mr_marina_license_doc', field_type: 'bool', label_ar: 'رخصة المارينا',          group: 'document', valid_values: [], ui_required: true },
+            { name: 'mr_berth_plan',         field_type: 'bool', label_ar: 'مخطط المراسي',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'mr_mooring_contracts',  field_type: 'bool', label_ar: 'عقود الإشغال والرسو',    group: 'document', valid_values: [], ui_required: false },
+            { name: 'mr_retail_contracts',   field_type: 'bool', label_ar: 'عقود المحلات والمطاعم',  group: 'document', valid_values: [], ui_required: false },
+            { name: 'mr_income_statements',  field_type: 'bool', label_ar: 'بيانات الدخل',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'mr_depth_reports',      field_type: 'bool', label_ar: 'تقارير الأعماق',         group: 'document', valid_values: [], ui_required: false },
+            { name: 'mr_site_photos_plans',  field_type: 'bool', label_ar: 'صور ومخططات',            group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    // ── End Phase 8R.1 ──────────────────────────────────────────────────────────
+};
 
     // ── Phase 8Q: Supplemental field renderer — uses data-es-supp-field (not data-es-req-field) ──
     function _suppFieldControlHTML(f) {

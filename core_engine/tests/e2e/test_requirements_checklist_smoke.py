@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P/8Q/8R.1 — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -276,6 +276,34 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS255 — (8Q) no data-es-req-field elements in #es-req-supp for land
   CS256 — (8Q) agricultural_land shows 'مصادر المياه والري' section heading
   CS257 — (8Q) ag_soil_fertility select renders with Arabic options in agricultural_land
+
+  CS258 — (8R.1) optgroup 'أصول البنية التحتية والنقل السيادية' appears in #asset-type
+  CS259 — (8R.1) airport option appears in #asset-type select
+  CS260 — (8R.1) seaport option appears in #asset-type select
+  CS261 — (8R.1) marina option appears in #asset-type select
+  CS262 — (8R.1) airport renders local form (badge 'نموذج محلي'); page stays on index.html
+  CS263 — (8R.1) seaport renders local form (badge 'نموذج محلي'); page stays on index.html
+  CS264 — (8R.1) marina renders local form (badge 'نموذج محلي'); page stays on index.html
+  CS265 — (8R.1) airport makes ZERO API calls to /api/valuation/requirements
+  CS266 — (8R.1) airport panel title contains 'مطار'
+  CS267 — (8R.1) ap_main_runway_length_m renders as number input with متر unit
+  CS268 — (8R.1) ap_main_runway_width_m renders as number input with متر unit
+  CS269 — (8R.1) ap_icao_compliance_status select renders with Arabic options
+  CS270 — (8R.1) airport document section shows upload hint text
+  CS271 — (8R.1) airport panel has no composite_valuation.html link
+  CS272 — (8R.1) seaport makes ZERO API calls to /api/valuation/requirements
+  CS273 — (8R.1) sp_annual_container_capacity_teu renders as number input with TEU/سنة unit
+  CS274 — (8R.1) sp_berth_draft_depth_m renders as number input with متر unit
+  CS275 — (8R.1) sp_harbor_basin_depth_m renders as number input with متر unit
+  CS276 — (8R.1) seaport document section shows upload hint text
+  CS277 — (8R.1) seaport panel has no composite_valuation.html link
+  CS278 — (8R.1) marina makes ZERO API calls to /api/valuation/requirements
+  CS279 — (8R.1) mr_wet_slips_count renders as number input
+  CS280 — (8R.1) mr_max_yacht_loa_m renders as number input with متر unit
+  CS281 — (8R.1) mr_service_facilities_available checkbox group renders (fuel_station option)
+  CS282 — (8R.1) marina document section shows upload hint text
+  CS283 — (8R.1) marina panel has no composite_valuation.html link
+  CS284 — (8R.1) regression guard: existing profiles (فندق, عمارة سكنية) still render form controls
 """
 from __future__ import annotations
 
@@ -4605,3 +4633,399 @@ def test_CS257_agricultural_land_soil_fertility_select_arabic(page: Page, live_s
     assert any("عالية" in o or "متوسطة" in o or "منخفضة" in o for o in opts), (
         f"ag_soil_fertility must have Arabic fertility options. Got: {opts}"
     )
+
+
+# ══ Phase 8R.1 — Infrastructure & Transport Profiles: Airport / Seaport / Marina (CS258–CS284) ══
+
+
+def _load_airport(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_seaport(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="seaport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_marina(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS258 ─────────────────────────────────────────────────────────────────────
+
+def test_CS258_infrastructure_transport_optgroup_present(page: Page, live_server: str) -> None:
+    """Phase 8R.1: optgroup 'أصول البنية التحتية والنقل السيادية' appears in #asset-type."""
+    page.goto(live_server, wait_until="networkidle")
+    optgroup_labels = page.locator("#asset-type optgroup").evaluate_all(
+        "els => els.map(e => e.getAttribute('label'))"
+    )
+    assert any("أصول البنية التحتية" in lbl for lbl in optgroup_labels), (
+        f"#asset-type must have optgroup 'أصول البنية التحتية والنقل السيادية'. Got: {optgroup_labels}"
+    )
+
+
+# ── CS259 ─────────────────────────────────────────────────────────────────────
+
+def test_CS259_airport_option_present_in_select(page: Page, live_server: str) -> None:
+    """Phase 8R.1: 'airport' option value exists inside #asset-type."""
+    page.goto(live_server, wait_until="networkidle")
+    option = page.locator("#asset-type option[value='airport']")
+    expect(option).to_be_attached()
+    assert "مطار" in option.inner_text(), (
+        f"airport option must show Arabic 'مطار' text. Got: {option.inner_text()!r}"
+    )
+
+
+# ── CS260 ─────────────────────────────────────────────────────────────────────
+
+def test_CS260_seaport_option_present_in_select(page: Page, live_server: str) -> None:
+    """Phase 8R.1: 'seaport' option value exists inside #asset-type."""
+    page.goto(live_server, wait_until="networkidle")
+    option = page.locator("#asset-type option[value='seaport']")
+    expect(option).to_be_attached()
+    assert "ميناء" in option.inner_text(), (
+        f"seaport option must show Arabic 'ميناء' text. Got: {option.inner_text()!r}"
+    )
+
+
+# ── CS261 ─────────────────────────────────────────────────────────────────────
+
+def test_CS261_marina_option_present_in_select(page: Page, live_server: str) -> None:
+    """Phase 8R.1: 'marina' option value exists inside #asset-type."""
+    page.goto(live_server, wait_until="networkidle")
+    option = page.locator("#asset-type option[value='marina']")
+    expect(option).to_be_attached()
+    assert "مارينا" in option.inner_text(), (
+        f"marina option must show Arabic 'مارينا' text. Got: {option.inner_text()!r}"
+    )
+
+
+# ── CS262 ─────────────────────────────────────────────────────────────────────
+
+def test_CS262_airport_renders_local_form_stays_on_index(page: Page, live_server: str) -> None:
+    """Phase 8R.1: airport renders local form with badge 'نموذج محلي'; page stays on index.html."""
+    _load_airport(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"airport badge must show 'نموذج محلي'. Got: {badge.inner_text()!r}"
+    )
+    assert page.url.startswith(live_server), (
+        f"page must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS263 ─────────────────────────────────────────────────────────────────────
+
+def test_CS263_seaport_renders_local_form_stays_on_index(page: Page, live_server: str) -> None:
+    """Phase 8R.1: seaport renders local form with badge 'نموذج محلي'; page stays on index.html."""
+    _load_seaport(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"seaport badge must show 'نموذج محلي'. Got: {badge.inner_text()!r}"
+    )
+    assert page.url.startswith(live_server), (
+        f"page must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS264 ─────────────────────────────────────────────────────────────────────
+
+def test_CS264_marina_renders_local_form_stays_on_index(page: Page, live_server: str) -> None:
+    """Phase 8R.1: marina renders local form with badge 'نموذج محلي'; page stays on index.html."""
+    _load_marina(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    expect(badge).to_be_visible()
+    assert badge.inner_text().strip() == "نموذج محلي", (
+        f"marina badge must show 'نموذج محلي'. Got: {badge.inner_text()!r}"
+    )
+    assert page.url.startswith(live_server), (
+        f"page must stay on index.html. Got URL: {page.url!r}"
+    )
+
+
+# ── CS265 ─────────────────────────────────────────────────────────────────────
+
+def test_CS265_airport_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8R.1: airport must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"airport must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS266 ─────────────────────────────────────────────────────────────────────
+
+def test_CS266_airport_panel_title_contains_airport_arabic(page: Page, live_server: str) -> None:
+    """Phase 8R.1: airport panel title contains 'مطار'."""
+    _load_airport(page, live_server)
+    title_text = page.locator("#es-req-title").inner_text()
+    assert "مطار" in title_text, (
+        f"airport title must contain 'مطار'. Got: {title_text!r}"
+    )
+
+
+# ── CS267 ─────────────────────────────────────────────────────────────────────
+
+def test_CS267_airport_runway_length_number_input_with_meter_unit(page: Page, live_server: str) -> None:
+    """Phase 8R.1: ap_main_runway_length_m renders as number input; متر unit text visible."""
+    _load_airport(page, live_server)
+    field = page.locator("#es-req-field-ap_main_runway_length_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"ap_main_runway_length_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"airport panel must show 'متر' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS268 ─────────────────────────────────────────────────────────────────────
+
+def test_CS268_airport_runway_width_number_input_with_meter_unit(page: Page, live_server: str) -> None:
+    """Phase 8R.1: ap_main_runway_width_m renders as number input with متر unit."""
+    _load_airport(page, live_server)
+    field = page.locator("#es-req-field-ap_main_runway_width_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"ap_main_runway_width_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS269 ─────────────────────────────────────────────────────────────────────
+
+def test_CS269_airport_icao_compliance_select_arabic_options(page: Page, live_server: str) -> None:
+    """Phase 8R.1: ap_icao_compliance_status select renders with Arabic options."""
+    _load_airport(page, live_server)
+    sel = page.locator("#es-req-field-ap_icao_compliance_status")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("متوافق" in o or "امتثال" in o or "جزئي" in o for o in opts), (
+        f"ap_icao_compliance_status must have Arabic options. Got: {opts}"
+    )
+
+
+# ── CS270 ─────────────────────────────────────────────────────────────────────
+
+def test_CS270_airport_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8R.1: airport document section shows upload hint text."""
+    _load_airport(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"airport panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS271 ─────────────────────────────────────────────────────────────────────
+
+def test_CS271_airport_has_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8R.1: airport panel has no composite_valuation.html link."""
+    _load_airport(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "airport panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS272 ─────────────────────────────────────────────────────────────────────
+
+def test_CS272_seaport_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8R.1: seaport must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="seaport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"seaport must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS273 ─────────────────────────────────────────────────────────────────────
+
+def test_CS273_seaport_teu_capacity_number_input_with_teu_unit(page: Page, live_server: str) -> None:
+    """Phase 8R.1: sp_annual_container_capacity_teu renders as number input; TEU unit visible."""
+    _load_seaport(page, live_server)
+    field = page.locator("#es-req-field-sp_annual_container_capacity_teu")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"sp_annual_container_capacity_teu must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "TEU" in panel_text, (
+        f"seaport panel must show 'TEU' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS274 ─────────────────────────────────────────────────────────────────────
+
+def test_CS274_seaport_berth_draft_depth_number_input_meter(page: Page, live_server: str) -> None:
+    """Phase 8R.1: sp_berth_draft_depth_m renders as number input with متر unit."""
+    _load_seaport(page, live_server)
+    field = page.locator("#es-req-field-sp_berth_draft_depth_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"sp_berth_draft_depth_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"seaport panel must show 'متر' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS275 ─────────────────────────────────────────────────────────────────────
+
+def test_CS275_seaport_harbor_basin_depth_number_input_meter(page: Page, live_server: str) -> None:
+    """Phase 8R.1: sp_harbor_basin_depth_m renders as number input with متر unit."""
+    _load_seaport(page, live_server)
+    field = page.locator("#es-req-field-sp_harbor_basin_depth_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"sp_harbor_basin_depth_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS276 ─────────────────────────────────────────────────────────────────────
+
+def test_CS276_seaport_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8R.1: seaport document section shows upload hint text."""
+    _load_seaport(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"seaport panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS277 ─────────────────────────────────────────────────────────────────────
+
+def test_CS277_seaport_has_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8R.1: seaport panel has no composite_valuation.html link."""
+    _load_seaport(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "seaport panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS278 ─────────────────────────────────────────────────────────────────────
+
+def test_CS278_marina_makes_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8R.1: marina must NOT call /api/valuation/requirements (static path)."""
+    api_calls: list[str] = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, (
+        f"marina must make ZERO API calls. Got calls: {api_calls}"
+    )
+
+
+# ── CS279 ─────────────────────────────────────────────────────────────────────
+
+def test_CS279_marina_wet_slips_count_number_input(page: Page, live_server: str) -> None:
+    """Phase 8R.1: mr_wet_slips_count renders as number input."""
+    _load_marina(page, live_server)
+    field = page.locator("#es-req-field-mr_wet_slips_count")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"mr_wet_slips_count must be number input. Got type={field.get_attribute('type')!r}"
+    )
+
+
+# ── CS280 ─────────────────────────────────────────────────────────────────────
+
+def test_CS280_marina_max_yacht_loa_number_input_meter(page: Page, live_server: str) -> None:
+    """Phase 8R.1: mr_max_yacht_loa_m renders as number input; متر unit text visible."""
+    _load_marina(page, live_server)
+    field = page.locator("#es-req-field-mr_max_yacht_loa_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"mr_max_yacht_loa_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"marina panel must show 'متر' unit text. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS281 ─────────────────────────────────────────────────────────────────────
+
+def test_CS281_marina_service_facilities_checkbox_group_renders(page: Page, live_server: str) -> None:
+    """Phase 8R.1: mr_service_facilities_available checkbox group renders with fuel_station option."""
+    _load_marina(page, live_server)
+    chips = page.locator("[data-es-req-field='mr_service_facilities_available']")
+    expect(chips.first).to_be_visible()
+    fuel_chip = page.locator("[data-es-req-field='mr_service_facilities_available'][value='fuel_station']")
+    expect(fuel_chip).to_be_attached()
+
+
+# ── CS282 ─────────────────────────────────────────────────────────────────────
+
+def test_CS282_marina_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8R.1: marina document section shows upload hint text."""
+    _load_marina(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"marina panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS283 ─────────────────────────────────────────────────────────────────────
+
+def test_CS283_marina_has_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8R.1: marina panel has no composite_valuation.html link."""
+    _load_marina(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "marina panel must not contain composite_valuation.html link"
+    )
+
+
+# ── CS284 ─────────────────────────────────────────────────────────────────────
+
+def test_CS284_regression_existing_profiles_still_render(page: Page, live_server: str) -> None:
+    """Phase 8R.1: regression guard — existing profiles (فندق, عمارة سكنية) still render form controls."""
+    for profile_value, profile_label in [("فندق", "فندق"), ("عمارة سكنية", "عمارة سكنية")]:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_label} panel must still render form controls after 8R.1. "
+            f"Got {count} controls."
+        )

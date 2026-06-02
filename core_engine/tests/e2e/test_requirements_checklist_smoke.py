@@ -5577,3 +5577,382 @@ def test_CS322_regression_existing_profiles_still_render_after_8s1(page: Page, l
             f"Regression: {profile_label} panel must still render form controls after 8S.1. "
             f"Got {count} controls."
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8T.1 — Healthcare / Wellness / Educational asset profiles
+# CS323–CS349
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_healthcare_facility(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="healthcare_facility")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_wellness_resort(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="wellness_resort")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_educational_asset(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="educational_asset")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS323 ─────────────────────────────────────────────────────────────────────
+
+def test_CS323_optgroup_medical_educational_exists(page: Page, live_server: str) -> None:
+    """Phase 8T.1: optgroup «أصول طبية وتعليمية وبيئية متخصّصة» exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    labels = page.locator("#asset-type optgroup").evaluate_all("els => els.map(e => e.label)")
+    assert "أصول طبية وتعليمية وبيئية متخصّصة" in labels, (
+        f"optgroup «أصول طبية وتعليمية وبيئية متخصّصة» not found in dropdown. "
+        f"Got: {labels}"
+    )
+
+
+# ── CS324 ─────────────────────────────────────────────────────────────────────
+
+def test_CS324_option_healthcare_facility_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: option value='healthcare_facility' exists with «— تقييم تفصيلي» suffix."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='healthcare_facility']")
+    assert opt.count() == 1, "option value='healthcare_facility' not found in dropdown."
+    text = opt.inner_text()
+    assert "تقييم تفصيلي" in text, (
+        f"healthcare_facility option must contain «تقييم تفصيلي». Got: {text!r}"
+    )
+
+
+# ── CS325 ─────────────────────────────────────────────────────────────────────
+
+def test_CS325_option_wellness_resort_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: option value='wellness_resort' exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='wellness_resort']")
+    assert opt.count() == 1, "option value='wellness_resort' not found in dropdown."
+
+
+# ── CS326 ─────────────────────────────────────────────────────────────────────
+
+def test_CS326_option_educational_asset_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: option value='educational_asset' exists with «— تقييم تفصيلي» suffix."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='educational_asset']")
+    assert opt.count() == 1, "option value='educational_asset' not found in dropdown."
+    text = opt.inner_text()
+    assert "تقييم تفصيلي" in text, (
+        f"educational_asset option must contain «تقييم تفصيلي». Got: {text!r}"
+    )
+
+
+# ── CS327 ─────────────────────────────────────────────────────────────────────
+
+def test_CS327_healthcare_facility_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting healthcare_facility shows badge and requirements panel."""
+    _load_healthcare_facility(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for healthcare_facility."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for healthcare_facility."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for healthcare_facility."
+    )
+
+
+# ── CS328 ─────────────────────────────────────────────────────────────────────
+
+def test_CS328_wellness_resort_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting wellness_resort shows badge and requirements panel."""
+    _load_wellness_resort(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for wellness_resort."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for wellness_resort."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for wellness_resort."
+    )
+
+
+# ── CS329 ─────────────────────────────────────────────────────────────────────
+
+def test_CS329_educational_asset_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting educational_asset shows badge and requirements panel."""
+    _load_educational_asset(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for educational_asset."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for educational_asset."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for educational_asset."
+    )
+
+
+# ── CS330 ─────────────────────────────────────────────────────────────────────
+
+def test_CS330_healthcare_facility_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting healthcare_facility does not navigate away from the page."""
+    _load_healthcare_facility(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting healthcare_facility. URL: {page.url}"
+    )
+
+
+# ── CS331 ─────────────────────────────────────────────────────────────────────
+
+def test_CS331_wellness_resort_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting wellness_resort does not navigate away from the page."""
+    _load_wellness_resort(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting wellness_resort. URL: {page.url}"
+    )
+
+
+# ── CS332 ─────────────────────────────────────────────────────────────────────
+
+def test_CS332_educational_asset_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8T.1: selecting educational_asset does not navigate away from the page."""
+    _load_educational_asset(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting educational_asset. URL: {page.url}"
+    )
+
+
+# ── CS333 ─────────────────────────────────────────────────────────────────────
+
+def test_CS333_healthcare_facility_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8T.1: healthcare_facility must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_healthcare_facility(page, live_server)
+    assert not api_calls, (
+        f"healthcare_facility must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS334 ─────────────────────────────────────────────────────────────────────
+
+def test_CS334_wellness_resort_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8T.1: wellness_resort must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_wellness_resort(page, live_server)
+    assert not api_calls, (
+        f"wellness_resort must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS335 ─────────────────────────────────────────────────────────────────────
+
+def test_CS335_educational_asset_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8T.1: educational_asset must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_educational_asset(page, live_server)
+    assert not api_calls, (
+        f"educational_asset must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS336 ─────────────────────────────────────────────────────────────────────
+
+def test_CS336_healthcare_facility_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: healthcare_facility renders hf_license_status, hf_total_beds, hf_operating_rooms."""
+    _load_healthcare_facility(page, live_server)
+    for field_name in ("hf_license_status", "hf_total_beds", "hf_operating_rooms"):
+        locator = page.locator(f"[data-es-req-field='{field_name}']")
+        assert locator.count() > 0, (
+            f"healthcare_facility: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS337 ─────────────────────────────────────────────────────────────────────
+
+def test_CS337_healthcare_facility_departments_checkbox_group_renders(page: Page, live_server: str) -> None:
+    """Phase 8T.1: healthcare_facility hf_departments checkbox_group renders checkboxes."""
+    _load_healthcare_facility(page, live_server)
+    checkboxes = page.locator("[data-es-req-field='hf_departments']")
+    assert checkboxes.count() > 0, (
+        "healthcare_facility: hf_departments checkbox_group must render checkboxes in #es-req-panel."
+    )
+
+
+# ── CS338 ─────────────────────────────────────────────────────────────────────
+
+def test_CS338_healthcare_facility_management_contract_textarea_renders(page: Page, live_server: str) -> None:
+    """Phase 8T.1: healthcare_facility hf_management_contract_terms textarea renders."""
+    _load_healthcare_facility(page, live_server)
+    ta = page.locator("textarea[data-es-req-field='hf_management_contract_terms']")
+    assert ta.count() == 1, (
+        "healthcare_facility: hf_management_contract_terms must render as a <textarea> element."
+    )
+
+
+# ── CS339 ─────────────────────────────────────────────────────────────────────
+
+def test_CS339_wellness_resort_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: wellness_resort renders wr_resort_class, wr_therapy_rooms, wr_pool_count."""
+    _load_wellness_resort(page, live_server)
+    for field_name in ("wr_resort_class", "wr_therapy_rooms", "wr_pool_count"):
+        locator = page.locator(f"[data-es-req-field='{field_name}']")
+        assert locator.count() > 0, (
+            f"wellness_resort: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS340 ─────────────────────────────────────────────────────────────────────
+
+def test_CS340_wellness_resort_wellness_services_checkbox_group_renders(page: Page, live_server: str) -> None:
+    """Phase 8T.1: wellness_resort wr_wellness_services checkbox_group renders checkboxes."""
+    _load_wellness_resort(page, live_server)
+    checkboxes = page.locator("[data-es-req-field='wr_wellness_services']")
+    assert checkboxes.count() > 0, (
+        "wellness_resort: wr_wellness_services checkbox_group must render checkboxes in #es-req-panel."
+    )
+
+
+# ── CS341 ─────────────────────────────────────────────────────────────────────
+
+def test_CS341_wellness_resort_operator_contract_textarea_renders(page: Page, live_server: str) -> None:
+    """Phase 8T.1: wellness_resort wr_operator_contract_terms textarea renders."""
+    _load_wellness_resort(page, live_server)
+    ta = page.locator("textarea[data-es-req-field='wr_operator_contract_terms']")
+    assert ta.count() == 1, (
+        "wellness_resort: wr_operator_contract_terms must render as a <textarea> element."
+    )
+
+
+# ── CS342 ─────────────────────────────────────────────────────────────────────
+
+def test_CS342_educational_asset_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8T.1: educational_asset renders ea_facility_type, ea_student_capacity, ea_classrooms_count."""
+    _load_educational_asset(page, live_server)
+    for field_name in ("ea_facility_type", "ea_student_capacity", "ea_classrooms_count"):
+        locator = page.locator(f"[data-es-req-field='{field_name}']")
+        assert locator.count() > 0, (
+            f"educational_asset: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS343 ─────────────────────────────────────────────────────────────────────
+
+def test_CS343_educational_asset_education_stages_checkbox_group_renders(page: Page, live_server: str) -> None:
+    """Phase 8T.1: educational_asset ea_education_stages checkbox_group renders checkboxes."""
+    _load_educational_asset(page, live_server)
+    checkboxes = page.locator("[data-es-req-field='ea_education_stages']")
+    assert checkboxes.count() > 0, (
+        "educational_asset: ea_education_stages checkbox_group must render checkboxes in #es-req-panel."
+    )
+
+
+# ── CS344 ─────────────────────────────────────────────────────────────────────
+
+def test_CS344_healthcare_facility_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: healthcare_facility documents section contains upload hint text."""
+    _load_healthcare_facility(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"healthcare_facility: upload hint '{hint_text}' not found in #es-req-panel."
+    )
+
+
+# ── CS345 ─────────────────────────────────────────────────────────────────────
+
+def test_CS345_wellness_resort_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: wellness_resort documents section contains upload hint text."""
+    _load_wellness_resort(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"wellness_resort: upload hint '{hint_text}' not found in #es-req-panel."
+    )
+
+
+# ── CS346 ─────────────────────────────────────────────────────────────────────
+
+def test_CS346_educational_asset_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8T.1: educational_asset documents section contains upload hint text."""
+    _load_educational_asset(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"educational_asset: upload hint '{hint_text}' not found in #es-req-panel."
+    )
+
+
+# ── CS347 ─────────────────────────────────────────────────────────────────────
+
+def test_CS347_no_auth_modal_for_8t1_profiles(page: Page, live_server: str) -> None:
+    """Phase 8T.1: no auth modal triggered for healthcare_facility, wellness_resort, educational_asset."""
+    for loader, label in [
+        (_load_healthcare_facility, "healthcare_facility"),
+        (_load_wellness_resort,     "wellness_resort"),
+        (_load_educational_asset,   "educational_asset"),
+    ]:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=label)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+        assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+            f"Auth modal must NOT appear for {label}."
+        )
+
+
+# ── CS348 ─────────────────────────────────────────────────────────────────────
+
+def test_CS348_no_console_errors_for_8t1_profiles(page: Page, live_server: str) -> None:
+    """Phase 8T.1: no JS console errors when rendering healthcare_facility, wellness_resort, educational_asset."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text.upper()
+        )
+    for loader, label in [
+        (_load_healthcare_facility, "healthcare_facility"),
+        (_load_wellness_resort,     "wellness_resort"),
+        (_load_educational_asset,   "educational_asset"),
+    ]:
+        console_errors: list[str] = []
+        page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+        loader(page, live_server)
+        assert not console_errors, (
+            f"JavaScript console errors during {label!r} render: {console_errors}"
+        )
+        console_errors.clear()
+
+
+# ── CS349 ─────────────────────────────────────────────────────────────────────
+
+def test_CS349_regression_existing_profiles_still_render_after_8t1(page: Page, live_server: str) -> None:
+    """Phase 8T.1: regression guard — hospital and school profiles still render after 8T.1."""
+    for profile_value, profile_label in [("مستشفى", "مستشفى"), ("مدرسة", "مدرسة")]:
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_label} panel must still render form controls after 8T.1. "
+            f"Got {count} controls."
+        )

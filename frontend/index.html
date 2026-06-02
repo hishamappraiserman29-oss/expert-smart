@@ -1339,6 +1339,11 @@
                     <option value="cold_storage">مخزن تبريد / غرفة باردة</option>
                     <option value="prefabricated_factory">مصنع جاهز / بريفاب</option>
                 </optgroup>
+                <optgroup label="أصول طبية وتعليمية وبيئية متخصّصة">
+                    <option value="healthcare_facility">منشأة طبية — تقييم تفصيلي</option>
+                    <option value="wellness_resort">منتجع استشفاء علاجي</option>
+                    <option value="educational_asset">أصل تعليمي — تقييم تفصيلي</option>
+                </optgroup>
                 <optgroup label="أصول خاصة ومعقدة">
                     <option value="أصول معنوية">أصول عقارية مرتبطة بأصول معنوية</option>
                     <option value="ملكيات جزئية">المصالح والملكيات الجزئية (Partial Interests)</option>
@@ -5785,6 +5790,9 @@ function _showIndexToast(msg, type) {
         'data_center':           'data_center',
         'cold_storage':          'cold_storage',
         'prefabricated_factory': 'prefabricated_factory',
+        'healthcare_facility':   'healthcare_facility',
+        'wellness_resort':       'wellness_resort',
+        'educational_asset':     'educational_asset',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5876,6 +5884,9 @@ function _showIndexToast(msg, type) {
         'data_center':           { type: 'form', titleAr: 'مركز بيانات (Data Center)' },
         'cold_storage':          { type: 'form', titleAr: 'مخزن تبريد / غرفة باردة' },
         'prefabricated_factory': { type: 'form', titleAr: 'مصنع جاهز / بريفاب' },
+        'healthcare_facility':   { type: 'form', titleAr: 'منشأة طبية — تقييم تفصيلي' },
+        'wellness_resort':       { type: 'form', titleAr: 'منتجع استشفاء علاجي' },
+        'educational_asset':     { type: 'form', titleAr: 'أصل تعليمي — تقييم تفصيلي' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5903,6 +5914,9 @@ function _showIndexToast(msg, type) {
         'data_center':           { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مركز بيانات — نموذج محلّي لتجميع بيانات السعة الكهربائية والتشغيل والترخيص. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'cold_storage':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مخزن تبريد — نموذج محلّي لتجميع بيانات درجات الحرارة والطاقة التخزينية والامتثال. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'prefabricated_factory': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'مصنع جاهز / بريفاب — نموذج محلّي لتجميع بيانات الهيكل المعدني والألواح وقابلية النقل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'healthcare_facility':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منشأة طبية — نموذج محلّي لتجميع بيانات الترخيص الطبي والطاقة السريرية وعقود الإدارة. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'wellness_resort':       { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منتجع استشفاء علاجي — نموذج محلّي لتجميع بيانات التصنيف والخدمات العلاجية وعقد التشغيل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'educational_asset':     { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أصل تعليمي — نموذج محلّي لتجميع بيانات ترخيص وزارة التعليم والطاقة الاستيعابية والبيانات المالية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -8121,6 +8135,131 @@ function _showIndexToast(msg, type) {
             { name: 'pf_site_plan',           field_type: 'bool', label_ar: 'مخطط الموقع',               group: 'document', valid_values: [], ui_required: false },
         ]},
     ]},
+    // ── Phase 8T.1 ──────────────────────────────────────────────────────────────
+    'healthcare_facility': { sections: [
+        { heading: 'التفاصيل الطبية الأساسية', color: '#d4af37', desc: '', fields: [
+            { name: 'hf_license_status',    field_type: 'str',            label_ar: 'حالة الترخيص الطبي',               group: 'basic',    valid_values: [], options: [{value:'licensed',label_ar:'مرخّص'},{value:'pending',label_ar:'قيد الإصدار'},{value:'renewal',label_ar:'قيد التجديد'},{value:'unlicensed',label_ar:'غير مرخّص'}], ui_required: true  },
+            { name: 'hf_facility_type',     field_type: 'str',            label_ar: 'نوع المنشأة',                       group: 'basic',    valid_values: [], options: [{value:'hospital',label_ar:'مستشفى'},{value:'polyclinic',label_ar:'عيادات متعددة التخصصات'},{value:'day_surgery',label_ar:'مركز جراحة يوم'},{value:'imaging_center',label_ar:'مركز أشعة وتشخيص'},{value:'rehab',label_ar:'مركز تأهيل'},{value:'specialty_clinic',label_ar:'عيادة متخصصة'}], ui_required: true  },
+            { name: 'hf_accreditation',     field_type: 'str',            label_ar: 'الاعتماد الدولي',                   group: 'basic',    valid_values: [], options: [{value:'jcia',label_ar:'JCIA'},{value:'cbahi',label_ar:'CBAHI'},{value:'other',label_ar:'اعتماد آخر'},{value:'none',label_ar:'لا يوجد'}], ui_required: false },
+            { name: 'hf_total_beds',        field_type: 'int',            label_ar: 'عدد الأسرة الإجمالية',             group: 'basic',    valid_values: [], unit_ar: 'سرير',              ui_required: false },
+            { name: 'hf_icu_beds',          field_type: 'int',            label_ar: 'عدد أسرة العناية المركزة',         group: 'basic',    valid_values: [], unit_ar: 'سرير',              ui_required: false },
+            { name: 'hf_operating_rooms',   field_type: 'int',            label_ar: 'غرف العمليات',                      group: 'basic',    valid_values: [], unit_ar: 'غرفة عمليات',      ui_required: false },
+        ]},
+        { heading: 'الطاقة الاستيعابية والتشغيلية', color: '#d4af37', desc: '', fields: [
+            { name: 'hf_daily_capacity',    field_type: 'int',            label_ar: 'الطاقة اليومية الاستيعابية',       group: 'ops',      valid_values: [], unit_ar: 'مريض/يوم',          ui_required: false },
+            { name: 'hf_departments',       field_type: 'checkbox_group', label_ar: 'الأقسام المتاحة',                  group: 'ops',      valid_values: [], options: [{value:'general_medicine',label_ar:'الطب العام'},{value:'surgery',label_ar:'الجراحة'},{value:'obs_gyn',label_ar:'النساء والولادة'},{value:'pediatrics',label_ar:'طب الأطفال'},{value:'radiology',label_ar:'الأشعة'},{value:'oncology',label_ar:'الأورام'},{value:'cardiac',label_ar:'القلب'},{value:'ortho',label_ar:'العظام والمفاصل'}], ui_required: false },
+            { name: 'hf_support_facilities',field_type: 'checkbox_group', label_ar: 'المرافق المساندة',                 group: 'ops',      valid_values: [], options: [{value:'pharmacy',label_ar:'صيدلية'},{value:'lab',label_ar:'مختبر'},{value:'cafeteria',label_ar:'كافيتيريا'},{value:'parking',label_ar:'مواقف'},{value:'prayer_room',label_ar:'مصلّى'}], ui_required: false },
+            { name: 'hf_helipad',           field_type: 'bool',           label_ar: 'يتوفر هيليباد (مهبط طائرات)',      group: 'ops',      valid_values: [], ui_required: false },
+            { name: 'hf_emergency_dept',    field_type: 'bool',           label_ar: 'قسم طوارئ مستقل',                  group: 'ops',      valid_values: [], ui_required: false },
+        ]},
+        { heading: 'المساحات والبيانات المالية', color: '#d4af37', desc: '', fields: [
+            { name: 'hf_gfa_sqm',           field_type: 'float',          label_ar: 'المساحة الإجمالية للمبنى',         group: 'finance',  valid_values: [], unit_ar: 'م²',               ui_required: false },
+            { name: 'hf_rentable_sqm',      field_type: 'float',          label_ar: 'المساحة القابلة للإيجار',          group: 'finance',  valid_values: [], unit_ar: 'م²',               ui_required: false },
+            { name: 'hf_annual_revenue',    field_type: 'float',          label_ar: 'الإيراد السنوي التشغيلي',          group: 'finance',  valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'hf_annual_expenses',   field_type: 'float',          label_ar: 'المصاريف التشغيلية السنوية',       group: 'finance',  valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'hf_occupancy_rate',    field_type: 'float',          label_ar: 'معدل الإشغال / الاستخدام',        group: 'finance',  valid_values: [], unit_ar: '%',                ui_required: false },
+        ]},
+        { heading: 'إدارة وعقود المنشأة', color: '#d4af37', desc: '', fields: [
+            { name: 'hf_operator_type',     field_type: 'str',            label_ar: 'نوع الإدارة',                       group: 'mgmt',     valid_values: [], options: [{value:'owner_operated',label_ar:'إدارة ذاتية'},{value:'managed',label_ar:'إدارة مُفوَّضة'},{value:'leased',label_ar:'مستأجر'},{value:'ppp',label_ar:'شراكة حكومية خاصة'}], ui_required: false },
+            { name: 'hf_operator_name',     field_type: 'str',            label_ar: 'اسم الجهة المشغّلة',               group: 'mgmt',     valid_values: [], options: [], ui_required: false },
+            { name: 'hf_management_contract_terms', field_type: 'textarea', label_ar: 'ملخص شروط عقد الإدارة/التشغيل', group: 'mgmt',     valid_values: [], ui_required: false },
+            { name: 'hf_remaining_contract_yrs', field_type: 'float',    label_ar: 'المدة المتبقية للعقد',              group: 'mgmt',     valid_values: [], unit_ar: 'سنة',              ui_required: false },
+        ]},
+        { heading: 'الامتثال والبنية التحتية', color: '#d4af37', desc: '', fields: [
+            { name: 'hf_fire_safety_compliance', field_type: 'bool',     label_ar: 'امتثال متطلبات السلامة من الحريق', group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'hf_medical_gas_system', field_type: 'bool',         label_ar: 'نظام غازات طبية متكامل',            group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'hf_backup_power_kva',   field_type: 'float',        label_ar: 'قدرة الطاقة الاحتياطية',            group: 'compliance', valid_values: [], unit_ar: 'KVA',             ui_required: false },
+            { name: 'hf_hvac_medical_grade', field_type: 'bool',         label_ar: 'تكييف وتهوية بالمواصفات الطبية',   group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'hf_waste_mgmt_system',  field_type: 'bool',         label_ar: 'نظام إدارة النفايات الطبية',        group: 'compliance', valid_values: [], ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'hf_medical_license',    field_type: 'bool', label_ar: 'رخصة المنشأة الطبية',              group: 'document', valid_values: [], ui_required: false },
+            { name: 'hf_accreditation_cert', field_type: 'bool', label_ar: 'شهادة الاعتماد الدولي',            group: 'document', valid_values: [], ui_required: false },
+            { name: 'hf_fire_safety_cert',   field_type: 'bool', label_ar: 'شهادة السلامة من الحريق',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'hf_financial_statements',field_type:'bool', label_ar: 'القوائم المالية (آخر سنتين)',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'hf_management_contract',field_type: 'bool', label_ar: 'عقد الإدارة / التشغيل',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'hf_title_deed',         field_type: 'bool', label_ar: 'صك الملكية / وثيقة الحيازة',      group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'wellness_resort': { sections: [
+        { heading: 'التصنيف والموقع', color: '#d4af37', desc: '', fields: [
+            { name: 'wr_resort_class',       field_type: 'str',            label_ar: 'تصنيف المنتجع',                     group: 'basic',    valid_values: [], options: [{value:'five_star',label_ar:'خمس نجوم'},{value:'four_star',label_ar:'أربع نجوم'},{value:'boutique',label_ar:'بوتيك'},{value:'spa_retreat',label_ar:'سبا / ريتريت'},{value:'medical_wellness',label_ar:'استشفاء طبي'}], ui_required: true  },
+            { name: 'wr_location_type',      field_type: 'str',            label_ar: 'نوع الموقع',                        group: 'basic',    valid_values: [], options: [{value:'beachfront',label_ar:'شاطئي'},{value:'mountain',label_ar:'جبلي'},{value:'desert',label_ar:'صحراوي'},{value:'urban',label_ar:'حضري'}], ui_required: false },
+            { name: 'wr_total_keys',         field_type: 'int',            label_ar: 'عدد الغرف والوحدات',                group: 'basic',    valid_values: [], unit_ar: 'وحدة/غرفة',         ui_required: false },
+            { name: 'wr_total_area_sqm',     field_type: 'float',          label_ar: 'المساحة الإجمالية',                 group: 'basic',    valid_values: [], unit_ar: 'م²',               ui_required: false },
+        ]},
+        { heading: 'الخدمات العلاجية والترفيهية', color: '#d4af37', desc: '', fields: [
+            { name: 'wr_spa_area_sqm',       field_type: 'float',          label_ar: 'مساحة السبا والعلاج',               group: 'services', valid_values: [], unit_ar: 'م²',               ui_required: false },
+            { name: 'wr_therapy_rooms',      field_type: 'int',            label_ar: 'غرف العلاج / الجلسات',              group: 'services', valid_values: [], unit_ar: 'غرفة',             ui_required: false },
+            { name: 'wr_pool_count',         field_type: 'int',            label_ar: 'عدد المسابح',                       group: 'services', valid_values: [], unit_ar: 'مسبح',             ui_required: false },
+            { name: 'wr_wellness_services',  field_type: 'checkbox_group', label_ar: 'خدمات الاستشفاء المتاحة',          group: 'services', valid_values: [], options: [{value:'hydrotherapy',label_ar:'علاج مائي'},{value:'cryotherapy',label_ar:'علاج بالبرودة'},{value:'floatation',label_ar:'علاج الطفو'},{value:'meditation',label_ar:'التأمل'},{value:'yoga',label_ar:'اليوغا'},{value:'physiotherapy',label_ar:'العلاج الطبيعي'},{value:'nutrition_consulting',label_ar:'استشارات التغذية'}], ui_required: false },
+            { name: 'wr_medical_supervision',field_type: 'bool',           label_ar: 'إشراف طبي متخصص',                  group: 'services', valid_values: [], ui_required: false },
+        ]},
+        { heading: 'التشغيل والإيرادات', color: '#d4af37', desc: '', fields: [
+            { name: 'wr_annual_revenue',     field_type: 'float',          label_ar: 'الإيراد السنوي الإجمالي',          group: 'ops',      valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'wr_revpar',             field_type: 'float',          label_ar: 'الإيراد لكل وحدة/ليلة (RevPAR)',  group: 'ops',      valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'wr_occupancy_rate',     field_type: 'float',          label_ar: 'معدل الإشغال السنوي',              group: 'ops',      valid_values: [], unit_ar: '%',                ui_required: false },
+            { name: 'wr_adr',                field_type: 'float',          label_ar: 'متوسط سعر الليلة (ADR)',           group: 'ops',      valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'wr_f_and_b_revenue',    field_type: 'float',          label_ar: 'إيراد المطاعم والمنافذ الغذائية', group: 'ops',      valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'wr_operator_type',      field_type: 'str',            label_ar: 'نوع التشغيل',                       group: 'ops',      valid_values: [], options: [{value:'owner_operated',label_ar:'إدارة ذاتية'},{value:'branded',label_ar:'علامة تجارية'},{value:'managed',label_ar:'إدارة مُفوَّضة'},{value:'franchise',label_ar:'امتياز تجاري'}], ui_required: false },
+            { name: 'wr_operator_contract_terms', field_type: 'textarea', label_ar: 'ملخص شروط عقد التشغيل/الامتياز',  group: 'ops',      valid_values: [], ui_required: false },
+            { name: 'wr_remaining_contract_yrs', field_type: 'float',     label_ar: 'المدة المتبقية للعقد',              group: 'ops',      valid_values: [], unit_ar: 'سنة',              ui_required: false },
+        ]},
+        { heading: 'البنية التحتية والامتثال', color: '#d4af37', desc: '', fields: [
+            { name: 'wr_water_source',       field_type: 'str',            label_ar: 'مصدر المياه',                       group: 'infra',    valid_values: [], options: [{value:'municipal',label_ar:'شبكة البلدية'},{value:'desalination',label_ar:'تحلية'},{value:'well',label_ar:'بئر'},{value:'recycled',label_ar:'مُعاد تدويره'}], ui_required: false },
+            { name: 'wr_power_source',       field_type: 'str',            label_ar: 'مصدر الطاقة',                       group: 'infra',    valid_values: [], options: [{value:'grid',label_ar:'الشبكة الوطنية'},{value:'solar',label_ar:'طاقة شمسية'},{value:'hybrid',label_ar:'هجين'},{value:'generator',label_ar:'مولد احتياطي'}], ui_required: false },
+            { name: 'wr_fire_safety_cert',   field_type: 'bool',           label_ar: 'شهادة السلامة من الحريق',          group: 'infra',    valid_values: [], ui_required: false },
+            { name: 'wr_tourism_license',    field_type: 'bool',           label_ar: 'رخصة الإيواء السياحي',              group: 'infra',    valid_values: [], ui_required: false },
+            { name: 'wr_waste_treatment',    field_type: 'bool',           label_ar: 'نظام معالجة مياه الصرف الصحي',    group: 'infra',    valid_values: [], ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'wr_tourism_license_doc',field_type: 'bool', label_ar: 'رخصة التصنيف السياحي',                group: 'document', valid_values: [], ui_required: false },
+            { name: 'wr_operator_contract_doc', field_type: 'bool', label_ar: 'عقد التشغيل / الامتياز',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'wr_financial_statements',field_type: 'bool', label_ar: 'القوائم المالية',                    group: 'document', valid_values: [], ui_required: false },
+            { name: 'wr_fire_cert_doc',      field_type: 'bool', label_ar: 'شهادة السلامة من الحريق',            group: 'document', valid_values: [], ui_required: false },
+            { name: 'wr_title_deed',         field_type: 'bool', label_ar: 'صك الملكية',                         group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'educational_asset': { sections: [
+        { heading: 'التصنيف والترخيص', color: '#d4af37', desc: '', fields: [
+            { name: 'ea_facility_type',      field_type: 'str',            label_ar: 'نوع المنشأة التعليمية',             group: 'basic',    valid_values: [], options: [{value:'private_school',label_ar:'مدرسة خاصة'},{value:'university',label_ar:'جامعة'},{value:'technical_college',label_ar:'كلية تقنية'},{value:'training_center',label_ar:'مركز تدريب'},{value:'kindergarten',label_ar:'روضة أطفال'}], ui_required: true  },
+            { name: 'ea_license_status',     field_type: 'str',            label_ar: 'حالة ترخيص وزارة التعليم',        group: 'basic',    valid_values: [], options: [{value:'licensed',label_ar:'مرخّص'},{value:'pending',label_ar:'قيد الإصدار'},{value:'renewal',label_ar:'قيد التجديد'},{value:'unlicensed',label_ar:'غير مرخّص'}], ui_required: true  },
+            { name: 'ea_accreditation',      field_type: 'str',            label_ar: 'الاعتماد الأكاديمي',                group: 'basic',    valid_values: [], options: [{value:'national',label_ar:'وطني'},{value:'international',label_ar:'دولي'},{value:'both',label_ar:'وطني ودولي'},{value:'none',label_ar:'لا يوجد'}], ui_required: false },
+            { name: 'ea_education_stages',   field_type: 'checkbox_group', label_ar: 'المراحل الدراسية المتاحة',         group: 'basic',    valid_values: [], options: [{value:'pre_k',label_ar:'ما قبل المدرسة'},{value:'primary',label_ar:'ابتدائي'},{value:'middle',label_ar:'متوسط'},{value:'high',label_ar:'ثانوي'},{value:'undergraduate',label_ar:'بكالوريوس'},{value:'postgraduate',label_ar:'دراسات عليا'}], ui_required: false },
+        ]},
+        { heading: 'الطاقة الاستيعابية والمرافق', color: '#d4af37', desc: '', fields: [
+            { name: 'ea_student_capacity',   field_type: 'int',            label_ar: 'الطاقة الاستيعابية للطلاب',        group: 'capacity', valid_values: [], unit_ar: 'طالب',             ui_required: false },
+            { name: 'ea_current_enrollment', field_type: 'int',            label_ar: 'عدد الطلاب المسجلين حالياً',       group: 'capacity', valid_values: [], unit_ar: 'طالب',             ui_required: false },
+            { name: 'ea_classrooms_count',   field_type: 'int',            label_ar: 'عدد الفصول الدراسية',              group: 'capacity', valid_values: [], unit_ar: 'فصل',              ui_required: false },
+            { name: 'ea_labs_count',         field_type: 'int',            label_ar: 'عدد المختبرات / الورش',            group: 'capacity', valid_values: [], unit_ar: 'مختبر',            ui_required: false },
+            { name: 'ea_gfa_sqm',            field_type: 'float',          label_ar: 'المساحة الإجمالية',                 group: 'capacity', valid_values: [], unit_ar: 'م²',               ui_required: false },
+            { name: 'ea_sport_facilities',   field_type: 'bool',           label_ar: 'ملاعب / صالات رياضية',             group: 'capacity', valid_values: [], ui_required: false },
+            { name: 'ea_campus_type',        field_type: 'str',            label_ar: 'نوع الحرم الدراسي',                 group: 'capacity', valid_values: [], options: [{value:'single_building',label_ar:'مبنى واحد'},{value:'campus',label_ar:'حرم جامعي'},{value:'distributed',label_ar:'موزّع على مواقع'}], ui_required: false },
+        ]},
+        { heading: 'البيانات المالية والتشغيلية', color: '#d4af37', desc: '', fields: [
+            { name: 'ea_annual_tuition_revenue', field_type: 'float',     label_ar: 'إجمالي الإيراد من الرسوم الدراسية', group: 'finance', valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'ea_other_revenue',      field_type: 'float',          label_ar: 'الإيرادات الأخرى (أنشطة، إيجارات)',group: 'finance', valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'ea_annual_expenses',    field_type: 'float',          label_ar: 'المصاريف التشغيلية السنوية',        group: 'finance', valid_values: [], unit_ar: 'ريال',             ui_required: false },
+            { name: 'ea_teacher_count',      field_type: 'int',            label_ar: 'عدد أعضاء الهيئة التدريسية',       group: 'finance', valid_values: [], unit_ar: 'معلم',             ui_required: false },
+            { name: 'ea_avg_salary_annual',  field_type: 'float',          label_ar: 'متوسط الراتب السنوي للمعلم',       group: 'finance', valid_values: [], unit_ar: 'ريال',             ui_required: false },
+        ]},
+        { heading: 'الامتثال والبنية التحتية', color: '#d4af37', desc: '', fields: [
+            { name: 'ea_fire_safety_compliance', field_type: 'bool',      label_ar: 'امتثال اشتراطات السلامة من الحريق',group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'ea_civil_defense_cert', field_type: 'bool',          label_ar: 'شهادة الدفاع المدني',               group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'ea_disabled_access',    field_type: 'bool',          label_ar: 'بيئة ملائمة لذوي الاحتياجات الخاصة', group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'ea_digital_infra',      field_type: 'bool',          label_ar: 'بنية تحتية رقمية وشبكة إنترنت',    group: 'compliance', valid_values: [], ui_required: false },
+            { name: 'ea_building_age_yrs',   field_type: 'int',           label_ar: 'عمر المبنى التقريبي',               group: 'compliance', valid_values: [], unit_ar: 'سنة',              ui_required: false },
+        ]},
+        { heading: 'المستندات', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'ea_education_license',  field_type: 'bool', label_ar: 'رخصة وزارة التعليم',                group: 'document', valid_values: [], ui_required: false },
+            { name: 'ea_accreditation_cert', field_type: 'bool', label_ar: 'شهادة الاعتماد الأكاديمي',         group: 'document', valid_values: [], ui_required: false },
+            { name: 'ea_fire_cert',          field_type: 'bool', label_ar: 'شهادة السلامة من الحريق',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'ea_financial_statements',field_type:'bool', label_ar: 'القوائم المالية (آخر سنتين)',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'ea_building_permit',    field_type: 'bool', label_ar: 'رخصة البناء / المخططات المعتمدة', group: 'document', valid_values: [], ui_required: false },
+            { name: 'ea_title_deed',         field_type: 'bool', label_ar: 'صك الملكية',                       group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    // ── End Phase 8T.1 ──────────────────────────────────────────────────────────
     // ── End Phase 8S.1 ──────────────────────────────────────────────────────────
 };
 

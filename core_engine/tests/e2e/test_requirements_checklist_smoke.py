@@ -6314,3 +6314,411 @@ def test_CS376_8r_8s_8t_profiles_still_render_after_8u1(page: Page, live_server:
         assert count > 0, (
             f"Regression: {profile_value} panel must still render form controls after 8U.1. Got {count}."
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8V — Littoral Rights / Riparian Rights / Waterway Easement
+# CS377–CS403
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_littoral_rights(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="littoral_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_riparian_rights(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="riparian_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_waterway_easement(page: Page, live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="waterway_easement")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS377 ─────────────────────────────────────────────────────────────────────
+
+def test_CS377_optgroup_water_rights_present(page: Page, live_server: str) -> None:
+    """Phase 8V: new optgroup «حقوق شاطئية ومائية وممرات ملاحية» appears in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    html = page.locator("#asset-type").evaluate("el => el.outerHTML")
+    assert "حقوق شاطئية ومائية وممرات ملاحية" in html, (
+        "Phase 8V optgroup label not found in #asset-type dropdown."
+    )
+
+
+# ── CS378 ─────────────────────────────────────────────────────────────────────
+
+def test_CS378_option_littoral_rights_present(page: Page, live_server: str) -> None:
+    """Phase 8V: option value 'littoral_rights' appears in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    options = page.locator("#asset-type option").all_inner_texts()
+    html = page.locator("#asset-type").evaluate("el => el.outerHTML")
+    assert "littoral_rights" in html, (
+        f"littoral_rights option not found in #asset-type. Options: {options}"
+    )
+
+
+# ── CS379 ─────────────────────────────────────────────────────────────────────
+
+def test_CS379_option_riparian_rights_present(page: Page, live_server: str) -> None:
+    """Phase 8V: option value 'riparian_rights' appears in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    html = page.locator("#asset-type").evaluate("el => el.outerHTML")
+    assert "riparian_rights" in html, (
+        "riparian_rights option not found in #asset-type dropdown."
+    )
+
+
+# ── CS380 ─────────────────────────────────────────────────────────────────────
+
+def test_CS380_option_waterway_easement_present(page: Page, live_server: str) -> None:
+    """Phase 8V: option value 'waterway_easement' appears in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    html = page.locator("#asset-type").evaluate("el => el.outerHTML")
+    assert "waterway_easement" in html, (
+        "waterway_easement option not found in #asset-type dropdown."
+    )
+
+
+# ── CS381 ─────────────────────────────────────────────────────────────────────
+
+def test_CS381_littoral_rights_panel_renders(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting littoral_rights renders badge «نموذج محلي» and #es-req-panel."""
+    _load_littoral_rights(page, live_server)
+    badge = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge, (
+        f"littoral_rights: badge must show «نموذج محلي». Got: {badge!r}"
+    )
+    count = page.locator("#es-req-panel input, #es-req-panel select, #es-req-panel textarea").count()
+    assert count > 0, (
+        f"littoral_rights: #es-req-panel must render form controls. Got {count}."
+    )
+
+
+# ── CS382 ─────────────────────────────────────────────────────────────────────
+
+def test_CS382_riparian_rights_panel_renders(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting riparian_rights renders badge «نموذج محلي» and #es-req-panel."""
+    _load_riparian_rights(page, live_server)
+    badge = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge, (
+        f"riparian_rights: badge must show «نموذج محلي». Got: {badge!r}"
+    )
+    count = page.locator("#es-req-panel input, #es-req-panel select, #es-req-panel textarea").count()
+    assert count > 0, (
+        f"riparian_rights: #es-req-panel must render form controls. Got {count}."
+    )
+
+
+# ── CS383 ─────────────────────────────────────────────────────────────────────
+
+def test_CS383_waterway_easement_panel_renders(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting waterway_easement renders badge «نموذج محلي» and #es-req-panel."""
+    _load_waterway_easement(page, live_server)
+    badge = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge, (
+        f"waterway_easement: badge must show «نموذج محلي». Got: {badge!r}"
+    )
+    count = page.locator("#es-req-panel input, #es-req-panel select, #es-req-panel textarea").count()
+    assert count > 0, (
+        f"waterway_easement: #es-req-panel must render form controls. Got {count}."
+    )
+
+
+# ── CS384 ─────────────────────────────────────────────────────────────────────
+
+def test_CS384_littoral_rights_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting littoral_rights does not navigate away from index.html."""
+    _load_littoral_rights(page, live_server)
+    assert page.url.rstrip("/").endswith(":5000") or "127.0.0.1:5000" in page.url, (
+        f"littoral_rights: page must stay on index.html. URL: {page.url}"
+    )
+
+
+# ── CS385 ─────────────────────────────────────────────────────────────────────
+
+def test_CS385_riparian_rights_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting riparian_rights does not navigate away from index.html."""
+    _load_riparian_rights(page, live_server)
+    assert page.url.rstrip("/").endswith(":5000") or "127.0.0.1:5000" in page.url, (
+        f"riparian_rights: page must stay on index.html. URL: {page.url}"
+    )
+
+
+# ── CS386 ─────────────────────────────────────────────────────────────────────
+
+def test_CS386_waterway_easement_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8V: selecting waterway_easement does not navigate away from index.html."""
+    _load_waterway_easement(page, live_server)
+    assert page.url.rstrip("/").endswith(":5000") or "127.0.0.1:5000" in page.url, (
+        f"waterway_easement: page must stay on index.html. URL: {page.url}"
+    )
+
+
+# ── CS387 ─────────────────────────────────────────────────────────────────────
+
+def test_CS387_littoral_rights_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8V: littoral_rights triggers zero POST requests to /api/valuation."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/valuation" in req.url else None)
+    _load_littoral_rights(page, live_server)
+    assert not api_calls, (
+        f"littoral_rights: must trigger zero API calls. Got: {api_calls}"
+    )
+
+
+# ── CS388 ─────────────────────────────────────────────────────────────────────
+
+def test_CS388_riparian_rights_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8V: riparian_rights triggers zero POST requests to /api/valuation."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/valuation" in req.url else None)
+    _load_riparian_rights(page, live_server)
+    assert not api_calls, (
+        f"riparian_rights: must trigger zero API calls. Got: {api_calls}"
+    )
+
+
+# ── CS389 ─────────────────────────────────────────────────────────────────────
+
+def test_CS389_waterway_easement_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8V: waterway_easement triggers zero POST requests to /api/valuation."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/valuation" in req.url else None)
+    _load_waterway_easement(page, live_server)
+    assert not api_calls, (
+        f"waterway_easement: must trigger zero API calls. Got: {api_calls}"
+    )
+
+
+# ── CS390 ─────────────────────────────────────────────────────────────────────
+
+def test_CS390_littoral_rights_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8V: littoral_rights key fields render in #es-req-panel."""
+    _load_littoral_rights(page, live_server)
+    panel = page.locator("#es-req-panel")
+    for field_name in (
+        "lr_coastal_frontage_length_m",
+        "lr_coastal_setback_distance_m",
+        "lr_annual_erosion_rate_m_per_year",
+        "lr_wave_breakers_available",
+    ):
+        loc = panel.locator(f"[data-es-req-field='{field_name}']")
+        assert loc.count() > 0, (
+            f"littoral_rights: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS391 ─────────────────────────────────────────────────────────────────────
+
+def test_CS391_riparian_rights_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8V: riparian_rights key fields render in #es-req-panel."""
+    _load_riparian_rights(page, live_server)
+    panel = page.locator("#es-req-panel")
+    for field_name in (
+        "rr_river_frontage_length_m",
+        "rr_right_to_build_dock_or_pier",
+        "rr_permitted_water_withdrawal_volume_m3_day",
+        "rr_water_withdrawal_license_status",
+    ):
+        loc = panel.locator(f"[data-es-req-field='{field_name}']")
+        assert loc.count() > 0, (
+            f"riparian_rights: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS392 ─────────────────────────────────────────────────────────────────────
+
+def test_CS392_waterway_easement_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8V: waterway_easement key fields render in #es-req-panel."""
+    _load_waterway_easement(page, live_server)
+    panel = page.locator("#es-req-panel")
+    for field_name in (
+        "we_waterway_width_m",
+        "we_navigable_depth_m",
+        "we_waterway_legal_status",
+        "we_dredging_required",
+        "we_periodic_dredging_cost_annual",
+    ):
+        loc = panel.locator(f"[data-es-req-field='{field_name}']")
+        assert loc.count() > 0, (
+            f"waterway_easement: field '{field_name}' not found in #es-req-panel."
+        )
+
+
+# ── CS393 ─────────────────────────────────────────────────────────────────────
+
+def test_CS393_littoral_rights_textarea_renders(page: Page, live_server: str) -> None:
+    """Phase 8V: littoral_rights insurance_or_environmental_risk_notes renders as <textarea>."""
+    _load_littoral_rights(page, live_server)
+    loc = page.locator("textarea[data-es-req-field='lr_insurance_or_environmental_risk_notes']")
+    assert loc.count() > 0, (
+        "littoral_rights: textarea 'lr_insurance_or_environmental_risk_notes' not found in #es-req-panel."
+    )
+
+
+# ── CS394 ─────────────────────────────────────────────────────────────────────
+
+def test_CS394_littoral_rights_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8V: littoral_rights document section contains upload guidance text."""
+    _load_littoral_rights(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"littoral_rights: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS395 ─────────────────────────────────────────────────────────────────────
+
+def test_CS395_riparian_rights_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8V: riparian_rights document section contains upload guidance text."""
+    _load_riparian_rights(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"riparian_rights: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS396 ─────────────────────────────────────────────────────────────────────
+
+def test_CS396_waterway_easement_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8V: waterway_easement document section contains upload guidance text."""
+    _load_waterway_easement(page, live_server)
+    hint_text = "ارفع المستندات من زر المرفقات"
+    content = page.locator("#es-req-panel").inner_text()
+    assert hint_text in content, (
+        f"waterway_easement: upload hint not found in #es-req-panel."
+    )
+
+
+# ── CS397 ─────────────────────────────────────────────────────────────────────
+
+def test_CS397_unit_display_renders(page: Page, live_server: str) -> None:
+    """Phase 8V: unit labels «متر طولي» (littoral_rights) and «م³/يوم» (riparian_rights) render."""
+    _load_littoral_rights(page, live_server)
+    content_lr = page.locator("#es-req-panel").inner_text()
+    assert "متر طولي" in content_lr, (
+        f"littoral_rights: unit 'متر طولي' not found in #es-req-panel."
+    )
+    _load_riparian_rights(page, live_server)
+    content_rr = page.locator("#es-req-panel").inner_text()
+    assert "م³/يوم" in content_rr, (
+        f"riparian_rights: unit 'م³/يوم' not found in #es-req-panel."
+    )
+
+
+# ── CS398 ─────────────────────────────────────────────────────────────────────
+
+def test_CS398_no_console_errors_for_8v_profiles(page: Page, live_server: str) -> None:
+    """Phase 8V: no JS console errors when rendering littoral_rights, riparian_rights, waterway_easement."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text.upper()
+            and "Failed to load resource" not in msg.text
+        )
+    for loader, label in [
+        (_load_littoral_rights,  "littoral_rights"),
+        (_load_riparian_rights,  "riparian_rights"),
+        (_load_waterway_easement,"waterway_easement"),
+    ]:
+        console_errors: list[str] = []
+        page.on("console", lambda msg: console_errors.append(msg.text) if _is_js_error(msg) else None)
+        loader(page, live_server)
+        assert not console_errors, (
+            f"JS console errors during {label!r} render: {console_errors}"
+        )
+        console_errors.clear()
+
+
+# ── CS399 ─────────────────────────────────────────────────────────────────────
+
+def test_CS399_marina_unchanged_after_8v(page: Page, live_server: str) -> None:
+    """Phase 8V: marina still renders its form controls unchanged after 8V."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: marina must still render form controls after 8V. Got {count}."
+    )
+
+
+# ── CS400 ─────────────────────────────────────────────────────────────────────
+
+def test_CS400_water_well_unchanged_after_8v(page: Page, live_server: str) -> None:
+    """Phase 8V: water_well still renders its form controls unchanged after 8V."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="water_well")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: water_well must still render form controls after 8V. Got {count}."
+    )
+
+
+# ── CS401 ─────────────────────────────────────────────────────────────────────
+
+def test_CS401_seaport_unchanged_after_8v(page: Page, live_server: str) -> None:
+    """Phase 8V: seaport still renders its form controls unchanged after 8V."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="seaport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: seaport must still render form controls after 8V. Got {count}."
+    )
+
+
+# ── CS402 ─────────────────────────────────────────────────────────────────────
+
+def test_CS402_agricultural_land_unchanged_after_8v(page: Page, live_server: str) -> None:
+    """Phase 8V: agricultural_land still renders its form controls unchanged after 8V."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: agricultural_land must still render form controls after 8V. Got {count}."
+    )
+
+
+# ── CS403 ─────────────────────────────────────────────────────────────────────
+
+def test_CS403_8r_8s_8t_8u_profiles_still_render_after_8v(page: Page, live_server: str) -> None:
+    """Phase 8V: regression guard — sample of 8R/8S/8T/8U profiles still render after 8V."""
+    for profile_value in ("airport", "data_center", "healthcare_facility", "heritage_property_detailed", "zoo_safari"):
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_value} panel must still render form controls after 8V. Got {count}."
+        )

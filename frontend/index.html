@@ -1329,6 +1329,11 @@
                     <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
                     <option value="water_well">بئر مياه / آبار جوفية</option>
                 </optgroup>
+                <optgroup label="أصول الترفيه والضيافة والتجمع الجماهيري">
+                    <option value="hotel_resort_detailed">فنادق ومنتجعات — استمارة تقييم تفصيلية</option>
+                    <option value="serviced_apartments">شقق فندقية ووحدات مخدومة</option>
+                    <option value="floating_hotel">فندق عائم / باخرة نهرية</option>
+                </optgroup>
                 <optgroup label="أصول البنية التحتية والنقل السيادية">
                     <option value="airport">مطار / حقل طيران</option>
                     <option value="seaport">ميناء بحري / أرصفة</option>
@@ -5809,6 +5814,9 @@ function _showIndexToast(msg, type) {
         'littoral_rights':              'littoral_rights',
         'riparian_rights':              'riparian_rights',
         'waterway_easement':            'waterway_easement',
+        'hotel_resort_detailed':        'hotel_resort_detailed',
+        'serviced_apartments':          'serviced_apartments',
+        'floating_hotel':               'floating_hotel',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5909,6 +5917,9 @@ function _showIndexToast(msg, type) {
         'littoral_rights':              { type: 'form', titleAr: 'حقوق شاطئية وحرم البحر — تقييم الحق القانوني' },
         'riparian_rights':              { type: 'form', titleAr: 'حقوق ضفاف الأنهار والمجاري — تقييم الحق القانوني' },
         'waterway_easement':            { type: 'form', titleAr: 'ممرات مائية وحقوق الارتفاق الملاحية — تقييم الحق القانوني' },
+        'hotel_resort_detailed': { type: 'form', titleAr: 'فندق أو منتجع — تقييم تفصيلي' },
+        'serviced_apartments':   { type: 'form', titleAr: 'شقق فندقية ووحدات مخدومة' },
+        'floating_hotel':        { type: 'form', titleAr: 'فندق عائم / باخرة نهرية' },
     };
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
@@ -5945,6 +5956,9 @@ function _showIndexToast(msg, type) {
         'littoral_rights':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حقوق شاطئية وحرم البحر — تقييم الحق القانوني للواجهة الشاطئية (طول الواجهة، خطوط التراجع، حقوق الانتفاع والإيجار). هذا تقييم الحق القانوني، لا تقييم منشأة بحرية مادية — لتقييم مارينا يخوت أو ميناء بحري استخدم الخيار المناسب في «أصول البنية التحتية والنقل السيادية». لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'riparian_rights':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حقوق ضفاف الأنهار والمجاري — تقييم الحق القانوني للضفة النهرية وحقوق سحب المياه وإنشاء المرسى. هذا تقييم الحق القانوني، لا تقييم بئر مادية أو أرض زراعية — لتقييم بئر جوفية استخدم «بئر مياه / آبار جوفية»، ولتقييم الأرض الزراعية استخدم «أرض زراعية». لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'waterway_easement':            { badge: 'نموذج محلي', color: '#6f82b3', desc: 'ممرات مائية وحقوق الارتفاق الملاحية — تقييم حق الارتفاق الملاحي على الممر المائي (أبعاد الممر، حقوق العبور، متطلبات التكريك). هذا تقييم الحق القانوني، لا تقييم منشأة مارينا أو ميناء مادي — لتقييم المنشأة استخدم «مارينا» أو «ميناء بحري». لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'hotel_resort_detailed': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'فندق أو منتجع — استمارة تقييم تفصيلية (ADR/RevPAR/مفاتيح/تصنيف النجوم/عقد المشغِّل). للتقييم السريع استخدم «فنادق ومنتجعات سياحية». كل الحقول محلية — صفر POST — لن تُرسَل إلى التقرير في هذه المرحلة.' },
+        'serviced_apartments':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'شقق فندقية ووحدات مخدومة — يضم Rental Pool وALOS وتشكيلة الوحدات؛ مختلف عن الوحدة السكنية العادية والفندق. كل الحقول محلية — صفر POST — لن تُرسَل إلى التقرير في هذه المرحلة.' },
+        'floating_hotel':        { badge: 'نموذج محلي', color: '#6f82b3', desc: 'فندق عائم / باخرة نهرية — تقييم بدن السفينة (Dry-Dock/ترخيص ملاحي/مرسى)؛ مختلف عن مارينا اليخوت أو الميناء البحري. كل الحقول محلية — صفر POST — لن تُرسَل إلى التقرير في هذه المرحلة.' },
     };
 
     function updateExplainer(profile) {
@@ -8617,6 +8631,250 @@ function _showIndexToast(msg, type) {
             { name: 'we_doc_photos_plans',                   field_type: 'bool', label_ar: 'صور ومخططات الموقع',                   group: 'document', valid_values: [], ui_required: false },
         ]},
     ]},
+    // ── Phase 8X.1 — Hospitality: hotel_resort_detailed, serviced_apartments, floating_hotel ──
+    'hotel_resort_detailed': { sections: [
+        { heading: 'بيانات الطاقة الفندقية', color: '#d4af37', desc: '', fields: [
+            { name: 'hrd_keys_count',              field_type: 'int',   label_ar: 'عدد المفاتيح (الوحدات)',         unit_ar: 'مفتاح', valid_values: [], group: '', ui_required: true  },
+            { name: 'hrd_rooms_count',             field_type: 'int',   label_ar: 'عدد الغرف',                      unit_ar: 'غرفة',  valid_values: [], group: '', ui_required: true  },
+            { name: 'hrd_suites_count',            field_type: 'int',   label_ar: 'عدد الأجنحة',                    valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_villas_or_chalets_count', field_type: 'int',   label_ar: 'عدد الفيلات أو الشاليهات',        valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_hotel_star_rating', field_type: 'str', label_ar: 'تصنيف النجوم',
+              options: [
+                { value: 'three_star',    label_ar: 'ثلاث نجوم' },
+                { value: 'four_star',     label_ar: 'أربع نجوم' },
+                { value: 'five_star',     label_ar: 'خمس نجوم' },
+                { value: 'luxury_resort', label_ar: 'منتجع فاخر' },
+                { value: 'boutique',      label_ar: 'بوتيك' },
+                { value: 'unclassified',  label_ar: 'غير مصنَّف' },
+                { value: 'unknown',       label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: true },
+            { name: 'hrd_resort_facilities_available', field_type: 'checkbox_group', label_ar: 'مرافق المنتجع المتاحة',
+              options: [
+                { value: 'pool',             label_ar: 'حوض سباحة' },
+                { value: 'beach',            label_ar: 'شاطئ' },
+                { value: 'spa',              label_ar: 'سبا' },
+                { value: 'gym',              label_ar: 'صالة رياضية' },
+                { value: 'conference_halls', label_ar: 'قاعات مؤتمرات' },
+                { value: 'restaurants',      label_ar: 'مطاعم' },
+                { value: 'kids_club',        label_ar: 'نادي أطفال' },
+                { value: 'marina_access',    label_ar: 'وصول للمارينا' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التشغيل والمؤشرات الفندقية', color: '#9ca3af', desc: '', fields: [
+            { name: 'hrd_adr',                         field_type: 'float', label_ar: 'متوسط السعر اليومي (ADR)',         unit_ar: 'جنيه/ليلة',       valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_annual_occupancy_rate',       field_type: 'float', label_ar: 'نسبة الإشغال السنوية',              unit_ar: '%',               valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_seasonal_occupancy_rate',     field_type: 'float', label_ar: 'نسبة الإشغال الموسمي',              unit_ar: '%',               valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_revpar',                      field_type: 'float', label_ar: 'الإيراد لكل غرفة متاحة (RevPAR)', unit_ar: 'جنيه/غرفة متاحة', valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_average_length_of_stay_alos', field_type: 'float', label_ar: 'متوسط مدة الإقامة (ALOS)',          unit_ar: 'ليلة',            valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_seasonality_level', field_type: 'str', label_ar: 'مستوى الموسمية',
+              options: [
+                { value: 'low',     label_ar: 'منخفض' },
+                { value: 'medium',  label_ar: 'متوسط' },
+                { value: 'high',    label_ar: 'مرتفع' },
+                { value: 'unknown', label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإدارة والتشغيل', color: '#9ca3af', desc: '', fields: [
+            { name: 'hrd_operator_type', field_type: 'str', label_ar: 'نوع المشغِّل',
+              options: [
+                { value: 'owner_operated',      label_ar: 'إدارة ذاتية' },
+                { value: 'management_contract', label_ar: 'عقد إدارة' },
+                { value: 'franchise',           label_ar: 'امتياز تجاري' },
+                { value: 'leased',              label_ar: 'تأجير كامل' },
+                { value: 'mixed',               label_ar: 'مختلط' },
+                { value: 'unknown',             label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_operator_brand',                    field_type: 'text',     label_ar: 'اسم العلامة التجارية للمشغِّل',     valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_management_contract_terms',         field_type: 'textarea', label_ar: 'شروط عقد الإدارة / الامتياز',        valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_remaining_operator_contract_years', field_type: 'float',    label_ar: 'السنوات المتبقية من عقد المشغِّل',   unit_ar: 'سنة',  valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_brand_flag_required_capex',         field_type: 'float',    label_ar: 'CAPEX مطلوب للعلامة التجارية',       unit_ar: 'جنيه', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإيرادات والمخاطر', color: '#9ca3af', desc: '', fields: [
+            { name: 'hrd_room_revenue_annual',           field_type: 'float', label_ar: 'إيراد الغرف السنوي',                 unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_food_beverage_revenue_annual',  field_type: 'float', label_ar: 'إيراد الأغذية والمشروبات السنوي',     unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_spa_events_revenue_annual',     field_type: 'float', label_ar: 'إيراد السبا والفعاليات السنوي',        unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_operating_expenses_annual',     field_type: 'float', label_ar: 'المصروفات التشغيلية السنوية',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_capex_required',                field_type: 'float', label_ar: 'CAPEX المطلوب',                       unit_ar: 'جنيه',     valid_values: [], group: '', ui_required: false },
+            { name: 'hrd_market_competition_level', field_type: 'str', label_ar: 'مستوى المنافسة السوقية',
+              options: [
+                { value: 'low',       label_ar: 'منخفض' },
+                { value: 'medium',    label_ar: 'متوسط' },
+                { value: 'high',      label_ar: 'مرتفع' },
+                { value: 'very_high', label_ar: 'مرتفع جداً' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'hrd_doc_operating_license',   field_type: 'bool', label_ar: 'رخصة التشغيل الفندقي',        group: 'document', valid_values: [], ui_required: true  },
+            { name: 'hrd_doc_classification_cert', field_type: 'bool', label_ar: 'شهادة التصنيف الفندقي',       group: 'document', valid_values: [], ui_required: true  },
+            { name: 'hrd_doc_management_contract', field_type: 'bool', label_ar: 'عقد الإدارة أو الامتياز',      group: 'document', valid_values: [], ui_required: false },
+            { name: 'hrd_doc_adr_occupancy_data',  field_type: 'bool', label_ar: 'بيانات ADR والإشغال',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'hrd_doc_financials',          field_type: 'bool', label_ar: 'قوائم الإيرادات والمصروفات',   group: 'document', valid_values: [], ui_required: false },
+            { name: 'hrd_doc_floor_plans',         field_type: 'bool', label_ar: 'مخططات الغرف والمرافق',        group: 'document', valid_values: [], ui_required: false },
+            { name: 'hrd_doc_technical_reports',   field_type: 'bool', label_ar: 'تقارير الحالة الفنية',         group: 'document', valid_values: [], ui_required: false },
+            { name: 'hrd_doc_photos_plans',        field_type: 'bool', label_ar: 'صور ومخططات الموقع',           group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'serviced_apartments': { sections: [
+        { heading: 'مزيج الوحدات والمساحات', color: '#d4af37', desc: '', fields: [
+            { name: 'sa_total_units_count',     field_type: 'int',   label_ar: 'إجمالي عدد الوحدات',        valid_values: [], group: '', ui_required: true  },
+            { name: 'sa_unit_mix', field_type: 'checkbox_group', label_ar: 'تشكيلة الوحدات',
+              options: [
+                { value: 'studio',        label_ar: 'ستوديو' },
+                { value: 'one_bedroom',   label_ar: 'غرفة نوم' },
+                { value: 'two_bedroom',   label_ar: 'غرفتان' },
+                { value: 'three_bedroom', label_ar: 'ثلاث غرف' },
+                { value: 'penthouse',     label_ar: 'بنتهاوس' },
+                { value: 'villa',         label_ar: 'فيلا' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'sa_net_rentable_area_sqm',  field_type: 'float', label_ar: 'المساحة الإيجارية الصافية',   unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_average_unit_area_sqm',  field_type: 'float', label_ar: 'متوسط مساحة الوحدة',         unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_furnished_units_pct',    field_type: 'float', label_ar: 'نسبة الوحدات المؤثَّثة',      unit_ar: '%',  valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'التشغيل والإقامة', color: '#9ca3af', desc: '', fields: [
+            { name: 'sa_average_length_of_stay_alos', field_type: 'float', label_ar: 'متوسط مدة الإقامة (ALOS)',  unit_ar: 'ليلة',       valid_values: [], group: '', ui_required: false },
+            { name: 'sa_short_stay_ratio',            field_type: 'float', label_ar: 'نسبة الإقامة القصيرة',       unit_ar: '%',          valid_values: [], group: '', ui_required: false },
+            { name: 'sa_long_stay_ratio',             field_type: 'float', label_ar: 'نسبة الإقامة الطويلة',        unit_ar: '%',          valid_values: [], group: '', ui_required: false },
+            { name: 'sa_annual_occupancy_rate',       field_type: 'float', label_ar: 'نسبة الإشغال السنوية',        unit_ar: '%',          valid_values: [], group: '', ui_required: false },
+            { name: 'sa_adr',                         field_type: 'float', label_ar: 'متوسط السعر اليومي (ADR)',    unit_ar: 'جنيه/ليلة',  valid_values: [], group: '', ui_required: false },
+            { name: 'sa_guest_services_available', field_type: 'checkbox_group', label_ar: 'خدمات الضيوف المتاحة',
+              options: [
+                { value: 'housekeeping', label_ar: 'تنظيف يومي' },
+                { value: 'concierge',    label_ar: 'خدمة الكونسيرج' },
+                { value: 'laundry',      label_ar: 'غسيل ملابس' },
+                { value: 'food_service', label_ar: 'خدمة الطعام' },
+                { value: 'parking',      label_ar: 'موقف سيارات' },
+                { value: 'gym',          label_ar: 'صالة رياضية' },
+                { value: 'pool',         label_ar: 'حوض سباحة' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'مجمع الإيجار وتوزيع الأرباح', color: '#9ca3af', desc: '', fields: [
+            { name: 'sa_rental_pool_program_status', field_type: 'str', label_ar: 'حالة برنامج Rental Pool',
+              options: [
+                { value: 'active',    label_ar: 'نشط' },
+                { value: 'optional',  label_ar: 'اختياري' },
+                { value: 'mandatory', label_ar: 'إلزامي' },
+                { value: 'none',      label_ar: 'لا يوجد' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'sa_rental_pool_profit_share_owner_pct',    field_type: 'float',    label_ar: 'حصة المالك من أرباح Rental Pool',    unit_ar: '%', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_rental_pool_profit_share_operator_pct', field_type: 'float',    label_ar: 'حصة المشغِّل من أرباح Rental Pool',  unit_ar: '%', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_owner_usage_restrictions',               field_type: 'textarea', label_ar: 'قيود استخدام المالك للوحدة',          valid_values: [], group: '', ui_required: false },
+            { name: 'sa_operator_contract_terms',                field_type: 'textarea', label_ar: 'شروط عقد المشغِّل',                   valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الإيرادات', color: '#9ca3af', desc: '', fields: [
+            { name: 'sa_annual_rental_income',          field_type: 'float', label_ar: 'الدخل الإيجاري السنوي',            unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_service_charge_revenue_annual', field_type: 'float', label_ar: 'إيراد رسوم الخدمة السنوي',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'sa_operating_expenses_annual',     field_type: 'float', label_ar: 'المصروفات التشغيلية السنوية',        unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'sa_doc_unit_management_contracts', field_type: 'bool', label_ar: 'عقود الوحدات أو الإدارة',  group: 'document', valid_values: [], ui_required: true  },
+            { name: 'sa_doc_rental_pool_program',       field_type: 'bool', label_ar: 'برنامج Rental Pool',       group: 'document', valid_values: [], ui_required: false },
+            { name: 'sa_doc_occupancy_alos_data',       field_type: 'bool', label_ar: 'بيانات الإشغال وALOS',     group: 'document', valid_values: [], ui_required: false },
+            { name: 'sa_doc_revenue_statements',        field_type: 'bool', label_ar: 'قوائم الإيرادات',          group: 'document', valid_values: [], ui_required: false },
+            { name: 'sa_doc_unit_plans',                field_type: 'bool', label_ar: 'مخططات الوحدات',           group: 'document', valid_values: [], ui_required: false },
+            { name: 'sa_doc_photos_plans',              field_type: 'bool', label_ar: 'صور ومخططات الموقع',       group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    'floating_hotel': { sections: [
+        { heading: 'الأبعاد الفنية للمنشأة العائمة', color: '#d4af37', desc: '', fields: [
+            { name: 'fh_vessel_length_m',    field_type: 'float', label_ar: 'طول المنشأة',                   unit_ar: 'متر', valid_values: [], group: '', ui_required: true  },
+            { name: 'fh_vessel_width_m',     field_type: 'float', label_ar: 'عرض المنشأة',                   unit_ar: 'متر', valid_values: [], group: '', ui_required: true  },
+            { name: 'fh_decks_count',        field_type: 'int',   label_ar: 'عدد الأسطح',                    valid_values: [], group: '', ui_required: false },
+            { name: 'fh_water_draft_m',      field_type: 'float', label_ar: 'عمق الغاطس',                    unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+            { name: 'fh_cabins_count',       field_type: 'int',   label_ar: 'عدد الكبائن',                   valid_values: [], group: '', ui_required: false },
+            { name: 'fh_passenger_capacity', field_type: 'int',   label_ar: 'الطاقة الاستيعابية للركاب',      valid_values: [], group: '', ui_required: false },
+            { name: 'fh_gross_tonnage',      field_type: 'float', label_ar: 'الحمولة الإجمالية (GT)',         valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'حالة البدن والفحص الفني', color: '#9ca3af', desc: '', fields: [
+            { name: 'fh_hull_condition', field_type: 'str', label_ar: 'حالة بدن السفينة',
+              options: [
+                { value: 'excellent', label_ar: 'ممتازة' },
+                { value: 'good',      label_ar: 'جيدة' },
+                { value: 'fair',      label_ar: 'مقبولة' },
+                { value: 'poor',      label_ar: 'ضعيفة' },
+                { value: 'critical',  label_ar: 'حرجة' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_steel_structure_condition', field_type: 'str', label_ar: 'حالة الهيكل الفولاذي',
+              options: [
+                { value: 'excellent', label_ar: 'ممتازة' },
+                { value: 'good',      label_ar: 'جيدة' },
+                { value: 'fair',      label_ar: 'مقبولة' },
+                { value: 'poor',      label_ar: 'ضعيفة' },
+                { value: 'critical',  label_ar: 'حرجة' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_last_dry_dock_date',        field_type: 'text', label_ar: 'تاريخ آخر دراي دوك',        valid_values: [], group: '', ui_required: false },
+            { name: 'fh_next_dry_dock_due_date',    field_type: 'text', label_ar: 'تاريخ دراي دوك القادم',      valid_values: [], group: '', ui_required: false },
+            { name: 'fh_dry_dock_report_available', field_type: 'bool', label_ar: 'تقرير دراي دوك متوفر؟',      valid_values: [], group: '', ui_required: false },
+            { name: 'fh_marine_safety_condition', field_type: 'str', label_ar: 'حالة السلامة البحرية',
+              options: [
+                { value: 'certified',       label_ar: 'معتمد' },
+                { value: 'expired',         label_ar: 'منتهي الصلاحية' },
+                { value: 'pending_renewal', label_ar: 'قيد التجديد' },
+                { value: 'unknown',         label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'الملاحة والتصنيف', color: '#9ca3af', desc: '', fields: [
+            { name: 'fh_navigation_license_status', field_type: 'str', label_ar: 'حالة ترخيص الملاحة',
+              options: [
+                { value: 'valid',     label_ar: 'ساري' },
+                { value: 'expired',   label_ar: 'منتهي' },
+                { value: 'suspended', label_ar: 'موقوف' },
+                { value: 'pending',   label_ar: 'قيد الإصدار' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_river_transport_license_expiry',     field_type: 'text', label_ar: 'تاريخ انتهاء رخصة نقل نهري',    valid_values: [], group: '', ui_required: false },
+            { name: 'fh_classification_society_certificate', field_type: 'text', label_ar: 'شهادة هيئة التصنيف الدولية',      valid_values: [], group: '', ui_required: false },
+            { name: 'fh_safety_certificate_status', field_type: 'str', label_ar: 'حالة شهادة السلامة',
+              options: [
+                { value: 'valid',           label_ar: 'سارية' },
+                { value: 'expired',         label_ar: 'منتهية' },
+                { value: 'pending_renewal', label_ar: 'قيد التجديد' },
+                { value: 'unknown',         label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_insurance_status', field_type: 'str', label_ar: 'حالة التأمين',
+              options: [
+                { value: 'insured',   label_ar: 'مؤمَّن' },
+                { value: 'uninsured', label_ar: 'غير مؤمَّن' },
+                { value: 'partial',   label_ar: 'تأمين جزئي' },
+                { value: 'unknown',   label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المراسي والتشغيل', color: '#9ca3af', desc: '', fields: [
+            { name: 'fh_mooring_rights_status', field_type: 'str', label_ar: 'حالة حقوق المرسى',
+              options: [
+                { value: 'owned',            label_ar: 'مملوك' },
+                { value: 'long_term_lease',  label_ar: 'إيجار طويل الأمد' },
+                { value: 'short_term_lease', label_ar: 'إيجار قصير الأمد' },
+                { value: 'none',             label_ar: 'لا يوجد' },
+                { value: 'unknown',          label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_strategic_mooring_locations',    field_type: 'text', label_ar: 'مواقع الإرساء الاستراتيجية',   valid_values: [], group: '', ui_required: false },
+            { name: 'fh_fixed_mooring_contracts_available', field_type: 'bool', label_ar: 'عقود إرساء ثابتة متوفرة؟',  valid_values: [], group: '', ui_required: false },
+            { name: 'fh_operator_contract_status', field_type: 'str', label_ar: 'حالة عقد التشغيل',
+              options: [
+                { value: 'active',            label_ar: 'نشط' },
+                { value: 'expired',           label_ar: 'منتهي' },
+                { value: 'under_negotiation', label_ar: 'قيد التفاوض' },
+                { value: 'none',              label_ar: 'لا يوجد' },
+                { value: 'unknown',           label_ar: 'غير محدد' },
+              ], valid_values: [], group: '', ui_required: false },
+            { name: 'fh_annual_cruise_income',      field_type: 'float', label_ar: 'الدخل السنوي من الرحلات',       unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+            { name: 'fh_operating_expenses_annual', field_type: 'float', label_ar: 'المصروفات التشغيلية السنوية',    unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+        ]},
+        { heading: 'المستندات المطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+            { name: 'fh_doc_navigation_license',           field_type: 'bool', label_ar: 'رخصة الملاحة',                        group: 'document', valid_values: [], ui_required: true  },
+            { name: 'fh_doc_international_certifications', field_type: 'bool', label_ar: 'شهادات هيئات الإشراف الدولية',         group: 'document', valid_values: [], ui_required: true  },
+            { name: 'fh_doc_dry_dock_report',              field_type: 'bool', label_ar: 'تقرير Dry-Dock',                      group: 'document', valid_values: [], ui_required: false },
+            { name: 'fh_doc_mooring_contracts',            field_type: 'bool', label_ar: 'عقود المراسي',                         group: 'document', valid_values: [], ui_required: false },
+            { name: 'fh_doc_operator_contract',            field_type: 'bool', label_ar: 'عقد التشغيل',                          group: 'document', valid_values: [], ui_required: false },
+            { name: 'fh_doc_revenue_data',                 field_type: 'bool', label_ar: 'بيانات الإيرادات',                     group: 'document', valid_values: [], ui_required: false },
+            { name: 'fh_doc_photos_plans',                 field_type: 'bool', label_ar: 'صور ومخططات المنشأة',                 group: 'document', valid_values: [], ui_required: false },
+        ]},
+    ]},
+    // ── End Phase 8X.1 ──────────────────────────────────────────────────────────
     // ── End Phase 8V ────────────────────────────────────────────────────────────
     // ── End Phase 8S.1 ──────────────────────────────────────────────────────────
 };

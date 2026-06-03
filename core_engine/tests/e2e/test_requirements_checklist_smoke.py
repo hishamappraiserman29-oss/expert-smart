@@ -6994,3 +6994,440 @@ def test_CS418_no_console_errors_for_8w_profiles(page: Page, live_server: str) -
     assert not errors, (
         f"Phase 8W: unexpected JS console errors for residential/land 8W profiles: {errors}"
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8X.1 — Hospitality: hotel_resort_detailed, serviced_apartments, floating_hotel
+# CS419–CS447
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_hotel_resort_detailed(page: Page, live_server: str) -> None:
+    """Phase 8X.1: load hotel_resort_detailed local form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="hotel_resort_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_serviced_apartments(page: Page, live_server: str) -> None:
+    """Phase 8X.1: load serviced_apartments local form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="serviced_apartments")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+def _load_floating_hotel(page: Page, live_server: str) -> None:
+    """Phase 8X.1: load floating_hotel local form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="floating_hotel")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS419 ─────────────────────────────────────────────────────────────────────
+
+def test_CS419_optgroup_hospitality_entertainment_exists(page: Page, live_server: str) -> None:
+    """Phase 8X.1: optgroup «أصول الترفيه والضيافة والتجمع الجماهيري» exists in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    labels = page.locator("#asset-type optgroup").evaluate_all("els => els.map(e => e.label)")
+    assert "أصول الترفيه والضيافة والتجمع الجماهيري" in labels, (
+        f"optgroup «أصول الترفيه والضيافة والتجمع الجماهيري» not found in dropdown. "
+        f"Got: {labels}"
+    )
+
+
+# ── CS420 ─────────────────────────────────────────────────────────────────────
+
+def test_CS420_all_three_8x1_options_present(page: Page, live_server: str) -> None:
+    """Phase 8X.1: all three 8X.1 options exist in the asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    for value in ("hotel_resort_detailed", "serviced_apartments", "floating_hotel"):
+        opt = page.locator(f"#asset-type option[value='{value}']")
+        assert opt.count() == 1, f"option value='{value}' not found in dropdown."
+
+
+# ── CS421 ─────────────────────────────────────────────────────────────────────
+
+def test_CS421_hotel_resort_detailed_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: selecting hotel_resort_detailed shows badge and requirements panel."""
+    _load_hotel_resort_detailed(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for hotel_resort_detailed."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for hotel_resort_detailed."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for hotel_resort_detailed."
+    )
+
+
+# ── CS422 ─────────────────────────────────────────────────────────────────────
+
+def test_CS422_hotel_resort_detailed_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8X.1: selecting hotel_resort_detailed does not navigate away from the page."""
+    _load_hotel_resort_detailed(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting hotel_resort_detailed. URL: {page.url}"
+    )
+
+
+# ── CS423 ─────────────────────────────────────────────────────────────────────
+
+def test_CS423_hotel_resort_detailed_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hotel_resort_detailed must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_hotel_resort_detailed(page, live_server)
+    assert not api_calls, (
+        f"hotel_resort_detailed must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS424 ─────────────────────────────────────────────────────────────────────
+
+def test_CS424_hotel_resort_detailed_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hotel_resort_detailed renders hrd_keys_count, hrd_rooms_count, hrd_hotel_star_rating."""
+    _load_hotel_resort_detailed(page, live_server)
+    for field_name in ("hrd_keys_count", "hrd_rooms_count", "hrd_hotel_star_rating"):
+        field = page.locator(f"#es-req-field-{field_name}")
+        assert field.count() > 0, (
+            f"hotel_resort_detailed: field '#es-req-field-{field_name}' not found in panel."
+        )
+
+
+# ── CS425 ─────────────────────────────────────────────────────────────────────
+
+def test_CS425_hotel_resort_detailed_resort_facilities_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hrd_resort_facilities_available checkbox_group renders with facility chips."""
+    _load_hotel_resort_detailed(page, live_server)
+    chips = page.locator("[data-es-req-field='hrd_resort_facilities_available']")
+    expect(chips.first).to_be_visible()
+    pool_chip = page.locator("[data-es-req-field='hrd_resort_facilities_available'][value='pool']")
+    expect(pool_chip).to_be_attached()
+
+
+# ── CS426 ─────────────────────────────────────────────────────────────────────
+
+def test_CS426_hotel_resort_detailed_adr_number_input_with_unit(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hrd_adr renders as number input; unit 'جنيه/ليلة' visible in panel."""
+    _load_hotel_resort_detailed(page, live_server)
+    field = page.locator("#es-req-field-hrd_adr")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"hrd_adr must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "جنيه/ليلة" in panel_text, (
+        f"hotel_resort_detailed panel must show 'جنيه/ليلة' unit. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS427 ─────────────────────────────────────────────────────────────────────
+
+def test_CS427_hotel_resort_detailed_occupancy_field_with_percent_unit(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hrd_annual_occupancy_rate renders as number input with '%' unit visible."""
+    _load_hotel_resort_detailed(page, live_server)
+    field = page.locator("#es-req-field-hrd_annual_occupancy_rate")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"hrd_annual_occupancy_rate must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "%" in panel_text, (
+        f"hotel_resort_detailed panel must show '%' for occupancy. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS428 ─────────────────────────────────────────────────────────────────────
+
+def test_CS428_hotel_resort_detailed_management_contract_textarea(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hrd_management_contract_terms renders as textarea."""
+    _load_hotel_resort_detailed(page, live_server)
+    field = page.locator("#es-req-field-hrd_management_contract_terms")
+    expect(field).to_be_visible()
+    assert field.evaluate("el => el.tagName.toLowerCase()") == "textarea", (
+        "hrd_management_contract_terms must be a textarea element."
+    )
+
+
+# ── CS429 ─────────────────────────────────────────────────────────────────────
+
+def test_CS429_hotel_resort_detailed_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hotel_resort_detailed document section shows upload hint text."""
+    _load_hotel_resort_detailed(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"hotel_resort_detailed panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS430 ─────────────────────────────────────────────────────────────────────
+
+def test_CS430_hotel_resort_detailed_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hotel_resort_detailed panel has no composite_valuation.html link."""
+    _load_hotel_resort_detailed(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "hotel_resort_detailed panel must not contain composite_valuation.html link."
+    )
+
+
+# ── CS431 ─────────────────────────────────────────────────────────────────────
+
+def test_CS431_hotel_resort_detailed_doc_operating_license_renders(page: Page, live_server: str) -> None:
+    """Phase 8X.1: hrd_doc_operating_license document checkbox renders in hotel_resort_detailed."""
+    _load_hotel_resort_detailed(page, live_server)
+    doc_field = page.locator("[data-es-req-field='hrd_doc_operating_license']")
+    assert doc_field.count() > 0, (
+        "hotel_resort_detailed: hrd_doc_operating_license document checkbox not found in panel."
+    )
+
+
+# ── CS432 ─────────────────────────────────────────────────────────────────────
+
+def test_CS432_serviced_apartments_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: selecting serviced_apartments shows badge and requirements panel."""
+    _load_serviced_apartments(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for serviced_apartments."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for serviced_apartments."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for serviced_apartments."
+    )
+
+
+# ── CS433 ─────────────────────────────────────────────────────────────────────
+
+def test_CS433_serviced_apartments_stays_on_page(page: Page, live_server: str) -> None:
+    """Phase 8X.1: selecting serviced_apartments does not navigate away from the page."""
+    _load_serviced_apartments(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting serviced_apartments. URL: {page.url}"
+    )
+
+
+# ── CS434 ─────────────────────────────────────────────────────────────────────
+
+def test_CS434_serviced_apartments_zero_api_calls(page: Page, live_server: str) -> None:
+    """Phase 8X.1: serviced_apartments must not call /api/valuation/requirements."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_serviced_apartments(page, live_server)
+    assert not api_calls, (
+        f"serviced_apartments must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS435 ─────────────────────────────────────────────────────────────────────
+
+def test_CS435_serviced_apartments_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: serviced_apartments renders sa_total_units_count, sa_net_rentable_area_sqm."""
+    _load_serviced_apartments(page, live_server)
+    for field_name in ("sa_total_units_count", "sa_net_rentable_area_sqm"):
+        field = page.locator(f"#es-req-field-{field_name}")
+        assert field.count() > 0, (
+            f"serviced_apartments: field '#es-req-field-{field_name}' not found in panel."
+        )
+
+
+# ── CS436 ─────────────────────────────────────────────────────────────────────
+
+def test_CS436_serviced_apartments_unit_mix_checkbox_group_renders(page: Page, live_server: str) -> None:
+    """Phase 8X.1: sa_unit_mix checkbox_group renders chips in serviced_apartments."""
+    _load_serviced_apartments(page, live_server)
+    chips = page.locator("[data-es-req-field='sa_unit_mix']")
+    expect(chips.first).to_be_visible()
+    studio_chip = page.locator("[data-es-req-field='sa_unit_mix'][value='studio']")
+    expect(studio_chip).to_be_attached()
+
+
+# ── CS437 ─────────────────────────────────────────────────────────────────────
+
+def test_CS437_serviced_apartments_alos_number_input_with_night_unit(page: Page, live_server: str) -> None:
+    """Phase 8X.1: sa_average_length_of_stay_alos renders as number input; unit 'ليلة' visible."""
+    _load_serviced_apartments(page, live_server)
+    field = page.locator("#es-req-field-sa_average_length_of_stay_alos")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"sa_average_length_of_stay_alos must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ليلة" in panel_text, (
+        f"serviced_apartments panel must show 'ليلة' unit for ALOS. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS438 ─────────────────────────────────────────────────────────────────────
+
+def test_CS438_serviced_apartments_owner_usage_restrictions_textarea(page: Page, live_server: str) -> None:
+    """Phase 8X.1: sa_owner_usage_restrictions renders as textarea in serviced_apartments."""
+    _load_serviced_apartments(page, live_server)
+    field = page.locator("#es-req-field-sa_owner_usage_restrictions")
+    expect(field).to_be_visible()
+    assert field.evaluate("el => el.tagName.toLowerCase()") == "textarea", (
+        "sa_owner_usage_restrictions must be a textarea element."
+    )
+
+
+# ── CS439 ─────────────────────────────────────────────────────────────────────
+
+def test_CS439_serviced_apartments_upload_hint_present(page: Page, live_server: str) -> None:
+    """Phase 8X.1: serviced_apartments document section shows upload hint text."""
+    _load_serviced_apartments(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"serviced_apartments panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS440 ─────────────────────────────────────────────────────────────────────
+
+def test_CS440_serviced_apartments_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8X.1: serviced_apartments panel has no composite_valuation.html link."""
+    _load_serviced_apartments(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "serviced_apartments panel must not contain composite_valuation.html link."
+    )
+
+
+# ── CS441 ─────────────────────────────────────────────────────────────────────
+
+def test_CS441_floating_hotel_badge_and_panel_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: selecting floating_hotel shows badge and requirements panel."""
+    _load_floating_hotel(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "Profile badge must be visible for floating_hotel."
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "#es-req-panel must be visible for floating_hotel."
+    auth_modal = page.locator("#auth-modal, #login-modal, .auth-modal")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible(), (
+        "Auth modal must NOT appear for floating_hotel."
+    )
+
+
+# ── CS442 ─────────────────────────────────────────────────────────────────────
+
+def test_CS442_floating_hotel_stays_on_page_and_zero_api(page: Page, live_server: str) -> None:
+    """Phase 8X.1: floating_hotel does not navigate away and makes zero API calls."""
+    api_calls: list[str] = []
+    page.on("request", lambda req: api_calls.append(req.url) if "valuation/requirements" in req.url else None)
+    _load_floating_hotel(page, live_server)
+    assert "127.0.0.1:5000" in page.url or "localhost:5000" in page.url, (
+        f"Page navigated away after selecting floating_hotel. URL: {page.url}"
+    )
+    assert not api_calls, (
+        f"floating_hotel must be fully static; unexpected API calls: {api_calls}"
+    )
+
+
+# ── CS443 ─────────────────────────────────────────────────────────────────────
+
+def test_CS443_floating_hotel_key_fields_render(page: Page, live_server: str) -> None:
+    """Phase 8X.1: floating_hotel renders fh_vessel_length_m, fh_hull_condition, fh_cabins_count."""
+    _load_floating_hotel(page, live_server)
+    for field_name in ("fh_vessel_length_m", "fh_hull_condition", "fh_cabins_count"):
+        field = page.locator(f"#es-req-field-{field_name}")
+        assert field.count() > 0, (
+            f"floating_hotel: field '#es-req-field-{field_name}' not found in panel."
+        )
+
+
+# ── CS444 ─────────────────────────────────────────────────────────────────────
+
+def test_CS444_floating_hotel_vessel_length_number_input_with_meter_unit(page: Page, live_server: str) -> None:
+    """Phase 8X.1: fh_vessel_length_m renders as number input; unit 'متر' visible in panel."""
+    _load_floating_hotel(page, live_server)
+    field = page.locator("#es-req-field-fh_vessel_length_m")
+    expect(field).to_be_visible()
+    assert field.get_attribute("type") == "number", (
+        f"fh_vessel_length_m must be number input. Got type={field.get_attribute('type')!r}"
+    )
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "متر" in panel_text, (
+        f"floating_hotel panel must show 'متر' unit for vessel length. Got: {panel_text[:400]!r}"
+    )
+
+
+# ── CS445 ─────────────────────────────────────────────────────────────────────
+
+def test_CS445_floating_hotel_hull_condition_select_with_options(page: Page, live_server: str) -> None:
+    """Phase 8X.1: fh_hull_condition select renders with جيدة and مقبولة options."""
+    _load_floating_hotel(page, live_server)
+    sel = page.locator("#es-req-field-fh_hull_condition")
+    expect(sel).to_be_visible()
+    opts = sel.locator("option").all_inner_texts()
+    assert any("جيدة" in o for o in opts), (
+        f"fh_hull_condition must have a 'جيدة' option. Got: {opts}"
+    )
+    assert any("مقبولة" in o for o in opts), (
+        f"fh_hull_condition must have a 'مقبولة' option. Got: {opts}"
+    )
+
+
+# ── CS446 ─────────────────────────────────────────────────────────────────────
+
+def test_CS446_floating_hotel_upload_hint_and_no_composite_link(page: Page, live_server: str) -> None:
+    """Phase 8X.1: floating_hotel shows upload hint and has no composite_valuation.html link."""
+    _load_floating_hotel(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "ارفع المستندات" in panel_text, (
+        f"floating_hotel panel must show upload hint 'ارفع المستندات'. Got: {panel_text[:400]!r}"
+    )
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "floating_hotel panel must not contain composite_valuation.html link."
+    )
+
+
+# ── CS447 ─────────────────────────────────────────────────────────────────────
+
+def test_CS447_regression_existing_profiles_unaffected_and_no_console_errors(page: Page, live_server: str) -> None:
+    """Phase 8X.1: regression — old hotel, 8R/8S/8T/8U/8V profiles still render; no JS console errors for 8X.1 profiles."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text.upper()
+            and "Failed to load resource" not in msg.text
+        )
+
+    # Regression: old hotel profile (value="فندق") must still render form controls
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    count = page.locator("#es-req-panel input, #es-req-panel select").count()
+    assert count > 0, (
+        f"Regression: old 'فندق' profile must still render form controls after 8X.1. Got {count}."
+    )
+
+    # Regression: sample of 8R/8S/8T/8U/8V profiles still render
+    for profile_value in ("airport", "cold_storage", "wellness_resort", "marina", "waterway_easement"):
+        page.goto(live_server, wait_until="networkidle")
+        _inject_session(page)
+        page.select_option("#asset-type", value=profile_value)
+        page.select_option("#val-purpose", value="fair_market_value")
+        page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+        count = page.locator("#es-req-panel input, #es-req-panel select").count()
+        assert count > 0, (
+            f"Regression: {profile_value} panel must still render form controls after 8X.1. Got {count}."
+        )
+
+    # No JS console errors for the three new 8X.1 profiles
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    for loader in (_load_hotel_resort_detailed, _load_serviced_apartments, _load_floating_hotel):
+        loader(page, live_server)
+    assert not errors, (
+        f"Phase 8X.1: unexpected JS console errors for 8X.1 profiles: {errors}"
+    )

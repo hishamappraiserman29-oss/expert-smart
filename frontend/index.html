@@ -5913,8 +5913,8 @@ function _showIndexToast(msg, type) {
 
     // ── Phase 8I: Profile explainer map — pure display, keyed by profile code ──
     var _PROFILE_EXPLAINER_MAP = {
-        'residential_unit': { badge: 'مدعوم', color: '#10b981', desc: 'وحدة سكنية — مدعوم بالكامل. المتطلبات والحقول تُجلَب مباشرة من API.' },
-        'land':             { badge: 'مدعوم', color: '#10b981', desc: 'أرض — مدعوم بالكامل. المتطلبات تُجلَب مباشرة من API.' },
+        'residential_unit': { badge: 'مدعوم', color: '#10b981', desc: 'وحدة سكنية (شقة / فيلا) — المتطلبات الأساسية تُجلَب من سجل الـ API؛ بيانات تفصيلية تكميلية (نوع الوحدة، التشطيب، الإشغال) متاحة دائماً للإدخال المحلي حتى عند غياب الاتصال.' },
+        'land':             { badge: 'مدعوم', color: '#10b981', desc: 'أرض فضاء (مطوَّرة أو خام) — المتطلبات الأساسية تُجلَب من سجل الـ API. هذا الخيار لأراضي التطوير غير الزراعية — لتقييم أرض زراعية استخدم خيار «أرض زراعية» المنفصل. بيانات تكميلية (مرحلة التطوير، FAR، التكاليف) متاحة للإدخال المحلي.' },
         'building_mixed':   { badge: 'مدعوم', color: '#10b981', desc: 'مبنى قائم (تجاري / سكني / إداري) — مدعوم بالكامل.' },
         'building_full':    { badge: 'نموذج مركّب', color: '#d4af37', desc: 'عقار كامل — يستلزم نموذج التقييم المركّب المتخصص.' },
         'hotel':    { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
@@ -8766,6 +8766,7 @@ function _showIndexToast(msg, type) {
                     { value: 'villa',      label_ar: 'فيلا' },
                     { value: 'duplex',     label_ar: 'دوبلكس' },
                     { value: 'townhouse',  label_ar: 'تاون هاوس' },
+                    { value: 'penthouse',  label_ar: 'بنتهاوس' },
                     { value: 'studio',     label_ar: 'ستوديو' },
                     { value: 'unknown',    label_ar: 'غير محدد' },
                   ], valid_values: [], group: '', ui_required: false },
@@ -8847,6 +8848,15 @@ function _showIndexToast(msg, type) {
         ],
         'land': [
             { heading: 'بيانات الأرض التفصيلية', color: '#d4af37', desc: '', fields: [
+                { name: 'land_development_stage', field_type: 'str', label_ar: 'مرحلة تطوير الأرض',
+                  options: [
+                    { value: 'raw_land',         label_ar: 'أرض خام' },
+                    { value: 'serviced_land',     label_ar: 'أرض مرفّقة' },
+                    { value: 'planned_land',      label_ar: 'أرض ضمن مخطط معتمد' },
+                    { value: 'ready_to_build',    label_ar: 'جاهزة للبناء' },
+                    { value: 'under_development', label_ar: 'تحت التطوير' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
                 { name: 'land_area_feddan', field_type: 'float', label_ar: 'مساحة الأرض (فدان)', unit_ar: 'فدان', valid_values: [], group: '', ui_required: false },
                 { name: 'depth_meters',     field_type: 'float', label_ar: 'عمق قطعة الأرض',     unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
                 { name: 'is_fenced',        field_type: 'bool',  label_ar: 'الأرض مسوّرة',        valid_values: [], group: '', ui_required: false },
@@ -8947,12 +8957,12 @@ function _showIndexToast(msg, type) {
         var schemas = _SUPPLEMENTAL_SCHEMAS[registryCode];
         if (!schemas || !schemas.length) { suppEl.innerHTML = ''; return; }
         var heading = registryCode === 'land'
-            ? 'بيانات تفصيلية تكميلية للأرض'
-            : 'بيانات تفصيلية تكميلية';
-        var html = '<div id="es-req-supp-header" style="border-top:1px solid #374151;margin-top:12px;padding-top:10px;">';
-        html += '<div style="font-size:0.78rem;font-weight:600;color:#9ca3af;margin-bottom:8px;">'
-            + heading
-            + '<span style="font-size:0.67rem;color:#6b7280;margin-right:8px;">(إدخال محلّي — لا تُرسَل للـ API)</span></div>';
+            ? 'متطلبات تقييم الأرض الفضاء — مطوَّرة أو خام'
+            : 'متطلبات تقييم الوحدة السكنية — شقة / فيلا';
+        var subtext = 'الحقول أعلاه من سجل المتطلبات الأساسي. الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.';
+        var html = '<div id="es-req-supp-header" style="border-top:2px solid #374151;margin-top:14px;padding-top:10px;">';
+        html += '<div style="font-size:0.85rem;font-weight:700;color:#d4af37;margin-bottom:4px;">' + heading + '</div>';
+        html += '<div style="font-size:0.72rem;color:#9ca3af;margin-bottom:10px;line-height:1.4;" id="es-req-supp-subtext">' + subtext + '</div>';
         schemas.forEach(function(sec) {
             html += _suppSectionControlsHTML(sec.heading, sec.color || '#6b7280', sec.desc || '', sec.fields);
         });
@@ -9155,6 +9165,9 @@ function _showIndexToast(msg, type) {
         }).catch(function (err) {
             if (err && err.message === 'ES_AUTH_401') {
                 showSoftMsg('تعذر تحميل متطلبات السجل حالياً بسبب انتهاء الجلسة. يمكنك متابعة إدخال بيانات الأصل محلياً، أو تسجيل الدخول لاحقاً.');
+                var _b401 = document.getElementById('es-req-body');
+                if (_b401) _b401.style.display = '';
+                _renderSupplemental(registryCode);
             } else {
                 hidePanel();
             }

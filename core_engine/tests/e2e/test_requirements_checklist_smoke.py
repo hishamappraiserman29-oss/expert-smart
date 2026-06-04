@@ -4486,16 +4486,21 @@ def test_CS245_land_supp_header_shows_local_input_label(page: Page, live_server:
 
 # ── CS246 ─────────────────────────────────────────────────────────────────────
 
-def test_CS246_building_full_static_supp_is_empty(page: Page, live_server: str) -> None:
-    """Phase 8Q: عمارة سكنية (static profile) — #es-req-supp must be empty."""
+def test_CS246_building_full_static_supp_is_populated(page: Page, live_server: str) -> None:
+    """Phase 8ZA update: عمارة سكنية (static/full) now populates #es-req-supp with enriched supplemental.
+    Previously empty (Phase 8Q), now populated since Phase 8ZA added building_full supplemental schema.
+    """
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
     page.select_option("#asset-type", value="عمارة سكنية")
     page.select_option("#val-purpose", value="fair_market_value")
-    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    page.locator("#es-req-supp-header").wait_for(state="visible", timeout=8_000)
     supp_html = page.locator("#es-req-supp").inner_html().strip()
-    assert supp_html == "", (
-        f"عمارة سكنية (static) must not populate #es-req-supp. Got: {supp_html[:200]!r}"
+    assert supp_html != "", (
+        f"Phase 8ZA: عمارة سكنية must now populate #es-req-supp with supplemental content."
+    )
+    assert "متطلبات تقييم العمارة السكنية" in page.locator("#es-req-supp-header").inner_text(), (
+        "Phase 8ZA: building_full supp header must contain 'متطلبات تقييم العمارة السكنية'."
     )
 
 
@@ -4517,16 +4522,20 @@ def test_CS247_commercial_api_supp_is_empty(page: Page, live_server: str) -> Non
 
 # ── CS248 ─────────────────────────────────────────────────────────────────────
 
-def test_CS248_switching_residential_to_building_full_clears_supp(page: Page, live_server: str) -> None:
-    """Phase 8Q: switching from residential → عمارة سكنية (static) clears #es-req-supp."""
+def test_CS248_switching_residential_to_building_full_updates_supp(page: Page, live_server: str) -> None:
+    """Phase 8ZA update: switching from residential → عمارة سكنية updates #es-req-supp to building_full content.
+    Previously cleared (Phase 8Q), now switches to building_full supplemental since Phase 8ZA.
+    """
     _load_residential_supp_8w(page, live_server)
     supp = page.locator("#es-req-supp")
-    assert supp.inner_html().strip() != "", "Supp must be populated before switch"
+    assert "متطلبات تقييم الوحدة السكنية" in supp.inner_text(), (
+        "Supp must show residential heading before switch"
+    )
     page.select_option("#asset-type", value="عمارة سكنية")
-    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
-    supp_html = supp.inner_html().strip()
-    assert supp_html == "", (
-        f"#es-req-supp must be empty after switching to عمارة سكنية. Got: {supp_html[:200]!r}"
+    page.locator("#es-req-supp-header").wait_for(state="visible", timeout=8_000)
+    supp_header = page.locator("#es-req-supp-header").inner_text()
+    assert "متطلبات تقييم العمارة السكنية" in supp_header, (
+        f"Phase 8ZA: after switching to عمارة سكنية, supp must show building_full heading. Got: {supp_header!r}"
     )
 
 
@@ -7831,4 +7840,399 @@ def test_CS479_8z_no_console_errors_after_enrichment(page: Page, live_server: st
     _load_residential_supp_8w(page, live_server)
     assert not errors, (
         f"Phase 8Z: unexpected JS console errors on residential supp render: {errors}"
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZA — Enriched building_full Valuation Requirements (CS480 – CS511)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_building_full_supp(page: Page, live_server: str) -> None:
+    """Phase 8ZA: load building_full panel and wait until supplemental header is visible."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp-header").wait_for(state="visible", timeout=8_000)
+
+
+# ── CS480 ─────────────────────────────────────────────────────────────────────
+
+def test_CS480_8za_bf_supp_heading_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZA: #es-req-supp-header shows 'متطلبات تقييم العمارة السكنية / المبنى الكامل'."""
+    _load_building_full_supp(page, live_server)
+    header_text = page.locator("#es-req-supp-header").inner_text()
+    assert "متطلبات تقييم العمارة السكنية" in header_text, (
+        f"Phase 8ZA: building_full supp heading missing. Got: {header_text!r}"
+    )
+
+
+# ── CS481 ─────────────────────────────────────────────────────────────────────
+
+def test_CS481_8za_bf_supp_heading_physical_structural(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'الخصائص المادية والإنشائية للمبنى' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص المادية والإنشائية للمبنى" in text, (
+        f"Phase 8ZA: section 'الخصائص المادية والإنشائية للمبنى' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS482 ─────────────────────────────────────────────────────────────────────
+
+def test_CS482_8za_bf_supp_heading_legal_regulatory(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'الخصائص القانونية والتنظيمية' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص القانونية والتنظيمية" in text, (
+        f"Phase 8ZA: section 'الخصائص القانونية والتنظيمية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS483 ─────────────────────────────────────────────────────────────────────
+
+def test_CS483_8za_bf_supp_heading_economic_income(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'الخصائص الاقتصادية والدخل' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص الاقتصادية والدخل" in text, (
+        f"Phase 8ZA: section 'الخصائص الاقتصادية والدخل' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS484 ─────────────────────────────────────────────────────────────────────
+
+def test_CS484_8za_bf_supp_heading_location_services(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'خصائص الموقع والخدمات المحيطة' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "خصائص الموقع والخدمات المحيطة" in text, (
+        f"Phase 8ZA: section 'خصائص الموقع والخدمات المحيطة' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS485 ─────────────────────────────────────────────────────────────────────
+
+def test_CS485_8za_bf_supp_heading_purpose_adjustments(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'معاملات التعديل حسب غرض التقييم' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل حسب غرض التقييم" in text, (
+        f"Phase 8ZA: purpose-adjustment section heading missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS486 ─────────────────────────────────────────────────────────────────────
+
+def test_CS486_8za_bf_supp_heading_energy_sustainability(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'كفاءة الطاقة والاستدامة' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "كفاءة الطاقة والاستدامة" in text, (
+        f"Phase 8ZA: section 'كفاءة الطاقة والاستدامة' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS487 ─────────────────────────────────────────────────────────────────────
+
+def test_CS487_8za_bf_supp_heading_climate_risks(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'المخاطر المناخية والطبيعية' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية والطبيعية" in text, (
+        f"Phase 8ZA: section 'المخاطر المناخية والطبيعية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS488 ─────────────────────────────────────────────────────────────────────
+
+def test_CS488_8za_bf_supp_heading_digital_infrastructure(page: Page, live_server: str) -> None:
+    """Phase 8ZA: 'البنية التحتية الرقمية والذكية' section heading visible."""
+    _load_building_full_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية والذكية" in text, (
+        f"Phase 8ZA: section 'البنية التحتية الرقمية والذكية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS489 ─────────────────────────────────────────────────────────────────────
+
+def test_CS489_8za_bf_total_gfa_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_total_gfa_sqm renders as number input (Section A)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_total_gfa_sqm']")
+    assert field.count() > 0, "Phase 8ZA: bf_total_gfa_sqm must be present in building_full supp."
+    assert field.get_attribute("type") == "number", (
+        f"bf_total_gfa_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS490 ─────────────────────────────────────────────────────────────────────
+
+def test_CS490_8za_bf_building_type_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_building_type select renders with options (Section B)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_building_type")
+    assert sel.count() > 0, "Phase 8ZA: bf_building_type select must render in building_full supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8ZA: bf_building_type must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS491 ─────────────────────────────────────────────────────────────────────
+
+def test_CS491_8za_bf_effective_age_years_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_effective_age_years renders as number input (Section B)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_effective_age_years']")
+    assert field.count() > 0, "Phase 8ZA: bf_effective_age_years must be present in building_full supp."
+    assert field.get_attribute("type") == "number", (
+        "bf_effective_age_years must be type='number'."
+    )
+
+
+# ── CS492 ─────────────────────────────────────────────────────────────────────
+
+def test_CS492_8za_bf_structural_defects_summary_textarea(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_structural_or_mep_defects_summary renders as <textarea> (Section B)."""
+    _load_building_full_supp(page, live_server)
+    ta = page.locator("textarea[data-es-supp-field='bf_structural_or_mep_defects_summary']")
+    assert ta.count() == 1, (
+        "Phase 8ZA: bf_structural_or_mep_defects_summary must render as <textarea>."
+    )
+
+
+# ── CS493 ─────────────────────────────────────────────────────────────────────
+
+def test_CS493_8za_bf_commercial_units_count_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_commercial_units_count renders as number input (Section C — floor table complement)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_commercial_units_count']")
+    assert field.count() > 0, "Phase 8ZA: bf_commercial_units_count must be present in building_full supp."
+    assert field.get_attribute("type") == "number", (
+        "bf_commercial_units_count must be type='number'."
+    )
+
+
+# ── CS494 ─────────────────────────────────────────────────────────────────────
+
+def test_CS494_8za_bf_finishing_level_common_areas_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_finishing_level_common_areas select renders (Section D)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_finishing_level_common_areas")
+    assert sel.count() > 0, "Phase 8ZA: bf_finishing_level_common_areas must render in building_full supp."
+
+
+# ── CS495 ─────────────────────────────────────────────────────────────────────
+
+def test_CS495_8za_bf_fire_fighting_system_bool_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_fire_fighting_system_available renders as bool select نعم/لا (Section D)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_fire_fighting_system_available")
+    assert sel.count() > 0, "Phase 8ZA: bf_fire_fighting_system_available must render in building_full supp."
+    opts_text = sel.inner_text()
+    assert "نعم" in opts_text and "لا" in opts_text, (
+        f"Phase 8ZA: bf_fire_fighting_system_available must show نعم/لا. Got: {opts_text!r}"
+    )
+
+
+# ── CS496 ─────────────────────────────────────────────────────────────────────
+
+def test_CS496_8za_bf_ownership_type_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_ownership_type select renders with Arabic options (Section E)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_ownership_type")
+    assert sel.count() > 0, "Phase 8ZA: bf_ownership_type must render in building_full supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8ZA: bf_ownership_type must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS497 ─────────────────────────────────────────────────────────────────────
+
+def test_CS497_8za_bf_mortgage_or_lien_status_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_mortgage_or_lien_status select renders (Section E)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_mortgage_or_lien_status")
+    assert sel.count() > 0, "Phase 8ZA: bf_mortgage_or_lien_status must render in building_full supp."
+
+
+# ── CS498 ─────────────────────────────────────────────────────────────────────
+
+def test_CS498_8za_bf_market_gross_rent_annual_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_market_gross_rent_annual renders as number input (Section F)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_market_gross_rent_annual']")
+    assert field.count() > 0, "Phase 8ZA: bf_market_gross_rent_annual must be present."
+    assert field.get_attribute("type") == "number", (
+        "bf_market_gross_rent_annual must be type='number'."
+    )
+
+
+# ── CS499 ─────────────────────────────────────────────────────────────────────
+
+def test_CS499_8za_bf_vacancy_rate_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_vacancy_rate renders as number input (Section F)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_vacancy_rate']")
+    assert field.count() > 0, "Phase 8ZA: bf_vacancy_rate must be present in building_full supp."
+    assert field.get_attribute("type") == "number", (
+        "bf_vacancy_rate must be type='number'."
+    )
+
+
+# ── CS500 ─────────────────────────────────────────────────────────────────────
+
+def test_CS500_8za_bf_district_classification_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_district_classification select renders (Section G)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_district_classification")
+    assert sel.count() > 0, "Phase 8ZA: bf_district_classification must render in building_full supp."
+
+
+# ── CS501 ─────────────────────────────────────────────────────────────────────
+
+def test_CS501_8za_bf_purpose_mortgage_lending_methodology_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_purpose_mortgage_lending_methodology select renders (Section H)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_purpose_mortgage_lending_methodology")
+    assert sel.count() > 0, (
+        "Phase 8ZA: bf_purpose_mortgage_lending_methodology must render in building_full supp."
+    )
+    opts = sel.locator("option")
+    assert opts.count() >= 8, (
+        f"Phase 8ZA: methodology select must have >=8 options. Got {opts.count()}"
+    )
+
+
+# ── CS502 ─────────────────────────────────────────────────────────────────────
+
+def test_CS502_8za_bf_purpose_mortgage_lending_adjustment_pct_number(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_purpose_mortgage_lending_adjustment_pct renders as number input (Section H)."""
+    _load_building_full_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='bf_purpose_mortgage_lending_adjustment_pct']")
+    assert field.count() > 0, "Phase 8ZA: bf_purpose_mortgage_lending_adjustment_pct must be present."
+    assert field.get_attribute("type") == "number", (
+        "bf_purpose_mortgage_lending_adjustment_pct must be type='number'."
+    )
+
+
+# ── CS503 ─────────────────────────────────────────────────────────────────────
+
+def test_CS503_8za_bf_purpose_sale_purchase_methodology_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_purpose_sale_purchase_methodology select renders (Section H)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_purpose_sale_purchase_methodology")
+    assert sel.count() > 0, (
+        "Phase 8ZA: bf_purpose_sale_purchase_methodology must render in building_full supp."
+    )
+
+
+# ── CS504 ─────────────────────────────────────────────────────────────────────
+
+def test_CS504_8za_bf_energy_efficiency_rating_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_energy_efficiency_rating select renders with A+–F options (Section I)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_energy_efficiency_rating")
+    assert sel.count() > 0, "Phase 8ZA: bf_energy_efficiency_rating must render in building_full supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 6, (
+        f"Phase 8ZA: bf_energy_efficiency_rating must have >=6 options. Got {opts.count()}"
+    )
+
+
+# ── CS505 ─────────────────────────────────────────────────────────────────────
+
+def test_CS505_8za_bf_flood_risk_level_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_flood_risk_level select renders (Section J)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_flood_risk_level")
+    assert sel.count() > 0, "Phase 8ZA: bf_flood_risk_level must render in building_full supp."
+
+
+# ── CS506 ─────────────────────────────────────────────────────────────────────
+
+def test_CS506_8za_bf_fiber_optic_available_bool_select(page: Page, live_server: str) -> None:
+    """Phase 8ZA: bf_fiber_optic_available renders as bool select نعم/لا (Section K)."""
+    _load_building_full_supp(page, live_server)
+    sel = page.locator("#es-supp-field-bf_fiber_optic_available")
+    assert sel.count() > 0, "Phase 8ZA: bf_fiber_optic_available must render in building_full supp."
+    opts_text = sel.inner_text()
+    assert "نعم" in opts_text and "لا" in opts_text, (
+        f"Phase 8ZA: bf_fiber_optic_available must show نعم/لا. Got: {opts_text!r}"
+    )
+
+
+# ── CS507 ─────────────────────────────────────────────────────────────────────
+
+def test_CS507_8za_cs92_regression_no_irshadi_in_panel(page: Page, live_server: str) -> None:
+    """Phase 8ZA regression: CS92 guard — no 'إرشادي' text in #es-req-panel after 8ZA enrichment."""
+    _load_building_full_supp(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "إرشادي" not in panel_text, (
+        f"Phase 8ZA: word 'إرشادي' must NOT appear anywhere in building_full panel. Got: {panel_text[:300]!r}"
+    )
+
+
+# ── CS508 ─────────────────────────────────────────────────────────────────────
+
+def test_CS508_8za_residential_unit_isolation_no_bf_supp_fields(page: Page, live_server: str) -> None:
+    """Phase 8ZA: residential_unit supp must NOT contain bf_* supplemental fields."""
+    _load_residential_supp_8w(page, live_server)
+    supp = page.locator("#es-req-supp")
+    for name in ("bf_total_gfa_sqm", "bf_building_type", "bf_ownership_type",
+                 "bf_purpose_mortgage_lending_methodology"):
+        count = supp.locator(f"[data-es-supp-field='{name}']").count()
+        assert count == 0, (
+            f"Phase 8ZA: building_full field '{name}' must NOT appear in residential_unit supp. Found {count}."
+        )
+
+
+# ── CS509 ─────────────────────────────────────────────────────────────────────
+
+def test_CS509_8za_floor_table_still_present_regression(page: Page, live_server: str) -> None:
+    """Phase 8ZA regression: existing building_full floor table (#es-bf-floor-table) still renders."""
+    _load_building_full_supp(page, live_server)
+    table = page.locator("#es-bf-floor-table")
+    assert table.count() > 0, (
+        "Phase 8ZA regression: #es-bf-floor-table must still render after 8ZA enrichment."
+    )
+    bf_fields = page.locator("[data-bf-floor]")
+    assert bf_fields.count() >= 5, (
+        f"Phase 8ZA regression: at least 5 data-bf-floor elements expected. Got {bf_fields.count()}."
+    )
+
+
+# ── CS510 ─────────────────────────────────────────────────────────────────────
+
+def test_CS510_8za_residential_8q_supp_regression(page: Page, live_server: str) -> None:
+    """Phase 8ZA regression: residential_unit 8Q supplemental (unit_type, occupancy_status) still renders."""
+    _load_residential_supp_8w(page, live_server)
+    supp = page.locator("#es-req-supp")
+    for name in ("unit_type", "occupancy_status", "maintenance_level"):
+        count = supp.locator(f"[data-es-supp-field='{name}']").count()
+        assert count > 0, (
+            f"Phase 8ZA regression: existing 8Q field '{name}' must still render in residential supp."
+        )
+
+
+# ── CS511 ─────────────────────────────────────────────────────────────────────
+
+def test_CS511_8za_no_console_errors_building_full_supp(page: Page, live_server: str) -> None:
+    """Phase 8ZA: no JS console errors after rendering enriched building_full supplemental."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    _load_building_full_supp(page, live_server)
+    assert not errors, (
+        f"Phase 8ZA: unexpected JS console errors on building_full supp render: {errors}"
     )

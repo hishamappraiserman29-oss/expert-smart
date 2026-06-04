@@ -8236,3 +8236,392 @@ def test_CS511_8za_no_console_errors_building_full_supp(page: Page, live_server:
     assert not errors, (
         f"Phase 8ZA: unexpected JS console errors on building_full supp render: {errors}"
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZB — Enriched land (Vacant / Development Land) Requirements (CS512–CS543)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_land_supp_8zb(page: Page, live_server: str) -> None:
+    """Phase 8ZB: load land panel via 401 path and wait for supplemental header."""
+    _mock_req_401(page)
+    page.goto(live_server, wait_until="networkidle")
+    page.evaluate("localStorage.removeItem('es_auth')")
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp-header").wait_for(state="visible", timeout=8_000)
+
+
+# ── CS512 ─────────────────────────────────────────────────────────────────────
+
+def test_CS512_8zb_land_supp_heading_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZB: #es-req-supp-header shows 'متطلبات تقييم الأرض الفضاء' heading."""
+    _load_land_supp_8zb(page, live_server)
+    header_text = page.locator("#es-req-supp-header").inner_text()
+    assert "متطلبات تقييم الأرض الفضاء" in header_text, (
+        f"Phase 8ZB: land supp heading missing. Got: {header_text!r}"
+    )
+
+
+# ── CS513 ─────────────────────────────────────────────────────────────────────
+
+def test_CS513_8zb_land_supp_heading_physical_properties(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'بيانات الأرض الأساسية والخصائص المادية' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "بيانات الأرض الأساسية والخصائص المادية" in text, (
+        f"Phase 8ZB: section heading missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS514 ─────────────────────────────────────────────────────────────────────
+
+def test_CS514_8zb_land_supp_heading_development_readiness(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'حالة التطوير وجاهزية البناء' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "حالة التطوير وجاهزية البناء" in text, (
+        f"Phase 8ZB: section 'حالة التطوير وجاهزية البناء' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS515 ─────────────────────────────────────────────────────────────────────
+
+def test_CS515_8zb_land_supp_heading_zoning_planning(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'التصنيف العمراني والتخطيط' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "التصنيف العمراني والتخطيط" in text, (
+        f"Phase 8ZB: section 'التصنيف العمراني والتخطيط' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS516 ─────────────────────────────────────────────────────────────────────
+
+def test_CS516_8zb_land_supp_heading_legal_restrictions(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'الوضع القانوني والقيود' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الوضع القانوني والقيود" in text, (
+        f"Phase 8ZB: section 'الوضع القانوني والقيود' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS517 ─────────────────────────────────────────────────────────────────────
+
+def test_CS517_8zb_land_supp_heading_utilities(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'المرافق والبنية التحتية' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "المرافق والبنية التحتية" in text, (
+        f"Phase 8ZB: section 'المرافق والبنية التحتية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS518 ─────────────────────────────────────────────────────────────────────
+
+def test_CS518_8zb_land_supp_heading_roads_access(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'الطرق والواجهات والوصول' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الطرق والواجهات والوصول" in text, (
+        f"Phase 8ZB: section 'الطرق والواجهات والوصول' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS519 ─────────────────────────────────────────────────────────────────────
+
+def test_CS519_8zb_land_supp_heading_economic_market(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'الخصائص الاقتصادية والسوقية' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص الاقتصادية والسوقية" in text, (
+        f"Phase 8ZB: section 'الخصائص الاقتصادية والسوقية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS520 ─────────────────────────────────────────────────────────────────────
+
+def test_CS520_8zb_land_supp_heading_development_costs(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'تكاليف التطوير والجدوى' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "تكاليف التطوير والجدوى" in text, (
+        f"Phase 8ZB: section 'تكاليف التطوير والجدوى' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS521 ─────────────────────────────────────────────────────────────────────
+
+def test_CS521_8zb_land_supp_heading_purpose_adjustments(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'معاملات التعديل حسب غرض التقييم' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل حسب غرض التقييم" in text, (
+        f"Phase 8ZB: purpose-adjustment section heading missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS522 ─────────────────────────────────────────────────────────────────────
+
+def test_CS522_8zb_land_supp_heading_environment_geotechnical(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'البيئة والمخاطر الجيوتقنية' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "البيئة والمخاطر الجيوتقنية" in text, (
+        f"Phase 8ZB: section 'البيئة والمخاطر الجيوتقنية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS523 ─────────────────────────────────────────────────────────────────────
+
+def test_CS523_8zb_land_supp_heading_climate_risks(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'المخاطر المناخية والطبيعية' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية والطبيعية" in text, (
+        f"Phase 8ZB: section 'المخاطر المناخية والطبيعية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS524 ─────────────────────────────────────────────────────────────────────
+
+def test_CS524_8zb_land_supp_heading_digital_infrastructure(page: Page, live_server: str) -> None:
+    """Phase 8ZB: 'البنية التحتية الرقمية والاستعداد الذكي' section heading visible."""
+    _load_land_supp_8zb(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية والاستعداد الذكي" in text, (
+        f"Phase 8ZB: section 'البنية التحتية الرقمية والاستعداد الذكي' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS525 ─────────────────────────────────────────────────────────────────────
+
+def test_CS525_8zb_soil_bearing_capacity_available_bool(page: Page, live_server: str) -> None:
+    """Phase 8ZB: soil_bearing_capacity_available renders as bool select (Section A)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-soil_bearing_capacity_available")
+    assert sel.count() > 0, "Phase 8ZB: soil_bearing_capacity_available must render in land supp."
+    opts_text = sel.inner_text()
+    assert "نعم" in opts_text, "Phase 8ZB: soil_bearing_capacity_available must show نعم option."
+
+
+# ── CS526 ─────────────────────────────────────────────────────────────────────
+
+def test_CS526_8zb_development_readiness_level_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: development_readiness_level select renders (Section B)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-development_readiness_level")
+    assert sel.count() > 0, "Phase 8ZB: development_readiness_level must render in land supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8ZB: development_readiness_level must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS527 ─────────────────────────────────────────────────────────────────────
+
+def test_CS527_8zb_current_land_use_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: current_land_use select renders (Section C)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-current_land_use")
+    assert sel.count() > 0, "Phase 8ZB: current_land_use must render in land supp."
+
+
+# ── CS528 ─────────────────────────────────────────────────────────────────────
+
+def test_CS528_8zb_setback_front_m_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZB: setback_front_m renders as number input with meter unit (Section C)."""
+    _load_land_supp_8zb(page, live_server)
+    field = page.locator("[data-es-supp-field='setback_front_m']")
+    assert field.count() > 0, "Phase 8ZB: setback_front_m must be present in land supp."
+    assert field.get_attribute("type") == "number", (
+        "setback_front_m must be type='number'."
+    )
+
+
+# ── CS529 ─────────────────────────────────────────────────────────────────────
+
+def test_CS529_8zb_ld_ownership_type_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_ownership_type select renders with Arabic options (Section D)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-ld_ownership_type")
+    assert sel.count() > 0, "Phase 8ZB: ld_ownership_type must render in land supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8ZB: ld_ownership_type must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS530 ─────────────────────────────────────────────────────────────────────
+
+def test_CS530_8zb_ld_legal_restrictions_summary_textarea(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_legal_restrictions_summary renders as <textarea> (Section D)."""
+    _load_land_supp_8zb(page, live_server)
+    ta = page.locator("textarea[data-es-supp-field='ld_legal_restrictions_summary']")
+    assert ta.count() == 1, (
+        "Phase 8ZB: ld_legal_restrictions_summary must render as <textarea>."
+    )
+
+
+# ── CS531 ─────────────────────────────────────────────────────────────────────
+
+def test_CS531_8zb_electricity_connection_status_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: electricity_connection_status select renders (Section E)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-electricity_connection_status")
+    assert sel.count() > 0, "Phase 8ZB: electricity_connection_status must render in land supp."
+
+
+# ── CS532 ─────────────────────────────────────────────────────────────────────
+
+def test_CS532_8zb_distance_to_nearest_water_m_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZB: distance_to_nearest_water_m renders as number input (Section E)."""
+    _load_land_supp_8zb(page, live_server)
+    field = page.locator("[data-es-supp-field='distance_to_nearest_water_m']")
+    assert field.count() > 0, "Phase 8ZB: distance_to_nearest_water_m must be present."
+    assert field.get_attribute("type") == "number", (
+        "distance_to_nearest_water_m must be type='number'."
+    )
+
+
+# ── CS533 ─────────────────────────────────────────────────────────────────────
+
+def test_CS533_8zb_access_road_type_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: access_road_type select renders with options (Section F)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-access_road_type")
+    assert sel.count() > 0, "Phase 8ZB: access_road_type must render in land supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8ZB: access_road_type must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS534 ─────────────────────────────────────────────────────────────────────
+
+def test_CS534_8zb_current_market_price_per_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZB: current_market_price_per_sqm renders as number input (Section G)."""
+    _load_land_supp_8zb(page, live_server)
+    field = page.locator("[data-es-supp-field='current_market_price_per_sqm']")
+    assert field.count() > 0, "Phase 8ZB: current_market_price_per_sqm must be present."
+    assert field.get_attribute("type") == "number", (
+        "current_market_price_per_sqm must be type='number'."
+    )
+
+
+# ── CS535 ─────────────────────────────────────────────────────────────────────
+
+def test_CS535_8zb_development_feasibility_level_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: development_feasibility_level select renders (Section H)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-development_feasibility_level")
+    assert sel.count() > 0, "Phase 8ZB: development_feasibility_level must render in land supp."
+
+
+# ── CS536 ─────────────────────────────────────────────────────────────────────
+
+def test_CS536_8zb_ld_purpose_mortgage_lending_methodology_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_purpose_mortgage_lending_methodology select renders with >=10 options (Section I)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-ld_purpose_mortgage_lending_methodology")
+    assert sel.count() > 0, (
+        "Phase 8ZB: ld_purpose_mortgage_lending_methodology must render in land supp."
+    )
+    opts = sel.locator("option")
+    assert opts.count() >= 10, (
+        f"Phase 8ZB: methodology select must have >=10 options (incl. land-specific). Got {opts.count()}"
+    )
+
+
+# ── CS537 ─────────────────────────────────────────────────────────────────────
+
+def test_CS537_8zb_ld_purpose_development_feasibility_methodology_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_purpose_development_feasibility_methodology (local-only) select renders (Section I)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-ld_purpose_development_feasibility_methodology")
+    assert sel.count() > 0, (
+        "Phase 8ZB: ld_purpose_development_feasibility_methodology (local-only) must render."
+    )
+    assert sel.get_attribute("data-es-req-field") is None, (
+        "ld_purpose_development_feasibility_methodology must NOT have data-es-req-field."
+    )
+
+
+# ── CS538 ─────────────────────────────────────────────────────────────────────
+
+def test_CS538_8zb_ld_purpose_expropriation_compensation_methodology_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_purpose_expropriation_compensation_methodology (local-only) select renders (Section I)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-ld_purpose_expropriation_compensation_methodology")
+    assert sel.count() > 0, (
+        "Phase 8ZB: ld_purpose_expropriation_compensation_methodology (local-only) must render."
+    )
+
+
+# ── CS539 ─────────────────────────────────────────────────────────────────────
+
+def test_CS539_8zb_ld_flood_risk_level_select(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_flood_risk_level select renders (Section J)."""
+    _load_land_supp_8zb(page, live_server)
+    sel = page.locator("#es-supp-field-ld_flood_risk_level")
+    assert sel.count() > 0, "Phase 8ZB: ld_flood_risk_level must render in land supp."
+
+
+# ── CS540 ─────────────────────────────────────────────────────────────────────
+
+def test_CS540_8zb_ld_climate_risk_value_impact_pct_number_input(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_climate_risk_value_impact_pct renders as number input (Section K)."""
+    _load_land_supp_8zb(page, live_server)
+    field = page.locator("[data-es-supp-field='ld_climate_risk_value_impact_pct']")
+    assert field.count() > 0, "Phase 8ZB: ld_climate_risk_value_impact_pct must be present."
+    assert field.get_attribute("type") == "number", (
+        "ld_climate_risk_value_impact_pct must be type='number'."
+    )
+
+
+# ── CS541 ─────────────────────────────────────────────────────────────────────
+
+def test_CS541_8zb_ld_digital_infrastructure_value_impact_pct(page: Page, live_server: str) -> None:
+    """Phase 8ZB: ld_digital_infrastructure_value_impact_pct renders as number input (Section L)."""
+    _load_land_supp_8zb(page, live_server)
+    field = page.locator("[data-es-supp-field='ld_digital_infrastructure_value_impact_pct']")
+    assert field.count() > 0, "Phase 8ZB: ld_digital_infrastructure_value_impact_pct must be present."
+    assert field.get_attribute("type") == "number", (
+        "ld_digital_infrastructure_value_impact_pct must be type='number'."
+    )
+
+
+# ── CS542 ─────────────────────────────────────────────────────────────────────
+
+def test_CS542_8zb_agricultural_land_isolation(page: Page, live_server: str) -> None:
+    """Phase 8ZB: agricultural_land form remains isolated — ag_area_sqm present, no land supp fields."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    ag_field = panel.locator("[data-es-req-field='ag_area_sqm']")
+    assert ag_field.count() > 0, (
+        "Phase 8ZB regression: ag_area_sqm must still render in agricultural_land form."
+    )
+    supp = page.locator("#es-req-supp")
+    land_supp_fields = supp.locator(
+        "[data-es-supp-field='development_feasibility_level'], "
+        "[data-es-supp-field='ld_purpose_mortgage_lending_methodology']"
+    )
+    assert land_supp_fields.count() == 0, (
+        f"Phase 8ZB: land supp fields must NOT appear in agricultural_land panel. "
+        f"Found {land_supp_fields.count()}."
+    )
+
+
+# ── CS543 ─────────────────────────────────────────────────────────────────────
+
+def test_CS543_8zb_existing_8q_land_fields_regression(page: Page, live_server: str) -> None:
+    """Phase 8ZB regression: existing 8Q/8W land fields (land_development_stage, far_ratio) still render."""
+    _load_land_supp_8zb(page, live_server)
+    supp = page.locator("#es-req-supp")
+    for name in ("land_development_stage", "far_ratio", "main_street_width_m",
+                 "infrastructure_development_cost"):
+        count = supp.locator(f"[data-es-supp-field='{name}']").count()
+        assert count > 0, (
+            f"Phase 8ZB regression: existing 8Q/8W field '{name}' must still render in land supp."
+        )

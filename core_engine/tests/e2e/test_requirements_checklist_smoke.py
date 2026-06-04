@@ -8625,3 +8625,343 @@ def test_CS543_8zb_existing_8q_land_fields_regression(page: Page, live_server: s
         assert count > 0, (
             f"Phase 8ZB regression: existing 8Q/8W field '{name}' must still render in land supp."
         )
+
+
+# ── Phase 8ZC — Enriched Agricultural Land Requirements (CS544–CS570) ─────────
+
+# ── CS544 ─────────────────────────────────────────────────────────────────────
+
+def test_CS544_agricultural_land_8zc_heading_legal(page: Page, live_server: str) -> None:
+    """Phase 8ZC: agricultural_land shows new 'الوضع القانوني والتنظيمي' section heading."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "الوضع القانوني والتنظيمي" in (panel.inner_text() or ""), (
+        "Phase 8ZC: heading 'الوضع القانوني والتنظيمي' must appear in agricultural_land panel."
+    )
+
+
+# ── CS545 ─────────────────────────────────────────────────────────────────────
+
+def test_CS545_agricultural_land_8zc_heading_market(page: Page, live_server: str) -> None:
+    """Phase 8ZC: agricultural_land shows 'السوق والوصول وسلاسل الإمداد' section heading."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "السوق والوصول وسلاسل الإمداد" in (panel.inner_text() or ""), (
+        "Phase 8ZC: heading 'السوق والوصول وسلاسل الإمداد' must appear in agricultural_land panel."
+    )
+
+
+# ── CS546 ─────────────────────────────────────────────────────────────────────
+
+def test_CS546_agricultural_land_8zc_heading_risks(page: Page, live_server: str) -> None:
+    """Phase 8ZC: agricultural_land shows 'المخاطر البيئية والمناخية' section heading."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "المخاطر البيئية والمناخية" in (panel.inner_text() or ""), (
+        "Phase 8ZC: heading 'المخاطر البيئية والمناخية' must appear in agricultural_land panel."
+    )
+
+
+# ── CS547 ─────────────────────────────────────────────────────────────────────
+
+def test_CS547_agricultural_land_8zc_heading_sustainability(page: Page, live_server: str) -> None:
+    """Phase 8ZC: agricultural_land shows 'الاستدامة وكفاءة الموارد' section heading."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "الاستدامة وكفاءة الموارد" in (panel.inner_text() or ""), (
+        "Phase 8ZC: heading 'الاستدامة وكفاءة الموارد' must appear in agricultural_land panel."
+    )
+
+
+# ── CS548 ─────────────────────────────────────────────────────────────────────
+
+def test_CS548_agricultural_land_8zc_heading_purpose(page: Page, live_server: str) -> None:
+    """Phase 8ZC: agricultural_land shows 'معاملات التعديل حسب غرض التقييم' heading."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "معاملات التعديل حسب غرض التقييم" in (panel.inner_text() or ""), (
+        "Phase 8ZC: purpose-adjustment heading must appear in agricultural_land panel."
+    )
+
+
+# ── CS549 ─────────────────────────────────────────────────────────────────────
+
+def test_CS549_agricultural_land_8zc_ag_topography_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_topography select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_topography']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_topography must render in agricultural_land panel."
+    )
+
+
+# ── CS550 ─────────────────────────────────────────────────────────────────────
+
+def test_CS550_agricultural_land_8zc_ag_land_tenure_type_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_land_tenure_type select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_land_tenure_type']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_land_tenure_type must render in agricultural_land panel."
+    )
+
+
+# ── CS551 ─────────────────────────────────────────────────────────────────────
+
+def test_CS551_agricultural_land_8zc_ag_crop_rotation_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_crop_rotation_available bool select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_crop_rotation_available']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_crop_rotation_available must render in agricultural_land panel."
+    )
+
+
+# ── CS552 ─────────────────────────────────────────────────────────────────────
+
+def test_CS552_agricultural_land_8zc_ag_drought_risk_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_drought_risk_level select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_drought_risk_level']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_drought_risk_level must render in agricultural_land panel."
+    )
+
+
+# ── CS553 ─────────────────────────────────────────────────────────────────────
+
+def test_CS553_agricultural_land_8zc_ag_water_use_efficiency_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_water_use_efficiency_level select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_water_use_efficiency_level']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_water_use_efficiency_level must render in agricultural_land panel."
+    )
+
+
+# ── CS554 ─────────────────────────────────────────────────────────────────────
+
+def test_CS554_agricultural_land_8zc_ag_purpose_mortgage_methodology_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_purpose_mortgage_lending_methodology select renders in panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_purpose_mortgage_lending_methodology']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_purpose_mortgage_lending_methodology must render in agricultural_land panel."
+    )
+
+
+# ── CS555 ─────────────────────────────────────────────────────────────────────
+
+def test_CS555_agricultural_land_8zc_ag_purpose_agricultural_lease_local_label(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_purpose_agricultural_lease_methodology renders and label contains 'محلي فقط'."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_purpose_agricultural_lease_methodology']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_purpose_agricultural_lease_methodology must render in agricultural_land panel."
+    )
+    assert "محلي فقط" in (panel.inner_text() or ""), (
+        "Phase 8ZC: local-purpose label must contain 'محلي فقط' in agricultural_land panel."
+    )
+
+
+# ── CS556 ─────────────────────────────────────────────────────────────────────
+
+def test_CS556_agricultural_land_8zc_methodology_opts_agricultural_income(page: Page, live_server: str) -> None:
+    """Phase 8ZC: 'رسملة الدخل الزراعي' option is available in methodology dropdowns."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "رسملة الدخل الزراعي" in (panel.inner_text() or ""), (
+        "Phase 8ZC: 'رسملة الدخل الزراعي' methodology option must be visible in agricultural_land panel."
+    )
+
+
+# ── CS557 ─────────────────────────────────────────────────────────────────────
+
+def test_CS557_agricultural_land_8zc_ag_area_feddan_help_ar(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_area_feddan help text '4,200' renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "4,200" in (panel.inner_text() or ""), (
+        "Phase 8ZC: ag_area_feddan help_ar '4,200 م²' must render in agricultural_land panel."
+    )
+
+
+# ── CS558 ─────────────────────────────────────────────────────────────────────
+
+def test_CS558_agricultural_land_8zc_ag_salinity_help_ar(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_salinity_level help text '2,000 ppm' renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "2,000 ppm" in (panel.inner_text() or ""), (
+        "Phase 8ZC: ag_salinity_level help_ar '2,000 ppm' must render in agricultural_land panel."
+    )
+
+
+# ── CS559 ─────────────────────────────────────────────────────────────────────
+
+def test_CS559_agricultural_land_8zc_ag_irrigation_system_help_ar(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_irrigation_system help text 'التنقيط' renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "التنقيط" in (panel.inner_text() or ""), (
+        "Phase 8ZC: ag_irrigation_system help_ar must contain 'التنقيط' in agricultural_land panel."
+    )
+
+
+# ── CS560 ─────────────────────────────────────────────────────────────────────
+
+def test_CS560_agricultural_land_8zc_ag_net_income_help_ar(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_net_agricultural_income_annual help text 'الرسملة' renders in panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "الرسملة" in (panel.inner_text() or ""), (
+        "Phase 8ZC: ag_net_agricultural_income_annual help_ar must contain 'الرسملة' in panel."
+    )
+
+
+# ── CS561 ─────────────────────────────────────────────────────────────────────
+
+def test_CS561_agricultural_land_8zc_ag_flood_risk_help_ar(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_flood_risk help text about insurance renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "التأمين" in (panel.inner_text() or ""), (
+        "Phase 8ZC: ag_flood_risk help_ar must contain 'التأمين' in agricultural_land panel."
+    )
+
+
+# ── CS562 ─────────────────────────────────────────────────────────────────────
+
+def test_CS562_agricultural_land_8zc_existing_soil_type_still_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC regression: existing ag_soil_type select still renders after 8ZC enrichment."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_soil_type']")
+    assert field.count() > 0, (
+        "Phase 8ZC regression: ag_soil_type must still render in agricultural_land panel after 8ZC."
+    )
+
+
+# ── CS563 ─────────────────────────────────────────────────────────────────────
+
+def test_CS563_agricultural_land_8zc_existing_cultivation_cost_still_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC regression: existing ag_annual_cultivation_cost still renders after 8ZC."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_annual_cultivation_cost']")
+    assert field.count() > 0, (
+        "Phase 8ZC regression: ag_annual_cultivation_cost must still render after 8ZC."
+    )
+
+
+# ── CS564 ─────────────────────────────────────────────────────────────────────
+
+def test_CS564_agricultural_land_8zc_water_section_still_present(page: Page, live_server: str) -> None:
+    """Phase 8ZC regression: existing 'مصادر المياه والري' heading still present (CS256 guard)."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert "مصادر المياه والري" in (panel.inner_text() or ""), (
+        "Phase 8ZC regression: 'مصادر المياه والري' section heading must remain unchanged after 8ZC."
+    )
+
+
+# ── CS565 ─────────────────────────────────────────────────────────────────────
+
+def test_CS565_agricultural_land_8zc_ag_sustainability_value_impact_pct_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_sustainability_value_impact_pct number input renders in panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_sustainability_value_impact_pct']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_sustainability_value_impact_pct must render in agricultural_land panel."
+    )
+
+
+# ── CS566 ─────────────────────────────────────────────────────────────────────
+
+def test_CS566_agricultural_land_8zc_ag_legal_dispute_status_renders(page: Page, live_server: str) -> None:
+    """Phase 8ZC: ag_legal_dispute_status select renders in agricultural_land panel."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    field = panel.locator("[data-es-req-field='ag_legal_dispute_status']")
+    assert field.count() > 0, (
+        "Phase 8ZC: ag_legal_dispute_status must render in agricultural_land panel."
+    )
+
+
+# ── CS567 ─────────────────────────────────────────────────────────────────────
+
+def test_CS567_land_unchanged_after_8zc(page: Page, live_server: str) -> None:
+    """Phase 8ZC isolation: land (أرض فضاء) supp panel renders far_ratio; no ag_ req fields cross."""
+    _load_land_supp_8zb(page, live_server)
+    supp = page.locator("#es-req-supp")
+    land_field = supp.locator("[data-es-supp-field='far_ratio']")
+    assert land_field.count() > 0, (
+        "Phase 8ZC isolation: far_ratio must still render in land supp after 8ZC."
+    )
+    ag_cross = supp.locator(
+        "[data-es-req-field='ag_topography'], "
+        "[data-es-req-field='ag_land_tenure_type']"
+    )
+    assert ag_cross.count() == 0, (
+        f"Phase 8ZC isolation: ag_ fields must NOT appear in land supp. Found {ag_cross.count()}."
+    )
+
+
+# ── CS568 ─────────────────────────────────────────────────────────────────────
+
+def test_CS568_riparian_rights_unchanged_after_8zc(page: Page, live_server: str) -> None:
+    """Phase 8ZC isolation: riparian_rights panel unchanged; ag_ enrichment fields absent."""
+    _load_riparian_rights(page, live_server)
+    panel = page.locator("#es-req-panel")
+    ag_cross = panel.locator(
+        "[data-es-req-field='ag_topography'], "
+        "[data-es-req-field='ag_land_tenure_type']"
+    )
+    assert ag_cross.count() == 0, (
+        f"Phase 8ZC isolation: ag_ enrichment fields must NOT appear in riparian_rights panel. "
+        f"Found {ag_cross.count()}."
+    )
+
+
+# ── CS569 ─────────────────────────────────────────────────────────────────────
+
+def test_CS569_water_well_unchanged_after_8zc(page: Page, live_server: str) -> None:
+    """Phase 8ZC isolation: water_well panel unchanged; ag_ enrichment fields absent."""
+    _load_water_well(page, live_server)
+    panel = page.locator("#es-req-panel")
+    ag_cross = panel.locator(
+        "[data-es-req-field='ag_land_tenure_type'], "
+        "[data-es-req-field='ag_topography']"
+    )
+    assert ag_cross.count() == 0, (
+        f"Phase 8ZC isolation: ag_ enrichment fields must NOT appear in water_well panel. "
+        f"Found {ag_cross.count()}."
+    )
+
+
+# ── CS570 ─────────────────────────────────────────────────────────────────────
+
+def test_CS570_8zc_airport_isolation(page: Page, live_server: str) -> None:
+    """Phase 8ZC isolation: airport panel unchanged after 8ZC; ag_ enrichment fields absent."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    panel = page.locator("#es-req-panel")
+    panel.wait_for(state="visible", timeout=4_000)
+    ag_cross = panel.locator(
+        "[data-es-req-field='ag_topography'], "
+        "[data-es-req-field='ag_drought_risk_level']"
+    )
+    assert ag_cross.count() == 0, (
+        f"Phase 8ZC isolation: ag_ enrichment fields must NOT appear in airport panel. "
+        f"Found {ag_cross.count()}."
+    )

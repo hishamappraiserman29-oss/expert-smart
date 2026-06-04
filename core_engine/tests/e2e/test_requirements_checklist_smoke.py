@@ -8965,3 +8965,1123 @@ def test_CS570_8zc_airport_isolation(page: Page, live_server: str) -> None:
         f"Phase 8ZC isolation: ag_ enrichment fields must NOT appear in airport panel. "
         f"Found {ag_cross.count()}."
     )
+
+
+# ── Phase 8ZD helpers ─────────────────────────────────────────────────────────
+
+def _load_existing_building(page: "Page", live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مبنى قائم")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS571 ─────────────────────────────────────────────────────────────────────
+
+def test_CS571_existing_building_routes_as_static_form(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: مبنى قائم routes as a static form profile (zero API calls)."""
+    api_calls: list = []
+    page.on("request", lambda r: api_calls.append(r.url) if "/api/valuation/requirements" in r.url else None)
+    _load_existing_building(page, live_server)
+    assert len(api_calls) == 0, (
+        f"8ZD: existing_building_detailed must make ZERO API calls. Got: {api_calls}"
+    )
+
+
+# ── CS572 ─────────────────────────────────────────────────────────────────────
+
+def test_CS572_existing_building_title_contains_arabic_name(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: panel title contains 'مبنى قائم'."""
+    _load_existing_building(page, live_server)
+    title = page.locator("#es-req-title").inner_text()
+    assert "مبنى قائم" in title, (
+        f"8ZD: title must contain 'مبنى قائم'. Got: {title!r}"
+    )
+
+
+# ── CS573 ─────────────────────────────────────────────────────────────────────
+
+def test_CS573_existing_building_badge_shows_local_form(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: explainer badge shows 'نموذج محلي' for existing_building_detailed."""
+    _load_existing_building(page, live_server)
+    badge = page.locator("#es-profile-badge").inner_text()
+    assert "نموذج محلي" in badge, (
+        f"8ZD: badge must contain 'نموذج محلي'. Got: {badge!r}"
+    )
+
+
+# ── CS574 ─────────────────────────────────────────────────────────────────────
+
+def test_CS574_existing_building_has_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: existing_building_detailed panel has no composite_valuation.html link."""
+    _load_existing_building(page, live_server)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "composite_valuation.html" not in panel_html, (
+        "8ZD: existing_building_detailed panel must NOT contain composite_valuation.html link."
+    )
+
+
+# ── CS575 ─────────────────────────────────────────────────────────────────────
+
+def test_CS575_existing_building_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: selecting مبنى قائم does NOT trigger auth/login modal."""
+    _load_existing_building(page, live_server)
+    modal = page.locator("#login-modal, #auth-modal, [id*='login']")
+    visible_count = sum(1 for i in range(modal.count()) if modal.nth(i).is_visible())
+    assert visible_count == 0, (
+        f"8ZD: NO auth modal must be visible after selecting مبنى قائم. visible={visible_count}"
+    )
+
+
+# ── CS576 ─────────────────────────────────────────────────────────────────────
+
+def test_CS576_existing_building_renders_supplemental_controls(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: #es-req-supp contains supplemental field controls (ebd_ fields)."""
+    _load_existing_building(page, live_server)
+    supp = page.locator("#es-req-supp")
+    supp.wait_for(state="attached", timeout=4_000)
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 10, (
+        f"8ZD: #es-req-supp must contain >10 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS577 ─────────────────────────────────────────────────────────────────────
+
+def test_CS577_existing_building_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: #es-req-supp header shows Arabic heading for existing_building_detailed."""
+    _load_existing_building(page, live_server)
+    supp = page.locator("#es-req-supp")
+    supp_text = supp.inner_text()
+    assert "مبنى قائم" in supp_text, (
+        f"8ZD: supp heading must contain 'مبنى قائم'. Got excerpt: {supp_text[:200]!r}"
+    )
+
+
+# ── CS578 ─────────────────────────────────────────────────────────────────────
+
+def test_CS578_existing_building_section_A_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'تعريف المبنى والاستخدام' visible."""
+    _load_existing_building(page, live_server)
+    assert "تعريف المبنى والاستخدام" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section A heading 'تعريف المبنى والاستخدام' must appear."
+    )
+
+
+# ── CS579 ─────────────────────────────────────────────────────────────────────
+
+def test_CS579_existing_building_section_B_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'الأرض والموقع العام' visible."""
+    _load_existing_building(page, live_server)
+    assert "الأرض والموقع العام" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section B heading 'الأرض والموقع العام' must appear."
+    )
+
+
+# ── CS580 ─────────────────────────────────────────────────────────────────────
+
+def test_CS580_existing_building_section_C_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'الخصائص المادية والإنشائية' visible."""
+    _load_existing_building(page, live_server)
+    assert "الخصائص المادية والإنشائية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section C heading must appear."
+    )
+
+
+# ── CS581 ─────────────────────────────────────────────────────────────────────
+
+def test_CS581_existing_building_section_D_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'التوزيع حسب الأدوار والاستخدامات' visible."""
+    _load_existing_building(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "التوزيع حسب الأدوار والاستخدامات" in panel_text, (
+        "8ZD: section D heading must appear in existing_building_detailed panel."
+    )
+
+
+# ── CS582 ─────────────────────────────────────────────────────────────────────
+
+def test_CS582_existing_building_section_E_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'التشطيبات والمرافق والخدمات' visible."""
+    _load_existing_building(page, live_server)
+    assert "التشطيبات والمرافق والخدمات" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section E heading must appear."
+    )
+
+
+# ── CS583 ─────────────────────────────────────────────────────────────────────
+
+def test_CS583_existing_building_section_F_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'الخصائص القانونية والتنظيمية' visible."""
+    _load_existing_building(page, live_server)
+    assert "الخصائص القانونية والتنظيمية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section F heading must appear."
+    )
+
+
+# ── CS584 ─────────────────────────────────────────────────────────────────────
+
+def test_CS584_existing_building_section_G_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'الإشغال والعقود والدخل' visible."""
+    _load_existing_building(page, live_server)
+    assert "الإشغال والعقود والدخل" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section G heading must appear."
+    )
+
+
+# ── CS585 ─────────────────────────────────────────────────────────────────────
+
+def test_CS585_existing_building_section_H_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'التكاليف وCAPEX والصيانة المؤجَّلة' visible."""
+    _load_existing_building(page, live_server)
+    assert "التكاليف وCAPEX" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section H heading must appear."
+    )
+
+
+# ── CS586 ─────────────────────────────────────────────────────────────────────
+
+def test_CS586_existing_building_section_I_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'السوق وقابلية التسويق' visible."""
+    _load_existing_building(page, live_server)
+    assert "السوق وقابلية التسويق" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section I heading must appear."
+    )
+
+
+# ── CS587 ─────────────────────────────────────────────────────────────────────
+
+def test_CS587_existing_building_section_J_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'معاملات التعديل حسب غرض التقييم' visible."""
+    _load_existing_building(page, live_server)
+    assert "معاملات التعديل حسب غرض التقييم" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section J heading must appear."
+    )
+
+
+# ── CS588 ─────────────────────────────────────────────────────────────────────
+
+def test_CS588_existing_building_section_K_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'كفاءة الطاقة والاستدامة' visible."""
+    _load_existing_building(page, live_server)
+    assert "كفاءة الطاقة والاستدامة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section K heading must appear."
+    )
+
+
+# ── CS589 ─────────────────────────────────────────────────────────────────────
+
+def test_CS589_existing_building_section_L_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'المخاطر المناخية والطبيعية' visible."""
+    _load_existing_building(page, live_server)
+    assert "المخاطر المناخية والطبيعية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section L heading must appear."
+    )
+
+
+# ── CS590 ─────────────────────────────────────────────────────────────────────
+
+def test_CS590_existing_building_section_M_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'البنية التحتية الرقمية والذكية' visible."""
+    _load_existing_building(page, live_server)
+    assert "البنية التحتية الرقمية والذكية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section M heading must appear."
+    )
+
+
+# ── CS591 ─────────────────────────────────────────────────────────────────────
+
+def test_CS591_existing_building_section_N_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: section heading 'مستندات إضافية مطلوبة' visible."""
+    _load_existing_building(page, live_server)
+    assert "مستندات إضافية مطلوبة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZD: section N heading must appear."
+    )
+
+
+# ── CS592 ─────────────────────────────────────────────────────────────────────
+
+def test_CS592_ebd_building_use_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_building_use_type select renders in existing_building_detailed supp."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_building_use_type']")
+    assert field.count() > 0, "8ZD: ebd_building_use_type must render in supp panel."
+
+
+# ── CS593 ─────────────────────────────────────────────────────────────────────
+
+def test_CS593_ebd_occupancy_type_select_arabic_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_occupancy_type select has Arabic options."""
+    _load_existing_building(page, live_server)
+    sel = page.locator("#es-req-supp [data-es-supp-field='ebd_occupancy_type']")
+    assert sel.count() > 0, "8ZD: ebd_occupancy_type must render."
+    opts = sel.locator("option").all_inner_texts()
+    arabic_opts = [o for o in opts if any("؀" <= c <= "ۿ" for c in o)]
+    assert len(arabic_opts) >= 3, (
+        f"8ZD: ebd_occupancy_type must have ≥3 Arabic options. Got: {opts}"
+    )
+
+
+# ── CS594 ─────────────────────────────────────────────────────────────────────
+
+def test_CS594_ebd_plot_area_sqm_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_plot_area_sqm renders as number input with م² unit."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_plot_area_sqm']")
+    assert inp.count() > 0, "8ZD: ebd_plot_area_sqm must render."
+    assert inp.first.get_attribute("type") == "number", (
+        "8ZD: ebd_plot_area_sqm must be type=number."
+    )
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "م²" in supp_text, "8ZD: م² unit label must appear in supp panel."
+
+
+# ── CS595 ─────────────────────────────────────────────────────────────────────
+
+def test_CS595_ebd_net_leasable_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_net_leasable_area_sqm renders as number input."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_net_leasable_area_sqm']")
+    assert inp.count() > 0, "8ZD: ebd_net_leasable_area_sqm must render."
+
+
+# ── CS596 ─────────────────────────────────────────────────────────────────────
+
+def test_CS596_ebd_construction_system_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_construction_system select renders in section C."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_construction_system']")
+    assert field.count() > 0, "8ZD: ebd_construction_system must render."
+
+
+# ── CS597 ─────────────────────────────────────────────────────────────────────
+
+def test_CS597_ebd_visible_structural_defects_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_visible_structural_defects checkbox group renders."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_visible_structural_defects']")
+    assert chips.count() > 0, "8ZD: ebd_visible_structural_defects checkbox group must render."
+
+
+# ── CS598 ─────────────────────────────────────────────────────────────────────
+
+def test_CS598_ebd_retail_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_retail_area_sqm number input renders in section D."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_retail_area_sqm']")
+    assert inp.count() > 0, "8ZD: ebd_retail_area_sqm must render."
+
+
+# ── CS599 ─────────────────────────────────────────────────────────────────────
+
+def test_CS599_ebd_unit_mix_summary_textarea_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_unit_mix_summary textarea renders in section D."""
+    _load_existing_building(page, live_server)
+    ta = page.locator("#es-req-supp [data-es-supp-field='ebd_unit_mix_summary']")
+    assert ta.count() > 0, "8ZD: ebd_unit_mix_summary textarea must render."
+
+
+# ── CS600 ─────────────────────────────────────────────────────────────────────
+
+def test_CS600_ebd_hvac_system_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_hvac_system_type select renders in section E."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_hvac_system_type']")
+    assert field.count() > 0, "8ZD: ebd_hvac_system_type must render."
+
+
+# ── CS601 ─────────────────────────────────────────────────────────────────────
+
+def test_CS601_ebd_building_facilities_available_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_building_facilities_available checkbox group renders."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_building_facilities_available']")
+    assert chips.count() > 0, "8ZD: ebd_building_facilities_available must render."
+
+
+# ── CS602 ─────────────────────────────────────────────────────────────────────
+
+def test_CS602_ebd_title_deed_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_title_deed_available bool select renders in section F."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_title_deed_available']")
+    assert field.count() > 0, "8ZD: ebd_title_deed_available must render."
+
+
+# ── CS603 ─────────────────────────────────────────────────────────────────────
+
+def test_CS603_ebd_market_gross_rent_annual_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_market_gross_rent_annual renders as number input with unit ج.م./سنة."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_market_gross_rent_annual']")
+    assert inp.count() > 0, "8ZD: ebd_market_gross_rent_annual must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "ج.م." in supp_text, "8ZD: ج.م. unit must appear in supp panel."
+
+
+# ── CS604 ─────────────────────────────────────────────────────────────────────
+
+def test_CS604_ebd_wale_months_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_wale_months (WALE) number input renders in section G."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_wale_months']")
+    assert inp.count() > 0, "8ZD: ebd_wale_months must render."
+
+
+# ── CS605 ─────────────────────────────────────────────────────────────────────
+
+def test_CS605_ebd_capex_required_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_capex_required renders as number input in section H."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_capex_required']")
+    assert inp.count() > 0, "8ZD: ebd_capex_required must render."
+
+
+# ── CS606 ─────────────────────────────────────────────────────────────────────
+
+def test_CS606_ebd_market_sale_price_per_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_market_sale_price_per_sqm renders with ج.م./م² unit."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_market_sale_price_per_sqm']")
+    assert inp.count() > 0, "8ZD: ebd_market_sale_price_per_sqm must render."
+
+
+# ── CS607 ─────────────────────────────────────────────────────────────────────
+
+def test_CS607_ebd_sustainability_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_sustainability_value_impact_pct renders with % unit in section K."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_sustainability_value_impact_pct']")
+    assert inp.count() > 0, "8ZD: ebd_sustainability_value_impact_pct must render."
+
+
+# ── CS608 ─────────────────────────────────────────────────────────────────────
+
+def test_CS608_ebd_climate_risk_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_climate_risk_value_impact_pct renders in section L."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_climate_risk_value_impact_pct']")
+    assert inp.count() > 0, "8ZD: ebd_climate_risk_value_impact_pct must render."
+
+
+# ── CS609 ─────────────────────────────────────────────────────────────────────
+
+def test_CS609_ebd_digital_infrastructure_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_digital_infrastructure_value_impact_pct renders in section M."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_digital_infrastructure_value_impact_pct']")
+    assert inp.count() > 0, "8ZD: ebd_digital_infrastructure_value_impact_pct must render."
+
+
+# ── CS610 ─────────────────────────────────────────────────────────────────────
+
+def test_CS610_ebd_doc_title_deed_document_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_doc_title_deed document checkbox renders in section N."""
+    _load_existing_building(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='ebd_doc_title_deed']")
+    assert cb.count() > 0, "8ZD: ebd_doc_title_deed checkbox must render."
+
+
+# ── CS611 ─────────────────────────────────────────────────────────────────────
+
+def test_CS611_ebd_doc_recent_photos_document_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_doc_recent_photos document checkbox renders in section N."""
+    _load_existing_building(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='ebd_doc_recent_photos']")
+    assert cb.count() > 0, "8ZD: ebd_doc_recent_photos checkbox must render."
+
+
+# ── CS612 ─────────────────────────────────────────────────────────────────────
+
+def test_CS612_ebd_floor_table_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: existing_building_detailed renders floor/use distribution table."""
+    _load_existing_building(page, live_server)
+    table = page.locator("#es-bf-floor-table")
+    assert table.count() > 0, "8ZD: #es-bf-floor-table must render in existing_building_detailed."
+
+
+# ── CS613 ─────────────────────────────────────────────────────────────────────
+
+def test_CS613_ebd_floor_table_has_five_rows(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: floor table has ≥5 rows (basement, ground, first, typical, roof)."""
+    _load_existing_building(page, live_server)
+    rows = page.locator("#es-bf-floor-table tbody tr")
+    assert rows.count() >= 5, (
+        f"8ZD: #es-bf-floor-table must have ≥5 rows. Got {rows.count()}."
+    )
+
+
+# ── CS614 ─────────────────────────────────────────────────────────────────────
+
+def test_CS614_ebd_floor_table_licensed_use_selects(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: floor table [data-bf-field='licensed_use'] selects count ≥5."""
+    _load_existing_building(page, live_server)
+    sels = page.locator("[data-bf-field='licensed_use']")
+    assert sels.count() >= 5, (
+        f"8ZD: licensed_use selects must be ≥5. Got {sels.count()}."
+    )
+
+
+# ── CS615 ─────────────────────────────────────────────────────────────────────
+
+def test_CS615_ebd_floor_labels_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: floor table shows Arabic floor labels (بدروم, الدور الأرضي, سطح)."""
+    _load_existing_building(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for label in ["بدروم", "الدور الأرضي", "سطح"]:
+        assert label in panel_text, (
+            f"8ZD: floor label '{label}' must appear in existing_building_detailed panel."
+        )
+
+
+# ── CS616 ─────────────────────────────────────────────────────────────────────
+
+def test_CS616_ebd_purpose_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_mortgage_lending_methodology select renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_mortgage_lending_methodology']"
+    )
+    assert field.count() > 0, "8ZD: mortgage_lending methodology must render."
+
+
+# ── CS617 ─────────────────────────────────────────────────────────────────────
+
+def test_CS617_ebd_purpose_sale_purchase_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_sale_purchase_adjustment_pct number input renders."""
+    _load_existing_building(page, live_server)
+    inp = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_sale_purchase_adjustment_pct']"
+    )
+    assert inp.count() > 0, "8ZD: sale_purchase adjustment_pct must render."
+
+
+# ── CS618 ─────────────────────────────────────────────────────────────────────
+
+def test_CS618_ebd_purpose_ifrs_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_ifrs_fair_value_methodology select renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_ifrs_fair_value_methodology']"
+    )
+    assert field.count() > 0, "8ZD: IFRS methodology must render."
+
+
+# ── CS619 ─────────────────────────────────────────────────────────────────────
+
+def test_CS619_ebd_purpose_litigation_dispute_local_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: litigation_dispute purpose block has help_ar marking it as local-only."""
+    _load_existing_building(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "نزاعات قضائية" in supp_text, (
+        "8ZD: litigation_dispute section must appear in supp panel."
+    )
+
+
+# ── CS620 ─────────────────────────────────────────────────────────────────────
+
+def test_CS620_ebd_purpose_investment_acquisition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_investment_acquisition_methodology select renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_investment_acquisition_methodology']"
+    )
+    assert field.count() > 0, "8ZD: investment_acquisition methodology must render."
+
+
+# ── CS621 ─────────────────────────────────────────────────────────────────────
+
+def test_CS621_ebd_purpose_redevelopment_feasibility_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_redevelopment_feasibility_methodology renders (local-only)."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_redevelopment_feasibility_methodology']"
+    )
+    assert field.count() > 0, "8ZD: redevelopment_feasibility methodology (local) must render."
+
+
+# ── CS622 ─────────────────────────────────────────────────────────────────────
+
+def test_CS622_ebd_supp_fields_use_data_es_supp_field_attribute(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: all ebd_ controls in supp use data-es-supp-field (not data-es-req-field)."""
+    _load_existing_building(page, live_server)
+    supp = page.locator("#es-req-supp")
+    req_fields = supp.locator("[data-es-req-field^='ebd_']")
+    assert req_fields.count() == 0, (
+        f"8ZD: no ebd_ field must use data-es-req-field in supp. Found {req_fields.count()}."
+    )
+
+
+# ── CS623 ─────────────────────────────────────────────────────────────────────
+
+def test_CS623_ebd_supp_has_no_api_fields_duplicated(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: #es-req-supp has no data-es-req-field elements for ebd_ profile."""
+    _load_existing_building(page, live_server)
+    supp = page.locator("#es-req-supp")
+    req_els = supp.locator("[data-es-req-field]")
+    assert req_els.count() == 0, (
+        f"8ZD: #es-req-supp must contain NO data-es-req-field elements. Got {req_els.count()}."
+    )
+
+
+# ── CS624 ─────────────────────────────────────────────────────────────────────
+
+def test_CS624_existing_building_supp_local_only_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: supp subtext contains 'إدخال محلي' or 'لا يُرسل للتقرير'."""
+    _load_existing_building(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلي" in supp_text or "لا يُرسل" in supp_text, (
+        f"8ZD: supp must show local-only disclaimer. Got excerpt: {supp_text[:300]!r}"
+    )
+
+
+# ── CS625 ─────────────────────────────────────────────────────────────────────
+
+def test_CS625_ebd_methodology_opts_include_dcf(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: methodology selects include DCF option (discounted_cash_flow)."""
+    _load_existing_building(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_mortgage_lending_methodology']"
+    )
+    assert sel.count() > 0, "8ZD: methodology select must exist."
+    opts = sel.locator("option").evaluate_all("els => els.map(e => e.value)")
+    assert "discounted_cash_flow" in opts, (
+        f"8ZD: DCF option missing from methodology select. Got: {opts}"
+    )
+
+
+# ── CS626 ─────────────────────────────────────────────────────────────────────
+
+def test_CS626_existing_building_isolated_from_building_full(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: selecting building_full does NOT show ebd_ supp fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    ebd_fields = page.locator("[data-es-supp-field^='ebd_']")
+    assert ebd_fields.count() == 0, (
+        f"8ZD isolation: ebd_ fields must NOT appear in building_full. Found {ebd_fields.count()}."
+    )
+
+
+# ── CS627 ─────────────────────────────────────────────────────────────────────
+
+def test_CS627_existing_building_isolated_from_residential_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: selecting residential_unit does NOT show ebd_ supp fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    ebd_fields = page.locator("[data-es-supp-field^='ebd_']")
+    assert ebd_fields.count() == 0, (
+        f"8ZD isolation: ebd_ fields must NOT appear in residential_unit. Found {ebd_fields.count()}."
+    )
+
+
+# ── CS628 ─────────────────────────────────────────────────────────────────────
+
+def test_CS628_existing_building_isolated_from_land(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: selecting land does NOT show ebd_ supp fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    ebd_fields = page.locator("[data-es-supp-field^='ebd_']")
+    assert ebd_fields.count() == 0, (
+        f"8ZD isolation: ebd_ fields must NOT appear in land. Found {ebd_fields.count()}."
+    )
+
+
+# ── CS629 ─────────────────────────────────────────────────────────────────────
+
+def test_CS629_existing_building_isolated_from_agricultural_land(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: selecting agricultural_land does NOT show ebd_ supp fields."""
+    _load_agricultural_land(page, live_server)
+    ebd_fields = page.locator("[data-es-supp-field^='ebd_']")
+    assert ebd_fields.count() == 0, (
+        f"8ZD isolation: ebd_ fields must NOT appear in agricultural_land. Found {ebd_fields.count()}."
+    )
+
+
+# ── CS630 ─────────────────────────────────────────────────────────────────────
+
+def test_CS630_building_full_unchanged_after_8zd(page: "Page", live_server: str) -> None:
+    """Phase 8ZD regression: building_full still renders floor table and land sections."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    panel = page.locator("#es-req-panel")
+    panel.wait_for(state="visible", timeout=4_000)
+    panel_text = panel.inner_text()
+    assert "بيانات الأرض" in panel_text, (
+        "8ZD regression: building_full must still show 'بيانات الأرض'."
+    )
+    table = panel.locator("#es-bf-floor-table")
+    assert table.count() > 0, (
+        "8ZD regression: building_full floor table must still render."
+    )
+
+
+# ── CS631 ─────────────────────────────────────────────────────────────────────
+
+def test_CS631_building_full_supp_still_renders_after_8zd(page: "Page", live_server: str) -> None:
+    """Phase 8ZD regression: building_full supplemental sections still render."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp = page.locator("#es-req-supp")
+    supp_text = supp.inner_text()
+    assert "العمارة السكنية" in supp_text or "المبنى الكامل" in supp_text, (
+        f"8ZD regression: building_full supp heading must still appear. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS632 ─────────────────────────────────────────────────────────────────────
+
+def test_CS632_agricultural_land_unchanged_after_8zd(page: "Page", live_server: str) -> None:
+    """Phase 8ZD regression: agricultural_land still renders ag_ fields."""
+    _load_agricultural_land(page, live_server)
+    panel = page.locator("#es-req-panel")
+    panel_text = panel.inner_text()
+    assert "أرض زراعية" in panel_text, (
+        "8ZD regression: agricultural_land title must still appear."
+    )
+    ag_field = panel.locator("[data-es-req-field='ag_area_sqm']")
+    assert ag_field.count() > 0, (
+        "8ZD regression: ag_area_sqm must still render in agricultural_land."
+    )
+
+
+# ── CS633 ─────────────────────────────────────────────────────────────────────
+
+def test_CS633_land_unchanged_after_8zd(page: "Page", live_server: str) -> None:
+    """Phase 8ZD regression: land profile unchanged."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "أرض" in panel_text, "8ZD regression: land panel must still show."
+
+
+# ── CS634 ─────────────────────────────────────────────────────────────────────
+
+def test_CS634_switching_ebd_to_hotel_clears_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: switching from مبنى قائم to فندق clears ebd_ supp fields."""
+    _load_existing_building(page, live_server)
+    ebd_count_before = page.locator("[data-es-supp-field^='ebd_']").count()
+    assert ebd_count_before > 0, "8ZD: ebd_ fields must appear before switching."
+    page.select_option("#asset-type", value="فندق")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    ebd_count_after = page.locator("[data-es-supp-field^='ebd_']").count()
+    assert ebd_count_after == 0, (
+        f"8ZD: after switching to فندق, ebd_ fields must be gone. Got {ebd_count_after}."
+    )
+
+
+# ── CS635 ─────────────────────────────────────────────────────────────────────
+
+def test_CS635_ebd_no_js_console_errors(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: no JS console errors when existing_building_detailed renders."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    _load_existing_building(page, live_server)
+    assert len(errors) == 0, (
+        f"8ZD: JS console errors on existing_building_detailed render: {errors}"
+    )
+
+
+# ── CS636 ─────────────────────────────────────────────────────────────────────
+
+def test_CS636_ebd_asset_grade_select_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_asset_grade select renders with Grade A/B/C options."""
+    _load_existing_building(page, live_server)
+    sel = page.locator("#es-req-supp [data-es-supp-field='ebd_asset_grade']")
+    assert sel.count() > 0, "8ZD: ebd_asset_grade must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "Grade A" in supp_text or "ممتاز" in supp_text, (
+        "8ZD: ebd_asset_grade must show grade options."
+    )
+
+
+# ── CS637 ─────────────────────────────────────────────────────────────────────
+
+def test_CS637_ebd_property_management_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_property_management_type select renders in section A."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_property_management_type']")
+    assert field.count() > 0, "8ZD: ebd_property_management_type must render."
+
+
+# ── CS638 ─────────────────────────────────────────────────────────────────────
+
+def test_CS638_ebd_efficiency_ratio_pct_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_efficiency_ratio_pct renders as number input."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_efficiency_ratio_pct']")
+    assert inp.count() > 0, "8ZD: ebd_efficiency_ratio_pct must render."
+
+
+# ── CS639 ─────────────────────────────────────────────────────────────────────
+
+def test_CS639_ebd_zoning_compliance_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap): ebd_zoning_compliance_status renders in section F."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_zoning_compliance_status']")
+    assert field.count() > 0, "8ZD: ebd_zoning_compliance_status must render."
+
+
+# ── CS640 ─────────────────────────────────────────────────────────────────────
+
+def test_CS640_ebd_disability_access_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap O): ebd_disability_access_compliance renders in section F."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_disability_access_compliance']")
+    assert field.count() > 0, "8ZD: ebd_disability_access_compliance must render."
+
+
+# ── CS641 ─────────────────────────────────────────────────────────────────────
+
+def test_CS641_ebd_safety_code_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap O): ebd_safety_code_compliance renders in section F."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_safety_code_compliance']")
+    assert field.count() > 0, "8ZD: ebd_safety_code_compliance must render."
+
+
+# ── CS642 ─────────────────────────────────────────────────────────────────────
+
+def test_CS642_ebd_anchor_tenant_credit_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap O): ebd_anchor_tenant_credit_quality renders in section G."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_anchor_tenant_credit_quality']")
+    assert field.count() > 0, "8ZD: ebd_anchor_tenant_credit_quality must render."
+
+
+# ── CS643 ─────────────────────────────────────────────────────────────────────
+
+def test_CS643_ebd_tenant_arrears_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap O): ebd_tenant_arrears_status renders in section G."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_tenant_arrears_status']")
+    assert field.count() > 0, "8ZD: ebd_tenant_arrears_status must render."
+
+
+# ── CS644 ─────────────────────────────────────────────────────────────────────
+
+def test_CS644_ebd_facility_management_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD (must-have gap O): ebd_facility_management_quality renders in section H."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_facility_management_quality']")
+    assert field.count() > 0, "8ZD: ebd_facility_management_quality must render."
+
+
+# ── CS645 ─────────────────────────────────────────────────────────────────────
+
+def test_CS645_ebd_climate_resilience_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_climate_resilience_features checkbox group renders in section L."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_climate_resilience_features']")
+    assert chips.count() > 0, "8ZD: ebd_climate_resilience_features must render."
+
+
+# ── CS646 ─────────────────────────────────────────────────────────────────────
+
+def test_CS646_ebd_sustainability_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_sustainability_features checkbox group renders in section K."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_sustainability_features']")
+    assert chips.count() > 0, "8ZD: ebd_sustainability_features must render."
+
+
+# ── CS647 ─────────────────────────────────────────────────────────────────────
+
+def test_CS647_ebd_flood_risk_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_flood_risk_level select renders in section L."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_flood_risk_level']")
+    assert field.count() > 0, "8ZD: ebd_flood_risk_level must render."
+
+
+# ── CS648 ─────────────────────────────────────────────────────────────────────
+
+def test_CS648_ebd_fiber_optic_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_fiber_optic_available bool renders in section M."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_fiber_optic_available']")
+    assert field.count() > 0, "8ZD: ebd_fiber_optic_available must render."
+
+
+# ── CS649 ─────────────────────────────────────────────────────────────────────
+
+def test_CS649_ebd_internet_speed_mbps_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_internet_speed_mbps renders as number input with Mbps unit."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_internet_speed_mbps']")
+    assert inp.count() > 0, "8ZD: ebd_internet_speed_mbps must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "Mbps" in supp_text, "8ZD: Mbps unit must appear."
+
+
+# ── CS650 ─────────────────────────────────────────────────────────────────────
+
+def test_CS650_ebd_energy_consumption_kwh_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_electricity_consumption_annual_kwh renders with kWh/سنة unit."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_electricity_consumption_annual_kwh']")
+    assert inp.count() > 0, "8ZD: ebd_electricity_consumption_annual_kwh must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "kWh" in supp_text, "8ZD: kWh/سنة unit must appear."
+
+
+# ── CS651 ─────────────────────────────────────────────────────────────────────
+
+def test_CS651_ebd_water_consumption_m3_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_water_consumption_annual_m3 renders with م³/سنة unit."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_water_consumption_annual_m3']")
+    assert inp.count() > 0, "8ZD: ebd_water_consumption_annual_m3 must render."
+
+
+# ── CS652 ─────────────────────────────────────────────────────────────────────
+
+def test_CS652_ebd_noi_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_net_operating_income_annual renders in section G."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_net_operating_income_annual']")
+    assert inp.count() > 0, "8ZD: ebd_net_operating_income_annual must render."
+
+
+# ── CS653 ─────────────────────────────────────────────────────────────────────
+
+def test_CS653_ebd_occupancy_rate_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_occupancy_rate renders with % unit in section G."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_occupancy_rate']")
+    assert inp.count() > 0, "8ZD: ebd_occupancy_rate must render."
+
+
+# ── CS654 ─────────────────────────────────────────────────────────────────────
+
+def test_CS654_ebd_major_replacement_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_major_replacement_required checkbox group renders in section H."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_major_replacement_required']")
+    assert chips.count() > 0, "8ZD: ebd_major_replacement_required must render."
+
+
+# ── CS655 ─────────────────────────────────────────────────────────────────────
+
+def test_CS655_ebd_explainer_desc_distinguishes_from_building_full(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: explainer desc for existing_building_detailed distinguishes from عمارة سكنية."""
+    _load_existing_building(page, live_server)
+    desc = page.locator("#es-profile-desc").inner_text()
+    assert "عمارة سكنية" in desc or "المركّب" in desc or "مختلف" in desc, (
+        f"8ZD: explainer must reference distinction from building_full. Got: {desc!r}"
+    )
+
+
+# ── CS656 ─────────────────────────────────────────────────────────────────────
+
+def test_CS656_ebd_doc_lease_contracts_checkbox_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_doc_lease_contracts document checkbox renders in section N."""
+    _load_existing_building(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='ebd_doc_lease_contracts']")
+    assert cb.count() > 0, "8ZD: ebd_doc_lease_contracts must render."
+
+
+# ── CS657 ─────────────────────────────────────────────────────────────────────
+
+def test_CS657_ebd_doc_structural_report_checkbox_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_doc_structural_report checkbox renders in section N."""
+    _load_existing_building(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='ebd_doc_structural_report']")
+    assert cb.count() > 0, "8ZD: ebd_doc_structural_report must render."
+
+
+# ── CS658 ─────────────────────────────────────────────────────────────────────
+
+def test_CS658_ebd_nuisance_sources_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_nuisance_sources_nearby checkbox group renders in section B."""
+    _load_existing_building(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='ebd_nuisance_sources_nearby']")
+    assert chips.count() > 0, "8ZD: ebd_nuisance_sources_nearby must render."
+
+
+# ── CS659 ─────────────────────────────────────────────────────────────────────
+
+def test_CS659_ebd_title_contains_full_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: panel title contains full Arabic heading 'مبنى قائم — تجاري / سكني / إداري'."""
+    _load_existing_building(page, live_server)
+    title = page.locator("#es-req-title").inner_text()
+    assert "تجاري" in title or "مبنى قائم" in title, (
+        f"8ZD: title must contain 'مبنى قائم' and type info. Got: {title!r}"
+    )
+
+
+# ── CS660 ─────────────────────────────────────────────────────────────────────
+
+def test_CS660_ebd_upload_hint_text_in_section_N(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: upload hint text visible in section N (مستندات إضافية)."""
+    _load_existing_building(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "مستندات" in supp_text, (
+        "8ZD: 'مستندات' heading must appear in section N of ebd supp."
+    )
+
+
+# ── CS661 ─────────────────────────────────────────────────────────────────────
+
+def test_CS661_ebd_bms_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_bms_available bool renders in section M."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_bms_available']")
+    assert field.count() > 0, "8ZD: ebd_bms_available must render."
+
+
+# ── CS662 ─────────────────────────────────────────────────────────────────────
+
+def test_CS662_ebd_green_building_certification_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_green_building_certification_status select renders in section K."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_green_building_certification_status']")
+    assert field.count() > 0, "8ZD: ebd_green_building_certification_status must render."
+
+
+# ── CS663 ─────────────────────────────────────────────────────────────────────
+
+def test_CS663_ebd_seismic_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_seismic_risk_level select renders in section L."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_seismic_risk_level']")
+    assert field.count() > 0, "8ZD: ebd_seismic_risk_level must render."
+
+
+# ── CS664 ─────────────────────────────────────────────────────────────────────
+
+def test_CS664_ebd_ev_charging_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_ev_charging_available bool renders in section M."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_ev_charging_available']")
+    assert field.count() > 0, "8ZD: ebd_ev_charging_available must render."
+
+
+# ── CS665 ─────────────────────────────────────────────────────────────────────
+
+def test_CS665_ebd_anchor_tenant_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_anchor_tenant_available bool renders in section G."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_anchor_tenant_available']")
+    assert field.count() > 0, "8ZD: ebd_anchor_tenant_available must render."
+
+
+# ── CS666 ─────────────────────────────────────────────────────────────────────
+
+def test_CS666_ebd_legal_dispute_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_legal_dispute_status select renders in section F."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_legal_dispute_status']")
+    assert field.count() > 0, "8ZD: ebd_legal_dispute_status must render."
+
+
+# ── CS667 ─────────────────────────────────────────────────────────────────────
+
+def test_CS667_ebd_tenant_concentration_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_tenant_concentration_risk select renders in section G."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_tenant_concentration_risk']")
+    assert field.count() > 0, "8ZD: ebd_tenant_concentration_risk must render."
+
+
+# ── CS668 ─────────────────────────────────────────────────────────────────────
+
+def test_CS668_ebd_demand_driver_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_demand_driver select renders in section I."""
+    _load_existing_building(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='ebd_demand_driver']")
+    assert field.count() > 0, "8ZD: ebd_demand_driver must render."
+
+
+# ── CS669 ─────────────────────────────────────────────────────────────────────
+
+def test_CS669_ebd_purpose_taxation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_taxation_methodology renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_taxation_methodology']"
+    )
+    assert field.count() > 0, "8ZD: taxation methodology must render."
+
+
+# ── CS670 ─────────────────────────────────────────────────────────────────────
+
+def test_CS670_ebd_purpose_liquidation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_liquidation_methodology renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_liquidation_methodology']"
+    )
+    assert field.count() > 0, "8ZD: liquidation methodology must render."
+
+
+# ── CS671 ─────────────────────────────────────────────────────────────────────
+
+def test_CS671_ebd_insurance_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_insurance_methodology renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_insurance_methodology']"
+    )
+    assert field.count() > 0, "8ZD: insurance methodology must render."
+
+
+# ── CS672 ─────────────────────────────────────────────────────────────────────
+
+def test_CS672_ebd_rental_assessment_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_purpose_rental_assessment_methodology renders."""
+    _load_existing_building(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_rental_assessment_methodology']"
+    )
+    assert field.count() > 0, "8ZD: rental_assessment methodology must render."
+
+
+# ── CS673 ─────────────────────────────────────────────────────────────────────
+
+def test_CS673_ebd_advertising_facade_income_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZD: ebd_advertising_facade_income_annual renders in section G."""
+    _load_existing_building(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='ebd_advertising_facade_income_annual']")
+    assert inp.count() > 0, "8ZD: ebd_advertising_facade_income_annual must render."
+
+
+# ── CS674 ─────────────────────────────────────────────────────────────────────
+
+def test_CS674_8zd_hotel_isolation(page: "Page", live_server: str) -> None:
+    """Phase 8ZD isolation: hotel panel does NOT show ebd_ supp fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="فندق")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    ebd_cross = page.locator("[data-es-supp-field^='ebd_']")
+    assert ebd_cross.count() == 0, (
+        f"8ZD isolation: ebd_ fields must NOT appear in hotel panel. Found {ebd_cross.count()}."
+    )

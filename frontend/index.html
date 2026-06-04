@@ -8962,6 +8962,13 @@ function _showIndexToast(msg, type) {
             var helpHtml = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
             return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtml + '</div>';
         }
+        if (f.field_type === 'textarea') {
+            ctrlHtml = '<textarea id="' + fid + '" name="' + f.name + '"'
+                + ' data-es-supp-field="' + f.name + '" rows="3"'
+                + ' placeholder="أدخل ملاحظاتك هنا" style="' + inputCss + 'resize:vertical;"></textarea>';
+            var helpHtmlTa = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtmlTa + '</div>';
+        }
         ctrlHtml = '<input type="text" id="' + fid + '" name="' + f.name + '"'
             + ' data-es-supp-field="' + f.name + '"'
             + ' placeholder="أدخل القيمة" style="' + inputCss + '">';
@@ -9012,6 +9019,20 @@ function _showIndexToast(msg, type) {
             });
         });
     }
+
+    // ── Phase 8Z: methodology options — shared across purpose-adjustment rows ────
+    var _METHODOLOGY_OPTS = [
+        { value: 'sales_comparison',             label_ar: 'مقارنة المبيعات' },
+        { value: 'income_approach',              label_ar: 'رسملة الدخل' },
+        { value: 'cost_approach',                label_ar: 'تكلفة الإحلال' },
+        { value: 'depreciated_replacement_cost', label_ar: 'تكلفة الإحلال المستهلكة' },
+        { value: 'market_rent_capitalization',   label_ar: 'رسملة الإيجار السوقي' },
+        { value: 'residual_method',              label_ar: 'أسلوب المتبقي' },
+        { value: 'liquidation_value',            label_ar: 'القيمة التصفوية' },
+        { value: 'expert_determination',         label_ar: 'تقدير الخبير' },
+        { value: 'mixed_methods',                label_ar: 'مناهج مختلطة' },
+        { value: 'unknown',                      label_ar: 'غير محدد' },
+    ];
 
     // ── Phase 8Q: Supplemental schemas for API-driven profiles ──────────────────
     // Keyed by registry code ('residential', 'land'). Never sent to API.
@@ -9102,6 +9123,316 @@ function _showIndexToast(msg, type) {
                 { name: 'ru_unit_plan',        field_type: 'bool', label_ar: 'مخطط الوحدة',                 group: 'document', valid_values: [], ui_required: false },
                 { name: 'ru_lease_contract',   field_type: 'bool', label_ar: 'عقد إيجار (إن وجد)',          group: 'document', valid_values: [], ui_required: false },
                 { name: 'ru_transaction_cert', field_type: 'bool', label_ar: 'شهادة تصرفات أو ما يعادلها', group: 'document', valid_values: [], ui_required: false },
+            ]},
+            // ── Phase 8Z: A — الخصائص المادية التفصيلية ─────────────────────
+            { heading: 'الخصائص المادية التفصيلية', color: '#6b7280', desc: '', fields: [
+                { name: 'land_share_sqm',         field_type: 'float', label_ar: 'حصة الأرض (فيلا / كمبوند)',    unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'building_age_years',      field_type: 'int',   label_ar: 'عمر المبنى',                    unit_ar: 'سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'terrace_area_sqm',        field_type: 'float', label_ar: 'مساحة التراس',                  unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'private_garden_area_sqm', field_type: 'float', label_ar: 'مساحة الحديقة الخاصة',         unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'parking_spaces_count',    field_type: 'int',   label_ar: 'عدد مواقف السيارات',            unit_ar: 'موقف', valid_values: [], group: '', ui_required: false },
+                { name: 'storage_room_available',  field_type: 'bool',  label_ar: 'يوجد غرفة مخزن',                valid_values: [], group: '', ui_required: false },
+                { name: 'maid_room_available',     field_type: 'bool',  label_ar: 'يوجد غرفة خادمة',               valid_values: [], group: '', ui_required: false },
+                { name: 'view_quality', field_type: 'str', label_ar: 'جودة الإطلالة',
+                  options: [
+                    { value: 'sea_or_nile',        label_ar: 'بحر / نيل' },
+                    { value: 'open_landscape',     label_ar: 'منظر طبيعي مفتوح' },
+                    { value: 'city_skyline',       label_ar: 'أفق المدينة' },
+                    { value: 'street_view',        label_ar: 'شارع' },
+                    { value: 'interior_courtyard', label_ar: 'فناء داخلي' },
+                    { value: 'other',              label_ar: 'أخرى' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'noise_exposure_level', field_type: 'str', label_ar: 'مستوى التعرض للضوضاء',
+                  options: [
+                    { value: 'quiet',      label_ar: 'هادئ' },
+                    { value: 'moderate',   label_ar: 'متوسط' },
+                    { value: 'noisy',      label_ar: 'صاخب' },
+                    { value: 'very_noisy', label_ar: 'صاخب جداً' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'finishing_quality_detail', field_type: 'str', label_ar: 'جودة مواد التشطيب',
+                  options: [
+                    { value: 'luxury_imported', label_ar: 'فاخر / مستورد' },
+                    { value: 'standard_local',  label_ar: 'قياسي / محلي' },
+                    { value: 'mixed',           label_ar: 'مختلط' },
+                    { value: 'economy',         label_ar: 'اقتصادي' },
+                    { value: 'shell',           label_ar: 'خام / عظم' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'structural_or_mep_defects_summary', field_type: 'textarea', label_ar: 'ملخص العيوب الإنشائية أو المرافق', valid_values: [], group: '', ui_required: false },
+                { name: 'building_facilities_available', field_type: 'checkbox_group', label_ar: 'مرافق المبنى / الكمبوند',
+                  options: [
+                    { value: 'security',           label_ar: 'حراسة / أمن' },
+                    { value: 'swimming_pool',      label_ar: 'حمام سباحة' },
+                    { value: 'gym',                label_ar: 'صالة رياضية' },
+                    { value: 'garden',             label_ar: 'حديقة مشتركة' },
+                    { value: 'clubhouse',          label_ar: 'نادي / كلوب هاوس' },
+                    { value: 'kids_area',          label_ar: 'منطقة أطفال' },
+                    { value: 'maintenance_office', label_ar: 'مكتب صيانة' },
+                    { value: 'cctv',               label_ar: 'كاميرات مراقبة' },
+                    { value: 'smart_access',       label_ar: 'دخول ذكي' },
+                    { value: 'other',              label_ar: 'أخرى' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: B — الخصائص القانونية والملكية ─────────────────────
+            { heading: 'الخصائص القانونية والملكية', color: '#6b7280', desc: '', fields: [
+                { name: 'ownership_type', field_type: 'str', label_ar: 'نوع الملكية',
+                  options: [
+                    { value: 'full_freehold',  label_ar: 'تمليك حر كامل' },
+                    { value: 'long_leasehold', label_ar: 'إيجار طويل الأمد' },
+                    { value: 'co_ownership',   label_ar: 'ملكية مشتركة' },
+                    { value: 'waqf',           label_ar: 'وقف' },
+                    { value: 'usufruct',       label_ar: 'حق انتفاع' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'title_deed_available', field_type: 'bool', label_ar: 'سند الملكية متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'title_deed_type', field_type: 'str', label_ar: 'نوع سند الملكية',
+                  options: [
+                    { value: 'tabu',                 label_ar: 'طابو / شهر عقاري' },
+                    { value: 'preliminary_contract', label_ar: 'عقد ابتدائي' },
+                    { value: 'allocation_letter',    label_ar: 'خطاب تخصيص' },
+                    { value: 'court_order',          label_ar: 'حكم قضائي' },
+                    { value: 'condominium_deed',     label_ar: 'حصة شيوع' },
+                    { value: 'unknown',              label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'mortgage_or_lien_status', field_type: 'str', label_ar: 'حالة الرهن أو القيود',
+                  options: [
+                    { value: 'no_mortgage',       label_ar: 'لا رهن / لا قيود' },
+                    { value: 'mortgaged_to_bank', label_ar: 'مرهون لبنك' },
+                    { value: 'lien_exists',       label_ar: 'يوجد حجز / قيد' },
+                    { value: 'disputed',          label_ar: 'متنازع عليه' },
+                    { value: 'unknown',           label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'building_permit_status', field_type: 'str', label_ar: 'حالة رخصة البناء',
+                  options: [
+                    { value: 'licensed',           label_ar: 'مرخص' },
+                    { value: 'unlicensed',         label_ar: 'غير مرخص' },
+                    { value: 'partially_licensed', label_ar: 'مرخص جزئياً' },
+                    { value: 'expired',            label_ar: 'منتهية الصلاحية' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'violations_or_unlicensed_additions', field_type: 'str', label_ar: 'مخالفات أو إضافات غير مرخصة',
+                  options: [
+                    { value: 'none',    label_ar: 'لا يوجد' },
+                    { value: 'minor',   label_ar: 'بسيطة' },
+                    { value: 'major',   label_ar: 'جوهرية' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'registration_status', field_type: 'str', label_ar: 'حالة التسجيل',
+                  options: [
+                    { value: 'registered',     label_ar: 'مسجل' },
+                    { value: 'not_registered', label_ar: 'غير مسجل' },
+                    { value: 'in_progress',    label_ar: 'قيد التسجيل' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'legal_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص القيود القانونية', valid_values: [], group: '', ui_required: false },
+                { name: 'common_area_share_pct', field_type: 'float', label_ar: 'حصة المالك في المساحات المشتركة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'property_management_quality', field_type: 'str', label_ar: 'جودة إدارة الأملاك',
+                  options: [
+                    { value: 'professional', label_ar: 'احترافية' },
+                    { value: 'good',         label_ar: 'جيدة' },
+                    { value: 'average',      label_ar: 'متوسطة' },
+                    { value: 'poor',         label_ar: 'ضعيفة' },
+                    { value: 'self_managed', label_ar: 'ذاتية' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'community_fees_arrears_status', field_type: 'str', label_ar: 'متأخرات رسوم المجتمع',
+                  options: [
+                    { value: 'no_arrears',    label_ar: 'لا متأخرات' },
+                    { value: 'minor_arrears', label_ar: 'متأخرات بسيطة' },
+                    { value: 'major_arrears', label_ar: 'متأخرات جوهرية' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: C — الخصائص الاقتصادية وقابلية التسويق ────────────
+            { heading: 'الخصائص الاقتصادية وقابلية التسويق', color: '#6b7280', desc: '', fields: [
+                { name: 'current_rent_monthly',             field_type: 'float', label_ar: 'الإيجار الحالي الفعلي (إن مؤجَّر)', unit_ar: 'ج.م./شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'market_rent_monthly',              field_type: 'float', label_ar: 'الإيجار السوقي التقديري',             unit_ar: 'ج.م./شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'annual_maintenance_cost',          field_type: 'float', label_ar: 'تكلفة الصيانة السنوية المقدَّرة',    unit_ar: 'ج.م./سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'expected_capex_required',          field_type: 'float', label_ar: 'نفقات رأسمالية متوقعة',              unit_ar: 'ج.م.',     valid_values: [], group: '', ui_required: false },
+                { name: 'marketability_level', field_type: 'str', label_ar: 'مستوى تسويقية الوحدة',
+                  options: [
+                    { value: 'high',     label_ar: 'عالية' },
+                    { value: 'medium',   label_ar: 'متوسطة' },
+                    { value: 'low',      label_ar: 'منخفضة' },
+                    { value: 'illiquid', label_ar: 'ضعيفة السيولة' },
+                    { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'expected_marketing_period_months', field_type: 'int',  label_ar: 'مدة التسويق المتوقعة',        unit_ar: 'شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'comparable_sales_available',       field_type: 'bool', label_ar: 'بيانات مقارنات بيع متاحة',            valid_values: [], group: '', ui_required: false },
+                { name: 'comparable_rents_available',       field_type: 'bool', label_ar: 'بيانات مقارنات إيجار متاحة',          valid_values: [], group: '', ui_required: false },
+                { name: 'basement_ground_floor_flood_risk', field_type: 'bool', label_ar: 'خطر تسرب مياه — بدروم / أرضي',       valid_values: [], group: '', ui_required: false },
+                { name: 'renovation_permit_status', field_type: 'str', label_ar: 'حالة تصاريح التجديد',
+                  options: [
+                    { value: 'not_required',  label_ar: 'غير مطلوب' },
+                    { value: 'obtained',      label_ar: 'تم الحصول عليه' },
+                    { value: 'pending',       label_ar: 'قيد الإجراء' },
+                    { value: 'not_obtained',  label_ar: 'لم يُحصَل عليه' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: D — خصائص الموقع والخدمات المحيطة ─────────────────
+            { heading: 'خصائص الموقع والخدمات المحيطة', color: '#6b7280', desc: '', fields: [
+                { name: 'neighborhood_quality', field_type: 'str', label_ar: 'جودة المنطقة السكنية',
+                  options: [
+                    { value: 'premium',       label_ar: 'فاخرة' },
+                    { value: 'good',          label_ar: 'جيدة' },
+                    { value: 'average',       label_ar: 'متوسطة' },
+                    { value: 'below_average', label_ar: 'أقل من المتوسط' },
+                    { value: 'poor',          label_ar: 'ضعيفة' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'district_classification', field_type: 'str', label_ar: 'تصنيف الحي / المنطقة',
+                  options: [
+                    { value: 'cbd',                  label_ar: 'وسط أعمال / مركزي' },
+                    { value: 'residential_prime',    label_ar: 'سكني مميز' },
+                    { value: 'residential_standard', label_ar: 'سكني عادي' },
+                    { value: 'suburban',             label_ar: 'ضاحية' },
+                    { value: 'rural',                label_ar: 'ريفي' },
+                    { value: 'mixed',                label_ar: 'مختلط' },
+                    { value: 'unknown',              label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'distance_to_main_road_m',        field_type: 'float', label_ar: 'المسافة إلى الطريق الرئيسي',  unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'distance_to_public_transport_m', field_type: 'float', label_ar: 'المسافة إلى وسيلة نقل عام',   unit_ar: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'accessibility_quality', field_type: 'str', label_ar: 'جودة إمكانية الوصول',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' },
+                    { value: 'good',      label_ar: 'جيدة' },
+                    { value: 'average',   label_ar: 'متوسطة' },
+                    { value: 'poor',      label_ar: 'ضعيفة' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'surrounding_services_quality', field_type: 'str', label_ar: 'جودة الخدمات المحيطة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' },
+                    { value: 'good',      label_ar: 'جيدة' },
+                    { value: 'average',   label_ar: 'متوسطة' },
+                    { value: 'poor',      label_ar: 'ضعيفة' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'safety_security_level', field_type: 'str', label_ar: 'مستوى الأمن والسلامة في المنطقة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتاز' },
+                    { value: 'good',      label_ar: 'جيد' },
+                    { value: 'average',   label_ar: 'متوسط' },
+                    { value: 'poor',      label_ar: 'ضعيف' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'nuisance_sources_nearby', field_type: 'checkbox_group', label_ar: 'مصادر إزعاج مجاورة',
+                  options: [
+                    { value: 'high_traffic_road',   label_ar: 'طريق كثيف المرور' },
+                    { value: 'industrial_activity', label_ar: 'نشاط صناعي' },
+                    { value: 'railway',             label_ar: 'سكة حديد' },
+                    { value: 'airport_noise',       label_ar: 'ضوضاء مطار' },
+                    { value: 'landfill',            label_ar: 'مكب نفايات' },
+                    { value: 'nightlife',           label_ar: 'حياة ليلية' },
+                    { value: 'none',                label_ar: 'لا يوجد' },
+                    { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: E — معاملات التعديل حسب غرض التقييم (إرشادي محلّي) ─
+            { heading: 'معاملات التعديل حسب غرض التقييم', color: '#d4af37',
+              desc: 'إرشادي محلّي فقط — لا يُطبَّق تلقائياً على ناتج التقرير. الأغراض 1–7 تُحاذى مع PURPOSE_RULES؛ الغرض 8 (نزاعات) إدخال محلّي غير مربوط بـ PURPOSE_RULES.',
+              fields: [
+                { name: 'mortgage_lending_methodology',      field_type: 'str', label_ar: 'رهن وتمويل — المنهجية',    options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'mortgage_lending_adjustment_pct',   field_type: 'float', label_ar: 'رهن وتمويل — نسبة التعديل',   unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'mortgage_lending_adjustment_rationale', field_type: 'textarea', label_ar: 'رهن وتمويل — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+                { name: 'sale_purchase_methodology',         field_type: 'str', label_ar: 'بيع وشراء — المنهجية',       options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'sale_purchase_adjustment_pct',      field_type: 'float', label_ar: 'بيع وشراء — نسبة التعديل',    unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'sale_purchase_adjustment_rationale', field_type: 'textarea', label_ar: 'بيع وشراء — مبرر التعديل',  valid_values: [], group: '', ui_required: false },
+                { name: 'insurance_methodology',             field_type: 'str', label_ar: 'تأمين — المنهجية',           options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'insurance_adjustment_pct',          field_type: 'float', label_ar: 'تأمين — نسبة التعديل',         unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'insurance_adjustment_rationale',    field_type: 'textarea', label_ar: 'تأمين — مبرر التعديل',       valid_values: [], group: '', ui_required: false },
+                { name: 'ifrs_fair_value_methodology',       field_type: 'str', label_ar: 'IFRS / تقارير مالية — المنهجية', options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'ifrs_fair_value_adjustment_pct',    field_type: 'float', label_ar: 'IFRS / تقارير مالية — نسبة التعديل', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'ifrs_fair_value_adjustment_rationale', field_type: 'textarea', label_ar: 'IFRS / تقارير مالية — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+                { name: 'rental_assessment_methodology',     field_type: 'str', label_ar: 'تحديد أجرة إيجارية — المنهجية', options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rental_assessment_adjustment_pct',  field_type: 'float', label_ar: 'تحديد أجرة — نسبة التعديل',    unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rental_assessment_adjustment_rationale', field_type: 'textarea', label_ar: 'تحديد أجرة — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+                { name: 'taxation_methodology',              field_type: 'str', label_ar: 'ضريبة عقارية — المنهجية',    options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'taxation_adjustment_pct',           field_type: 'float', label_ar: 'ضريبة عقارية — نسبة التعديل', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'taxation_adjustment_rationale',     field_type: 'textarea', label_ar: 'ضريبة عقارية — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+                { name: 'liquidation_methodology',           field_type: 'str', label_ar: 'تصفية إجبارية — المنهجية',   options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'liquidation_adjustment_pct',        field_type: 'float', label_ar: 'تصفية إجبارية — نسبة التعديل', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'liquidation_adjustment_rationale',  field_type: 'textarea', label_ar: 'تصفية إجبارية — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+                { name: 'litigation_dispute_methodology',    field_type: 'str', label_ar: 'نزاعات قضائية — المنهجية (محلّي فقط)', options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false, help_ar: 'غرض محلّي للاستيعاب فقط — لا يقابل PURPOSE_RULES في الخادم.' },
+                { name: 'litigation_dispute_adjustment_pct', field_type: 'float', label_ar: 'نزاعات — نسبة التعديل (محلّي)', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'litigation_dispute_adjustment_rationale', field_type: 'textarea', label_ar: 'نزاعات — مبرر التعديل (محلّي)', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: F — كفاءة الطاقة والاستدامة ────────────────────────
+            { heading: 'كفاءة الطاقة والاستدامة', color: '#10b981', desc: '', fields: [
+                { name: 'energy_efficiency_rating', field_type: 'str', label_ar: 'تصنيف كفاءة الطاقة',
+                  options: [
+                    { value: 'A_plus', label_ar: 'A+' },
+                    { value: 'A',      label_ar: 'A' },
+                    { value: 'B',      label_ar: 'B' },
+                    { value: 'C',      label_ar: 'C' },
+                    { value: 'D',      label_ar: 'D' },
+                    { value: 'E',      label_ar: 'E' },
+                    { value: 'F',      label_ar: 'F' },
+                    { value: 'unknown',label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'electricity_consumption_monthly_kwh', field_type: 'float', label_ar: 'استهلاك الكهرباء الشهري', unit_ar: 'kWh/شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'water_consumption_monthly_m3',        field_type: 'float', label_ar: 'استهلاك المياه الشهري',    unit_ar: 'م³/شهر',  valid_values: [], group: '', ui_required: false },
+                { name: 'sustainability_value_impact_pct',     field_type: 'float', label_ar: 'تأثير الاستدامة على القيمة', unit_ar: '%',       valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: G — المخاطر المناخية والطبيعية ─────────────────────
+            { heading: 'المخاطر المناخية والطبيعية', color: '#f59e0b', desc: '', fields: [
+                { name: 'flood_risk_level', field_type: 'str', label_ar: 'مستوى خطر الفيضان',
+                  options: [
+                    { value: 'negligible', label_ar: 'لا يُذكر' },
+                    { value: 'low',        label_ar: 'منخفض' },
+                    { value: 'medium',     label_ar: 'متوسط' },
+                    { value: 'high',       label_ar: 'مرتفع' },
+                    { value: 'very_high',  label_ar: 'مرتفع جداً' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'fire_risk_level', field_type: 'str', label_ar: 'مستوى خطر الحريق',
+                  options: [
+                    { value: 'negligible', label_ar: 'لا يُذكر' },
+                    { value: 'low',        label_ar: 'منخفض' },
+                    { value: 'medium',     label_ar: 'متوسط' },
+                    { value: 'high',       label_ar: 'مرتفع' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'heat_stress_risk_level', field_type: 'str', label_ar: 'مستوى إجهاد الحرارة',
+                  options: [
+                    { value: 'negligible', label_ar: 'لا يُذكر' },
+                    { value: 'low',        label_ar: 'منخفض' },
+                    { value: 'medium',     label_ar: 'متوسط' },
+                    { value: 'high',       label_ar: 'مرتفع' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'climate_risk_value_impact_pct', field_type: 'float', label_ar: 'تأثير المخاطر المناخية على القيمة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: H — البنية التحتية الرقمية ─────────────────────────
+            { heading: 'البنية التحتية الرقمية', color: '#6b7280', desc: '', fields: [
+                { name: 'fiber_optic_available', field_type: 'bool', label_ar: 'يوجد ألياف ضوئية', valid_values: [], group: '', ui_required: false },
+                { name: 'five_g_coverage_quality', field_type: 'str', label_ar: 'جودة تغطية الجيل الخامس (5G)',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' },
+                    { value: 'good',      label_ar: 'جيدة' },
+                    { value: 'partial',   label_ar: 'جزئية' },
+                    { value: 'none',      label_ar: 'لا يوجد' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'digital_infrastructure_quality', field_type: 'str', label_ar: 'جودة البنية التحتية الرقمية الإجمالية',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' },
+                    { value: 'good',      label_ar: 'جيدة' },
+                    { value: 'average',   label_ar: 'متوسطة' },
+                    { value: 'poor',      label_ar: 'ضعيفة' },
+                    { value: 'unknown',   label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'digital_infrastructure_value_impact_pct', field_type: 'float', label_ar: 'تأثير البنية الرقمية على القيمة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── Phase 8Z: مستندات إضافية مطلوبة ─────────────────────────────
+            { heading: 'مستندات إضافية مطلوبة', color: '#6b7280', desc: _UPLOAD_HINT, fields: [
+                { name: 'ru_mortgage_lien_docs',  field_type: 'bool', label_ar: 'مستندات الرهن أو القيود (إن وجدت)', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_energy_certificate',  field_type: 'bool', label_ar: 'شهادة كفاءة الطاقة (إن وجدت)',       group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_insurance_docs',      field_type: 'bool', label_ar: 'وثائق التأمين (إن وجدت)',            group: 'document', valid_values: [], ui_required: false },
+                { name: 'ru_renovation_approval', field_type: 'bool', label_ar: 'موافقات التعديلات الداخلية (إن وجدت)', group: 'document', valid_values: [], ui_required: false },
             ]},
         ],
         'land': [

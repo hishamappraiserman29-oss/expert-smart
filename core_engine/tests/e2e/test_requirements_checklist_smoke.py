@@ -6891,12 +6891,15 @@ def test_CS412_401_land_no_modal_supp_renders(page: Page, live_server: str) -> N
 # ── CS413 ─────────────────────────────────────────────────────────────────────
 
 def test_CS413_no_duplicate_api_fields_in_residential_supp(page: Page, live_server: str) -> None:
-    """Phase 8W: API-rendered fields must NOT appear as supplemental fields in residential panel."""
+    """Phase 8W/8Z: API-rendered fields must NOT appear as supplemental fields in residential panel.
+    Note: view_quality removed from this list in 8Z — it is now a legitimate supplemental field
+    (not in API mock) and was pre-emptively over-listed here in a prior wave.
+    """
     _load_residential_supp_8w(page, live_server)
     supp = page.locator("#es-req-supp")
     for name in (
         "area_sqm", "floor_number", "rooms_count", "finishing_level",
-        "legal_status", "elevator_available", "parking_available", "view_quality",
+        "legal_status", "elevator_available", "parking_available",
     ):
         count = supp.locator(f"[data-es-supp-field='{name}']").count()
         assert count == 0, (
@@ -7430,4 +7433,402 @@ def test_CS447_regression_existing_profiles_unaffected_and_no_console_errors(pag
         loader(page, live_server)
     assert not errors, (
         f"Phase 8X.1: unexpected JS console errors for 8X.1 profiles: {errors}"
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8Z — Enriched Residential Unit Valuation Requirements (CS448 – CS479)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── CS448 ─────────────────────────────────────────────────────────────────────
+
+def test_CS448_8z_residential_supp_heading_physical_properties(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'الخصائص المادية التفصيلية' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص المادية التفصيلية" in text, (
+        f"Phase 8Z: section 'الخصائص المادية التفصيلية' missing from residential supp. Got: {text[:300]!r}"
+    )
+
+
+# ── CS449 ─────────────────────────────────────────────────────────────────────
+
+def test_CS449_8z_residential_supp_heading_legal_properties(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'الخصائص القانونية والملكية' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص القانونية والملكية" in text, (
+        f"Phase 8Z: section 'الخصائص القانونية والملكية' missing from residential supp. Got: {text[:300]!r}"
+    )
+
+
+# ── CS450 ─────────────────────────────────────────────────────────────────────
+
+def test_CS450_8z_residential_supp_heading_economic_properties(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'الخصائص الاقتصادية وقابلية التسويق' heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص الاقتصادية وقابلية التسويق" in text, (
+        f"Phase 8Z: section 'الخصائص الاقتصادية وقابلية التسويق' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS451 ─────────────────────────────────────────────────────────────────────
+
+def test_CS451_8z_residential_supp_heading_location_services(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'خصائص الموقع والخدمات المحيطة' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "خصائص الموقع والخدمات المحيطة" in text, (
+        f"Phase 8Z: section 'خصائص الموقع والخدمات المحيطة' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS452 ─────────────────────────────────────────────────────────────────────
+
+def test_CS452_8z_residential_supp_heading_purpose_adjustments(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'معاملات التعديل حسب غرض التقييم' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل حسب غرض التقييم" in text, (
+        f"Phase 8Z: purpose-adjustment section heading missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS453 ─────────────────────────────────────────────────────────────────────
+
+def test_CS453_8z_residential_supp_heading_energy_sustainability(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'كفاءة الطاقة والاستدامة' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "كفاءة الطاقة والاستدامة" in text, (
+        f"Phase 8Z: section 'كفاءة الطاقة والاستدامة' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS454 ─────────────────────────────────────────────────────────────────────
+
+def test_CS454_8z_residential_supp_heading_climate_risks(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'المخاطر المناخية والطبيعية' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية والطبيعية" in text, (
+        f"Phase 8Z: section 'المخاطر المناخية والطبيعية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS455 ─────────────────────────────────────────────────────────────────────
+
+def test_CS455_8z_residential_supp_heading_digital_infrastructure(page: Page, live_server: str) -> None:
+    """Phase 8Z: residential supp must show 'البنية التحتية الرقمية' section heading."""
+    _load_residential_supp_8w(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية" in text, (
+        f"Phase 8Z: section 'البنية التحتية الرقمية' missing. Got: {text[:300]!r}"
+    )
+
+
+# ── CS456 ─────────────────────────────────────────────────────────────────────
+
+def test_CS456_8z_land_share_sqm_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: es-supp-field-land_share_sqm renders as number input (Section A)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='land_share_sqm']")
+    assert field.count() > 0, "Phase 8Z: land_share_sqm must be present in residential supp."
+    assert field.get_attribute("type") == "number", (
+        f"land_share_sqm must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS457 ─────────────────────────────────────────────────────────────────────
+
+def test_CS457_8z_building_age_years_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: es-supp-field-building_age_years renders as number input (Section A)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='building_age_years']")
+    assert field.count() > 0, "Phase 8Z: building_age_years must be present in residential supp."
+    assert field.get_attribute("type") == "number", (
+        f"building_age_years must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS458 ─────────────────────────────────────────────────────────────────────
+
+def test_CS458_8z_building_facilities_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8Z: building_facilities_available renders as checkbox_group in residential supp (Section A)."""
+    _load_residential_supp_8w(page, live_server)
+    checkboxes = page.locator("[data-es-supp-field='building_facilities_available']")
+    assert checkboxes.count() > 0, (
+        "Phase 8Z: building_facilities_available checkbox_group must render in residential supp."
+    )
+    # Verify at least one chip option (e.g., 'security')
+    security_chip = page.locator("[data-es-supp-field='building_facilities_available'][value='security']")
+    assert security_chip.count() > 0, (
+        "Phase 8Z: building_facilities_available must include 'security' chip option."
+    )
+
+
+# ── CS459 ─────────────────────────────────────────────────────────────────────
+
+def test_CS459_8z_ownership_type_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: ownership_type select renders with Arabic options in residential supp (Section B)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-ownership_type")
+    assert sel.count() > 0, "Phase 8Z: ownership_type select must render in residential supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8Z: ownership_type must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS460 ─────────────────────────────────────────────────────────────────────
+
+def test_CS460_8z_mortgage_or_lien_status_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: mortgage_or_lien_status select renders in residential supp (Section B)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-mortgage_or_lien_status")
+    assert sel.count() > 0, "Phase 8Z: mortgage_or_lien_status must render in residential supp."
+
+
+# ── CS461 ─────────────────────────────────────────────────────────────────────
+
+def test_CS461_8z_legal_restrictions_summary_textarea_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: legal_restrictions_summary renders as <textarea> in residential supp (Section B)."""
+    _load_residential_supp_8w(page, live_server)
+    ta = page.locator("textarea[data-es-supp-field='legal_restrictions_summary']")
+    assert ta.count() == 1, (
+        "Phase 8Z: legal_restrictions_summary must render as <textarea> in residential supp."
+    )
+
+
+# ── CS462 ─────────────────────────────────────────────────────────────────────
+
+def test_CS462_8z_current_rent_monthly_number_input_not_duplicate(page: Page, live_server: str) -> None:
+    """Phase 8Z: current_rent_monthly is new (distinct from rental_income_monthly); both must exist."""
+    _load_residential_supp_8w(page, live_server)
+    current = page.locator("[data-es-supp-field='current_rent_monthly']")
+    existing = page.locator("[data-es-supp-field='rental_income_monthly']")
+    assert current.count() > 0, "Phase 8Z: current_rent_monthly must be present in residential supp."
+    assert existing.count() > 0, "Phase 8Z: existing rental_income_monthly must still be present."
+    assert current.get_attribute("type") == "number", (
+        "current_rent_monthly must be type='number'."
+    )
+
+
+# ── CS463 ─────────────────────────────────────────────────────────────────────
+
+def test_CS463_8z_market_rent_monthly_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: market_rent_monthly renders as number input in residential supp (Section C)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='market_rent_monthly']")
+    assert field.count() > 0, "Phase 8Z: market_rent_monthly must be present in residential supp."
+    assert field.get_attribute("type") == "number", (
+        f"market_rent_monthly must be type='number'. Got: {field.get_attribute('type')!r}"
+    )
+
+
+# ── CS464 ─────────────────────────────────────────────────────────────────────
+
+def test_CS464_8z_neighborhood_quality_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: neighborhood_quality select renders with Arabic options in residential supp (Section D)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-neighborhood_quality")
+    assert sel.count() > 0, "Phase 8Z: neighborhood_quality select must render in residential supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8Z: neighborhood_quality must have >=4 options. Got {opts.count()}"
+    )
+
+
+# ── CS465 ─────────────────────────────────────────────────────────────────────
+
+def test_CS465_8z_nuisance_sources_nearby_checkbox_group(page: Page, live_server: str) -> None:
+    """Phase 8Z: nuisance_sources_nearby renders as checkbox_group in residential supp (Section D)."""
+    _load_residential_supp_8w(page, live_server)
+    checkboxes = page.locator("[data-es-supp-field='nuisance_sources_nearby']")
+    assert checkboxes.count() > 0, (
+        "Phase 8Z: nuisance_sources_nearby checkbox_group must render in residential supp."
+    )
+
+
+# ── CS466 ─────────────────────────────────────────────────────────────────────
+
+def test_CS466_8z_mortgage_lending_methodology_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: mortgage_lending_methodology select renders (Section E — purpose adjustments)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-mortgage_lending_methodology")
+    assert sel.count() > 0, "Phase 8Z: mortgage_lending_methodology select must render in residential supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 8, (
+        f"Phase 8Z: mortgage_lending_methodology must have >=8 methodology options. Got {opts.count()}"
+    )
+
+
+# ── CS467 ─────────────────────────────────────────────────────────────────────
+
+def test_CS467_8z_mortgage_lending_adjustment_pct_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: mortgage_lending_adjustment_pct renders as number input (Section E)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='mortgage_lending_adjustment_pct']")
+    assert field.count() > 0, "Phase 8Z: mortgage_lending_adjustment_pct must render in residential supp."
+    assert field.get_attribute("type") == "number", (
+        "mortgage_lending_adjustment_pct must be type='number'."
+    )
+
+
+# ── CS468 ─────────────────────────────────────────────────────────────────────
+
+def test_CS468_8z_sale_purchase_methodology_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: sale_purchase_methodology select renders (Section E — purpose adjustments)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-sale_purchase_methodology")
+    assert sel.count() > 0, "Phase 8Z: sale_purchase_methodology must render in residential supp."
+
+
+# ── CS469 ─────────────────────────────────────────────────────────────────────
+
+def test_CS469_8z_litigation_dispute_methodology_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: litigation_dispute_methodology select renders as local-only field (Section E)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-litigation_dispute_methodology")
+    assert sel.count() > 0, (
+        "Phase 8Z: litigation_dispute_methodology (local-only purpose) must render in residential supp."
+    )
+    # Confirm it's a supp field (not req field) — no data-es-req-field on same element
+    assert sel.get_attribute("data-es-req-field") is None, (
+        "litigation_dispute_methodology must NOT have data-es-req-field attribute."
+    )
+
+
+# ── CS470 ─────────────────────────────────────────────────────────────────────
+
+def test_CS470_8z_energy_efficiency_rating_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: energy_efficiency_rating select renders in residential supp (Section F)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-energy_efficiency_rating")
+    assert sel.count() > 0, "Phase 8Z: energy_efficiency_rating select must render in residential supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 6, (
+        f"Phase 8Z: energy_efficiency_rating must have >=6 options (A+ through F). Got {opts.count()}"
+    )
+
+
+# ── CS471 ─────────────────────────────────────────────────────────────────────
+
+def test_CS471_8z_electricity_consumption_monthly_kwh_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: electricity_consumption_monthly_kwh renders as number input (Section F)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='electricity_consumption_monthly_kwh']")
+    assert field.count() > 0, "Phase 8Z: electricity_consumption_monthly_kwh must render in residential supp."
+    assert field.get_attribute("type") == "number", (
+        "electricity_consumption_monthly_kwh must be type='number'."
+    )
+
+
+# ── CS472 ─────────────────────────────────────────────────────────────────────
+
+def test_CS472_8z_sustainability_value_impact_pct_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: sustainability_value_impact_pct renders as number input with % unit (Section F)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='sustainability_value_impact_pct']")
+    assert field.count() > 0, "Phase 8Z: sustainability_value_impact_pct must render in residential supp."
+    assert field.get_attribute("type") == "number", (
+        "sustainability_value_impact_pct must be type='number'."
+    )
+
+
+# ── CS473 ─────────────────────────────────────────────────────────────────────
+
+def test_CS473_8z_flood_risk_level_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: flood_risk_level select renders in residential supp (Section G)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-flood_risk_level")
+    assert sel.count() > 0, "Phase 8Z: flood_risk_level select must render in residential supp."
+    opts = sel.locator("option")
+    assert opts.count() >= 4, (
+        f"Phase 8Z: flood_risk_level must have >=4 risk-level options. Got {opts.count()}"
+    )
+
+
+# ── CS474 ─────────────────────────────────────────────────────────────────────
+
+def test_CS474_8z_climate_risk_value_impact_pct_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: climate_risk_value_impact_pct renders as number input (Section G)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='climate_risk_value_impact_pct']")
+    assert field.count() > 0, "Phase 8Z: climate_risk_value_impact_pct must render in residential supp."
+    assert field.get_attribute("type") == "number", (
+        "climate_risk_value_impact_pct must be type='number'."
+    )
+
+
+# ── CS475 ─────────────────────────────────────────────────────────────────────
+
+def test_CS475_8z_fiber_optic_available_bool_select_renders(page: Page, live_server: str) -> None:
+    """Phase 8Z: fiber_optic_available renders as bool select (نعم/لا) in residential supp (Section H)."""
+    _load_residential_supp_8w(page, live_server)
+    sel = page.locator("#es-supp-field-fiber_optic_available")
+    assert sel.count() > 0, "Phase 8Z: fiber_optic_available must render in residential supp."
+    opts_text = sel.inner_text()
+    assert "نعم" in opts_text and "لا" in opts_text, (
+        f"Phase 8Z: fiber_optic_available must show نعم/لا options. Got: {opts_text!r}"
+    )
+
+
+# ── CS476 ─────────────────────────────────────────────────────────────────────
+
+def test_CS476_8z_digital_infrastructure_value_impact_pct_number_input(page: Page, live_server: str) -> None:
+    """Phase 8Z: digital_infrastructure_value_impact_pct renders as number input (Section H)."""
+    _load_residential_supp_8w(page, live_server)
+    field = page.locator("[data-es-supp-field='digital_infrastructure_value_impact_pct']")
+    assert field.count() > 0, (
+        "Phase 8Z: digital_infrastructure_value_impact_pct must render in residential supp."
+    )
+    assert field.get_attribute("type") == "number", (
+        "digital_infrastructure_value_impact_pct must be type='number'."
+    )
+
+
+# ── CS477 ─────────────────────────────────────────────────────────────────────
+
+def test_CS477_8z_no_building_full_leakage_in_residential_supp(page: Page, live_server: str) -> None:
+    """Phase 8Z: no building_full floor-table elements must appear in residential_unit supplemental."""
+    _load_residential_supp_8w(page, live_server)
+    supp = page.locator("#es-req-supp")
+    bf_elements = supp.locator("[data-bf-floor], [data-bf-field]")
+    assert bf_elements.count() == 0, (
+        f"Phase 8Z: building_full elements must NOT leak into residential supp. Found {bf_elements.count()}."
+    )
+
+
+# ── CS478 ─────────────────────────────────────────────────────────────────────
+
+def test_CS478_8z_existing_8q_fields_still_present_regression(page: Page, live_server: str) -> None:
+    """Phase 8Z regression: existing 8Q supplemental fields (unit_type, maintenance_level, occupancy_status) still render."""
+    _load_residential_supp_8w(page, live_server)
+    supp = page.locator("#es-req-supp")
+    for name in ("unit_type", "maintenance_level", "occupancy_status", "bedrooms_count", "visible_defects"):
+        count = supp.locator(f"[data-es-supp-field='{name}']").count()
+        assert count > 0, (
+            f"Phase 8Z regression: existing 8Q field '{name}' must still render in residential supp."
+        )
+
+
+# ── CS479 ─────────────────────────────────────────────────────────────────────
+
+def test_CS479_8z_no_console_errors_after_enrichment(page: Page, live_server: str) -> None:
+    """Phase 8Z: no JS console errors after rendering the enriched residential_unit supplemental."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list[str] = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    _load_residential_supp_8w(page, live_server)
+    assert not errors, (
+        f"Phase 8Z: unexpected JS console errors on residential supp render: {errors}"
     )

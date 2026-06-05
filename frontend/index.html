@@ -1325,6 +1325,7 @@
                     <option value="فندق">فنادق ومنتجعات سياحية</option>
                     <option value="مصنع">صناعي / مستودع / لوجستي</option>
                     <option value="محل تجاري">تجزئة (محلات / مولات)</option>
+                    <option value="retail_shop_detailed">تجزئة / محل تجاري — تقييم تفصيلي</option>
                     <option value="مستشفى">أصول متخصصة: مستشفيات ومراكز طبية</option>
                     <option value="مدرسة">أصول متخصصة: مدارس ومرافق تعليمية</option>
                     <option value="مناجم">مناجم وآبار (بترول / غاز / مياه / ذهب)</option>
@@ -5821,6 +5822,7 @@ function _showIndexToast(msg, type) {
         'floating_hotel':               'floating_hotel',
         'مبنى قائم':                    'existing_building_detailed',
         'industrial_logistics_facility_detailed': 'industrial_logistics_facility_detailed',
+        'retail_shop_detailed':                   'retail_shop_detailed',
     };
 
     // ── Purpose mapping: frontend values → registry codes ─────────────────────
@@ -5896,6 +5898,7 @@ function _showIndexToast(msg, type) {
         'hotel':              { type: 'form', titleAr: 'فندق / منتجع سياحي' },
         'factory':            { type: 'form', titleAr: 'مصنع / صناعي / لوجستي' },
         'retail':             { type: 'form', titleAr: 'تجزئة / محلات تجارية' },
+        'retail_shop_detailed': { type: 'form', titleAr: 'تجزئة / محل تجاري — تقييم تفصيلي' },
         'hospital':           { type: 'form', titleAr: 'مستشفى / مركز طبي' },
         'school':             { type: 'form', titleAr: 'مدرسة / مرفق تعليمي' },
         'mine':               { type: 'form', titleAr: 'منجم / آبار' },
@@ -5937,6 +5940,7 @@ function _showIndexToast(msg, type) {
         'hotel':    { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'factory':  { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'retail':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'retail_shop_detailed': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'تجزئة / محل تجاري — نموذج تفصيلي محلّي لتجميع بيانات الوحدة التجارية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'hospital': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'school':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'mine':               { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذا نموذج محلي لتجميع بيانات الأصل حالياً. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
@@ -9555,6 +9559,8 @@ function _showIndexToast(msg, type) {
     'existing_building_detailed': { sections: [] },
     // ── Phase 8ZF: industrial_logistics_facility_detailed — all fields in _SUPPLEMENTAL_SCHEMAS ──
     'industrial_logistics_facility_detailed': { sections: [] },
+    // ── Phase 8ZG: retail_shop_detailed — all fields in _SUPPLEMENTAL_SCHEMAS ──
+    'retail_shop_detailed': { sections: [] },
 };
 
     // ── Phase 8Q: Supplemental field renderer — uses data-es-supp-field (not data-es-req-field) ──
@@ -9722,6 +9728,8 @@ function _showIndexToast(msg, type) {
         { value: 'agricultural_income_capitalization', label_ar: 'رسملة الدخل الزراعي' },
         { value: 'crop_yield_method',                  label_ar: 'أسلوب غلة المحاصيل' },
         { value: 'land_rent_capitalization',           label_ar: 'رسملة إيجار الأرض الزراعية' },
+        // ── Phase 8ZG: retail methodology options ────────────────────────────
+        { value: 'profit_method',                      label_ar: 'أسلوب الأرباح (Profit Method)' },
         { value: 'unknown',                      label_ar: 'غير محدد' },
     ];
 
@@ -13469,6 +13477,598 @@ function _showIndexToast(msg, type) {
             ]},
         ],
         // ── End Phase 8ZF ────────────────────────────────────────────────────────
+        // ── Phase 8ZG: retail_shop_detailed deep-enrichment supplemental ─────────
+        'retail_shop_detailed': [
+            // ── A — تعريف أصل التجزئة ونوعه ─────────────────────────────────
+            { heading: 'تعريف أصل التجزئة ونوعه', color: '#d4af37', desc: '', fields: [
+                { name: 'rs_supp_retail_asset_type', field_type: 'str', label_ar: 'نوع الأصل التجاري',
+                  options: [
+                    { value: 'street_shop',       label_ar: 'محل شارع' },
+                    { value: 'mall_shop',          label_ar: 'محل مول' },
+                    { value: 'retail_strip',       label_ar: 'شريط تجاري' },
+                    { value: 'showroom',           label_ar: 'صالة عرض / معرض' },
+                    { value: 'food_and_beverage',  label_ar: 'مأكولات ومشروبات (F&B)' },
+                    { value: 'supermarket',        label_ar: 'سوبرماركت / بقالة' },
+                    { value: 'pharmacy',           label_ar: 'صيدلية' },
+                    { value: 'bank_branch',        label_ar: 'فرع بنك' },
+                    { value: 'anchor_store',       label_ar: 'مستأجر رئيس (Anchor)' },
+                    { value: 'kiosk',              label_ar: 'كيوسك' },
+                    { value: 'warehouse_retail',   label_ar: 'تجزئة مستودعية' },
+                    { value: 'mixed_retail',       label_ar: 'تجزئة مختلطة' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_retail_positioning', field_type: 'str', label_ar: 'تموضع المحل التجاري',
+                  options: [
+                    { value: 'prime',        label_ar: 'ممتاز (Prime)' },
+                    { value: 'secondary',    label_ar: 'ثانوي' },
+                    { value: 'neighborhood', label_ar: 'حي سكني' },
+                    { value: 'destination',  label_ar: 'وجهة متخصّصة' },
+                    { value: 'convenience',  label_ar: 'قريب / ملائم' },
+                    { value: 'luxury',       label_ar: 'فاخر' },
+                    { value: 'discount',     label_ar: 'خصم / اقتصادي' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_operating_status', field_type: 'str', label_ar: 'حالة التشغيل',
+                  options: [
+                    { value: 'operating',          label_ar: 'يعمل' },
+                    { value: 'vacant',             label_ar: 'شاغر' },
+                    { value: 'under_fitout',       label_ar: 'تحت التجهيز (Fit-out)' },
+                    { value: 'under_renovation',   label_ar: 'تحت التجديد' },
+                    { value: 'temporarily_closed', label_ar: 'مغلق مؤقتاً' },
+                    { value: 'distressed',         label_ar: 'متعثّر' },
+                    { value: 'unknown',            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_owner_occupied_or_leased', field_type: 'str', label_ar: 'وضع الإشغال',
+                  options: [
+                    { value: 'owner_occupied', label_ar: 'مالك / مشغّل' },
+                    { value: 'tenant_occupied', label_ar: 'مستأجَر' },
+                    { value: 'vacant',          label_ar: 'شاغر' },
+                    { value: 'mixed',           label_ar: 'مختلط' },
+                    { value: 'unknown',         label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_single_tenant_or_multi_tenant', field_type: 'str', label_ar: 'مستأجر واحد أم متعدد',
+                  options: [
+                    { value: 'single_tenant', label_ar: 'مستأجر واحد' },
+                    { value: 'multi_tenant',  label_ar: 'متعدد المستأجرين' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tenant_trade_category', field_type: 'str', label_ar: 'فئة النشاط التجاري للمستأجر',
+                  options: [
+                    { value: 'fashion',       label_ar: 'أزياء وملابس' },
+                    { value: 'f_and_b',       label_ar: 'مأكولات ومشروبات' },
+                    { value: 'grocery',       label_ar: 'بقالة / سوبرماركت' },
+                    { value: 'electronics',   label_ar: 'إلكترونيات' },
+                    { value: 'pharmacy',      label_ar: 'صيدلية' },
+                    { value: 'services',      label_ar: 'خدمات' },
+                    { value: 'banking',       label_ar: 'بنوك / مالية' },
+                    { value: 'entertainment', label_ar: 'ترفيه وترويح' },
+                    { value: 'furniture',     label_ar: 'أثاث وديكور' },
+                    { value: 'other',         label_ar: 'أخرى' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── B — الخصائص المادية والمساحات ────────────────────────────────
+            { heading: 'الخصائص المادية والمساحات', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_gross_area_sqm',            field_type: 'float', label_ar: 'المساحة الإجمالية',              unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_net_leasable_area_sqm',     field_type: 'float', label_ar: 'المساحة الصالحة للتأجير (NLA)',  unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sales_area_sqm',            field_type: 'float', label_ar: 'مساحة المبيعات',                 unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_storage_area_sqm',          field_type: 'float', label_ar: 'مساحة التخزين',                  unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_mezzanine_area_sqm',        field_type: 'float', label_ar: 'مساحة الميزانين',                unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_outdoor_seating_area_sqm',  field_type: 'float', label_ar: 'مساحة الجلوس الخارجي',           unit_ar: 'م²',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_frontage_m',                field_type: 'float', label_ar: 'واجهة المحل',                    unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_shop_depth_m',              field_type: 'float', label_ar: 'عمق المحل',                      unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_ceiling_height_m',          field_type: 'float', label_ar: 'ارتفاع السقف',                   unit_ar: 'متر',  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_floor_level', field_type: 'str', label_ar: 'مستوى الطابق',
+                  options: [
+                    { value: 'basement',       label_ar: 'بدروم' },
+                    { value: 'ground',         label_ar: 'أرضي' },
+                    { value: 'first',          label_ar: 'أول' },
+                    { value: 'upper_floor',    label_ar: 'طابق علوي' },
+                    { value: 'multiple_levels', label_ar: 'متعدد الطوابق' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_corner_unit',                        field_type: 'bool', label_ar: 'وحدة زاوية (Corner Unit)؟',       valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_dual_frontage_available',            field_type: 'bool', label_ar: 'واجهة مزدوجة متاحة؟',            valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_back_of_house_available',            field_type: 'bool', label_ar: 'منطقة خلفية / خدمات متاحة؟',      valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_loading_or_service_access_available', field_type: 'bool', label_ar: 'وصول تحميل / خدمة متاح؟',       valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_parking_spaces_dedicated_count',     field_type: 'int',  label_ar: 'أماكن انتظار مخصَّصة',           valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_physical_condition', field_type: 'str', label_ar: 'الحالة المادية للوحدة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor', label_ar: 'سيئة' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_fitout_condition', field_type: 'str', label_ar: 'حالة التجهيزات (Fit-out)',
+                  options: [
+                    { value: 'new',              label_ar: 'جديدة' },
+                    { value: 'good',             label_ar: 'جيدة' },
+                    { value: 'average',          label_ar: 'متوسطة' },
+                    { value: 'needs_refurbishment', label_ar: 'تحتاج تجديداً' },
+                    { value: 'shell_and_core',   label_ar: 'هيكل خام (Shell & Core)' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_fitout_age_years', field_type: 'int', label_ar: 'عمر التجهيزات الحالية', unit_ar: 'سنة', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── C — الواجهة والرؤية والوصول ──────────────────────────────────
+            { heading: 'الواجهة والرؤية والوصول', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_visibility_quality', field_type: 'str', label_ar: 'جودة الرؤية والظهور',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'poor', label_ar: 'ضعيفة' },
+                    { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_signage_rights_available', field_type: 'bool', label_ar: 'حقوق اللافتات متاحة؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_street_exposure_quality', field_type: 'str', label_ar: 'جودة الانكشاف على الشارع',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'poor', label_ar: 'ضعيفة' },
+                    { value: 'not_applicable', label_ar: 'غير مطبّق (داخل مول)' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_pedestrian_access_quality', field_type: 'str', label_ar: 'جودة وصول المشاة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتاز' }, { value: 'good', label_ar: 'جيد' },
+                    { value: 'average', label_ar: 'متوسط' }, { value: 'poor', label_ar: 'ضعيف' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_parking_availability_quality', field_type: 'str', label_ar: 'توفّر ومستوى الانتظار',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتاز / مجاني' }, { value: 'good', label_ar: 'جيد' },
+                    { value: 'average', label_ar: 'متوسط' }, { value: 'poor', label_ar: 'ضعيف / مدفوع فقط' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_public_transport_access_quality', field_type: 'str', label_ar: 'جودة وصول النقل العام',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'poor', label_ar: 'ضعيفة' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_entrance_proximity_quality', field_type: 'str', label_ar: 'القرب من المدخل الرئيسي',
+                  options: [
+                    { value: 'adjacent', label_ar: 'مجاور / عند المدخل' }, { value: 'near', label_ar: 'قريب' },
+                    { value: 'medium', label_ar: 'متوسط' }, { value: 'far', label_ar: 'بعيد' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_anchor_tenant_proximity_quality', field_type: 'str', label_ar: 'القرب من المستأجر الرئيس',
+                  options: [
+                    { value: 'adjacent', label_ar: 'مجاور' }, { value: 'near', label_ar: 'قريب' },
+                    { value: 'medium', label_ar: 'متوسط' }, { value: 'far', label_ar: 'بعيد' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_footfall_level', field_type: 'str', label_ar: 'مستوى الإقبال / حركة المشاة',
+                  options: [
+                    { value: 'very_high', label_ar: 'مرتفع جداً' }, { value: 'high', label_ar: 'مرتفع' },
+                    { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_measured_footfall_daily', field_type: 'int', label_ar: 'العد اليومي المقاس للزوّار', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_footfall_notes', field_type: 'textarea', label_ar: 'ملاحظات حركة المشاة', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── D — السياق التجاري ومنطقة الجذب ─────────────────────────────
+            { heading: 'السياق التجاري ومنطقة الجذب', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_retail_context', field_type: 'str', label_ar: 'السياق التجاري للموقع',
+                  options: [
+                    { value: 'high_street',         label_ar: 'شارع رئيسي تجاري' },
+                    { value: 'neighborhood_center',  label_ar: 'مركز حي سكني' },
+                    { value: 'community_mall',        label_ar: 'مول مجتمعي' },
+                    { value: 'regional_mall',         label_ar: 'مول إقليمي' },
+                    { value: 'strip_center',          label_ar: 'شريط تجاري' },
+                    { value: 'mixed_use_project',     label_ar: 'مشروع متعدد الاستخدامات' },
+                    { value: 'transport_hub',         label_ar: 'محور نقل' },
+                    { value: 'tourist_area',          label_ar: 'منطقة سياحية' },
+                    { value: 'unknown',               label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_catchment_area_quality', field_type: 'str', label_ar: 'جودة منطقة الجذب',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'poor', label_ar: 'ضعيفة' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_catchment_income_level', field_type: 'str', label_ar: 'مستوى دخل منطقة الجذب',
+                  options: [
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'upper_middle', label_ar: 'فوق المتوسط' },
+                    { value: 'middle', label_ar: 'متوسط' }, { value: 'lower_middle', label_ar: 'دون المتوسط' },
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_nearby_competition_level', field_type: 'str', label_ar: 'مستوى المنافسة القريبة',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'moderate', label_ar: 'معتدل' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'very_high', label_ar: 'مرتفع جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_complementary_retail_nearby', field_type: 'bool', label_ar: 'تجزئة مكمّلة في المحيط؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_surrounding_occupancy_rate',  field_type: 'float', label_ar: 'معدّل إشغال المحيط التجاري', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_trade_area_growth_trend', field_type: 'str', label_ar: 'اتجاه نمو منطقة الجذب',
+                  options: [
+                    { value: 'growing', label_ar: 'نامٍ' }, { value: 'stable', label_ar: 'مستقر' },
+                    { value: 'declining', label_ar: 'متراجع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tourism_dependency_level', field_type: 'str', label_ar: 'مستوى الاعتماد على السياحة',
+                  options: [
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'moderate', label_ar: 'معتدل' },
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'none', label_ar: 'لا يوجد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_strip_unit_count',       field_type: 'int',   label_ar: 'عدد وحدات الشريط التجاري',
+                  help_ar: 'للشرائط التجارية متعدّدة الوحدات فقط — أدخل إجماليات الشريط هنا.', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_strip_total_gla_sqm',    field_type: 'float', label_ar: 'إجمالي مساحة الشريط (GLA)', unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_strip_avg_unit_size_sqm', field_type: 'float', label_ar: 'متوسط مساحة الوحدة في الشريط', unit_ar: 'م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_strip_vacancy_count',    field_type: 'int',   label_ar: 'عدد الوحدات الشاغرة في الشريط', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_position_notes',  field_type: 'textarea', label_ar: 'ملاحظات الموضع التجاري', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── E — الإيجارات والعقود والدخل ──────────────────────────────────
+            { heading: 'الإيجارات والعقود والدخل', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_lease_contract_available',       field_type: 'bool',  label_ar: 'عقد الإيجار متاح؟',              valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_current_rent_monthly',           field_type: 'float', label_ar: 'الإيجار الحالي الشهري',          unit_ar: 'جنيه/شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_current_rent_annual',            field_type: 'float', label_ar: 'الإيجار الحالي السنوي',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_rent_monthly',            field_type: 'float', label_ar: 'الإيجار السوقي الشهري',          unit_ar: 'جنيه/شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_rent_annual',             field_type: 'float', label_ar: 'الإيجار السوقي السنوي',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_rent_per_sqm_monthly',           field_type: 'float', label_ar: 'الإيجار الشهري للمتر',           unit_ar: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_rent_per_sqm_annual',            field_type: 'float', label_ar: 'الإيجار السنوي للمتر',           unit_ar: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_lease_remaining_months',         field_type: 'int',   label_ar: 'المدة المتبقية من الإيجار',     unit_ar: 'شهر',      valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_turnover_rent_applicable',       field_type: 'bool',  label_ar: 'إيجار نسبة المبيعات (Turnover Rent) مطبَّق؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_turnover_rent_pct',              field_type: 'float', label_ar: 'نسبة إيجار المبيعات',           unit_ar: '%',         valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_rent_free_period_remaining_months', field_type: 'int', label_ar: 'شهور الإيجار المجاني المتبقية', unit_ar: 'شهر',     valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_service_charge_monthly',         field_type: 'float', label_ar: 'رسوم الخدمة الشهرية',           unit_ar: 'جنيه/شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_service_charge_annual',          field_type: 'float', label_ar: 'رسوم الخدمة السنوية',           unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tenant_quality', field_type: 'str', label_ar: 'جودة المستأجر',
+                  options: [
+                    { value: 'international_brand', label_ar: 'علامة تجارية دولية' },
+                    { value: 'regional_brand',      label_ar: 'علامة تجارية إقليمية' },
+                    { value: 'local_brand',         label_ar: 'علامة تجارية محلية' },
+                    { value: 'individual_tenant',   label_ar: 'مستأجر فردي' },
+                    { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tenant_covenant_strength', field_type: 'str', label_ar: 'قوة الضمان التجاري للمستأجر',
+                  options: [
+                    { value: 'strong', label_ar: 'قوي' }, { value: 'average', label_ar: 'متوسط' },
+                    { value: 'weak', label_ar: 'ضعيف' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_lease_break_options_available', field_type: 'bool',  label_ar: 'خيارات إنهاء مبكّر (Break Clause) متاحة؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_rent_arrears_status', field_type: 'str', label_ar: 'حالة متأخّرات الإيجار',
+                  options: [
+                    { value: 'none', label_ar: 'لا يوجد' }, { value: 'minor', label_ar: 'طفيفة' },
+                    { value: 'significant', label_ar: 'جوهرية' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_exclusivity_clause_available', field_type: 'bool', label_ar: 'شرط حصرية النشاط التجاري؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_lease_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص قيود العقد وشروطه الخاصة', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── F — المبيعات والإنتاجية التجارية ─────────────────────────────
+            { heading: 'المبيعات والإنتاجية التجارية', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_annual_gross_sales',            field_type: 'float', label_ar: 'إجمالي المبيعات السنوي',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_monthly_average_sales',         field_type: 'float', label_ar: 'متوسط المبيعات الشهرية',         unit_ar: 'جنيه/شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sales_per_sqm_annual',          field_type: 'float', label_ar: 'المبيعات السنوية للمتر',          unit_ar: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_occupancy_cost_ratio_pct',      field_type: 'float', label_ar: 'نسبة تكلفة الإشغال (OCR)',       unit_ar: '%',         valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_rent_to_sales_ratio_pct',       field_type: 'float', label_ar: 'نسبة الإيجار إلى المبيعات',      unit_ar: '%',         valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_online_order_or_delivery_sales_pct', field_type: 'float', label_ar: 'نسبة مبيعات التوصيل/الأونلاين', unit_ar: '%',    valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sales_trend', field_type: 'str', label_ar: 'اتجاه المبيعات',
+                  options: [
+                    { value: 'increasing', label_ar: 'في تصاعد' }, { value: 'stable', label_ar: 'مستقر' },
+                    { value: 'declining', label_ar: 'في تراجع' }, { value: 'volatile', label_ar: 'متذبذب' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sales_records_available', field_type: 'bool',  label_ar: 'سجلات المبيعات / POS متاحة؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_retail_productivity_notes', field_type: 'textarea', label_ar: 'ملاحظات إنتاجية التجزئة', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── G — المصروفات والتكاليف وCAPEX ───────────────────────────────
+            { heading: 'المصروفات والتكاليف وCAPEX', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_operating_expenses_annual',      field_type: 'float', label_ar: 'المصروفات التشغيلية السنوية',    unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_utilities_cost_annual',          field_type: 'float', label_ar: 'تكلفة المرافق السنوية',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_maintenance_cost_annual',        field_type: 'float', label_ar: 'تكلفة الصيانة السنوية',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_insurance_cost_annual',          field_type: 'float', label_ar: 'تكلفة التأمين السنوية',          unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_fitout_capex_required',          field_type: 'float', label_ar: 'CAPEX للتجهيزات المطلوبة',       unit_ar: 'جنيه',     valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_deferred_maintenance_cost',      field_type: 'float', label_ar: 'تكلفة الصيانة المؤجَّلة',        unit_ar: 'جنيه',     valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_reinstatement_obligation_cost',  field_type: 'float', label_ar: 'تكلفة إعادة الأصل لحالته الأصلية', unit_ar: 'جنيه',  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_landlord_contribution_to_fitout', field_type: 'float', label_ar: 'مساهمة المالك في التجهيزات',    unit_ar: 'جنيه',     valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_major_replacement_required', field_type: 'checkbox_group', label_ar: 'استبدالات رئيسية مطلوبة',
+                  options: [
+                    { value: 'storefront',   label_ar: 'واجهة المحل' },
+                    { value: 'flooring',     label_ar: 'الأرضيات' },
+                    { value: 'hvac',         label_ar: 'تكييف / تهوية' },
+                    { value: 'electrical',   label_ar: 'كهرباء' },
+                    { value: 'plumbing',     label_ar: 'سباكة' },
+                    { value: 'signage',      label_ar: 'لافتات' },
+                    { value: 'fire_system',  label_ar: 'نظام إطفاء' },
+                    { value: 'none',         label_ar: 'لا شيء' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_capex_notes', field_type: 'textarea', label_ar: 'ملاحظات CAPEX والتكاليف', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── H — الخدمات الفنية وMEP ───────────────────────────────────────
+            { heading: 'الخدمات الفنية وMEP', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_electrical_capacity_kva', field_type: 'float', label_ar: 'سعة الكهرباء', unit_ar: 'kVA', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_hvac_available',          field_type: 'bool',  label_ar: 'نظام تكييف متاح؟',             valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_hvac_condition', field_type: 'str', label_ar: 'حالة نظام التكييف',
+                  options: [
+                    { value: 'new', label_ar: 'جديد' }, { value: 'good', label_ar: 'جيد' },
+                    { value: 'average', label_ar: 'متوسط' }, { value: 'needs_maintenance', label_ar: 'يحتاج صيانة' },
+                    { value: 'poor', label_ar: 'سيئ' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_ventilation_extraction_available', field_type: 'bool', label_ar: 'تهوية / شفط متاح؟',          valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_grease_trap_available',            field_type: 'bool', label_ar: 'مصيدة شحوم (للمطاعم) متاحة؟',valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_gas_connection_available',         field_type: 'bool', label_ar: 'توصيل غاز متاح؟',            valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_water_connection_status', field_type: 'str', label_ar: 'حالة توصيل المياه',
+                  options: [
+                    { value: 'connected', label_ar: 'متصل' }, { value: 'not_connected', label_ar: 'غير متصل' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_fire_alarm_system_status', field_type: 'str', label_ar: 'حالة نظام إنذار الحريق',
+                  options: [
+                    { value: 'operational', label_ar: 'يعمل' }, { value: 'needs_maintenance', label_ar: 'يحتاج صيانة' },
+                    { value: 'not_installed', label_ar: 'غير مركَّب' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sprinkler_system_available', field_type: 'bool', label_ar: 'نظام رشاشات متاح؟',              valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_cctv_available',              field_type: 'bool', label_ar: 'CCTV متاح؟',                    valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_loading_bay_available',       field_type: 'bool', label_ar: 'منطقة تحميل / تفريغ متاحة؟',    valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_mep_constraints_summary',     field_type: 'textarea', label_ar: 'ملاحظات وقيود MEP',          valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── I — التراخيص والاستخدام القانوني ─────────────────────────────
+            { heading: 'التراخيص والاستخدام القانوني', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_ownership_type', field_type: 'str', label_ar: 'نوع الملكية',
+                  options: [
+                    { value: 'freehold',    label_ar: 'ملك حر' },
+                    { value: 'leasehold',   label_ar: 'إيجار طويل' },
+                    { value: 'usufruct',    label_ar: 'حق انتفاع' },
+                    { value: 'strata',      label_ar: 'ملكية طبقية' },
+                    { value: 'unknown',     label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_title_deed_available',          field_type: 'bool', label_ar: 'سند الملكية / العقد متاح؟',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_commercial_license_status', field_type: 'str', label_ar: 'حالة الرخصة التجارية',
+                  options: [
+                    { value: 'valid', label_ar: 'سارية' }, { value: 'expired', label_ar: 'منتهية' },
+                    { value: 'under_renewal', label_ar: 'تحت التجديد' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_operating_license_status', field_type: 'str', label_ar: 'حالة رخصة التشغيل',
+                  options: [
+                    { value: 'valid', label_ar: 'سارية' }, { value: 'expired', label_ar: 'منتهية' },
+                    { value: 'under_renewal', label_ar: 'تحت التجديد' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_food_beverage_license_status', field_type: 'str', label_ar: 'رخصة الأغذية والمشروبات (إن انطبق)',
+                  options: [
+                    { value: 'valid', label_ar: 'سارية' }, { value: 'expired', label_ar: 'منتهية' },
+                    { value: 'under_renewal', label_ar: 'تحت التجديد' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_civil_defense_license_status', field_type: 'str', label_ar: 'حالة رخصة الحماية المدنية',
+                  options: [
+                    { value: 'valid', label_ar: 'سارية' }, { value: 'expired', label_ar: 'منتهية' },
+                    { value: 'under_renewal', label_ar: 'تحت التجديد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_signage_permit_status', field_type: 'str', label_ar: 'حالة تصريح اللافتات',
+                  options: [
+                    { value: 'valid', label_ar: 'ساري' }, { value: 'expired', label_ar: 'منتهٍ' },
+                    { value: 'not_required', label_ar: 'غير مطلوب' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_mall_or_management_approval_status', field_type: 'str', label_ar: 'موافقة إدارة المول / المجمع',
+                  options: [
+                    { value: 'approved', label_ar: 'معتمَدة' }, { value: 'pending', label_ar: 'قيد الاعتماد' },
+                    { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_zoning_compliance_status', field_type: 'str', label_ar: 'مطابقة الاستخدام لتقسيم المناطق',
+                  options: [
+                    { value: 'compliant', label_ar: 'مطابق' }, { value: 'non_compliant', label_ar: 'غير مطابق' },
+                    { value: 'partially_compliant', label_ar: 'جزئياً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_lease_assignment_permission', field_type: 'str', label_ar: 'إذن التنازل عن الإيجار',
+                  options: [
+                    { value: 'permitted', label_ar: 'مسموح' }, { value: 'requires_landlord_consent', label_ar: 'يستلزم موافقة المالك' },
+                    { value: 'not_permitted', label_ar: 'غير مسموح' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sublease_permission', field_type: 'str', label_ar: 'إذن التأجير من الباطن',
+                  options: [
+                    { value: 'permitted', label_ar: 'مسموح' }, { value: 'requires_landlord_consent', label_ar: 'يستلزم موافقة المالك' },
+                    { value: 'not_permitted', label_ar: 'غير مسموح' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_landlord_consent_required', field_type: 'bool', label_ar: 'موافقة المالك مطلوبة للتغييرات؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_operating_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص القيود التشغيلية والقانونية', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── J — السوق وقابلية التسويق ─────────────────────────────────────
+            { heading: 'السوق وقابلية التسويق', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_marketability_level', field_type: 'str', label_ar: 'مستوى قابلية التسويق',
+                  options: [
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'above_average', label_ar: 'فوق المتوسط' },
+                    { value: 'average', label_ar: 'متوسط' }, { value: 'below_average', label_ar: 'دون المتوسط' },
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_expected_marketing_period_months', field_type: 'int',   label_ar: 'فترة التسويق المتوقعة',   unit_ar: 'شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_liquidity_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر السيولة',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'very_high', label_ar: 'مرتفع جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_comparable_rents_available',    field_type: 'bool',  label_ar: 'إيجارات مقارنة متاحة؟',       valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_comparable_sales_available',    field_type: 'bool',  label_ar: 'مبيعات مقارنة متاحة؟',        valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_rent_per_sqm',           field_type: 'float', label_ar: 'الإيجار السوقي للمتر',         unit_ar: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_sale_price_per_sqm',     field_type: 'float', label_ar: 'سعر البيع السوقي للمتر',       unit_ar: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tenant_demand_level', field_type: 'str', label_ar: 'مستوى الطلب من المستأجرين',
+                  options: [
+                    { value: 'strong', label_ar: 'قوي' }, { value: 'moderate', label_ar: 'معتدل' },
+                    { value: 'weak', label_ar: 'ضعيف' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_vacancy_in_submarket_level', field_type: 'str', label_ar: 'مستوى الشواغر في السوق الفرعي',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'moderate', label_ar: 'معتدل' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'very_high', label_ar: 'مرتفع جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_re_leasing_risk_level', field_type: 'str', label_ar: 'مخاطر إعادة التأجير',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_e_commerce_disruption_risk_level', field_type: 'str', label_ar: 'مخاطر تعطيل التجارة الإلكترونية',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_redevelopment_or_repositioning_potential', field_type: 'str', label_ar: 'إمكانية إعادة التطوير أو التموضع',
+                  options: [
+                    { value: 'high', label_ar: 'مرتفعة' }, { value: 'medium', label_ar: 'متوسطة' },
+                    { value: 'low', label_ar: 'منخفضة' }, { value: 'not_feasible', label_ar: 'غير جدوى' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_market_notes', field_type: 'textarea', label_ar: 'ملاحظات السوق وقابلية التسويق', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── K — معاملات التعديل حسب غرض التقييم ─────────────────────────
+            { heading: 'معاملات التعديل حسب غرض التقييم', color: '#d4af37',
+              desc: 'توجيه محلي فقط — لا يُطبَّق تلقائياً على ناتج التقرير ولا يُرسَل للـ API. الأغراض 1–7 تُحاذى مع أكواد السجل؛ الأغراض 8–11 إدخال محلي تجاري.',
+              fields: [
+                { name: 'rs_supp_purpose_mortgage_lending_methodology',          field_type: 'str',      label_ar: 'رهن وتمويل — المنهجية',              options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_mortgage_lending_adjustment_pct',       field_type: 'float',    label_ar: 'رهن وتمويل — نسبة التعديل',          unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_mortgage_lending_adjustment_rationale', field_type: 'textarea', label_ar: 'رهن وتمويل — مبرر التعديل',           valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_sale_purchase_methodology',             field_type: 'str',      label_ar: 'بيع وشراء — المنهجية',               options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_sale_purchase_adjustment_pct',          field_type: 'float',    label_ar: 'بيع وشراء — نسبة التعديل',           unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_sale_purchase_adjustment_rationale',    field_type: 'textarea', label_ar: 'بيع وشراء — مبرر التعديل',            valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_insurance_methodology',                 field_type: 'str',      label_ar: 'تأمين — المنهجية',                   options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_insurance_adjustment_pct',              field_type: 'float',    label_ar: 'تأمين — نسبة التعديل',                unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_insurance_adjustment_rationale',        field_type: 'textarea', label_ar: 'تأمين — مبرر التعديل',                valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_ifrs_fair_value_methodology',           field_type: 'str',      label_ar: 'IFRS / تقارير مالية — المنهجية',     options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_ifrs_fair_value_adjustment_pct',        field_type: 'float',    label_ar: 'IFRS — نسبة التعديل',                 unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_ifrs_fair_value_adjustment_rationale',  field_type: 'textarea', label_ar: 'IFRS — مبرر التعديل',                  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_rental_assessment_methodology',         field_type: 'str',      label_ar: 'تحديد الأجرة — المنهجية',             options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_rental_assessment_adjustment_pct',      field_type: 'float',    label_ar: 'تحديد الأجرة — نسبة التعديل',         unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_rental_assessment_adjustment_rationale', field_type: 'textarea', label_ar: 'تحديد الأجرة — مبرر التعديل',        valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_taxation_methodology',                  field_type: 'str',      label_ar: 'ضريبة عقارية — المنهجية',             options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_taxation_adjustment_pct',               field_type: 'float',    label_ar: 'ضريبة عقارية — نسبة التعديل',         unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_taxation_adjustment_rationale',         field_type: 'textarea', label_ar: 'ضريبة عقارية — مبرر التعديل',          valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_liquidation_methodology',               field_type: 'str',      label_ar: 'تصفية إجبارية — المنهجية',            options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_liquidation_adjustment_pct',            field_type: 'float',    label_ar: 'تصفية إجبارية — نسبة التعديل',        unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_liquidation_adjustment_rationale',      field_type: 'textarea', label_ar: 'تصفية إجبارية — مبرر التعديل',         valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_litigation_dispute_methodology',        field_type: 'str',      label_ar: 'نزاعات قضائية — المنهجية',            options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false, help_ar: 'توجيه محلي فقط — لا يقابل كود غرض في السجل ولا يُرسَل للـ API.' },
+                { name: 'rs_supp_purpose_litigation_dispute_adjustment_pct',     field_type: 'float',    label_ar: 'نزاعات — نسبة التعديل',                unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_litigation_dispute_adjustment_rationale', field_type: 'textarea', label_ar: 'نزاعات — مبرر التعديل',             valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_investment_acquisition_methodology',    field_type: 'str',      label_ar: 'استثمار / استحواذ — المنهجية',        options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false, help_ar: 'توجيه محلي فقط — لا يقابل كود غرض في السجل ولا يُرسَل للـ API.' },
+                { name: 'rs_supp_purpose_investment_acquisition_adjustment_pct', field_type: 'float',    label_ar: 'استثمار — نسبة التعديل',               unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_investment_acquisition_adjustment_rationale', field_type: 'textarea', label_ar: 'استثمار — مبرر التعديل',       valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_lease_renewal_review_methodology',      field_type: 'str',      label_ar: 'مراجعة / تجديد إيجار — المنهجية',    options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false, help_ar: 'توجيه محلي فقط — لا يقابل كود غرض في السجل ولا يُرسَل للـ API.' },
+                { name: 'rs_supp_purpose_lease_renewal_review_adjustment_pct',   field_type: 'float',    label_ar: 'مراجعة الإيجار — نسبة التعديل',       unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_lease_renewal_review_adjustment_rationale', field_type: 'textarea', label_ar: 'مراجعة الإيجار — مبرر التعديل',  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_business_interruption_methodology',     field_type: 'str',      label_ar: 'توقّف الأعمال — المنهجية',            options: _METHODOLOGY_OPTS, valid_values: [], group: '', ui_required: false, help_ar: 'توجيه محلي فقط — لا يقابل كود غرض في السجل ولا يُرسَل للـ API.' },
+                { name: 'rs_supp_purpose_business_interruption_adjustment_pct',  field_type: 'float',    label_ar: 'توقّف الأعمال — نسبة التعديل',        unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_purpose_business_interruption_adjustment_rationale', field_type: 'textarea', label_ar: 'توقّف الأعمال — مبرر التعديل', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── L — كفاءة الطاقة والاستدامة ───────────────────────────────────
+            { heading: 'كفاءة الطاقة والاستدامة', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_energy_efficiency_rating', field_type: 'str', label_ar: 'تصنيف كفاءة الطاقة',
+                  options: [
+                    { value: 'a_plus', label_ar: 'A+ (ممتاز)' }, { value: 'a', label_ar: 'A' },
+                    { value: 'b', label_ar: 'B' }, { value: 'c', label_ar: 'C' },
+                    { value: 'd', label_ar: 'D' }, { value: 'not_rated', label_ar: 'غير مصنَّف' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_electricity_consumption_annual_kwh', field_type: 'float', label_ar: 'استهلاك الكهرباء السنوي', unit_ar: 'kWh/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_water_consumption_annual_m3',        field_type: 'float', label_ar: 'استهلاك المياه السنوي',    unit_ar: 'م³/سنة',   valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_led_lighting_available',             field_type: 'bool',  label_ar: 'إضاءة LED متاحة؟',         valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_smart_meter_available',              field_type: 'bool',  label_ar: 'عداد ذكي متاح؟',           valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_efficient_refrigeration_available',  field_type: 'bool',  label_ar: 'تبريد كفوء متاح (إن انطبق)؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_waste_sorting_or_recycling_available', field_type: 'bool', label_ar: 'فرز / إعادة تدوير نفايات متاح؟', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_green_retail_certification_status', field_type: 'str', label_ar: 'شهادة تجزئة خضراء',
+                  options: [
+                    { value: 'leed_certified', label_ar: 'LEED Certified' }, { value: 'leed_silver', label_ar: 'LEED Silver' },
+                    { value: 'leed_gold', label_ar: 'LEED Gold' }, { value: 'other_cert', label_ar: 'شهادة أخرى' },
+                    { value: 'none', label_ar: 'لا يوجد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sustainability_features', field_type: 'checkbox_group', label_ar: 'مزايا الاستدامة',
+                  options: [
+                    { value: 'led_lighting',            label_ar: 'إضاءة LED' },
+                    { value: 'efficient_hvac',          label_ar: 'تكييف كفوء' },
+                    { value: 'efficient_refrigeration', label_ar: 'تبريد كفوء' },
+                    { value: 'smart_meter',             label_ar: 'عداد ذكي' },
+                    { value: 'low_flow_fixtures',       label_ar: 'صنابير اقتصادية' },
+                    { value: 'waste_sorting',           label_ar: 'فرز النفايات' },
+                    { value: 'recycling_facilities',    label_ar: 'مرافق إعادة تدوير' },
+                    { value: 'none',                    label_ar: 'لا يوجد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sustainability_value_impact_pct', field_type: 'float',    label_ar: 'التأثير التقديري للاستدامة على القيمة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_sustainability_notes',            field_type: 'textarea', label_ar: 'ملاحظات كفاءة الطاقة والاستدامة',        valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── M — المخاطر المناخية والتشغيلية ──────────────────────────────
+            { heading: 'المخاطر المناخية والتشغيلية', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_flood_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الفيضان',
+                  options: [
+                    { value: 'negligible', label_ar: 'لا يُذكر' }, { value: 'low', label_ar: 'منخفض' },
+                    { value: 'medium', label_ar: 'متوسط' }, { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_fire_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الحريق',
+                  options: [
+                    { value: 'negligible', label_ar: 'لا يُذكر' }, { value: 'low', label_ar: 'منخفض' },
+                    { value: 'medium', label_ar: 'متوسط' }, { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_basement_or_ground_floor_flooding_risk', field_type: 'str', label_ar: 'مخاطر تسرّب مياه (بدروم/أرضي)',
+                  options: [
+                    { value: 'low', label_ar: 'منخفضة' }, { value: 'medium', label_ar: 'متوسطة' },
+                    { value: 'high', label_ar: 'مرتفعة' }, { value: 'not_applicable', label_ar: 'غير مطبّق' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_crime_or_security_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الجريمة / الأمن',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_business_interruption_risk_level', field_type: 'str', label_ar: 'مخاطر انقطاع الأعمال',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_tenant_failure_risk_level', field_type: 'str', label_ar: 'مخاطر تعثّر المستأجر',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_footfall_decline_risk_level', field_type: 'str', label_ar: 'مخاطر تراجع الإقبال',
+                  options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_climate_resilience_features', field_type: 'checkbox_group', label_ar: 'مزايا الصمود المناخي',
+                  options: [
+                    { value: 'flood_barriers',      label_ar: 'حواجز فيضان' },
+                    { value: 'fire_detection',      label_ar: 'كشف حريق' },
+                    { value: 'sprinkler_system',    label_ar: 'نظام رشاشات' },
+                    { value: 'backup_power',        label_ar: 'طاقة احتياطية' },
+                    { value: 'emergency_access',    label_ar: 'مسارات طوارئ' },
+                    { value: 'heat_resilient_design', label_ar: 'تصميم مقاوم للحرارة' },
+                    { value: 'none',                label_ar: 'لا يوجد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_climate_or_operational_risk_notes', field_type: 'textarea', label_ar: 'ملاحظات المخاطر المناخية والتشغيلية', valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── N — البنية التحتية الرقمية والأومني تشانل ────────────────────
+            { heading: 'البنية التحتية الرقمية والأومني تشانل', color: '#6b7280', desc: '', fields: [
+                { name: 'rs_supp_fiber_optic_available',              field_type: 'bool',  label_ar: 'ألياف بصرية متاحة؟',           valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_internet_speed_mbps',                field_type: 'float', label_ar: 'سرعة الإنترنت',                unit_ar: 'Mbps', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_five_g_coverage_quality', field_type: 'str', label_ar: 'جودة تغطية 5G',
+                  options: [
+                    { value: 'full_coverage', label_ar: 'كاملة' }, { value: 'partial', label_ar: 'جزئية' },
+                    { value: 'no_coverage', label_ar: 'لا تغطية' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_pos_system_available',               field_type: 'bool',  label_ar: 'نظام نقطة بيع (POS) متاح؟',    valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_online_ordering_or_delivery_integration', field_type: 'str', label_ar: 'تكامل الطلب الإلكتروني / التوصيل',
+                  options: [
+                    { value: 'fully_integrated', label_ar: 'متكامل كلياً' }, { value: 'partial', label_ar: 'جزئي' },
+                    { value: 'none', label_ar: 'لا يوجد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_digital_payment_infrastructure', field_type: 'str', label_ar: 'بنية الدفع الرقمي',
+                  options: [
+                    { value: 'full', label_ar: 'كاملة (نقد + بطاقات + محافظ رقمية)' },
+                    { value: 'cards_only', label_ar: 'بطاقات فقط' },
+                    { value: 'cash_only', label_ar: 'نقد فقط' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_customer_analytics_available', field_type: 'bool',  label_ar: 'تحليلات العملاء / CRM متاحة؟',     valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_loyalty_system_available',     field_type: 'bool',  label_ar: 'نظام ولاء متاح؟',                  valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_click_and_collect_available',  field_type: 'bool',  label_ar: 'خدمة Click & Collect متاحة؟',      valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_digital_signage_available',    field_type: 'bool',  label_ar: 'لافتات رقمية متاحة؟',              valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_digital_infrastructure_quality', field_type: 'str', label_ar: 'تقييم جودة البنية الرقمية الكلية',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good', label_ar: 'جيدة' },
+                    { value: 'average', label_ar: 'متوسطة' }, { value: 'poor', label_ar: 'ضعيفة' }, { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_digital_infrastructure_value_impact_pct', field_type: 'float',    label_ar: 'التأثير التقديري للبنية الرقمية على القيمة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rs_supp_omnichannel_notes',                       field_type: 'textarea', label_ar: 'ملاحظات البنية الرقمية والأومني تشانل',       valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── O — مستندات إضافية مطلوبة ─────────────────────────────────────
+            { heading: 'مستندات إضافية مطلوبة', color: '#6b7280',
+              desc: 'يُرجى تأكيد توفّر المستندات التالية للتقييم. (توجيه محلي — لن يُرسَل للتقرير حالياً.)',
+              fields: [
+                { name: 'rs_doc_title_deed_or_lease',       field_type: 'bool', label_ar: 'سند الملكية / عقد الإيجار',           group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_commercial_license',        field_type: 'bool', label_ar: 'رخصة النشاط التجاري',                 group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_civil_defense_license',     field_type: 'bool', label_ar: 'رخصة الحماية المدنية',                group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_mall_approval',             field_type: 'bool', label_ar: 'موافقة إدارة المول / المجمع',         group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_signage_permit',            field_type: 'bool', label_ar: 'رخصة اللافتات',                       group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_unit_plan',                 field_type: 'bool', label_ar: 'مخطط الوحدة ومساحاتها',              group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_shop_photos',               field_type: 'bool', label_ar: 'صور الواجهة والتشطيبات',              group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_lease_contract',            field_type: 'bool', label_ar: 'عقد الإيجار وشروط التصعيد',          group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_service_charge_statement',  field_type: 'bool', label_ar: 'بيانات رسوم الخدمة',                  group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_sales_or_pos_records',      field_type: 'bool', label_ar: 'بيانات المبيعات / POS (إن وجدت)',    group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_operating_expenses',        field_type: 'bool', label_ar: 'بيانات المصروفات والتكاليف',         group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_fitout_documents',          field_type: 'bool', label_ar: 'مستندات التجهيزات والـ Fit-out',      group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_food_safety_cert',          field_type: 'bool', label_ar: 'شهادات السلامة / الغذاء (إن وجدت)',  group: 'document', valid_values: [], ui_required: false },
+                { name: 'rs_doc_market_comparables',        field_type: 'bool', label_ar: 'مقارنات إيجارية / بيعية (إن وجدت)', group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ],
+        // ── End Phase 8ZG ────────────────────────────────────────────────────────
     };
 
     function _renderSupplemental(registryCode) {
@@ -13486,8 +14086,10 @@ function _showIndexToast(msg, type) {
             ? 'متطلبات تقييم فندق أو منتجع — تقييم تفصيلي'
             : registryCode === 'industrial_logistics_facility_detailed'
             ? 'متطلبات تقييم مصنع / أصل صناعي أو لوجستي — تقييم تفصيلي'
+            : registryCode === 'retail_shop_detailed'
+            ? 'متطلبات تقييم تجزئة / محل تجاري — تقييم تفصيلي'
             : 'متطلبات تقييم الوحدة السكنية — شقة / فيلا';
-        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed')
+        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed')
             ? 'الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.'
             : 'الحقول أعلاه من سجل المتطلبات الأساسي. الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.';
         var html = '<div id="es-req-supp-header" style="border-top:2px solid #374151;margin-top:14px;padding-top:10px;">';

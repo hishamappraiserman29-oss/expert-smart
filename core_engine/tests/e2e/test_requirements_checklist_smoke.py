@@ -11515,3 +11515,553 @@ def test_CS809_8zf_hotel_and_ebd_regression(page: "Page", live_server: str) -> N
     assert "مبنى قائم" in ebd_text or "تجاري" in ebd_text, (
         "8ZF regression: existing_building_detailed supp heading must still appear."
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZG — retail_shop_detailed (Retail / Shop — Detailed Valuation)
+# CS810 – CS859
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _load_retail_shop_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: load retail_shop_detailed and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="retail_shop_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS810 ─────────────────────────────────────────────────────────────────────
+
+def test_CS810_8zg_profile_option_exists_in_dropdown(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: retail_shop_detailed option exists in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opts = page.locator("#asset-type option[value='retail_shop_detailed']")
+    assert opts.count() > 0, "8ZG: retail_shop_detailed must be in dropdown."
+
+
+# ── CS811 ─────────────────────────────────────────────────────────────────────
+
+def test_CS811_8zg_badge_renders_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: badge renders for retail_shop_detailed; no auth modal appears."""
+    _load_retail_shop_supp(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "8ZG: #es-profile-badge must be visible."
+    badge_text = badge.inner_text()
+    assert "نموذج محلي" in badge_text, f"8ZG: badge must contain 'نموذج محلي'. Got: {badge_text}"
+    modal = page.locator("#auth-modal, #authModal, [id*='auth'][id*='modal']")
+    assert modal.count() == 0 or not modal.first.is_visible(), "8ZG: no auth modal must appear."
+
+
+# ── CS812 ─────────────────────────────────────────────────────────────────────
+
+def test_CS812_8zg_panel_visible_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: panel is visible and no composite link is triggered."""
+    _load_retail_shop_supp(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "8ZG: #es-req-panel must be visible."
+    panel_html = panel.inner_html()
+    assert "composite" not in panel_html.lower(), "8ZG: no composite link must appear in panel."
+
+
+# ── CS813 ─────────────────────────────────────────────────────────────────────
+
+def test_CS813_8zg_supp_controls_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: retail_shop_detailed #es-req-supp receives rs_supp_ fields (>10 controls)."""
+    _load_retail_shop_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 10, (
+        f"8ZG: #es-req-supp must contain >10 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS814 ─────────────────────────────────────────────────────────────────────
+
+def test_CS814_8zg_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: supp header shows Arabic heading referencing retail/shop valuation."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "تجزئة" in supp_text or "محل تجاري" in supp_text, (
+        f"8ZG: supp heading must contain 'تجزئة' or 'محل تجاري'. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS815 ─────────────────────────────────────────────────────────────────────
+
+def test_CS815_8zg_supp_local_only_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: supp shows 'إدخال محلي' or 'لا يُرسل للتقرير' disclaimer."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلي" in supp_text or "لا يُرسل" in supp_text, (
+        f"8ZG: local-only text must appear in supp. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS816 ─────────────────────────────────────────────────────────────────────
+
+def test_CS816_8zg_section_A_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section A «تعريف أصل التجزئة ونوعه» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "تعريف أصل التجزئة" in supp_text, "8ZG: section A heading must appear."
+
+
+# ── CS817 ─────────────────────────────────────────────────────────────────────
+
+def test_CS817_8zg_section_B_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section B «الخصائص المادية والمساحات» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص المادية والمساحات" in supp_text, "8ZG: section B heading must appear."
+
+
+# ── CS818 ─────────────────────────────────────────────────────────────────────
+
+def test_CS818_8zg_section_C_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section C «الواجهة والرؤية والوصول» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الواجهة والرؤية والوصول" in supp_text, "8ZG: section C heading must appear."
+
+
+# ── CS819 ─────────────────────────────────────────────────────────────────────
+
+def test_CS819_8zg_section_D_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section D «السياق التجاري ومنطقة الجذب» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "السياق التجاري ومنطقة الجذب" in supp_text, "8ZG: section D heading must appear."
+
+
+# ── CS820 ─────────────────────────────────────────────────────────────────────
+
+def test_CS820_8zg_section_E_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section E «الإيجارات والعقود والدخل» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الإيجارات والعقود والدخل" in supp_text, "8ZG: section E heading must appear."
+
+
+# ── CS821 ─────────────────────────────────────────────────────────────────────
+
+def test_CS821_8zg_section_F_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section F «المبيعات والإنتاجية التجارية» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المبيعات والإنتاجية التجارية" in supp_text, "8ZG: section F heading must appear."
+
+
+# ── CS822 ─────────────────────────────────────────────────────────────────────
+
+def test_CS822_8zg_section_G_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section G «المصروفات والتكاليف وCAPEX» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المصروفات والتكاليف" in supp_text and "CAPEX" in supp_text, (
+        "8ZG: section G heading must appear."
+    )
+
+
+# ── CS823 ─────────────────────────────────────────────────────────────────────
+
+def test_CS823_8zg_section_H_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section H «الخدمات الفنية وMEP» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الخدمات الفنية" in supp_text and "MEP" in supp_text, (
+        "8ZG: section H heading must appear."
+    )
+
+
+# ── CS824 ─────────────────────────────────────────────────────────────────────
+
+def test_CS824_8zg_section_I_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section I «التراخيص والاستخدام القانوني» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "التراخيص والاستخدام القانوني" in supp_text, "8ZG: section I heading must appear."
+
+
+# ── CS825 ─────────────────────────────────────────────────────────────────────
+
+def test_CS825_8zg_section_J_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section J «السوق وقابلية التسويق» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "السوق وقابلية التسويق" in supp_text, "8ZG: section J heading must appear."
+
+
+# ── CS826 ─────────────────────────────────────────────────────────────────────
+
+def test_CS826_8zg_section_K_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section K «معاملات التعديل حسب غرض التقييم» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل" in supp_text, "8ZG: section K heading must appear."
+
+
+# ── CS827 ─────────────────────────────────────────────────────────────────────
+
+def test_CS827_8zg_section_L_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section L «كفاءة الطاقة والاستدامة» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "كفاءة الطاقة والاستدامة" in supp_text, "8ZG: section L heading must appear."
+
+
+# ── CS828 ─────────────────────────────────────────────────────────────────────
+
+def test_CS828_8zg_section_M_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section M «المخاطر المناخية والتشغيلية» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية" in supp_text, "8ZG: section M heading must appear."
+
+
+# ── CS829 ─────────────────────────────────────────────────────────────────────
+
+def test_CS829_8zg_section_N_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section N «البنية التحتية الرقمية والأومني تشانل» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية" in supp_text, "8ZG: section N heading must appear."
+
+
+# ── CS830 ─────────────────────────────────────────────────────────────────────
+
+def test_CS830_8zg_section_O_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: section O «مستندات إضافية مطلوبة» heading renders."""
+    _load_retail_shop_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "مستندات إضافية مطلوبة" in supp_text, "8ZG: section O heading must appear."
+
+
+# ── CS831 ─────────────────────────────────────────────────────────────────────
+
+def test_CS831_8zg_field_retail_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_retail_asset_type (section A) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_retail_asset_type']")
+    assert field.count() > 0, "8ZG: rs_supp_retail_asset_type must render."
+
+
+# ── CS832 ─────────────────────────────────────────────────────────────────────
+
+def test_CS832_8zg_field_gross_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_gross_area_sqm (section B) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_gross_area_sqm']")
+    assert field.count() > 0, "8ZG: rs_supp_gross_area_sqm must render."
+
+
+# ── CS833 ─────────────────────────────────────────────────────────────────────
+
+def test_CS833_8zg_field_visibility_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_visibility_quality (section C) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_visibility_quality']")
+    assert field.count() > 0, "8ZG: rs_supp_visibility_quality must render."
+
+
+# ── CS834 ─────────────────────────────────────────────────────────────────────
+
+def test_CS834_8zg_field_retail_context_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_retail_context (section D) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_retail_context']")
+    assert field.count() > 0, "8ZG: rs_supp_retail_context must render."
+
+
+# ── CS835 ─────────────────────────────────────────────────────────────────────
+
+def test_CS835_8zg_field_current_rent_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_current_rent_annual (section E) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_current_rent_annual']")
+    assert field.count() > 0, "8ZG: rs_supp_current_rent_annual must render."
+
+
+# ── CS836 ─────────────────────────────────────────────────────────────────────
+
+def test_CS836_8zg_field_annual_gross_sales_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_annual_gross_sales (section F) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_annual_gross_sales']")
+    assert field.count() > 0, "8ZG: rs_supp_annual_gross_sales must render."
+
+
+# ── CS837 ─────────────────────────────────────────────────────────────────────
+
+def test_CS837_8zg_field_operating_expenses_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_operating_expenses_annual (section G) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_operating_expenses_annual']")
+    assert field.count() > 0, "8ZG: rs_supp_operating_expenses_annual must render."
+
+
+# ── CS838 ─────────────────────────────────────────────────────────────────────
+
+def test_CS838_8zg_field_hvac_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_hvac_available (section H) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_hvac_available']")
+    assert field.count() > 0, "8ZG: rs_supp_hvac_available must render."
+
+
+# ── CS839 ─────────────────────────────────────────────────────────────────────
+
+def test_CS839_8zg_field_commercial_license_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_commercial_license_status (section I) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_commercial_license_status']")
+    assert field.count() > 0, "8ZG: rs_supp_commercial_license_status must render."
+
+
+# ── CS840 ─────────────────────────────────────────────────────────────────────
+
+def test_CS840_8zg_field_marketability_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: rs_supp_marketability_level (section J) renders."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='rs_supp_marketability_level']")
+    assert field.count() > 0, "8ZG: rs_supp_marketability_level must render."
+
+
+# ── CS841 ─────────────────────────────────────────────────────────────────────
+
+def test_CS841_8zg_purpose_mortgage_lending_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose mortgage_lending methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_mortgage_lending_methodology']"
+    )
+    assert field.count() > 0, "8ZG: mortgage_lending methodology must render in section K."
+
+
+# ── CS842 ─────────────────────────────────────────────────────────────────────
+
+def test_CS842_8zg_purpose_sale_purchase_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose sale_purchase methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_sale_purchase_methodology']"
+    )
+    assert field.count() > 0, "8ZG: sale_purchase methodology must render."
+
+
+# ── CS843 ─────────────────────────────────────────────────────────────────────
+
+def test_CS843_8zg_purpose_insurance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose insurance methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_insurance_methodology']"
+    )
+    assert field.count() > 0, "8ZG: insurance methodology must render."
+
+
+# ── CS844 ─────────────────────────────────────────────────────────────────────
+
+def test_CS844_8zg_purpose_ifrs_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose ifrs_fair_value methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_ifrs_fair_value_methodology']"
+    )
+    assert field.count() > 0, "8ZG: ifrs_fair_value methodology must render."
+
+
+# ── CS845 ─────────────────────────────────────────────────────────────────────
+
+def test_CS845_8zg_purpose_rental_assessment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose rental_assessment methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_rental_assessment_methodology']"
+    )
+    assert field.count() > 0, "8ZG: rental_assessment methodology must render."
+
+
+# ── CS846 ─────────────────────────────────────────────────────────────────────
+
+def test_CS846_8zg_purpose_taxation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose taxation methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_taxation_methodology']"
+    )
+    assert field.count() > 0, "8ZG: taxation methodology must render."
+
+
+# ── CS847 ─────────────────────────────────────────────────────────────────────
+
+def test_CS847_8zg_purpose_liquidation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: purpose liquidation methodology field renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_liquidation_methodology']"
+    )
+    assert field.count() > 0, "8ZG: liquidation methodology must render."
+
+
+# ── CS848 ─────────────────────────────────────────────────────────────────────
+
+def test_CS848_8zg_purpose_litigation_dispute_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: litigation_dispute (local-only) renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_litigation_dispute_methodology']"
+    )
+    assert field.count() > 0, "8ZG: litigation_dispute (local) methodology must render."
+
+
+# ── CS849 ─────────────────────────────────────────────────────────────────────
+
+def test_CS849_8zg_purpose_investment_acquisition_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: investment_acquisition (local-only) renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_investment_acquisition_methodology']"
+    )
+    assert field.count() > 0, "8ZG: investment_acquisition (local) methodology must render."
+
+
+# ── CS850 ─────────────────────────────────────────────────────────────────────
+
+def test_CS850_8zg_purpose_lease_renewal_review_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: lease_renewal_review (local-only) renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_lease_renewal_review_methodology']"
+    )
+    assert field.count() > 0, "8ZG: lease_renewal_review (local) methodology must render."
+
+
+# ── CS851 ─────────────────────────────────────────────────────────────────────
+
+def test_CS851_8zg_purpose_business_interruption_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: business_interruption (local-only) renders in section K."""
+    _load_retail_shop_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_business_interruption_methodology']"
+    )
+    assert field.count() > 0, "8ZG: business_interruption (local) methodology must render."
+
+
+# ── CS852 ─────────────────────────────────────────────────────────────────────
+
+def test_CS852_8zg_profit_method_option_available(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: profit_method option is available in the mortgage_lending methodology selector."""
+    _load_retail_shop_supp(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='rs_supp_purpose_mortgage_lending_methodology']"
+    )
+    if sel.count() == 0:
+        return
+    sel_html = sel.first.inner_html()
+    assert "profit_method" in sel_html, (
+        "8ZG: profit_method option must be available in methodology selector."
+    )
+
+
+# ── CS853 ─────────────────────────────────────────────────────────────────────
+
+def test_CS853_8zg_all_supp_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZG: spot-check that rs_supp_ fields carry data-es-supp-field attribute."""
+    _load_retail_shop_supp(page, live_server)
+    sample_fields = [
+        "rs_supp_retail_asset_type",
+        "rs_supp_gross_area_sqm",
+        "rs_supp_frontage_m",
+        "rs_supp_current_rent_annual",
+        "rs_supp_annual_gross_sales",
+        "rs_supp_marketability_level",
+        "rs_doc_title_deed_or_lease",
+    ]
+    for fname in sample_fields:
+        el = page.locator(f"#es-req-supp [data-es-supp-field='{fname}']")
+        assert el.count() > 0, f"8ZG: {fname} must carry data-es-supp-field and render."
+
+
+# ── CS854 ─────────────────────────────────────────────────────────────────────
+
+def test_CS854_8zg_rs_supp_not_in_old_retail_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZG isolation: rs_supp_ fields must NOT appear in old retail (محل تجاري) panel."""
+    _load_retail(page, live_server)
+    rs_fields = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert rs_fields.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in old retail panel. "
+        f"Found {rs_fields.count()}."
+    )
+
+
+# ── CS855 ─────────────────────────────────────────────────────────────────────
+
+def test_CS855_8zg_rs_supp_not_in_building_full_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZG isolation: rs_supp_ fields must NOT appear in building_full supp panel."""
+    _load_building_full_supp(page, live_server)
+    rs_fields = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert rs_fields.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in building_full panel. "
+        f"Found {rs_fields.count()}."
+    )
+
+
+# ── CS856 ─────────────────────────────────────────────────────────────────────
+
+def test_CS856_8zg_rs_supp_not_in_existing_building_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZG isolation: rs_supp_ fields must NOT appear in existing_building_detailed supp."""
+    _load_existing_building(page, live_server)
+    rs_fields = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert rs_fields.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in existing_building_detailed panel. "
+        f"Found {rs_fields.count()}."
+    )
+
+
+# ── CS857 ─────────────────────────────────────────────────────────────────────
+
+def test_CS857_8zg_rs_supp_not_in_hotel_resort_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZG isolation: rs_supp_ fields must NOT appear in hotel_resort_detailed supp."""
+    _load_hotel_resort_supp(page, live_server)
+    rs_fields = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert rs_fields.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in hotel_resort_detailed panel. "
+        f"Found {rs_fields.count()}."
+    )
+
+
+# ── CS858 ─────────────────────────────────────────────────────────────────────
+
+def test_CS858_8zg_rs_supp_not_in_industrial_logistics_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZG isolation: rs_supp_ fields must NOT appear in industrial_logistics supp."""
+    _load_industrial_logistics_supp(page, live_server)
+    rs_fields = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert rs_fields.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in industrial_logistics panel. "
+        f"Found {rs_fields.count()}."
+    )
+
+
+# ── CS859 ─────────────────────────────────────────────────────────────────────
+
+def test_CS859_8zg_land_residential_regression(page: "Page", live_server: str) -> None:
+    """Phase 8ZG regression: land and residential_unit profiles still render after 8ZG."""
+    _load_land(page, live_server)
+    land_panel = page.locator("#es-req-panel")
+    assert land_panel.is_visible(), "8ZG regression: land panel must still be visible."
+    land_rs = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert land_rs.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in land panel. "
+        f"Found {land_rs.count()}."
+    )
+    _load_residential(page, live_server)
+    res_panel = page.locator("#es-req-panel")
+    assert res_panel.is_visible(), "8ZG regression: residential panel must still be visible."
+    res_rs = page.locator("[data-es-supp-field^='rs_supp_']")
+    assert res_rs.count() == 0, (
+        f"8ZG isolation: rs_supp_ fields must not appear in residential panel. "
+        f"Found {res_rs.count()}."
+    )

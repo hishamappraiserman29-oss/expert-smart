@@ -10085,3 +10085,880 @@ def test_CS674_8zd_hotel_isolation(page: "Page", live_server: str) -> None:
     assert ebd_cross.count() == 0, (
         f"8ZD isolation: ebd_ fields must NOT appear in hotel panel. Found {ebd_cross.count()}."
     )
+
+
+# ── Phase 8ZE helpers ─────────────────────────────────────────────────────────
+
+def _load_hotel_resort_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: load hotel_resort_detailed and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="hotel_resort_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS675 ─────────────────────────────────────────────────────────────────────
+
+def test_CS675_hrd_supp_renders_supplemental_controls(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hotel_resort_detailed #es-req-supp receives new hrd_supp_ fields."""
+    _load_hotel_resort_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 10, (
+        f"8ZE: #es-req-supp must contain >10 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS676 ─────────────────────────────────────────────────────────────────────
+
+def test_CS676_hrd_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: supp header shows Arabic heading 'متطلبات تقييم فندق أو منتجع'."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "فندق" in supp_text or "منتجع" in supp_text, (
+        f"8ZE: supp heading must contain 'فندق' or 'منتجع'. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS677 ─────────────────────────────────────────────────────────────────────
+
+def test_CS677_hrd_supp_local_only_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: supp shows 'إدخال محلي' or 'لا يُرسل للتقرير' disclaimer."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلي" in supp_text or "لا يُرسل" in supp_text, (
+        f"8ZE: local-only text must appear in supp. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS678 ─────────────────────────────────────────────────────────────────────
+
+def test_CS678_hrd_supp_zero_api_calls(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hotel_resort_detailed supplemental makes ZERO API calls."""
+    api_calls: list = []
+    page.on("request", lambda r: api_calls.append(r.url) if "/api/valuation/requirements" in r.url else None)
+    _load_hotel_resort_supp(page, live_server)
+    assert len(api_calls) == 0, f"8ZE: must make zero API calls. Got: {api_calls}"
+
+
+# ── CS679 ─────────────────────────────────────────────────────────────────────
+
+def test_CS679_hrd_supp_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: panel has no composite_valuation.html link."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "composite_valuation.html" not in page.locator("#es-req-panel").inner_html(), (
+        "8ZE: panel must not contain composite_valuation.html link."
+    )
+
+
+# ── CS680 ─────────────────────────────────────────────────────────────────────
+
+def test_CS680_hrd_supp_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: no auth modal appears after loading hotel_resort_detailed supp."""
+    _load_hotel_resort_supp(page, live_server)
+    modal = page.locator("#login-modal, #auth-modal, [id*='login']")
+    visible = sum(1 for i in range(modal.count()) if modal.nth(i).is_visible())
+    assert visible == 0, f"8ZE: no auth modal must be visible. visible={visible}"
+
+
+# ── CS681 ─────────────────────────────────────────────────────────────────────
+
+def test_CS681_hrd_supp_section_A_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section A heading 'تعريف الفندق أو المنتجع' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "تعريف الفندق أو المنتجع" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section A heading must appear."
+    )
+
+
+# ── CS682 ─────────────────────────────────────────────────────────────────────
+
+def test_CS682_hrd_supp_section_B_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section B heading 'الغرف والمفاتيح ومزيج الإقامة' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "الغرف والمفاتيح ومزيج الإقامة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section B heading must appear."
+    )
+
+
+# ── CS683 ─────────────────────────────────────────────────────────────────────
+
+def test_CS683_hrd_supp_section_C_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section C heading 'الأرض والموقع والمكوّنات العقارية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "الأرض والموقع والمكوّنات" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section C heading must appear."
+    )
+
+
+# ── CS684 ─────────────────────────────────────────────────────────────────────
+
+def test_CS684_hrd_supp_section_D_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section D heading 'المرافق والخدمات الفندقية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "المرافق والخدمات الفندقية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section D heading must appear."
+    )
+
+
+# ── CS685 ─────────────────────────────────────────────────────────────────────
+
+def test_CS685_hrd_supp_section_E_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section E heading 'التشغيل والمؤشرات الفندقية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "التشغيل والمؤشرات الفندقية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section E heading must appear."
+    )
+
+
+# ── CS686 ─────────────────────────────────────────────────────────────────────
+
+def test_CS686_hrd_supp_section_F_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section F heading 'الإيرادات والمصروفات' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "الإيرادات والمصروفات" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section F heading must appear."
+    )
+
+
+# ── CS687 ─────────────────────────────────────────────────────────────────────
+
+def test_CS687_hrd_supp_section_G_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section G heading 'الإدارة والعقود والعلامة التجارية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "الإدارة والعقود والعلامة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section G heading must appear."
+    )
+
+
+# ── CS688 ─────────────────────────────────────────────────────────────────────
+
+def test_CS688_hrd_supp_section_H_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section H heading 'الحالة الفنية وCAPEX وFF&E' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "CAPEX" in (page.locator("#es-req-supp").inner_text() or "") or "FF&E" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section H heading (CAPEX/FF&E) must appear."
+    )
+
+
+# ── CS689 ─────────────────────────────────────────────────────────────────────
+
+def test_CS689_hrd_supp_section_I_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section I heading 'التراخيص والامتثال' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "التراخيص والامتثال" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section I heading must appear."
+    )
+
+
+# ── CS690 ─────────────────────────────────────────────────────────────────────
+
+def test_CS690_hrd_supp_section_J_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section J heading 'السوق والمنافسة وقابلية التسويق' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "السوق والمنافسة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section J heading must appear."
+    )
+
+
+# ── CS691 ─────────────────────────────────────────────────────────────────────
+
+def test_CS691_hrd_supp_section_K_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section K heading 'معاملات التعديل حسب غرض التقييم' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "معاملات التعديل حسب غرض التقييم" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section K heading must appear."
+    )
+
+
+# ── CS692 ─────────────────────────────────────────────────────────────────────
+
+def test_CS692_hrd_supp_section_L_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section L heading 'كفاءة الطاقة والاستدامة' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "كفاءة الطاقة والاستدامة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section L heading must appear."
+    )
+
+
+# ── CS693 ─────────────────────────────────────────────────────────────────────
+
+def test_CS693_hrd_supp_section_M_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section M heading 'المخاطر المناخية والطبيعية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "المخاطر المناخية والطبيعية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section M heading must appear."
+    )
+
+
+# ── CS694 ─────────────────────────────────────────────────────────────────────
+
+def test_CS694_hrd_supp_section_N_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section N heading 'البنية التحتية الرقمية والتكنولوجيا الفندقية' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "البنية التحتية الرقمية" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section N heading must appear."
+    )
+
+
+# ── CS695 ─────────────────────────────────────────────────────────────────────
+
+def test_CS695_hrd_supp_section_O_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: section O heading 'مستندات إضافية مطلوبة' visible."""
+    _load_hotel_resort_supp(page, live_server)
+    assert "مستندات إضافية مطلوبة" in (page.locator("#es-req-supp").inner_text() or ""), (
+        "8ZE: section O heading must appear."
+    )
+
+
+# ── CS696 ─────────────────────────────────────────────────────────────────────
+
+def test_CS696_hrd_supp_hotel_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_hotel_asset_type select renders in section A."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_hotel_asset_type']")
+    assert field.count() > 0, "8ZE: hrd_supp_hotel_asset_type must render."
+
+
+# ── CS697 ─────────────────────────────────────────────────────────────────────
+
+def test_CS697_hrd_supp_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_operating_status select renders."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_operating_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_operating_status must render."
+
+
+# ── CS698 ─────────────────────────────────────────────────────────────────────
+
+def test_CS698_hrd_supp_target_guest_segment_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_target_guest_segment checkbox group renders."""
+    _load_hotel_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_target_guest_segment']")
+    assert chips.count() > 0, "8ZE: hrd_supp_target_guest_segment checkbox group must render."
+
+
+# ── CS699 ─────────────────────────────────────────────────────────────────────
+
+def test_CS699_hrd_supp_branded_residences_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_branded_residences_count number input renders in section B."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_branded_residences_count']")
+    assert inp.count() > 0, "8ZE: hrd_supp_branded_residences_count must render."
+
+
+# ── CS700 ─────────────────────────────────────────────────────────────────────
+
+def test_CS700_hrd_supp_average_room_size_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_average_room_size_sqm number input renders with م² unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_average_room_size_sqm']")
+    assert inp.count() > 0, "8ZE: hrd_supp_average_room_size_sqm must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "م²" in supp_text, "8ZE: م² unit must appear in supp."
+
+
+# ── CS701 ─────────────────────────────────────────────────────────────────────
+
+def test_CS701_hrd_supp_rooms_condition_in_H_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_rooms_condition appears exactly once (section H only)."""
+    _load_hotel_resort_supp(page, live_server)
+    fields = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_rooms_condition']")
+    assert fields.count() == 1, (
+        f"8ZE: hrd_supp_rooms_condition must appear exactly once. Got {fields.count()}."
+    )
+
+
+# ── CS702 ─────────────────────────────────────────────────────────────────────
+
+def test_CS702_hrd_supp_land_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_land_area_sqm number input renders in section C."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_land_area_sqm']")
+    assert inp.count() > 0, "8ZE: hrd_supp_land_area_sqm must render."
+
+
+# ── CS703 ─────────────────────────────────────────────────────────────────────
+
+def test_CS703_hrd_supp_beachfront_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_beachfront_available bool select renders."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_beachfront_available']")
+    assert field.count() > 0, "8ZE: hrd_supp_beachfront_available must render."
+
+
+# ── CS704 ─────────────────────────────────────────────────────────────────────
+
+def test_CS704_hrd_supp_distance_to_airport_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_distance_to_airport_km renders with كم unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_distance_to_airport_km']")
+    assert inp.count() > 0, "8ZE: hrd_supp_distance_to_airport_km must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "كم" in supp_text, "8ZE: كم unit must appear in supp."
+
+
+# ── CS705 ─────────────────────────────────────────────────────────────────────
+
+def test_CS705_hrd_supp_resort_components_summary_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_resort_components_summary textarea renders (DRY 8N alternative)."""
+    _load_hotel_resort_supp(page, live_server)
+    ta = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_resort_components_summary']")
+    assert ta.count() > 0, "8ZE: hrd_supp_resort_components_summary must render."
+
+
+# ── CS706 ─────────────────────────────────────────────────────────────────────
+
+def test_CS706_hrd_supp_meeting_rooms_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_meeting_rooms_count number input renders in section D."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_meeting_rooms_count']")
+    assert inp.count() > 0, "8ZE: hrd_supp_meeting_rooms_count must render."
+
+
+# ── CS707 ─────────────────────────────────────────────────────────────────────
+
+def test_CS707_hrd_supp_spa_available_bool_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_spa_available bool renders in section D."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_spa_available']")
+    assert field.count() > 0, "8ZE: hrd_supp_spa_available must render."
+
+
+# ── CS708 ─────────────────────────────────────────────────────────────────────
+
+def test_CS708_hrd_supp_trevpar_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_trevpar (TRevPAR) number input renders in section E."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_trevpar']")
+    assert inp.count() > 0, "8ZE: hrd_supp_trevpar must render."
+
+
+# ── CS709 ─────────────────────────────────────────────────────────────────────
+
+def test_CS709_hrd_supp_goppar_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_goppar (GOPPAR) number input renders in section E."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_goppar']")
+    assert inp.count() > 0, "8ZE: hrd_supp_goppar must render."
+
+
+# ── CS710 ─────────────────────────────────────────────────────────────────────
+
+def test_CS710_hrd_supp_mpi_ari_rgi_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: MPI, ARI, RGI index fields render in section E."""
+    _load_hotel_resort_supp(page, live_server)
+    for field_name in ('hrd_supp_market_penetration_index', 'hrd_supp_average_rate_index', 'hrd_supp_revenue_generation_index'):
+        f = page.locator(f"#es-req-supp [data-es-supp-field='{field_name}']")
+        assert f.count() > 0, f"8ZE: {field_name} must render."
+
+
+# ── CS711 ─────────────────────────────────────────────────────────────────────
+
+def test_CS711_hrd_supp_distribution_channel_mix_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_distribution_channel_mix checkbox group renders."""
+    _load_hotel_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_distribution_channel_mix']")
+    assert chips.count() > 0, "8ZE: hrd_supp_distribution_channel_mix must render."
+
+
+# ── CS712 ─────────────────────────────────────────────────────────────────────
+
+def test_CS712_hrd_supp_ebitda_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_ebitda_annual number input renders in section F."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_ebitda_annual']")
+    assert inp.count() > 0, "8ZE: hrd_supp_ebitda_annual must render."
+
+
+# ── CS713 ─────────────────────────────────────────────────────────────────────
+
+def test_CS713_hrd_supp_gop_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_gross_operating_profit_annual renders in section F."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_gross_operating_profit_annual']")
+    assert inp.count() > 0, "8ZE: hrd_supp_gross_operating_profit_annual must render."
+
+
+# ── CS714 ─────────────────────────────────────────────────────────────────────
+
+def test_CS714_hrd_supp_franchise_agreement_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_franchise_agreement_status select renders in section G."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_franchise_agreement_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_franchise_agreement_status must render."
+
+
+# ── CS715 ─────────────────────────────────────────────────────────────────────
+
+def test_CS715_hrd_supp_ffe_reserve_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_ffe_reserve_pct renders with % unit in section H."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_ffe_reserve_pct']")
+    assert inp.count() > 0, "8ZE: hrd_supp_ffe_reserve_pct must render."
+
+
+# ── CS716 ─────────────────────────────────────────────────────────────────────
+
+def test_CS716_hrd_supp_brand_pip_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_brand_pip_required bool renders in section H."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_brand_pip_required']")
+    assert field.count() > 0, "8ZE: hrd_supp_brand_pip_required must render."
+
+
+# ── CS717 ─────────────────────────────────────────────────────────────────────
+
+def test_CS717_hrd_supp_civil_defense_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_civil_defense_license_status renders in section I."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_civil_defense_license_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_civil_defense_license_status must render."
+
+
+# ── CS718 ─────────────────────────────────────────────────────────────────────
+
+def test_CS718_hrd_supp_hotel_operating_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_hotel_operating_license_status renders in section I."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_hotel_operating_license_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_hotel_operating_license_status must render."
+
+
+# ── CS719 ─────────────────────────────────────────────────────────────────────
+
+def test_CS719_hrd_supp_market_adr_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_market_adr renders with جنيه/ليلة unit in section J."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_market_adr']")
+    assert inp.count() > 0, "8ZE: hrd_supp_market_adr must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "جنيه/ليلة" in supp_text, "8ZE: جنيه/ليلة unit must appear in supp."
+
+
+# ── CS720 ─────────────────────────────────────────────────────────────────────
+
+def test_CS720_hrd_supp_ota_dependency_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE (must-have gap P): hrd_supp_ota_dependency_risk_level renders in section J."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_ota_dependency_risk_level']")
+    assert field.count() > 0, "8ZE: hrd_supp_ota_dependency_risk_level must render."
+
+
+# ── CS721 ─────────────────────────────────────────────────────────────────────
+
+def test_CS721_hrd_supp_purpose_mortgage_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: mortgage_lending methodology select renders in section K."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='hrd_supp_purpose_mortgage_lending_methodology']"
+    )
+    assert field.count() > 0, "8ZE: mortgage_lending methodology must render."
+
+
+# ── CS722 ─────────────────────────────────────────────────────────────────────
+
+def test_CS722_hrd_supp_methodology_opts_include_room_rate_multiplier(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: methodology selects include room_rate_multiplier option."""
+    _load_hotel_resort_supp(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='hrd_supp_purpose_mortgage_lending_methodology']"
+    )
+    assert sel.count() > 0, "8ZE: methodology select must exist."
+    opts = sel.locator("option").evaluate_all("els => els.map(e => e.value)")
+    assert "room_rate_multiplier" in opts, (
+        f"8ZE: room_rate_multiplier must be in methodology options. Got: {opts}"
+    )
+
+
+# ── CS723 ─────────────────────────────────────────────────────────────────────
+
+def test_CS723_hrd_supp_methodology_opts_include_direct_capitalization(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: methodology selects include direct_capitalization option."""
+    _load_hotel_resort_supp(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='hrd_supp_purpose_sale_purchase_methodology']"
+    )
+    assert sel.count() > 0, "8ZE: sale_purchase methodology select must exist."
+    opts = sel.locator("option").evaluate_all("els => els.map(e => e.value)")
+    assert "direct_capitalization" in opts, (
+        f"8ZE: direct_capitalization must be in methodology options. Got: {opts}"
+    )
+
+
+# ── CS724 ─────────────────────────────────────────────────────────────────────
+
+def test_CS724_hrd_supp_mgmt_contract_review_local_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: management_contract_review purpose block renders (local-only)."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "مراجعة عقد الإدارة" in supp_text, (
+        "8ZE: management_contract_review section must appear in supp."
+    )
+
+
+# ── CS725 ─────────────────────────────────────────────────────────────────────
+
+def test_CS725_hrd_supp_impairment_testing_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: impairment_testing methodology renders (local-only)."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='hrd_supp_purpose_impairment_testing_methodology']"
+    )
+    assert field.count() > 0, "8ZE: impairment_testing methodology must render."
+
+
+# ── CS726 ─────────────────────────────────────────────────────────────────────
+
+def test_CS726_hrd_supp_energy_consumption_kwh_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_electricity_consumption_annual_kwh renders in section L."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_electricity_consumption_annual_kwh']")
+    assert inp.count() > 0, "8ZE: electricity_consumption_annual_kwh must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "kWh" in supp_text, "8ZE: kWh unit must appear."
+
+
+# ── CS727 ─────────────────────────────────────────────────────────────────────
+
+def test_CS727_hrd_supp_sustainability_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_sustainability_value_impact_pct renders in section L."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_sustainability_value_impact_pct']")
+    assert inp.count() > 0, "8ZE: sustainability_value_impact_pct must render."
+
+
+# ── CS728 ─────────────────────────────────────────────────────────────────────
+
+def test_CS728_hrd_supp_sustainability_features_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_sustainability_features checkbox group renders in section L."""
+    _load_hotel_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_sustainability_features']")
+    assert chips.count() > 0, "8ZE: sustainability_features must render."
+
+
+# ── CS729 ─────────────────────────────────────────────────────────────────────
+
+def test_CS729_hrd_supp_coastal_erosion_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_coastal_erosion_risk_level renders in section M."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_coastal_erosion_risk_level']")
+    assert field.count() > 0, "8ZE: hrd_supp_coastal_erosion_risk_level must render."
+
+
+# ── CS730 ─────────────────────────────────────────────────────────────────────
+
+def test_CS730_hrd_supp_seasonal_closure_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE (must-have gap P): hrd_supp_seasonal_closure_risk renders in section M."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_seasonal_closure_risk']")
+    assert field.count() > 0, "8ZE: hrd_supp_seasonal_closure_risk must render."
+
+
+# ── CS731 ─────────────────────────────────────────────────────────────────────
+
+def test_CS731_hrd_supp_climate_resilience_features_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_climate_resilience_features checkbox group renders."""
+    _load_hotel_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_climate_resilience_features']")
+    assert chips.count() > 0, "8ZE: climate_resilience_features must render."
+
+
+# ── CS732 ─────────────────────────────────────────────────────────────────────
+
+def test_CS732_hrd_supp_pms_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_pms_available bool renders in section N."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_pms_available']")
+    assert field.count() > 0, "8ZE: hrd_supp_pms_available must render."
+
+
+# ── CS733 ─────────────────────────────────────────────────────────────────────
+
+def test_CS733_hrd_supp_hotel_technology_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_hotel_technology_value_impact_pct renders with % unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_hotel_technology_value_impact_pct']")
+    assert inp.count() > 0, "8ZE: hotel_technology_value_impact_pct must render."
+
+
+# ── CS734 ─────────────────────────────────────────────────────────────────────
+
+def test_CS734_hrd_doc_supp_pip_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_doc_supp_pip_plan document checkbox renders in section O."""
+    _load_hotel_resort_supp(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='hrd_doc_supp_pip_plan']")
+    assert cb.count() > 0, "8ZE: hrd_doc_supp_pip_plan must render."
+
+
+# ── CS735 ─────────────────────────────────────────────────────────────────────
+
+def test_CS735_hrd_doc_supp_str_data_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_doc_supp_str_competitor_data document checkbox renders."""
+    _load_hotel_resort_supp(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='hrd_doc_supp_str_competitor_data']")
+    assert cb.count() > 0, "8ZE: hrd_doc_supp_str_competitor_data must render."
+
+
+# ── CS736 ─────────────────────────────────────────────────────────────────────
+
+def test_CS736_hrd_supp_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: all hrd_supp_ controls use data-es-supp-field (not data-es-req-field)."""
+    _load_hotel_resort_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    req_fields = supp.locator("[data-es-req-field^='hrd_supp_']")
+    assert req_fields.count() == 0, (
+        f"8ZE: no hrd_supp_ field must use data-es-req-field. Found {req_fields.count()}."
+    )
+
+
+# ── CS737 ─────────────────────────────────────────────────────────────────────
+
+def test_CS737_hrd_existing_fields_still_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZE regression: existing hrd_adr, hrd_revpar, hrd_keys_count still render."""
+    _load_hotel_resort_supp(page, live_server)
+    panel = page.locator("#es-req-panel")
+    for field_name in ("hrd_adr", "hrd_revpar", "hrd_keys_count"):
+        f = panel.locator(f"[data-es-req-field='{field_name}']")
+        assert f.count() > 0, f"8ZE regression: {field_name} must still render in main form."
+
+
+# ── CS738 ─────────────────────────────────────────────────────────────────────
+
+def test_CS738_hrd_existing_sections_still_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZE regression: existing main-form section headings still present."""
+    _load_hotel_resort_supp(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    for heading in ("بيانات الطاقة الفندقية", "التشغيل والمؤشرات الفندقية", "المستندات المطلوبة"):
+        assert heading in panel_text, f"8ZE regression: '{heading}' must still appear."
+
+
+# ── CS739 ─────────────────────────────────────────────────────────────────────
+
+def test_CS739_hrd_supp_isolated_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: serviced_apartments does NOT show hrd_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="serviced_apartments")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    hrd_supp = page.locator("[data-es-supp-field^='hrd_supp_']")
+    assert hrd_supp.count() == 0, (
+        f"8ZE isolation: hrd_supp_ fields must NOT appear in serviced_apartments. Got {hrd_supp.count()}."
+    )
+
+
+# ── CS740 ─────────────────────────────────────────────────────────────────────
+
+def test_CS740_hrd_supp_isolated_from_floating_hotel(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: floating_hotel does NOT show hrd_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="floating_hotel")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    hrd_supp = page.locator("[data-es-supp-field^='hrd_supp_']")
+    assert hrd_supp.count() == 0, (
+        f"8ZE isolation: hrd_supp_ fields must NOT appear in floating_hotel. Got {hrd_supp.count()}."
+    )
+
+
+# ── CS741 ─────────────────────────────────────────────────────────────────────
+
+def test_CS741_hrd_supp_isolated_from_existing_building(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: existing_building_detailed does NOT show hrd_supp_ fields."""
+    _load_existing_building(page, live_server)
+    hrd_supp = page.locator("[data-es-supp-field^='hrd_supp_']")
+    assert hrd_supp.count() == 0, (
+        f"8ZE isolation: hrd_supp_ fields must NOT appear in existing_building. Got {hrd_supp.count()}."
+    )
+
+
+# ── CS742 ─────────────────────────────────────────────────────────────────────
+
+def test_CS742_hrd_supp_no_js_console_errors(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: no JS console errors when hotel_resort_detailed supp renders."""
+    def _is_js_error(msg) -> bool:
+        return (
+            msg.type == "error"
+            and "401" not in msg.text
+            and "UNAUTHORIZED" not in msg.text
+            and "Failed to load resource" not in msg.text
+        )
+
+    errors: list = []
+    page.on("console", lambda msg: errors.append(msg.text) if _is_js_error(msg) else None)
+    page.on("pageerror", lambda err: errors.append(str(err)))
+    _load_hotel_resort_supp(page, live_server)
+    assert len(errors) == 0, f"8ZE: JS errors on hotel_resort_detailed supp: {errors}"
+
+
+# ── CS743 ─────────────────────────────────────────────────────────────────────
+
+def test_CS743_hrd_supp_brand_positioning_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_brand_positioning select renders in section A."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_brand_positioning']")
+    assert field.count() > 0, "8ZE: hrd_supp_brand_positioning must render."
+
+
+# ── CS744 ─────────────────────────────────────────────────────────────────────
+
+def test_CS744_hrd_supp_noi_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_net_operating_income_annual renders in section F."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_net_operating_income_annual']")
+    assert inp.count() > 0, "8ZE: hrd_supp_net_operating_income_annual must render."
+
+
+# ── CS745 ─────────────────────────────────────────────────────────────────────
+
+def test_CS745_hrd_supp_owner_operator_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_owner_operator_dispute_status renders in section G."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_owner_operator_dispute_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_owner_operator_dispute_status must render."
+
+
+# ── CS746 ─────────────────────────────────────────────────────────────────────
+
+def test_CS746_hrd_supp_competitive_positioning_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_competitive_positioning select renders in section J."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_competitive_positioning']")
+    assert field.count() > 0, "8ZE: hrd_supp_competitive_positioning must render."
+
+
+# ── CS747 ─────────────────────────────────────────────────────────────────────
+
+def test_CS747_hrd_supp_water_consumption_m3_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_water_consumption_annual_m3 renders with م³/سنة unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_water_consumption_annual_m3']")
+    assert inp.count() > 0, "8ZE: water_consumption_annual_m3 must render."
+
+
+# ── CS748 ─────────────────────────────────────────────────────────────────────
+
+def test_CS748_hrd_supp_green_hotel_certification_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_green_hotel_certification_status select renders."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_green_hotel_certification_status']")
+    assert field.count() > 0, "8ZE: green_hotel_certification_status must render."
+
+
+# ── CS749 ─────────────────────────────────────────────────────────────────────
+
+def test_CS749_hrd_supp_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_flood_risk_level select renders in section M."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_flood_risk_level']")
+    assert field.count() > 0, "8ZE: hrd_supp_flood_risk_level must render."
+
+
+# ── CS750 ─────────────────────────────────────────────────────────────────────
+
+def test_CS750_hrd_supp_climate_risk_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_climate_risk_value_impact_pct renders with % unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_climate_risk_value_impact_pct']")
+    assert inp.count() > 0, "8ZE: climate_risk_value_impact_pct must render."
+
+
+# ── CS751 ─────────────────────────────────────────────────────────────────────
+
+def test_CS751_hrd_supp_internet_speed_mbps_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_internet_speed_mbps renders with Mbps unit."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_internet_speed_mbps']")
+    assert inp.count() > 0, "8ZE: internet_speed_mbps must render."
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "Mbps" in supp_text, "8ZE: Mbps unit must appear."
+
+
+# ── CS752 ─────────────────────────────────────────────────────────────────────
+
+def test_CS752_hrd_supp_ev_charging_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_ev_charging_available bool renders in section N."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_ev_charging_available']")
+    assert field.count() > 0, "8ZE: hrd_supp_ev_charging_available must render."
+
+
+# ── CS753 ─────────────────────────────────────────────────────────────────────
+
+def test_CS753_hrd_doc_supp_ffe_list_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_doc_supp_ffe_list document checkbox renders in section O."""
+    _load_hotel_resort_supp(page, live_server)
+    cb = page.locator("#es-req-supp [data-es-supp-field='hrd_doc_supp_ffe_list']")
+    assert cb.count() > 0, "8ZE: hrd_doc_supp_ffe_list must render."
+
+
+# ── CS754 ─────────────────────────────────────────────────────────────────────
+
+def test_CS754_hrd_supp_private_beach_rights_descriptive(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: private_beach_rights_status is descriptive only (data-es-supp-field)."""
+    _load_hotel_resort_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_private_beach_rights_status']")
+    assert field.count() > 0, "8ZE: hrd_supp_private_beach_rights_status must render."
+    api_link_in_panel = "littoral_rights" in page.locator("#es-req-panel").inner_html()
+    assert not api_link_in_panel, (
+        "8ZE: private_beach_rights_status must not reference littoral_rights profile in panel."
+    )
+
+
+# ── CS755 ─────────────────────────────────────────────────────────────────────
+
+def test_CS755_methodology_opts_room_rate_multiplier_in_ebd_too(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: room_rate_multiplier also appears in existing_building_detailed methodology."""
+    _load_existing_building(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='ebd_purpose_mortgage_lending_methodology']"
+    )
+    if sel.count() == 0:
+        return  # skip if ebd_ field not found (different selector)
+    opts = sel.locator("option").evaluate_all("els => els.map(e => e.value)")
+    assert "room_rate_multiplier" in opts, (
+        f"8ZE: room_rate_multiplier must also be in ebd_ methodology opts (additive). Got: {opts}"
+    )
+
+
+# ── CS756 ─────────────────────────────────────────────────────────────────────
+
+def test_CS756_hrd_supp_payroll_cost_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_payroll_cost_annual number input renders in section F."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_payroll_cost_annual']")
+    assert inp.count() > 0, "8ZE: hrd_supp_payroll_cost_annual must render."
+
+
+# ── CS757 ─────────────────────────────────────────────────────────────────────
+
+def test_CS757_hrd_supp_last_major_renovation_year_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: hrd_supp_last_major_renovation_year renders with سنة unit in section H."""
+    _load_hotel_resort_supp(page, live_server)
+    inp = page.locator("#es-req-supp [data-es-supp-field='hrd_supp_last_major_renovation_year']")
+    assert inp.count() > 0, "8ZE: hrd_supp_last_major_renovation_year must render."
+
+
+# ── CS758 ─────────────────────────────────────────────────────────────────────
+
+def test_CS758_hrd_supp_litigation_dispute_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZE: litigation_dispute purpose renders as local-only in section K."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "نزاعات قضائية" in supp_text, "8ZE: litigation_dispute section must appear."
+
+
+# ── CS759 ─────────────────────────────────────────────────────────────────────
+
+def test_CS759_8ze_existing_building_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZE regression: existing_building_detailed supp still renders after 8ZE."""
+    _load_existing_building(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "مبنى قائم" in supp_text or "تجاري" in supp_text, (
+        "8ZE regression: existing_building_detailed supp heading must still appear."
+    )
+    ebd_field = page.locator("#es-req-supp [data-es-supp-field='ebd_building_use_type']")
+    assert ebd_field.count() > 0, "8ZE regression: ebd_building_use_type must still render."

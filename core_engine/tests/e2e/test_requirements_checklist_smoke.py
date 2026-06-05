@@ -10962,3 +10962,556 @@ def test_CS759_8ze_existing_building_unchanged(page: "Page", live_server: str) -
     )
     ebd_field = page.locator("#es-req-supp [data-es-supp-field='ebd_building_use_type']")
     assert ebd_field.count() > 0, "8ZE regression: ebd_building_use_type must still render."
+
+
+# ── Phase 8ZF helpers ─────────────────────────────────────────────────────────
+
+def _load_industrial_logistics_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: load industrial_logistics_facility_detailed and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="industrial_logistics_facility_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS760 ─────────────────────────────────────────────────────────────────────
+
+def test_CS760_8zf_profile_option_exists_in_dropdown(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: industrial_logistics_facility_detailed option exists in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opts = page.locator("#asset-type option[value='industrial_logistics_facility_detailed']")
+    assert opts.count() > 0, "8ZF: industrial_logistics_facility_detailed must be in dropdown."
+
+
+# ── CS761 ─────────────────────────────────────────────────────────────────────
+
+def test_CS761_8zf_badge_renders_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: badge renders for industrial_logistics_facility_detailed; no auth modal."""
+    _load_industrial_logistics_supp(page, live_server)
+    badge = page.locator("#es-profile-badge")
+    assert badge.is_visible(), "8ZF: #es-profile-badge must be visible."
+    badge_text = badge.inner_text()
+    assert "نموذج محلي" in badge_text, f"8ZF: badge must contain 'نموذج محلي'. Got: {badge_text}"
+    modal = page.locator("#auth-modal, #authModal, [id*='auth'][id*='modal']")
+    assert modal.count() == 0 or not modal.first.is_visible(), "8ZF: no auth modal must appear."
+
+
+# ── CS762 ─────────────────────────────────────────────────────────────────────
+
+def test_CS762_8zf_panel_visible_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: panel is visible and no composite link is triggered."""
+    _load_industrial_logistics_supp(page, live_server)
+    panel = page.locator("#es-req-panel")
+    assert panel.is_visible(), "8ZF: #es-req-panel must be visible."
+    panel_html = panel.inner_html()
+    assert "composite" not in panel_html.lower() or "composite_valuation" not in panel_html, (
+        "8ZF: no composite_valuation link must appear in panel."
+    )
+
+
+# ── CS763 ─────────────────────────────────────────────────────────────────────
+
+def test_CS763_8zf_zero_api_calls(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: no API calls to /api/valuation/requirements (fully local form)."""
+    api_calls: list = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/valuation/requirements" in req.url else None)
+    _load_industrial_logistics_supp(page, live_server)
+    assert len(api_calls) == 0, f"8ZF: must make zero /api/valuation/requirements calls. Got: {api_calls}"
+
+
+# ── CS764 ─────────────────────────────────────────────────────────────────────
+
+def test_CS764_8zf_section_A_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section A «تعريف الأصل الصناعي أو اللوجستي» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "تعريف الأصل الصناعي" in supp_text, "8ZF: section A heading must appear."
+
+
+# ── CS765 ─────────────────────────────────────────────────────────────────────
+
+def test_CS765_8zf_section_B_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section B «الأرض والموقع والوصول» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الأرض والموقع والوصول" in supp_text, "8ZF: section B heading must appear."
+
+
+# ── CS766 ─────────────────────────────────────────────────────────────────────
+
+def test_CS766_8zf_section_C_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section C «المباني الصناعية والهيكل» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المباني الصناعية والهيكل" in supp_text, "8ZF: section C heading must appear."
+
+
+# ── CS767 ─────────────────────────────────────────────────────────────────────
+
+def test_CS767_8zf_section_D_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section D «الإنتاج والعمليات الصناعية» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الإنتاج والعمليات الصناعية" in supp_text, "8ZF: section D heading must appear."
+
+
+# ── CS768 ─────────────────────────────────────────────────────────────────────
+
+def test_CS768_8zf_section_E_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section E «المرافق والطاقة والخدمات» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المرافق والطاقة والخدمات" in supp_text, "8ZF: section E heading must appear."
+
+
+# ── CS769 ─────────────────────────────────────────────────────────────────────
+
+def test_CS769_8zf_section_F_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section F «اللوجستيات والتحميل والتخزين» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "اللوجستيات والتحميل والتخزين" in supp_text, "8ZF: section F heading must appear."
+
+
+# ── CS770 ─────────────────────────────────────────────────────────────────────
+
+def test_CS770_8zf_section_G_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section G «التراخيص والامتثال والتنظيم» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "التراخيص والامتثال والتنظيم" in supp_text, "8ZF: section G heading must appear."
+
+
+# ── CS771 ─────────────────────────────────────────────────────────────────────
+
+def test_CS771_8zf_section_H_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section H «البيئة وHSE والمخاطر الصناعية» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "البيئة" in supp_text and "HSE" in supp_text, "8ZF: section H heading must appear."
+
+
+# ── CS772 ─────────────────────────────────────────────────────────────────────
+
+def test_CS772_8zf_section_I_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section I «الإشغال والعقود والدخل» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "الإشغال والعقود والدخل" in supp_text, "8ZF: section I heading must appear."
+
+
+# ── CS773 ─────────────────────────────────────────────────────────────────────
+
+def test_CS773_8zf_section_J_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section J «التكاليف وCAPEX والصيانة» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "CAPEX" in supp_text and "الصيانة" in supp_text, "8ZF: section J heading must appear."
+
+
+# ── CS774 ─────────────────────────────────────────────────────────────────────
+
+def test_CS774_8zf_section_K_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section K «السوق والموقع الصناعي وقابلية التسويق» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "السوق والموقع الصناعي" in supp_text, "8ZF: section K heading must appear."
+
+
+# ── CS775 ─────────────────────────────────────────────────────────────────────
+
+def test_CS775_8zf_section_L_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section L «معاملات التعديل حسب غرض التقييم» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل" in supp_text, "8ZF: section L heading must appear."
+
+
+# ── CS776 ─────────────────────────────────────────────────────────────────────
+
+def test_CS776_8zf_section_M_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section M «كفاءة الطاقة والاستدامة» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "كفاءة الطاقة والاستدامة" in supp_text, "8ZF: section M heading must appear."
+
+
+# ── CS777 ─────────────────────────────────────────────────────────────────────
+
+def test_CS777_8zf_section_N_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section N «المخاطر المناخية والطبيعية والتشغيلية» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية" in supp_text, "8ZF: section N heading must appear."
+
+
+# ── CS778 ─────────────────────────────────────────────────────────────────────
+
+def test_CS778_8zf_section_O_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section O «البنية التحتية الرقمية واللوجستية الذكية» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية" in supp_text, "8ZF: section O heading must appear."
+
+
+# ── CS779 ─────────────────────────────────────────────────────────────────────
+
+def test_CS779_8zf_section_P_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section P «مستندات إضافية مطلوبة» heading renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "مستندات إضافية مطلوبة" in supp_text, "8ZF: section P heading must appear."
+
+
+# ── CS780 ─────────────────────────────────────────────────────────────────────
+
+def test_CS780_8zf_field_industrial_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_industrial_asset_type field renders in section A."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_industrial_asset_type']")
+    assert field.count() > 0, "8ZF: il_supp_industrial_asset_type must render."
+
+
+# ── CS781 ─────────────────────────────────────────────────────────────────────
+
+def test_CS781_8zf_field_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_operating_status field renders in section A."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_operating_status']")
+    assert field.count() > 0, "8ZF: il_supp_operating_status must render."
+
+
+# ── CS782 ─────────────────────────────────────────────────────────────────────
+
+def test_CS782_8zf_field_plot_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_plot_area_sqm (section B) renders with م² unit."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_plot_area_sqm']")
+    assert field.count() > 0, "8ZF: il_supp_plot_area_sqm must render."
+
+
+# ── CS783 ─────────────────────────────────────────────────────────────────────
+
+def test_CS783_8zf_field_floor_loading_capacity_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_floor_loading_capacity_ton_sqm (section C) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_floor_loading_capacity_ton_sqm']")
+    assert field.count() > 0, "8ZF: il_supp_floor_loading_capacity_ton_sqm must render."
+
+
+# ── CS784 ─────────────────────────────────────────────────────────────────────
+
+def test_CS784_8zf_section_D_machinery_exclusion_desc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: section D description mentions operational interface (no machinery valuation)."""
+    _load_industrial_logistics_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "واجهة تشغيلية" in supp_text or "الآلات" in supp_text, (
+        "8ZF: section D operational-interface note must appear."
+    )
+
+
+# ── CS785 ─────────────────────────────────────────────────────────────────────
+
+def test_CS785_8zf_machinery_exclusion_note_field_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_machinery_excluded_from_real_estate_value_note renders in section D."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_machinery_excluded_from_real_estate_value_note']"
+    )
+    assert field.count() > 0, "8ZF: machinery exclusion note field must render."
+
+
+# ── CS786 ─────────────────────────────────────────────────────────────────────
+
+def test_CS786_8zf_field_electricity_capacity_kva_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_electricity_capacity_kva (section E) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_electricity_capacity_kva']")
+    assert field.count() > 0, "8ZF: il_supp_electricity_capacity_kva must render."
+
+
+# ── CS787 ─────────────────────────────────────────────────────────────────────
+
+def test_CS787_8zf_field_loading_docks_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_loading_docks_count (section F) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='il_supp_loading_docks_count']")
+    assert field.count() > 0, "8ZF: il_supp_loading_docks_count must render."
+
+
+# ── CS788 ─────────────────────────────────────────────────────────────────────
+
+def test_CS788_8zf_purpose_mortgage_lending_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose mortgage_lending methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_mortgage_lending_methodology']"
+    )
+    assert field.count() > 0, "8ZF: mortgage_lending methodology must render in section L."
+
+
+# ── CS789 ─────────────────────────────────────────────────────────────────────
+
+def test_CS789_8zf_purpose_sale_purchase_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose sale_purchase methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_sale_purchase_methodology']"
+    )
+    assert field.count() > 0, "8ZF: sale_purchase methodology must render."
+
+
+# ── CS790 ─────────────────────────────────────────────────────────────────────
+
+def test_CS790_8zf_purpose_insurance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose insurance methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_insurance_methodology']"
+    )
+    assert field.count() > 0, "8ZF: insurance methodology must render."
+
+
+# ── CS791 ─────────────────────────────────────────────────────────────────────
+
+def test_CS791_8zf_purpose_ifrs_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose ifrs_fair_value methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_ifrs_fair_value_methodology']"
+    )
+    assert field.count() > 0, "8ZF: ifrs_fair_value methodology must render."
+
+
+# ── CS792 ─────────────────────────────────────────────────────────────────────
+
+def test_CS792_8zf_purpose_rental_assessment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose rental_assessment methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_rental_assessment_methodology']"
+    )
+    assert field.count() > 0, "8ZF: rental_assessment methodology must render."
+
+
+# ── CS793 ─────────────────────────────────────────────────────────────────────
+
+def test_CS793_8zf_purpose_taxation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose taxation methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_taxation_methodology']"
+    )
+    assert field.count() > 0, "8ZF: taxation methodology must render."
+
+
+# ── CS794 ─────────────────────────────────────────────────────────────────────
+
+def test_CS794_8zf_purpose_liquidation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: purpose liquidation methodology field renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_liquidation_methodology']"
+    )
+    assert field.count() > 0, "8ZF: liquidation methodology must render."
+
+
+# ── CS795 ─────────────────────────────────────────────────────────────────────
+
+def test_CS795_8zf_purpose_litigation_dispute_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: litigation_dispute (local-only) renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_litigation_dispute_methodology']"
+    )
+    assert field.count() > 0, "8ZF: litigation_dispute (local) methodology must render."
+
+
+# ── CS796 ─────────────────────────────────────────────────────────────────────
+
+def test_CS796_8zf_purpose_investment_acquisition_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: investment_acquisition (local-only) renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_investment_acquisition_methodology']"
+    )
+    assert field.count() > 0, "8ZF: investment_acquisition (local) methodology must render."
+
+
+# ── CS797 ─────────────────────────────────────────────────────────────────────
+
+def test_CS797_8zf_purpose_owner_occupation_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: owner_occupation (local-only) renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_owner_occupation_methodology']"
+    )
+    assert field.count() > 0, "8ZF: owner_occupation (local) methodology must render."
+
+
+# ── CS798 ─────────────────────────────────────────────────────────────────────
+
+def test_CS798_8zf_purpose_sale_leaseback_local_only(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: sale_leaseback (local-only) renders in section L."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_sale_leaseback_methodology']"
+    )
+    assert field.count() > 0, "8ZF: sale_leaseback (local) methodology must render."
+
+
+# ── CS799 ─────────────────────────────────────────────────────────────────────
+
+def test_CS799_8zf_methodology_depreciated_replacement_cost_available(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: depreciated_replacement_cost option is in mortgage_lending methodology selector."""
+    _load_industrial_logistics_supp(page, live_server)
+    sel = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_purpose_mortgage_lending_methodology']"
+    )
+    if sel.count() == 0:
+        return
+    opts = sel.locator("option").evaluate_all("els => els.map(e => e.value)")
+    assert "depreciated_replacement_cost" in opts, (
+        f"8ZF: depreciated_replacement_cost must be in methodology opts. Got: {opts}"
+    )
+
+
+# ── CS800 ─────────────────────────────────────────────────────────────────────
+
+def test_CS800_8zf_sustainability_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_sustainability_value_impact_pct (section M) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_sustainability_value_impact_pct']"
+    )
+    assert field.count() > 0, "8ZF: il_supp_sustainability_value_impact_pct must render."
+
+
+# ── CS801 ─────────────────────────────────────────────────────────────────────
+
+def test_CS801_8zf_climate_risk_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_climate_risk_value_impact_pct (section N) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_climate_risk_value_impact_pct']"
+    )
+    assert field.count() > 0, "8ZF: il_supp_climate_risk_value_impact_pct must render."
+
+
+# ── CS802 ─────────────────────────────────────────────────────────────────────
+
+def test_CS802_8zf_digital_infrastructure_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: il_supp_digital_infrastructure_value_impact_pct (section O) renders."""
+    _load_industrial_logistics_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='il_supp_digital_infrastructure_value_impact_pct']"
+    )
+    assert field.count() > 0, "8ZF: il_supp_digital_infrastructure_value_impact_pct must render."
+
+
+# ── CS803 ─────────────────────────────────────────────────────────────────────
+
+def test_CS803_8zf_all_supp_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZF: spot-check that il_supp_ fields carry data-es-supp-field attribute."""
+    _load_industrial_logistics_supp(page, live_server)
+    sample_fields = [
+        "il_supp_industrial_asset_type",
+        "il_supp_electricity_capacity_kva",
+        "il_supp_occupancy_rate",
+        "il_supp_capex_required",
+        "il_supp_climate_risk_value_impact_pct",
+        "il_supp_internet_speed_mbps",
+        "il_doc_title_deed_or_usufruct",
+    ]
+    for fname in sample_fields:
+        el = page.locator(f"#es-req-supp [data-es-supp-field='{fname}']")
+        assert el.count() > 0, f"8ZF: {fname} must carry data-es-supp-field and render."
+
+
+# ── CS804 ─────────────────────────────────────────────────────────────────────
+
+def test_CS804_8zf_factory_profile_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZF regression: factory profile still renders unchanged after 8ZF."""
+    _load_factory(page, live_server)
+    panel_text = page.locator("#es-req-panel").inner_text()
+    assert "بيانات الأرض الصناعية" in panel_text or "الأرض الصناعية" in panel_text, (
+        "8ZF regression: factory panel must still render its sections."
+    )
+    fc_field = page.locator("[data-es-req-field='fc_land_area_sqm'], input[name='fc_land_area_sqm']")
+    assert fc_field.count() > 0 or "fc_land" in page.locator("#es-req-panel").inner_html(), (
+        "8ZF regression: fc_ fields must still exist in factory panel."
+    )
+
+
+# ── CS805 ─────────────────────────────────────────────────────────────────────
+
+def test_CS805_8zf_prefabricated_factory_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZF regression: prefabricated_factory profile still renders after 8ZF."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="prefabricated_factory")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "pf_" in panel_html or "بريفاب" in panel_html or "جاهز" in panel_html, (
+        "8ZF regression: prefabricated_factory panel must still render."
+    )
+
+
+# ── CS806 ─────────────────────────────────────────────────────────────────────
+
+def test_CS806_8zf_cold_storage_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZF regression: cold_storage profile still renders after 8ZF."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "cs_" in panel_html or "تبريد" in panel_html, (
+        "8ZF regression: cold_storage panel must still render."
+    )
+
+
+# ── CS807 ─────────────────────────────────────────────────────────────────────
+
+def test_CS807_8zf_data_center_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZF regression: data_center profile still renders after 8ZF."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="data_center")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    panel_html = page.locator("#es-req-panel").inner_html()
+    assert "dc_" in panel_html or "Data Center" in panel_html or "بيانات" in panel_html, (
+        "8ZF regression: data_center panel must still render."
+    )
+
+
+# ── CS808 ─────────────────────────────────────────────────────────────────────
+
+def test_CS808_8zf_il_supp_fields_not_in_factory_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZF isolation: il_supp_ fields must NOT appear in factory panel."""
+    _load_factory(page, live_server)
+    il_fields = page.locator("[data-es-supp-field^='il_supp_']")
+    assert il_fields.count() == 0, (
+        f"8ZF isolation: il_supp_ fields must not appear in factory panel. Found {il_fields.count()}."
+    )
+
+
+# ── CS809 ─────────────────────────────────────────────────────────────────────
+
+def test_CS809_8zf_hotel_and_ebd_regression(page: "Page", live_server: str) -> None:
+    """Phase 8ZF regression: hotel_resort_detailed and existing_building_detailed still render."""
+    _load_hotel_resort_supp(page, live_server)
+    hotel_text = page.locator("#es-req-supp").inner_text()
+    assert "تعريف الفندق" in hotel_text or "فندق" in hotel_text, (
+        "8ZF regression: hotel_resort_detailed supp heading must still appear."
+    )
+    _load_existing_building(page, live_server)
+    ebd_text = page.locator("#es-req-supp").inner_text()
+    assert "مبنى قائم" in ebd_text or "تجاري" in ebd_text, (
+        "8ZF regression: existing_building_detailed supp heading must still appear."
+    )

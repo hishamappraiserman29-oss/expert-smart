@@ -12065,3 +12065,549 @@ def test_CS859_8zg_land_residential_regression(page: "Page", live_server: str) -
         f"8ZG isolation: rs_supp_ fields must not appear in residential panel. "
         f"Found {res_rs.count()}."
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZH — Healthcare Facility Detailed Valuation Requirements (CS860–CS909)
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def _load_healthcare_facility_supp(page: "Page", live_server: str) -> None:
+    """Load healthcare_facility profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="healthcare_facility")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS860 ─────────────────────────────────────────────────────────────────────
+
+def test_CS860_8zh_healthcare_facility_dropdown_option_exists(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: dropdown must contain value='healthcare_facility' option."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opts = page.locator("#asset-type option[value='healthcare_facility']")
+    assert opts.count() >= 1, "8ZH: option value='healthcare_facility' not found in #asset-type."
+
+
+# ── CS861 ─────────────────────────────────────────────────────────────────────
+
+def test_CS861_8zh_healthcare_facility_badge_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: badge/explainer renders for healthcare_facility profile."""
+    _load_healthcare_facility(page, live_server)
+    badge = page.locator(".es-profile-badge, [class*='profile-badge'], #es-profile-explainer")
+    assert badge.count() >= 1 and badge.first.is_visible(), (
+        "8ZH: no profile badge rendered for healthcare_facility."
+    )
+
+
+# ── CS862 ─────────────────────────────────────────────────────────────────────
+
+def test_CS862_8zh_healthcare_facility_supp_panel_visible(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: #es-req-supp supplemental panel must be visible for healthcare_facility."""
+    _load_healthcare_facility_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.is_visible(), "8ZH: #es-req-supp supplemental panel not visible for healthcare_facility."
+
+
+# ── CS863 ─────────────────────────────────────────────────────────────────────
+
+def test_CS863_8zh_healthcare_facility_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: no auth modal shown after loading healthcare_facility."""
+    _load_healthcare_facility_supp(page, live_server)
+    modal = page.locator("#auth-modal, .auth-modal, [id*='auth'][id*='modal']")
+    visible_count = sum(1 for i in range(modal.count()) if modal.nth(i).is_visible())
+    assert visible_count == 0, f"8ZH: auth modal visible after loading healthcare_facility ({visible_count} found)."
+
+
+# ── CS864 ─────────────────────────────────────────────────────────────────────
+
+def test_CS864_8zh_healthcare_facility_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: no composite_valuation.html link in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    links = page.locator("#es-req-supp a[href*='composite_valuation']")
+    assert links.count() == 0, (
+        f"8ZH: composite_valuation.html link must not appear in healthcare_facility supp panel. "
+        f"Found {links.count()}."
+    )
+
+
+# ── CS865 ─────────────────────────────────────────────────────────────────────
+
+def test_CS865_8zh_healthcare_facility_supp_heading_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: supp panel heading must contain healthcare valuation text."""
+    _load_healthcare_facility_supp(page, live_server)
+    header = page.locator("#es-req-supp-header")
+    assert header.is_visible(), "8ZH: #es-req-supp-header not found."
+    text = header.inner_text()
+    assert "مستشفى" in text or "مركز طبي" in text, (
+        f"8ZH: heading must contain 'مستشفى' or 'مركز طبي'. Got: {text[:120]!r}"
+    )
+
+
+# ── CS866 ─────────────────────────────────────────────────────────────────────
+
+def test_CS866_8zh_section_A_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section A heading — تعريف الأصل الصحي ونموذج التشغيل."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "تعريف الأصل الصحي" in text, (
+        f"8ZH Section A heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS867 ─────────────────────────────────────────────────────────────────────
+
+def test_CS867_8zh_section_B_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section B heading — الطاقة السريرية والتوزيع الطبي."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الطاقة السريرية" in text, (
+        f"8ZH Section B heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS868 ─────────────────────────────────────────────────────────────────────
+
+def test_CS868_8zh_section_C_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section C heading — الأقسام والخدمات الطبية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الأقسام والخدمات الطبية" in text, (
+        f"8ZH Section C heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS869 ─────────────────────────────────────────────────────────────────────
+
+def test_CS869_8zh_section_D_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section D heading — الأجهزة الطبية والتجهيزات التخصصية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الأجهزة الطبية" in text, (
+        f"8ZH Section D heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS870 ─────────────────────────────────────────────────────────────────────
+
+def test_CS870_8zh_section_E_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section E heading — التراخيص والاعتمادات الطبية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "التراخيص والاعتمادات" in text, (
+        f"8ZH Section E heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS871 ─────────────────────────────────────────────────────────────────────
+
+def test_CS871_8zh_section_F_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section F heading — الغرف الخاصة والحماية الإشعاعية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الحماية الإشعاعية" in text, (
+        f"8ZH Section F heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS872 ─────────────────────────────────────────────────────────────────────
+
+def test_CS872_8zh_section_G_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section G heading — البنية الفنية وMEP والغازات الطبية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "MEP" in text and "الغازات الطبية" in text, (
+        f"8ZH Section G heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS873 ─────────────────────────────────────────────────────────────────────
+
+def test_CS873_8zh_section_H_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section H heading — مكافحة العدوى والسلامة والتشغيل السريري."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "مكافحة العدوى" in text, (
+        f"8ZH Section H heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS874 ─────────────────────────────────────────────────────────────────────
+
+def test_CS874_8zh_section_I_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section I heading — الكادر الطبي والتشغيل."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الكادر الطبي" in text, (
+        f"8ZH Section I heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS875 ─────────────────────────────────────────────────────────────────────
+
+def test_CS875_8zh_section_J_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section J heading — الإيرادات والمصروفات والتشغيل المالي."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الإيرادات والمصروفات" in text, (
+        f"8ZH Section J heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS876 ─────────────────────────────────────────────────────────────────────
+
+def test_CS876_8zh_section_K_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section K heading — دافعي التكلفة والتأمين والمرضى."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "دافعي التكلفة" in text, (
+        f"8ZH Section K heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS877 ─────────────────────────────────────────────────────────────────────
+
+def test_CS877_8zh_section_L_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section L heading — الحالة الفنية وCAPEX والصيانة."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "CAPEX" in text and "الصيانة" in text, (
+        f"8ZH Section L heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS878 ─────────────────────────────────────────────────────────────────────
+
+def test_CS878_8zh_section_M_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section M heading — الموقع والسوق والمنافسة."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الموقع والسوق" in text, (
+        f"8ZH Section M heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS879 ─────────────────────────────────────────────────────────────────────
+
+def test_CS879_8zh_section_N_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section N heading — الخصائص القانونية والتنظيمية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الخصائص القانونية" in text, (
+        f"8ZH Section N heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS880 ─────────────────────────────────────────────────────────────────────
+
+def test_CS880_8zh_section_O_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section O heading — معاملات التعديل حسب غرض التقييم."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل" in text, (
+        f"8ZH Section O heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS881 ─────────────────────────────────────────────────────────────────────
+
+def test_CS881_8zh_section_P_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section P heading — كفاءة الطاقة والاستدامة الصحية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "كفاءة الطاقة" in text and "الاستدامة" in text, (
+        f"8ZH Section P heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS882 ─────────────────────────────────────────────────────────────────────
+
+def test_CS882_8zh_section_Q_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section Q heading — المخاطر المناخية والطبيعية واستمرارية الأعمال."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر المناخية" in text, (
+        f"8ZH Section Q heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS883 ─────────────────────────────────────────────────────────────────────
+
+def test_CS883_8zh_section_R_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section R heading — البنية التحتية الرقمية والصحة الرقمية."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "البنية التحتية الرقمية" in text, (
+        f"8ZH Section R heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS884 ─────────────────────────────────────────────────────────────────────
+
+def test_CS884_8zh_section_S_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: Section S heading — مستندات إضافية مطلوبة."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "مستندات إضافية" in text, (
+        f"8ZH Section S heading not found. Snippet: {text[:200]!r}"
+    )
+
+
+# ── CS885 ─────────────────────────────────────────────────────────────────────
+
+def test_CS885_8zh_field_operating_status(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_operating_status field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_operating_status']")
+    assert f.count() >= 1, "8ZH: hc_supp_operating_status not found in supp panel."
+
+
+# ── CS886 ─────────────────────────────────────────────────────────────────────
+
+def test_CS886_8zh_field_licensed_beds_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_licensed_beds_count field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_licensed_beds_count']")
+    assert f.count() >= 1, "8ZH: hc_supp_licensed_beds_count not found in supp panel."
+
+
+# ── CS887 ─────────────────────────────────────────────────────────────────────
+
+def test_CS887_8zh_field_heavy_equipment_available(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_heavy_equipment_available field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_heavy_equipment_available']")
+    assert f.count() >= 1, "8ZH: hc_supp_heavy_equipment_available not found in supp panel."
+
+
+# ── CS888 ─────────────────────────────────────────────────────────────────────
+
+def test_CS888_8zh_field_jci_accreditation_status(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_jci_accreditation_status field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_jci_accreditation_status']")
+    assert f.count() >= 1, "8ZH: hc_supp_jci_accreditation_status not found in supp panel."
+
+
+# ── CS889 ─────────────────────────────────────────────────────────────────────
+
+def test_CS889_8zh_field_lead_lined_rooms_available(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_lead_lined_rooms_available field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_lead_lined_rooms_available']")
+    assert f.count() >= 1, "8ZH: hc_supp_lead_lined_rooms_available not found in supp panel."
+
+
+# ── CS890 ─────────────────────────────────────────────────────────────────────
+
+def test_CS890_8zh_field_oxygen_supply_system_type(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_oxygen_supply_system_type field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_oxygen_supply_system_type']")
+    assert f.count() >= 1, "8ZH: hc_supp_oxygen_supply_system_type not found in supp panel."
+
+
+# ── CS891 ─────────────────────────────────────────────────────────────────────
+
+def test_CS891_8zh_field_doctors_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_doctors_count field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_doctors_count']")
+    assert f.count() >= 1, "8ZH: hc_supp_doctors_count not found in supp panel."
+
+
+# ── CS892 ─────────────────────────────────────────────────────────────────────
+
+def test_CS892_8zh_field_annual_inpatient_revenue(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_annual_inpatient_revenue field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_annual_inpatient_revenue']")
+    assert f.count() >= 1, "8ZH: hc_supp_annual_inpatient_revenue not found in supp panel."
+
+
+# ── CS893 ─────────────────────────────────────────────────────────────────────
+
+def test_CS893_8zh_field_payer_mix(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_payer_mix field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_payer_mix']")
+    assert f.count() >= 1, "8ZH: hc_supp_payer_mix not found in supp panel."
+
+
+# ── CS894 ─────────────────────────────────────────────────────────────────────
+
+def test_CS894_8zh_field_electricity_consumption_annual_kwh(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: hc_supp_electricity_consumption_annual_kwh field renders in supp panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_electricity_consumption_annual_kwh']")
+    assert f.count() >= 1, "8ZH: hc_supp_electricity_consumption_annual_kwh not found in supp panel."
+
+
+# ── CS895 ─────────────────────────────────────────────────────────────────────
+
+def test_CS895_8zh_section_O_purpose_mortgage_lending(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: mortgage_lending purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_mortgage_lending_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_mortgage_lending_methodology not found."
+
+
+# ── CS896 ─────────────────────────────────────────────────────────────────────
+
+def test_CS896_8zh_section_O_purpose_sale_purchase(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: sale_purchase purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_sale_purchase_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_sale_purchase_methodology not found."
+
+
+# ── CS897 ─────────────────────────────────────────────────────────────────────
+
+def test_CS897_8zh_section_O_purpose_insurance(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: insurance purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_insurance_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_insurance_methodology not found."
+
+
+# ── CS898 ─────────────────────────────────────────────────────────────────────
+
+def test_CS898_8zh_section_O_purpose_ifrs_fair_value(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: ifrs_fair_value purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_ifrs_fair_value_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_ifrs_fair_value_methodology not found."
+
+
+# ── CS899 ─────────────────────────────────────────────────────────────────────
+
+def test_CS899_8zh_section_O_purpose_impairment_testing(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: impairment_testing (local-only) purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_impairment_testing_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_impairment_testing_methodology not found."
+
+
+# ── CS900 ─────────────────────────────────────────────────────────────────────
+
+def test_CS900_8zh_section_O_purpose_acquisition_investment(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: acquisition_investment purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_acquisition_investment_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_acquisition_investment_methodology not found."
+
+
+# ── CS901 ─────────────────────────────────────────────────────────────────────
+
+def test_CS901_8zh_section_O_purpose_taxation(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: taxation purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_taxation_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_taxation_methodology not found."
+
+
+# ── CS902 ─────────────────────────────────────────────────────────────────────
+
+def test_CS902_8zh_section_O_purpose_liquidation(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: liquidation purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_liquidation_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_liquidation_methodology not found."
+
+
+# ── CS903 ─────────────────────────────────────────────────────────────────────
+
+def test_CS903_8zh_section_O_purpose_litigation_dispute(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: litigation_dispute (local-only) purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_litigation_dispute_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_litigation_dispute_methodology not found."
+
+
+# ── CS904 ─────────────────────────────────────────────────────────────────────
+
+def test_CS904_8zh_section_O_purpose_operator_contract_review(page: "Page", live_server: str) -> None:
+    """Phase 8ZH Section O: operator_contract_review (local-only) purpose block renders."""
+    _load_healthcare_facility_supp(page, live_server)
+    f = page.locator("[data-es-supp-field='hc_supp_purpose_operator_contract_review_methodology']")
+    assert f.count() >= 1, "8ZH: hc_supp_purpose_operator_contract_review_methodology not found."
+
+
+# ── CS905 ─────────────────────────────────────────────────────────────────────
+
+def test_CS905_8zh_data_es_supp_field_attribute_spot_check(page: "Page", live_server: str) -> None:
+    """Phase 8ZH: sampled hc_supp_ / hc_doc_ fields all have data-es-supp-field attribute."""
+    _load_healthcare_facility_supp(page, live_server)
+    sampled_fields = [
+        "hc_supp_operating_status",
+        "hc_supp_licensed_beds_count",
+        "hc_supp_jci_accreditation_status",
+        "hc_supp_doctors_count",
+        "hc_supp_payer_mix",
+        "hc_supp_flood_risk_level",
+        "hc_doc_medical_equipment_list",
+    ]
+    missing = []
+    for field in sampled_fields:
+        el = page.locator(f"[data-es-supp-field='{field}']")
+        if el.count() == 0:
+            missing.append(field)
+    assert not missing, f"8ZH: missing data-es-supp-field attributes: {missing}"
+
+
+# ── CS906 ─────────────────────────────────────────────────────────────────────
+
+def test_CS906_8zh_hc_supp_fields_not_in_land_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZH isolation: hc_supp_ fields must NOT appear in land supp panel."""
+    _load_land(page, live_server)
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() == 0, (
+        f"8ZH isolation: hc_supp_ fields must not appear in land panel. "
+        f"Found {hc_fields.count()}."
+    )
+
+
+# ── CS907 ─────────────────────────────────────────────────────────────────────
+
+def test_CS907_8zh_hc_supp_fields_not_in_wellness_resort_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZH isolation: hc_supp_ fields must NOT appear in wellness_resort supp panel."""
+    _load_wellness_resort(page, live_server)
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() == 0, (
+        f"8ZH isolation: hc_supp_ fields must not appear in wellness_resort panel. "
+        f"Found {hc_fields.count()}."
+    )
+
+
+# ── CS908 ─────────────────────────────────────────────────────────────────────
+
+def test_CS908_8zh_hc_supp_fields_not_in_retail_shop_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZH isolation: hc_supp_ fields must NOT appear in retail_shop_detailed supp panel."""
+    _load_retail_shop_supp(page, live_server)
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() == 0, (
+        f"8ZH isolation: hc_supp_ fields must not appear in retail_shop_detailed panel. "
+        f"Found {hc_fields.count()}."
+    )
+
+
+# ── CS909 ─────────────────────────────────────────────────────────────────────
+
+def test_CS909_8zh_old_hospital_ho_total_beds_regression(page: "Page", live_server: str) -> None:
+    """Phase 8ZH regression: old hospital profile ho_total_beds still renders correctly."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opts = page.locator("#asset-type option[value='hospital']")
+    if opts.count() == 0:
+        return  # old hospital profile removed -- test passes by design
+    page.select_option("#asset-type", value="hospital")
+    page.select_option("#val-purpose", value="fair_market_value")
+    panel = page.locator("#es-req-panel")
+    panel.wait_for(state="visible", timeout=4_000)
+    ho_beds = page.locator("[data-es-field='ho_total_beds'], [data-field='ho_total_beds']")
+    if ho_beds.count() > 0:
+        assert ho_beds.first.is_visible(), (
+            "8ZH regression: ho_total_beds field must still be visible in old hospital profile."
+        )

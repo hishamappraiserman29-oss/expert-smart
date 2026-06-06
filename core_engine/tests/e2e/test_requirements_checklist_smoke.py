@@ -12611,3 +12611,511 @@ def test_CS909_8zh_old_hospital_ho_total_beds_regression(page: "Page", live_serv
         assert ho_beds.first.is_visible(), (
             "8ZH regression: ho_total_beds field must still be visible in old hospital profile."
         )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 8ZI — Prefabricated Factory Detailed Valuation Requirements (CS910–CS959)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _load_prefab_factory_supp(page: "Page", live_server: str) -> None:
+    """Load prefabricated_factory supplemental panel for Phase 8ZI tests."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="prefabricated_factory")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp = page.locator("#es-req-supp")
+    supp.wait_for(state="visible", timeout=5_000)
+
+
+# ── CS910 ─────────────────────────────────────────────────────────────────────
+
+def test_CS910_8zi_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: supplemental panel renders for prefabricated_factory."""
+    _load_prefab_factory_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.is_visible(), "8ZI: #es-req-supp must be visible for prefabricated_factory."
+
+
+# ── CS911 ─────────────────────────────────────────────────────────────────────
+
+def test_CS911_8zi_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: supplemental heading contains Arabic text for prefabricated_factory."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header")
+    assert heading.count() > 0, "8ZI: #es-req-supp-header must exist."
+    text = heading.inner_text()
+    assert "مصنع" in text or "بريفاب" in text, (
+        f"8ZI: heading must mention مصنع or بريفاب, got: {text!r}"
+    )
+
+
+# ── CS912 ─────────────────────────────────────────────────────────────────────
+
+def test_CS912_8zi_supp_local_only_subtext(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: supplemental subtext says 'إدخال محلي' for prefabricated_factory."""
+    _load_prefab_factory_supp(page, live_server)
+    header = page.locator("#es-req-supp-header")
+    text = header.inner_text()
+    assert "إدخال محلي" in text or "لا يُرسل" in text, (
+        f"8ZI: subtext must mention local-only, got: {text!r}"
+    )
+
+
+# ── CS913 ─────────────────────────────────────────────────────────────────────
+
+def test_CS913_8zi_all_supp_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: every control in #es-req-supp has data-es-supp-field attribute."""
+    _load_prefab_factory_supp(page, live_server)
+    controls = page.locator("#es-req-supp [data-es-supp-field]")
+    assert controls.count() > 0, "8ZI: no data-es-supp-field controls found."
+    # Verify none accidentally use data-es-req-field
+    bad = page.locator("#es-req-supp [data-es-req-field]")
+    assert bad.count() == 0, (
+        f"8ZI: {bad.count()} controls in supp panel use data-es-req-field (must use data-es-supp-field)."
+    )
+
+
+# ── CS914 ─────────────────────────────────────────────────────────────────────
+
+def test_CS914_8zi_section_A_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section A heading 'تعريف المصنع الجاهز ونموذج التشغيل' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="تعريف المصنع الجاهز")
+    assert heading.count() > 0, "8ZI: section A heading must render."
+
+
+# ── CS915 ─────────────────────────────────────────────────────────────────────
+
+def test_CS915_8zi_field_prefab_factory_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_prefab_factory_asset_type (section A) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_prefab_factory_asset_type']")
+    assert field.count() > 0, "8ZI: pf_supp_prefab_factory_asset_type must render."
+
+
+# ── CS916 ─────────────────────────────────────────────────────────────────────
+
+def test_CS916_8zi_field_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_operating_status (section A) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_operating_status']")
+    assert field.count() > 0, "8ZI: pf_supp_operating_status must render."
+
+
+# ── CS917 ─────────────────────────────────────────────────────────────────────
+
+def test_CS917_8zi_field_year_of_installation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_year_of_installation (section A) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_year_of_installation']")
+    assert field.count() > 0, "8ZI: pf_supp_year_of_installation must render."
+
+
+# ── CS918 ─────────────────────────────────────────────────────────────────────
+
+def test_CS918_8zi_section_B_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section B heading 'الأرض والموقع والوصول' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="الأرض والموقع والوصول")
+    assert heading.count() > 0, "8ZI: section B heading must render."
+
+
+# ── CS919 ─────────────────────────────────────────────────────────────────────
+
+def test_CS919_8zi_field_plot_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_plot_area_sqm (section B) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_plot_area_sqm']")
+    assert field.count() > 0, "8ZI: pf_supp_plot_area_sqm must render."
+
+
+# ── CS920 ─────────────────────────────────────────────────────────────────────
+
+def test_CS920_8zi_field_industrial_zone_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_industrial_zone_status (section B) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_industrial_zone_status']")
+    assert field.count() > 0, "8ZI: pf_supp_industrial_zone_status must render."
+
+
+# ── CS921 ─────────────────────────────────────────────────────────────────────
+
+def test_CS921_8zi_section_C_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section C heading 'الهيكل المعدني والبحور المفتوحة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="الهيكل المعدني والبحور المفتوحة")
+    assert heading.count() > 0, "8ZI: section C heading must render."
+
+
+# ── CS922 ─────────────────────────────────────────────────────────────────────
+
+def test_CS922_8zi_field_structural_defects_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_structural_defects renders as checkbox_group (section C)."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_structural_defects']")
+    assert field.count() > 0, "8ZI: pf_supp_structural_defects checkbox group must render."
+
+
+# ── CS923 ─────────────────────────────────────────────────────────────────────
+
+def test_CS923_8zi_section_D_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section D heading 'الألواح والعزل والغلاف الخارجي' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="الألواح والعزل والغلاف الخارجي")
+    assert heading.count() > 0, "8ZI: section D heading must render."
+
+
+# ── CS924 ─────────────────────────────────────────────────────────────────────
+
+def test_CS924_8zi_field_roof_panel_thickness_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_roof_panel_thickness_mm (section D) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_roof_panel_thickness_mm']")
+    assert field.count() > 0, "8ZI: pf_supp_roof_panel_thickness_mm must render."
+
+
+# ── CS925 ─────────────────────────────────────────────────────────────────────
+
+def test_CS925_8zi_section_E_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section E heading 'الأساسات والأرضيات والتحميل' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="الأساسات والأرضيات والتحميل")
+    assert heading.count() > 0, "8ZI: section E heading must render."
+
+
+# ── CS926 ─────────────────────────────────────────────────────────────────────
+
+def test_CS926_8zi_field_floor_slab_thickness_mm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_floor_slab_thickness_mm (section E) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_floor_slab_thickness_mm']")
+    assert field.count() > 0, "8ZI: pf_supp_floor_slab_thickness_mm must render."
+
+
+# ── CS927 ─────────────────────────────────────────────────────────────────────
+
+def test_CS927_8zi_section_F_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section F heading 'الرافعات والتحميل الصناعي' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="الرافعات والتحميل الصناعي")
+    assert heading.count() > 0, "8ZI: section F heading must render."
+
+
+# ── CS928 ─────────────────────────────────────────────────────────────────────
+
+def test_CS928_8zi_field_overhead_cranes_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_overhead_cranes_count (section F) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_overhead_cranes_count']")
+    assert field.count() > 0, "8ZI: pf_supp_overhead_cranes_count must render."
+
+
+# ── CS929 ─────────────────────────────────────────────────────────────────────
+
+def test_CS929_8zi_section_G_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section G heading 'قابلية الفك والنقل وإعادة التركيب' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="قابلية الفك والنقل وإعادة التركيب")
+    assert heading.count() > 0, "8ZI: section G heading must render."
+
+
+# ── CS930 ─────────────────────────────────────────────────────────────────────
+
+def test_CS930_8zi_field_relocatable_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_relocatable_status (section G) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_relocatable_status']")
+    assert field.count() > 0, "8ZI: pf_supp_relocatable_status must render."
+
+
+# ── CS931 ─────────────────────────────────────────────────────────────────────
+
+def test_CS931_8zi_field_residual_salvage_value_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_residual_salvage_value (section G) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_residual_salvage_value']")
+    assert field.count() > 0, "8ZI: pf_supp_residual_salvage_value must render."
+
+
+# ── CS932 ─────────────────────────────────────────────────────────────────────
+
+def test_CS932_8zi_section_H_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section H heading 'المرافق والطاقة وMEP' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="المرافق والطاقة")
+    assert heading.count() > 0, "8ZI: section H heading must render."
+
+
+# ── CS933 ─────────────────────────────────────────────────────────────────────
+
+def test_CS933_8zi_field_electricity_capacity_kva_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_electricity_capacity_kva (section H) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_electricity_capacity_kva']")
+    assert field.count() > 0, "8ZI: pf_supp_electricity_capacity_kva must render."
+
+
+# ── CS934 ─────────────────────────────────────────────────────────────────────
+
+def test_CS934_8zi_section_I_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section I heading 'التشغيل الصناعي والملاءمة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="التشغيل الصناعي والملاءمة")
+    assert heading.count() > 0, "8ZI: section I heading must render."
+
+
+# ── CS935 ─────────────────────────────────────────────────────────────────────
+
+def test_CS935_8zi_field_machinery_excluded_note_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_machinery_excluded_from_real_estate_value_note renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_machinery_excluded_from_real_estate_value_note']"
+    )
+    assert field.count() > 0, "8ZI: machinery_excluded note must render in section I."
+
+
+# ── CS936 ─────────────────────────────────────────────────────────────────────
+
+def test_CS936_8zi_section_J_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section J heading 'التراخيص والوضع القانوني' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="التراخيص والوضع القانوني")
+    assert heading.count() > 0, "8ZI: section J heading must render."
+
+
+# ── CS937 ─────────────────────────────────────────────────────────────────────
+
+def test_CS937_8zi_field_ownership_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_ownership_type (section J) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_ownership_type']")
+    assert field.count() > 0, "8ZI: pf_supp_ownership_type must render."
+
+
+# ── CS938 ─────────────────────────────────────────────────────────────────────
+
+def test_CS938_8zi_section_K_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section K heading 'العقود والدخل والإشغال' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="العقود والدخل والإشغال")
+    assert heading.count() > 0, "8ZI: section K heading must render."
+
+
+# ── CS939 ─────────────────────────────────────────────────────────────────────
+
+def test_CS939_8zi_field_current_rent_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_current_rent_annual (section K) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_current_rent_annual']")
+    assert field.count() > 0, "8ZI: pf_supp_current_rent_annual must render."
+
+
+# ── CS940 ─────────────────────────────────────────────────────────────────────
+
+def test_CS940_8zi_section_L_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section L heading 'التكاليف وCAPEX والصيانة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="التكاليف وCAPEX")
+    assert heading.count() > 0, "8ZI: section L heading must render."
+
+
+# ── CS941 ─────────────────────────────────────────────────────────────────────
+
+def test_CS941_8zi_field_replacement_cost_new_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_replacement_cost_new (section L) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_replacement_cost_new']")
+    assert field.count() > 0, "8ZI: pf_supp_replacement_cost_new must render."
+
+
+# ── CS942 ─────────────────────────────────────────────────────────────────────
+
+def test_CS942_8zi_section_M_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section M heading 'السوق وقابلية التسويق' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="السوق وقابلية التسويق")
+    assert heading.count() > 0, "8ZI: section M heading must render."
+
+
+# ── CS943 ─────────────────────────────────────────────────────────────────────
+
+def test_CS943_8zi_field_marketability_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_marketability_level (section M) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_marketability_level']")
+    assert field.count() > 0, "8ZI: pf_supp_marketability_level must render."
+
+
+# ── CS944 ─────────────────────────────────────────────────────────────────────
+
+def test_CS944_8zi_section_N_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section N heading 'معاملات التعديل حسب غرض التقييم' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="معاملات التعديل حسب غرض التقييم")
+    assert heading.count() > 0, "8ZI: section N heading must render."
+
+
+# ── CS945 ─────────────────────────────────────────────────────────────────────
+
+def test_CS945_8zi_purpose_mortgage_lending_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_mortgage_lending_methodology renders in section N."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_mortgage_lending_methodology']"
+    )
+    assert field.count() > 0, "8ZI: mortgage_lending methodology must render."
+
+
+# ── CS946 ─────────────────────────────────────────────────────────────────────
+
+def test_CS946_8zi_purpose_sale_purchase_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_sale_purchase_methodology renders in section N."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_sale_purchase_methodology']"
+    )
+    assert field.count() > 0, "8ZI: sale_purchase methodology must render."
+
+
+# ── CS947 ─────────────────────────────────────────────────────────────────────
+
+def test_CS947_8zi_purpose_taxation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_taxation_methodology renders in section N."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_taxation_methodology']"
+    )
+    assert field.count() > 0, "8ZI: taxation methodology must render."
+
+
+# ── CS948 ─────────────────────────────────────────────────────────────────────
+
+def test_CS948_8zi_purpose_liquidation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_liquidation_methodology renders in section N."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_liquidation_methodology']"
+    )
+    assert field.count() > 0, "8ZI: liquidation methodology must render."
+
+
+# ── CS949 ─────────────────────────────────────────────────────────────────────
+
+def test_CS949_8zi_purpose_local_only_sale_leaseback_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_sale_leaseback_methodology (local-only) renders in section N."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator(
+        "#es-req-supp [data-es-supp-field='pf_supp_sale_leaseback_methodology']"
+    )
+    assert field.count() > 0, "8ZI: sale_leaseback (local-only) methodology must render."
+
+
+# ── CS950 ─────────────────────────────────────────────────────────────────────
+
+def test_CS950_8zi_section_O_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section O heading 'كفاءة الطاقة والاستدامة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="كفاءة الطاقة والاستدامة")
+    assert heading.count() > 0, "8ZI: section O heading must render."
+
+
+# ── CS951 ─────────────────────────────────────────────────────────────────────
+
+def test_CS951_8zi_field_sustainability_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_sustainability_features renders as checkbox_group (section O)."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_sustainability_features']")
+    assert field.count() > 0, "8ZI: pf_supp_sustainability_features checkbox group must render."
+
+
+# ── CS952 ─────────────────────────────────────────────────────────────────────
+
+def test_CS952_8zi_section_P_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section P heading 'المخاطر المناخية والتشغيلية' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="المخاطر المناخية والتشغيلية")
+    assert heading.count() > 0, "8ZI: section P heading must render."
+
+
+# ── CS953 ─────────────────────────────────────────────────────────────────────
+
+def test_CS953_8zi_field_climate_resilience_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_climate_resilience_features renders as checkbox_group (section P)."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_climate_resilience_features']")
+    assert field.count() > 0, "8ZI: pf_supp_climate_resilience_features checkbox group must render."
+
+
+# ── CS954 ─────────────────────────────────────────────────────────────────────
+
+def test_CS954_8zi_section_Q_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section Q heading 'البنية الرقمية والمراقبة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="البنية الرقمية والمراقبة")
+    assert heading.count() > 0, "8ZI: section Q heading must render."
+
+
+# ── CS955 ─────────────────────────────────────────────────────────────────────
+
+def test_CS955_8zi_field_fiber_optic_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_supp_fiber_optic_available (section Q) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_supp_fiber_optic_available']")
+    assert field.count() > 0, "8ZI: pf_supp_fiber_optic_available must render."
+
+
+# ── CS956 ─────────────────────────────────────────────────────────────────────
+
+def test_CS956_8zi_section_R_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: section R heading 'مستندات إضافية مطلوبة' renders."""
+    _load_prefab_factory_supp(page, live_server)
+    heading = page.locator("#es-req-supp", has_text="مستندات إضافية مطلوبة")
+    assert heading.count() > 0, "8ZI: section R heading must render."
+
+
+# ── CS957 ─────────────────────────────────────────────────────────────────────
+
+def test_CS957_8zi_doc_civil_defense_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_doc_civil_defense_license (section R, document group) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_doc_civil_defense_license']")
+    assert field.count() > 0, "8ZI: pf_doc_civil_defense_license must render."
+
+
+# ── CS958 ─────────────────────────────────────────────────────────────────────
+
+def test_CS958_8zi_doc_site_photos_recent_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: pf_doc_site_photos_recent (section R, document group) renders."""
+    _load_prefab_factory_supp(page, live_server)
+    field = page.locator("#es-req-supp [data-es-supp-field='pf_doc_site_photos_recent']")
+    assert field.count() > 0, "8ZI: pf_doc_site_photos_recent must render."
+
+
+# ── CS959 ─────────────────────────────────────────────────────────────────────
+
+def test_CS959_8zi_static_pf_fields_not_duplicated_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZI: static pf_ fields must NOT appear as data-es-supp-field in supplemental panel."""
+    _load_prefab_factory_supp(page, live_server)
+    STATIC_SKIP = [
+        "pf_clear_span_m", "pf_bay_spacing_m", "pf_eaves_height_m", "pf_ridge_height_m",
+        "pf_steel_frame_type", "pf_steel_frame_condition",
+        "pf_overhead_crane_load_capacity_ton", "pf_crane_beam_available",
+        "pf_sandwich_panel_type", "pf_panel_thickness_mm",
+        "pf_roof_panel_condition", "pf_wall_panel_condition", "pf_thermal_insulation_quality",
+        "pf_dismantling_reassembly_feasibility", "pf_estimated_relocation_cost",
+        "pf_remaining_economic_life_years", "pf_corrosion_protection_status",
+        "pf_foundation_type", "pf_built_area_sqm", "pf_floor_loading_capacity_ton_sqm",
+        "pf_utilities_available", "pf_industrial_license_status",
+        "pf_ownership_doc", "pf_building_permit", "pf_industrial_license",
+        "pf_structural_drawings", "pf_supplier_specs", "pf_site_plan",
+    ]
+    duplicated = []
+    for fname in STATIC_SKIP:
+        el = page.locator(f"#es-req-supp [data-es-supp-field='{fname}']")
+        if el.count() > 0:
+            duplicated.append(fname)
+    assert not duplicated, (
+        f"8ZI: static pf_ fields must not appear in supplemental panel, but found: {duplicated}"
+    )

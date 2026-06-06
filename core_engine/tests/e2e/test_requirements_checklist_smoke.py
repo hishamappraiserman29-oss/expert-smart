@@ -13119,3 +13119,425 @@ def test_CS959_8zi_static_pf_fields_not_duplicated_in_supp(page: "Page", live_se
     assert not duplicated, (
         f"8ZI: static pf_ fields must not appear in supplemental panel, but found: {duplicated}"
     )
+
+
+# ────────────────────────────────────────────────────────────────────────────────
+# Phase 8ZJ — Educational Asset Detailed Valuation Requirements (CS960–CS1009)
+# ────────────────────────────────────────────────────────────────────────────────
+
+def _load_educational_asset_supp(page: "Page", live_server: str) -> None:
+    """Load educational_asset supplemental panel for Phase 8ZJ tests."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="educational_asset")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp = page.locator("#es-req-supp")
+    supp.wait_for(state="visible", timeout=5_000)
+
+
+# ── CS960 ─────────────────────────────────────────────────────────────────────
+
+def test_CS960_ea_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: supplemental panel renders for educational_asset."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+# ── CS961 ─────────────────────────────────────────────────────────────────────
+
+def test_CS961_ea_supp_heading_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: heading contains Arabic educational text."""
+    _load_educational_asset_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").text_content()
+    assert "مدرسة" in heading or "تعليمي" in heading, f"8ZJ: unexpected heading: {heading}"
+
+
+# ── CS962 ─────────────────────────────────────────────────────────────────────
+
+def test_CS962_ea_supp_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_operating_status renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_operating_status']").count() > 0
+
+
+# ── CS963 ─────────────────────────────────────────────────────────────────────
+
+def test_CS963_ea_supp_operator_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_operator_type renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_operator_type']").count() > 0
+
+
+# ── CS964 ─────────────────────────────────────────────────────────────────────
+
+def test_CS964_ea_supp_school_operator_name_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_school_operator_name text input renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_school_operator_name']").count() > 0
+
+
+# ── CS965 ─────────────────────────────────────────────────────────────────────
+
+def test_CS965_ea_supp_target_student_segment_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_target_student_segment checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_target_student_segment']").count() > 0
+
+
+# ── CS966 ─────────────────────────────────────────────────────────────────────
+
+def test_CS966_ea_supp_current_utilization_rate_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_current_utilization_rate_pct renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_current_utilization_rate_pct']").count() > 0
+
+
+# ── CS967 ─────────────────────────────────────────────────────────────────────
+
+def test_CS967_ea_supp_student_retention_rate_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_student_retention_rate_pct renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_student_retention_rate_pct']").count() > 0
+
+
+# ── CS968 ─────────────────────────────────────────────────────────────────────
+
+def test_CS968_ea_supp_shift_system_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_shift_system select renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_shift_system']").count() > 0
+
+
+# ── CS969 ─────────────────────────────────────────────────────────────────────
+
+def test_CS969_ea_supp_education_system_type_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_education_system_type checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_education_system_type']").count() > 0
+
+
+# ── CS970 ─────────────────────────────────────────────────────────────────────
+
+def test_CS970_ea_supp_international_accreditation_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_international_accreditation_status renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_international_accreditation_status']").count() > 0
+
+
+# ── CS971 ─────────────────────────────────────────────────────────────────────
+
+def test_CS971_ea_supp_education_quality_rating_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_education_quality_rating renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_education_quality_rating']").count() > 0
+
+
+# ── CS972 ─────────────────────────────────────────────────────────────────────
+
+def test_CS972_ea_supp_land_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_land_area_sqm float input renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_land_area_sqm']").count() > 0
+
+
+# ── CS973 ─────────────────────────────────────────────────────────────────────
+
+def test_CS973_ea_supp_library_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_library_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_library_available']")
+    assert el.count() > 0, "8ZJ: ea_supp_library_available must render."
+
+
+# ── CS974 ─────────────────────────────────────────────────────────────────────
+
+def test_CS974_ea_supp_auditorium_capacity_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_auditorium_capacity int input renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_auditorium_capacity']").count() > 0
+
+
+# ── CS975 ─────────────────────────────────────────────────────────────────────
+
+def test_CS975_ea_supp_future_expansion_potential_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_future_expansion_potential renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_future_expansion_potential']").count() > 0
+
+
+# ── CS976 ─────────────────────────────────────────────────────────────────────
+
+def test_CS976_ea_supp_facilities_available_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_facilities_available checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_facilities_available']").count() > 0
+
+
+# ── CS977 ─────────────────────────────────────────────────────────────────────
+
+def test_CS977_ea_supp_building_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_building_condition select renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_building_condition']").count() > 0
+
+
+# ── CS978 ─────────────────────────────────────────────────────────────────────
+
+def test_CS978_ea_supp_emergency_evacuation_plan_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_emergency_evacuation_plan_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_emergency_evacuation_plan_available']")
+    assert el.count() > 0, "8ZJ: ea_supp_emergency_evacuation_plan_available must render."
+
+
+# ── CS979 ─────────────────────────────────────────────────────────────────────
+
+def test_CS979_ea_supp_capex_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_capex_required float renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_capex_required']").count() > 0
+
+
+# ── CS980 ─────────────────────────────────────────────────────────────────────
+
+def test_CS980_ea_supp_teacher_student_ratio_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_teacher_student_ratio float renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_teacher_student_ratio']").count() > 0
+
+
+# ── CS981 ─────────────────────────────────────────────────────────────────────
+
+def test_CS981_ea_supp_principal_stability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_principal_or_management_stability renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_principal_or_management_stability']").count() > 0
+
+
+# ── CS982 ─────────────────────────────────────────────────────────────────────
+
+def test_CS982_ea_supp_outsourced_services_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_outsourced_services_available checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_outsourced_services_available']").count() > 0
+
+
+# ── CS983 ─────────────────────────────────────────────────────────────────────
+
+def test_CS983_ea_supp_total_revenue_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_total_revenue_annual float renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_total_revenue_annual']").count() > 0
+
+
+# ── CS984 ─────────────────────────────────────────────────────────────────────
+
+def test_CS984_ea_supp_ebitda_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_ebitda_annual float renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_ebitda_annual']").count() > 0
+
+
+# ── CS985 ─────────────────────────────────────────────────────────────────────
+
+def test_CS985_ea_supp_target_market_income_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_target_market_income_level renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_target_market_income_level']").count() > 0
+
+
+# ── CS986 ─────────────────────────────────────────────────────────────────────
+
+def test_CS986_ea_supp_school_reputation_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_school_reputation_level renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_school_reputation_level']").count() > 0
+
+
+# ── CS987 ─────────────────────────────────────────────────────────────────────
+
+def test_CS987_ea_supp_marketability_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_marketability_level renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_marketability_level']").count() > 0
+
+
+# ── CS988 ─────────────────────────────────────────────────────────────────────
+
+def test_CS988_ea_supp_ownership_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_ownership_type renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_ownership_type']").count() > 0
+
+
+# ── CS989 ─────────────────────────────────────────────────────────────────────
+
+def test_CS989_ea_supp_zoning_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_zoning_compliance_for_education_use renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_zoning_compliance_for_education_use']").count() > 0
+
+
+# ── CS990 ─────────────────────────────────────────────────────────────────────
+
+def test_CS990_ea_supp_mortgage_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_mortgage_lending_methodology (section K) renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_mortgage_lending_methodology']").count() > 0
+
+
+# ── CS991 ─────────────────────────────────────────────────────────────────────
+
+def test_CS991_ea_supp_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_sale_purchase_methodology renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_sale_purchase_methodology']").count() > 0
+
+
+# ── CS992 ─────────────────────────────────────────────────────────────────────
+
+def test_CS992_ea_supp_ifrs_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_ifrs_fair_value_methodology renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_ifrs_fair_value_methodology']").count() > 0
+
+
+# ── CS993 ─────────────────────────────────────────────────────────────────────
+
+def test_CS993_ea_supp_acquisition_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_acquisition_investment_methodology (local purpose) renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_acquisition_investment_methodology']").count() > 0
+
+
+# ── CS994 ─────────────────────────────────────────────────────────────────────
+
+def test_CS994_ea_supp_energy_efficiency_rating_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_energy_efficiency_rating renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_energy_efficiency_rating']").count() > 0
+
+
+# ── CS995 ─────────────────────────────────────────────────────────────────────
+
+def test_CS995_ea_supp_solar_panels_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_solar_panels_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_solar_panels_available']")
+    assert el.count() > 0, "8ZJ: ea_supp_solar_panels_available must render."
+
+
+# ── CS996 ─────────────────────────────────────────────────────────────────────
+
+def test_CS996_ea_supp_sustainability_features_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_sustainability_features checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_sustainability_features']").count() > 0
+
+
+# ── CS997 ─────────────────────────────────────────────────────────────────────
+
+def test_CS997_ea_supp_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_flood_risk_level renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_flood_risk_level']").count() > 0
+
+
+# ── CS998 ─────────────────────────────────────────────────────────────────────
+
+def test_CS998_ea_supp_backup_power_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_backup_power_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_backup_power_available']")
+    assert el.count() > 0, "8ZJ: ea_supp_backup_power_available must render."
+
+
+# ── CS999 ─────────────────────────────────────────────────────────────────────
+
+def test_CS999_ea_supp_climate_resilience_features_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_climate_resilience_features checkbox group renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_climate_resilience_features']").count() > 0
+
+
+# ── CS1000 ────────────────────────────────────────────────────────────────────
+
+def test_CS1000_ea_supp_fiber_optic_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_fiber_optic_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_fiber_optic_available']")
+    assert el.count() > 0, "8ZJ: ea_supp_fiber_optic_available must render."
+
+
+# ── CS1001 ────────────────────────────────────────────────────────────────────
+
+def test_CS1001_ea_supp_lms_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_learning_management_system_lms_available bool (select) renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_learning_management_system_lms_available']")
+    assert el.count() > 0, "8ZJ: LMS available must render."
+
+
+# ── CS1002 ────────────────────────────────────────────────────────────────────
+
+def test_CS1002_ea_supp_smart_classrooms_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_smart_classrooms_count int renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_smart_classrooms_count']").count() > 0
+
+
+# ── CS1003 ────────────────────────────────────────────────────────────────────
+
+def test_CS1003_ea_supp_cybersecurity_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_supp_cybersecurity_compliance_status renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_supp_cybersecurity_compliance_status']").count() > 0
+
+
+# ── CS1004 ────────────────────────────────────────────────────────────────────
+
+def test_CS1004_ea_doc_curriculum_approvals_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_curriculum_approvals document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_curriculum_approvals']").count() > 0
+
+
+# ── CS1005 ────────────────────────────────────────────────────────────────────
+
+def test_CS1005_ea_doc_management_contracts_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_management_operation_contracts document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_management_operation_contracts']").count() > 0
+
+
+# ── CS1006 ────────────────────────────────────────────────────────────────────
+
+def test_CS1006_ea_doc_building_floor_plans_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_building_floor_plans document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_building_floor_plans']").count() > 0
+
+
+# ── CS1007 ────────────────────────────────────────────────────────────────────
+
+def test_CS1007_ea_doc_safety_lab_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_safety_lab_reports document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_safety_lab_reports']").count() > 0
+
+
+# ── CS1008 ────────────────────────────────────────────────────────────────────
+
+def test_CS1008_ea_doc_technical_condition_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_technical_condition_reports document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_technical_condition_reports']").count() > 0
+
+
+# ── CS1009 ────────────────────────────────────────────────────────────────────
+
+def test_CS1009_ea_doc_site_photos_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZJ: ea_doc_site_photos_recent document checkbox renders."""
+    _load_educational_asset_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ea_doc_site_photos_recent']").count() > 0

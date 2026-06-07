@@ -16365,6 +16365,16 @@ function _showIndexToast(msg, type) {
                   ], valid_values: [], group: '', ui_required: false },
                 { name: 'well_supp_purpose_water_rights_review_adj',   field_type: 'float', label_ar: 'مراجعة حقوق المياه — معامل التعديل', unit_ar: '%', valid_values: [], group: '', ui_required: false },
                 { name: 'well_supp_purpose_water_rights_review_notes', field_type: 'str',   label_ar: 'مراجعة حقوق المياه — ملاحظة',                    valid_values: [], group: '', ui_required: false },
+                // hotel_resort_support_value — Phase 8ZL local-only purpose
+                { name: 'well_supp_purpose_hotel_resort_support_value_methodology', field_type: 'str', label_ar: 'دعم فندق / منتجع — منهجية التقييم',
+                  help_ar: '(غرض محلي إرشادي فقط — لا يُرسَل للتقرير)',
+                  options: [
+                    { value: 'avoided_cost_method',      label_ar: 'طريقة التكلفة المتجنَّبة' }, { value: 'income_contribution_method', label_ar: 'طريقة مساهمة الدخل' },
+                    { value: 'comparative_water_cost',   label_ar: 'مقارنة تكلفة المياه' },      { value: 'expert_determination',       label_ar: 'تقدير الخبير' },
+                    { value: 'mixed_methods',             label_ar: 'منهجيات مختلطة' },            { value: 'unknown',                    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_purpose_hotel_resort_support_value_adj',   field_type: 'float', label_ar: 'دعم فندق / منتجع — معامل التعديل', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_purpose_hotel_resort_support_value_notes', field_type: 'str',   label_ar: 'دعم فندق / منتجع — ملاحظة',                        valid_values: [], group: '', ui_required: false },
             ]},
             // T — مستندات إضافية مطلوبة
             // SKIP: ww_well_permit, ww_water_analysis_rpt, ww_pump_specs, ww_production_log, ww_ownership_deed (already in static form)
@@ -16376,7 +16386,200 @@ function _showIndexToast(msg, type) {
                 { name: 'well_doc_groundwater_model',         field_type: 'bool', label_ar: 'نموذج المياه الجوفية',                 group: 'document', valid_values: [], ui_required: false },
                 { name: 'well_doc_water_sale_contracts',      field_type: 'bool', label_ar: 'عقود بيع المياه',                      group: 'document', valid_values: [], ui_required: false },
                 { name: 'well_doc_site_photos_recent',        field_type: 'bool', label_ar: 'صور حديثة للبئر والموقع والمعدات',     group: 'document', valid_values: [], ui_required: false },
+                // Phase 8ZL additional documents
+                { name: 'well_doc_water_authority_approval',  field_type: 'bool', label_ar: 'موافقة جهة المياه الرسمية',             group: 'document', valid_values: [], ui_required: false },
+                { name: 'well_doc_meter_readings',            field_type: 'bool', label_ar: 'بيانات عدّاد السحب',                   group: 'document', valid_values: [], ui_required: false },
+                { name: 'well_doc_maintenance_contracts',     field_type: 'bool', label_ar: 'عقود الصيانة والتشغيل',                 group: 'document', valid_values: [], ui_required: false },
+                { name: 'well_doc_energy_bills',              field_type: 'bool', label_ar: 'فواتير الطاقة أو الوقود',               group: 'document', valid_values: [], ui_required: false },
+                { name: 'well_doc_violation_records',         field_type: 'bool', label_ar: 'مستندات المخالفات أو القيود',           group: 'document', valid_values: [], ui_required: false },
             ]},
+            // ── Phase 8ZL — Groundwater Well Enrichment ─────────────────────────────
+            // U — البيانات الهيدروجيولوجية والخزان الجوفي
+            { heading: 'U — البيانات الهيدروجيولوجية والخزان الجوفي', color: '#0ea5e9', desc: 'بيانات الخزان الجوفي والهيدروجيولوجيا', fields: [
+                { name: 'well_supp_aquifer_type', field_type: 'str', label_ar: 'نوع الخزان الجوفي',
+                  options: [
+                    { value: 'confined',       label_ar: 'محصور (مضغوط)' }, { value: 'unconfined',     label_ar: 'حر (غير محصور)' },
+                    { value: 'semi_confined',  label_ar: 'شبه محصور' },     { value: 'artesian',       label_ar: 'ارتوازي' },
+                    { value: 'fractured_rock', label_ar: 'صخر متشقق' },     { value: 'karst',          label_ar: 'كارستي' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_groundwater_table_trend', field_type: 'str', label_ar: 'اتجاه منسوب المياه الجوفية',
+                  options: [
+                    { value: 'stable',               label_ar: 'مستقر' },          { value: 'declining',          label_ar: 'منخفض (هابط)' },
+                    { value: 'rising',               label_ar: 'مرتفع (صاعد)' },   { value: 'seasonal_fluctuation', label_ar: 'تذبذب موسمي' },
+                    { value: 'unknown',              label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_safe_yield_m3_day',         field_type: 'float', label_ar: 'الإنتاجية الآمنة للخزان',        unit_ar: 'م³/يوم',    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_recharge_rate_m3_day',      field_type: 'float', label_ar: 'معدل التغذية الجوفية (كمية)',    unit_ar: 'م³/يوم',    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_nearby_wells_density', field_type: 'str', label_ar: 'كثافة الآبار المجاورة',
+                  options: [
+                    { value: 'none',      label_ar: 'لا يوجد' },   { value: 'low',       label_ar: 'منخفضة' },
+                    { value: 'moderate',  label_ar: 'متوسطة' },    { value: 'high',      label_ar: 'مرتفعة' },
+                    { value: 'very_high', label_ar: 'مرتفعة جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_pumping_test_available', field_type: 'bool', label_ar: 'اختبار الضخ متاح',                    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_pumping_test_date',      field_type: 'str',  label_ar: 'تاريخ اختبار الضخ',                   valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_aquifer_notes',          field_type: 'textarea', label_ar: 'ملاحظات الخزان الجوفي',           valid_values: [], group: '', ui_required: false },
+            ]},
+            // V — مواصفات البئر الإنشائية الإضافية
+            { heading: 'V — مواصفات البئر الإنشائية الإضافية', color: '#7c3aed', desc: 'تفاصيل البناء والمواد والحماية', fields: [
+                { name: 'well_supp_drilling_diameter_mm', field_type: 'float', label_ar: 'قطر الحفر',                       unit_ar: 'مم', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_casing_diameter_mm',  field_type: 'float', label_ar: 'قطر غلاف البئر',                   unit_ar: 'مم', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_casing_material', field_type: 'str', label_ar: 'مادة غلاف البئر',
+                  options: [
+                    { value: 'steel',           label_ar: 'فولاذ' },          { value: 'pvc',              label_ar: 'PVC' },
+                    { value: 'hdpe',            label_ar: 'HDPE' },           { value: 'concrete',         label_ar: 'خرسانة' },
+                    { value: 'galvanized_steel', label_ar: 'فولاذ مجلفن' },   { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_screen_material', field_type: 'str', label_ar: 'مادة شاشة البئر',
+                  options: [
+                    { value: 'stainless_steel', label_ar: 'فولاذ مقاوم للصدأ' }, { value: 'pvc',          label_ar: 'PVC' },
+                    { value: 'galvanized_steel', label_ar: 'فولاذ مجلفن' },       { value: 'slotted_pipe', label_ar: 'أنبوب مشقق' },
+                    { value: 'unknown',          label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_gravel_pack_available',             field_type: 'bool', label_ar: 'توافر طبقة الحصى (Gravel Pack)',       valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_well_head_protection_available',    field_type: 'bool', label_ar: 'توافر حماية رأس البئر',                 valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_sanitary_seal_available',           field_type: 'bool', label_ar: 'توافر سداد صحي',                        valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_rehabilitation_history_available',  field_type: 'bool', label_ar: 'سجل إعادة التأهيل متاح',                valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_well_completion_report_available',  field_type: 'bool', label_ar: 'تقرير إتمام البئر متاح',                 valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_construction_notes',                field_type: 'textarea', label_ar: 'ملاحظات الإنشاء والبناء',            valid_values: [], group: '', ui_required: false },
+            ]},
+            // W — المضخات والطاقة الإضافية
+            { heading: 'W — المضخات والطاقة الإضافية', color: '#d97706', desc: 'حالة المضخة والطاقة البديلة', fields: [
+                { name: 'well_supp_pump_age_years', field_type: 'int', label_ar: 'عمر المضخة', unit_ar: 'سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_pump_condition', field_type: 'str', label_ar: 'حالة المضخة',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good',    label_ar: 'جيدة' },
+                    { value: 'fair',      label_ar: 'مقبولة' }, { value: 'poor',    label_ar: 'ضعيفة' },
+                    { value: 'critical',  label_ar: 'حرجة' },   { value: 'unknown', label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_variable_frequency_drive_available', field_type: 'bool', label_ar: 'توافر محرك تردد متغير (VFD)',         valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_solar_power_available',              field_type: 'bool', label_ar: 'توافر طاقة شمسية',                    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_solar_capacity_kw',                  field_type: 'float', label_ar: 'سعة النظام الشمسي', unit_ar: 'كيلوواط', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_diesel_generator_available',         field_type: 'bool', label_ar: 'توافر مولد ديزل',                      valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_control_panel_condition', field_type: 'str', label_ar: 'حالة لوحة التحكم',
+                  options: [
+                    { value: 'excellent', label_ar: 'ممتازة' }, { value: 'good',    label_ar: 'جيدة' },
+                    { value: 'fair',      label_ar: 'مقبولة' }, { value: 'poor',    label_ar: 'ضعيفة' },
+                    { value: 'unknown',   label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_pump_energy_notes', field_type: 'textarea', label_ar: 'ملاحظات المضخات والطاقة', valid_values: [], group: '', ui_required: false },
+            ]},
+            // X — الإنتاج والسعة التشغيلية
+            { heading: 'X — الإنتاج والسعة التشغيلية', color: '#059669', desc: 'بيانات الإنتاج الفعلي والسعة التشغيلية', fields: [
+                { name: 'well_supp_tested_flow_rate_m3_hour',        field_type: 'float', label_ar: 'معدل التدفق المختبَر',               unit_ar: 'م³/ساعة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_operational_flow_rate_m3_hour',   field_type: 'float', label_ar: 'معدل التدفق التشغيلي الفعلي',        unit_ar: 'م³/ساعة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_daily_operating_hours',           field_type: 'float', label_ar: 'ساعات التشغيل اليومية',              unit_ar: 'ساعة/يوم', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_annual_operating_days',           field_type: 'int',   label_ar: 'أيام التشغيل السنوية',               unit_ar: 'يوم/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_seasonal_variability_level', field_type: 'str', label_ar: 'مستوى التذبذب الموسمي',
+                  options: [
+                    { value: 'none',      label_ar: 'لا يوجد' },   { value: 'low',       label_ar: 'منخفض' },
+                    { value: 'moderate',  label_ar: 'متوسط' },     { value: 'high',      label_ar: 'مرتفع' },
+                    { value: 'very_high', label_ar: 'مرتفع جداً' }, { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_peak_season_output_m3_day',       field_type: 'float', label_ar: 'إنتاج ذروة الموسم',                  unit_ar: 'م³/يوم',   valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_low_season_output_m3_day',        field_type: 'float', label_ar: 'إنتاج أدنى الموسم',                  unit_ar: 'م³/يوم',   valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_downtime_days_annual',            field_type: 'int',   label_ar: 'أيام التوقف السنوية',                unit_ar: 'يوم/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_production_capacity_notes',       field_type: 'textarea', label_ar: 'ملاحظات الإنتاج والسعة',          valid_values: [], group: '', ui_required: false },
+            ]},
+            // Y — جودة المياه الإضافية
+            { heading: 'Y — جودة المياه الإضافية', color: '#2563eb', desc: 'معايير جودة إضافية غير مغطاة في القسم N', fields: [
+                { name: 'well_supp_hardness_level', field_type: 'str', label_ar: 'درجة صلابة المياه',
+                  options: [
+                    { value: 'soft',      label_ar: 'ناعمة' },    { value: 'moderate',  label_ar: 'متوسطة' },
+                    { value: 'hard',      label_ar: 'صلبة' },     { value: 'very_hard', label_ar: 'صلبة جداً' },
+                    { value: 'unknown',   label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_nitrate_level_mg_l',                    field_type: 'float', label_ar: 'مستوى النترات',                    unit_ar: 'ملغ/لتر', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_microbial_contamination_risk', field_type: 'str', label_ar: 'خطر التلوث الميكروبي',
+                  options: [
+                    { value: 'none',     label_ar: 'لا يوجد' }, { value: 'low',      label_ar: 'منخفض' },
+                    { value: 'moderate', label_ar: 'متوسط' },   { value: 'high',     label_ar: 'مرتفع' },
+                    { value: 'critical', label_ar: 'حرج' },     { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_chemical_contamination_risk_specific', field_type: 'str', label_ar: 'خطر التلوث الكيميائي المحدد',
+                  options: [
+                    { value: 'none',          label_ar: 'لا يوجد' },   { value: 'low_risk',      label_ar: 'منخفض' },
+                    { value: 'moderate_risk',  label_ar: 'متوسط' },    { value: 'high_risk',     label_ar: 'مرتفع' },
+                    { value: 'unknown',        label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_reverse_osmosis_required', field_type: 'bool', label_ar: 'هل يتطلب تناضح عكسي (RO)؟', valid_values: [], group: '', ui_required: false },
+            ]},
+            // Z — الدخل والقيمة الاقتصادية الإضافية
+            { heading: 'Z — الدخل والقيمة الاقتصادية الإضافية', color: '#b45309', desc: 'بيانات الدخل والقيمة الاقتصادية المفصَّلة (تكمّل القسم P)', fields: [
+                { name: 'well_supp_water_sale_revenue_annual',            field_type: 'float', label_ar: 'إيراد بيع المياه السنوي الفعلي',           unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_water_supply_contract_terms',          field_type: 'textarea', label_ar: 'تفاصيل عقود توريد المياه',             valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_avoided_water_purchase_cost_annual',   field_type: 'float', label_ar: 'التكلفة المتجنَّبة لشراء المياه (سنوي)',   unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_irrigation_value_contribution_annual', field_type: 'float', label_ar: 'مساهمة قيمة الري (سنوي)',                 unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_industrial_cooling_saving_annual',     field_type: 'float', label_ar: 'وفورات التبريد الصناعي (سنوي)',            unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_hotel_resort_water_support_value_annual', field_type: 'float', label_ar: 'قيمة دعم المياه للفندق / المنتجع (سنوي)', unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_replacement_water_source_cost_annual', field_type: 'float', label_ar: 'تكلفة مصدر بديل للمياه (سنوي)',            unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_alternative_water_source_available',   field_type: 'bool',  label_ar: 'هل يوجد مصدر مياه بديل؟',                 valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_alternative_water_source_cost_m3',     field_type: 'float', label_ar: 'تكلفة مصدر المياه البديل',                 unit_ar: 'جنيه/م³',   valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_net_economic_benefit_annual',           field_type: 'float', label_ar: 'صافي الفائدة الاقتصادية السنوية',         unit_ar: 'جنيه/سنة',  valid_values: [], group: '', ui_required: false },
+            ]},
+            // AA — المراقبة الرقمية والعدادات
+            { heading: 'AA — المراقبة الرقمية والعدادات', color: '#0891b2', desc: 'منظومة المراقبة الذكية وقياس البيانات عن بُعد', fields: [
+                { name: 'well_supp_smart_meter_available',               field_type: 'bool', label_ar: 'توافر عدّاد ذكي',                            valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_flow_sensor_available',               field_type: 'bool', label_ar: 'توافر حساس التدفق',                          valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_water_level_sensor_available',        field_type: 'bool', label_ar: 'توافر حساس منسوب المياه',                    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_water_quality_sensor_available',      field_type: 'bool', label_ar: 'توافر حساس جودة المياه',                     valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_pump_runtime_monitoring_available',   field_type: 'bool', label_ar: 'توافر مراقبة وقت تشغيل المضخة',              valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_scada_or_iot_integration_available',  field_type: 'bool', label_ar: 'توافر تكامل SCADA / إنترنت الأشياء',         valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_data_logging_available',              field_type: 'bool', label_ar: 'توافر تسجيل البيانات الآلي',                 valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_telemetry_connectivity_quality', field_type: 'str', label_ar: 'جودة اتصال القياس عن بُعد',
+                  options: [
+                    { value: 'none',      label_ar: 'لا يوجد' },   { value: 'poor',      label_ar: 'ضعيفة' },
+                    { value: 'moderate',  label_ar: 'متوسطة' },    { value: 'good',      label_ar: 'جيدة' },
+                    { value: 'excellent', label_ar: 'ممتازة' },    { value: 'unknown',   label_ar: 'غير محددة' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_digital_monitoring_value_impact_pct', field_type: 'float', label_ar: 'أثر المراقبة الرقمية على القيمة', unit_ar: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_digital_monitoring_notes',            field_type: 'textarea', label_ar: 'ملاحظات المراقبة الرقمية',             valid_values: [], group: '', ui_required: false },
+            ]},
+            // AB — تعريف وتراخيص إضافية
+            { heading: 'AB — تعريف وتراخيص إضافية', color: '#6d28d9', desc: 'بيانات تعريفية وترخيص تكميلية (تكمّل القسمين K وL)', fields: [
+                { name: 'well_supp_well_type_by_use', field_type: 'str', label_ar: 'نوع البئر حسب الاستخدام',
+                  options: [
+                    { value: 'irrigation_well',     label_ar: 'بئر ري' },             { value: 'drinking_water_well', label_ar: 'بئر مياه شرب' },
+                    { value: 'industrial_well',     label_ar: 'بئر صناعي' },           { value: 'mixed_use_well',      label_ar: 'بئر متعدد الاستخدام' },
+                    { value: 'recharge_well',       label_ar: 'بئر تغذية' },           { value: 'unknown',             label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_critical_dependency_level', field_type: 'str', label_ar: 'مستوى الاعتماد الحرج على البئر',
+                  options: [
+                    { value: 'none',     label_ar: 'لا يوجد' }, { value: 'low',      label_ar: 'منخفض' },
+                    { value: 'moderate', label_ar: 'متوسط' },   { value: 'high',     label_ar: 'مرتفع' },
+                    { value: 'critical', label_ar: 'حرج' },     { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_license_issue_date',           field_type: 'str',   label_ar: 'تاريخ إصدار الرخصة',                                    valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_licensed_use_type', field_type: 'str', label_ar: 'نوع الاستخدام المرخَّص',
+                  options: [
+                    { value: 'agricultural', label_ar: 'زراعي' },   { value: 'industrial', label_ar: 'صناعي' },
+                    { value: 'domestic',     label_ar: 'منزلي' },   { value: 'municipal',  label_ar: 'بلدي' },
+                    { value: 'commercial',   label_ar: 'تجاري' },   { value: 'mixed',      label_ar: 'مختلط' },
+                    { value: 'unknown',      label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_permitted_abstraction_m3_hour', field_type: 'float', label_ar: 'الاستخراج المسموح به (م³/ساعة)', unit_ar: 'م³/ساعة', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_actual_abstraction_m3_day',     field_type: 'float', label_ar: 'الاستخراج الفعلي اليومي',        unit_ar: 'م³/يوم',  valid_values: [], group: '', ui_required: false },
+            ]},
+            // AC — مخاطر إضافية وصيانة
+            { heading: 'AC — مخاطر إضافية وصيانة', color: '#dc2626', desc: 'مخاطر إضافية وتكاليف صيانة (تكمّل القسم Q)', fields: [
+                { name: 'well_supp_well_failure_risk_level', field_type: 'str', label_ar: 'خطر تعطل / فشل البئر',
+                  options: [
+                    { value: 'very_low', label_ar: 'منخفض جداً' }, { value: 'low',      label_ar: 'منخفض' },
+                    { value: 'moderate', label_ar: 'متوسط' },       { value: 'high',     label_ar: 'مرتفع' },
+                    { value: 'critical', label_ar: 'حرج' },         { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_regulatory_restriction_risk_level', field_type: 'str', label_ar: 'خطر القيود التنظيمية',
+                  options: [
+                    { value: 'none',     label_ar: 'لا يوجد' }, { value: 'low',      label_ar: 'منخفض' },
+                    { value: 'moderate', label_ar: 'متوسط' },   { value: 'high',     label_ar: 'مرتفع' },
+                    { value: 'critical', label_ar: 'حرج' },     { value: 'unknown',  label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_annual_water_testing_cost',      field_type: 'float',    label_ar: 'تكلفة فحص المياه السنوية', unit_ar: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_maintenance_contract_available', field_type: 'bool',     label_ar: 'توافر عقد صيانة',                                valid_values: [], group: '', ui_required: false },
+                { name: 'well_supp_maintenance_notes',              field_type: 'textarea', label_ar: 'ملاحظات الصيانة والمخاطر',                       valid_values: [], group: '', ui_required: false },
+            ]},
+            // ── End Phase 8ZL ─────────────────────────────────────────────────────────
         ],
         // ── End Phase 8ZJ ─────────────────────────────────────────────────────────
         // ── End Phase 8ZI ─────────────────────────────────────────────────────────

@@ -14427,3 +14427,497 @@ def test_CS1109_water_well_supp_isolates_from_mine(page: "Page", live_server: st
     """Phase 8ZK: loading water_well does not show mine_supp_ fields."""
     _load_water_well_supp(page, live_server)
     assert page.locator("[data-es-supp-field='mine_supp_asset_subtype']").count() == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZL — Water Well / Groundwater Detailed Enrichment  CS1110–CS1159
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── CS1110 ────────────────────────────────────────────────────────────────────
+
+def test_CS1110_water_well_supp_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: water_well supplemental heading includes آبار."""
+    _load_water_well_supp(page, live_server)
+    header = page.locator("#es-req-supp-header")
+    header.wait_for(state="visible", timeout=4_000)
+    assert "آبار" in header.inner_text()
+
+
+# ── CS1111 ────────────────────────────────────────────────────────────────────
+
+def test_CS1111_water_well_section_U_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section U heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "U — البيانات الهيدروجيولوجية" in supp.inner_text()
+
+
+# ── CS1112 ────────────────────────────────────────────────────────────────────
+
+def test_CS1112_well_supp_aquifer_type_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_aquifer_type renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_aquifer_type']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1113 ────────────────────────────────────────────────────────────────────
+
+def test_CS1113_well_supp_groundwater_table_trend_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_groundwater_table_trend renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_groundwater_table_trend']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1114 ────────────────────────────────────────────────────────────────────
+
+def test_CS1114_well_supp_safe_yield_m3_day_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_safe_yield_m3_day renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_safe_yield_m3_day']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1115 ────────────────────────────────────────────────────────────────────
+
+def test_CS1115_well_supp_recharge_rate_m3_day_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_recharge_rate_m3_day renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_recharge_rate_m3_day']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1116 ────────────────────────────────────────────────────────────────────
+
+def test_CS1116_well_supp_pumping_test_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_pumping_test_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_pumping_test_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1117 ────────────────────────────────────────────────────────────────────
+
+def test_CS1117_water_well_section_V_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section V heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "V — مواصفات البئر الإنشائية" in supp.inner_text()
+
+
+# ── CS1118 ────────────────────────────────────────────────────────────────────
+
+def test_CS1118_well_supp_casing_material_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_casing_material renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_casing_material']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1119 ────────────────────────────────────────────────────────────────────
+
+def test_CS1119_well_supp_gravel_pack_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_gravel_pack_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_gravel_pack_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1120 ────────────────────────────────────────────────────────────────────
+
+def test_CS1120_well_supp_well_completion_report_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_well_completion_report_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_well_completion_report_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1121 ────────────────────────────────────────────────────────────────────
+
+def test_CS1121_water_well_section_W_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section W heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "W — المضخات والطاقة الإضافية" in supp.inner_text()
+
+
+# ── CS1122 ────────────────────────────────────────────────────────────────────
+
+def test_CS1122_well_supp_pump_age_years_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_pump_age_years renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_pump_age_years']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1123 ────────────────────────────────────────────────────────────────────
+
+def test_CS1123_well_supp_pump_condition_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_pump_condition renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_pump_condition']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1124 ────────────────────────────────────────────────────────────────────
+
+def test_CS1124_well_supp_solar_power_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_solar_power_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_solar_power_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1125 ────────────────────────────────────────────────────────────────────
+
+def test_CS1125_well_supp_diesel_generator_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_diesel_generator_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_diesel_generator_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1126 ────────────────────────────────────────────────────────────────────
+
+def test_CS1126_water_well_section_X_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section X heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "X — الإنتاج والسعة التشغيلية" in supp.inner_text()
+
+
+# ── CS1127 ────────────────────────────────────────────────────────────────────
+
+def test_CS1127_well_supp_tested_flow_rate_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_tested_flow_rate_m3_hour renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_tested_flow_rate_m3_hour']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1128 ────────────────────────────────────────────────────────────────────
+
+def test_CS1128_well_supp_operational_flow_rate_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_operational_flow_rate_m3_hour renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_operational_flow_rate_m3_hour']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1129 ────────────────────────────────────────────────────────────────────
+
+def test_CS1129_well_supp_seasonal_variability_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_seasonal_variability_level renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_seasonal_variability_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1130 ────────────────────────────────────────────────────────────────────
+
+def test_CS1130_well_supp_downtime_days_annual_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_downtime_days_annual renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_downtime_days_annual']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1131 ────────────────────────────────────────────────────────────────────
+
+def test_CS1131_water_well_section_Y_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section Y heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "Y — جودة المياه الإضافية" in supp.inner_text()
+
+
+# ── CS1132 ────────────────────────────────────────────────────────────────────
+
+def test_CS1132_well_supp_hardness_level_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_hardness_level renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_hardness_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1133 ────────────────────────────────────────────────────────────────────
+
+def test_CS1133_well_supp_nitrate_level_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_nitrate_level_mg_l renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_nitrate_level_mg_l']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1134 ────────────────────────────────────────────────────────────────────
+
+def test_CS1134_well_supp_reverse_osmosis_required_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_reverse_osmosis_required renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_reverse_osmosis_required']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1135 ────────────────────────────────────────────────────────────────────
+
+def test_CS1135_water_well_section_Z_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section Z heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "Z — الدخل والقيمة الاقتصادية الإضافية" in supp.inner_text()
+
+
+# ── CS1136 ────────────────────────────────────────────────────────────────────
+
+def test_CS1136_well_supp_water_sale_revenue_annual_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_water_sale_revenue_annual renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_water_sale_revenue_annual']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1137 ────────────────────────────────────────────────────────────────────
+
+def test_CS1137_well_supp_alternative_water_source_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_alternative_water_source_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_alternative_water_source_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1138 ────────────────────────────────────────────────────────────────────
+
+def test_CS1138_well_supp_net_economic_benefit_annual_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_net_economic_benefit_annual renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_net_economic_benefit_annual']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1139 ────────────────────────────────────────────────────────────────────
+
+def test_CS1139_water_well_section_AA_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section AA heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "AA — المراقبة الرقمية" in supp.inner_text()
+
+
+# ── CS1140 ────────────────────────────────────────────────────────────────────
+
+def test_CS1140_well_supp_smart_meter_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_smart_meter_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_smart_meter_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1141 ────────────────────────────────────────────────────────────────────
+
+def test_CS1141_well_supp_scada_iot_integration_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_scada_or_iot_integration_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_scada_or_iot_integration_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1142 ────────────────────────────────────────────────────────────────────
+
+def test_CS1142_well_supp_telemetry_connectivity_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_telemetry_connectivity_quality renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_telemetry_connectivity_quality']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1143 ────────────────────────────────────────────────────────────────────
+
+def test_CS1143_well_supp_digital_monitoring_value_impact_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_digital_monitoring_value_impact_pct renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_digital_monitoring_value_impact_pct']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1144 ────────────────────────────────────────────────────────────────────
+
+def test_CS1144_water_well_section_AB_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section AB heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "AB — تعريف وتراخيص إضافية" in supp.inner_text()
+
+
+# ── CS1145 ────────────────────────────────────────────────────────────────────
+
+def test_CS1145_well_supp_well_type_by_use_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_well_type_by_use renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_well_type_by_use']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1146 ────────────────────────────────────────────────────────────────────
+
+def test_CS1146_well_supp_critical_dependency_level_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_critical_dependency_level renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_critical_dependency_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1147 ────────────────────────────────────────────────────────────────────
+
+def test_CS1147_well_supp_licensed_use_type_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_licensed_use_type renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_licensed_use_type']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1148 ────────────────────────────────────────────────────────────────────
+
+def test_CS1148_well_supp_permitted_abstraction_m3_hour_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_permitted_abstraction_m3_hour renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_permitted_abstraction_m3_hour']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1149 ────────────────────────────────────────────────────────────────────
+
+def test_CS1149_water_well_section_AC_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: section AC heading renders in supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert "AC — مخاطر إضافية وصيانة" in supp.inner_text()
+
+
+# ── CS1150 ────────────────────────────────────────────────────────────────────
+
+def test_CS1150_well_supp_well_failure_risk_level_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_well_failure_risk_level renders as select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_well_failure_risk_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1151 ────────────────────────────────────────────────────────────────────
+
+def test_CS1151_well_supp_maintenance_contract_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_maintenance_contract_available renders as bool select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_maintenance_contract_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1152 ────────────────────────────────────────────────────────────────────
+
+def test_CS1152_well_supp_annual_water_testing_cost_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_annual_water_testing_cost renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_annual_water_testing_cost']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1153 ────────────────────────────────────────────────────────────────────
+
+def test_CS1153_well_supp_purpose_hotel_resort_methodology_local(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_purpose_hotel_resort_support_value_methodology renders as local select."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_hotel_resort_support_value_methodology']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1154 ────────────────────────────────────────────────────────────────────
+
+def test_CS1154_well_supp_purpose_hotel_resort_adj_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_supp_purpose_hotel_resort_support_value_adj renders as number input."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_hotel_resort_support_value_adj']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") == "number"
+
+
+# ── CS1155 ────────────────────────────────────────────────────────────────────
+
+def test_CS1155_well_doc_water_authority_approval_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_doc_water_authority_approval document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_water_authority_approval']").count() > 0
+
+
+# ── CS1156 ────────────────────────────────────────────────────────────────────
+
+def test_CS1156_well_doc_meter_readings_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_doc_meter_readings document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_meter_readings']").count() > 0
+
+
+# ── CS1157 ────────────────────────────────────────────────────────────────────
+
+def test_CS1157_well_doc_energy_bills_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: well_doc_energy_bills document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_energy_bills']").count() > 0
+
+
+# ── CS1158 ────────────────────────────────────────────────────────────────────
+
+def test_CS1158_8zl_new_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: Phase 8ZL new fields use data-es-supp-field, not data-es-req-field."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_supp_aquifer_type']").count() > 0
+    assert page.locator("[data-es-req-field='well_supp_aquifer_type']").count() == 0
+    assert page.locator("[data-es-supp-field='well_supp_smart_meter_available']").count() > 0
+    assert page.locator("[data-es-req-field='well_supp_smart_meter_available']").count() == 0
+
+
+# ── CS1159 ────────────────────────────────────────────────────────────────────
+
+def test_CS1159_8zl_water_well_sections_isolate_from_agri_land(page: "Page", live_server: str) -> None:
+    """Phase 8ZL: Phase 8ZL well fields do not appear under agricultural_land."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='well_supp_aquifer_type']").count() == 0
+    assert page.locator("[data-es-supp-field='well_supp_smart_meter_available']").count() == 0
+    assert page.locator("[data-es-supp-field='well_supp_well_type_by_use']").count() == 0

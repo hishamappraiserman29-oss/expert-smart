@@ -14921,3 +14921,74 @@ def test_CS1159_8zl_water_well_sections_isolate_from_agri_land(page: "Page", liv
     assert page.locator("[data-es-supp-field='well_supp_aquifer_type']").count() == 0
     assert page.locator("[data-es-supp-field='well_supp_smart_meter_available']").count() == 0
     assert page.locator("[data-es-supp-field='well_supp_well_type_by_use']").count() == 0
+
+
+# ── CS1160–CS1165 (Phase 8ZM — hotel_resort_detailed supplemental completion) ─
+
+
+# ── CS1160 ────────────────────────────────────────────────────────────────────
+
+def test_CS1160_hrd_supp_wildfire_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: hrd_supp_wildfire_or_external_fire_exposure renders as a select element."""
+    _load_hotel_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hrd_supp_wildfire_or_external_fire_exposure']")
+    assert el.count() > 0, "hrd_supp_wildfire_or_external_fire_exposure not found in hotel_resort_detailed supp."
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select", (
+        "hrd_supp_wildfire_or_external_fire_exposure must render as <select>."
+    )
+
+
+# ── CS1161 ────────────────────────────────────────────────────────────────────
+
+def test_CS1161_hrd_supp_wildfire_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: hrd_supp_wildfire uses data-es-supp-field, not data-es-req-field."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_el = page.locator("[data-es-supp-field='hrd_supp_wildfire_or_external_fire_exposure']")
+    assert supp_el.count() > 0, "hrd_supp_wildfire_or_external_fire_exposure not found via data-es-supp-field."
+    req_el = page.locator("[data-es-req-field='hrd_supp_wildfire_or_external_fire_exposure']")
+    assert req_el.count() == 0, (
+        "hrd_supp_wildfire_or_external_fire_exposure must NOT use data-es-req-field."
+    )
+
+
+# ── CS1162 ────────────────────────────────────────────────────────────────────
+
+def test_CS1162_hrd_supp_access_control_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: hrd_supp_access_control_system_available renders as a bool select element."""
+    _load_hotel_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hrd_supp_access_control_system_available']")
+    assert el.count() > 0, "hrd_supp_access_control_system_available not found in hotel_resort_detailed supp."
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select", (
+        "hrd_supp_access_control_system_available (bool) must render as <select>."
+    )
+
+
+# ── CS1163 ────────────────────────────────────────────────────────────────────
+
+def test_CS1163_hrd_supp_access_control_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: hrd_supp_access_control_system_available uses data-es-supp-field, not data-es-req-field."""
+    _load_hotel_resort_supp(page, live_server)
+    supp_el = page.locator("[data-es-supp-field='hrd_supp_access_control_system_available']")
+    assert supp_el.count() > 0, "hrd_supp_access_control_system_available not found via data-es-supp-field."
+    req_el = page.locator("[data-es-req-field='hrd_supp_access_control_system_available']")
+    assert req_el.count() == 0, (
+        "hrd_supp_access_control_system_available must NOT use data-es-req-field."
+    )
+
+
+# ── CS1164 ────────────────────────────────────────────────────────────────────
+
+def test_CS1164_8zm_new_fields_absent_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: new hotel_resort_detailed supp fields do not appear under serviced_apartments."""
+    _load_serviced_apartments(page, live_server)
+    assert page.locator("[data-es-supp-field='hrd_supp_wildfire_or_external_fire_exposure']").count() == 0
+    assert page.locator("[data-es-supp-field='hrd_supp_access_control_system_available']").count() == 0
+
+
+# ── CS1165 ────────────────────────────────────────────────────────────────────
+
+def test_CS1165_8zm_new_fields_absent_from_floating_hotel(page: "Page", live_server: str) -> None:
+    """Phase 8ZM: new hotel_resort_detailed supp fields do not appear under floating_hotel."""
+    _load_floating_hotel(page, live_server)
+    assert page.locator("[data-es-supp-field='hrd_supp_wildfire_or_external_fire_exposure']").count() == 0
+    assert page.locator("[data-es-supp-field='hrd_supp_access_control_system_available']").count() == 0

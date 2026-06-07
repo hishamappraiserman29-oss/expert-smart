@@ -12804,6 +12804,15 @@ function _showIndexToast(msg, type) {
                     { value: 'negligible', label_ar: 'لا يُذكر' }, { value: 'low', label_ar: 'منخفض' },
                     { value: 'medium', label_ar: 'متوسط' }, { value: 'high', label_ar: 'مرتفع' }, { value: 'unknown', label_ar: 'غير محدد' },
                   ], valid_values: [], group: '', ui_required: false },
+                { name: 'hrd_supp_wildfire_or_external_fire_exposure', field_type: 'str', label_ar: 'التعرّض لحرائق خارجية / حرائق الغابات',
+                  options: [
+                    { value: 'negligible',    label_ar: 'لا يُذكر' },
+                    { value: 'low',           label_ar: 'منخفض' },
+                    { value: 'medium',        label_ar: 'متوسط' },
+                    { value: 'high',          label_ar: 'مرتفع' },
+                    { value: 'not_applicable', label_ar: 'لا ينطبق' },
+                    { value: 'unknown',       label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
                 { name: 'hrd_supp_water_scarcity_risk_level', field_type: 'str', label_ar: 'مخاطر شح المياه',
                   options: [
                     { value: 'low', label_ar: 'منخفضة' }, { value: 'medium', label_ar: 'متوسطة' },
@@ -12862,6 +12871,7 @@ function _showIndexToast(msg, type) {
                 { name: 'hrd_supp_smart_room_technology_available',          field_type: 'bool', label_ar: 'يوجد تقنية الغرفة الذكية',               valid_values: [], group: '', ui_required: false },
                 { name: 'hrd_supp_digital_key_or_mobile_checkin_available',  field_type: 'bool', label_ar: 'يوجد مفتاح رقمي / تسجيل وصول عبر الهاتف', valid_values: [], group: '', ui_required: false },
                 { name: 'hrd_supp_cctv_or_smart_security_available',         field_type: 'bool', label_ar: 'يوجد مراقبة ذكية CCTV',                  valid_values: [], group: '', ui_required: false },
+                { name: 'hrd_supp_access_control_system_available',          field_type: 'bool', label_ar: 'يوجد نظام التحكم في الوصول',             valid_values: [], group: '', ui_required: false },
                 { name: 'hrd_supp_ev_charging_available',                    field_type: 'bool', label_ar: 'يوجد شحن سيارات كهربائية',               valid_values: [], group: '', ui_required: false },
                 { name: 'hrd_supp_digital_guest_experience_quality', field_type: 'str', label_ar: 'جودة تجربة الضيف الرقمية',
                   options: [

@@ -13541,3 +13541,889 @@ def test_CS1009_ea_doc_site_photos_renders(page: "Page", live_server: str) -> No
     """Phase 8ZJ: ea_doc_site_photos_recent document checkbox renders."""
     _load_educational_asset_supp(page, live_server)
     assert page.locator("[data-es-supp-field='ea_doc_site_photos_recent']").count() > 0
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZK — Mine / Quarry & Water Well Supplemental  (CS1010–CS1109)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_mine_supp(page: "Page", live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مناجم")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp = page.locator("#es-req-supp")
+    supp.wait_for(state="visible", timeout=5_000)
+
+
+def _load_water_well_supp(page: "Page", live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="water_well")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp = page.locator("#es-req-supp")
+    supp.wait_for(state="visible", timeout=5_000)
+
+
+# ── CS1010 ────────────────────────────────────────────────────────────────────
+
+def test_CS1010_mine_dropdown_option_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine option present in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    assert page.locator("#asset-type option[value='مناجم']").count() > 0
+
+
+# ── CS1011 ────────────────────────────────────────────────────────────────────
+
+def test_CS1011_mine_renders_supplemental_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine renders supplemental panel."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+# ── CS1012 ────────────────────────────────────────────────────────────────────
+
+def test_CS1012_mine_supp_heading_contains_mine(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine supplemental heading contains منجم / محجر."""
+    _load_mine_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "منجم" in heading or "محجر" in heading
+
+
+# ── CS1013 ────────────────────────────────────────────────────────────────────
+
+def test_CS1013_mine_supp_subtext_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine supplemental subtext rendered."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("#es-req-supp-subtext").count() > 0
+
+
+# ── CS1014 ────────────────────────────────────────────────────────────────────
+
+def test_CS1014_mine_section_A_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section A heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "تعريف الأصل" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1015 ────────────────────────────────────────────────────────────────────
+
+def test_CS1015_mine_supp_asset_subtype_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_asset_subtype select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_asset_subtype']")
+    assert el.count() > 0
+
+
+# ── CS1016 ────────────────────────────────────────────────────────────────────
+
+def test_CS1016_mine_supp_mining_stage_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_mining_stage select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_mining_stage']")
+    assert el.count() > 0
+
+
+# ── CS1017 ────────────────────────────────────────────────────────────────────
+
+def test_CS1017_mine_supp_owner_operator_model_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_owner_operator_model select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_owner_operator_model']")
+    assert el.count() > 0
+
+
+# ── CS1018 ────────────────────────────────────────────────────────────────────
+
+def test_CS1018_mine_supp_secondary_minerals_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_secondary_minerals textarea renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_secondary_minerals']")
+    assert el.count() > 0
+
+
+# ── CS1019 ────────────────────────────────────────────────────────────────────
+
+def test_CS1019_mine_section_B_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section B heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "حقوق وتراخيص" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1020 ────────────────────────────────────────────────────────────────────
+
+def test_CS1020_mine_supp_concession_license_number_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_concession_license_number renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_concession_license_number']")
+    assert el.count() > 0
+
+
+# ── CS1021 ────────────────────────────────────────────────────────────────────
+
+def test_CS1021_mine_supp_renewal_rights_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_renewal_rights_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_renewal_rights_available']")
+    assert el.count() > 0
+
+
+# ── CS1022 ────────────────────────────────────────────────────────────────────
+
+def test_CS1022_mine_supp_royalty_obligation_pct_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_royalty_obligation_pct number input renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_royalty_obligation_pct']")
+    assert el.count() > 0
+
+
+# ── CS1023 ────────────────────────────────────────────────────────────────────
+
+def test_CS1023_mine_supp_exploration_rights_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_exploration_rights_status select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_exploration_rights_status']")
+    assert el.count() > 0
+
+
+# ── CS1024 ────────────────────────────────────────────────────────────────────
+
+def test_CS1024_mine_supp_extraction_rights_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_extraction_rights_status select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_extraction_rights_status']")
+    assert el.count() > 0
+
+
+# ── CS1025 ────────────────────────────────────────────────────────────────────
+
+def test_CS1025_mine_supp_environmental_permit_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_environmental_permit_status select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_environmental_permit_status']")
+    assert el.count() > 0
+
+
+# ── CS1026 ────────────────────────────────────────────────────────────────────
+
+def test_CS1026_mine_section_C_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section C heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "الاحتياطيات والموارد" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1027 ────────────────────────────────────────────────────────────────────
+
+def test_CS1027_mine_supp_measured_resources_tonnes_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_measured_resources_tonnes number input renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_measured_resources_tonnes']")
+    assert el.count() > 0
+
+
+# ── CS1028 ────────────────────────────────────────────────────────────────────
+
+def test_CS1028_mine_supp_competent_person_report_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_competent_person_report_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_competent_person_report_available']")
+    assert el.count() > 0
+
+
+# ── CS1029 ────────────────────────────────────────────────────────────────────
+
+def test_CS1029_mine_supp_geological_confidence_level_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_geological_confidence_level select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_geological_confidence_level']")
+    assert el.count() > 0
+
+
+# ── CS1030 ────────────────────────────────────────────────────────────────────
+
+def test_CS1030_mine_section_D_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section D heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "خطة الاستخراج" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1031 ────────────────────────────────────────────────────────────────────
+
+def test_CS1031_mine_supp_annual_extraction_capacity_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_annual_extraction_capacity_tonnes number input renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_annual_extraction_capacity_tonnes']")
+    assert el.count() > 0
+
+
+# ── CS1032 ────────────────────────────────────────────────────────────────────
+
+def test_CS1032_mine_supp_mining_plan_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_mining_plan_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_mining_plan_available']")
+    assert el.count() > 0
+
+
+# ── CS1033 ────────────────────────────────────────────────────────────────────
+
+def test_CS1033_mine_supp_waste_rock_management_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_waste_rock_management_status select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_waste_rock_management_status']")
+    assert el.count() > 0
+
+
+# ── CS1034 ────────────────────────────────────────────────────────────────────
+
+def test_CS1034_mine_section_E_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section E heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "مرافق المعالجة" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1035 ────────────────────────────────────────────────────────────────────
+
+def test_CS1035_mine_supp_processing_plant_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_processing_plant_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_processing_plant_available']")
+    assert el.count() > 0
+
+
+# ── CS1036 ────────────────────────────────────────────────────────────────────
+
+def test_CS1036_mine_supp_processing_type_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_processing_type select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_processing_type']")
+    assert el.count() > 0
+
+
+# ── CS1037 ────────────────────────────────────────────────────────────────────
+
+def test_CS1037_mine_supp_offtake_contracts_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_offtake_contracts_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_offtake_contracts_available']")
+    assert el.count() > 0
+
+
+# ── CS1038 ────────────────────────────────────────────────────────────────────
+
+def test_CS1038_mine_section_G_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section G heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "البيئة والسلامة" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1039 ────────────────────────────────────────────────────────────────────
+
+def test_CS1039_mine_supp_eia_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_eia_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_eia_available']")
+    assert el.count() > 0
+
+
+# ── CS1040 ────────────────────────────────────────────────────────────────────
+
+def test_CS1040_mine_supp_closure_plan_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_closure_plan_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_closure_plan_available']")
+    assert el.count() > 0
+
+
+# ── CS1041 ────────────────────────────────────────────────────────────────────
+
+def test_CS1041_mine_supp_closure_cost_estimate_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_closure_cost_estimate number input renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_closure_cost_estimate']")
+    assert el.count() > 0
+
+
+# ── CS1042 ────────────────────────────────────────────────────────────────────
+
+def test_CS1042_mine_section_H_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section H heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "الاقتصاديات" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1043 ────────────────────────────────────────────────────────────────────
+
+def test_CS1043_mine_supp_ebitda_annual_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_ebitda_annual number input renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_ebitda_annual']")
+    assert el.count() > 0
+
+
+# ── CS1044 ────────────────────────────────────────────────────────────────────
+
+def test_CS1044_mine_supp_feasibility_study_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_feasibility_study_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_feasibility_study_available']")
+    assert el.count() > 0
+
+
+# ── CS1045 ────────────────────────────────────────────────────────────────────
+
+def test_CS1045_mine_section_I_purpose_table_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section I purpose adjustment table heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "جدول معامل التعديل" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1046 ────────────────────────────────────────────────────────────────────
+
+def test_CS1046_mine_supp_purpose_mortgage_lending_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_purpose_mortgage_lending select renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_purpose_mortgage_lending']")
+    assert el.count() > 0
+
+
+# ── CS1047 ────────────────────────────────────────────────────────────────────
+
+def test_CS1047_mine_supp_purpose_mortgage_lending_adj_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_purpose_mortgage_lending_adj number renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_purpose_mortgage_lending_adj']")
+    assert el.count() > 0
+
+
+# ── CS1048 ────────────────────────────────────────────────────────────────────
+
+def test_CS1048_mine_supp_purpose_concession_review_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_purpose_concession_review (local purpose) renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_purpose_concession_review']")
+    assert el.count() > 0
+
+
+# ── CS1049 ────────────────────────────────────────────────────────────────────
+
+def test_CS1049_mine_supp_purpose_closure_liability_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_purpose_closure_liability (local purpose) renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_purpose_closure_liability']")
+    assert el.count() > 0
+
+
+# ── CS1050 ────────────────────────────────────────────────────────────────────
+
+def test_CS1050_mine_section_J_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section J sustainability heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "الاستدامة" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1051 ────────────────────────────────────────────────────────────────────
+
+def test_CS1051_mine_supp_esg_rating_available_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_esg_rating_available bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_esg_rating_available']")
+    assert el.count() > 0
+
+
+# ── CS1052 ────────────────────────────────────────────────────────────────────
+
+def test_CS1052_mine_supp_carbon_emission_tracking_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_supp_carbon_emission_tracking bool renders."""
+    _load_mine_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='mine_supp_carbon_emission_tracking']")
+    assert el.count() > 0
+
+
+# ── CS1053 ────────────────────────────────────────────────────────────────────
+
+def test_CS1053_mine_section_S_docs_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine section S documents heading renders."""
+    _load_mine_supp(page, live_server)
+    assert "مستندات إضافية" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1054 ────────────────────────────────────────────────────────────────────
+
+def test_CS1054_mine_doc_competent_person_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_doc_competent_person_report document checkbox renders."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_doc_competent_person_report']").count() > 0
+
+
+# ── CS1055 ────────────────────────────────────────────────────────────────────
+
+def test_CS1055_mine_doc_eia_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_doc_eia_report document checkbox renders."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_doc_eia_report']").count() > 0
+
+
+# ── CS1056 ────────────────────────────────────────────────────────────────────
+
+def test_CS1056_mine_doc_financial_model_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_doc_financial_model document checkbox renders."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_doc_financial_model']").count() > 0
+
+
+# ── CS1057 ────────────────────────────────────────────────────────────────────
+
+def test_CS1057_mine_doc_hse_management_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine_doc_hse_management_plan document checkbox renders."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_doc_hse_management_plan']").count() > 0
+
+
+# ── CS1058 ────────────────────────────────────────────────────────────────────
+
+def test_CS1058_mine_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine profile has no composite valuation link."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("#es-composite-link").count() == 0
+
+
+# ── CS1059 ────────────────────────────────────────────────────────────────────
+
+def test_CS1059_mine_supp_uses_data_es_supp_field_not_req(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: mine supp fields use data-es-supp-field (not data-es-req-field)."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_supp_asset_subtype']").count() > 0
+    assert page.locator("[data-es-req-field='mine_supp_asset_subtype']").count() == 0
+
+
+# ── CS1060 ────────────────────────────────────────────────────────────────────
+
+def test_CS1060_water_well_dropdown_option_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well option present in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    assert page.locator("#asset-type option[value='water_well']").count() > 0
+
+
+# ── CS1061 ────────────────────────────────────────────────────────────────────
+
+def test_CS1061_water_well_renders_supplemental_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well renders supplemental panel."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+# ── CS1062 ────────────────────────────────────────────────────────────────────
+
+def test_CS1062_water_well_supp_heading_contains_bien(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well supplemental heading contains بئر."""
+    _load_water_well_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "بئر" in heading
+
+
+# ── CS1063 ────────────────────────────────────────────────────────────────────
+
+def test_CS1063_water_well_supp_subtext_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well supplemental subtext rendered."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("#es-req-supp-subtext").count() > 0
+
+
+# ── CS1064 ────────────────────────────────────────────────────────────────────
+
+def test_CS1064_water_well_section_K_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section K heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "تعريف الأصل" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1065 ────────────────────────────────────────────────────────────────────
+
+def test_CS1065_well_supp_asset_subtype_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_asset_subtype select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_asset_subtype']")
+    assert el.count() > 0
+
+
+# ── CS1066 ────────────────────────────────────────────────────────────────────
+
+def test_CS1066_well_supp_use_purpose_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_use_purpose checkbox_group renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_use_purpose']")
+    assert el.count() > 0
+
+
+# ── CS1067 ────────────────────────────────────────────────────────────────────
+
+def test_CS1067_well_supp_operating_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_operating_status select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_operating_status']")
+    assert el.count() > 0
+
+
+# ── CS1068 ────────────────────────────────────────────────────────────────────
+
+def test_CS1068_well_supp_wells_count_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_wells_count number input renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_wells_count']")
+    assert el.count() > 0
+
+
+# ── CS1069 ────────────────────────────────────────────────────────────────────
+
+def test_CS1069_water_well_section_L_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section L heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "التراخيص وحقوق" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1070 ────────────────────────────────────────────────────────────────────
+
+def test_CS1070_well_supp_permitted_abstraction_day_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_permitted_abstraction_m3_day number renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_permitted_abstraction_m3_day']")
+    assert el.count() > 0
+
+
+# ── CS1071 ────────────────────────────────────────────────────────────────────
+
+def test_CS1071_well_supp_legal_water_rights_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_legal_water_rights_status select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_legal_water_rights_status']")
+    assert el.count() > 0
+
+
+# ── CS1072 ────────────────────────────────────────────────────────────────────
+
+def test_CS1072_well_supp_water_authority_approval_status_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_water_authority_approval_status select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_water_authority_approval_status']")
+    assert el.count() > 0
+
+
+# ── CS1073 ────────────────────────────────────────────────────────────────────
+
+def test_CS1073_well_supp_metering_required_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_metering_required bool renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_metering_required']")
+    assert el.count() > 0
+
+
+# ── CS1074 ────────────────────────────────────────────────────────────────────
+
+def test_CS1074_water_well_section_M_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section M technical specs heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "المواصفات الفنية" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1075 ────────────────────────────────────────────────────────────────────
+
+def test_CS1075_well_supp_drawdown_m_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_drawdown_m number input renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_drawdown_m']")
+    assert el.count() > 0
+
+
+# ── CS1076 ────────────────────────────────────────────────────────────────────
+
+def test_CS1076_well_supp_pump_capacity_kw_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_pump_capacity_kw number input renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_pump_capacity_kw']")
+    assert el.count() > 0
+
+
+# ── CS1077 ────────────────────────────────────────────────────────────────────
+
+def test_CS1077_well_supp_yield_reliability_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_yield_reliability select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_yield_reliability']")
+    assert el.count() > 0
+
+
+# ── CS1078 ────────────────────────────────────────────────────────────────────
+
+def test_CS1078_well_supp_well_condition_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_well_condition select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_well_condition']")
+    assert el.count() > 0
+
+
+# ── CS1079 ────────────────────────────────────────────────────────────────────
+
+def test_CS1079_water_well_section_N_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section N water quality heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "جودة المياه" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1080 ────────────────────────────────────────────────────────────────────
+
+def test_CS1080_well_supp_ph_value_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_ph_value number input renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_ph_value']")
+    assert el.count() > 0
+
+
+# ── CS1081 ────────────────────────────────────────────────────────────────────
+
+def test_CS1081_well_supp_treatment_required_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_treatment_required bool renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_treatment_required']")
+    assert el.count() > 0
+
+
+# ── CS1082 ────────────────────────────────────────────────────────────────────
+
+def test_CS1082_well_supp_water_suitability_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_water_suitability select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_water_suitability']")
+    assert el.count() > 0
+
+
+# ── CS1083 ────────────────────────────────────────────────────────────────────
+
+def test_CS1083_water_well_section_O_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section O operating costs heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "تكاليف التشغيل" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1084 ────────────────────────────────────────────────────────────────────
+
+def test_CS1084_well_supp_electricity_kwh_annual_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_electricity_kwh_annual number input renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_electricity_kwh_annual']")
+    assert el.count() > 0
+
+
+# ── CS1085 ────────────────────────────────────────────────────────────────────
+
+def test_CS1085_well_supp_rehabilitation_required_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_rehabilitation_required bool renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_rehabilitation_required']")
+    assert el.count() > 0
+
+
+# ── CS1086 ────────────────────────────────────────────────────────────────────
+
+def test_CS1086_water_well_section_P_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section P economic value heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "القيمة الاقتصادية" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1087 ────────────────────────────────────────────────────────────────────
+
+def test_CS1087_well_supp_primary_valuation_method_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_primary_valuation_method select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_primary_valuation_method']")
+    assert el.count() > 0
+
+
+# ── CS1088 ────────────────────────────────────────────────────────────────────
+
+def test_CS1088_well_supp_annual_water_value_estimate_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_annual_water_value_estimate number renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_annual_water_value_estimate']")
+    assert el.count() > 0
+
+
+# ── CS1089 ────────────────────────────────────────────────────────────────────
+
+def test_CS1089_water_well_section_Q_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section Q sustainability risks heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "المخاطر والاستدامة" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1090 ────────────────────────────────────────────────────────────────────
+
+def test_CS1090_well_supp_aquifer_sustainability_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_aquifer_sustainability select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_aquifer_sustainability']")
+    assert el.count() > 0
+
+
+# ── CS1091 ────────────────────────────────────────────────────────────────────
+
+def test_CS1091_well_supp_sustainability_measures_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_sustainability_measures checkbox_group renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_sustainability_measures']")
+    assert el.count() > 0
+
+
+# ── CS1092 ────────────────────────────────────────────────────────────────────
+
+def test_CS1092_water_well_section_R_purpose_table_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section R purpose adjustment table heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "جدول معامل التعديل" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1093 ────────────────────────────────────────────────────────────────────
+
+def test_CS1093_well_supp_purpose_mortgage_lending_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_purpose_mortgage_lending select renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_mortgage_lending']")
+    assert el.count() > 0
+
+
+# ── CS1094 ────────────────────────────────────────────────────────────────────
+
+def test_CS1094_well_supp_purpose_agricultural_support_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_purpose_agricultural_support (local purpose) renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_agricultural_support']")
+    assert el.count() > 0
+
+
+# ── CS1095 ────────────────────────────────────────────────────────────────────
+
+def test_CS1095_well_supp_purpose_water_sale_business_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_purpose_water_sale_business (local purpose) renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_water_sale_business']")
+    assert el.count() > 0
+
+
+# ── CS1096 ────────────────────────────────────────────────────────────────────
+
+def test_CS1096_well_supp_purpose_water_rights_review_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_purpose_water_rights_review (local purpose) renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_water_rights_review']")
+    assert el.count() > 0
+
+
+# ── CS1097 ────────────────────────────────────────────────────────────────────
+
+def test_CS1097_well_supp_purpose_industrial_support_local_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_supp_purpose_industrial_support (local purpose) renders."""
+    _load_water_well_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='well_supp_purpose_industrial_support']")
+    assert el.count() > 0
+
+
+# ── CS1098 ────────────────────────────────────────────────────────────────────
+
+def test_CS1098_water_well_section_T_docs_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well section T documents heading renders."""
+    _load_water_well_supp(page, live_server)
+    assert "مستندات إضافية" in page.locator("#es-req-supp").inner_text()
+
+
+# ── CS1099 ────────────────────────────────────────────────────────────────────
+
+def test_CS1099_well_doc_drilling_log_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_drilling_log document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_drilling_log']").count() > 0
+
+
+# ── CS1100 ────────────────────────────────────────────────────────────────────
+
+def test_CS1100_well_doc_pump_test_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_pump_test_report document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_pump_test_report']").count() > 0
+
+
+# ── CS1101 ────────────────────────────────────────────────────────────────────
+
+def test_CS1101_well_doc_hydrogeological_study_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_hydrogeological_study document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_hydrogeological_study']").count() > 0
+
+
+# ── CS1102 ────────────────────────────────────────────────────────────────────
+
+def test_CS1102_well_doc_water_quality_certificate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_water_quality_certificate document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_water_quality_certificate']").count() > 0
+
+
+# ── CS1103 ────────────────────────────────────────────────────────────────────
+
+def test_CS1103_well_doc_groundwater_model_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_groundwater_model document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_groundwater_model']").count() > 0
+
+
+# ── CS1104 ────────────────────────────────────────────────────────────────────
+
+def test_CS1104_well_doc_water_sale_contracts_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_water_sale_contracts document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_water_sale_contracts']").count() > 0
+
+
+# ── CS1105 ────────────────────────────────────────────────────────────────────
+
+def test_CS1105_well_doc_site_photos_recent_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: well_doc_site_photos_recent document checkbox renders."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_doc_site_photos_recent']").count() > 0
+
+
+# ── CS1106 ────────────────────────────────────────────────────────────────────
+
+def test_CS1106_water_well_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well profile has no composite valuation link."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("#es-composite-link").count() == 0
+
+
+# ── CS1107 ────────────────────────────────────────────────────────────────────
+
+def test_CS1107_water_well_supp_uses_data_es_supp_field_not_req(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: water_well supp fields use data-es-supp-field (not data-es-req-field)."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_supp_asset_subtype']").count() > 0
+    assert page.locator("[data-es-req-field='well_supp_asset_subtype']").count() == 0
+
+
+# ── CS1108 ────────────────────────────────────────────────────────────────────
+
+def test_CS1108_mine_supp_isolates_from_water_well(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: loading mine does not show well_supp_ fields."""
+    _load_mine_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='well_supp_asset_subtype']").count() == 0
+
+
+# ── CS1109 ────────────────────────────────────────────────────────────────────
+
+def test_CS1109_water_well_supp_isolates_from_mine(page: "Page", live_server: str) -> None:
+    """Phase 8ZK: loading water_well does not show mine_supp_ fields."""
+    _load_water_well_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='mine_supp_asset_subtype']").count() == 0

@@ -15567,3 +15567,647 @@ def test_CS1220_sa_supp_heading_absent_from_residential_unit(page: "Page", live_
     assert "شقق فندقية" not in supp_text and "مخدومة" not in supp_text, (
         f"8ZN: serviced_apartments heading must not appear under residential_unit. Got: {supp_text[:200]!r}"
     )
+
+
+# ── Phase 8ZO helpers ────────────────────────────────────────────────────────
+
+def _load_floating_hotel_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: load floating_hotel and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="floating_hotel")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS1221 ────────────────────────────────────────────────────────────────────
+
+def test_CS1221_fh_supp_panel_renders_and_has_many_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: floating_hotel #es-req-supp contains >50 supp controls."""
+    _load_floating_hotel_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 50, (
+        f"8ZO: #es-req-supp must contain >50 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS1222 ────────────────────────────────────────────────────────────────────
+
+def test_CS1222_fh_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: supp header contains Arabic heading for floating hotel."""
+    _load_floating_hotel_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "فندق عائم" in supp_text or "باخرة نهرية" in supp_text, (
+        f"8ZO: supp heading must contain 'فندق عائم' or 'باخرة نهرية'. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS1223 ────────────────────────────────────────────────────────────────────
+
+def test_CS1223_fh_supp_section_A_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section A fh_supp_asset_type renders as a <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_asset_type']")
+    assert el.count() > 0, "fh_supp_asset_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1224 ────────────────────────────────────────────────────────────────────
+
+def test_CS1224_fh_supp_section_B_air_draft_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section B fh_supp_air_draft_m renders as number <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_air_draft_m']")
+    assert el.count() > 0, "fh_supp_air_draft_m not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1225 ────────────────────────────────────────────────────────────────────
+
+def test_CS1225_fh_supp_section_C_cabin_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section C fh_supp_cabin_condition renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_cabin_condition']")
+    assert el.count() > 0, "fh_supp_cabin_condition not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1226 ────────────────────────────────────────────────────────────────────
+
+def test_CS1226_fh_supp_section_D_corrosion_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section D fh_supp_corrosion_level renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_corrosion_level']")
+    assert el.count() > 0, "fh_supp_corrosion_level not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1227 ────────────────────────────────────────────────────────────────────
+
+def test_CS1227_fh_supp_section_E_propulsion_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section E fh_supp_propulsion_type renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_propulsion_type']")
+    assert el.count() > 0, "fh_supp_propulsion_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1228 ────────────────────────────────────────────────────────────────────
+
+def test_CS1228_fh_supp_section_F_vessel_registration_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section F fh_supp_vessel_registration_status renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_vessel_registration_status']")
+    assert el.count() > 0, "fh_supp_vessel_registration_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1229 ────────────────────────────────────────────────────────────────────
+
+def test_CS1229_fh_supp_section_G_primary_mooring_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section G fh_supp_primary_mooring_location renders as text <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_primary_mooring_location']")
+    assert el.count() > 0, "fh_supp_primary_mooring_location not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1230 ────────────────────────────────────────────────────────────────────
+
+def test_CS1230_fh_supp_section_H_occupancy_rate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section H fh_supp_annual_occupancy_rate renders as number <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_annual_occupancy_rate']")
+    assert el.count() > 0, "fh_supp_annual_occupancy_rate not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1231 ────────────────────────────────────────────────────────────────────
+
+def test_CS1231_fh_supp_section_I_ebitda_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section I fh_supp_ebitda_annual renders as number <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_ebitda_annual']")
+    assert el.count() > 0, "fh_supp_ebitda_annual not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1232 ────────────────────────────────────────────────────────────────────
+
+def test_CS1232_fh_supp_section_J_operator_name_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section J fh_supp_operator_name renders as text <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_operator_name']")
+    assert el.count() > 0, "fh_supp_operator_name not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1233 ────────────────────────────────────────────────────────────────────
+
+def test_CS1233_fh_supp_section_K_overall_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section K fh_supp_vessel_overall_condition renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_vessel_overall_condition']")
+    assert el.count() > 0, "fh_supp_vessel_overall_condition not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1234 ────────────────────────────────────────────────────────────────────
+
+def test_CS1234_fh_supp_section_L_fmv_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L fh_supp_adj_fmv_methodology renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_fmv_methodology']")
+    assert el.count() > 0, "fh_supp_adj_fmv_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1235 ────────────────────────────────────────────────────────────────────
+
+def test_CS1235_fh_supp_section_M_fuel_efficiency_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section M fh_supp_fuel_efficiency_level renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_fuel_efficiency_level']")
+    assert el.count() > 0, "fh_supp_fuel_efficiency_level not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1236 ────────────────────────────────────────────────────────────────────
+
+def test_CS1236_fh_supp_section_N_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section N fh_supp_flood_risk_level renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_flood_risk_level']")
+    assert el.count() > 0, "fh_supp_flood_risk_level not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1237 ────────────────────────────────────────────────────────────────────
+
+def test_CS1237_fh_supp_section_O_high_speed_internet_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section O fh_supp_high_speed_internet (bool) renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_high_speed_internet']")
+    assert el.count() > 0, "fh_supp_high_speed_internet not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1238 ────────────────────────────────────────────────────────────────────
+
+def test_CS1238_fh_doc_supp_vessel_reg_cert_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section P fh_doc_supp_vessel_reg_cert renders as checkbox <input>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_doc_supp_vessel_reg_cert']")
+    assert el.count() > 0, "fh_doc_supp_vessel_reg_cert not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1239 ────────────────────────────────────────────────────────────────────
+
+def test_CS1239_fh_supp_asset_type_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_asset_type uses data-es-supp-field, not data-es-req-field."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() > 0
+    assert page.locator("[data-es-req-field='fh_supp_asset_type']").count() == 0
+
+
+# ── CS1240 ────────────────────────────────────────────────────────────────────
+
+def test_CS1240_fh_supp_propulsion_type_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_propulsion_type uses data-es-supp-field, not data-es-req-field."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_propulsion_type']").count() > 0
+    assert page.locator("[data-es-req-field='fh_supp_propulsion_type']").count() == 0
+
+
+# ── CS1241 ────────────────────────────────────────────────────────────────────
+
+def test_CS1241_fh_doc_supp_vessel_reg_cert_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_doc_supp_vessel_reg_cert uses data-es-supp-field, not data-es-req-field."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_doc_supp_vessel_reg_cert']").count() > 0
+    assert page.locator("[data-es-req-field='fh_doc_supp_vessel_reg_cert']").count() == 0
+
+
+# ── CS1242 ────────────────────────────────────────────────────────────────────
+
+def test_CS1242_fh_supp_adj_fmv_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_adj_fmv_methodology uses data-es-supp-field, not data-es-req-field."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_adj_fmv_methodology']").count() > 0
+    assert page.locator("[data-es-req-field='fh_supp_adj_fmv_methodology']").count() == 0
+
+
+# ── CS1243 ────────────────────────────────────────────────────────────────────
+
+def test_CS1243_fh_supp_bool_field_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: bool field fh_supp_route_rights_available renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_route_rights_available']")
+    assert el.count() > 0, "fh_supp_route_rights_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1244 ────────────────────────────────────────────────────────────────────
+
+def test_CS1244_fh_supp_float_field_adr_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: float field fh_supp_adr renders as <input type=number>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adr']")
+    assert el.count() > 0, "fh_supp_adr not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1245 ────────────────────────────────────────────────────────────────────
+
+def test_CS1245_fh_supp_int_field_engines_count_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: int field fh_supp_engines_count renders as <input type=number>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_engines_count']")
+    assert el.count() > 0, "fh_supp_engines_count not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1246 ────────────────────────────────────────────────────────────────────
+
+def test_CS1246_fh_supp_textarea_field_machinery_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: textarea field fh_supp_machinery_notes renders as <textarea>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_machinery_notes']")
+    assert el.count() > 0, "fh_supp_machinery_notes not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1247 ────────────────────────────────────────────────────────────────────
+
+def test_CS1247_fh_supp_checkbox_group_guest_amenities_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: checkbox_group field fh_supp_guest_amenities renders as chip inputs."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_guest_amenities']")
+    assert el.count() > 0, "fh_supp_guest_amenities chip not found"
+
+
+# ── CS1248 ────────────────────────────────────────────────────────────────────
+
+def test_CS1248_fh_doc_supp_kpi_data_renders_as_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: doc field fh_doc_supp_kpi_data renders as <input type=checkbox>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_doc_supp_kpi_data']")
+    assert el.count() > 0, "fh_doc_supp_kpi_data not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1249 ────────────────────────────────────────────────────────────────────
+
+def test_CS1249_fh_supp_section_L_fmv_rationale_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L fh_supp_adj_fmv_rationale renders as <textarea>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_fmv_rationale']")
+    assert el.count() > 0, "fh_supp_adj_fmv_rationale not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1250 ────────────────────────────────────────────────────────────────────
+
+def test_CS1250_fh_supp_section_L_bank_financing_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L fh_supp_adj_bank_financing_methodology renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_bank_financing_methodology']")
+    assert el.count() > 0, "fh_supp_adj_bank_financing_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1251 ────────────────────────────────────────────────────────────────────
+
+def test_CS1251_fh_supp_section_L_insurance_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L fh_supp_adj_insurance_methodology renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_insurance_methodology']")
+    assert el.count() > 0, "fh_supp_adj_insurance_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1252 ────────────────────────────────────────────────────────────────────
+
+def test_CS1252_fh_supp_section_L_ifrs_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L local advisory fh_supp_adj_ifrs_methodology renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_ifrs_methodology']")
+    assert el.count() > 0, "fh_supp_adj_ifrs_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1253 ────────────────────────────────────────────────────────────────────
+
+def test_CS1253_fh_supp_section_L_impairment_rationale_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section L local advisory fh_supp_adj_impairment_rationale renders as <textarea>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_impairment_rationale']")
+    assert el.count() > 0, "fh_supp_adj_impairment_rationale not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1254 ────────────────────────────────────────────────────────────────────
+
+def test_CS1254_fh_supp_methodology_has_vessel_appraisal_basis_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_adj_fmv_methodology select includes vessel_appraisal_basis option."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_fmv_methodology']")
+    assert el.count() > 0
+    options = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "vessel_appraisal_basis" in options, (
+        f"8ZO: vessel_appraisal_basis not in methodology options. Got: {options}"
+    )
+
+
+# ── CS1255 ────────────────────────────────────────────────────────────────────
+
+def test_CS1255_fh_supp_methodology_has_scrap_value_floor_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_adj_fmv_methodology select includes scrap_value_floor option."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_adj_fmv_methodology']")
+    assert el.count() > 0
+    options = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "scrap_value_floor" in options, (
+        f"8ZO: scrap_value_floor not in methodology options. Got: {options}"
+    )
+
+
+# ── CS1256 ────────────────────────────────────────────────────────────────────
+
+def test_CS1256_fh_supp_zero_api_calls_on_load(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: loading floating_hotel supp fires zero /api/valuation/requirements calls."""
+    api_calls: list = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="floating_hotel")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, f"8ZO: expected 0 /api/valuation/requirements calls. Got: {api_calls}"
+
+
+# ── CS1257 ────────────────────────────────────────────────────────────────────
+
+def test_CS1257_fh_supp_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: no authentication modal appears when loading floating_hotel supp."""
+    _load_floating_hotel_supp(page, live_server)
+    modal = page.locator("#auth-modal, .auth-modal, [id*='login']")
+    assert modal.count() == 0 or not modal.first.is_visible(), (
+        "8ZO: auth modal must not appear on floating_hotel supp load."
+    )
+
+
+# ── CS1258 ────────────────────────────────────────────────────────────────────
+
+def test_CS1258_fh_supp_no_composite_target(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: floating_hotel supp form has no composite valuation target."""
+    _load_floating_hotel_supp(page, live_server)
+    composite = page.locator("#composite-target, [data-composite-target]")
+    assert composite.count() == 0 or not composite.first.is_visible(), (
+        "8ZO: composite target must not appear for floating_hotel."
+    )
+
+
+# ── CS1259 ────────────────────────────────────────────────────────────────────
+
+def test_CS1259_fh_supp_fields_absent_from_residential_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under residential_unit."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_propulsion_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_ebitda_annual']").count() == 0
+
+
+# ── CS1260 ────────────────────────────────────────────────────────────────────
+
+def test_CS1260_fh_supp_fields_absent_from_land_vacant(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under land_vacant."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_vessel_overall_condition']").count() == 0
+
+
+# ── CS1261 ────────────────────────────────────────────────────────────────────
+
+def test_CS1261_fh_supp_fields_absent_from_building_full(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under building_full."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_doc_supp_vessel_reg_cert']").count() == 0
+
+
+# ── CS1262 ────────────────────────────────────────────────────────────────────
+
+def test_CS1262_fh_supp_fields_absent_from_hotel_resort(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under hotel_resort_detailed."""
+    _load_hotel_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_propulsion_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_doc_supp_vessel_reg_cert']").count() == 0
+
+
+# ── CS1263 ────────────────────────────────────────────────────────────────────
+
+def test_CS1263_fh_supp_fields_absent_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under serviced_apartments."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_ebitda_annual']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_doc_supp_vessel_reg_cert']").count() == 0
+
+
+# ── CS1264 ────────────────────────────────────────────────────────────────────
+
+def test_CS1264_fh_supp_fields_absent_from_industrial(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_ fields do not appear under industrial_logistics_facility_detailed."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="industrial_logistics_facility_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='fh_supp_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='fh_supp_propulsion_type']").count() == 0
+
+
+# ── CS1265 ────────────────────────────────────────────────────────────────────
+
+def test_CS1265_fh_existing_vessel_length_still_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: pre-existing field fh_vessel_length_m still renders in main panel after enrichment."""
+    _load_floating_hotel(page, live_server)
+    el = page.locator("#es-req-field-fh_vessel_length_m")
+    assert el.count() > 0, "fh_vessel_length_m missing — pre-existing field was deleted"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1266 ────────────────────────────────────────────────────────────────────
+
+def test_CS1266_fh_existing_hull_condition_still_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: pre-existing field fh_hull_condition still renders as <select> in main panel after enrichment."""
+    _load_floating_hotel(page, live_server)
+    el = page.locator("#es-req-field-fh_hull_condition")
+    assert el.count() > 0, "fh_hull_condition missing — pre-existing field was deleted"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1267 ────────────────────────────────────────────────────────────────────
+
+def test_CS1267_fh_existing_doc_navigation_license_still_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: pre-existing doc field fh_doc_navigation_license still renders in main panel after enrichment."""
+    _load_floating_hotel(page, live_server)
+    el = page.locator("#es-req-field-fh_doc_navigation_license")
+    assert el.count() > 0, "fh_doc_navigation_license missing — pre-existing doc field was deleted"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1268 ────────────────────────────────────────────────────────────────────
+
+def test_CS1268_fh_supp_cabin_condition_dry_only_once(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_cabin_condition appears exactly once (DRY — Section C only, not K)."""
+    _load_floating_hotel_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='fh_supp_cabin_condition']").count()
+    assert count == 1, (
+        f"8ZO: fh_supp_cabin_condition must appear exactly once (DRY). Got count={count}"
+    )
+
+
+# ── CS1269 ────────────────────────────────────────────────────────────────────
+
+def test_CS1269_fh_supp_section_K_has_overall_condition_not_cabin(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section K has fh_supp_vessel_overall_condition but NOT fh_supp_cabin_condition."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fh_supp_vessel_overall_condition']").count() > 0
+    # Cabin condition is DRY — only in Section C, count must remain 1 (not added again in K)
+    assert page.locator("[data-es-supp-field='fh_supp_cabin_condition']").count() == 1
+
+
+# ── CS1270 ────────────────────────────────────────────────────────────────────
+
+def test_CS1270_fh_supp_heading_bug_fixed_not_residential(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: heading bug fixed — supp panel does not show the residential fallback heading."""
+    _load_floating_hotel_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "متطلبات تقييم الوحدة السكنية" not in supp_text, (
+        f"8ZO: residential fallback heading must not appear for floating_hotel. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS1271 ────────────────────────────────────────────────────────────────────
+
+def test_CS1271_fh_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: supplemental panel subtext renders (extended local advisory notice)."""
+    _load_floating_hotel_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلي" in supp_text or "تكميلية" in supp_text or "لا يُرسل" in supp_text, (
+        f"8ZO: subtext notice not found in supp panel. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS1272 ────────────────────────────────────────────────────────────────────
+
+def test_CS1272_fh_supp_section_E_propulsion_select_has_diesel_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: fh_supp_propulsion_type select has diesel_engine option."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_propulsion_type']")
+    assert el.count() > 0
+    options = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "diesel_engine" in options, (
+        f"8ZO: diesel_engine not in propulsion_type options. Got: {options}"
+    )
+
+
+# ── CS1273 ────────────────────────────────────────────────────────────────────
+
+def test_CS1273_fh_supp_section_G_waterway_depth_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section G fh_supp_waterway_depth_risk renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_waterway_depth_risk']")
+    assert el.count() > 0, "fh_supp_waterway_depth_risk not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1274 ────────────────────────────────────────────────────────────────────
+
+def test_CS1274_fh_supp_section_H_revpar_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section H fh_supp_revpar renders as <input type=number>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_revpar']")
+    assert el.count() > 0, "fh_supp_revpar not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1275 ────────────────────────────────────────────────────────────────────
+
+def test_CS1275_fh_supp_section_N_climate_resilience_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section N fh_supp_climate_resilience renders as chip inputs."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_climate_resilience']")
+    assert el.count() > 0, "fh_supp_climate_resilience chip not found"
+
+
+# ── CS1276 ────────────────────────────────────────────────────────────────────
+
+def test_CS1276_fh_supp_section_O_pms_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section O fh_supp_pms_available (bool) renders as <select>."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_pms_available']")
+    assert el.count() > 0, "fh_supp_pms_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1277 ────────────────────────────────────────────────────────────────────
+
+def test_CS1277_fh_supp_section_M_sustainability_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: Section M fh_supp_sustainability_features renders as chip inputs."""
+    _load_floating_hotel_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='fh_supp_sustainability_features']")
+    assert el.count() > 0, "fh_supp_sustainability_features chip not found"
+
+
+# ── CS1278 ────────────────────────────────────────────────────────────────────
+
+def test_CS1278_fh_supp_total_supp_field_count_exceeds_100(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: floating_hotel supp panel contains >100 data-es-supp-field controls."""
+    _load_floating_hotel_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 100, (
+        f"8ZO: #es-req-supp must contain >100 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS1279 ────────────────────────────────────────────────────────────────────
+
+def test_CS1279_fh_existing_doc_international_certifications_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: pre-existing doc field fh_doc_international_certifications still renders in main panel."""
+    _load_floating_hotel(page, live_server)
+    el = page.locator("#es-req-field-fh_doc_international_certifications")
+    assert el.count() > 0, "fh_doc_international_certifications missing — pre-existing field deleted"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1280 ────────────────────────────────────────────────────────────────────
+
+def test_CS1280_fh_supp_heading_absent_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZO: floating_hotel supp heading does not appear under serviced_apartments."""
+    _load_serviced_apartments_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "فندق عائم" not in supp_text and "باخرة نهرية" not in supp_text, (
+        f"8ZO: floating_hotel heading must not appear under serviced_apartments. Got: {supp_text[:200]!r}"
+    )

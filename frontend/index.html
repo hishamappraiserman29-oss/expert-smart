@@ -16597,7 +16597,7 @@ function _showIndexToast(msg, type) {
         'serviced_apartments': [
             {
                 section: 'A',
-                titleAr: 'أ — تصنيف الأصل والنموذج التشغيلي',
+                heading: 'أ — تصنيف الأصل والنموذج التشغيلي',
                 fields: [
                     { name: 'sa_supp_serviced_asset_type', field_type: 'str', label_ar: 'نوع الأصل الفندقي المخدوم', options: [{value:'serviced_apartments',label_ar:'شقق فندقية مخدومة'},{value:'apart_hotel',label_ar:'أبارت هوتيل'},{value:'branded_residences',label_ar:'شقق برنامج العلامة التجارية'},{value:'mixed_hospitality_residential',label_ar:'مختلط سكني فندقي'},{value:'extended_stay',label_ar:'إقامة مطوّلة'},{value:'short_term_rental',label_ar:'إيجار قصير المدى'},{value:'unknown',label_ar:'غير معروف'}] },
                     { name: 'sa_supp_operating_status', field_type: 'str', label_ar: 'الوضع التشغيلي', options: [{value:'operating',label_ar:'تشغيل فعلي'},{value:'pre_opening',label_ar:'قبيل الافتتاح'},{value:'under_renovation',label_ar:'تحت التجديد'},{value:'suspended',label_ar:'متوقف'},{value:'unknown',label_ar:'غير معروف'}] },
@@ -16609,7 +16609,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'B',
-                titleAr: 'ب — مزيج الوحدات والمساحات',
+                heading: 'ب — مزيج الوحدات والمساحات',
                 fields: [
                     { name: 'sa_supp_total_units', field_type: 'int', label_ar: 'إجمالي الوحدات' },
                     { name: 'sa_supp_studio_units', field_type: 'int', label_ar: 'وحدات الاستوديو' },
@@ -16627,7 +16627,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'C',
-                titleAr: 'ج — الخدمات والمرافق',
+                heading: 'ج — الخدمات والمرافق',
                 fields: [
                     { name: 'sa_supp_spa_available', field_type: 'bool', label_ar: 'منتجع صحي / سبا' },
                     { name: 'sa_supp_kids_area_available', field_type: 'bool', label_ar: 'منطقة أطفال' },
@@ -16642,7 +16642,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'D',
-                titleAr: 'د — الأداء التشغيلي والإشغال',
+                heading: 'د — الأداء التشغيلي والإشغال',
                 fields: [
                     { name: 'sa_supp_seasonal_occupancy_pct', field_type: 'float', label_ar: 'نسبة الإشغال الموسمي (%)' },
                     { name: 'sa_supp_revpar_sar', field_type: 'float', label_ar: 'الإيراد لكل وحدة متاحة RevPAR (ريال)' },
@@ -16662,7 +16662,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'E',
-                titleAr: 'هـ — تجمع الإيجار وحقوق الملاك',
+                heading: 'هـ — تجمع الإيجار وحقوق الملاك',
                 fields: [
                     { name: 'sa_supp_rental_pool_units_count', field_type: 'int', label_ar: 'عدد الوحدات في تجمع الإيجار' },
                     { name: 'sa_supp_rental_pool_participation_pct', field_type: 'float', label_ar: 'نسبة المشاركة في التجمع (%)' },
@@ -16680,7 +16680,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'F',
-                titleAr: 'و — الإيرادات والمصروفات والدخل الصافي',
+                heading: 'و — الإيرادات والمصروفات والدخل الصافي',
                 fields: [
                     { name: 'sa_supp_annual_unit_revenue_sar', field_type: 'float', label_ar: 'إيراد الوحدات السنوي (ريال)' },
                     { name: 'sa_supp_annual_fb_revenue_sar', field_type: 'float', label_ar: 'إيراد الأغذية والمشروبات السنوي (ريال)' },
@@ -16702,7 +16702,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'G',
-                titleAr: 'ز — عقد التشغيل والمشغّل',
+                heading: 'ز — عقد التشغيل والمشغّل',
                 fields: [
                     { name: 'sa_supp_operator_name', field_type: 'str', label_ar: 'اسم المشغّل', options: [{value:'accor',label_ar:'أكور'},{value:'marriott',label_ar:'ماريوت'},{value:'hilton',label_ar:'هيلتون'},{value:'igh',label_ar:'IHG'},{value:'wyndham',label_ar:'ويندهام'},{value:'rotana',label_ar:'روتانا'},{value:'local_operator',label_ar:'مشغّل محلي'},{value:'self_managed',label_ar:'إدارة ذاتية'},{value:'other',label_ar:'أخرى'}] },
                     { name: 'sa_supp_operator_type', field_type: 'str', label_ar: 'نوع المشغّل', options: [{value:'international_brand',label_ar:'علامة دولية'},{value:'regional_brand',label_ar:'علامة إقليمية'},{value:'local_brand',label_ar:'علامة محلية'},{value:'independent',label_ar:'مستقل'},{value:'self_managed',label_ar:'إدارة ذاتية'}] },
@@ -16720,7 +16720,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'H',
-                titleAr: 'ح — الملكية والتراخيص والامتثال القانوني',
+                heading: 'ح — الملكية والتراخيص والامتثال القانوني',
                 fields: [
                     { name: 'sa_supp_ownership_structure', field_type: 'str', label_ar: 'هيكل الملكية', options: [{value:'single_owner',label_ar:'مالك واحد'},{value:'strata_title',label_ar:'ملكية قطعية (ستراتا)'},{value:'joint_venture',label_ar:'مشروع مشترك'},{value:'reit',label_ar:'صندوق استثمار عقاري'},{value:'other',label_ar:'أخرى'}] },
                     { name: 'sa_supp_title_deed_available', field_type: 'bool', label_ar: 'صك الملكية متاح' },
@@ -16742,7 +16742,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'I',
-                titleAr: 'ط — الحالة الفنية والمتطلبات الرأسمالية',
+                heading: 'ط — الحالة الفنية والمتطلبات الرأسمالية',
                 fields: [
                     { name: 'sa_supp_overall_condition', field_type: 'str', label_ar: 'الحالة العامة', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
                     { name: 'sa_supp_structural_condition', field_type: 'str', label_ar: 'حالة الهيكل الإنشائي', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
@@ -16766,7 +16766,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'J',
-                titleAr: 'ي — السوق والتنافسية والتسويق',
+                heading: 'ي — السوق والتنافسية والتسويق',
                 fields: [
                     { name: 'sa_supp_competitive_set_count', field_type: 'int', label_ar: 'عدد المنافسين المباشرين' },
                     { name: 'sa_supp_market_occupancy_pct', field_type: 'float', label_ar: 'متوسط إشغال السوق (%)' },
@@ -16786,7 +16786,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'K',
-                titleAr: 'ك — الأغراض التقييمية ومنهجية القيمة',
+                heading: 'ك — الأغراض التقييمية ومنهجية القيمة',
                 fields: [
                     { name: 'sa_supp_purpose_fair_market_value_methodology', field_type: 'str', label_ar: 'قيمة السوق العادلة — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}] },
                     { name: 'sa_supp_purpose_fair_market_value_adjustment_pct', field_type: 'float', label_ar: 'قيمة السوق العادلة — نسبة التعديل (%)' },
@@ -16825,7 +16825,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'L',
-                titleAr: 'ل — الاستدامة والبيئة',
+                heading: 'ل — الاستدامة والبيئة',
                 fields: [
                     { name: 'sa_supp_energy_rating', field_type: 'str', label_ar: 'تصنيف الطاقة', options: [{value:'platinum',label_ar:'بلاتيني'},{value:'gold',label_ar:'ذهبي'},{value:'silver',label_ar:'فضي'},{value:'bronze',label_ar:'برونزي'},{value:'not_rated',label_ar:'غير مصنّف'}] },
                     { name: 'sa_supp_electricity_consumption_kwh_per_unit', field_type: 'float', label_ar: 'استهلاك الكهرباء (كيلوواط/وحدة/سنة)' },
@@ -16846,7 +16846,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'M',
-                titleAr: 'م — مخاطر المناخ والتغيرات البيئية',
+                heading: 'م — مخاطر المناخ والتغيرات البيئية',
                 fields: [
                     { name: 'sa_supp_flood_risk', field_type: 'str', label_ar: 'مخاطر الفيضانات', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
                     { name: 'sa_supp_coastal_flood_risk', field_type: 'str', label_ar: 'مخاطر فيضانات الشاطئ', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
@@ -16866,7 +16866,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'N',
-                titleAr: 'ن — البنية التحتية الرقمية والذكية',
+                heading: 'ن — البنية التحتية الرقمية والذكية',
                 fields: [
                     { name: 'sa_supp_fiber_optic_available', field_type: 'bool', label_ar: 'توصيلات الألياف الضوئية' },
                     { name: 'sa_supp_internet_speed_mbps', field_type: 'float', label_ar: 'سرعة الإنترنت (ميجابت/ثانية)' },
@@ -16887,7 +16887,7 @@ function _showIndexToast(msg, type) {
             },
             {
                 section: 'O',
-                titleAr: 'س — المستندات والوثائق التكميلية',
+                heading: 'س — المستندات والوثائق التكميلية',
                 fields: [
                     { name: 'sa_doc_supp_classification_cert', field_type: 'str', label_ar: 'شهادة التصنيف الفندقي', group: 'document' },
                     { name: 'sa_doc_supp_profit_distribution_statements', field_type: 'str', label_ar: 'كشوفات توزيعات الأرباح', group: 'document' },

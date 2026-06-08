@@ -16211,3 +16211,18 @@ def test_CS1280_fh_supp_heading_absent_from_serviced_apartments(page: "Page", li
     assert "فندق عائم" not in supp_text and "باخرة نهرية" not in supp_text, (
         f"8ZO: floating_hotel heading must not appear under serviced_apartments. Got: {supp_text[:200]!r}"
     )
+
+
+# ── CS1281 ────────────────────────────────────────────────────────────────────
+
+def test_CS1281_serviced_apartments_supp_no_undefined_headings(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: serviced_apartments supplemental section headings must not render as 'undefined'."""
+    _load_serviced_apartments_supp(page, live_server)
+    supp_panel = page.locator("#es-req-supp")
+    supp_text = supp_panel.inner_text()
+    assert "undefined" not in supp_text.lower(), (
+        f"8ZN: 'undefined' found in #es-req-supp for serviced_apartments. First occurrence: "
+        f"{supp_text[max(0, supp_text.lower().find('undefined')-40):supp_text.lower().find('undefined')+60]!r}"
+    )
+    headings = supp_panel.locator("details > summary")
+    assert headings.count() > 0, "8ZN: No <summary> section headings found in #es-req-supp for serviced_apartments."

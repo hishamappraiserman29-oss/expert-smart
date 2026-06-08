@@ -14992,3 +14992,578 @@ def test_CS1165_8zm_new_fields_absent_from_floating_hotel(page: "Page", live_ser
     _load_floating_hotel(page, live_server)
     assert page.locator("[data-es-supp-field='hrd_supp_wildfire_or_external_fire_exposure']").count() == 0
     assert page.locator("[data-es-supp-field='hrd_supp_access_control_system_available']").count() == 0
+
+
+# ── Phase 8ZN helpers ────────────────────────────────────────────────────────
+
+def _load_serviced_apartments_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: load serviced_apartments and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="serviced_apartments")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS1166 ────────────────────────────────────────────────────────────────────
+
+def test_CS1166_sa_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: serviced_apartments #es-req-supp receives sa_supp_ controls."""
+    _load_serviced_apartments_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 50, (
+        f"8ZN: #es-req-supp must contain >50 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS1167 ────────────────────────────────────────────────────────────────────
+
+def test_CS1167_sa_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: supp header contains Arabic heading for serviced apartments."""
+    _load_serviced_apartments_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "شقق فندقية" in supp_text or "مخدومة" in supp_text, (
+        f"8ZN: supp heading must contain 'شقق فندقية' or 'مخدومة'. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS1168 ────────────────────────────────────────────────────────────────────
+
+def test_CS1168_sa_supp_section_A_serviced_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section A sa_supp_serviced_asset_type renders as a <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']")
+    assert el.count() > 0, "sa_supp_serviced_asset_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1169 ────────────────────────────────────────────────────────────────────
+
+def test_CS1169_sa_supp_section_B_total_units_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section B sa_supp_total_units renders as a number <input>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_total_units']")
+    assert el.count() > 0, "sa_supp_total_units not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1170 ────────────────────────────────────────────────────────────────────
+
+def test_CS1170_sa_supp_section_C_spa_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section C sa_supp_spa_available (bool) renders as a <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_spa_available']")
+    assert el.count() > 0, "sa_supp_spa_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1171 ────────────────────────────────────────────────────────────────────
+
+def test_CS1171_sa_supp_section_D_revpar_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section D sa_supp_revpar_sar renders as a number <input>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_revpar_sar']")
+    assert el.count() > 0, "sa_supp_revpar_sar not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1172 ────────────────────────────────────────────────────────────────────
+
+def test_CS1172_sa_supp_section_E_rental_pool_units_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section E sa_supp_rental_pool_units_count renders as a number <input>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_rental_pool_units_count']")
+    assert el.count() > 0, "sa_supp_rental_pool_units_count not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1173 ────────────────────────────────────────────────────────────────────
+
+def test_CS1173_sa_supp_section_F_noi_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section F sa_supp_noi_sar renders as a number <input>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_noi_sar']")
+    assert el.count() > 0, "sa_supp_noi_sar not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1174 ────────────────────────────────────────────────────────────────────
+
+def test_CS1174_sa_supp_section_G_contract_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section G sa_supp_management_contract_available (bool) renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_management_contract_available']")
+    assert el.count() > 0, "sa_supp_management_contract_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1175 ────────────────────────────────────────────────────────────────────
+
+def test_CS1175_sa_supp_section_H_title_deed_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section H sa_supp_title_deed_available (bool) renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_title_deed_available']")
+    assert el.count() > 0, "sa_supp_title_deed_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1176 ────────────────────────────────────────────────────────────────────
+
+def test_CS1176_sa_supp_section_I_overall_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section I sa_supp_overall_condition renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_overall_condition']")
+    assert el.count() > 0, "sa_supp_overall_condition not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1177 ────────────────────────────────────────────────────────────────────
+
+def test_CS1177_sa_supp_section_J_competitive_set_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section J sa_supp_competitive_set_count renders as number <input>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_competitive_set_count']")
+    assert el.count() > 0, "sa_supp_competitive_set_count not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1178 ────────────────────────────────────────────────────────────────────
+
+def test_CS1178_sa_supp_section_K_fmv_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section K sa_supp_purpose_fair_market_value_methodology renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_purpose_fair_market_value_methodology']")
+    assert el.count() > 0, "sa_supp_purpose_fair_market_value_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1179 ────────────────────────────────────────────────────────────────────
+
+def test_CS1179_sa_supp_section_L_energy_rating_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section L sa_supp_energy_rating renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_energy_rating']")
+    assert el.count() > 0, "sa_supp_energy_rating not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1180 ────────────────────────────────────────────────────────────────────
+
+def test_CS1180_sa_supp_section_M_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section M sa_supp_flood_risk renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_flood_risk']")
+    assert el.count() > 0, "sa_supp_flood_risk not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1181 ────────────────────────────────────────────────────────────────────
+
+def test_CS1181_sa_supp_section_N_fiber_optic_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section N sa_supp_fiber_optic_available (bool) renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_fiber_optic_available']")
+    assert el.count() > 0, "sa_supp_fiber_optic_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1182 ────────────────────────────────────────────────────────────────────
+
+def test_CS1182_sa_supp_section_O_classification_cert_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section O sa_doc_supp_classification_cert renders as <input type=checkbox>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_doc_supp_classification_cert']")
+    assert el.count() > 0, "sa_doc_supp_classification_cert not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1183 ────────────────────────────────────────────────────────────────────
+
+def test_CS1183_sa_supp_serviced_asset_type_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_serviced_asset_type uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_serviced_asset_type']").count() == 0
+
+
+# ── CS1184 ────────────────────────────────────────────────────────────────────
+
+def test_CS1184_sa_supp_operating_model_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_operating_model uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_operating_model']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_operating_model']").count() == 0
+
+
+# ── CS1185 ────────────────────────────────────────────────────────────────────
+
+def test_CS1185_sa_supp_rental_pool_units_count_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_rental_pool_units_count uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_rental_pool_units_count']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_rental_pool_units_count']").count() == 0
+
+
+# ── CS1186 ────────────────────────────────────────────────────────────────────
+
+def test_CS1186_sa_supp_management_contract_available_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_management_contract_available uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_management_contract_available']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_management_contract_available']").count() == 0
+
+
+# ── CS1187 ────────────────────────────────────────────────────────────────────
+
+def test_CS1187_sa_supp_purpose_fmv_methodology_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_purpose_fair_market_value_methodology uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_purpose_fair_market_value_methodology']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_purpose_fair_market_value_methodology']").count() == 0
+
+
+# ── CS1188 ────────────────────────────────────────────────────────────────────
+
+def test_CS1188_sa_doc_supp_classification_cert_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_doc_supp_classification_cert uses data-es-supp-field, not data-es-req-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_doc_supp_classification_cert']").count() > 0
+    assert page.locator("[data-es-req-field='sa_doc_supp_classification_cert']").count() == 0
+
+
+# ── CS1189 ────────────────────────────────────────────────────────────────────
+
+def test_CS1189_sa_supp_bool_field_spa_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: bool field sa_supp_spa_available renders as <select> with yes/no options."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_spa_available']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1190 ────────────────────────────────────────────────────────────────────
+
+def test_CS1190_sa_supp_bool_field_owner_usage_allowed_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: bool field sa_supp_owner_usage_allowed renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_owner_usage_allowed']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1191 ────────────────────────────────────────────────────────────────────
+
+def test_CS1191_sa_supp_float_field_revpar_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: float field sa_supp_revpar_sar renders as <input type=number>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_revpar_sar']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1192 ────────────────────────────────────────────────────────────────────
+
+def test_CS1192_sa_supp_int_field_total_units_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: int field sa_supp_total_units renders as <input type=number>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_total_units']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1193 ────────────────────────────────────────────────────────────────────
+
+def test_CS1193_sa_supp_textarea_field_unit_mix_summary_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: textarea field sa_supp_unit_mix_summary renders as <textarea>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_unit_mix_summary']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1194 ────────────────────────────────────────────────────────────────────
+
+def test_CS1194_sa_supp_checkbox_group_sustainability_features_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: checkbox_group field sa_supp_sustainability_features renders as chip inputs."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_sustainability_features']")
+    assert el.count() > 0, "sa_supp_sustainability_features chip not found"
+
+
+# ── CS1195 ────────────────────────────────────────────────────────────────────
+
+def test_CS1195_sa_supp_section_K_rental_pool_review_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section K local advisory sa_supp_purpose_rental_pool_review_methodology renders."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_purpose_rental_pool_review_methodology']")
+    assert el.count() > 0, "sa_supp_purpose_rental_pool_review_methodology not found"
+
+
+# ── CS1196 ────────────────────────────────────────────────────────────────────
+
+def test_CS1196_sa_supp_section_K_operator_contract_rationale_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section K sa_supp_purpose_operator_contract_review_rationale renders as <textarea>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_purpose_operator_contract_review_rationale']")
+    assert el.count() > 0, "sa_supp_purpose_operator_contract_review_rationale not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1197 ────────────────────────────────────────────────────────────────────
+
+def test_CS1197_sa_supp_zero_api_calls_on_load(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: loading serviced_apartments supp fires zero /api/valuation/requirements calls."""
+    api_calls: list = []
+    page.goto("about:blank")
+    page.route("**/api/valuation/requirements**", lambda route: (
+        api_calls.append(route.request.url), route.continue_()
+    ))
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="serviced_apartments")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert len(api_calls) == 0, f"8ZN: expected 0 /api/valuation/requirements calls. Got: {api_calls}"
+
+
+# ── CS1198 ────────────────────────────────────────────────────────────────────
+
+def test_CS1198_sa_supp_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: no authentication modal appears when loading serviced_apartments supp."""
+    _load_serviced_apartments_supp(page, live_server)
+    modal = page.locator("#auth-modal, .auth-modal, [id*='login']")
+    assert modal.count() == 0 or not modal.first.is_visible(), (
+        "8ZN: auth modal must not appear on serviced_apartments supp load."
+    )
+
+
+# ── CS1199 ────────────────────────────────────────────────────────────────────
+
+def test_CS1199_sa_supp_no_composite_target(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: serviced_apartments supp form has no composite valuation target."""
+    _load_serviced_apartments_supp(page, live_server)
+    composite = page.locator("#composite-target, [data-composite-target]")
+    assert composite.count() == 0 or not composite.first.is_visible(), (
+        "8ZN: composite target must not appear for serviced_apartments."
+    )
+
+
+# ── CS1200 ────────────────────────────────────────────────────────────────────
+
+def test_CS1200_sa_supp_fields_absent_from_residential_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_ fields do not appear under residential_unit."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_rental_pool_units_count']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_noi_sar']").count() == 0
+
+
+# ── CS1201 ────────────────────────────────────────────────────────────────────
+
+def test_CS1201_sa_supp_fields_absent_from_hotel_resort(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_ fields do not appear under hotel_resort_detailed."""
+    _load_hotel_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_rental_pool_units_count']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_doc_supp_classification_cert']").count() == 0
+
+
+# ── CS1202 ────────────────────────────────────────────────────────────────────
+
+def test_CS1202_sa_supp_fields_absent_from_floating_hotel(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_ fields do not appear under floating_hotel."""
+    _load_floating_hotel(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_noi_sar']").count() == 0
+
+
+# ── CS1203 ────────────────────────────────────────────────────────────────────
+
+def test_CS1203_sa_supp_fields_absent_from_land(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_ fields do not appear under land profile."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_rental_pool_units_count']").count() == 0
+
+
+# ── CS1204 ────────────────────────────────────────────────────────────────────
+
+def test_CS1204_sa_supp_fields_absent_from_building_full(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_ fields do not appear under building_full."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    assert page.locator("[data-es-supp-field='sa_supp_serviced_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='sa_supp_noi_sar']").count() == 0
+
+
+# ── CS1205 ────────────────────────────────────────────────────────────────────
+
+def test_CS1205_hrd_supp_fields_absent_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: hrd_supp_ fields do not bleed into serviced_apartments."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hrd_supp_hotel_classification']").count() == 0
+    assert page.locator("[data-es-supp-field='hrd_supp_total_keys']").count() == 0
+
+
+# ── CS1206 ────────────────────────────────────────────────────────────────────
+
+def test_CS1206_sa_supp_section_M_climate_resilience_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section M sa_supp_climate_resilience_features renders as chip inputs."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_climate_resilience_features']")
+    assert el.count() > 0, "sa_supp_climate_resilience_features chip not found"
+
+
+# ── CS1207 ────────────────────────────────────────────────────────────────────
+
+def test_CS1207_sa_supp_section_N_digital_key_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section N sa_supp_digital_key_system (bool) renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_digital_key_system']")
+    assert el.count() > 0, "sa_supp_digital_key_system not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1208 ────────────────────────────────────────────────────────────────────
+
+def test_CS1208_sa_doc_supp_insurance_docs_renders_as_checkbox(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section O sa_doc_supp_insurance_docs renders as <input type=checkbox>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_doc_supp_insurance_docs']")
+    assert el.count() > 0, "sa_doc_supp_insurance_docs not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1209 ────────────────────────────────────────────────────────────────────
+
+def test_CS1209_sa_supp_section_N_access_control_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_access_control_system_available uses data-es-supp-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_access_control_system_available']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_access_control_system_available']").count() == 0
+
+
+# ── CS1210 ────────────────────────────────────────────────────────────────────
+
+def test_CS1210_sa_supp_section_M_wildfire_uses_supp_field_attr(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: sa_supp_wildfire_or_external_fire_exposure uses data-es-supp-field."""
+    _load_serviced_apartments_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='sa_supp_wildfire_or_external_fire_exposure']").count() > 0
+    assert page.locator("[data-es-req-field='sa_supp_wildfire_or_external_fire_exposure']").count() == 0
+
+
+# ── CS1211 ────────────────────────────────────────────────────────────────────
+
+def test_CS1211_sa_supp_section_B_gfa_renders_as_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section B sa_supp_gfa_sqm renders as <input type=number>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_gfa_sqm']")
+    assert el.count() > 0, "sa_supp_gfa_sqm not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1212 ────────────────────────────────────────────────────────────────────
+
+def test_CS1212_sa_supp_section_D_channel_mix_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section D sa_supp_channel_mix_summary renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_channel_mix_summary']")
+    assert el.count() > 0, "sa_supp_channel_mix_summary not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1213 ────────────────────────────────────────────────────────────────────
+
+def test_CS1213_sa_supp_section_E_owner_blackout_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section E sa_supp_owner_blackout_period renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_owner_blackout_period']")
+    assert el.count() > 0, "sa_supp_owner_blackout_period not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1214 ────────────────────────────────────────────────────────────────────
+
+def test_CS1214_sa_supp_section_G_operator_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section G sa_supp_operator_type renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_operator_type']")
+    assert el.count() > 0, "sa_supp_operator_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1215 ────────────────────────────────────────────────────────────────────
+
+def test_CS1215_sa_supp_section_H_tourism_license_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section H sa_supp_tourism_license_status renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_tourism_license_status']")
+    assert el.count() > 0, "sa_supp_tourism_license_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1216 ────────────────────────────────────────────────────────────────────
+
+def test_CS1216_sa_supp_section_I_ffe_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section I sa_supp_ffe_condition renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_ffe_condition']")
+    assert el.count() > 0, "sa_supp_ffe_condition not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1217 ────────────────────────────────────────────────────────────────────
+
+def test_CS1217_sa_supp_section_J_marketability_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section J sa_supp_marketability_rating renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_marketability_rating']")
+    assert el.count() > 0, "sa_supp_marketability_rating not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1218 ────────────────────────────────────────────────────────────────────
+
+def test_CS1218_sa_supp_section_L_green_cert_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section L sa_supp_green_certification renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_green_certification']")
+    assert el.count() > 0, "sa_supp_green_certification not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1219 ────────────────────────────────────────────────────────────────────
+
+def test_CS1219_sa_supp_section_K_impairment_testing_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: Section K sa_supp_purpose_impairment_testing_methodology renders as <select>."""
+    _load_serviced_apartments_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='sa_supp_purpose_impairment_testing_methodology']")
+    assert el.count() > 0, "sa_supp_purpose_impairment_testing_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1220 ────────────────────────────────────────────────────────────────────
+
+def test_CS1220_sa_supp_heading_absent_from_residential_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZN: serviced_apartments supp heading text does not appear under residential_unit."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "شقق فندقية" not in supp_text and "مخدومة" not in supp_text, (
+        f"8ZN: serviced_apartments heading must not appear under residential_unit. Got: {supp_text[:200]!r}"
+    )

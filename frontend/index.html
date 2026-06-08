@@ -16594,6 +16594,312 @@ function _showIndexToast(msg, type) {
         // ── End Phase 8ZJ ─────────────────────────────────────────────────────────
         // ── End Phase 8ZI ─────────────────────────────────────────────────────────
         // ── End Phase 8ZH ─────────────────────────────────────────────────────────
+        'serviced_apartments': [
+            {
+                section: 'A',
+                titleAr: 'أ — تصنيف الأصل والنموذج التشغيلي',
+                fields: [
+                    { name: 'sa_supp_serviced_asset_type', field_type: 'str', label_ar: 'نوع الأصل الفندقي المخدوم', options: [{value:'serviced_apartments',label_ar:'شقق فندقية مخدومة'},{value:'apart_hotel',label_ar:'أبارت هوتيل'},{value:'branded_residences',label_ar:'شقق برنامج العلامة التجارية'},{value:'mixed_hospitality_residential',label_ar:'مختلط سكني فندقي'},{value:'extended_stay',label_ar:'إقامة مطوّلة'},{value:'short_term_rental',label_ar:'إيجار قصير المدى'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_operating_status', field_type: 'str', label_ar: 'الوضع التشغيلي', options: [{value:'operating',label_ar:'تشغيل فعلي'},{value:'pre_opening',label_ar:'قبيل الافتتاح'},{value:'under_renovation',label_ar:'تحت التجديد'},{value:'suspended',label_ar:'متوقف'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_operating_model', field_type: 'str', label_ar: 'نموذج التشغيل', options: [{value:'owner_operated',label_ar:'مُشغَّل من المالك'},{value:'third_party_operator',label_ar:'مشغّل خارجي'},{value:'franchise',label_ar:'امتياز تجاري'},{value:'self_managed_strata',label_ar:'إدارة ذاتية من الملاك'},{value:'hybrid',label_ar:'نموذج مختلط'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_hospitality_or_residential_classification', field_type: 'str', label_ar: 'التصنيف: فندقي أم سكني', options: [{value:'full_hospitality',label_ar:'فندقي كامل'},{value:'residential_led',label_ar:'سكني أساسي'},{value:'mixed',label_ar:'مختلط'},{value:'not_determined',label_ar:'غير محدد'}] },
+                    { name: 'sa_supp_brand_positioning', field_type: 'str', label_ar: 'مستوى العلامة التجارية', options: [{value:'ultra_luxury',label_ar:'فاخر جداً'},{value:'luxury',label_ar:'فاخر'},{value:'upper_upscale',label_ar:'راقٍ متقدم'},{value:'upscale',label_ar:'راقٍ'},{value:'upper_midscale',label_ar:'متوسط متقدم'},{value:'midscale',label_ar:'متوسط'},{value:'economy',label_ar:'اقتصادي'},{value:'unbranded',label_ar:'بدون علامة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_target_guest_segment', field_type: 'str', label_ar: 'الشريحة المستهدفة', options: [{value:'corporate',label_ar:'قطاع الأعمال'},{value:'leisure',label_ar:'سياحة وترفيه'},{value:'long_stay',label_ar:'إقامة مطوّلة'},{value:'family',label_ar:'عائلي'},{value:'mixed',label_ar:'مختلط'},{value:'unknown',label_ar:'غير معروف'}] }
+                ]
+            },
+            {
+                section: 'B',
+                titleAr: 'ب — مزيج الوحدات والمساحات',
+                fields: [
+                    { name: 'sa_supp_total_units', field_type: 'int', label_ar: 'إجمالي الوحدات' },
+                    { name: 'sa_supp_studio_units', field_type: 'int', label_ar: 'وحدات الاستوديو' },
+                    { name: 'sa_supp_one_br_units', field_type: 'int', label_ar: 'وحدات غرفة نوم واحدة' },
+                    { name: 'sa_supp_two_br_units', field_type: 'int', label_ar: 'وحدات غرفتا نوم' },
+                    { name: 'sa_supp_three_plus_br_units', field_type: 'int', label_ar: 'وحدات ثلاث غرف نوم فأكثر' },
+                    { name: 'sa_supp_gfa_sqm', field_type: 'float', label_ar: 'إجمالي المساحة البنائية (م²)' },
+                    { name: 'sa_supp_total_sellable_area_sqm', field_type: 'float', label_ar: 'إجمالي المساحة القابلة للبيع (م²)' },
+                    { name: 'sa_supp_avg_unit_size_sqm', field_type: 'float', label_ar: 'متوسط مساحة الوحدة (م²)' },
+                    { name: 'sa_supp_hotel_keys_if_mixed', field_type: 'int', label_ar: 'عدد غرف الفندق (إن كان مختلطاً)' },
+                    { name: 'sa_supp_penthouse_units', field_type: 'int', label_ar: 'وحدات البنتهاوس' },
+                    { name: 'sa_supp_accessible_units', field_type: 'int', label_ar: 'وحدات ذوي الاحتياجات الخاصة' },
+                    { name: 'sa_supp_unit_mix_summary', field_type: 'textarea', label_ar: 'ملخص مزيج الوحدات' }
+                ]
+            },
+            {
+                section: 'C',
+                titleAr: 'ج — الخدمات والمرافق',
+                fields: [
+                    { name: 'sa_supp_spa_available', field_type: 'bool', label_ar: 'منتجع صحي / سبا' },
+                    { name: 'sa_supp_kids_area_available', field_type: 'bool', label_ar: 'منطقة أطفال' },
+                    { name: 'sa_supp_business_lounge_available', field_type: 'bool', label_ar: 'صالة الأعمال' },
+                    { name: 'sa_supp_meeting_rooms_count', field_type: 'int', label_ar: 'عدد قاعات الاجتماعات' },
+                    { name: 'sa_supp_parking_count', field_type: 'int', label_ar: 'عدد مواقف السيارات' },
+                    { name: 'sa_supp_boh_area_sqm', field_type: 'float', label_ar: 'مساحة الخدمات الخلفية BOH (م²)' },
+                    { name: 'sa_supp_staff_accommodation_available', field_type: 'bool', label_ar: 'إسكان الموظفين متاح' },
+                    { name: 'sa_supp_service_quality_rating', field_type: 'str', label_ar: 'تصنيف جودة الخدمة', options: [{value:'excellent',label_ar:'ممتاز'},{value:'good',label_ar:'جيد'},{value:'average',label_ar:'متوسط'},{value:'below_average',label_ar:'دون المتوسط'},{value:'poor',label_ar:'ضعيف'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_amenities_notes', field_type: 'textarea', label_ar: 'ملاحظات الخدمات والمرافق' }
+                ]
+            },
+            {
+                section: 'D',
+                titleAr: 'د — الأداء التشغيلي والإشغال',
+                fields: [
+                    { name: 'sa_supp_seasonal_occupancy_pct', field_type: 'float', label_ar: 'نسبة الإشغال الموسمي (%)' },
+                    { name: 'sa_supp_revpar_sar', field_type: 'float', label_ar: 'الإيراد لكل وحدة متاحة RevPAR (ريال)' },
+                    { name: 'sa_supp_trevpar_sar', field_type: 'float', label_ar: 'إجمالي الإيراد لكل وحدة TRevPAR (ريال)' },
+                    { name: 'sa_supp_avg_monthly_rate_sar', field_type: 'float', label_ar: 'متوسط الإيجار الشهري (ريال)' },
+                    { name: 'sa_supp_monthly_occupancy_pct', field_type: 'float', label_ar: 'متوسط نسبة الإشغال الشهري (%)' },
+                    { name: 'sa_supp_corporate_client_ratio_pct', field_type: 'float', label_ar: 'نسبة العملاء من قطاع الأعمال (%)' },
+                    { name: 'sa_supp_leisure_guest_ratio_pct', field_type: 'float', label_ar: 'نسبة النزلاء السياحيين (%)' },
+                    { name: 'sa_supp_annual_turnover_rate_pct', field_type: 'float', label_ar: 'معدل دوران النزلاء السنوي (%)' },
+                    { name: 'sa_supp_repeat_guest_rate_pct', field_type: 'float', label_ar: 'معدل النزلاء المتكررين (%)' },
+                    { name: 'sa_supp_channel_mix_summary', field_type: 'str', label_ar: 'توزيع قنوات الحجز', options: [{value:'direct_dominant',label_ar:'الحجز المباشر أساسي'},{value:'ota_dominant',label_ar:'منصات الحجز أساسية'},{value:'corporate_dominant',label_ar:'الشركات أساسية'},{value:'mixed',label_ar:'مختلط'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_online_review_score', field_type: 'float', label_ar: 'تقييم المراجعات الإلكترونية (من 10)' },
+                    { name: 'sa_supp_guest_satisfaction_index', field_type: 'str', label_ar: 'مؤشر رضا النزلاء', options: [{value:'very_high',label_ar:'مرتفع جداً'},{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'not_measured',label_ar:'لم يُقاس'}] },
+                    { name: 'sa_supp_seasonality_pattern', field_type: 'str', label_ar: 'النمط الموسمي', options: [{value:'year_round',label_ar:'طوال العام'},{value:'peak_summer',label_ar:'ذروة الصيف'},{value:'peak_winter',label_ar:'ذروة الشتاء'},{value:'hajj_umrah_driven',label_ar:'موسم الحج والعمرة'},{value:'business_driven',label_ar:'دافع الأعمال'},{value:'mixed',label_ar:'مختلط'}] },
+                    { name: 'sa_supp_operational_performance_notes', field_type: 'textarea', label_ar: 'ملاحظات الأداء التشغيلي' }
+                ]
+            },
+            {
+                section: 'E',
+                titleAr: 'هـ — تجمع الإيجار وحقوق الملاك',
+                fields: [
+                    { name: 'sa_supp_rental_pool_units_count', field_type: 'int', label_ar: 'عدد الوحدات في تجمع الإيجار' },
+                    { name: 'sa_supp_rental_pool_participation_pct', field_type: 'float', label_ar: 'نسبة المشاركة في التجمع (%)' },
+                    { name: 'sa_supp_avg_rental_pool_income_monthly_sar', field_type: 'float', label_ar: 'متوسط دخل التجمع الشهري (ريال)' },
+                    { name: 'sa_supp_owner_usage_allowed', field_type: 'bool', label_ar: 'استخدام المالك مسموح' },
+                    { name: 'sa_supp_owner_usage_days_per_year', field_type: 'int', label_ar: 'أيام استخدام المالك سنوياً' },
+                    { name: 'sa_supp_owner_blackout_period', field_type: 'str', label_ar: 'فترة حظر استخدام المالك', options: [{value:'no_blackout',label_ar:'لا يوجد حظر'},{value:'peak_only',label_ar:'فترات الذروة فقط'},{value:'hajj_season',label_ar:'موسم الحج'},{value:'custom',label_ar:'مخصص'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_operator_pricing_control', field_type: 'bool', label_ar: 'التحكم في التسعير للمشغّل' },
+                    { name: 'sa_supp_early_exit_from_pool_allowed', field_type: 'bool', label_ar: 'الخروج المبكر من التجمع مسموح' },
+                    { name: 'sa_supp_reserve_fund_rights', field_type: 'bool', label_ar: 'حقوق صندوق الاحتياطي' },
+                    { name: 'sa_supp_audit_rights_available', field_type: 'bool', label_ar: 'حق التدقيق المالي متاح' },
+                    { name: 'sa_supp_rental_pool_dispute_resolution', field_type: 'str', label_ar: 'آلية فض نزاعات التجمع', options: [{value:'arbitration',label_ar:'تحكيم'},{value:'litigation',label_ar:'تقاضٍ'},{value:'mediation',label_ar:'وساطة'},{value:'not_specified',label_ar:'غير محدد'}] },
+                    { name: 'sa_supp_rental_pool_notes', field_type: 'textarea', label_ar: 'ملاحظات تجمع الإيجار' }
+                ]
+            },
+            {
+                section: 'F',
+                titleAr: 'و — الإيرادات والمصروفات والدخل الصافي',
+                fields: [
+                    { name: 'sa_supp_annual_unit_revenue_sar', field_type: 'float', label_ar: 'إيراد الوحدات السنوي (ريال)' },
+                    { name: 'sa_supp_annual_fb_revenue_sar', field_type: 'float', label_ar: 'إيراد الأغذية والمشروبات السنوي (ريال)' },
+                    { name: 'sa_supp_annual_other_revenue_sar', field_type: 'float', label_ar: 'الإيرادات الأخرى السنوية (ريال)' },
+                    { name: 'sa_supp_total_annual_revenue_sar', field_type: 'float', label_ar: 'إجمالي الإيرادات السنوية (ريال)' },
+                    { name: 'sa_supp_housekeeping_cost_sar', field_type: 'float', label_ar: 'تكلفة التنظيف والمنازل (ريال)' },
+                    { name: 'sa_supp_utilities_cost_sar', field_type: 'float', label_ar: 'تكلفة المرافق (ريال)' },
+                    { name: 'sa_supp_maintenance_cost_sar', field_type: 'float', label_ar: 'تكلفة الصيانة (ريال)' },
+                    { name: 'sa_supp_payroll_cost_sar', field_type: 'float', label_ar: 'تكلفة الرواتب (ريال)' },
+                    { name: 'sa_supp_management_fee_pct', field_type: 'float', label_ar: 'رسوم الإدارة (%)' },
+                    { name: 'sa_supp_marketing_cost_sar', field_type: 'float', label_ar: 'تكلفة التسويق (ريال)' },
+                    { name: 'sa_supp_ota_commission_pct', field_type: 'float', label_ar: 'عمولة منصات الحجز OTA (%)' },
+                    { name: 'sa_supp_insurance_cost_sar', field_type: 'float', label_ar: 'تكلفة التأمين (ريال)' },
+                    { name: 'sa_supp_noi_sar', field_type: 'float', label_ar: 'صافي الدخل التشغيلي NOI (ريال)' },
+                    { name: 'sa_supp_owner_distribution_pct', field_type: 'float', label_ar: 'توزيعات المالك من الإيراد (%)' },
+                    { name: 'sa_supp_operator_share_pct', field_type: 'float', label_ar: 'حصة المشغّل من الإيراد (%)' },
+                    { name: 'sa_supp_financial_notes', field_type: 'textarea', label_ar: 'ملاحظات مالية' }
+                ]
+            },
+            {
+                section: 'G',
+                titleAr: 'ز — عقد التشغيل والمشغّل',
+                fields: [
+                    { name: 'sa_supp_operator_name', field_type: 'str', label_ar: 'اسم المشغّل', options: [{value:'accor',label_ar:'أكور'},{value:'marriott',label_ar:'ماريوت'},{value:'hilton',label_ar:'هيلتون'},{value:'igh',label_ar:'IHG'},{value:'wyndham',label_ar:'ويندهام'},{value:'rotana',label_ar:'روتانا'},{value:'local_operator',label_ar:'مشغّل محلي'},{value:'self_managed',label_ar:'إدارة ذاتية'},{value:'other',label_ar:'أخرى'}] },
+                    { name: 'sa_supp_operator_type', field_type: 'str', label_ar: 'نوع المشغّل', options: [{value:'international_brand',label_ar:'علامة دولية'},{value:'regional_brand',label_ar:'علامة إقليمية'},{value:'local_brand',label_ar:'علامة محلية'},{value:'independent',label_ar:'مستقل'},{value:'self_managed',label_ar:'إدارة ذاتية'}] },
+                    { name: 'sa_supp_management_contract_available', field_type: 'bool', label_ar: 'عقد الإدارة متاح' },
+                    { name: 'sa_supp_contract_remaining_years', field_type: 'int', label_ar: 'السنوات المتبقية من العقد' },
+                    { name: 'sa_supp_base_management_fee_pct', field_type: 'float', label_ar: 'رسوم الإدارة الأساسية (%)' },
+                    { name: 'sa_supp_incentive_fee_pct', field_type: 'float', label_ar: 'رسوم الحوافز (%)' },
+                    { name: 'sa_supp_franchise_fee_pct', field_type: 'float', label_ar: 'رسوم الامتياز (%)' },
+                    { name: 'sa_supp_contract_termination_clause', field_type: 'bool', label_ar: 'بند الإنهاء المبكر موجود' },
+                    { name: 'sa_supp_kpi_clause_present', field_type: 'bool', label_ar: 'بند مؤشرات الأداء KPI موجود' },
+                    { name: 'sa_supp_pip_cost_sar', field_type: 'float', label_ar: 'تكلفة خطة تحسين العقار PIP (ريال)' },
+                    { name: 'sa_supp_operator_dispute_status', field_type: 'str', label_ar: 'وضع النزاع مع المشغّل', options: [{value:'no_dispute',label_ar:'لا يوجد نزاع'},{value:'minor_dispute',label_ar:'نزاع بسيط'},{value:'active_dispute',label_ar:'نزاع جارٍ'},{value:'terminated',label_ar:'تم الإنهاء'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_operator_notes', field_type: 'textarea', label_ar: 'ملاحظات عقد التشغيل' }
+                ]
+            },
+            {
+                section: 'H',
+                titleAr: 'ح — الملكية والتراخيص والامتثال القانوني',
+                fields: [
+                    { name: 'sa_supp_ownership_structure', field_type: 'str', label_ar: 'هيكل الملكية', options: [{value:'single_owner',label_ar:'مالك واحد'},{value:'strata_title',label_ar:'ملكية قطعية (ستراتا)'},{value:'joint_venture',label_ar:'مشروع مشترك'},{value:'reit',label_ar:'صندوق استثمار عقاري'},{value:'other',label_ar:'أخرى'}] },
+                    { name: 'sa_supp_title_deed_available', field_type: 'bool', label_ar: 'صك الملكية متاح' },
+                    { name: 'sa_supp_strata_registered', field_type: 'bool', label_ar: 'مسجَّل نظام الطوابق (ستراتا)' },
+                    { name: 'sa_supp_hoa_formed', field_type: 'bool', label_ar: 'جمعية الملاك مُشكَّلة' },
+                    { name: 'sa_supp_tourism_license_status', field_type: 'str', label_ar: 'وضع رخصة السياحة', options: [{value:'valid',label_ar:'سارية'},{value:'expired',label_ar:'منتهية'},{value:'pending',label_ar:'قيد المعالجة'},{value:'not_required',label_ar:'غير مطلوبة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_municipality_permit_status', field_type: 'str', label_ar: 'وضع تصريح البلدية', options: [{value:'valid',label_ar:'ساري'},{value:'expired',label_ar:'منتهي'},{value:'pending',label_ar:'قيد المعالجة'},{value:'not_required',label_ar:'غير مطلوب'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_fire_safety_cert_status', field_type: 'str', label_ar: 'وضع شهادة السلامة من الحريق', options: [{value:'valid',label_ar:'سارية'},{value:'expired',label_ar:'منتهية'},{value:'pending',label_ar:'قيد المعالجة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_health_permit_status', field_type: 'str', label_ar: 'وضع التصريح الصحي', options: [{value:'valid',label_ar:'ساري'},{value:'expired',label_ar:'منتهي'},{value:'pending',label_ar:'قيد المعالجة'},{value:'not_required',label_ar:'غير مطلوب'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_civil_defense_approval_status', field_type: 'str', label_ar: 'وضع اعتماد الدفاع المدني', options: [{value:'approved',label_ar:'معتمد'},{value:'pending',label_ar:'قيد الاعتماد'},{value:'not_approved',label_ar:'غير معتمد'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_zoning_compliance_status', field_type: 'str', label_ar: 'وضع الامتثال للتقسيم العمراني', options: [{value:'compliant',label_ar:'ممتثل'},{value:'non_compliant',label_ar:'غير ممتثل'},{value:'conditional',label_ar:'مشروط'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_ada_compliance_status', field_type: 'str', label_ar: 'وضع الامتثال لمتطلبات ذوي الاحتياجات الخاصة', options: [{value:'compliant',label_ar:'ممتثل'},{value:'partial',label_ar:'جزئي'},{value:'non_compliant',label_ar:'غير ممتثل'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_lease_or_usufruct_registered', field_type: 'bool', label_ar: 'عقد الإيجار / حق الانتفاع مسجَّل' },
+                    { name: 'sa_supp_mortgage_encumbrance', field_type: 'bool', label_ar: 'رهن عقاري قائم' },
+                    { name: 'sa_supp_legal_dispute_status', field_type: 'bool', label_ar: 'نزاع قانوني قائم' },
+                    { name: 'sa_supp_foreclosure_risk', field_type: 'str', label_ar: 'مخاطر التنفيذ القضائي', options: [{value:'none',label_ar:'لا يوجد'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_regulatory_compliance_notes', field_type: 'textarea', label_ar: 'ملاحظات الامتثال التنظيمي' }
+                ]
+            },
+            {
+                section: 'I',
+                titleAr: 'ط — الحالة الفنية والمتطلبات الرأسمالية',
+                fields: [
+                    { name: 'sa_supp_overall_condition', field_type: 'str', label_ar: 'الحالة العامة', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_structural_condition', field_type: 'str', label_ar: 'حالة الهيكل الإنشائي', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_mep_condition', field_type: 'str', label_ar: 'حالة الأنظمة الميكانيكية والكهربائية والسباكة', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_facade_condition', field_type: 'str', label_ar: 'حالة الواجهات', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_interior_finish_condition', field_type: 'str', label_ar: 'حالة التشطيبات الداخلية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_ffe_condition', field_type: 'str', label_ar: 'حالة الأثاث والتجهيزات والمعدات FF&E', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_elevator_condition', field_type: 'str', label_ar: 'حالة المصاعد', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'not_applicable',label_ar:'غير منطبق'}] },
+                    { name: 'sa_supp_pool_and_leisure_condition', field_type: 'str', label_ar: 'حالة المسبح ومرافق الترفيه', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'not_applicable',label_ar:'غير منطبق'}] },
+                    { name: 'sa_supp_roof_condition', field_type: 'str', label_ar: 'حالة السطح', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'سيئة'},{value:'unknown',label_ar:'غير معروفة'}] },
+                    { name: 'sa_supp_last_renovation_year', field_type: 'int', label_ar: 'سنة آخر تجديد' },
+                    { name: 'sa_supp_renovation_required', field_type: 'bool', label_ar: 'التجديد مطلوب' },
+                    { name: 'sa_supp_capex_required_sar', field_type: 'float', label_ar: 'النفقات الرأسمالية المطلوبة (ريال)' },
+                    { name: 'sa_supp_deferred_maintenance_sar', field_type: 'float', label_ar: 'الصيانة المؤجلة (ريال)' },
+                    { name: 'sa_supp_ffe_reserve_fund_sar', field_type: 'float', label_ar: 'صندوق احتياطي FF&E (ريال)' },
+                    { name: 'sa_supp_ffe_replacement_cycle_years', field_type: 'int', label_ar: 'دورة استبدال FF&E (سنوات)' },
+                    { name: 'sa_supp_pip_required', field_type: 'bool', label_ar: 'خطة تحسين العقار PIP مطلوبة' },
+                    { name: 'sa_supp_pip_estimated_cost_sar', field_type: 'float', label_ar: 'التكلفة التقديرية لـ PIP (ريال)' },
+                    { name: 'sa_supp_condition_notes', field_type: 'textarea', label_ar: 'ملاحظات الحالة الفنية' }
+                ]
+            },
+            {
+                section: 'J',
+                titleAr: 'ي — السوق والتنافسية والتسويق',
+                fields: [
+                    { name: 'sa_supp_competitive_set_count', field_type: 'int', label_ar: 'عدد المنافسين المباشرين' },
+                    { name: 'sa_supp_market_occupancy_pct', field_type: 'float', label_ar: 'متوسط إشغال السوق (%)' },
+                    { name: 'sa_supp_market_adr_sar', field_type: 'float', label_ar: 'متوسط المعدل اليومي السوقي ADR (ريال)' },
+                    { name: 'sa_supp_market_monthly_rate_sar', field_type: 'float', label_ar: 'متوسط الإيجار الشهري السوقي (ريال)' },
+                    { name: 'sa_supp_market_revpar_sar', field_type: 'float', label_ar: 'RevPAR السوقي (ريال)' },
+                    { name: 'sa_supp_competitive_positioning', field_type: 'str', label_ar: 'الموقع التنافسي', options: [{value:'market_leader',label_ar:'رائد السوق'},{value:'above_average',label_ar:'أعلى من المتوسط'},{value:'average',label_ar:'متوسط'},{value:'below_average',label_ar:'دون المتوسط'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_primary_demand_driver', field_type: 'str', label_ar: 'محرّك الطلب الرئيسي', options: [{value:'business_travel',label_ar:'سفر الأعمال'},{value:'tourism',label_ar:'السياحة'},{value:'religious',label_ar:'السياحة الدينية'},{value:'medical',label_ar:'السياحة الطبية'},{value:'education',label_ar:'التعليم'},{value:'events',label_ar:'الفعاليات والمؤتمرات'},{value:'mixed',label_ar:'مختلط'}] },
+                    { name: 'sa_supp_new_supply_risk', field_type: 'str', label_ar: 'مخاطر العرض الجديد', options: [{value:'none',label_ar:'لا يوجد'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_str_regulation_risk', field_type: 'str', label_ar: 'مخاطر تنظيمات الإيجار قصير المدى', options: [{value:'none',label_ar:'لا يوجد'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_marketability_rating', field_type: 'str', label_ar: 'تقييم قابلية التسويق', options: [{value:'excellent',label_ar:'ممتاز'},{value:'good',label_ar:'جيد'},{value:'average',label_ar:'متوسط'},{value:'below_average',label_ar:'دون المتوسط'},{value:'poor',label_ar:'ضعيف'}] },
+                    { name: 'sa_supp_estimated_marketing_period_months', field_type: 'int', label_ar: 'الفترة التسويقية المقدّرة (شهر)' },
+                    { name: 'sa_supp_market_liquidity', field_type: 'str', label_ar: 'سيولة السوق', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'illiquid',label_ar:'غير سائل'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_buyer_pool_depth', field_type: 'str', label_ar: 'عمق مجموعة المشترين', options: [{value:'deep',label_ar:'واسعة'},{value:'moderate',label_ar:'متوسطة'},{value:'shallow',label_ar:'ضيقة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_market_notes', field_type: 'textarea', label_ar: 'ملاحظات السوق' }
+                ]
+            },
+            {
+                section: 'K',
+                titleAr: 'ك — الأغراض التقييمية ومنهجية القيمة',
+                fields: [
+                    { name: 'sa_supp_purpose_fair_market_value_methodology', field_type: 'str', label_ar: 'قيمة السوق العادلة — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_fair_market_value_adjustment_pct', field_type: 'float', label_ar: 'قيمة السوق العادلة — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_fair_market_value_rationale', field_type: 'textarea', label_ar: 'قيمة السوق العادلة — المبررات' },
+                    { name: 'sa_supp_purpose_mortgage_financing_methodology', field_type: 'str', label_ar: 'التمويل العقاري — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_mortgage_financing_adjustment_pct', field_type: 'float', label_ar: 'التمويل العقاري — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_mortgage_financing_rationale', field_type: 'textarea', label_ar: 'التمويل العقاري — المبررات' },
+                    { name: 'sa_supp_purpose_insurance_replacement_methodology', field_type: 'str', label_ar: 'تأمين الإحلال — المنهجية', options: [{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'income_approach',label_ar:'نهج الدخل'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_insurance_replacement_adjustment_pct', field_type: 'float', label_ar: 'تأمين الإحلال — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_insurance_replacement_rationale', field_type: 'textarea', label_ar: 'تأمين الإحلال — المبررات' },
+                    { name: 'sa_supp_purpose_rental_valuation_methodology', field_type: 'str', label_ar: 'تقييم الإيجار — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'gross_multiplier',label_ar:'مضاعف الإيراد الإجمالي'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_rental_valuation_adjustment_pct', field_type: 'float', label_ar: 'تقييم الإيجار — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_rental_valuation_rationale', field_type: 'textarea', label_ar: 'تقييم الإيجار — المبررات' },
+                    { name: 'sa_supp_purpose_investment_analysis_methodology', field_type: 'str', label_ar: 'تحليل الاستثمار — المنهجية', options: [{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_investment_analysis_adjustment_pct', field_type: 'float', label_ar: 'تحليل الاستثمار — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_investment_analysis_rationale', field_type: 'textarea', label_ar: 'تحليل الاستثمار — المبررات' },
+                    { name: 'sa_supp_purpose_going_concern_methodology', field_type: 'str', label_ar: 'المنشأة كمشروع مستمر — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}] },
+                    { name: 'sa_supp_purpose_going_concern_adjustment_pct', field_type: 'float', label_ar: 'المنشأة كمشروع مستمر — نسبة التعديل (%)' },
+                    { name: 'sa_supp_purpose_going_concern_rationale', field_type: 'textarea', label_ar: 'المنشأة كمشروع مستمر — المبررات' },
+                    { name: 'sa_supp_purpose_rental_pool_review_methodology', field_type: 'str', label_ar: 'مراجعة تجمع الإيجار — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}], help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_rental_pool_review_adjustment_pct', field_type: 'float', label_ar: 'مراجعة تجمع الإيجار — نسبة التعديل (%)', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_rental_pool_review_rationale', field_type: 'textarea', label_ar: 'مراجعة تجمع الإيجار — المبررات', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_operator_contract_review_methodology', field_type: 'str', label_ar: 'مراجعة عقد التشغيل — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}], help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_operator_contract_review_adjustment_pct', field_type: 'float', label_ar: 'مراجعة عقد التشغيل — نسبة التعديل (%)', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_operator_contract_review_rationale', field_type: 'textarea', label_ar: 'مراجعة عقد التشغيل — المبررات', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_acquisition_investment_methodology', field_type: 'str', label_ar: 'الاستحواذ والاستثمار — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'mixed',label_ar:'منهج مختلط'}], help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_acquisition_investment_adjustment_pct', field_type: 'float', label_ar: 'الاستحواذ والاستثمار — نسبة التعديل (%)', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_acquisition_investment_rationale', field_type: 'textarea', label_ar: 'الاستحواذ والاستثمار — المبررات', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_litigation_dispute_methodology', field_type: 'str', label_ar: 'النزاعات القضائية — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'sales_comparison',label_ar:'مقارنة المبيعات'},{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'mixed',label_ar:'منهج مختلط'}], help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_litigation_dispute_adjustment_pct', field_type: 'float', label_ar: 'النزاعات القضائية — نسبة التعديل (%)', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_litigation_dispute_rationale', field_type: 'textarea', label_ar: 'النزاعات القضائية — المبررات', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_impairment_testing_methodology', field_type: 'str', label_ar: 'اختبار الانخفاض في القيمة — المنهجية', options: [{value:'income_approach',label_ar:'نهج الدخل'},{value:'dcf',label_ar:'التدفق النقدي المخصوم'},{value:'cost_approach',label_ar:'نهج التكلفة'},{value:'mixed',label_ar:'منهج مختلط'}], help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_impairment_testing_adjustment_pct', field_type: 'float', label_ar: 'اختبار الانخفاض في القيمة — نسبة التعديل (%)', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' },
+                    { name: 'sa_supp_purpose_impairment_testing_rationale', field_type: 'textarea', label_ar: 'اختبار الانخفاض في القيمة — المبررات', help_ar: 'غرض استشاري محلي — لا يُرسل للتقرير' }
+                ]
+            },
+            {
+                section: 'L',
+                titleAr: 'ل — الاستدامة والبيئة',
+                fields: [
+                    { name: 'sa_supp_energy_rating', field_type: 'str', label_ar: 'تصنيف الطاقة', options: [{value:'platinum',label_ar:'بلاتيني'},{value:'gold',label_ar:'ذهبي'},{value:'silver',label_ar:'فضي'},{value:'bronze',label_ar:'برونزي'},{value:'not_rated',label_ar:'غير مصنّف'}] },
+                    { name: 'sa_supp_electricity_consumption_kwh_per_unit', field_type: 'float', label_ar: 'استهلاك الكهرباء (كيلوواط/وحدة/سنة)' },
+                    { name: 'sa_supp_water_consumption_m3_per_unit', field_type: 'float', label_ar: 'استهلاك الماء (م³/وحدة/سنة)' },
+                    { name: 'sa_supp_energy_cost_per_unit_sar', field_type: 'float', label_ar: 'تكلفة الطاقة لكل وحدة (ريال)' },
+                    { name: 'sa_supp_water_cost_per_unit_sar', field_type: 'float', label_ar: 'تكلفة المياه لكل وحدة (ريال)' },
+                    { name: 'sa_supp_hvac_efficiency_rating', field_type: 'str', label_ar: 'كفاءة نظام التكييف HVAC', options: [{value:'high_efficiency',label_ar:'كفاءة عالية'},{value:'standard',label_ar:'قياسي'},{value:'low_efficiency',label_ar:'كفاءة منخفضة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_solar_panels_installed', field_type: 'bool', label_ar: 'ألواح طاقة شمسية مُثبَّتة' },
+                    { name: 'sa_supp_greywater_recycling', field_type: 'bool', label_ar: 'نظام إعادة استخدام المياه الرمادية' },
+                    { name: 'sa_supp_wastewater_treatment', field_type: 'bool', label_ar: 'نظام معالجة مياه الصرف' },
+                    { name: 'sa_supp_waste_management_program', field_type: 'bool', label_ar: 'برنامج إدارة النفايات' },
+                    { name: 'sa_supp_green_certification', field_type: 'str', label_ar: 'شهادة البناء الأخضر', options: [{value:'leed_platinum',label_ar:'LEED بلاتيني'},{value:'leed_gold',label_ar:'LEED ذهبي'},{value:'leed_silver',label_ar:'LEED فضي'},{value:'mostadam',label_ar:'مستدام'},{value:'edge',label_ar:'EDGE'},{value:'breeam',label_ar:'BREEAM'},{value:'none',label_ar:'لا يوجد'},{value:'under_review',label_ar:'قيد المراجعة'}] },
+                    { name: 'sa_supp_sustainability_features', field_type: 'checkbox_group', label_ar: 'مميزات الاستدامة', options: [{value:'led_lighting',label_ar:'إضاءة LED'},{value:'smart_meters',label_ar:'عدادات ذكية'},{value:'ev_charging',label_ar:'شحن السيارات الكهربائية'},{value:'green_roof',label_ar:'سطح أخضر'},{value:'rainwater_harvesting',label_ar:'تجميع مياه الأمطار'},{value:'carbon_neutral',label_ar:'محايد كربونياً'}] },
+                    { name: 'sa_supp_sustainability_value_impact_pct', field_type: 'float', label_ar: 'أثر الاستدامة على القيمة (%)' },
+                    { name: 'sa_supp_sustainability_notes', field_type: 'textarea', label_ar: 'ملاحظات الاستدامة' },
+                    { name: 'sa_supp_green_cert_expiry_year', field_type: 'int', label_ar: 'سنة انتهاء الشهادة الخضراء' }
+                ]
+            },
+            {
+                section: 'M',
+                titleAr: 'م — مخاطر المناخ والتغيرات البيئية',
+                fields: [
+                    { name: 'sa_supp_flood_risk', field_type: 'str', label_ar: 'مخاطر الفيضانات', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_coastal_flood_risk', field_type: 'str', label_ar: 'مخاطر فيضانات الشاطئ', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_storm_surge_risk', field_type: 'str', label_ar: 'مخاطر الأمواج العاتية', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_heat_stress_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الإجهاد الحراري', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'extreme',label_ar:'شديدة جداً'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_wildfire_or_external_fire_exposure', field_type: 'str', label_ar: 'مخاطر الحرائق الخارجية', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_seismic_risk_level', field_type: 'str', label_ar: 'مستوى المخاطر الزلزالية', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_water_scarcity_risk', field_type: 'str', label_ar: 'مخاطر شحّ المياه', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_seasonal_demand_disruption_risk', field_type: 'str', label_ar: 'مخاطر تقلب الطلب الموسمي', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_str_regulatory_change_risk', field_type: 'str', label_ar: 'مخاطر تغيير تنظيمات الإيجار القصير', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_operator_failure_risk', field_type: 'str', label_ar: 'مخاطر إخفاق المشغّل', options: [{value:'negligible',label_ar:'لا يُذكر'},{value:'low',label_ar:'منخفضة'},{value:'medium',label_ar:'متوسطة'},{value:'high',label_ar:'مرتفعة'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_climate_resilience_features', field_type: 'checkbox_group', label_ar: 'ميزات مرونة المناخ', options: [{value:'flood_barriers',label_ar:'حواجز الفيضانات'},{value:'backup_power',label_ar:'طاقة احتياطية'},{value:'water_storage',label_ar:'خزن المياه'},{value:'heat_insulation',label_ar:'عزل حراري'},{value:'fire_suppression',label_ar:'إخماد الحرائق'},{value:'storm_shutters',label_ar:'مصاريع الإعصار'}] },
+                    { name: 'sa_supp_climate_value_impact_pct', field_type: 'float', label_ar: 'أثر مخاطر المناخ على القيمة (%)' },
+                    { name: 'sa_supp_climate_insurance_available', field_type: 'str', label_ar: 'توافر التأمين ضد مخاطر المناخ', options: [{value:'full_coverage',label_ar:'تغطية كاملة'},{value:'partial_coverage',label_ar:'تغطية جزئية'},{value:'not_available',label_ar:'غير متاح'},{value:'unknown',label_ar:'غير معروف'}] },
+                    { name: 'sa_supp_climate_notes', field_type: 'textarea', label_ar: 'ملاحظات مخاطر المناخ' }
+                ]
+            },
+            {
+                section: 'N',
+                titleAr: 'ن — البنية التحتية الرقمية والذكية',
+                fields: [
+                    { name: 'sa_supp_fiber_optic_available', field_type: 'bool', label_ar: 'توصيلات الألياف الضوئية' },
+                    { name: 'sa_supp_internet_speed_mbps', field_type: 'float', label_ar: 'سرعة الإنترنت (ميجابت/ثانية)' },
+                    { name: 'sa_supp_five_g_coverage', field_type: 'bool', label_ar: 'تغطية شبكة الجيل الخامس 5G' },
+                    { name: 'sa_supp_pms_system', field_type: 'bool', label_ar: 'نظام إدارة الممتلكات PMS' },
+                    { name: 'sa_supp_channel_manager_integrated', field_type: 'bool', label_ar: 'مدير القنوات مُدمَج' },
+                    { name: 'sa_supp_revenue_management_system', field_type: 'bool', label_ar: 'نظام إدارة الإيرادات RMS' },
+                    { name: 'sa_supp_digital_key_system', field_type: 'bool', label_ar: 'نظام المفتاح الرقمي' },
+                    { name: 'sa_supp_smart_room_technology', field_type: 'bool', label_ar: 'تقنية الغرفة الذكية' },
+                    { name: 'sa_supp_guest_app_available', field_type: 'bool', label_ar: 'تطبيق النزلاء متاح' },
+                    { name: 'sa_supp_cctv_or_smart_security_available', field_type: 'bool', label_ar: 'المراقبة الذكية / كاميرات CCTV' },
+                    { name: 'sa_supp_access_control_system_available', field_type: 'bool', label_ar: 'نظام التحكم في الدخول' },
+                    { name: 'sa_supp_ev_charging_stations', field_type: 'bool', label_ar: 'محطات شحن السيارات الكهربائية' },
+                    { name: 'sa_supp_guest_experience_quality', field_type: 'str', label_ar: 'جودة تجربة النزيل الرقمية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'average',label_ar:'متوسطة'},{value:'below_average',label_ar:'دون المتوسط'},{value:'poor',label_ar:'ضعيفة'}] },
+                    { name: 'sa_supp_tech_value_impact_pct', field_type: 'float', label_ar: 'أثر التقنية على القيمة (%)' },
+                    { name: 'sa_supp_digital_infra_notes', field_type: 'textarea', label_ar: 'ملاحظات البنية التحتية الرقمية' }
+                ]
+            },
+            {
+                section: 'O',
+                titleAr: 'س — المستندات والوثائق التكميلية',
+                fields: [
+                    { name: 'sa_doc_supp_classification_cert', field_type: 'str', label_ar: 'شهادة التصنيف الفندقي', group: 'document' },
+                    { name: 'sa_doc_supp_profit_distribution_statements', field_type: 'str', label_ar: 'كشوفات توزيعات الأرباح', group: 'document' },
+                    { name: 'sa_doc_supp_service_operation_contracts', field_type: 'str', label_ar: 'عقود الخدمة والتشغيل', group: 'document' },
+                    { name: 'sa_doc_supp_ownership_strata_docs', field_type: 'str', label_ar: 'وثائق الملكية / نظام الطوابق', group: 'document' },
+                    { name: 'sa_doc_supp_ffe_list', field_type: 'str', label_ar: 'قائمة الأثاث والتجهيزات FF&E', group: 'document' },
+                    { name: 'sa_doc_supp_technical_condition_reports', field_type: 'str', label_ar: 'تقارير الحالة الفنية', group: 'document' },
+                    { name: 'sa_doc_supp_insurance_docs', field_type: 'str', label_ar: 'وثائق التأمين', group: 'document' }
+                ]
+            }
+        ],
+        // ── End Phase 8ZN ────────────────────────────────────────────────────────
         // ── End Phase 8ZG ────────────────────────────────────────────────────────
     };
 
@@ -16624,8 +16930,10 @@ function _showIndexToast(msg, type) {
             ? 'متطلبات تقييم منجم / محجر — تقييم تفصيلي'
             : registryCode === 'water_well'
             ? 'متطلبات تقييم بئر مياه / آبار — تقييم تفصيلي'
+            : registryCode === 'serviced_apartments'
+            ? 'متطلبات تقييم شقق فندقية ووحدات مخدومة — تقييم تفصيلي'
             : 'متطلبات تقييم الوحدة السكنية — شقة / فيلا';
-        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well')
+        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well' || registryCode === 'serviced_apartments')
             ? 'الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.'
             : 'الحقول أعلاه من سجل المتطلبات الأساسي. الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.';
         var html = '<div id="es-req-supp-header" style="border-top:2px solid #374151;margin-top:14px;padding-top:10px;">';

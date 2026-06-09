@@ -16226,3 +16226,632 @@ def test_CS1281_serviced_apartments_supp_no_undefined_headings(page: "Page", liv
     )
     headings = supp_panel.locator("details > summary")
     assert headings.count() > 0, "8ZN: No <summary> section headings found in #es-req-supp for serviced_apartments."
+
+
+# ── Phase 8ZP helpers ─────────────────────────────────────────────────────────
+
+def _load_airport_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: load airport and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=4_000)
+
+
+# ── CS1282 ────────────────────────────────────────────────────────────────────
+
+def test_CS1282_airport_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport #es-req-supp receives >200 supp controls."""
+    _load_airport_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 200, (
+        f"8ZP: #es-req-supp must contain >200 supp controls. Got {controls.count()}."
+    )
+
+
+# ── CS1283 ────────────────────────────────────────────────────────────────────
+
+def test_CS1283_airport_supp_heading_arabic(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: supp header contains Arabic heading for airport."""
+    _load_airport_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "\u0645\u0637\u0627\u0631" in supp_text or "\u062d\u0642\u0644 \u0637\u064a\u0631\u0627\u0646" in supp_text, (
+        f"8ZP: supp heading must contain Arabic airport text. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS1284 ────────────────────────────────────────────────────────────────────
+
+def test_CS1284_airport_supp_heading_not_residential(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supp heading does not show residential fallback."""
+    _load_airport_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "\u0645\u062a\u0637\u0644\u0628\u0627\u062a \u062a\u0642\u064a\u064a\u0645 \u0627\u0644\u0648\u062d\u062f\u0629 \u0627\u0644\u0633\u0643\u0646\u064a\u0629" not in supp_text, (
+        f"8ZP: residential fallback heading must not appear for airport. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS1285 ────────────────────────────────────────────────────────────────────
+
+def test_CS1285_airport_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: supplemental panel subtext renders (extended advisory notice)."""
+    _load_airport_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert (
+        "\u0625\u062f\u062e\u0627\u0644 \u0645\u062d\u0644\u064a" in supp_text
+        or "\u062a\u0643\u0645\u064a\u0644\u064a\u0629" in supp_text
+        or "\u0644\u0627 \u064a\u064f\u0631\u0633\u0644" in supp_text
+    ), (
+        f"8ZP: subtext notice not found in airport supp panel. Got: {supp_text[:300]!r}"
+    )
+
+
+# ── CS1286 ────────────────────────────────────────────────────────────────────
+
+def test_CS1286_airport_supp_sec_A_asset_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section A airport_asset_type renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='airport_asset_type']")
+    assert el.count() > 0, "airport_asset_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1287 ────────────────────────────────────────────────────────────────────
+
+def test_CS1287_airport_supp_sec_A_asset_type_has_international_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section A airport_asset_type select has international_airport option."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='airport_asset_type']")
+    assert el.count() > 0
+    options = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "international_airport" in options, (
+        f"8ZP: international_airport not in airport_asset_type options. Got: {options}"
+    )
+
+
+# ── CS1288 ────────────────────────────────────────────────────────────────────
+
+def test_CS1288_airport_supp_sec_A_operating_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section A ap_supp_operating_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_operating_status']")
+    assert el.count() > 0, "ap_supp_operating_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1289 ────────────────────────────────────────────────────────────────────
+
+def test_CS1289_airport_supp_sec_A_sovereign_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section A ap_supp_sovereign_strategic_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_sovereign_strategic_status']")
+    assert el.count() > 0, "ap_supp_sovereign_strategic_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1290 ────────────────────────────────────────────────────────────────────
+
+def test_CS1290_airport_supp_sec_B_land_area_sqm_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section B airport_land_area_sqm renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='airport_land_area_sqm']")
+    assert el.count() > 0, "airport_land_area_sqm not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1291 ────────────────────────────────────────────────────────────────────
+
+def test_CS1291_airport_supp_sec_B_expansion_land_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section B ap_supp_expansion_land_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_expansion_land_available']")
+    assert el.count() > 0, "ap_supp_expansion_land_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1292 ────────────────────────────────────────────────────────────────────
+
+def test_CS1292_airport_supp_sec_B_dev_rights_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section B ap_supp_commercial_real_estate_dev_rights renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_commercial_real_estate_dev_rights']")
+    assert el.count() > 0, "ap_supp_commercial_real_estate_dev_rights not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1293 ────────────────────────────────────────────────────────────────────
+
+def test_CS1293_airport_supp_sec_C_runway_surface_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section C ap_supp_runway_surface_type renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_runway_surface_type']")
+    assert el.count() > 0, "ap_supp_runway_surface_type not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1294 ────────────────────────────────────────────────────────────────────
+
+def test_CS1294_airport_supp_sec_C_slot_scarcity_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section C ap_supp_slot_scarcity_level renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_slot_scarcity_level']")
+    assert el.count() > 0, "ap_supp_slot_scarcity_level not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1295 ────────────────────────────────────────────────────────────────────
+
+def test_CS1295_airport_supp_sec_C_taxiways_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section C ap_supp_taxiways_count renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_taxiways_count']")
+    assert el.count() > 0, "ap_supp_taxiways_count not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1296 ────────────────────────────────────────────────────────────────────
+
+def test_CS1296_airport_supp_sec_D_terminals_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section D ap_supp_terminals_count renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_terminals_count']")
+    assert el.count() > 0, "ap_supp_terminals_count not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1297 ────────────────────────────────────────────────────────────────────
+
+def test_CS1297_airport_supp_sec_D_terminal_utilization_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section D ap_supp_terminal_utilization_rate_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_terminal_utilization_rate_pct']")
+    assert el.count() > 0, "ap_supp_terminal_utilization_rate_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1298 ────────────────────────────────────────────────────────────────────
+
+def test_CS1298_airport_supp_sec_E_aircraft_movements_annual_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section E ap_supp_aircraft_movements_annual renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_aircraft_movements_annual']")
+    assert el.count() > 0, "ap_supp_aircraft_movements_annual not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1299 ────────────────────────────────────────────────────────────────────
+
+def test_CS1299_airport_supp_sec_E_route_network_strength_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section E ap_supp_route_network_strength renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_route_network_strength']")
+    assert el.count() > 0, "ap_supp_route_network_strength not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1300 ────────────────────────────────────────────────────────────────────
+
+def test_CS1300_airport_supp_sec_F_cargo_terminal_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section F ap_supp_cargo_terminal_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_cargo_terminal_available']")
+    assert el.count() > 0, "ap_supp_cargo_terminal_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1301 ────────────────────────────────────────────────────────────────────
+
+def test_CS1301_airport_supp_sec_F_fuel_farm_ownership_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section F ap_supp_fuel_farm_ownership_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_fuel_farm_ownership_status']")
+    assert el.count() > 0, "ap_supp_fuel_farm_ownership_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1302 ────────────────────────────────────────────────────────────────────
+
+def test_CS1302_airport_supp_sec_F_mro_facility_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section F ap_supp_mro_facility_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_mro_facility_available']")
+    assert el.count() > 0, "ap_supp_mro_facility_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1303 ────────────────────────────────────────────────────────────────────
+
+def test_CS1303_airport_supp_sec_G_navigation_aids_renders_as_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section G ap_supp_navigation_aids renders as checkbox group chip inputs."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_navigation_aids']")
+    assert el.count() > 0, "ap_supp_navigation_aids chip not found"
+
+
+# ── CS1304 ────────────────────────────────────────────────────────────────────
+
+def test_CS1304_airport_supp_sec_G_rescue_firefighting_category_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section G ap_supp_rescue_firefighting_category renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_rescue_firefighting_category']")
+    assert el.count() > 0, "ap_supp_rescue_firefighting_category not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1305 ────────────────────────────────────────────────────────────────────
+
+def test_CS1305_airport_supp_sec_G_atc_tower_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section G ap_supp_atc_tower_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_atc_tower_available']")
+    assert el.count() > 0, "ap_supp_atc_tower_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1306 ────────────────────────────────────────────────────────────────────
+
+def test_CS1306_airport_supp_sec_H_civil_aviation_approval_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section H ap_supp_civil_aviation_authority_approval renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_civil_aviation_authority_approval']")
+    assert el.count() > 0, "ap_supp_civil_aviation_authority_approval not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1307 ────────────────────────────────────────────────────────────────────
+
+def test_CS1307_airport_supp_sec_H_route_slot_rights_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section H ap_supp_route_slot_rights_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_route_slot_rights_status']")
+    assert el.count() > 0, "ap_supp_route_slot_rights_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1308 ────────────────────────────────────────────────────────────────────
+
+def test_CS1308_airport_supp_sec_H_sovereign_transfer_approval_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section H ap_supp_sovereign_transfer_approval_required (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_sovereign_transfer_approval_required']")
+    assert el.count() > 0, "ap_supp_sovereign_transfer_approval_required not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1309 ────────────────────────────────────────────────────────────────────
+
+def test_CS1309_airport_supp_sec_I_total_revenue_annual_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section I ap_supp_total_revenue_annual renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_total_revenue_annual']")
+    assert el.count() > 0, "ap_supp_total_revenue_annual not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1310 ────────────────────────────────────────────────────────────────────
+
+def test_CS1310_airport_supp_sec_I_passenger_tariff_regulation_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section I ap_supp_passenger_tariff_regulation_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_passenger_tariff_regulation_status']")
+    assert el.count() > 0, "ap_supp_passenger_tariff_regulation_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1311 ────────────────────────────────────────────────────────────────────
+
+def test_CS1311_airport_supp_sec_J_capex_required_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section J ap_supp_capex_required renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_capex_required']")
+    assert el.count() > 0, "ap_supp_capex_required not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1312 ────────────────────────────────────────────────────────────────────
+
+def test_CS1312_airport_supp_sec_J_deferred_maintenance_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section J ap_supp_deferred_maintenance_cost renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_deferred_maintenance_cost']")
+    assert el.count() > 0, "ap_supp_deferred_maintenance_cost not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1313 ────────────────────────────────────────────────────────────────────
+
+def test_CS1313_airport_supp_sec_K_wale_months_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section K ap_supp_wale_months renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_wale_months']")
+    assert el.count() > 0, "ap_supp_wale_months not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1314 ────────────────────────────────────────────────────────────────────
+
+def test_CS1314_airport_supp_sec_K_contract_dispute_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section K ap_supp_contract_dispute_status renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_contract_dispute_status']")
+    assert el.count() > 0, "ap_supp_contract_dispute_status not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1315 ────────────────────────────────────────────────────────────────────
+
+def test_CS1315_airport_supp_sec_L_catchment_market_strength_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section L ap_supp_catchment_market_strength renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_catchment_market_strength']")
+    assert el.count() > 0, "ap_supp_catchment_market_strength not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1316 ────────────────────────────────────────────────────────────────────
+
+def test_CS1316_airport_supp_sec_L_closure_relocation_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section L ap_supp_airport_closure_relocation_risk renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_airport_closure_relocation_risk']")
+    assert el.count() > 0, "ap_supp_airport_closure_relocation_risk not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1317 ────────────────────────────────────────────────────────────────────
+
+def test_CS1317_airport_supp_sec_M_mortgage_methodology_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_mortgage_methodology renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_mortgage_methodology']")
+    assert el.count() > 0, "ap_supp_mortgage_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1318 ────────────────────────────────────────────────────────────────────
+
+def test_CS1318_airport_supp_sec_M_mortgage_adjustment_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_mortgage_adjustment_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_mortgage_adjustment_pct']")
+    assert el.count() > 0, "ap_supp_mortgage_adjustment_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1319 ────────────────────────────────────────────────────────────────────
+
+def test_CS1319_airport_supp_sec_M_mortgage_rationale_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_mortgage_adjustment_rationale renders as <textarea>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_mortgage_adjustment_rationale']")
+    assert el.count() > 0, "ap_supp_mortgage_adjustment_rationale not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1320 ────────────────────────────────────────────────────────────────────
+
+def test_CS1320_airport_supp_sec_M_local_concession_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_concession_review_methodology (local-only) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_concession_review_methodology']")
+    assert el.count() > 0, "ap_supp_concession_review_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1321 ────────────────────────────────────────────────────────────────────
+
+def test_CS1321_airport_supp_sec_M_local_concession_review_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_concession_review_adjustment_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_concession_review_adjustment_pct']")
+    assert el.count() > 0, "ap_supp_concession_review_adjustment_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1322 ────────────────────────────────────────────────────────────────────
+
+def test_CS1322_airport_supp_sec_M_impairment_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section M ap_supp_impairment_methodology (local-only) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_impairment_methodology']")
+    assert el.count() > 0, "ap_supp_impairment_methodology not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1323 ────────────────────────────────────────────────────────────────────
+
+def test_CS1323_airport_supp_sec_N_sustainability_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section N ap_supp_sustainability_features renders as checkbox group."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_sustainability_features']")
+    assert el.count() > 0, "ap_supp_sustainability_features chip not found"
+
+
+# ── CS1324 ────────────────────────────────────────────────────────────────────
+
+def test_CS1324_airport_supp_sec_N_sustainability_value_impact_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section N ap_supp_sustainability_value_impact_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_sustainability_value_impact_pct']")
+    assert el.count() > 0, "ap_supp_sustainability_value_impact_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1325 ────────────────────────────────────────────────────────────────────
+
+def test_CS1325_airport_supp_sec_N_solar_farm_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section N ap_supp_solar_farm_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_solar_farm_available']")
+    assert el.count() > 0, "ap_supp_solar_farm_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1326 ────────────────────────────────────────────────────────────────────
+
+def test_CS1326_airport_supp_sec_O_flood_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section O ap_supp_flood_risk_level renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_flood_risk_level']")
+    assert el.count() > 0, "ap_supp_flood_risk_level not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1327 ────────────────────────────────────────────────────────────────────
+
+def test_CS1327_airport_supp_sec_O_climate_resilience_features_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section O ap_supp_climate_resilience_features renders as checkbox group."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_climate_resilience_features']")
+    assert el.count() > 0, "ap_supp_climate_resilience_features chip not found"
+
+
+# ── CS1328 ────────────────────────────────────────────────────────────────────
+
+def test_CS1328_airport_supp_sec_O_climate_risk_value_impact_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section O ap_supp_climate_risk_value_impact_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_climate_risk_value_impact_pct']")
+    assert el.count() > 0, "ap_supp_climate_risk_value_impact_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1329 ────────────────────────────────────────────────────────────────────
+
+def test_CS1329_airport_supp_sec_P_fiber_optic_available_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section P ap_supp_fiber_optic_available (bool) renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_fiber_optic_available']")
+    assert el.count() > 0, "ap_supp_fiber_optic_available not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1330 ────────────────────────────────────────────────────────────────────
+
+def test_CS1330_airport_supp_sec_P_five_g_coverage_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section P ap_supp_five_g_coverage_quality renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_five_g_coverage_quality']")
+    assert el.count() > 0, "ap_supp_five_g_coverage_quality not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1331 ────────────────────────────────────────────────────────────────────
+
+def test_CS1331_airport_supp_sec_P_digital_value_impact_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section P ap_supp_digital_airport_value_impact_pct renders as number <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_digital_airport_value_impact_pct']")
+    assert el.count() > 0, "ap_supp_digital_airport_value_impact_pct not found"
+    assert el.first.evaluate("e => e.getAttribute('type')") == "number"
+
+
+# ── CS1332 ────────────────────────────────────────────────────────────────────
+
+def test_CS1332_airport_supp_doc_aerodrome_certificate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section Q ap_doc_supp_aerodrome_certificate renders as document checkbox input."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_doc_supp_aerodrome_certificate']")
+    assert el.count() > 0, "ap_doc_supp_aerodrome_certificate not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1333 ────────────────────────────────────────────────────────────────────
+
+def test_CS1333_airport_supp_doc_capex_plans_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section Q ap_doc_supp_capex_plans renders as document checkbox input."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_doc_supp_capex_plans']")
+    assert el.count() > 0, "ap_doc_supp_capex_plans not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1334 ────────────────────────────────────────────────────────────────────
+
+def test_CS1334_airport_supp_fields_absent_from_floating_hotel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supp fields do not appear under floating_hotel."""
+    _load_floating_hotel_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='airport_asset_type']").count() == 0
+    assert page.locator("[data-es-supp-field='ap_supp_operating_status']").count() == 0
+    assert page.locator("[data-es-supp-field='ap_supp_runway_surface_type']").count() == 0
+
+
+# ── CS1335 ────────────────────────────────────────────────────────────────────
+
+def test_CS1335_airport_supp_heading_absent_from_floating_hotel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supp heading does not appear under floating_hotel."""
+    _load_floating_hotel_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "\u0645\u0637\u0627\u0631 / \u062d\u0642\u0644 \u0637\u064a\u0631\u0627\u0646" not in supp_text, (
+        f"8ZP: airport heading must not appear under floating_hotel. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS1336 ────────────────────────────────────────────────────────────────────
+
+def test_CS1336_airport_supp_heading_absent_from_serviced_apartments(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supp heading does not appear under serviced_apartments."""
+    _load_serviced_apartments_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "\u0645\u0637\u0627\u0631 / \u062d\u0642\u0644 \u0637\u064a\u0631\u0627\u0646" not in supp_text, (
+        f"8ZP: airport heading must not appear under serviced_apartments. Got: {supp_text[:200]!r}"
+    )
+
+
+# ── CS1337 ────────────────────────────────────────────────────────────────────
+
+def test_CS1337_airport_supp_no_undefined_headings(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supplemental section headings must not render as 'undefined'."""
+    _load_airport_supp(page, live_server)
+    supp_panel = page.locator("#es-req-supp")
+    supp_text = supp_panel.inner_text()
+    assert "undefined" not in supp_text.lower(), (
+        f"8ZP: 'undefined' found in #es-req-supp for airport. First occurrence: "
+        f"{supp_text[max(0, supp_text.lower().find('undefined')-40):supp_text.lower().find('undefined')+60]!r}"
+    )
+    headings = supp_panel.locator("details > summary")
+    assert headings.count() > 0, "8ZP: No <summary> section headings found in #es-req-supp for airport."
+
+
+# ── CS1338 ────────────────────────────────────────────────────────────────────
+
+def test_CS1338_airport_supp_sec_B_airside_condition_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section C ap_supp_airside_condition_notes renders as <textarea>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_airside_condition_notes']")
+    assert el.count() > 0, "ap_supp_airside_condition_notes not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+# ── CS1339 ────────────────────────────────────────────────────────────────────
+
+def test_CS1339_airport_supp_sec_A_iata_code_renders_as_text_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section A airport_code_iata renders as text <input>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='airport_code_iata']")
+    assert el.count() > 0, "airport_code_iata not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "input"
+
+
+# ── CS1340 ────────────────────────────────────────────────────────────────────
+
+def test_CS1340_airport_supp_sec_C_runway_pavement_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: Section C ap_supp_runway_pavement_condition renders as <select>."""
+    _load_airport_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ap_supp_runway_pavement_condition']")
+    assert el.count() > 0, "ap_supp_runway_pavement_condition not found"
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS1341 ────────────────────────────────────────────────────────────────────
+
+def test_CS1341_airport_supp_total_supp_field_count_exceeds_200(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport supp panel contains >200 data-es-supp-field controls (sanity guard)."""
+    _load_airport_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    controls = supp.locator("[data-es-supp-field]")
+    assert controls.count() > 200, (
+        f"8ZP: #es-req-supp must contain >200 supp controls for airport. Got {controls.count()}."
+    )

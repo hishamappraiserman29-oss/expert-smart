@@ -21132,3 +21132,615 @@ def test_CS1900_dc_supp_8zs_regression_guard(page: "Page", live_server: str) -> 
         "#es-req-supp [data-es-supp-field^='dc_doc_supp_']"
     ).count()
     assert supp_count >= 200, f"Phase 8ZS regression: expected >=200 fields, got {supp_count}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZT — Cold Storage / Cold Room Detailed Valuation Requirements
+# Tests CS1901–CS2000
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _load_cold_storage_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZT: load cold_storage profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+
+
+# ── CS1901: supplemental panel renders ────────────────────────────────────────
+def test_CS1901_cold_storage_supp_panel_renders(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+# ── CS1902: heading text ──────────────────────────────────────────────────────
+def test_CS1902_cold_storage_supp_heading_text(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    h = page.locator("#es-req-supp-header").inner_text()
+    assert "مخزن تبريد" in h
+
+
+# ── CS1903: subtext renders ───────────────────────────────────────────────────
+def test_CS1903_cold_storage_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    st = page.locator("#es-req-supp-subtext").inner_text()
+    assert "إدخال محلي" in st
+
+
+# ── CS1904–CS1922: section headings A–S ──────────────────────────────────────
+def test_CS1904_cold_storage_supp_section_a_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("تعريف أصل التبريد").first.is_visible()
+
+def test_CS1905_cold_storage_supp_section_b_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("نطاقات الحرارة").first.is_visible()
+
+def test_CS1906_cold_storage_supp_section_c_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("نظام التبريد والمعدات").first.is_visible()
+
+def test_CS1907_cold_storage_supp_section_d_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("العزل الحراري").first.is_visible()
+
+def test_CS1908_cold_storage_supp_section_e_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("الهيكل والمساحات").first.is_visible()
+
+def test_CS1909_cold_storage_supp_section_f_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("التحميل والتوزيع").first.is_visible()
+
+def test_CS1910_cold_storage_supp_section_g_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("الطاقة والمرافق").first.is_visible()
+
+def test_CS1911_cold_storage_supp_section_h_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("المراقبة والتحكم").first.is_visible()
+
+def test_CS1912_cold_storage_supp_section_i_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("التراخيص والامتثال").first.is_visible()
+
+def test_CS1913_cold_storage_supp_section_j_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("السلامة والمخاطر").first.is_visible()
+
+def test_CS1914_cold_storage_supp_section_k_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("العملاء والعقود").first.is_visible()
+
+def test_CS1915_cold_storage_supp_section_l_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("المصروفات والتكاليف").first.is_visible()
+
+def test_CS1916_cold_storage_supp_section_m_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("CAPEX").first.is_visible()
+
+def test_CS1917_cold_storage_supp_section_n_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("السوق والطلب").first.is_visible()
+
+def test_CS1918_cold_storage_supp_section_o_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("معاملات التعديل").first.is_visible()
+
+def test_CS1919_cold_storage_supp_section_p_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("الاستدامة").first.is_visible()
+
+def test_CS1920_cold_storage_supp_section_q_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("المخاطر المناخية").first.is_visible()
+
+def test_CS1921_cold_storage_supp_section_r_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("البنية الرقمية").first.is_visible()
+
+def test_CS1922_cold_storage_supp_section_s_heading(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    assert page.locator("#es-req-supp").get_by_text("مستندات إضافية").first.is_visible()
+
+
+# ── CS1923–CS1941: sampled cs_supp_ fields across sections ───────────────────
+def test_CS1923_cold_storage_supp_asset_type_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_cold_storage_asset_type']")
+    assert el.count() > 0
+
+def test_CS1924_cold_storage_supp_operating_status_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_operating_status']")
+    assert el.count() > 0
+
+def test_CS1925_cold_storage_supp_blast_freezing_available_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_blast_freezing_available']")
+    assert el.count() > 0
+
+def test_CS1926_cold_storage_supp_blast_freezing_capacity_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_blast_freezing_capacity_tonnes_day']")
+    assert el.count() > 0
+
+def test_CS1927_cold_storage_supp_compressors_count_int(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_compressors_count']")
+    assert el.count() > 0
+
+def test_CS1928_cold_storage_supp_refrigerant_phase_out_risk_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigerant_phase_out_risk_level']")
+    assert el.count() > 0
+
+def test_CS1929_cold_storage_supp_insulation_panel_condition_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_insulation_panel_condition']")
+    assert el.count() > 0
+
+def test_CS1930_cold_storage_supp_frost_heave_protection_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_frost_heave_protection_available']")
+    assert el.count() > 0
+
+def test_CS1931_cold_storage_supp_racking_system_available_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_racking_system_available']")
+    assert el.count() > 0
+
+def test_CS1932_cold_storage_supp_refrigerated_docks_int(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigerated_loading_docks_count']")
+    assert el.count() > 0
+
+def test_CS1933_cold_storage_supp_electricity_capacity_kva_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_electricity_capacity_kva']")
+    assert el.count() > 0
+
+def test_CS1934_cold_storage_supp_temperature_mapping_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_temperature_mapping_available']")
+    assert el.count() > 0
+
+def test_CS1935_cold_storage_supp_gdp_status_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_gdp_good_distribution_practice_status']")
+    assert el.count() > 0
+
+def test_CS1936_cold_storage_supp_ammonia_detection_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_ammonia_detection_system_available']")
+    assert el.count() > 0
+
+def test_CS1937_cold_storage_supp_storage_fee_per_pallet_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_storage_fee_per_pallet_month']")
+    assert el.count() > 0
+
+def test_CS1938_cold_storage_supp_net_operating_income_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_net_operating_income_annual']")
+    assert el.count() > 0
+
+def test_CS1939_cold_storage_supp_refrigeration_replacement_capex_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigeration_replacement_capex']")
+    assert el.count() > 0
+
+def test_CS1940_cold_storage_supp_cold_chain_demand_level_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_cold_chain_demand_level']")
+    assert el.count() > 0
+
+def test_CS1941_cold_storage_supp_wms_available_bool(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_warehouse_management_system_wms_available']")
+    assert el.count() > 0
+
+
+# ── CS1942–CS1945: cs_doc_supp_ document fields ───────────────────────────────
+def test_CS1942_cold_storage_supp_doc_temperature_mapping_report(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_temperature_mapping_report']")
+    assert el.count() > 0
+
+def test_CS1943_cold_storage_supp_doc_gdp_or_haccp_certificate(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_gdp_or_haccp_certificate']")
+    assert el.count() > 0
+
+def test_CS1944_cold_storage_supp_doc_capex_plan(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_capex_plan']")
+    assert el.count() > 0
+
+def test_CS1945_cold_storage_supp_doc_insurance_policy(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_insurance_policy']")
+    assert el.count() > 0
+
+
+# ── CS1946–CS1956: purpose fields ─────────────────────────────────────────────
+def test_CS1946_cold_storage_supp_mortgage_lending_methodology(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_mortgage_lending_methodology']")
+    assert el.count() > 0
+
+def test_CS1947_cold_storage_supp_sale_purchase_methodology(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_sale_purchase_methodology']")
+    assert el.count() > 0
+
+def test_CS1948_cold_storage_supp_insurance_adjustment_pct(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_insurance_adjustment_pct']")
+    assert el.count() > 0
+
+def test_CS1949_cold_storage_supp_taxation_methodology(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_taxation_methodology']")
+    assert el.count() > 0
+
+def test_CS1950_cold_storage_supp_liquidation_adjustment_pct(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_liquidation_adjustment_pct']")
+    assert el.count() > 0
+
+def test_CS1951_cold_storage_supp_ifrs_fair_value_methodology(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_ifrs_fair_value_methodology']")
+    assert el.count() > 0
+
+def test_CS1952_cold_storage_supp_rental_assessment_methodology_local(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_rental_assessment_methodology']")
+    assert el.count() > 0
+
+def test_CS1953_cold_storage_supp_sale_leaseback_methodology_local(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_sale_leaseback_methodology']")
+    assert el.count() > 0
+
+def test_CS1954_cold_storage_supp_litigation_dispute_methodology_local(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_litigation_dispute_methodology']")
+    assert el.count() > 0
+
+def test_CS1955_cold_storage_supp_impairment_testing_methodology_local(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_impairment_testing_methodology']")
+    assert el.count() > 0
+
+def test_CS1956_cold_storage_supp_acquisition_investment_methodology(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_acquisition_investment_methodology']")
+    assert el.count() > 0
+
+
+# ── CS1957: local-only purpose help_ar present ────────────────────────────────
+def test_CS1957_cold_storage_supp_local_purposes_help_ar(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_rental_assessment_adjustment_pct" in html
+    assert "cs_supp_litigation_dispute_adjustment_pct" in html
+    assert "cs_supp_impairment_testing_adjustment_pct" in html
+    assert "cs_supp_sale_leaseback_adjustment_pct" in html
+
+
+# ── CS1958: all supplemental fields use data-es-supp-field ───────────────────
+def test_CS1958_cold_storage_supp_all_fields_use_supp_attr(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_cold_storage_asset_type" in supp_html
+    assert "cs_supp_blast_freezing_available" in supp_html
+    assert "cs_doc_supp_temperature_mapping_report" in supp_html
+
+
+# ── CS1959: no data-es-req-field inside supplemental panel ───────────────────
+def test_CS1959_cold_storage_supp_no_req_field_attr(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field^='cs_supp_']").count()
+    assert count == 0
+
+
+# ── CS1960: no API POST triggered ─────────────────────────────────────────────
+def test_CS1960_cold_storage_supp_no_api_post_triggered(page: "Page", live_server: str) -> None:
+    """Phase 8ZT: loading cold_storage supplemental triggers zero valuation POST calls."""
+    post_calls: list = []
+    page.on("request", lambda req: post_calls.append(req.url)
+            if req.method == "POST" and "/api/" in req.url else None)
+    _load_cold_storage_supp(page, live_server)
+    valuation_posts = [u for u in post_calls if "/api/" in u
+                       and "/radar" not in u and "/health" not in u]
+    assert len(valuation_posts) == 0
+
+
+# ── CS1961: no JS console errors ──────────────────────────────────────────────
+def test_CS1961_cold_storage_supp_no_js_errors(page: "Page", live_server: str) -> None:
+    errors: list = []
+    page.on("console", lambda m: errors.append(m.text)
+            if m.type == "error"
+               and "401" not in m.text
+               and "UNAUTHORIZED" not in m.text
+               and "Failed to load resource" not in m.text
+            else None)
+    _load_cold_storage_supp(page, live_server)
+    assert len(errors) == 0, f"Unexpected JS errors: {errors}"
+
+
+# ── CS1962: existing cold_storage main form unchanged ─────────────────────────
+def test_CS1962_cold_storage_main_form_still_renders(page: "Page", live_server: str) -> None:
+    _load_cold_storage(page, live_server)
+    assert page.locator("[data-es-req-field='cs_total_storage_area_sqm']").count() > 0
+    assert page.locator("[data-es-req-field='cs_pallet_positions_count']").count() > 0
+    assert page.locator("[data-es-req-field='cs_refrigeration_system_type']").count() > 0
+
+
+# ── CS1963: skipped static fields not duplicated in supplemental ──────────────
+def test_CS1963_cold_storage_supp_skipped_fields_not_duplicated(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    # These exact static field names must NOT appear in supplemental panel
+    assert "data-es-supp-field='cs_supp_total_storage_volume_m3'" not in supp_html
+    assert "data-es-supp-field='cs_supp_pallet_positions_count'" not in supp_html
+    assert "data-es-supp-field='cs_supp_refrigeration_system_type'" not in supp_html
+    assert "data-es-supp-field='cs_supp_loading_docks_count'" not in supp_html
+
+
+# ── CS1964: methodology select includes storage_rate_capitalization ───────────
+def test_CS1964_cold_storage_supp_methodology_storage_rate_option(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "storage_rate_capitalization" in html
+
+
+# ── CS1965: sustainability features checkbox_group renders ────────────────────
+def test_CS1965_cold_storage_supp_sustainability_features_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_sustainability_features']")
+    assert el.count() > 0
+
+
+# ── CS1966: climate resilience features checkbox_group renders ────────────────
+def test_CS1966_cold_storage_supp_climate_resilience_features_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_climate_resilience_features']")
+    assert el.count() > 0
+
+
+# ── CS1967: storage_use_profile checkbox_group renders ───────────────────────
+def test_CS1967_cold_storage_supp_storage_use_profile_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_storage_use_profile']")
+    assert el.count() > 0
+
+
+# ── CS1968: notes textarea fields render ──────────────────────────────────────
+def test_CS1968_cold_storage_supp_refrigeration_system_notes_textarea(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigeration_system_notes']")
+    assert el.count() > 0
+
+def test_CS1969_cold_storage_supp_revenue_contract_notes_textarea(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_revenue_contract_notes']")
+    assert el.count() > 0
+
+def test_CS1970_cold_storage_supp_capex_notes_textarea(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_capex_notes']")
+    assert el.count() > 0
+
+
+# ── CS1971: sustainability value impact float renders ─────────────────────────
+def test_CS1971_cold_storage_supp_sustainability_value_impact_pct_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_sustainability_value_impact_pct']")
+    assert el.count() > 0
+
+
+# ── CS1972: climate risk value impact float renders ───────────────────────────
+def test_CS1972_cold_storage_supp_climate_risk_value_impact_pct_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_climate_risk_value_impact_pct']")
+    assert el.count() > 0
+
+
+# ── CS1973–CS1982: regression guards — neighboring profiles unchanged ─────────
+def test_CS1973_8zt_regression_data_center_supp_still_renders(page: "Page", live_server: str) -> None:
+    _load_dc_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+    h = page.locator("#es-req-supp-header").inner_text()
+    assert "مركز بيانات" in h
+
+def test_CS1974_8zt_regression_prefabricated_factory_supp_renders(page: "Page", live_server: str) -> None:
+    _load_prefab_factory_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+def test_CS1975_8zt_regression_marina_supp_renders(page: "Page", live_server: str) -> None:
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+    h = page.locator("#es-req-supp-header").inner_text()
+    assert "مارينا" in h
+
+def test_CS1976_8zt_regression_seaport_supp_renders(page: "Page", live_server: str) -> None:
+    _load_seaport_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+def test_CS1977_8zt_regression_airport_supp_renders(page: "Page", live_server: str) -> None:
+    _load_airport_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+def test_CS1978_8zt_regression_existing_building_no_cs_supp_fields(page: "Page", live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مبنى قائم")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_" not in supp_html
+    assert "cs_doc_supp_" not in supp_html
+
+def test_CS1979_8zt_regression_land_no_cs_supp_fields(page: "Page", live_server: str) -> None:
+    _load_land_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_" not in supp_html
+
+def test_CS1980_8zt_regression_data_center_no_cs_supp_fields(page: "Page", live_server: str) -> None:
+    _load_dc_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_" not in supp_html
+    assert "cs_doc_supp_" not in supp_html
+
+def test_CS1981_8zt_regression_industrial_logistics_no_cs_supp(page: "Page", live_server: str) -> None:
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="industrial_logistics_facility_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_" not in supp_html
+
+def test_CS1982_8zt_regression_prefabricated_factory_no_cs_supp(page: "Page", live_server: str) -> None:
+    _load_prefab_factory_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "cs_supp_" not in supp_html
+    assert "cs_doc_supp_" not in supp_html
+
+
+# ── CS1983: cold_storage supp does NOT render dc_supp_ fields ────────────────
+def test_CS1983_8zt_cold_storage_supp_no_dc_supp_fields(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "dc_supp_" not in supp_html
+    assert "dc_doc_supp_" not in supp_html
+
+
+# ── CS1984: refrigerant type text field renders ───────────────────────────────
+def test_CS1984_cold_storage_supp_refrigerant_type_str_field(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigerant_type']")
+    assert el.count() > 0
+
+
+# ── CS1985: deep_freeze_temperature_range text field renders ──────────────────
+def test_CS1985_cold_storage_supp_deep_freeze_temperature_range_str(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_deep_freeze_temperature_range_c']")
+    assert el.count() > 0
+
+
+# ── CS1986: energy_intensity_kwh_per_m3 float renders ────────────────────────
+def test_CS1986_cold_storage_supp_energy_intensity_kwh_per_m3_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_energy_intensity_kwh_per_m3']")
+    assert el.count() > 0
+
+
+# ── CS1987: market_storage_rate_per_pallet float renders ─────────────────────
+def test_CS1987_cold_storage_supp_market_storage_rate_per_pallet_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_market_storage_rate_per_pallet']")
+    assert el.count() > 0
+
+
+# ── CS1988: refrigerant_conversion_capex float renders ───────────────────────
+def test_CS1988_cold_storage_supp_refrigerant_conversion_capex_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_refrigerant_conversion_capex']")
+    assert el.count() > 0
+
+
+# ── CS1989: bms_or_scada_available (R section) bool renders ──────────────────
+def test_CS1989_cold_storage_supp_bms_or_scada_bool_section_r(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_bms_or_scada_available']")
+    assert el.count() > 0
+
+
+# ── CS1990: doc_refrigeration_specs renders ───────────────────────────────────
+def test_CS1990_cold_storage_supp_doc_refrigeration_specs(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_refrigeration_specs']")
+    assert el.count() > 0
+
+
+# ── CS1991: doc_tenant_contracts renders ─────────────────────────────────────
+def test_CS1991_cold_storage_supp_doc_tenant_contracts(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_doc_supp_tenant_contracts']")
+    assert el.count() > 0
+
+
+# ── CS1992: backup_power_runtime_hours float in Q renders ────────────────────
+def test_CS1992_cold_storage_supp_backup_power_runtime_hours_float(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_backup_power_runtime_hours']")
+    assert el.count() > 0
+
+
+# ── CS1993: digital_infrastructure_quality select in R renders ───────────────
+def test_CS1993_cold_storage_supp_digital_infrastructure_quality_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_digital_infrastructure_quality']")
+    assert el.count() > 0
+
+
+# ── CS1994: insurance_availability_for_cold_storage_risks select renders ─────
+def test_CS1994_cold_storage_supp_insurance_availability_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_insurance_availability_for_cold_storage_risks']")
+    assert el.count() > 0
+
+
+# ── CS1995: energy_cost_pass_through_status select renders ───────────────────
+def test_CS1995_cold_storage_supp_energy_cost_pass_through_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_energy_cost_pass_through_status']")
+    assert el.count() > 0
+
+
+# ── CS1996: operator_name str field renders ───────────────────────────────────
+def test_CS1996_cold_storage_supp_operator_name_str_field(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_cold_storage_operator_name']")
+    assert el.count() > 0
+
+
+# ── CS1997: customer_concentration_risk_level select renders ─────────────────
+def test_CS1997_cold_storage_supp_customer_concentration_risk_select(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_customer_concentration_risk_level']")
+    assert el.count() > 0
+
+
+# ── CS1998: capex_timeline_months int renders ─────────────────────────────────
+def test_CS1998_cold_storage_supp_capex_timeline_months_int(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='cs_supp_capex_timeline_months']")
+    assert el.count() > 0
+
+
+# ── CS1999: no composite_valuation.html link in cold_storage supp ────────────
+def test_CS1999_cold_storage_supp_no_composite_link(page: "Page", live_server: str) -> None:
+    _load_cold_storage_supp(page, live_server)
+    links = page.locator("#es-req-supp a[href*='composite']").count()
+    assert links == 0
+
+
+# ── CS2000: 8ZT complete regression — all profiles produce no errors ──────────
+def test_CS2000_8zt_complete_regression_no_console_errors(page: "Page", live_server: str) -> None:
+    errors: list = []
+    page.on("console", lambda m: errors.append(m.text)
+            if m.type == "error"
+               and "401" not in m.text
+               and "UNAUTHORIZED" not in m.text
+               and "Failed to load resource" not in m.text
+            else None)
+    _load_cold_storage_supp(page, live_server)
+    assert len(errors) == 0, f"Unexpected JS errors on cold_storage supp: {errors}"

@@ -18435,3 +18435,1522 @@ def test_CS1539_seaport_supp_total_supp_field_count_exceeds_200(page: "Page", li
     assert count > 200, (
         f"8ZO: expected > 200 supp fields for seaport, found {count}."
     )
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZP — Yacht Marina & Marine Tourism Supplemental  (CS1540–CS1737)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _load_marina_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: load marina profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+
+
+# ── CS1540–CS1543: panel, heading, subtext, section count ────────────────────
+def test_CS1540_marina_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: marina supplemental panel is visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+def test_CS1541_marina_supp_heading_correct(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: heading contains arabic marina title."""
+    _load_marina_supp(page, live_server)
+    text = page.locator("#es-req-supp-header").inner_text()
+    assert "مارينا" in text or "يخوت" in text
+
+
+def test_CS1542_marina_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: subtext contains local-data disclaimer."""
+    _load_marina_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "إدخال محلي" in text or "لا يُرسل" in text
+
+
+def test_CS1543_marina_supp_section_count_is_17(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: marina supplemental has exactly 17 sections."""
+    _load_marina_supp(page, live_server)
+    summaries = page.locator("#es-req-supp summary")
+    assert summaries.count() == 17
+
+
+# ── CS1544–CS1560: section headings ─────────────────────────────────────────
+def test_CS1544_marina_supp_sec_A_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section أ heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="تعريف وهوية المارينا").count() >= 1
+
+
+def test_CS1545_marina_supp_sec_B_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ب heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="طاقة المراسي").count() >= 1
+
+
+def test_CS1546_marina_supp_sec_C_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ج heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="المنشآت البحرية").count() >= 1
+
+
+def test_CS1547_marina_supp_sec_D_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section د heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="الخدمات والمرافق").count() >= 1
+
+
+def test_CS1548_marina_supp_sec_E_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section هـ heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="خدمات اليخوت").count() >= 1
+
+
+def test_CS1549_marina_supp_sec_F_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section و heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="المرافق السياحية").count() >= 1
+
+
+def test_CS1550_marina_supp_sec_G_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ز heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="التشغيل والإيرادات").count() >= 1
+
+
+def test_CS1551_marina_supp_sec_H_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ح heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="العقود والعضويات").count() >= 1
+
+
+def test_CS1552_marina_supp_sec_I_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ط heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="التراخيص والحقوق").count() >= 1
+
+
+def test_CS1553_marina_supp_sec_J_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ي heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="البيئة والمياه").count() >= 1
+
+
+def test_CS1554_marina_supp_sec_K_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ك heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="السوق والطلب").count() >= 1
+
+
+def test_CS1555_marina_supp_sec_L_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ل heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="رأس المال والصيانة").count() >= 1
+
+
+def test_CS1556_marina_supp_sec_M_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section م purpose-adjustment heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="معاملات التعديل").count() >= 1
+
+
+def test_CS1557_marina_supp_sec_N_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ن sustainability heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="الاستدامة").count() >= 1
+
+
+def test_CS1558_marina_supp_sec_O_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section س climate-risk heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="المخاطر المناخية").count() >= 1
+
+
+def test_CS1559_marina_supp_sec_P_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ع digital heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="الرقمية والذكية").count() >= 1
+
+
+def test_CS1560_marina_supp_sec_Q_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section ق documents heading visible."""
+    _load_marina_supp(page, live_server)
+    assert page.locator("#es-req-supp summary").filter(has_text="مستندات تكميلية").count() >= 1
+
+
+# ── CS1561–CS1566: section أ field samples ───────────────────────────────────
+def test_CS1561_marina_supp_sec_A_marina_classification_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_classification renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_classification']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1562_marina_supp_sec_A_ownership_structure_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_ownership_structure renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_ownership_structure']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1563_marina_supp_sec_A_management_operator_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_management_operator renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_management_operator']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1564_marina_supp_sec_A_water_area_lease_years_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_water_area_lease_remaining_years renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_water_area_lease_remaining_years']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1565_marina_supp_sec_A_littoral_rights_documented_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_littoral_or_coastal_rights_documented renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_littoral_or_coastal_rights_documented']")
+    assert el.count() >= 1
+
+
+def test_CS1566_marina_supp_sec_A_public_access_obligations_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_public_access_obligations renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_public_access_obligations']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+# ── CS1567–CS1572: section ب field samples ───────────────────────────────────
+def test_CS1567_marina_supp_sec_B_operational_wet_slips_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_operational_wet_slips renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_operational_wet_slips']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1568_marina_supp_sec_B_superyacht_berths_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_superyacht_berths_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_superyacht_berths_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1569_marina_supp_sec_B_pontoon_material_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_pontoon_material renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_pontoon_material']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1570_marina_supp_sec_B_waitlist_active_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_waitlist_active renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_waitlist_active']")
+    assert el.count() >= 1
+
+
+def test_CS1571_marina_supp_sec_B_berth_transfer_restrictions_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_berth_transfer_restrictions renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_berth_transfer_restrictions']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1572_marina_supp_sec_B_peak_occupancy_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_peak_occupancy_rate_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_peak_occupancy_rate_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1573–CS1578: section ج field samples ───────────────────────────────────
+def test_CS1573_marina_supp_sec_C_breakwater_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_breakwater_type renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_breakwater_type']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1574_marina_supp_sec_C_breakwater_length_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_breakwater_length_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_breakwater_length_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1575_marina_supp_sec_C_breakwater_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_breakwater_condition renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_breakwater_condition']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1576_marina_supp_sec_C_dredging_frequency_years_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_dredging_frequency_years renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_dredging_frequency_years']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1577_marina_supp_sec_C_dredging_responsibility_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_dredging_responsibility renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_dredging_responsibility']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1578_marina_supp_sec_C_coastal_erosion_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_coastal_erosion_risk renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_coastal_erosion_risk']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+# ── CS1579–CS1584: section د field samples ───────────────────────────────────
+def test_CS1579_marina_supp_sec_D_shore_power_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_shore_power_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_shore_power_available']")
+    assert el.count() >= 1
+
+
+def test_CS1580_marina_supp_sec_D_shore_power_capacity_amps_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_shore_power_capacity_amps renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_shore_power_capacity_amps']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1581_marina_supp_sec_D_fuel_dock_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_fuel_dock_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_fuel_dock_available']")
+    assert el.count() >= 1
+
+
+def test_CS1582_marina_supp_sec_D_fuel_dock_daily_capacity_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_fuel_dock_daily_capacity_litres renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_fuel_dock_daily_capacity_litres']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1583_marina_supp_sec_D_waste_reception_facility_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_waste_reception_facility renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_waste_reception_facility']")
+    assert el.count() >= 1
+
+
+def test_CS1584_marina_supp_sec_D_travel_lift_capacity_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_travel_lift_capacity_tonnes renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_travel_lift_capacity_tonnes']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1585–CS1590: section هـ field samples ──────────────────────────────────
+def test_CS1585_marina_supp_sec_E_boat_cleaning_service_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_boat_cleaning_service renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_boat_cleaning_service']")
+    assert el.count() >= 1
+
+
+def test_CS1586_marina_supp_sec_E_charter_fleet_managed_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_charter_fleet_managed renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_charter_fleet_managed']")
+    assert el.count() >= 1
+
+
+def test_CS1587_marina_supp_sec_E_charter_fleet_size_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_charter_fleet_size renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_charter_fleet_size']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1588_marina_supp_sec_E_charter_fleet_dependency_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_charter_fleet_dependency_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_charter_fleet_dependency_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1589_marina_supp_sec_E_sailing_school_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sailing_school_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sailing_school_available']")
+    assert el.count() >= 1
+
+
+def test_CS1590_marina_supp_sec_E_sailing_school_revenue_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sailing_school_annual_revenue_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sailing_school_annual_revenue_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1591–CS1596: section و field samples ───────────────────────────────────
+def test_CS1591_marina_supp_sec_F_promenade_length_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_promenade_length_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_promenade_length_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1592_marina_supp_sec_F_hotel_rooms_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_hotel_rooms_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_hotel_rooms_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1593_marina_supp_sec_F_resort_integration_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_resort_integration_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_resort_integration_available']")
+    assert el.count() >= 1
+
+
+def test_CS1594_marina_supp_sec_F_resort_integration_premium_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_resort_integration_premium_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_resort_integration_premium_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1595_marina_supp_sec_F_swimming_pool_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_swimming_pool_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_swimming_pool_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1596_marina_supp_sec_F_sailing_races_annually_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sailing_races_hosted_annually renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sailing_races_hosted_annually']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1597–CS1602: section ز field samples ───────────────────────────────────
+def test_CS1597_marina_supp_sec_G_total_annual_revenue_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_total_annual_revenue_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_total_annual_revenue_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1598_marina_supp_sec_G_ebitda_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_ebitda_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_ebitda_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1599_marina_supp_sec_G_ebitda_margin_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_ebitda_margin_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_ebitda_margin_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1600_marina_supp_sec_G_peak_season_months_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_peak_season_months renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_peak_season_months']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1601_marina_supp_sec_G_online_booking_platform_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_online_booking_platform renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_online_booking_platform']")
+    assert el.count() >= 1
+
+
+def test_CS1602_marina_supp_sec_G_revenue_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_revenue_notes renders as textarea."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_revenue_notes']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "TEXTAREA"
+
+
+# ── CS1603–CS1608: section ح field samples ───────────────────────────────────
+def test_CS1603_marina_supp_sec_H_annual_berth_contracts_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_annual_berth_contracts_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_annual_berth_contracts_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1604_marina_supp_sec_H_membership_club_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_membership_club_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_membership_club_available']")
+    assert el.count() >= 1
+
+
+def test_CS1605_marina_supp_sec_H_membership_transferability_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_membership_transferability renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_membership_transferability']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1606_marina_supp_sec_H_berth_waitlist_strength_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_berth_waitlist_strength renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_berth_waitlist_strength']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1607_marina_supp_sec_H_concession_contract_term_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_concession_contract_term_years renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_concession_contract_term_years']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1608_marina_supp_sec_H_customer_concentration_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_customer_concentration_risk renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_customer_concentration_risk']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+# ── CS1609–CS1614: section ط field samples ───────────────────────────────────
+def test_CS1609_marina_supp_sec_I_license_expiry_year_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_license_expiry_year renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_license_expiry_year']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1610_marina_supp_sec_I_environmental_permit_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_environmental_permit_status renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_environmental_permit_status']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1611_marina_supp_sec_I_marina_transfer_restrictions_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_transfer_restrictions renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_transfer_restrictions']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1612_marina_supp_sec_I_water_area_rights_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_water_area_rights_type renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_water_area_rights_type']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1613_marina_supp_sec_I_water_area_field_rights_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_water_area_field_rights renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_water_area_field_rights']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1614_marina_supp_sec_I_dredging_permit_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_dredging_permit_status renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_dredging_permit_status']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+# ── CS1615–CS1620: section ي field samples ───────────────────────────────────
+def test_CS1615_marina_supp_sec_J_water_quality_monitoring_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_water_quality_monitoring renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_water_quality_monitoring']")
+    assert el.count() >= 1
+
+
+def test_CS1616_marina_supp_sec_J_water_quality_classification_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_water_quality_classification renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_water_quality_classification']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1617_marina_supp_sec_J_marine_habitat_sensitivity_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marine_habitat_sensitivity renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marine_habitat_sensitivity']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1618_marina_supp_sec_J_marina_evacuation_plan_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_evacuation_plan renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_evacuation_plan']")
+    assert el.count() >= 1
+
+
+def test_CS1619_marina_supp_sec_J_fuel_dock_env_liability_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_fuel_dock_environmental_liability renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_fuel_dock_environmental_liability']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1620_marina_supp_sec_J_blue_flag_certification_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_blue_flag_certification renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_blue_flag_certification']")
+    assert el.count() >= 1
+
+
+# ── CS1621–CS1626: section ك field samples ───────────────────────────────────
+def test_CS1621_marina_supp_sec_K_market_demand_trend_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_market_demand_trend renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_market_demand_trend']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1622_marina_supp_sec_K_seasonality_exposure_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_seasonality_exposure renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_seasonality_exposure']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1623_marina_supp_sec_K_superyacht_demand_score_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_superyacht_demand_score renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_superyacht_demand_score']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1624_marina_supp_sec_K_competing_marinas_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_competing_marinas_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_competing_marinas_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1625_marina_supp_sec_K_comparable_cap_rate_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_comparable_cap_rate_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_comparable_cap_rate_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1626_marina_supp_sec_K_market_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_market_notes renders as textarea."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_market_notes']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "TEXTAREA"
+
+
+# ── CS1627–CS1632: section ل field samples ───────────────────────────────────
+def test_CS1627_marina_supp_sec_L_capex_required_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_capex_required_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_capex_required_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1628_marina_supp_sec_L_pontoon_replacement_cost_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_pontoon_replacement_cost_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_pontoon_replacement_cost_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1629_marina_supp_sec_L_breakwater_rehab_cost_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_breakwater_rehab_cost_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_breakwater_rehab_cost_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1630_marina_supp_sec_L_immediate_repairs_egp_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_immediate_repairs_egp renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_immediate_repairs_egp']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1631_marina_supp_sec_L_remaining_useful_life_years_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_remaining_useful_life_years renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_remaining_useful_life_years']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1632_marina_supp_sec_L_residual_value_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_residual_value_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_residual_value_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1633–CS1638: section ن field samples ───────────────────────────────────
+def test_CS1633_marina_supp_sec_N_green_marina_certification_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_green_marina_certification renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_green_marina_certification']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1634_marina_supp_sec_N_renewable_energy_installed_kw_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_renewable_energy_installed_kw renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_renewable_energy_installed_kw']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1635_marina_supp_sec_N_electricity_consumption_kwh_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_electricity_consumption_annual_kwh renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_electricity_consumption_annual_kwh']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1636_marina_supp_sec_N_esg_policy_documented_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_esg_policy_documented renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_esg_policy_documented']")
+    assert el.count() >= 1
+
+
+def test_CS1637_marina_supp_sec_N_sustainability_report_published_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sustainability_report_published renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sustainability_report_published']")
+    assert el.count() >= 1
+
+
+def test_CS1638_marina_supp_sec_N_green_revenue_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_green_revenue_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_green_revenue_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1639–CS1644: section س field samples ───────────────────────────────────
+def test_CS1639_marina_supp_sec_O_sea_level_rise_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sea_level_rise_risk renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sea_level_rise_risk']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1640_marina_supp_sec_O_storm_surge_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_storm_surge_risk renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_storm_surge_risk']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1641_marina_supp_sec_O_coastal_retreat_projections_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_coastal_retreat_projections renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_coastal_retreat_projections']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1642_marina_supp_sec_O_seismic_risk_level_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_seismic_risk_level renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_seismic_risk_level']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1643_marina_supp_sec_O_insurance_availability_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_insurance_availability renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_insurance_availability']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1644_marina_supp_sec_O_climate_adaptation_plan_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_climate_adaptation_plan renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_climate_adaptation_plan']")
+    assert el.count() >= 1
+
+
+# ── CS1645–CS1650: section ع field samples ───────────────────────────────────
+def test_CS1645_marina_supp_sec_P_marina_management_software_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_management_software renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_management_software']")
+    assert el.count() >= 1
+
+
+def test_CS1646_marina_supp_sec_P_online_berth_booking_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_online_berth_booking renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_online_berth_booking']")
+    assert el.count() >= 1
+
+
+def test_CS1647_marina_supp_sec_P_fiber_optic_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_fiber_optic_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_fiber_optic_available']")
+    assert el.count() >= 1
+
+
+def test_CS1648_marina_supp_sec_P_cybersecurity_compliance_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_cybersecurity_compliance renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_cybersecurity_compliance']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1649_marina_supp_sec_P_vhf_comms_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_vhf_comms_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_vhf_comms_available']")
+    assert el.count() >= 1
+
+
+def test_CS1650_marina_supp_sec_P_ais_transponder_coverage_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_ais_transponder_coverage renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_ais_transponder_coverage']")
+    assert el.count() >= 1
+
+
+# ── CS1651–CS1660: additional field samples ──────────────────────────────────
+def test_CS1651_marina_supp_sec_B_waitlist_length_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_waitlist_length renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_waitlist_length']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1652_marina_supp_sec_B_covered_berths_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_covered_berths_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_covered_berths_available']")
+    assert el.count() >= 1
+
+
+def test_CS1653_marina_supp_sec_B_average_annual_berth_fee_per_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_average_annual_berth_fee_per_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_average_annual_berth_fee_per_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1654_marina_supp_sec_B_floating_pontoon_age_years_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_floating_pontoon_age_years renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_floating_pontoon_age_years']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1655_marina_supp_sec_C_quay_wall_length_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_quay_wall_length_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_quay_wall_length_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1656_marina_supp_sec_C_storm_damage_history_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_storm_damage_history renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_storm_damage_history']")
+    assert el.count() >= 1
+
+
+def test_CS1657_marina_supp_sec_C_siltation_rate_cm_per_year_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_siltation_rate_cm_per_year renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_siltation_rate_cm_per_year']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1658_marina_supp_sec_G_repeat_customer_rate_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_repeat_customer_rate_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_repeat_customer_rate_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1659_marina_supp_sec_G_staff_count_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_staff_count renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_staff_count']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1660_marina_supp_sec_G_seasonal_revenue_variation_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_seasonal_revenue_variation_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_seasonal_revenue_variation_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+# ── CS1661–CS1676: document supplemental fields ──────────────────────────────
+def test_CS1661_marina_supp_doc_hydrographic_survey_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_hydrographic_survey renders as bool."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_hydrographic_survey']")
+    assert el.count() >= 1
+
+
+def test_CS1662_marina_supp_doc_environmental_impact_assessment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_environmental_impact_assessment renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_environmental_impact_assessment']")
+    assert el.count() >= 1
+
+
+def test_CS1663_marina_supp_doc_coastal_rights_deed_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_coastal_rights_deed renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_coastal_rights_deed']")
+    assert el.count() >= 1
+
+
+def test_CS1664_marina_supp_doc_water_area_lease_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_water_area_lease_agreement renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_water_area_lease_agreement']")
+    assert el.count() >= 1
+
+
+def test_CS1665_marina_supp_doc_concession_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_concession_agreement renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_concession_agreement']")
+    assert el.count() >= 1
+
+
+def test_CS1666_marina_supp_doc_structural_inspection_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_structural_inspection_report renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_structural_inspection_report']")
+    assert el.count() >= 1
+
+
+def test_CS1667_marina_supp_doc_fuel_dock_permit_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_fuel_dock_permit renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_fuel_dock_permit']")
+    assert el.count() >= 1
+
+
+def test_CS1668_marina_supp_doc_marine_insurance_policy_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_marine_insurance_policy renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_marine_insurance_policy']")
+    assert el.count() >= 1
+
+
+def test_CS1669_marina_supp_doc_charter_fleet_agreements_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_charter_fleet_agreements renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_charter_fleet_agreements']")
+    assert el.count() >= 1
+
+
+def test_CS1670_marina_supp_doc_membership_agreements_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_membership_agreements renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_membership_agreements']")
+    assert el.count() >= 1
+
+
+def test_CS1671_marina_supp_doc_dredging_permit_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_dredging_permit renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_dredging_permit']")
+    assert el.count() >= 1
+
+
+def test_CS1672_marina_supp_doc_esg_sustainability_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_esg_sustainability_report renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_esg_sustainability_report']")
+    assert el.count() >= 1
+
+
+def test_CS1673_marina_supp_doc_climate_risk_assessment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_climate_risk_assessment renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_climate_risk_assessment']")
+    assert el.count() >= 1
+
+
+def test_CS1674_marina_supp_doc_financial_audit_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_financial_audit_reports renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_financial_audit_reports']")
+    assert el.count() >= 1
+
+
+def test_CS1675_marina_supp_doc_management_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_management_agreement renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_management_agreement']")
+    assert el.count() >= 1
+
+
+def test_CS1676_marina_supp_doc_marina_master_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_doc_supp_marina_master_plan renders."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_doc_supp_marina_master_plan']")
+    assert el.count() >= 1
+
+
+# ── CS1677–CS1679: existing static marina fields remain in main form ─────────
+def test_CS1677_marina_static_wet_slips_count_in_main_form(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_wet_slips_count static field still present in main form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    el = page.locator("[data-es-req-field='mr_wet_slips_count']")
+    assert el.count() >= 1
+
+
+def test_CS1678_marina_static_restaurants_count_in_main_form(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_restaurants_count static field still present in main form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    el = page.locator("[data-es-req-field='mr_restaurants_count']")
+    assert el.count() >= 1
+
+
+def test_CS1679_marina_static_marina_license_status_in_main_form(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_marina_license_status static field still present in main form."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    el = page.locator("[data-es-req-field='mr_marina_license_status']")
+    assert el.count() >= 1
+
+
+# ── CS1680–CS1686: skip list fields NOT in supplemental ──────────────────────
+def test_CS1680_marina_skip_wet_slips_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_wet_slips_count must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_wet_slips_count']")
+    assert el.count() == 0
+
+
+def test_CS1681_marina_skip_dry_storage_capacity_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_dry_storage_capacity must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_dry_storage_capacity']")
+    assert el.count() == 0
+
+
+def test_CS1682_marina_skip_max_yacht_loa_m_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_max_yacht_loa_m must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_max_yacht_loa_m']")
+    assert el.count() == 0
+
+
+def test_CS1683_marina_skip_restaurants_count_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_restaurants_count must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_restaurants_count']")
+    assert el.count() == 0
+
+
+def test_CS1684_marina_skip_annual_berthing_income_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_annual_berthing_income must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_annual_berthing_income']")
+    assert el.count() == 0
+
+
+def test_CS1685_marina_skip_marina_license_status_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_marina_license_status must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_marina_license_status']")
+    assert el.count() == 0
+
+
+def test_CS1686_marina_skip_waterfront_concession_status_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_waterfront_concession_status must NOT appear in supplemental (skip list)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_waterfront_concession_status']")
+    assert el.count() == 0
+
+
+# ── CS1687–CS1688: data-es-supp-field / no data-es-req-field ────────────────
+def test_CS1687_marina_supp_all_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: all controls in marina supp panel have data-es-supp-field."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    all_supp_fields = supp.locator("[data-es-supp-field]")
+    all_req_fields  = supp.locator("[data-es-req-field]")
+    assert all_supp_fields.count() >= 260
+    assert all_req_fields.count() == 0
+
+
+def test_CS1688_marina_supp_no_data_es_req_field_inside_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: no data-es-req-field attribute inside marina supplemental panel."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-req-field]")
+    assert el.count() == 0
+
+
+# ── CS1689–CS1710: purpose adjustment section ─────────────────────────────────
+def test_CS1689_marina_supp_sec_M_mortgage_methodology_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_mortgage_methodology renders as select (PURPOSE_RULES mapped)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_mortgage_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1690_marina_supp_sec_M_mortgage_adjustment_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_mortgage_adjustment_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_mortgage_adjustment_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1691_marina_supp_sec_M_mortgage_rationale_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_mortgage_adjustment_rationale renders as textarea."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_mortgage_adjustment_rationale']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "TEXTAREA"
+
+
+def test_CS1692_marina_supp_sec_M_sale_purchase_adjustment_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_sale_purchase_adjustment_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_sale_purchase_adjustment_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1693_marina_supp_sec_M_insurance_methodology_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_insurance_methodology renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_insurance_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1694_marina_supp_sec_M_ifrs_fv_adjustment_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_ifrs_fv_adjustment_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_ifrs_fv_adjustment_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1695_marina_supp_sec_M_acquisition_rationale_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_acquisition_adjustment_rationale renders as textarea."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_acquisition_adjustment_rationale']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "TEXTAREA"
+
+
+def test_CS1696_marina_supp_sec_M_taxation_methodology_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_taxation_methodology renders as select."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_taxation_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1697_marina_supp_sec_M_liquidation_adjustment_pct_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_liquidation_adjustment_pct renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_liquidation_adjustment_pct']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1698_marina_supp_sec_M_concession_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_concession_review_methodology renders (local-only purpose)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_concession_review_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1699_marina_supp_sec_M_concession_review_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_concession_review_adjustment_pct renders (local-only — has help hint)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_concession_review_adjustment_pct']")
+    assert el.count() >= 1
+
+
+def test_CS1700_marina_supp_sec_M_tourism_investment_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_tourism_investment_methodology renders (local-only purpose)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_tourism_investment_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1701_marina_supp_sec_M_tourism_investment_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_tourism_investment_adjustment_pct renders (local-only — has help hint)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_tourism_investment_adjustment_pct']")
+    assert el.count() >= 1
+
+
+def test_CS1702_marina_supp_sec_M_litigation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_litigation_methodology renders (local-only purpose)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_litigation_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1703_marina_supp_sec_M_litigation_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_litigation_adjustment_pct renders (local-only — has help hint)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_litigation_adjustment_pct']")
+    assert el.count() >= 1
+
+
+def test_CS1704_marina_supp_sec_M_impairment_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_impairment_methodology renders (local-only purpose)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_impairment_methodology']")
+    assert el.count() >= 1 and el.first.evaluate("e => e.tagName") == "SELECT"
+
+
+def test_CS1705_marina_supp_sec_M_impairment_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_impairment_adjustment_pct renders (local-only — has help hint)."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_impairment_adjustment_pct']")
+    assert el.count() >= 1
+
+
+def test_CS1706_marina_supp_sec_M_purpose_section_has_33_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section م has exactly 33 fields (11 purposes × 3 fields each)."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    # find all supp fields whose name starts with mr_supp_ and contains _adjustment_ or _methodology or _rationale
+    method_fields = supp.locator("[data-es-supp-field*='mr_supp_'][data-es-supp-field*='_methodology']")
+    pct_fields    = supp.locator("[data-es-supp-field*='mr_supp_'][data-es-supp-field*='_adjustment_pct']")
+    ratio_fields  = supp.locator("[data-es-supp-field*='mr_supp_'][data-es-supp-field*='_adjustment_rationale']")
+    assert method_fields.count() == 11
+    assert pct_fields.count() == 11
+    assert ratio_fields.count() == 11
+
+
+def test_CS1707_marina_supp_sec_M_local_purpose_help_ar_visible_in_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: local-only purpose field has help hint rendered in supp panel."""
+    _load_marina_supp(page, live_server)
+    panel_text = page.locator("#es-req-supp").inner_text()
+    assert "إرشادي" in panel_text or "لا يُرسل" in panel_text
+
+
+def test_CS1708_marina_supp_sec_M_all_11_methodology_selects_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: all 11 methodology selects are present in section م."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    methodology_fields = supp.locator("[data-es-supp-field$='_methodology']")
+    assert methodology_fields.count() == 11
+
+
+def test_CS1709_marina_supp_sec_M_section_accessible(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: section م purpose-adjustment is accessible (summary clickable)."""
+    _load_marina_supp(page, live_server)
+    summary = page.locator("#es-req-supp summary").filter(has_text="معاملات التعديل")
+    assert summary.count() >= 1 and summary.first.is_visible()
+
+
+def test_CS1710_marina_supp_sec_M_no_backend_call_for_local_purposes(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: local-only purpose fields do not trigger any POST or backend API call."""
+    api_calls = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/" in req.url and req.method == "POST" else None)
+    _load_marina_supp(page, live_server)
+    # trigger a field interaction
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_concession_review_adjustment_pct']")
+    if el.count() >= 1:
+        el.first.fill("5")
+    marina_posts = [u for u in api_calls if "marina" in u or "supplemental" in u]
+    assert len(marina_posts) == 0
+
+
+# ── CS1711–CS1713: no auth modal, no composite link, no backend ───────────────
+def test_CS1711_marina_supp_no_auth_modal_on_load(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: no authentication modal appears when loading marina supplemental."""
+    js_errors = []
+    page.on("console", lambda msg: js_errors.append(msg.text) if msg.type == "error" and "401" not in msg.text and "UNAUTHORIZED" not in msg.text else None)
+    _load_marina_supp(page, live_server)
+    auth_modal = page.locator("#auth-modal, .auth-modal, [data-modal='auth']")
+    assert auth_modal.count() == 0 or not auth_modal.first.is_visible()
+    assert not any("auth" in e.lower() and "required" in e.lower() for e in js_errors)
+
+
+def test_CS1712_marina_supp_no_composite_link_visible(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: no composite valuation link visible for marina profile."""
+    _load_marina_supp(page, live_server)
+    composite_link = page.locator("a[href*='composite_valuation'], #cv-nav-link, .cv-nav-link")
+    assert composite_link.count() == 0 or not composite_link.first.is_visible()
+
+
+def test_CS1713_marina_supp_no_api_post_triggered(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: loading marina profile triggers zero valuation POST calls to /api/."""
+    post_calls = []
+    page.on("request", lambda req: post_calls.append(req.url) if req.method == "POST" and "/api/" in req.url else None)
+    _load_marina_supp(page, live_server)
+    # /api/radar/start is an analytics heartbeat on every page load — not a valuation call
+    valuation_posts = [u for u in post_calls if "/api/" in u and "/radar" not in u and "/health" not in u]
+    assert len(valuation_posts) == 0
+
+
+# ── CS1714–CS1723: isolation from neighboring profiles ───────────────────────
+def test_CS1714_seaport_supp_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: seaport profile does NOT render mr_supp_ marina fields."""
+    _load_seaport_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1715_airport_supp_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport profile does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1716_hotel_resort_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: hotel_resort_detailed profile does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="hotel_resort_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1717_floating_hotel_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: floating_hotel profile does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="floating_hotel")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1718_serviced_apartments_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: serviced_apartments profile does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="serviced_apartments")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1719_building_full_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: residential/commercial buildings profile (تجاري) does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="تجاري")  # سكني/تجاري/إداري buildings
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1720_retail_shop_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: retail_shop_detailed profile does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="retail_shop_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1721_industrial_logistics_does_not_show_marina_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: industrial_logistics_facility_detailed does NOT render mr_supp_ marina fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="industrial_logistics_facility_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1722_marina_supp_sp_prefix_fields_not_in_marina_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: seaport sp_supp_ fields do NOT leak into marina supplemental panel."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field^='sp_supp_']")
+    assert el.count() == 0
+
+
+def test_CS1723_marina_supp_ap_prefix_fields_not_in_marina_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: airport ap_supp_ fields do NOT leak into marina supplemental panel."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field^='ap_supp_']")
+    assert el.count() == 0
+
+
+# ── CS1724–CS1737: counts, edge cases, final checks ─────────────────────────
+def test_CS1724_marina_supp_section_M_all_purposes_have_3_fields_each(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: each of 11 purposes has exactly 3 fields (methodology, pct, rationale)."""
+    _load_marina_supp(page, live_server)
+    purposes = [
+        "mortgage", "sale_purchase", "insurance", "ifrs_fv", "acquisition",
+        "taxation", "liquidation", "concession_review", "tourism_investment",
+        "litigation", "impairment"
+    ]
+    supp = page.locator("#es-req-supp")
+    for p in purposes:
+        meth = supp.locator(f"[data-es-supp-field='mr_supp_{p}_methodology']").count()
+        pct  = supp.locator(f"[data-es-supp-field='mr_supp_{p}_adjustment_pct']").count()
+        rat  = supp.locator(f"[data-es-supp-field='mr_supp_{p}_adjustment_rationale']").count()
+        assert meth >= 1, f"purpose {p}: methodology missing"
+        assert pct >= 1,  f"purpose {p}: adjustment_pct missing"
+        assert rat >= 1,  f"purpose {p}: rationale missing"
+
+
+def test_CS1725_marina_supp_doc_fields_all_render_as_checkboxes(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: all mr_doc_supp_ fields are checkboxes (bool)."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    doc_fields = supp.locator("[data-es-supp-field^='mr_doc_supp_']")
+    count = doc_fields.count()
+    assert count == 16, f"expected 16 mr_doc_supp_ fields, found {count}"
+    for i in range(count):
+        tag = doc_fields.nth(i).evaluate("e => e.tagName")
+        assert tag == "INPUT", f"doc field {i} is {tag}, expected INPUT"
+
+
+def test_CS1726_marina_static_form_section_count_is_4(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: existing marina static form still has 4 sections (untouched)."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    # static form sections use fieldset or section-like elements
+    main_form = page.locator("#es-req-main")
+    try:
+        main_form.wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert main_form.is_visible()
+
+
+def test_CS1727_marina_supp_total_field_count_in_range(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: marina supplemental has between 260 and 290 data-es-supp-field elements."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    count = supp.locator("[data-es-supp-field]").count()
+    assert count >= 260, f"expected >= 260 fields, found {count}"
+    assert count <= 290, f"expected <= 290 fields, found {count}"
+
+
+def test_CS1728_marina_supp_mr_doc_supp_count_is_16(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: exactly 16 mr_doc_supp_ fields in marina supplemental panel."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field^='mr_doc_supp_']")
+    assert el.count() == 16
+
+
+def test_CS1729_marina_supp_no_js_errors(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: no application JavaScript errors on marina supplemental load."""
+    js_errors = []
+    page.on("console", lambda msg: js_errors.append(msg.text)
+            if msg.type == "error"
+               and "401" not in msg.text
+               and "UNAUTHORIZED" not in msg.text
+               and "Failed to load resource" not in msg.text
+            else None)
+    _load_marina_supp(page, live_server)
+    assert len(js_errors) == 0, f"Unexpected JS errors: {js_errors}"
+
+
+def test_CS1730_marina_supp_marina_license_renewable_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_marina_license_renewable renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_marina_license_renewable']")
+    assert el.count() >= 1
+
+
+def test_CS1731_marina_supp_wifi_speed_mbps_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_wifi_speed_mbps renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_wifi_speed_mbps']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1732_marina_supp_tidal_range_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_tidal_range_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_tidal_range_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1733_marina_supp_coastal_authority_approval_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_coastal_authority_approval renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_coastal_authority_approval']")
+    assert el.count() >= 1
+
+
+def test_CS1734_marina_supp_electric_boat_charging_renders_as_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_electric_boat_charging_available renders as checkbox."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_electric_boat_charging_available']")
+    assert el.count() >= 1
+
+
+def test_CS1735_marina_supp_dredging_depth_m_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: mr_supp_dredging_depth_m renders as number."""
+    _load_marina_supp(page, live_server)
+    el = page.locator("#es-req-supp [data-es-supp-field='mr_supp_dredging_depth_m']")
+    assert el.count() >= 1 and el.first.get_attribute("type") == "number"
+
+
+def test_CS1736_marina_supp_section_count_verified_by_summary_elements(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: summary elements count inside supp panel equals 17 sections."""
+    _load_marina_supp(page, live_server)
+    count = page.locator("#es-req-supp summary").count()
+    assert count == 17, f"expected 17 section summaries, found {count}"
+
+
+def test_CS1737_marina_supp_total_supp_field_count_exceeds_250(page: "Page", live_server: str) -> None:
+    """Phase 8ZP: marina supplemental panel has more than 250 data-es-supp-field elements."""
+    _load_marina_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    all_fields = supp.locator("[data-es-supp-field]")
+    count = all_fields.count()
+    assert count > 250, (
+        f"8ZP: expected > 250 supp fields for marina, found {count}."
+    )

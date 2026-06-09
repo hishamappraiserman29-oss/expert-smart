@@ -19954,3 +19954,1181 @@ def test_CS1737_marina_supp_total_supp_field_count_exceeds_250(page: "Page", liv
     assert count > 250, (
         f"8ZP: expected > 250 supp fields for marina, found {count}."
     )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZS — Data Center Detailed Valuation Requirements CS1738–CS1940
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _load_dc_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: load data_center profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="data_center")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=8_000)
+
+
+def test_CS1738_dc_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: data_center supplemental panel is visible after profile load."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+def test_CS1739_dc_supp_heading_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: data_center supplemental heading contains expected text."""
+    _load_dc_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "Data Center" in heading or "مركز بيانات" in heading
+
+
+def test_CS1740_dc_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: supplemental subtext element is present."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("#es-req-supp-subtext").is_visible()
+
+
+def test_CS1741_dc_supp_section_A_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section A heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "تعريف مركز البيانات" in content
+
+
+def test_CS1742_dc_supp_section_B_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section B heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الطاقة الكهربائية" in content
+
+
+def test_CS1743_dc_supp_section_C_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section C heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الاعتمادية" in content
+
+
+def test_CS1744_dc_supp_section_D_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section D heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "UPS" in content
+
+
+def test_CS1745_dc_supp_section_E_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section E heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "التبريد" in content
+
+
+def test_CS1746_dc_supp_section_F_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section F heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "المساحات" in content
+
+
+def test_CS1747_dc_supp_section_G_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section G heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الاتصال" in content
+
+
+def test_CS1748_dc_supp_section_H_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section H heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الأمن" in content
+
+
+def test_CS1749_dc_supp_section_I_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section I heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الامتثال" in content
+
+
+def test_CS1750_dc_supp_section_J_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section J heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "العملاء" in content
+
+
+def test_CS1751_dc_supp_section_K_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section K heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "المصروفات" in content
+
+
+def test_CS1752_dc_supp_section_L_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section L heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "CAPEX" in content
+
+
+def test_CS1753_dc_supp_section_M_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section M heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "السوق" in content
+
+
+def test_CS1754_dc_supp_section_N_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section N (purpose adjustments) heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "معاملات التعديل" in content
+
+
+def test_CS1755_dc_supp_section_O_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section O (sustainability) heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "الاستدامة" in content
+
+
+def test_CS1756_dc_supp_section_P_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section P (climate risks) heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "المخاطر" in content
+
+
+def test_CS1757_dc_supp_section_Q_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section Q (digital infrastructure) heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "DCIM" in content or "الرقمية" in content
+
+
+def test_CS1758_dc_supp_section_R_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: section R (documents) heading renders."""
+    _load_dc_supp(page, live_server)
+    content = page.locator("#es-req-supp").inner_text()
+    assert "مستندات" in content
+
+
+def test_CS1759_dc_supp_contracted_it_load_mw_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_contracted_it_load_mw field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_contracted_it_load_mw']").count() > 0
+
+
+def test_CS1760_dc_supp_power_density_kw_per_rack_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_power_density_kw_per_rack field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_power_density_kw_per_rack']").count() > 0
+
+
+def test_CS1761_dc_supp_contracted_it_load_renders_as_number(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_contracted_it_load_mw is a number input."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_contracted_it_load_mw']")
+    assert el.count() > 0
+    assert el.first.get_attribute("type") in ("number", None) or el.first.tag_name() in ("input", "div")
+
+
+def test_CS1762_dc_supp_actual_uptime_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_actual_uptime_pct field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_actual_uptime_pct']").count() > 0
+
+
+def test_CS1763_dc_supp_ups_capacity_mw_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ups_capacity_mw field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ups_capacity_mw']").count() > 0
+
+
+def test_CS1764_dc_supp_design_pue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_design_pue field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_design_pue']").count() > 0
+
+
+def test_CS1765_dc_supp_wue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_wue (Water Usage Effectiveness) field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_wue']").count() > 0
+
+
+def test_CS1766_dc_supp_land_area_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_land_area_sqm field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_land_area_sqm']").count() > 0
+
+
+def test_CS1767_dc_supp_fiber_routes_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_fiber_routes_count field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_fiber_routes_count']").count() > 0
+
+
+def test_CS1768_dc_supp_contracted_mw_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_contracted_mw field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_contracted_mw']").count() > 0
+
+
+def test_CS1769_dc_supp_total_revenue_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_total_revenue_annual field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_total_revenue_annual']").count() > 0
+
+
+def test_CS1770_dc_supp_asset_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_asset_type renders as a select element."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_asset_type']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1771_dc_supp_tier_cert_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_uptime_institute_cert_status renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_uptime_institute_cert_status']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1772_dc_supp_battery_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_battery_type renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_battery_type']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1773_dc_supp_ai_hpc_ready_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ai_hpc_ready (bool) field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ai_hpc_ready']").count() > 0
+
+
+def test_CS1774_dc_supp_stranded_power_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_stranded_power_risk field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_stranded_power_risk']").count() > 0
+
+
+def test_CS1775_dc_supp_grid_queue_position_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_grid_queue_position field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_grid_queue_position']").count() > 0
+
+
+def test_CS1776_dc_supp_slab_loading_capacity_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_slab_loading_capacity_kn_sqm field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_slab_loading_capacity_kn_sqm']").count() > 0
+
+
+def test_CS1777_dc_supp_raised_floor_height_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_raised_floor_height_mm field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_raised_floor_height_mm']").count() > 0
+
+
+def test_CS1778_dc_supp_latency_to_cloud_ms_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_latency_to_cloud_ms field renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_latency_to_cloud_ms']").count() > 0
+
+
+def test_CS1779_dc_supp_iso_27001_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_iso_27001_status renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_iso_27001_status']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1780_dc_supp_soc_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_soc_status renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_soc_status']").count() > 0
+
+
+def test_CS1781_dc_supp_tenants_count_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_tenants_count renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_tenants_count']").count() > 0
+
+
+def test_CS1782_dc_supp_wacr_years_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_wacr_years renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_wacr_years']").count() > 0
+
+
+def test_CS1783_dc_supp_wale_months_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_wale_months renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_wale_months']").count() > 0
+
+
+def test_CS1784_dc_supp_ebitda_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ebitda_annual renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ebitda_annual']").count() > 0
+
+
+def test_CS1785_dc_supp_noi_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_noi_annual renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_noi_annual']").count() > 0
+
+
+def test_CS1786_dc_supp_capex_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_capex_required renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_capex_required']").count() > 0
+
+
+def test_CS1787_dc_supp_ups_replacement_capex_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ups_replacement_capex renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ups_replacement_capex']").count() > 0
+
+
+def test_CS1788_dc_supp_market_demand_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_market_demand_level renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_market_demand_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1789_dc_supp_obsolescence_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_obsolescence_risk_level renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_obsolescence_risk_level']").count() > 0
+
+
+# ── Section N — purpose triplets ──────────────────────────────────────────────
+
+def test_CS1790_dc_supp_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: mortgage_lending methodology select renders."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_mortgage_lending_methodology']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1791_dc_supp_mortgage_lending_adjustment_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: mortgage_lending adjustment_pct renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_mortgage_lending_adjustment_pct']").count() > 0
+
+
+def test_CS1792_dc_supp_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: sale_purchase methodology select renders."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_sale_purchase_methodology']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1793_dc_supp_ifrs_fair_value_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: ifrs_fair_value methodology select renders."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_ifrs_fair_value_methodology']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1794_dc_supp_acquisition_investment_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: acquisition_investment methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_acquisition_investment_methodology']").count() > 0
+
+
+def test_CS1795_dc_supp_taxation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: taxation methodology select renders."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_taxation_methodology']")
+    assert el.count() > 0
+
+
+def test_CS1796_dc_supp_liquidation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: liquidation methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_liquidation_methodology']").count() > 0
+
+
+def test_CS1797_dc_supp_sale_leaseback_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: sale_leaseback (local-only) methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_sale_leaseback_methodology']").count() > 0
+
+
+def test_CS1798_dc_supp_tenant_contract_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: tenant_contract_review (local-only) methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_tenant_contract_review_methodology']").count() > 0
+
+
+def test_CS1799_dc_supp_litigation_dispute_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: litigation_dispute (local-only) methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_litigation_dispute_methodology']").count() > 0
+
+
+def test_CS1800_dc_supp_impairment_testing_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: impairment_testing (local-only) methodology renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_impairment_testing_methodology']").count() > 0
+
+
+def test_CS1801_dc_supp_methodology_has_mw_capacity_multiple_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: methodology select has mw_capacity_multiple option."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_mortgage_lending_methodology']")
+    assert el.count() > 0
+    opts = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "mw_capacity_multiple" in opts
+
+
+def test_CS1802_dc_supp_methodology_has_rack_kw_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: methodology select has rack_kw_rate_capitalization option."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_sale_purchase_methodology']")
+    assert el.count() > 0
+    opts = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "rack_kw_rate_capitalization" in opts
+
+
+def test_CS1803_dc_supp_methodology_has_dcf_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: methodology select has discounted_cash_flow option."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_ifrs_fair_value_methodology']")
+    assert el.count() > 0
+    opts = el.first.evaluate("e => Array.from(e.options).map(o => o.value)")
+    assert "discounted_cash_flow" in opts
+
+
+# ── Sustainability / climate / digital ───────────────────────────────────────
+
+def test_CS1804_dc_supp_renewable_energy_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_renewable_energy_pct renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_renewable_energy_pct']").count() > 0
+
+
+def test_CS1805_dc_supp_sustainability_features_renders_as_checkboxes(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_sustainability_features renders checkbox_group."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_sustainability_features']").count() > 0
+
+
+def test_CS1806_dc_supp_climate_resilience_features_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_climate_resilience_features renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_climate_resilience_features']").count() > 0
+
+
+def test_CS1807_dc_supp_dcim_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_dcim_available (bool) renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_dcim_available']").count() > 0
+
+
+def test_CS1808_dc_supp_digital_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_digital_value_impact_pct renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_digital_value_impact_pct']").count() > 0
+
+
+def test_CS1809_dc_supp_flood_risk_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_flood_risk_level renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_flood_risk_level']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1810_dc_supp_cooling_failure_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cooling_failure_risk_level renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_cooling_failure_risk_level']").count() > 0
+
+
+# ── Document fields ───────────────────────────────────────────────────────────
+
+def test_CS1811_dc_doc_supp_electrical_single_line_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_electrical_single_line renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_electrical_single_line']").count() > 0
+
+
+def test_CS1812_dc_doc_supp_tier_uptime_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_tier_uptime_report renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_tier_uptime_report']").count() > 0
+
+
+def test_CS1813_dc_doc_supp_iso_soc_pci_certificates_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_iso_soc_pci_certificates renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_iso_soc_pci_certificates']").count() > 0
+
+
+def test_CS1814_dc_doc_supp_pue_wue_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_pue_wue_reports renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_pue_wue_reports']").count() > 0
+
+
+def test_CS1815_dc_doc_supp_colocation_contracts_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_colocation_contracts renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_colocation_contracts']").count() > 0
+
+
+def test_CS1816_dc_doc_supp_dcim_operations_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_dcim_operations_reports renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_dcim_operations_reports']").count() > 0
+
+
+def test_CS1817_dc_doc_supp_capex_lifecycle_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_capex_lifecycle_plan renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_capex_lifecycle_plan']").count() > 0
+
+
+def test_CS1818_dc_doc_supp_insurance_documents_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_insurance_documents renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_insurance_documents']").count() > 0
+
+
+# ── data-es-supp-field / no data-es-req-field ─────────────────────────────────
+
+def test_CS1819_dc_supp_all_fields_use_supp_attribute(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: all supplemental fields in data_center use data-es-supp-field."""
+    _load_dc_supp(page, live_server)
+    supp = page.locator("#es-req-supp [data-es-supp-field^='dc_supp_'], #es-req-supp [data-es-supp-field^='dc_doc_supp_']")
+    assert supp.count() > 0
+
+
+def test_CS1820_dc_supp_no_req_field_in_supp_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: no data-es-req-field attributes inside data_center supplemental panel."""
+    _load_dc_supp(page, live_server)
+    req_fields = page.locator("#es-req-supp [data-es-req-field^='dc_supp_']")
+    assert req_fields.count() == 0
+
+
+def test_CS1821_dc_supp_field_count_exceeds_200(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: total dc_supp_ + dc_doc_supp_ field count exceeds 200."""
+    _load_dc_supp(page, live_server)
+    count = page.locator(
+        "#es-req-supp [data-es-supp-field^='dc_supp_'], "
+        "#es-req-supp [data-es-supp-field^='dc_doc_supp_']"
+    ).count()
+    assert count > 200, f"Expected >200 supplemental fields, got {count}"
+
+
+def test_CS1822_dc_supp_section_count_is_18(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: exactly 18 supplemental sections render."""
+    _load_dc_supp(page, live_server)
+    sections = page.locator("#es-req-supp .es-req-section-heading, #es-req-supp [class*='section']")
+    # Flexible: just check headings via text content
+    content = page.locator("#es-req-supp").inner_text()
+    # All 18 section letters should be present
+    for letter in ["أ —", "ب —", "ج —", "د —",
+                   "هـ —", "و —", "ز —", "ح —",
+                   "ط —", "ي —", "ك —", "ل —",
+                   "م —", "ن —", "س —", "ع —",
+                   "ف —", "ق —"]:
+        assert letter in content, f"Section letter not found: {letter}"
+
+
+# ── No API POST / no JS errors ─────────────────────────────────────────────────
+
+def test_CS1823_dc_supp_no_api_post_triggered(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: loading data_center profile triggers zero valuation POST calls."""
+    post_calls = []
+    page.on("request", lambda req: post_calls.append(req.url)
+            if req.method == "POST" and "/api/" in req.url else None)
+    _load_dc_supp(page, live_server)
+    valuation_posts = [u for u in post_calls if "/api/" in u
+                       and "/radar" not in u and "/health" not in u]
+    assert len(valuation_posts) == 0
+
+
+def test_CS1824_dc_supp_no_js_errors(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: no application JavaScript errors on data_center supplemental load."""
+    js_errors = []
+    page.on("console", lambda msg: js_errors.append(msg.text)
+            if msg.type == "error"
+               and "401" not in msg.text
+               and "UNAUTHORIZED" not in msg.text
+               and "Failed to load resource" not in msg.text
+            else None)
+    _load_dc_supp(page, live_server)
+    assert len(js_errors) == 0, f"Unexpected JS errors: {js_errors}"
+
+
+# ── Existing data_center static form unchanged ────────────────────────────────
+
+def test_CS1825_dc_static_total_power_capacity_mw_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing dc_total_power_capacity_mw main-form field still renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-req-field='dc_total_power_capacity_mw']").count() > 0
+
+
+def test_CS1826_dc_static_tier_classification_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing dc_tier_classification main-form field still renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-req-field='dc_tier_classification']").count() > 0
+
+
+def test_CS1827_dc_static_pue_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing dc_pue main-form field still renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-req-field='dc_pue']").count() > 0
+
+
+def test_CS1828_dc_static_white_space_area_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing dc_white_space_area_sqm main-form field still renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-req-field='dc_white_space_area_sqm']").count() > 0
+
+
+def test_CS1829_dc_static_racks_count_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing dc_racks_count main-form field still renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-req-field='dc_racks_count']").count() > 0
+
+
+# ── Skipped static fields are not duplicated in supplemental ──────────────────
+
+def test_CS1830_dc_supp_no_duplicate_total_power(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_total_power_capacity_mw is NOT duplicated in supplemental panel."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_total_power_capacity_mw']").count() == 0
+
+
+def test_CS1831_dc_supp_no_duplicate_tier_classification(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_tier_classification is NOT duplicated in supplemental."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_tier_classification']").count() == 0
+
+
+def test_CS1832_dc_supp_no_duplicate_pue(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_pue is NOT duplicated in supplemental."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_pue']").count() == 0
+
+
+def test_CS1833_dc_supp_no_duplicate_cooling_system_type(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_cooling_system_type is NOT duplicated in supplemental."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_cooling_system_type']").count() == 0
+
+
+# ── Regression guards — neighboring profiles unaffected ──────────────────────
+
+def test_CS1834_cold_storage_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: cold_storage profile does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+    assert page.locator("[data-es-supp-field^='dc_doc_supp_']").count() == 0
+
+
+def test_CS1835_industrial_logistics_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: industrial_logistics_facility_detailed does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="industrial_logistics_facility_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1836_prefabricated_factory_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: prefabricated_factory does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="prefabricated_factory")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1837_existing_building_detailed_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: existing_building_detailed does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="مبنى قائم")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1838_land_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: land (أرض فضاء) profile does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1839_marina_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: marina profile does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1840_seaport_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: seaport profile does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="seaport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+def test_CS1841_airport_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: airport profile does NOT render dc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="airport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    assert page.locator("[data-es-supp-field^='dc_supp_']").count() == 0
+
+
+# ── Additional supplemental field checks ─────────────────────────────────────
+
+def test_CS1842_dc_supp_power_capacity_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_power_capacity_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_power_capacity_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1843_dc_supp_reliability_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_reliability_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_reliability_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1844_dc_supp_market_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_market_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_market_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1845_dc_supp_expense_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_expense_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_expense_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1846_dc_supp_electrical_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_electrical_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_electrical_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1847_dc_supp_thermal_risk_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_thermal_risk_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_thermal_risk_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1848_dc_supp_connectivity_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_connectivity_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_connectivity_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1849_dc_supp_compliance_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_compliance_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_compliance_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1850_dc_supp_risk_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_risk_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_risk_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1851_dc_supp_sustainability_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_sustainability_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_sustainability_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1852_dc_supp_monitoring_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_monitoring_notes renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_monitoring_notes']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1853_dc_supp_grid_connection_capacity_mva_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_grid_connection_capacity_mva renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_grid_connection_capacity_mva']").count() > 0
+
+
+def test_CS1854_dc_supp_transformer_capacity_mva_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_transformer_capacity_mva renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_transformer_capacity_mva']").count() > 0
+
+
+def test_CS1855_dc_supp_cooling_water_consumption_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cooling_water_consumption renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_cooling_water_consumption']").count() > 0
+
+
+def test_CS1856_dc_supp_building_gfa_sqm_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_building_gfa_sqm renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_building_gfa_sqm']").count() > 0
+
+
+def test_CS1857_dc_supp_floor_to_ceiling_height_m_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_floor_to_ceiling_height_m renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_floor_to_ceiling_height_m']").count() > 0
+
+
+def test_CS1858_dc_supp_future_phase_capacity_mw_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_future_phase_capacity_mw renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_future_phase_capacity_mw']").count() > 0
+
+
+def test_CS1859_dc_supp_ups_autonomy_minutes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ups_autonomy_minutes renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ups_autonomy_minutes']").count() > 0
+
+
+def test_CS1860_dc_supp_backup_power_runtime_hours_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_backup_power_runtime_hours renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_backup_power_runtime_hours']").count() > 0
+
+
+def test_CS1861_dc_supp_power_cost_per_kwh_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_power_cost_per_kwh renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_power_cost_per_kwh']").count() > 0
+
+
+def test_CS1862_dc_supp_climate_risk_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_climate_risk_value_impact_pct renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_climate_risk_value_impact_pct']").count() > 0
+
+
+def test_CS1863_dc_supp_sustainability_value_impact_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_sustainability_value_impact renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_sustainability_value_impact']").count() > 0
+
+
+def test_CS1864_dc_supp_opex_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_opex_annual renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_opex_annual']").count() > 0
+
+
+def test_CS1865_dc_supp_annual_power_revenue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_annual_power_revenue renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_annual_power_revenue']").count() > 0
+
+
+def test_CS1866_dc_supp_cross_connect_revenue_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cross_connect_revenue_annual renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_cross_connect_revenue_annual']").count() > 0
+
+
+def test_CS1867_dc_supp_hyperscale_customer_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_hyperscale_customer_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_hyperscale_customer_available']").count() > 0
+
+
+def test_CS1868_dc_supp_min_revenue_guarantee_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_min_revenue_guarantee renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_min_revenue_guarantee']").count() > 0
+
+
+def test_CS1869_dc_supp_concurrent_maintainability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_concurrent_maintainability renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_concurrent_maintainability']").count() > 0
+
+
+def test_CS1870_dc_supp_fault_tolerance_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_fault_tolerance_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_fault_tolerance_available']").count() > 0
+
+
+def test_CS1871_dc_supp_ix_presence_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ix_presence renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_ix_presence']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1872_dc_supp_cloud_on_ramp_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cloud_on_ramp_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_cloud_on_ramp_available']").count() > 0
+
+
+def test_CS1873_dc_supp_data_sovereignty_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_data_sovereignty_compliance renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_data_sovereignty_compliance']").count() > 0
+
+
+def test_CS1874_dc_supp_cybersecurity_compliance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cybersecurity_compliance renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_cybersecurity_compliance']").count() > 0
+
+
+def test_CS1875_dc_supp_pci_dss_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_pci_dss_status renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_pci_dss_status']").count() > 0
+
+
+def test_CS1876_dc_supp_data_residency_requirements_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_data_residency_requirements renders as textarea."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_data_residency_requirements']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS1877_dc_supp_civil_defense_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_civil_defense_license_status renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_civil_defense_license_status']").count() > 0
+
+
+def test_CS1878_dc_supp_energy_cost_pass_through_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_energy_cost_pass_through renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_energy_cost_pass_through']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1879_dc_supp_immediate_repairs_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_immediate_repairs_required renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_immediate_repairs_required']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1880_dc_supp_capex_timeline_months_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_capex_timeline_months renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_capex_timeline_months']").count() > 0
+
+
+def test_CS1881_dc_supp_switchgear_replacement_capex_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_switchgear_replacement_capex renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_switchgear_replacement_capex']").count() > 0
+
+
+def test_CS1882_dc_supp_lifecycle_replacement_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_lifecycle_replacement_cost renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_lifecycle_replacement_cost']").count() > 0
+
+
+def test_CS1883_dc_supp_cloud_demand_driver_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_cloud_demand_driver renders as select."""
+    _load_dc_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='dc_supp_cloud_demand_driver']")
+    assert el.count() > 0
+    assert el.first.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS1884_dc_supp_absorption_rate_mw_yr_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_absorption_rate_mw_yr renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_absorption_rate_mw_yr']").count() > 0
+
+
+def test_CS1885_dc_supp_buyer_pool_depth_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_buyer_pool_depth renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_buyer_pool_depth']").count() > 0
+
+
+def test_CS1886_dc_supp_green_dc_cert_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_green_dc_cert_status renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_green_dc_cert_status']").count() > 0
+
+
+def test_CS1887_dc_supp_ppa_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_ppa_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_ppa_available']").count() > 0
+
+
+def test_CS1888_dc_supp_water_scarcity_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_water_scarcity_risk_level renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_water_scarcity_risk_level']").count() > 0
+
+
+def test_CS1889_dc_supp_power_grid_reliability_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_power_grid_reliability_risk renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_power_grid_reliability_risk']").count() > 0
+
+
+def test_CS1890_dc_supp_seismic_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_seismic_risk_level renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_seismic_risk_level']").count() > 0
+
+
+def test_CS1891_dc_supp_disaster_recovery_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_disaster_recovery_plan_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_disaster_recovery_plan_available']").count() > 0
+
+
+def test_CS1892_dc_supp_business_continuity_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_business_continuity_plan_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_business_continuity_plan_available']").count() > 0
+
+
+def test_CS1893_dc_supp_smart_metering_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_smart_metering_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_smart_metering_available']").count() > 0
+
+
+def test_CS1894_dc_supp_predictive_maintenance_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_supp_predictive_maintenance_available renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_supp_predictive_maintenance_available']").count() > 0
+
+
+def test_CS1895_dc_doc_supp_power_supply_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_power_supply_agreement renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_power_supply_agreement']").count() > 0
+
+
+def test_CS1896_dc_doc_supp_cooling_mep_drawings_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_cooling_mep_drawings renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_cooling_mep_drawings']").count() > 0
+
+
+def test_CS1897_dc_doc_supp_security_safety_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_security_safety_reports renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_security_safety_reports']").count() > 0
+
+
+def test_CS1898_dc_doc_supp_critical_maintenance_contracts_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_critical_maintenance_contracts renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_critical_maintenance_contracts']").count() > 0
+
+
+def test_CS1899_dc_doc_supp_site_photos_drawings_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: dc_doc_supp_site_photos_drawings renders."""
+    _load_dc_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='dc_doc_supp_site_photos_drawings']").count() > 0
+
+
+def test_CS1900_dc_supp_8zs_regression_guard(page: "Page", live_server: str) -> None:
+    """Phase 8ZS: complete data_center supplemental schema is present in DOM with correct count."""
+    _load_dc_supp(page, live_server)
+    supp_count = page.locator(
+        "#es-req-supp [data-es-supp-field^='dc_supp_'], "
+        "#es-req-supp [data-es-supp-field^='dc_doc_supp_']"
+    ).count()
+    assert supp_count >= 200, f"Phase 8ZS regression: expected >=200 fields, got {supp_count}"

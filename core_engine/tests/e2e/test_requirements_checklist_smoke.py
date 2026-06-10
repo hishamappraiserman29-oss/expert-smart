@@ -25123,3 +25123,758 @@ def test_CS2417_8zz_skipped_zs_enclosure_condition_not_in_supp(page: "Page", liv
     _load_zoo_safari_supp(page, live_server)
     el = page.locator("[data-es-supp-field='zs_enclosure_condition']")
     assert el.count() == 0, "8ZZ: main-form zs_enclosure_condition duplicated in supplemental"
+
+
+# ── Phase 8ZAA: Littoral Rights Detailed Supplemental Requirements ────────────
+
+def _load_littoral_rights_supp(page: "Page", live_server: str) -> None:
+    """Load littoral_rights profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="littoral_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2418_8zaa_panel_visible(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Supplemental panel renders for littoral_rights."""
+    _load_littoral_rights_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZAA: supplemental panel not visible"
+
+
+def test_CS2419_8zaa_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Heading contains the approved Arabic text."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "متطلبات تقييم حقوق ساحلية / واجهة بحرية" in html, \
+        "8ZAA: heading not found"
+
+
+def test_CS2420_8zaa_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Subtext 'local data' renders."""
+    _load_littoral_rights_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert "لا يُرسل للتقرير" in subtext, "8ZAA: subtext missing local-only message"
+
+
+def test_CS2421_8zaa_section_count_is_15(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Exactly 15 supplemental sections render."""
+    _load_littoral_rights_supp(page, live_server)
+    sections = page.locator("#es-req-supp details")
+    assert sections.count() == 15, f"8ZAA: expected 15 sections, got {sections.count()}"
+
+
+def test_CS2422_8zaa_dropdown_option_exists(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: littoral_rights option exists in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='littoral_rights']")
+    assert opt.count() >= 1, "8ZAA: dropdown option for littoral_rights not found"
+
+
+def test_CS2423_8zaa_sec_a_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section A heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "تعريف الحق الشاطئي وطبيعته القانونية" in html, \
+        "8ZAA: section A heading missing"
+
+
+def test_CS2424_8zaa_sec_b_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section B heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الواجهة الشاطئية والحدود والمساحة" in html, \
+        "8ZAA: section B heading missing"
+
+
+def test_CS2425_8zaa_sec_c_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section C heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حرم البحر وقيود البناء" in html, \
+        "8ZAA: section C heading missing"
+
+
+def test_CS2426_8zaa_sec_d_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section D heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حقوق الوصول والاستخدام والاستبعاد" in html, \
+        "8ZAA: section D heading missing"
+
+
+def test_CS2427_8zaa_sec_e_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section E heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التآكل والترسيب وتغير خط الشاطئ" in html, \
+        "8ZAA: section E heading missing"
+
+
+def test_CS2428_8zaa_sec_f_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section F heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الحماية الساحلية والالتزامات الهندسية" in html, \
+        "8ZAA: section F heading missing"
+
+
+def test_CS2429_8zaa_sec_g_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section G heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الوضع البيئي والتصاريح" in html, \
+        "8ZAA: section G heading missing"
+
+
+def test_CS2430_8zaa_sec_h_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section H heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الملكية والتسجيل والنزاعات" in html, \
+        "8ZAA: section H heading missing"
+
+
+def test_CS2431_8zaa_sec_i_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section I heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "القيمة الاقتصادية والدخل" in html, \
+        "8ZAA: section I heading missing"
+
+
+def test_CS2432_8zaa_sec_j_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section J heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "السوق والمقارنات وقابلية التسويق" in html, \
+        "8ZAA: section J heading missing"
+
+
+def test_CS2433_8zaa_sec_k_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section K heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "معاملات التعديل حسب غرض التقييم" in html, \
+        "8ZAA: section K heading missing"
+
+
+def test_CS2434_8zaa_sec_l_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section L heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المخاطر المناخية والساحلية" in html, \
+        "8ZAA: section L heading missing"
+
+
+def test_CS2435_8zaa_sec_m_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section M heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المسؤولية والتأمين والسلامة العامة" in html, \
+        "8ZAA: section M heading missing"
+
+
+def test_CS2436_8zaa_sec_n_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section N heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التوثيق الرقمي والمسح الساحلي" in html, \
+        "8ZAA: section N heading missing"
+
+
+def test_CS2437_8zaa_sec_o_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Section O heading renders."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مستندات إضافية مطلوبة" in html, \
+        "8ZAA: section O heading missing"
+
+
+def test_CS2438_8zaa_sec_a_littoral_right_type_has_9_opts(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_littoral_right_type renders with 9 options."""
+    _load_littoral_rights_supp(page, live_server)
+    sel = page.locator("[data-es-supp-field='lr_supp_littoral_right_type']")
+    assert sel.count() >= 1, "8ZAA: lr_supp_littoral_right_type not found"
+    opts = sel.first.locator("option")
+    assert opts.count() >= 9, f"8ZAA: expected at least 9 options, got {opts.count()}"
+
+
+def test_CS2439_8zaa_sec_a_right_transferability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_right_transferability renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_right_transferability']")
+    assert el.count() >= 1, "8ZAA: lr_supp_right_transferability not found"
+
+
+def test_CS2440_8zaa_sec_a_legal_right_summary_is_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_legal_right_summary is rendered as textarea."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("textarea[data-es-supp-field='lr_supp_legal_right_summary']")
+    assert el.count() >= 1, "8ZAA: lr_supp_legal_right_summary textarea not found"
+
+
+def test_CS2441_8zaa_sec_b_legal_coastal_frontage_unit_meter(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_legal_coastal_frontage_m shows unit متر."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "lr_supp_legal_coastal_frontage_m" in html, "8ZAA: lr_supp_legal_coastal_frontage_m not found"
+    assert "متر" in html, "8ZAA: unit meter not found"
+
+
+def test_CS2442_8zaa_sec_b_beach_area_sqm_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_beach_area_sqm renders with unit م²."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_beach_area_sqm']")
+    assert el.count() >= 1, "8ZAA: lr_supp_beach_area_sqm not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "م²" in html, "8ZAA: unit m2 not found"
+
+
+def test_CS2443_8zaa_sec_c_coastal_setback_regime_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_coastal_setback_regime renders with strict_no_build_zone option."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_coastal_setback_regime']")
+    assert el.count() >= 1, "8ZAA: lr_supp_coastal_setback_regime not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "strict_no_build_zone" in html, "8ZAA: strict_no_build_zone option not found"
+
+
+def test_CS2444_8zaa_sec_c_buildability_impact_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_buildability_impact_pct renders with unit %."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_buildability_impact_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_buildability_impact_pct not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "%" in html, "8ZAA: percent unit not found"
+
+
+def test_CS2445_8zaa_sec_c_restriction_value_impact_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_restriction_value_impact_pct renders with unit %."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_restriction_value_impact_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_restriction_value_impact_pct not found"
+
+
+def test_CS2446_8zaa_sec_d_beach_access_right_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_beach_access_right renders with private_exclusive option."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "lr_supp_beach_access_right" in html, "8ZAA: lr_supp_beach_access_right not found"
+    assert "private_exclusive" in html, "8ZAA: private_exclusive option not found"
+
+
+def test_CS2447_8zaa_sec_d_access_path_legal_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_access_path_legal_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_access_path_legal_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_access_path_legal_status not found"
+
+
+def test_CS2448_8zaa_sec_e_accretion_rate_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_accretion_rate_m_per_year renders with unit متر/سنة."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_accretion_rate_m_per_year']")
+    assert el.count() >= 1, "8ZAA: lr_supp_accretion_rate_m_per_year not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "سنة" in html, "8ZAA: unit year not found"
+
+
+def test_CS2449_8zaa_sec_e_beach_nourishment_required_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_beach_nourishment_required is bool (yes/no select)."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_beach_nourishment_required']")
+    assert el.count() >= 1, "8ZAA: lr_supp_beach_nourishment_required not found"
+
+
+def test_CS2450_8zaa_sec_e_liability_for_erosion_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_liability_for_erosion_or_retreat renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_liability_for_erosion_or_retreat']")
+    assert el.count() >= 1, "8ZAA: lr_supp_liability_for_erosion_or_retreat not found"
+
+
+def test_CS2451_8zaa_sec_f_seawall_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_seawall_condition renders with 6 options including not_applicable."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_seawall_condition']")
+    assert el.count() >= 1, "8ZAA: lr_supp_seawall_condition not found"
+    opts = el.first.locator("option")
+    assert opts.count() >= 6, f"8ZAA: expected at least 6 options, got {opts.count()}"
+
+
+def test_CS2452_8zaa_sec_f_estimated_capex_unit_jm(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_estimated_coastal_protection_capex renders with unit جنيه."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_estimated_coastal_protection_capex']")
+    assert el.count() >= 1, "8ZAA: lr_supp_estimated_coastal_protection_capex not found"
+
+
+def test_CS2453_8zaa_sec_g_turtle_nesting_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_turtle_nesting_or_sensitive_habitat_presence is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_turtle_nesting_or_sensitive_habitat_presence']")
+    assert el.count() >= 1, "8ZAA: lr_supp_turtle_nesting_or_sensitive_habitat_presence not found"
+
+
+def test_CS2454_8zaa_sec_g_env_permit_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_environmental_permit_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_environmental_permit_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_environmental_permit_status not found"
+
+
+def test_CS2455_8zaa_sec_h_legal_dispute_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_legal_dispute_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_legal_dispute_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_legal_dispute_status not found"
+
+
+def test_CS2456_8zaa_sec_h_neighboring_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_neighboring_owner_dispute_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_neighboring_owner_dispute_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_neighboring_owner_dispute_status not found"
+
+
+def test_CS2457_8zaa_sec_i_income_generating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_income_generating_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_income_generating_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_income_generating_status not found"
+
+
+def test_CS2458_8zaa_sec_i_beach_access_fee_revenue_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_beach_access_fee_revenue_annual renders with unit جنيه/سنة."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_beach_access_fee_revenue_annual']")
+    assert el.count() >= 1, "8ZAA: lr_supp_beach_access_fee_revenue_annual not found"
+
+
+def test_CS2459_8zaa_sec_j_frontage_value_per_meter_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_market_frontage_value_per_meter renders with unit جنيه/متر."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_market_frontage_value_per_meter']")
+    assert el.count() >= 1, "8ZAA: lr_supp_market_frontage_value_per_meter not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "جنيه/متر" in html, "8ZAA: unit jm/meter not found"
+
+
+def test_CS2460_8zaa_sec_j_beach_area_value_per_sqm_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_market_beach_area_value_per_sqm renders with unit جنيه/م²."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_market_beach_area_value_per_sqm']")
+    assert el.count() >= 1, "8ZAA: lr_supp_market_beach_area_value_per_sqm not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "جنيه/م²" in html, "8ZAA: unit jm/sqm not found"
+
+
+def test_CS2461_8zaa_sec_j_marketing_period_unit_month(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_expected_marketing_period_months renders with unit شهر."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_expected_marketing_period_months']")
+    assert el.count() >= 1, "8ZAA: lr_supp_expected_marketing_period_months not found"
+    html = page.locator("#es-req-supp").inner_html()
+    assert "شهر" in html, "8ZAA: unit month not found"
+
+
+def test_CS2462_8zaa_sec_l_sea_level_rise_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_sea_level_rise_risk_level renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_sea_level_rise_risk_level']")
+    assert el.count() >= 1, "8ZAA: lr_supp_sea_level_rise_risk_level not found"
+
+
+def test_CS2463_8zaa_sec_l_regulatory_retreat_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_regulatory_retreat_risk_level renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_regulatory_retreat_risk_level']")
+    assert el.count() >= 1, "8ZAA: lr_supp_regulatory_retreat_risk_level not found"
+
+
+def test_CS2464_8zaa_sec_l_climate_risk_value_impact_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_climate_risk_value_impact_pct renders with unit %."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_climate_risk_value_impact_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_climate_risk_value_impact_pct not found"
+
+
+def test_CS2465_8zaa_sec_m_public_liability_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_public_liability_risk_level renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_public_liability_risk_level']")
+    assert el.count() >= 1, "8ZAA: lr_supp_public_liability_risk_level not found"
+
+
+def test_CS2466_8zaa_sec_m_insurance_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_insurance_status renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_insurance_status']")
+    assert el.count() >= 1, "8ZAA: lr_supp_insurance_status not found"
+
+
+def test_CS2467_8zaa_sec_n_gps_survey_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_gps_survey_available is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_gps_survey_available']")
+    assert el.count() >= 1, "8ZAA: lr_supp_gps_survey_available not found"
+
+
+def test_CS2468_8zaa_sec_n_digital_doc_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_digital_documentation_quality renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_digital_documentation_quality']")
+    assert el.count() >= 1, "8ZAA: lr_supp_digital_documentation_quality not found"
+
+
+def test_CS2469_8zaa_sec_o_doc_access_rights_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_doc_supp_access_rights_documents renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_doc_supp_access_rights_documents']")
+    assert el.count() >= 1, "8ZAA: lr_doc_supp_access_rights_documents not found"
+
+
+def test_CS2470_8zaa_sec_o_doc_env_permits_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_doc_supp_environmental_permits renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_doc_supp_environmental_permits']")
+    assert el.count() >= 1, "8ZAA: lr_doc_supp_environmental_permits not found"
+
+
+def test_CS2471_8zaa_sec_o_doc_gis_drone_maps_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_doc_supp_gis_drone_maps renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_doc_supp_gis_drone_maps']")
+    assert el.count() >= 1, "8ZAA: lr_doc_supp_gis_drone_maps not found"
+
+
+def test_CS2472_8zaa_lr_methodology_has_contribution_to_land_value(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _LR_METHODOLOGY_OPTS includes contribution_to_land_value."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "contribution_to_land_value" in html, "8ZAA: contribution_to_land_value not in LR methodology opts"
+
+
+def test_CS2473_8zaa_lr_methodology_has_paired_sales_analysis(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _LR_METHODOLOGY_OPTS includes paired_sales_analysis."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "paired_sales_analysis" in html, "8ZAA: paired_sales_analysis not in LR methodology opts"
+
+
+def test_CS2474_8zaa_lr_methodology_has_concession_dcf(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _LR_METHODOLOGY_OPTS includes concession_dcf."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "concession_dcf" in html, "8ZAA: concession_dcf not in LR methodology opts"
+
+
+def test_CS2475_8zaa_lr_methodology_has_cost_to_cure(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _LR_METHODOLOGY_OPTS includes cost_to_cure_or_protection_cost."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "cost_to_cure_or_protection_cost" in html, "8ZAA: cost_to_cure_or_protection_cost not in LR methodology opts"
+
+
+def test_CS2476_8zaa_lr_methodology_inherits_sales_comparison(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _LR_METHODOLOGY_OPTS inherits sales_comparison from base."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "sales_comparison" in html, "8ZAA: sales_comparison not inherited in LR methodology opts"
+
+
+def test_CS2477_8zaa_lr_methodology_no_base_mutation(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: _METHODOLOGY_OPTS base does not contain contribution_to_land_value (no mutation)."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="riparian_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    # riparian_rights has no supplemental schema — panel stays hidden; just verify via innerHTML
+    page.wait_for_timeout(500)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "contribution_to_land_value" not in html, "8ZAA: base _METHODOLOGY_OPTS mutated (contribution_to_land_value leaked)"
+
+
+def test_CS2478_8zaa_12_purpose_methodology_selects_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: All 12 purpose methodology selects render in Section K."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    purposes = [
+        "lr_supp_m_mortgage_lending_methodology",
+        "lr_supp_m_sale_purchase_methodology",
+        "lr_supp_m_insurance_methodology",
+        "lr_supp_m_ifrs_fair_value_methodology",
+        "lr_supp_m_development_feasibility_methodology",
+        "lr_supp_m_hospitality_support_value_methodology",
+        "lr_supp_m_concession_review_methodology",
+        "lr_supp_m_expropriation_compensation_methodology",
+        "lr_supp_m_taxation_methodology",
+        "lr_supp_m_liquidation_methodology",
+        "lr_supp_m_litigation_dispute_methodology",
+        "lr_supp_m_impairment_testing_methodology",
+    ]
+    for p in purposes:
+        assert p in html, f"8ZAA: purpose methodology field {p} not found"
+
+
+def test_CS2479_8zaa_local_purposes_have_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Local-advisory purpose fields contain help_ar Arabic text."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "غرض محلي إرشادي فقط" in html, \
+        "8ZAA: local purpose help_ar text not found"
+
+
+def test_CS2480_8zaa_explainer_contains_redirect(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Supplemental desc contains redirect text for marina/seaport/land."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مارينا" in html, "8ZAA: marina redirect text not found in explainer"
+    assert "ميناء" in html, "8ZAA: seaport redirect text not found in explainer"
+    assert "أرض" in html, "8ZAA: land redirect text not found in explainer"
+
+
+def test_CS2481_8zaa_all_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: All supplemental inputs have data-es-supp-field attribute."""
+    _load_littoral_rights_supp(page, live_server)
+    supp_div = page.locator("#es-req-supp")
+    total_inputs = supp_div.locator("input, select, textarea").count()
+    supp_tagged = supp_div.locator("[data-es-supp-field]").count()
+    assert supp_tagged >= 1, "8ZAA: no data-es-supp-field attributes found"
+    assert supp_tagged == total_inputs, \
+        f"8ZAA: tagged {supp_tagged} vs total inputs {total_inputs} — some inputs missing data-es-supp-field"
+
+
+def test_CS2482_8zaa_zero_data_es_req_field_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: No data-es-req-field inside supplemental panel."""
+    _load_littoral_rights_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, f"8ZAA: found {count} data-es-req-field inside supplemental panel"
+
+
+def test_CS2483_8zaa_static_form_still_renders_lr_coastal_frontage(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: Existing littoral_rights static form still renders lr_coastal_frontage_length_m."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="littoral_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    el = page.locator("[data-es-req-field='lr_coastal_frontage_length_m']")
+    assert el.count() >= 1, "8ZAA: lr_coastal_frontage_length_m missing from static form"
+
+
+def test_CS2484_8zaa_skipped_lr_coastal_frontage_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_coastal_frontage_length_m must NOT be duplicated in supplemental."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_coastal_frontage_length_m']")
+    assert el.count() == 0, "8ZAA: lr_coastal_frontage_length_m duplicated in supplemental"
+
+
+def test_CS2485_8zaa_skipped_lr_coastal_setback_line_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_coastal_setback_line_defined must NOT be duplicated in supplemental."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_coastal_setback_line_defined']")
+    assert el.count() == 0, "8ZAA: lr_coastal_setback_line_defined duplicated in supplemental"
+
+
+def test_CS2486_8zaa_skipped_lr_concession_remaining_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_concession_remaining_years must NOT be duplicated in supplemental."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_concession_remaining_years']")
+    assert el.count() == 0, "8ZAA: lr_concession_remaining_years duplicated in supplemental"
+
+
+def test_CS2487_8zaa_skipped_lr_annual_erosion_rate_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_annual_erosion_rate_m_per_year must NOT be duplicated in supplemental."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_annual_erosion_rate_m_per_year']")
+    assert el.count() == 0, "8ZAA: lr_annual_erosion_rate_m_per_year duplicated in supplemental"
+
+
+def test_CS2488_8zaa_isolation_marina_no_lr_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: marina profile supplemental must NOT contain lr_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="marina")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    el = page.locator("[data-es-supp-field^='lr_supp_']")
+    assert el.count() == 0, f"8ZAA: lr_supp_ fields leaked into marina ({el.count()} found)"
+
+
+def test_CS2489_8zaa_isolation_seaport_no_lr_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: seaport profile supplemental must NOT contain lr_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="seaport")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    el = page.locator("[data-es-supp-field^='lr_supp_']")
+    assert el.count() == 0, f"8ZAA: lr_supp_ fields leaked into seaport ({el.count()} found)"
+
+
+def test_CS2490_8zaa_isolation_riparian_rights_no_lr_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: riparian_rights profile must NOT show lr_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="riparian_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    # riparian_rights has no supplemental schema — panel stays hidden; just verify no lr_supp_ fields
+    page.wait_for_timeout(500)
+    el = page.locator("[data-es-supp-field^='lr_supp_']")
+    assert el.count() == 0, f"8ZAA: lr_supp_ leaked into riparian_rights ({el.count()} found)"
+
+
+def test_CS2491_8zaa_isolation_waterway_easement_no_lr_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: waterway_easement profile must NOT show lr_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="waterway_easement")
+    page.select_option("#val-purpose", value="fair_market_value")
+    # waterway_easement has no supplemental schema — panel stays hidden; just verify no lr_supp_ fields
+    page.wait_for_timeout(500)
+    el = page.locator("[data-es-supp-field^='lr_supp_']")
+    assert el.count() == 0, f"8ZAA: lr_supp_ leaked into waterway_easement ({el.count()} found)"
+
+
+def test_CS2492_8zaa_isolation_land_no_lr_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: land profile supplemental must NOT contain lr_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")  # HTML option value for land profile
+    page.select_option("#val-purpose", value="fair_market_value")
+    # land has no supplemental schema — panel stays hidden; just verify no lr_supp_ fields
+    page.wait_for_timeout(500)
+    el = page.locator("[data-es-supp-field^='lr_supp_']")
+    assert el.count() == 0, f"8ZAA: lr_supp_ leaked into land ({el.count()} found)"
+
+
+def test_CS2493_8zaa_sec_i_development_premium_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_development_premium_due_to_frontage_pct renders with unit %."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_development_premium_due_to_frontage_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_development_premium_due_to_frontage_pct not found"
+
+
+def test_CS2494_8zaa_sec_i_market_rent_premium_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_market_rent_premium_due_to_beach_access_pct renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_market_rent_premium_due_to_beach_access_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_market_rent_premium_due_to_beach_access_pct not found"
+
+
+def test_CS2495_8zaa_sec_l_coastal_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_coastal_flood_risk_level renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_coastal_flood_risk_level']")
+    assert el.count() >= 1, "8ZAA: lr_supp_coastal_flood_risk_level not found"
+
+
+def test_CS2496_8zaa_sec_o_doc_income_data_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_doc_supp_income_data renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_doc_supp_income_data']")
+    assert el.count() >= 1, "8ZAA: lr_doc_supp_income_data not found"
+
+
+def test_CS2497_8zaa_sec_o_doc_insurance_documents_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_doc_supp_insurance_documents renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_doc_supp_insurance_documents']")
+    assert el.count() >= 1, "8ZAA: lr_doc_supp_insurance_documents not found"
+
+
+def test_CS2498_8zaa_sec_b_buffer_zone_unit_meter(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_beach_buffer_zone_width_m renders with unit متر."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_beach_buffer_zone_width_m']")
+    assert el.count() >= 1, "8ZAA: lr_supp_beach_buffer_zone_width_m not found"
+
+
+def test_CS2499_8zaa_sec_l_climate_adaptation_required_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_climate_adaptation_required is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_climate_adaptation_required']")
+    assert el.count() >= 1, "8ZAA: lr_supp_climate_adaptation_required not found"
+
+
+def test_CS2500_8zaa_sec_l_adaptation_cost_unit_jm(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_adaptation_cost_estimate renders with unit جنيه."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_adaptation_cost_estimate']")
+    assert el.count() >= 1, "8ZAA: lr_supp_adaptation_cost_estimate not found"
+
+
+def test_CS2501_8zaa_sec_f_seawall_condition_6_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_seawall_condition includes not_applicable in options."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "not_applicable" in html, "8ZAA: not_applicable option not found in seawall_condition"
+
+
+def test_CS2502_8zaa_sec_f_coastal_protection_obligation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_coastal_protection_maintenance_obligation renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_coastal_protection_maintenance_obligation']")
+    assert el.count() >= 1, "8ZAA: lr_supp_coastal_protection_maintenance_obligation not found"
+
+
+def test_CS2503_8zaa_sec_a_right_holder_type_land_owner_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_right_holder_type contains land_owner option."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "land_owner" in html, "8ZAA: land_owner option not found in lr_supp_right_holder_type"
+
+
+def test_CS2504_8zaa_sec_a_right_attached_to_property_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_right_attached_to_property is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_right_attached_to_property']")
+    assert el.count() >= 1, "8ZAA: lr_supp_right_attached_to_property not found"
+
+
+def test_CS2505_8zaa_sec_k_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_m_mortgage_lending_methodology renders."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZAA: lr_supp_m_mortgage_lending_methodology not found"
+
+
+def test_CS2506_8zaa_sec_k_hospitality_methodology_has_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_m_hospitality_support_value_methodology has local advisory help_ar."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "lr_supp_m_hospitality_support_value_methodology" in html, \
+        "8ZAA: hospitality methodology field not found"
+    assert "غرض محلي إرشادي" in html, \
+        "8ZAA: local advisory help_ar not found for hospitality purpose"
+
+
+def test_CS2507_8zaa_sec_e_historical_shoreline_study_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_historical_shoreline_study_available is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_historical_shoreline_study_available']")
+    assert el.count() >= 1, "8ZAA: lr_supp_historical_shoreline_study_available not found"
+
+
+def test_CS2508_8zaa_sec_n_gis_boundary_layer_is_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_gis_boundary_layer_available is bool."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_gis_boundary_layer_available']")
+    assert el.count() >= 1, "8ZAA: lr_supp_gis_boundary_layer_available not found"
+
+
+def test_CS2509_8zaa_sec_k_development_feasibility_has_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_m_development_feasibility_methodology has local advisory help_ar."""
+    _load_littoral_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "lr_supp_m_development_feasibility_methodology" in html, \
+        "8ZAA: development_feasibility methodology not found"
+
+
+def test_CS2510_8zaa_sec_k_expropriation_adj_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZAA: lr_supp_m_expropriation_compensation_adjustment_pct renders with unit %."""
+    _load_littoral_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='lr_supp_m_expropriation_compensation_adjustment_pct']")
+    assert el.count() >= 1, "8ZAA: lr_supp_m_expropriation_compensation_adjustment_pct not found"

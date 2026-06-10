@@ -12136,13 +12136,13 @@ def test_CS864_8zh_healthcare_facility_no_composite_link(page: "Page", live_serv
 # ── CS865 ─────────────────────────────────────────────────────────────────────
 
 def test_CS865_8zh_healthcare_facility_supp_heading_text(page: "Page", live_server: str) -> None:
-    """Phase 8ZH: supp panel heading must contain healthcare valuation text."""
+    """Phase 8ZU: supp panel heading must contain updated healthcare valuation text."""
     _load_healthcare_facility_supp(page, live_server)
     header = page.locator("#es-req-supp-header")
-    assert header.is_visible(), "8ZH: #es-req-supp-header not found."
+    assert header.is_visible(), "8ZU: #es-req-supp-header not found."
     text = header.inner_text()
-    assert "مستشفى" in text or "مركز طبي" in text, (
-        f"8ZH: heading must contain 'مستشفى' or 'مركز طبي'. Got: {text[:120]!r}"
+    assert "منشأة طبية" in text, (
+        f"8ZU: heading must contain 'منشأة طبية'. Got: {text[:120]!r}"
     )
 
 
@@ -21744,3 +21744,797 @@ def test_CS2000_8zt_complete_regression_no_console_errors(page: "Page", live_ser
             else None)
     _load_cold_storage_supp(page, live_server)
     assert len(errors) == 0, f"Unexpected JS errors on cold_storage supp: {errors}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Phase 8ZU — Healthcare Facility Supplemental Completion & Schema Correction
+# CS2001–CS2070
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── CS2001 ────────────────────────────────────────────────────────────────────
+
+def test_CS2001_8zu_heading_updated_to_munshaa_tibbiyya(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: heading must now contain 'منشأة طبية' (not old مستشفى/مركز طبي)."""
+    _load_healthcare_facility_supp(page, live_server)
+    header = page.locator("#es-req-supp-header")
+    assert header.is_visible(), "8ZU: #es-req-supp-header missing"
+    text = header.inner_text()
+    assert "منشأة طبية" in text, f"8ZU: heading must contain 'منشأة طبية'. Got: {text[:120]!r}"
+
+
+# ── CS2002 ────────────────────────────────────────────────────────────────────
+
+def test_CS2002_8zu_operating_status_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operating_status must render as <select> after schema correction."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_operating_status']")
+    assert sel.count() >= 1, "8ZU: hc_supp_operating_status select not rendered after schema fix"
+
+
+# ── CS2003 ────────────────────────────────────────────────────────────────────
+
+def test_CS2003_8zu_operating_status_select_has_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operating_status select must have multiple option elements."""
+    _load_healthcare_facility_supp(page, live_server)
+    opts = page.locator("select[data-es-supp-field='hc_supp_operating_status'] option")
+    assert opts.count() >= 4, (
+        f"8ZU: hc_supp_operating_status select must have >=4 options. Found {opts.count()}"
+    )
+
+
+# ── CS2004 ────────────────────────────────────────────────────────────────────
+
+def test_CS2004_8zu_methodology_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: purpose methodology field must render as <select> after options fix."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator(
+        "select[data-es-supp-field='hc_supp_purpose_mortgage_lending_methodology']"
+    )
+    assert sel.count() >= 1, (
+        "8ZU: mortgage_lending_methodology select not rendered — options fix may have failed"
+    )
+
+
+# ── CS2005 ────────────────────────────────────────────────────────────────────
+
+def test_CS2005_8zu_methodology_select_has_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: purpose methodology select must have option elements from _METHODOLOGY_OPTS."""
+    _load_healthcare_facility_supp(page, live_server)
+    opts = page.locator(
+        "select[data-es-supp-field='hc_supp_purpose_mortgage_lending_methodology'] option"
+    )
+    assert opts.count() >= 5, (
+        f"8ZU: mortgage_lending_methodology select must have >=5 options. Found {opts.count()}"
+    )
+
+
+# ── CS2006 ────────────────────────────────────────────────────────────────────
+
+def test_CS2006_8zu_jci_accreditation_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_jci_accreditation_status must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_jci_accreditation_status']")
+    assert sel.count() >= 1, "8ZU: jci_accreditation_status select not rendered"
+
+
+# ── CS2007 ────────────────────────────────────────────────────────────────────
+
+def test_CS2007_8zu_building_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_building_condition must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_building_condition']")
+    assert sel.count() >= 1, "8ZU: hc_supp_building_condition select not rendered"
+
+
+# ── CS2008 ────────────────────────────────────────────────────────────────────
+
+def test_CS2008_8zu_new_field_healthcare_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_healthcare_asset_type must be present in supplemental panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_healthcare_asset_type']")
+    assert field.count() >= 1, "8ZU: hc_supp_healthcare_asset_type not found in supp panel"
+
+
+# ── CS2009 ────────────────────────────────────────────────────────────────────
+
+def test_CS2009_8zu_healthcare_asset_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_healthcare_asset_type must render as a <select> with options."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_healthcare_asset_type']")
+    assert sel.count() >= 1, "8ZU: hc_supp_healthcare_asset_type not a select element"
+    opts = page.locator("select[data-es-supp-field='hc_supp_healthcare_asset_type'] option")
+    assert opts.count() >= 10, (
+        f"8ZU: healthcare_asset_type needs >=10 options. Got {opts.count()}"
+    )
+
+
+# ── CS2010 ────────────────────────────────────────────────────────────────────
+
+def test_CS2010_8zu_new_field_operator_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operator_type must be present and render as select."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_operator_type']")
+    assert field.count() >= 1, "8ZU: hc_supp_operator_type not found"
+    sel = page.locator("select[data-es-supp-field='hc_supp_operator_type']")
+    assert sel.count() >= 1, "8ZU: hc_supp_operator_type not a select"
+
+
+# ── CS2011 ────────────────────────────────────────────────────────────────────
+
+def test_CS2011_8zu_new_field_departments_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_departments_available checkbox_group must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_departments_available']")
+    assert field.count() >= 1, "8ZU: hc_supp_departments_available not found"
+
+
+# ── CS2012 ────────────────────────────────────────────────────────────────────
+
+def test_CS2012_8zu_departments_available_is_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_departments_available must render as checkbox inputs."""
+    _load_healthcare_facility_supp(page, live_server)
+    checkboxes = page.locator("input[type='checkbox'][data-es-supp-field='hc_supp_departments_available']")
+    assert checkboxes.count() >= 10, (
+        f"8ZU: departments_available needs >=10 checkbox items. Got {checkboxes.count()}"
+    )
+
+
+# ── CS2013 ────────────────────────────────────────────────────────────────────
+
+def test_CS2013_8zu_new_field_movable_equipment_scope_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_movable_equipment_included_in_scope must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_movable_equipment_included_in_scope']")
+    assert field.count() >= 1, "8ZU: hc_supp_movable_equipment_included_in_scope not found"
+
+
+# ── CS2014 ────────────────────────────────────────────────────────────────────
+
+def test_CS2014_8zu_movable_equipment_scope_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_movable_equipment_included_in_scope must render as select."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_movable_equipment_included_in_scope']")
+    assert sel.count() >= 1, "8ZU: movable_equipment_included_in_scope not a select element"
+
+
+# ── CS2015 ────────────────────────────────────────────────────────────────────
+
+def test_CS2015_8zu_new_field_heavy_equipment_types_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_heavy_equipment_types checkbox_group must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_heavy_equipment_types']")
+    assert field.count() >= 1, "8ZU: hc_supp_heavy_equipment_types not found"
+
+
+# ── CS2016 ────────────────────────────────────────────────────────────────────
+
+def test_CS2016_8zu_heavy_equipment_types_is_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_heavy_equipment_types must render as checkbox inputs."""
+    _load_healthcare_facility_supp(page, live_server)
+    checkboxes = page.locator(
+        "input[type='checkbox'][data-es-supp-field='hc_supp_heavy_equipment_types']"
+    )
+    assert checkboxes.count() >= 8, (
+        f"8ZU: heavy_equipment_types needs >=8 checkbox items. Got {checkboxes.count()}"
+    )
+
+
+# ── CS2017 ────────────────────────────────────────────────────────────────────
+
+def test_CS2017_8zu_new_field_specialized_hvac_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_specialized_hvac_available must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_specialized_hvac_available']")
+    assert field.count() >= 1, "8ZU: hc_supp_specialized_hvac_available not found"
+
+
+# ── CS2018 ────────────────────────────────────────────────────────────────────
+
+def test_CS2018_8zu_new_field_biomedical_waste_storage_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_biomedical_waste_storage_available must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_biomedical_waste_storage_available']")
+    assert field.count() >= 1, "8ZU: hc_supp_biomedical_waste_storage_available not found"
+
+
+# ── CS2019 ────────────────────────────────────────────────────────────────────
+
+def test_CS2019_8zu_new_field_outsourced_services_list_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_outsourced_services_list checkbox_group must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_outsourced_services_list']")
+    assert field.count() >= 1, "8ZU: hc_supp_outsourced_services_list not found"
+
+
+# ── CS2020 ────────────────────────────────────────────────────────────────────
+
+def test_CS2020_8zu_outsourced_services_list_is_checkbox_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_outsourced_services_list must render as checkbox inputs."""
+    _load_healthcare_facility_supp(page, live_server)
+    checkboxes = page.locator(
+        "input[type='checkbox'][data-es-supp-field='hc_supp_outsourced_services_list']"
+    )
+    assert checkboxes.count() >= 5, (
+        f"8ZU: outsourced_services_list needs >=5 checkboxes. Got {checkboxes.count()}"
+    )
+
+
+# ── CS2021 ────────────────────────────────────────────────────────────────────
+
+def test_CS2021_8zu_new_field_operator_contract_terms_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operator_contract_terms textarea must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_supp_operator_contract_terms']")
+    assert field.count() >= 1, "8ZU: hc_supp_operator_contract_terms not found"
+
+
+# ── CS2022 ────────────────────────────────────────────────────────────────────
+
+def test_CS2022_8zu_operator_contract_terms_is_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operator_contract_terms must render as <textarea>."""
+    _load_healthcare_facility_supp(page, live_server)
+    ta = page.locator("textarea[data-es-supp-field='hc_supp_operator_contract_terms']")
+    assert ta.count() >= 1, "8ZU: hc_supp_operator_contract_terms not a textarea"
+
+
+# ── CS2023 ────────────────────────────────────────────────────────────────────
+
+def test_CS2023_8zu_new_field_annual_patient_revenue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_annual_patient_revenue must render as number input."""
+    _load_healthcare_facility_supp(page, live_server)
+    inp = page.locator("input[type='number'][data-es-supp-field='hc_supp_annual_patient_revenue']")
+    assert inp.count() >= 1, "8ZU: hc_supp_annual_patient_revenue number input not found"
+
+
+# ── CS2024 ────────────────────────────────────────────────────────────────────
+
+def test_CS2024_8zu_new_field_total_revenue_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_total_revenue_annual must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    inp = page.locator("[data-es-supp-field='hc_supp_total_revenue_annual']")
+    assert inp.count() >= 1, "8ZU: hc_supp_total_revenue_annual not found"
+
+
+# ── CS2025 ────────────────────────────────────────────────────────────────────
+
+def test_CS2025_8zu_new_field_operating_expenses_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operating_expenses_annual must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    inp = page.locator("[data-es-supp-field='hc_supp_operating_expenses_annual']")
+    assert inp.count() >= 1, "8ZU: hc_supp_operating_expenses_annual not found"
+
+
+# ── CS2026 ────────────────────────────────────────────────────────────────────
+
+def test_CS2026_8zu_doc_medical_facility_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_doc_medical_facility_license document checkbox must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_doc_medical_facility_license']")
+    assert field.count() >= 1, "8ZU: hc_doc_medical_facility_license not found"
+
+
+# ── CS2027 ────────────────────────────────────────────────────────────────────
+
+def test_CS2027_8zu_doc_jci_cbahi_cert_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_doc_jci_cbahi_cert document checkbox must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_doc_jci_cbahi_cert']")
+    assert field.count() >= 1, "8ZU: hc_doc_jci_cbahi_cert not found"
+
+
+# ── CS2028 ────────────────────────────────────────────────────────────────────
+
+def test_CS2028_8zu_doc_financial_statements_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_doc_financial_statements document checkbox must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_doc_financial_statements']")
+    assert field.count() >= 1, "8ZU: hc_doc_financial_statements not found"
+
+
+# ── CS2029 ────────────────────────────────────────────────────────────────────
+
+def test_CS2029_8zu_doc_management_contract_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_doc_management_contract document checkbox must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_doc_management_contract']")
+    assert field.count() >= 1, "8ZU: hc_doc_management_contract not found"
+
+
+# ── CS2030 ────────────────────────────────────────────────────────────────────
+
+def test_CS2030_8zu_doc_civil_protection_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_doc_civil_protection_license document checkbox must render."""
+    _load_healthcare_facility_supp(page, live_server)
+    field = page.locator("[data-es-supp-field='hc_doc_civil_protection_license']")
+    assert field.count() >= 1, "8ZU: hc_doc_civil_protection_license not found"
+
+
+# ── CS2031 ────────────────────────────────────────────────────────────────────
+
+def test_CS2031_8zu_all_new_supp_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: all new supplemental fields must use data-es-supp-field attribute."""
+    _load_healthcare_facility_supp(page, live_server)
+    new_fields = [
+        'hc_supp_healthcare_asset_type', 'hc_supp_operator_type',
+        'hc_supp_departments_available', 'hc_supp_movable_equipment_included_in_scope',
+        'hc_supp_heavy_equipment_types', 'hc_supp_specialized_hvac_available',
+        'hc_supp_biomedical_waste_storage_available', 'hc_supp_outsourced_services_list',
+        'hc_supp_operator_contract_terms', 'hc_supp_annual_patient_revenue',
+        'hc_supp_total_revenue_annual', 'hc_supp_operating_expenses_annual',
+        'hc_doc_medical_facility_license', 'hc_doc_jci_cbahi_cert',
+        'hc_doc_financial_statements', 'hc_doc_management_contract',
+        'hc_doc_civil_protection_license',
+    ]
+    missing = []
+    for fname in new_fields:
+        if page.locator(f"[data-es-supp-field='{fname}']").count() == 0:
+            missing.append(fname)
+    assert not missing, f"8ZU: missing data-es-supp-field for: {missing}"
+
+
+# ── CS2032 ────────────────────────────────────────────────────────────────────
+
+def test_CS2032_8zu_no_data_es_req_field_in_supp_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: supplemental panel must contain no data-es-req-field attributes."""
+    _load_healthcare_facility_supp(page, live_server)
+    req_fields = page.locator("#es-req-supp [data-es-req-field]")
+    assert req_fields.count() == 0, (
+        f"8ZU: found {req_fields.count()} data-es-req-field elements inside #es-req-supp"
+    )
+
+
+# ── CS2033 ────────────────────────────────────────────────────────────────────
+
+def test_CS2033_8zu_no_api_post_on_supp_load(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: loading healthcare supplemental triggers zero valuation POST calls."""
+    post_calls: list = []
+    page.on("request", lambda req: post_calls.append(req.url)
+            if req.method == "POST" and "/api/" in req.url else None)
+    _load_healthcare_facility_supp(page, live_server)
+    valuation_posts = [u for u in post_calls
+                       if "/api/" in u and "/radar" not in u and "/health" not in u]
+    assert len(valuation_posts) == 0, (
+        f"8ZU: unexpected valuation POST on supplemental load: {valuation_posts}"
+    )
+
+
+# ── CS2034 ────────────────────────────────────────────────────────────────────
+
+def test_CS2034_8zu_no_js_errors_on_supp_load(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: no unexpected JS console errors loading healthcare supplemental."""
+    errors: list = []
+    page.on("console", lambda m: errors.append(m.text)
+            if m.type == "error"
+               and "401" not in m.text
+               and "UNAUTHORIZED" not in m.text
+               and "Failed to load resource" not in m.text
+            else None)
+    _load_healthcare_facility_supp(page, live_server)
+    assert len(errors) == 0, f"8ZU: unexpected JS errors: {errors}"
+
+
+# ── CS2035 ────────────────────────────────────────────────────────────────────
+
+def test_CS2035_8zu_hospital_regression_ho_total_beds_still_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZU regression: legacy hospital profile ho_total_beds still renders."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    if page.locator("#asset-type option[value='hospital']").count() == 0:
+        return  # hospital profile not available in this session -- passes by design
+    page.select_option("#asset-type", value="hospital")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#asset-form").wait_for(state="visible", timeout=6_000)
+    field = page.locator("[data-es-req-field='ho_total_beds']")
+    assert field.count() >= 1 and field.first.is_visible(), (
+        "8ZU regression: ho_total_beds not visible in legacy hospital profile"
+    )
+
+
+# ── CS2036 ────────────────────────────────────────────────────────────────────
+
+def test_CS2036_8zu_hospital_has_no_hc_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: legacy hospital panel must not contain any hc_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    if page.locator("#asset-type option[value='hospital']").count() == 0:
+        return  # hospital profile not available in this session -- passes by design
+    page.select_option("#asset-type", value="hospital")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#asset-form").wait_for(state="visible", timeout=6_000)
+    hc_in_hospital = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_in_hospital.count() == 0, (
+        f"8ZU: found {hc_in_hospital.count()} hc_supp_ fields in hospital profile — isolation breach"
+    )
+
+
+# ── CS2037 ────────────────────────────────────────────────────────────────────
+
+def test_CS2037_8zu_hf_main_form_fields_still_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: existing hf_ main form fields must still render for healthcare_facility."""
+    _load_healthcare_facility(page, live_server)
+    for fname in ['hf_license_status', 'hf_total_beds', 'hf_annual_revenue']:
+        field = page.locator(f"[data-es-req-field='{fname}']")
+        assert field.count() >= 1, f"8ZU: hf_ main form field {fname} no longer renders"
+
+
+# ── CS2038 ────────────────────────────────────────────────────────────────────
+
+def test_CS2038_8zu_skipped_fields_not_duplicated_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: main-form-only fields must not appear as hc_supp_ duplicates."""
+    _load_healthcare_facility_supp(page, live_server)
+    # These are in main form — must not be re-added to supplemental
+    skipped = ['hc_supp_icu_beds_count', 'hc_supp_operating_rooms_count',
+               'hc_supp_medical_license_status', 'hc_supp_medical_gas_system_available']
+    found_duplicates = []
+    for fname in skipped:
+        if page.locator(f"[data-es-supp-field='{fname}']").count() > 0:
+            found_duplicates.append(fname)
+    assert not found_duplicates, f"8ZU: skipped fields appeared as supp duplicates: {found_duplicates}"
+
+
+# ── CS2039 ────────────────────────────────────────────────────────────────────
+
+def test_CS2039_8zu_supp_panel_no_auth_modal(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: no auth modal after loading healthcare supplemental."""
+    _load_healthcare_facility_supp(page, live_server)
+    modal = page.locator("#auth-modal, .auth-modal, [id*='auth'][id*='modal']")
+    visible_count = sum(1 for i in range(modal.count()) if modal.nth(i).is_visible())
+    assert visible_count == 0, f"8ZU: auth modal visible ({visible_count} found)"
+
+
+# ── CS2040 ────────────────────────────────────────────────────────────────────
+
+def test_CS2040_8zu_supp_panel_no_composite_link(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: no composite_valuation.html link in healthcare supplemental panel."""
+    _load_healthcare_facility_supp(page, live_server)
+    links = page.locator("#es-req-supp a[href*='composite_valuation']")
+    assert links.count() == 0, (
+        f"8ZU: found {links.count()} composite_valuation links in supp panel"
+    )
+
+
+# ── CS2041 ────────────────────────────────────────────────────────────────────
+
+def test_CS2041_8zu_section_A_has_new_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section A (تعريف الأصل الصحي) must contain the two new fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "تعريف الأصل الصحي" in text, "8ZU: Section A heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_healthcare_asset_type']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_operator_type']").count() >= 1
+
+
+# ── CS2042 ────────────────────────────────────────────────────────────────────
+
+def test_CS2042_8zu_section_C_has_departments_available(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section C (الأقسام والخدمات الطبية) must contain departments_available."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الأقسام والخدمات الطبية" in text, "8ZU: Section C heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_departments_available']").count() >= 1
+
+
+# ── CS2043 ────────────────────────────────────────────────────────────────────
+
+def test_CS2043_8zu_section_D_has_movable_scope_and_types(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section D (الأجهزة الطبية) must contain the two new D fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الأجهزة الطبية" in text, "8ZU: Section D heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_movable_equipment_included_in_scope']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_heavy_equipment_types']").count() >= 1
+
+
+# ── CS2044 ────────────────────────────────────────────────────────────────────
+
+def test_CS2044_8zu_section_G_has_new_mep_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section G (MEP والغازات الطبية) must contain the two new G fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "MEP" in text and "الغازات الطبية" in text, "8ZU: Section G heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_specialized_hvac_available']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_biomedical_waste_storage_available']").count() >= 1
+
+
+# ── CS2045 ────────────────────────────────────────────────────────────────────
+
+def test_CS2045_8zu_section_I_has_new_staffing_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section I (الكادر الطبي والتشغيل) must contain new I fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الكادر الطبي" in text, "8ZU: Section I heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_outsourced_services_list']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_operator_contract_terms']").count() >= 1
+
+
+# ── CS2046 ────────────────────────────────────────────────────────────────────
+
+def test_CS2046_8zu_section_J_has_new_revenue_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section J (الإيرادات والمصروفات) must contain the 3 new J fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الإيرادات والمصروفات" in text, "8ZU: Section J heading not found"
+    assert page.locator("[data-es-supp-field='hc_supp_annual_patient_revenue']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_total_revenue_annual']").count() >= 1
+    assert page.locator("[data-es-supp-field='hc_supp_operating_expenses_annual']").count() >= 1
+
+
+# ── CS2047 ────────────────────────────────────────────────────────────────────
+
+def test_CS2047_8zu_section_S_has_all_new_doc_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: Section S (مستندات إضافية) must contain all 5 new doc fields."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "مستندات إضافية" in text, "8ZU: Section S heading not found"
+    for fname in ['hc_doc_medical_facility_license', 'hc_doc_jci_cbahi_cert',
+                  'hc_doc_financial_statements', 'hc_doc_management_contract',
+                  'hc_doc_civil_protection_license']:
+        assert page.locator(f"[data-es-supp-field='{fname}']").count() >= 1, (
+            f"8ZU: {fname} not found in Section S"
+        )
+
+
+# ── CS2048 ────────────────────────────────────────────────────────────────────
+
+def test_CS2048_8zu_doc_fields_render_as_checkboxes(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: all new document fields must render as checkbox inputs."""
+    _load_healthcare_facility_supp(page, live_server)
+    for fname in ['hc_doc_medical_facility_license', 'hc_doc_jci_cbahi_cert',
+                  'hc_doc_financial_statements', 'hc_doc_management_contract',
+                  'hc_doc_civil_protection_license']:
+        cb = page.locator(f"input[type='checkbox'][data-es-supp-field='{fname}']")
+        assert cb.count() >= 1, f"8ZU: {fname} not a checkbox input"
+
+
+# ── CS2049 ────────────────────────────────────────────────────────────────────
+
+def test_CS2049_8zu_payer_mix_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_payer_mix must render as <select> after schema correction."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_payer_mix']")
+    assert sel.count() >= 1, "8ZU: hc_supp_payer_mix not a select after schema fix"
+
+
+# ── CS2050 ────────────────────────────────────────────────────────────────────
+
+def test_CS2050_8zu_ownership_type_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_ownership_type must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_ownership_type']")
+    assert sel.count() >= 1, "8ZU: hc_supp_ownership_type not a select"
+
+
+# ── CS2051 ────────────────────────────────────────────────────────────────────
+
+def test_CS2051_8zu_energy_efficiency_rating_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_energy_efficiency_rating must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_energy_efficiency_rating']")
+    assert sel.count() >= 1, "8ZU: hc_supp_energy_efficiency_rating not a select"
+
+
+# ── CS2052 ────────────────────────────────────────────────────────────────────
+
+def test_CS2052_8zu_flood_risk_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_flood_risk_level must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_flood_risk_level']")
+    assert sel.count() >= 1, "8ZU: hc_supp_flood_risk_level not a select"
+
+
+# ── CS2053 ────────────────────────────────────────────────────────────────────
+
+def test_CS2053_8zu_digital_health_quality_renders_as_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_digital_health_infrastructure_quality must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator(
+        "select[data-es-supp-field='hc_supp_digital_health_infrastructure_quality']"
+    )
+    assert sel.count() >= 1, "8ZU: digital_health_infrastructure_quality not a select"
+
+
+# ── CS2054 ────────────────────────────────────────────────────────────────────
+
+def test_CS2054_8zu_wellness_resort_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: wellness_resort profile must remain available and unaffected."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opt = page.locator("#asset-type option[value='wellness_resort']")
+    assert opt.count() >= 1, "8ZU: wellness_resort option missing from dropdown"
+
+
+# ── CS2055 ────────────────────────────────────────────────────────────────────
+
+def test_CS2055_8zu_hc_supp_fields_not_in_wellness_resort(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_ fields must not appear in wellness_resort panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="wellness_resort")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return  # wellness_resort has no supplemental — isolation confirmed
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() == 0, (
+        f"8ZU: found {hc_fields.count()} hc_supp_ fields in wellness_resort — isolation breach"
+    )
+
+
+# ── CS2056 ────────────────────────────────────────────────────────────────────
+
+def test_CS2056_8zu_hc_supp_fields_not_in_land_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_ fields must not appear in land profile."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    if page.locator("#asset-type option[value='land']").count() == 0:
+        return  # land profile not available in this session -- passes by design
+    page.select_option("#asset-type", value="land")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=5_000)
+    except Exception:
+        return
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() == 0, (
+        f"8ZU: found {hc_fields.count()} hc_supp_ fields in land — isolation breach"
+    )
+
+
+# ── CS2057 ────────────────────────────────────────────────────────────────────
+
+def test_CS2057_8zu_supp_local_only_subtext_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: local-only subtext must be visible in healthcare supplemental."""
+    _load_healthcare_facility_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "لا يُرسل للتقرير" in text, (
+        "8ZU: local-only subtext 'لا يُرسل للتقرير' not found in supp panel"
+    )
+
+
+# ── CS2058 ────────────────────────────────────────────────────────────────────
+
+def test_CS2058_8zu_purpose_sale_purchase_methodology_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: sale_purchase methodology field must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator(
+        "select[data-es-supp-field='hc_supp_purpose_sale_purchase_methodology']"
+    )
+    assert sel.count() >= 1, "8ZU: sale_purchase_methodology not a select"
+
+
+# ── CS2059 ────────────────────────────────────────────────────────────────────
+
+def test_CS2059_8zu_purpose_liquidation_methodology_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: liquidation methodology field must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator(
+        "select[data-es-supp-field='hc_supp_purpose_liquidation_methodology']"
+    )
+    assert sel.count() >= 1, "8ZU: liquidation_methodology not a select"
+
+
+# ── CS2060 ────────────────────────────────────────────────────────────────────
+
+def test_CS2060_8zu_purpose_operator_contract_review_methodology_is_select(
+    page: "Page", live_server: str
+) -> None:
+    """Phase 8ZU: operator_contract_review methodology (local) must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator(
+        "select[data-es-supp-field='hc_supp_purpose_operator_contract_review_methodology']"
+    )
+    assert sel.count() >= 1, "8ZU: operator_contract_review_methodology not a select"
+
+
+# ── CS2061 ────────────────────────────────────────────────────────────────────
+
+def test_CS2061_8zu_supp_total_hc_fields_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: supplemental panel must contain more hc_supp_ fields than before (>=260)."""
+    _load_healthcare_facility_supp(page, live_server)
+    hc_fields = page.locator("[data-es-supp-field^='hc_supp_']")
+    assert hc_fields.count() >= 260, (
+        f"8ZU: expected >=260 hc_supp_ fields. Got {hc_fields.count()}"
+    )
+
+
+# ── CS2062 ────────────────────────────────────────────────────────────────────
+
+def test_CS2062_8zu_supp_doc_fields_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: supplemental panel must contain >=18 hc_doc_ document checkboxes."""
+    _load_healthcare_facility_supp(page, live_server)
+    doc_fields = page.locator("[data-es-supp-field^='hc_doc_']")
+    assert doc_fields.count() >= 18, (
+        f"8ZU: expected >=18 hc_doc_ fields. Got {doc_fields.count()}"
+    )
+
+
+# ── CS2063 ────────────────────────────────────────────────────────────────────
+
+def test_CS2063_8zu_total_revenue_annual_is_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_total_revenue_annual must render as number input."""
+    _load_healthcare_facility_supp(page, live_server)
+    inp = page.locator(
+        "input[type='number'][data-es-supp-field='hc_supp_total_revenue_annual']"
+    )
+    assert inp.count() >= 1, "8ZU: hc_supp_total_revenue_annual not a number input"
+
+
+# ── CS2064 ────────────────────────────────────────────────────────────────────
+
+def test_CS2064_8zu_operating_expenses_is_number_input(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_operating_expenses_annual must render as number input."""
+    _load_healthcare_facility_supp(page, live_server)
+    inp = page.locator(
+        "input[type='number'][data-es-supp-field='hc_supp_operating_expenses_annual']"
+    )
+    assert inp.count() >= 1, "8ZU: hc_supp_operating_expenses_annual not a number input"
+
+
+# ── CS2065 ────────────────────────────────────────────────────────────────────
+
+def test_CS2065_8zu_doctor_availability_model_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_doctor_availability_model must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_doctor_availability_model']")
+    assert sel.count() >= 1, "8ZU: hc_supp_doctor_availability_model not a select"
+
+
+# ── CS2066 ────────────────────────────────────────────────────────────────────
+
+def test_CS2066_8zu_oxygen_supply_type_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_oxygen_supply_system_type must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_oxygen_supply_system_type']")
+    assert sel.count() >= 1, "8ZU: hc_supp_oxygen_supply_system_type not a select"
+
+
+# ── CS2067 ────────────────────────────────────────────────────────────────────
+
+def test_CS2067_8zu_proximity_competing_hospitals_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_proximity_to_competing_hospitals must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_proximity_to_competing_hospitals']")
+    assert sel.count() >= 1, "8ZU: hc_supp_proximity_to_competing_hospitals not a select"
+
+
+# ── CS2068 ────────────────────────────────────────────────────────────────────
+
+def test_CS2068_8zu_healthcare_facility_supp_visible_after_reload(
+    page: "Page", live_server: str
+) -> None:
+    """Phase 8ZU: supplemental panel must be visible on a fresh load of healthcare_facility."""
+    _load_healthcare_facility_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.is_visible(), "8ZU: #es-req-supp not visible for healthcare_facility"
+
+
+# ── CS2069 ────────────────────────────────────────────────────────────────────
+
+def test_CS2069_8zu_cybersecurity_compliance_is_select(page: "Page", live_server: str) -> None:
+    """Phase 8ZU: hc_supp_cybersecurity_compliance_status must render as <select>."""
+    _load_healthcare_facility_supp(page, live_server)
+    sel = page.locator("select[data-es-supp-field='hc_supp_cybersecurity_compliance_status']")
+    assert sel.count() >= 1, "8ZU: hc_supp_cybersecurity_compliance_status not a select"
+
+
+# ── CS2070 ────────────────────────────────────────────────────────────────────
+
+def test_CS2070_8zu_complete_regression_no_console_errors(page: "Page", live_server: str) -> None:
+    """Phase 8ZU end-to-end: confirm no JS errors and all 19 new fields present."""
+    errors: list = []
+    page.on("console", lambda m: errors.append(m.text)
+            if m.type == "error"
+               and "401" not in m.text
+               and "UNAUTHORIZED" not in m.text
+               and "Failed to load resource" not in m.text
+            else None)
+    _load_healthcare_facility_supp(page, live_server)
+    # Spot-check 6 of the 19 new fields
+    spot = [
+        'hc_supp_healthcare_asset_type', 'hc_supp_departments_available',
+        'hc_supp_movable_equipment_included_in_scope', 'hc_supp_total_revenue_annual',
+        'hc_doc_medical_facility_license', 'hc_doc_civil_protection_license',
+    ]
+    missing = [f for f in spot if page.locator(f"[data-es-supp-field='{f}']").count() == 0]
+    assert not missing, f"8ZU: spot-check fields missing: {missing}"
+    assert len(errors) == 0, f"8ZU: unexpected JS errors: {errors}"

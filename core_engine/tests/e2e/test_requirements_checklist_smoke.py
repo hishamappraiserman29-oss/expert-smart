@@ -23025,3 +23025,647 @@ def test_CS2143_8zw_educational_asset_supp_section_count_is_15(page: "Page", liv
     _load_educational_asset_supp(page, live_server)
     count = page.locator("#es-req-supp details").count()
     assert count == 15, f"8ZW: expected 15 supplemental sections, got {count} — possible duplication or missing section"
+
+
+# ── Phase 8ZX — Heritage Property Detailed Supplemental ──────────────────────
+
+def _load_heritage_property_detailed_supp(page: "Page", live_server: str) -> None:
+    """Load heritage_property_detailed profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage_property_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS2144–CS2147: panel / heading / subtext / dropdown ──────────────────────
+
+def test_CS2144_8zx_heritage_property_detailed_dropdown_option_exists(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: dropdown must contain value='heritage_property_detailed' option."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    assert page.locator("#asset-type option[value='heritage_property_detailed']").count() >= 1
+
+
+def test_CS2145_8zx_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: heritage_property_detailed supplemental panel must be visible."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+def test_CS2146_8zx_heading_contains_heritage(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: supplemental heading must contain Arabic heritage text."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    heading_text = page.locator("#es-req-supp-header").inner_text()
+    assert "تراثي" in heading_text, f"8ZX: heritage heading not found. Got: {heading_text[:120]}"
+
+
+def test_CS2147_8zx_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: supplemental subtext must render for heritage_property_detailed."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert len(subtext) > 10, f"8ZX: subtext is empty or too short. Got: {subtext!r}"
+
+
+def test_CS2148_8zx_section_count_is_17(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: supplemental panel must have exactly 17 sections (A–Q)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 17, f"8ZX: expected 17 sections, got {count}"
+
+
+# ── CS2149–CS2155: Section A & B fields ──────────────────────────────────────
+
+def test_CS2149_8zx_section_a_heritage_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section A — hpd_supp_heritage_asset_type must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_asset_type']")
+    assert el.count() >= 1
+
+
+def test_CS2150_8zx_section_a_significance_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section A — hpd_supp_heritage_significance_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_significance_level']")
+    assert el.count() >= 1
+
+
+def test_CS2151_8zx_section_b_listing_grade_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section B — hpd_supp_listing_grade must render with heritage grades."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_listing_grade']")
+    assert el.count() >= 1
+    html = el.evaluate("e => e.outerHTML")
+    assert "grade_1_exceptional" in html, f"8ZX: grade_1_exceptional option missing. HTML: {html[:200]}"
+
+
+def test_CS2152_8zx_section_b_buffer_zone_defined_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section B — hpd_supp_heritage_boundary_or_buffer_zone_defined must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_boundary_or_buffer_zone_defined']")
+    assert el.count() >= 1
+
+
+def test_CS2153_8zx_section_b_gost_significance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section B — GOST R 55528 cultural significance field must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_cultural_heritage_significance_gost']")
+    assert el.count() >= 1
+
+
+def test_CS2154_8zx_section_b_gost_preservation_zone_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section B — GOST preservation zone type field must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_preservation_zone_type_gost']")
+    assert el.count() >= 1
+
+
+def test_CS2155_8zx_section_b_unregistered_significant_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section B — hpd_supp_unregistered_but_significant_status must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_unregistered_but_significant_status']")
+    assert el.count() >= 1
+
+
+# ── CS2156–CS2162: Section C restriction fields ───────────────────────────────
+
+def test_CS2156_8zx_section_c_construction_restriction_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section C — hpd_supp_construction_restriction_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_construction_restriction_level']")
+    assert el.count() >= 1
+
+
+def test_CS2157_8zx_section_c_facade_alteration_prohibited_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section C — hpd_supp_facade_alteration_prohibited must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_facade_alteration_prohibited']")
+    assert el.count() >= 1
+
+
+def test_CS2158_8zx_section_c_restriction_value_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section C — restriction_value_impact_pct float field with % unit must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_restriction_value_impact_pct']")
+    assert el.count() >= 1
+
+
+def test_CS2159_8zx_section_c_unauthorized_modifications_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section C — hpd_supp_unauthorized_modifications_status must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_unauthorized_modifications_status']")
+    assert el.count() >= 1
+
+
+def test_CS2160_8zx_section_c_conservation_authority_approval_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section C — conservation_authority_approval_required must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_conservation_authority_approval_required']")
+    assert el.count() >= 1
+
+
+# ── CS2161–CS2165: Section D architectural/cultural ──────────────────────────
+
+def test_CS2161_8zx_section_d_architectural_style_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section D — hpd_supp_architectural_style must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_architectural_style']")
+    assert el.count() >= 1
+
+
+def test_CS2162_8zx_section_d_authenticity_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section D — hpd_supp_authenticity_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_authenticity_level']")
+    assert el.count() >= 1
+
+
+def test_CS2163_8zx_section_d_integrity_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section D — hpd_supp_integrity_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_integrity_level']")
+    assert el.count() >= 1
+
+
+def test_CS2164_8zx_section_d_character_defining_elements_chip_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section D — character_defining_elements must render as checkbox_group chips."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    chips = page.locator("[data-es-supp-field='hpd_supp_character_defining_elements']")
+    assert chips.count() >= 1, "8ZX: character_defining_elements chips not found"
+
+
+# ── CS2165–CS2170: Section E structural + NTC 2018 ───────────────────────────
+
+def test_CS2165_8zx_section_e_structural_system_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — hpd_supp_structural_system must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_structural_system']")
+    assert el.count() >= 1
+
+
+def test_CS2166_8zx_section_e_structural_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — hpd_supp_structural_condition must render with critical option."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_structural_condition']")
+    assert el.count() >= 1
+
+
+def test_CS2167_8zx_section_e_emergency_shoring_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — hpd_supp_emergency_shoring_required must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_emergency_shoring_required']")
+    assert el.count() >= 1
+
+
+def test_CS2168_8zx_section_e_ntc2018_seismic_assessment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — NTC2018 seismic assessment field must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_seismic_vulnerability_assessment_available']")
+    assert el.count() >= 1
+
+
+def test_CS2169_8zx_section_e_ntc2018_knowledge_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — NTC2018 knowledge level (LC1/LC2/LC3) must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_knowledge_level_ntc2018']")
+    assert el.count() >= 1
+    html = el.evaluate("e => e.outerHTML")
+    assert "LC1_limited" in html, f"8ZX: LC1_limited option missing. HTML: {html[:200]}"
+
+
+def test_CS2170_8zx_section_e_ntc2018_seismic_risk_class_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section E — Italian seismic risk class field must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_seismic_risk_class_it']")
+    assert el.count() >= 1
+
+
+# ── CS2171–CS2175: Section F moisture/materials ───────────────────────────────
+
+def test_CS2171_8zx_section_f_moisture_risk_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section F — hpd_supp_moisture_risk_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_moisture_risk_level']")
+    assert el.count() >= 1
+
+
+def test_CS2172_8zx_section_f_rising_damp_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section F — hpd_supp_rising_damp_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_rising_damp_available']")
+    assert el.count() >= 1
+
+
+def test_CS2173_8zx_section_f_material_type_chip_group_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section F — material_type checkbox_group chips must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    chips = page.locator("[data-es-supp-field='hpd_supp_material_type']")
+    assert chips.count() >= 1
+
+
+def test_CS2174_8zx_section_f_archaeological_discovery_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section F — hpd_supp_archaeological_discovery_risk must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_archaeological_discovery_risk']")
+    assert el.count() >= 1
+
+
+# ── CS2175–CS2178: Section G spaces ──────────────────────────────────────────
+
+def test_CS2175_8zx_section_g_land_area_sqm_with_unit_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section G — hpd_supp_land_area_sqm number input must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_land_area_sqm']")
+    assert el.count() >= 1
+
+
+def test_CS2176_8zx_section_g_courtyard_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section G — hpd_supp_courtyard_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_courtyard_available']")
+    assert el.count() >= 1
+
+
+def test_CS2177_8zx_section_g_tourist_route_proximity_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section G — tourist_or_cultural_route_proximity must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_tourist_or_cultural_route_proximity']")
+    assert el.count() >= 1
+
+
+# ── CS2178–CS2183: Section H CAPEX ───────────────────────────────────────────
+
+def test_CS2178_8zx_section_h_total_capex_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section H — hpd_supp_total_conservation_capex_required must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_total_conservation_capex_required']")
+    assert el.count() >= 1
+
+
+def test_CS2179_8zx_section_h_facade_restoration_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section H — facade_restoration_cost_estimate must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_facade_restoration_cost_estimate']")
+    assert el.count() >= 1
+
+
+def test_CS2180_8zx_section_h_restoration_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section H — hpd_supp_restoration_quality must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_restoration_quality']")
+    assert el.count() >= 1
+
+
+def test_CS2181_8zx_section_h_conservation_plan_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section H — hpd_supp_conservation_plan_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_conservation_plan_available']")
+    assert el.count() >= 1
+
+
+def test_CS2182_8zx_section_h_specialist_material_supply_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section H — specialist_material_supply_risk must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_specialist_material_supply_risk']")
+    assert el.count() >= 1
+
+
+# ── CS2183–CS2186: Section I MEP ─────────────────────────────────────────────
+
+def test_CS2183_8zx_section_i_electrical_condition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section I — hpd_supp_electrical_system_condition must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_electrical_system_condition']")
+    assert el.count() >= 1
+
+
+def test_CS2184_8zx_section_i_hvac_heritage_compatible_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section I — hvac_installation_heritage_compatible must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_hvac_installation_heritage_compatible']")
+    assert el.count() >= 1
+
+
+def test_CS2185_8zx_section_i_modern_services_integration_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section I — modern_services_integration_quality must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_modern_services_integration_quality']")
+    assert el.count() >= 1
+
+
+def test_CS2186_8zx_section_i_fire_alarm_system_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section I — hpd_supp_fire_alarm_system_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_fire_alarm_system_available']")
+    assert el.count() >= 1
+
+
+# ── CS2187–CS2191: Section J legal ───────────────────────────────────────────
+
+def test_CS2187_8zx_section_j_ownership_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section J — hpd_supp_ownership_type must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_ownership_type']")
+    assert el.count() >= 1
+
+
+def test_CS2188_8zx_section_j_heritage_restriction_on_title_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section J — heritage_restriction_registered_on_title must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_restriction_registered_on_title']")
+    assert el.count() >= 1
+
+
+def test_CS2189_8zx_section_j_government_preemption_right_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section J — government_preemption_right_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_government_preemption_right_available']")
+    assert el.count() >= 1
+
+
+def test_CS2190_8zx_section_j_expropriation_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section J — expropriation_or_public_acquisition_risk must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_expropriation_or_public_acquisition_risk']")
+    assert el.count() >= 1
+
+
+# ── CS2191–CS2195: Section K income ──────────────────────────────────────────
+
+def test_CS2191_8zx_section_k_income_producing_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section K — hpd_supp_income_producing_status must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_income_producing_status']")
+    assert el.count() >= 1
+
+
+def test_CS2192_8zx_section_k_tourism_revenue_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section K — tourism_or_ticketing_revenue_annual number input must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_tourism_or_ticketing_revenue_annual']")
+    assert el.count() >= 1
+
+
+def test_CS2193_8zx_section_k_grants_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section K — hpd_supp_grants_or_subsidies_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_grants_or_subsidies_available']")
+    assert el.count() >= 1
+
+
+def test_CS2194_8zx_section_k_adaptive_reuse_business_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section K — adaptive_reuse_business_plan_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_adaptive_reuse_business_plan_available']")
+    assert el.count() >= 1
+
+
+# ── CS2195–CS2199: Section L market ──────────────────────────────────────────
+
+def test_CS2195_8zx_section_l_heritage_premium_discount_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section L — hpd_supp_heritage_premium_or_discount_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_premium_or_discount_level']")
+    assert el.count() >= 1
+
+
+def test_CS2196_8zx_section_l_rarity_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section L — hpd_supp_rarity_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_rarity_level']")
+    assert el.count() >= 1
+
+
+def test_CS2197_8zx_section_l_adaptive_reuse_potential_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section L — hpd_supp_adaptive_reuse_potential must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_adaptive_reuse_potential']")
+    assert el.count() >= 1
+
+
+def test_CS2198_8zx_section_l_comparable_heritage_sales_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section L — comparable_heritage_sales_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_comparable_heritage_sales_available']")
+    assert el.count() >= 1
+
+
+# ── CS2199–CS2208: Section M methodology / purpose fields ────────────────────
+
+def test_CS2199_8zx_section_m_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — mortgage_lending methodology select must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2200_8zx_section_m_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — sale_purchase methodology select must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_sale_purchase_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2201_8zx_section_m_conservation_cost_adjusted_value_option_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — conservation_cost_adjusted_value option must appear in methodology select."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "conservation_cost_adjusted_value" in html, f"8ZX: conservation_cost_adjusted_value missing from methodology options. HTML: {html[:300]}"
+
+
+def test_CS2202_8zx_section_m_adaptive_reuse_dcf_option_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — adaptive_reuse_dcf option must appear in methodology select."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "adaptive_reuse_dcf" in html, f"8ZX: adaptive_reuse_dcf missing from methodology options. HTML: {html[:300]}"
+
+
+def test_CS2203_8zx_section_m_heritage_conservation_review_local_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — heritage_conservation_review local purpose methodology must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_heritage_conservation_review_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2204_8zx_section_m_adaptive_reuse_investment_local_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — adaptive_reuse_investment local purpose methodology must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_adaptive_reuse_investment_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2205_8zx_section_m_expropriation_compensation_local_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — expropriation_compensation local purpose must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_expropriation_compensation_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2206_8zx_section_m_liquidation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — liquidation methodology (standard PURPOSE_RULES) must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_liquidation_methodology']")
+    assert el.count() >= 1
+
+
+def test_CS2207_8zx_section_m_impairment_testing_local_purpose_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section M — impairment_testing local purpose methodology must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_impairment_testing_methodology']")
+    assert el.count() >= 1
+
+
+# ── CS2208–CS2212: Section N risks ───────────────────────────────────────────
+
+def test_CS2208_8zx_section_n_insurance_availability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section N — hpd_supp_insurance_availability_status must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_insurance_availability_status']")
+    assert el.count() >= 1
+
+
+def test_CS2209_8zx_section_n_collapse_risk_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section N — hpd_supp_collapse_risk_level must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_collapse_risk_level']")
+    assert el.count() >= 1
+
+
+def test_CS2210_8zx_section_n_heritage_insurance_coverage_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section N — heritage_insurance_coverage_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_insurance_coverage_available']")
+    assert el.count() >= 1
+
+
+# ── CS2211–CS2213: Section O sustainability ──────────────────────────────────
+
+def test_CS2211_8zx_section_o_energy_efficiency_rating_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section O — hpd_supp_energy_efficiency_rating must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_energy_efficiency_rating']")
+    assert el.count() >= 1
+
+
+def test_CS2212_8zx_section_o_heritage_compatible_energy_upgrade_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section O — heritage_compatible_energy_upgrade_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_compatible_energy_upgrade_available']")
+    assert el.count() >= 1
+
+
+def test_CS2213_8zx_section_o_solar_panels_allowed_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section O — hpd_supp_solar_panels_allowed must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_solar_panels_allowed']")
+    assert el.count() >= 1
+
+
+# ── CS2214–CS2216: Section P digital documentation ───────────────────────────
+
+def test_CS2214_8zx_section_p_laser_scan_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section P — hpd_supp_laser_scan_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_laser_scan_available']")
+    assert el.count() >= 1
+
+
+def test_CS2215_8zx_section_p_conservation_method_statement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section P — conservation_method_statement_available must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_conservation_method_statement_available']")
+    assert el.count() >= 1
+
+
+# ── CS2216: Section Q documents ──────────────────────────────────────────────
+
+def test_CS2216_8zx_section_q_heritage_boundary_map_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Section Q — hpd_doc_supp_heritage_boundary_map document checkbox must render."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_doc_supp_heritage_boundary_map']")
+    assert el.count() >= 1
+
+
+# ── CS2217–CS2220: Isolation ─────────────────────────────────────────────────
+
+def test_CS2217_8zx_isolation_hpd_supp_not_in_healthcare_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: hpd_supp_ fields must NOT appear in healthcare_facility supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="healthcare_facility")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_asset_type']")
+    assert el.count() == 0, "8ZX: hpd_supp_ field leaked into healthcare_facility panel"
+
+
+def test_CS2218_8zx_isolation_hpd_supp_not_in_historical_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: hpd_supp_ fields must NOT appear when historical (Phase 8M) profile is loaded."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="historical")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(1_000)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_asset_type']")
+    assert el.count() == 0, "8ZX: hpd_supp_ field leaked into historical panel"
+
+
+def test_CS2219_8zx_isolation_hpd_supp_not_in_heritage_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: hpd_supp_ fields must NOT appear when heritage (Phase 8M) profile is loaded."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(1_000)
+    el = page.locator("[data-es-supp-field='hpd_supp_heritage_asset_type']")
+    assert el.count() == 0, "8ZX: hpd_supp_ field leaked into heritage panel"
+
+
+# ── CS2220–CS2225: Attribute guard / methodology / no-API ────────────────────
+
+def test_CS2220_8zx_no_es_req_field_attr_inside_supp_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: zero data-es-req-field attributes must appear inside #es-req-supp."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    leaks = page.locator("#es-req-supp [data-es-req-field]")
+    assert leaks.count() == 0, f"8ZX: {leaks.count()} data-es-req-field attr found inside #es-req-supp"
+
+
+def test_CS2221_8zx_hpd_methodology_opts_includes_conservation_cost(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: _HPD_METHODOLOGY_OPTS must include conservation_cost_adjusted_value option."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_sale_purchase_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "conservation_cost_adjusted_value" in html, f"8ZX: conservation_cost_adjusted_value missing from _HPD_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2222_8zx_hpd_methodology_opts_includes_adaptive_reuse_dcf(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: _HPD_METHODOLOGY_OPTS must include adaptive_reuse_dcf option."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_sale_purchase_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "adaptive_reuse_dcf" in html, f"8ZX: adaptive_reuse_dcf missing from _HPD_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2223_8zx_hpd_methodology_opts_includes_compensation_basis(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: _HPD_METHODOLOGY_OPTS must include compensation_basis (inherited from base opts)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_m_sale_purchase_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "compensation_basis" in html, f"8ZX: compensation_basis missing from _HPD_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2224_8zx_hpd_methodology_opts_does_not_mutate_base_opts(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: _WR_METHODOLOGY_OPTS must NOT contain conservation_cost_adjusted_value (no mutation of base via concat)."""
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "conservation_cost_adjusted_value" not in html, "8ZX: conservation_cost_adjusted_value leaked into wellness_resort methodology options — _METHODOLOGY_OPTS mutated by concat"
+
+
+def test_CS2225_8zx_skipped_main_form_docs_not_in_supp_section_q(page: "Page", live_server: str) -> None:
+    """Phase 8ZX: Main-form doc fields (e.g. hpd_heritage_registration_decree) must NOT appear in supplemental."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_heritage_registration_decree']")
+    assert el.count() == 0, "8ZX: main-form doc hpd_heritage_registration_decree duplicated in supplemental"

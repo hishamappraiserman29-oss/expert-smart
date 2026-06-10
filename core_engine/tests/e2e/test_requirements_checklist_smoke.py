@@ -23002,3 +23002,26 @@ def test_CS2140_8zv_wr_methodology_opts_includes_natural_resource_premium(page: 
     _load_wellness_resort_supp(page, live_server)
     el = page.locator("[data-es-supp-field='wr_supp_m_mortgage_lending_methodology'] option[value='natural_resource_premium_analysis']")
     assert el.count() >= 1, "8ZV: natural_resource_premium_analysis option not found in methodology select"
+
+
+# ── Phase 8ZW — Educational Asset Heading Completion ─────────────────────────
+
+def test_CS2141_8zw_educational_asset_supp_heading_contains_madrasa(page: "Page", live_server: str) -> None:
+    """Phase 8ZW: supplemental heading must contain 'مدرسة / مرفق تعليمي'."""
+    _load_educational_asset_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").text_content()
+    assert "مدرسة / مرفق تعليمي" in heading, f"8ZW: heading does not contain expected wording: {heading}"
+
+
+def test_CS2142_8zw_educational_asset_supp_section_n_digital_infra_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZW: regression — Section N field ea_supp_fiber_optic_available still renders."""
+    _load_educational_asset_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ea_supp_fiber_optic_available']")
+    assert el.count() >= 1, "8ZW: ea_supp_fiber_optic_available (Section N) not found — schema may have regressed"
+
+
+def test_CS2143_8zw_educational_asset_supp_section_count_is_15(page: "Page", live_server: str) -> None:
+    """Phase 8ZW: supplemental panel must have exactly 15 sections (A–O) — detects duplication."""
+    _load_educational_asset_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 15, f"8ZW: expected 15 supplemental sections, got {count} — possible duplication or missing section"

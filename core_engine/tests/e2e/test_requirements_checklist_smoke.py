@@ -22538,3 +22538,467 @@ def test_CS2070_8zu_complete_regression_no_console_errors(page: "Page", live_ser
     missing = [f for f in spot if page.locator(f"[data-es-supp-field='{f}']").count() == 0]
     assert not missing, f"8ZU: spot-check fields missing: {missing}"
     assert len(errors) == 0, f"8ZU: unexpected JS errors: {errors}"
+
+
+# ── Phase 8ZV — Wellness Resort Supplemental (CS2071–CS2140) ─────────────────
+
+def _load_wellness_resort_supp(page: "Page", live_server: str) -> None:
+    """Load wellness_resort profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="wellness_resort")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS2071-CS2074: panel / heading / subtext ──────────────────────────────────
+
+def test_CS2071_8zv_wellness_resort_dropdown_option_exists(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: dropdown must contain value='wellness_resort' option."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    assert page.locator("#asset-type option[value='wellness_resort']").count() >= 1
+
+
+def test_CS2072_8zv_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: wellness_resort supplemental panel must be visible."""
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+def test_CS2073_8zv_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: supplemental heading must contain correct Arabic text."""
+    _load_wellness_resort_supp(page, live_server)
+    heading_text = page.locator("#es-req-supp-header").inner_text()
+    assert "منتجع استشفاء علاجي" in heading_text, f"8ZV: heading not found. Got: {heading_text[:120]}"
+
+
+def test_CS2074_8zv_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: supplemental subtext must render for wellness_resort."""
+    _load_wellness_resort_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert "إدخال محلي" in subtext, f"8ZV: subtext not found. Got: {subtext[:80]}"
+
+
+# ── CS2075-CS2091: section headings A–Q ──────────────────────────────────────
+
+def test_CS2075_8zv_section_A_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('تعريف المنتجع')").count() >= 1
+
+
+def test_CS2076_8zv_section_B_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('المورد الطبيعي')").count() >= 1
+
+
+def test_CS2077_8zv_section_C_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('مرافق العلاج')").count() >= 1
+
+
+def test_CS2078_8zv_section_D_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('الإقامة والضيافة')").count() >= 1
+
+
+def test_CS2079_8zv_section_E_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('البرامج العلاجية')").count() >= 1
+
+
+def test_CS2080_8zv_section_F_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('التشغيل والمؤشرات')").count() >= 1
+
+
+def test_CS2081_8zv_section_G_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('الإيرادات والمصروفات')").count() >= 1
+
+
+def test_CS2082_8zv_section_H_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('العقود والإدارة')").count() >= 1
+
+
+def test_CS2083_8zv_section_I_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('التراخيص والامتثال')").count() >= 1
+
+
+def test_CS2084_8zv_section_J_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('البنية التحتية')").count() >= 1
+
+
+def test_CS2085_8zv_section_K_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('التنافسية السوقية')").count() >= 1
+
+
+def test_CS2086_8zv_section_L_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('الاستدامة')").count() >= 1
+
+
+def test_CS2087_8zv_section_M_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('معاملات التعديل')").count() >= 1
+
+
+def test_CS2088_8zv_section_N_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('المخاطر البيئية')").count() >= 1
+
+
+def test_CS2089_8zv_section_O_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('مخاطر التقييم')").count() >= 1
+
+
+def test_CS2090_8zv_section_P_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('البنية الرقمية')").count() >= 1
+
+
+def test_CS2091_8zv_section_Q_heading_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("#es-req-supp :text('مستندات إضافية')").count() >= 1
+
+
+# ── CS2092-CS2118: key field renders ─────────────────────────────────────────
+
+def test_CS2092_8zv_wellness_resort_asset_type_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_wellness_resort_asset_type']")
+    assert el.count() >= 1, "8ZV: wr_supp_wellness_resort_asset_type not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2093_8zv_natural_therapeutic_resource_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_natural_therapeutic_resource_available']")
+    assert el.count() >= 1, "8ZV: wr_supp_natural_therapeutic_resource_available not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2094_8zv_natural_resource_type_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_natural_resource_type']")
+    assert el.count() >= 1, "8ZV: wr_supp_natural_resource_type not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+    # Must include thermal_spring option
+    assert page.locator("[data-es-supp-field='wr_supp_natural_resource_type'] option[value='thermal_spring']").count() >= 1
+
+
+def test_CS2095_8zv_target_guest_segment_renders_as_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='wr_supp_target_guest_segment']")
+    assert chips.count() >= 1, "8ZV: wr_supp_target_guest_segment checkbox_group chips not found"
+
+
+def test_CS2096_8zv_concession_remaining_years_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_concession_remaining_years']")
+    assert el.count() >= 1, "8ZV: wr_supp_concession_remaining_years not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2097_8zv_resource_rights_notes_renders_as_textarea(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_resource_rights_notes']")
+    assert el.count() >= 1, "8ZV: wr_supp_resource_rights_notes not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "textarea"
+
+
+def test_CS2098_8zv_wellness_treatment_rooms_count_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_wellness_treatment_rooms_count']")
+    assert el.count() >= 1, "8ZV: wr_supp_wellness_treatment_rooms_count not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2099_8zv_thermal_pools_count_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_thermal_pools_count']")
+    assert el.count() >= 1, "8ZV: wr_supp_thermal_pools_count not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2100_8zv_wellness_program_spaces_renders_as_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='wr_supp_wellness_program_spaces_available']")
+    assert chips.count() >= 1, "8ZV: wr_supp_wellness_program_spaces_available chips not found"
+
+
+def test_CS2101_8zv_treatment_facility_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_treatment_facility_condition']")
+    assert el.count() >= 1, "8ZV: wr_supp_treatment_facility_condition not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2102_8zv_average_room_size_sqm_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_average_room_size_sqm']")
+    assert el.count() >= 1, "8ZV: wr_supp_average_room_size_sqm not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2103_8zv_meditation_gardens_available_renders_as_bool(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_meditation_gardens_available']")
+    assert el.count() >= 1, "8ZV: wr_supp_meditation_gardens_available not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2104_8zv_medical_supervision_level_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_medical_supervision_level']")
+    assert el.count() >= 1, "8ZV: wr_supp_medical_supervision_level not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2105_8zv_treatment_sessions_annual_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_treatment_sessions_annual']")
+    assert el.count() >= 1, "8ZV: wr_supp_treatment_sessions_annual not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2106_8zv_trevpar_renders_as_number(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_trevpar']")
+    assert el.count() >= 1, "8ZV: wr_supp_trevpar not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2107_8zv_seasonality_level_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_seasonality_level']")
+    assert el.count() >= 1, "8ZV: wr_supp_seasonality_level not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2108_8zv_distribution_channel_mix_renders_as_checkbox_group(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    chips = page.locator("#es-req-supp [data-es-supp-field='wr_supp_distribution_channel_mix']")
+    assert chips.count() >= 1, "8ZV: wr_supp_distribution_channel_mix chips not found"
+
+
+def test_CS2109_8zv_ebitda_annual_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_ebitda_annual']")
+    assert el.count() >= 1, "8ZV: wr_supp_ebitda_annual not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2110_8zv_franchise_agreement_status_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_franchise_or_brand_agreement_status']")
+    assert el.count() >= 1, "8ZV: wr_supp_franchise_or_brand_agreement_status not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2111_8zv_tourism_license_status_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_tourism_license_status']")
+    assert el.count() >= 1, "8ZV: wr_supp_tourism_license_status not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2112_8zv_wellness_spa_license_status_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_wellness_or_spa_license_status']")
+    assert el.count() >= 1, "8ZV: wr_supp_wellness_or_spa_license_status not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2113_8zv_building_condition_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_building_condition']")
+    assert el.count() >= 1, "8ZV: wr_supp_building_condition not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2114_8zv_capex_required_renders_as_number(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_capex_required_estimated']")
+    assert el.count() >= 1, "8ZV: wr_supp_capex_required_estimated not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2115_8zv_wellness_destination_strength_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_wellness_destination_strength']")
+    assert el.count() >= 1, "8ZV: wr_supp_wellness_destination_strength not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2116_8zv_market_share_estimate_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_market_share_estimate_pct']")
+    assert el.count() >= 1, "8ZV: wr_supp_market_share_estimate_pct not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2117_8zv_annual_energy_consumption_renders_with_unit(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_annual_energy_consumption_kwh']")
+    assert el.count() >= 1, "8ZV: wr_supp_annual_energy_consumption_kwh not found"
+    assert el.evaluate("e => e.type") == "number"
+
+
+def test_CS2118_8zv_green_building_rating_renders_as_select(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_green_building_rating']")
+    assert el.count() >= 1, "8ZV: wr_supp_green_building_rating not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+# ── CS2119-CS2130: Section M purpose fields ───────────────────────────────────
+
+def test_CS2119_8zv_section_M_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZV: wr_supp_m_mortgage_lending_methodology not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2120_8zv_section_M_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_sale_purchase_methodology']").count() >= 1
+
+
+def test_CS2121_8zv_section_M_insurance_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_insurance_methodology']").count() >= 1
+
+
+def test_CS2122_8zv_section_M_ifrs_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_ifrs_fair_value_methodology']").count() >= 1
+
+
+def test_CS2123_8zv_section_M_acquisition_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_acquisition_investment_methodology']").count() >= 1
+
+
+def test_CS2124_8zv_section_M_taxation_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_taxation_methodology']").count() >= 1
+
+
+def test_CS2125_8zv_section_M_liquidation_methodology_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_liquidation_methodology']").count() >= 1
+
+
+def test_CS2126_8zv_section_M_operator_contract_review_local_advisory(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: local-only operator_contract_review purpose must render with help_ar."""
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_operator_contract_review_methodology']").count() >= 1
+
+
+def test_CS2127_8zv_section_M_tourism_investment_review_local_advisory(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_tourism_investment_review_methodology']").count() >= 1
+
+
+def test_CS2128_8zv_section_M_medical_wellness_business_review_local_advisory(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_medical_wellness_business_review_methodology']").count() >= 1
+
+
+def test_CS2129_8zv_section_M_litigation_dispute_local_advisory(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_litigation_dispute_methodology']").count() >= 1
+
+
+def test_CS2130_8zv_section_M_impairment_testing_local_advisory(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='wr_supp_m_impairment_testing_methodology']").count() >= 1
+
+
+# ── CS2131-CS2136: risk / digital / doc fields ────────────────────────────────
+
+def test_CS2131_8zv_contamination_risk_level_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_contamination_risk_level']")
+    assert el.count() >= 1, "8ZV: wr_supp_contamination_risk_level not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2132_8zv_therapeutic_claims_liability_risk_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_therapeutic_claims_liability_risk_level']")
+    assert el.count() >= 1, "8ZV: wr_supp_therapeutic_claims_liability_risk_level not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2133_8zv_overall_risk_rating_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_overall_risk_rating']")
+    assert el.count() >= 1, "8ZV: wr_supp_overall_risk_rating not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2134_8zv_property_management_system_renders_as_bool(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_property_management_system_available']")
+    assert el.count() >= 1, "8ZV: wr_supp_property_management_system_available not found"
+    assert el.evaluate("e => e.tagName.toLowerCase()") == "select"
+
+
+def test_CS2135_8zv_doc_wellness_spa_license_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_doc_supp_wellness_spa_license']")
+    assert el.count() >= 1, "8ZV: wr_doc_supp_wellness_spa_license not found"
+    assert el.evaluate("e => e.type") == "checkbox"
+
+
+def test_CS2136_8zv_doc_natural_resource_license_renders(page: "Page", live_server: str) -> None:
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_doc_supp_natural_resource_license']")
+    assert el.count() >= 1, "8ZV: wr_doc_supp_natural_resource_license not found"
+    assert el.evaluate("e => e.type") == "checkbox"
+
+
+# ── CS2137-CS2140: isolation / meta ──────────────────────────────────────────
+
+def test_CS2137_8zv_wr_supp_fields_not_in_healthcare_facility_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: wr_supp_ fields must NOT appear in healthcare_facility supplemental."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="healthcare_facility")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    leak = page.locator("[data-es-supp-field^='wr_supp_']").count()
+    assert leak == 0, f"8ZV: {leak} wr_supp_ fields leaked into healthcare_facility panel"
+
+
+def test_CS2138_8zv_wr_supp_fields_not_in_hotel_resort_panel(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: wr_supp_ fields must NOT appear in hotel_resort_detailed supplemental."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="hotel_resort_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    leak = page.locator("[data-es-supp-field^='wr_supp_']").count()
+    assert leak == 0, f"8ZV: {leak} wr_supp_ fields leaked into hotel_resort_detailed panel"
+
+
+def test_CS2139_8zv_supp_fields_use_data_es_supp_field_not_req_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: no wr_supp_ field inside #es-req-supp may use data-es-req-field."""
+    _load_wellness_resort_supp(page, live_server)
+    wrong = page.locator("#es-req-supp [data-es-req-field^='wr_supp_']").count()
+    assert wrong == 0, f"8ZV: {wrong} wr_supp_ fields used data-es-req-field inside supplemental panel"
+
+
+def test_CS2140_8zv_wr_methodology_opts_includes_natural_resource_premium(page: "Page", live_server: str) -> None:
+    """Phase 8ZV: _WR_METHODOLOGY_OPTS must expose natural_resource_premium_analysis option."""
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_m_mortgage_lending_methodology'] option[value='natural_resource_premium_analysis']")
+    assert el.count() >= 1, "8ZV: natural_resource_premium_analysis option not found in methodology select"

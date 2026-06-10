@@ -24377,3 +24377,749 @@ def test_CS2321_8zy_skipped_main_form_field_tb_forest_area_not_in_supp(page: "Pa
     _load_timberland_supp(page, live_server)
     el = page.locator("[data-es-supp-field='tb_forest_area_hectares']")
     assert el.count() == 0, "8ZY: main-form tb_forest_area_hectares duplicated in supplemental"
+
+
+# ── Phase 8ZZ: zoo_safari — Zoo/Safari Park Detailed Supplemental ────────────
+
+def _load_zoo_safari_supp(page: "Page", live_server: str) -> None:
+    """Load zoo_safari profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="zoo_safari")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2322_8zz_zoo_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zoo_safari supplemental panel must be visible."""
+    _load_zoo_safari_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZZ: #es-req-supp not visible for zoo_safari"
+
+
+def test_CS2323_8zz_zoo_supp_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zoo_safari supplemental heading must match approved text."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp-header").inner_html()
+    assert "متطلبات تقييم حديقة حيوان / متنزه بري" in html, f"8ZZ: heading missing. HTML: {html[:300]}"
+
+
+def test_CS2324_8zz_zoo_supp_subtext(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zoo_safari supplemental subtext must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "إدخال محلي لا يُرسل للتقرير" in html, f"8ZZ: subtext missing. HTML: {html[:200]}"
+
+
+def test_CS2325_8zz_zoo_supp_section_count_20(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zoo_safari supplemental must render exactly 20 sections."""
+    _load_zoo_safari_supp(page, live_server)
+    sections = page.locator("#es-req-supp details")
+    assert sections.count() == 20, f"8ZZ: expected 20 sections, got {sections.count()}"
+
+
+def test_CS2326_8zz_zoo_safari_option_in_dropdown(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zoo_safari option must exist in asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    opts = page.locator("#asset-type option[value='zoo_safari']")
+    assert opts.count() >= 1, "8ZZ: zoo_safari option missing from asset-type dropdown"
+
+
+def test_CS2327_8zz_section_a_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section A heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "تعريف الأصل ونموذج التشغيل" in html, "8ZZ: Section A heading missing"
+
+
+def test_CS2328_8zz_section_b_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section B heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الأرض والموقع والتخطيط العام" in html, "8ZZ: Section B heading missing"
+
+
+def test_CS2329_8zz_section_c_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section C heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مجموعة الحيوانات وتصنيفها" in html, "8ZZ: Section C heading missing"
+
+
+def test_CS2330_8zz_section_d_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section D heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التصاريح والامتثال للحياة البرية" in html, "8ZZ: Section D heading missing"
+
+
+def test_CS2331_8zz_section_e_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section E heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الحظائر والموائل ومرافق الإيواء" in html, "8ZZ: Section E heading missing"
+
+
+def test_CS2332_8zz_section_f_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section F heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الرعاية البيطرية والتغذية والرفاه الحيواني" in html, "8ZZ: Section F heading missing"
+
+
+def test_CS2333_8zz_section_g_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section G heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الاعتمادات والمعايير الدولية" in html, "8ZZ: Section G heading missing"
+
+
+def test_CS2334_8zz_section_h_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section H heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مرافق الزوار والتجربة السياحية" in html, "8ZZ: Section H heading missing"
+
+
+def test_CS2335_8zz_section_i_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section I heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التشغيل والإيرادات" in html, "8ZZ: Section I heading missing"
+
+
+def test_CS2336_8zz_section_j_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section J heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المصروفات والتكاليف والتشغيل المالي" in html, "8ZZ: Section J heading missing"
+
+
+def test_CS2337_8zz_section_k_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section K heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "CAPEX والصيانة والتطوير" in html, "8ZZ: Section K heading missing"
+
+
+def test_CS2338_8zz_section_l_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section L heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "العقود والرعاية والشراكات" in html, "8ZZ: Section L heading missing"
+
+
+def test_CS2339_8zz_section_m_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section M heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "السوق والطلب والمنافسة" in html, "8ZZ: Section M heading missing"
+
+
+def test_CS2340_8zz_section_n_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section N heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الوضع القانوني والملكية والتنظيم" in html, "8ZZ: Section N heading missing"
+
+
+def test_CS2341_8zz_section_o_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "معاملات التعديل حسب غرض التقييم" in html, "8ZZ: Section O heading missing"
+
+
+def test_CS2342_8zz_section_p_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section P heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التأمين والمخاطر الحيوانية والسلامة العامة" in html, "8ZZ: Section P heading missing"
+
+
+def test_CS2343_8zz_section_q_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section Q heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الاستدامة والبيئة والتنوع الحيوي" in html, "8ZZ: Section Q heading missing"
+
+
+def test_CS2344_8zz_section_r_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section R heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المخاطر المناخية والطبيعية والتشغيلية" in html, "8ZZ: Section R heading missing"
+
+
+def test_CS2345_8zz_section_s_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section S heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "البنية الرقمية والمراقبة" in html, "8ZZ: Section S heading missing"
+
+
+def test_CS2346_8zz_section_t_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T heading must render."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مستندات إضافية مطلوبة" in html, "8ZZ: Section T heading missing"
+
+
+def test_CS2347_8zz_sec_a_zoo_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section A — zs_supp_zoo_asset_type select must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() >= 1, "8ZZ: zs_supp_zoo_asset_type missing"
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "safari_park" in html, f"8ZZ: safari_park option missing. HTML: {html[:300]}"
+
+
+def test_CS2348_8zz_sec_b_total_site_area_sqm_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section B — zs_supp_total_site_area_sqm must render with unit م²."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_total_site_area_sqm']")
+    assert el.count() >= 1, "8ZZ: zs_supp_total_site_area_sqm missing"
+    parent = page.locator("[data-es-supp-field='zs_supp_total_site_area_sqm']").locator("..")
+    assert "م²" in parent.inner_html(), "8ZZ: unit م² missing for total_site_area_sqm"
+
+
+def test_CS2349_8zz_sec_c_total_animals_count_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section C — zs_supp_total_animals_count must render with unit حيوان."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_total_animals_count']")
+    assert el.count() >= 1, "8ZZ: zs_supp_total_animals_count missing"
+    parent = el.locator("..")
+    assert "حيوان" in parent.inner_html(), "8ZZ: unit حيوان missing for total_animals_count"
+
+
+def test_CS2350_8zz_sec_c_transferability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section C — zs_supp_animal_collection_transferability_status must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_collection_transferability_status']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_collection_transferability_status missing"
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "non_transferable" in html, f"8ZZ: non_transferable option missing. HTML: {html[:300]}"
+
+
+def test_CS2351_8zz_sec_c_flagship_species_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section C — zs_supp_flagship_species_available bool must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_flagship_species_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_flagship_species_available missing"
+
+
+def test_CS2352_8zz_sec_d_zoo_operating_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section D — zs_supp_zoo_operating_license_status must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_operating_license_status']")
+    assert el.count() >= 1, "8ZZ: zs_supp_zoo_operating_license_status missing"
+
+
+def test_CS2353_8zz_sec_d_inspection_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section D — zs_supp_inspection_reports_available (ADD from dedup) must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_inspection_reports_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_inspection_reports_available missing"
+
+
+def test_CS2354_8zz_sec_e_open_safari_area_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section E — zs_supp_open_safari_area_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_open_safari_area_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_open_safari_area_available missing"
+
+
+def test_CS2355_8zz_sec_e_climate_controlled_enclosures_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section E — zs_supp_climate_controlled_enclosures_count (ADD from dedup) must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_climate_controlled_enclosures_count']")
+    assert el.count() >= 1, "8ZZ: zs_supp_climate_controlled_enclosures_count missing"
+
+
+def test_CS2356_8zz_sec_f_animal_mortality_rate_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section F — zs_supp_animal_mortality_rate_pct must render with unit %."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_mortality_rate_pct']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_mortality_rate_pct missing"
+    parent = el.locator("..")
+    assert "%" in parent.inner_html(), "8ZZ: unit % missing for animal_mortality_rate_pct"
+
+
+def test_CS2357_8zz_sec_f_biosecurity_protocol_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section F — zs_supp_biosecurity_protocol_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_biosecurity_protocol_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_biosecurity_protocol_available missing"
+
+
+def test_CS2358_8zz_sec_g_international_accreditation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section G — zs_supp_international_zoo_accreditation_status must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_international_zoo_accreditation_status']")
+    assert el.count() >= 1, "8ZZ: zs_supp_international_zoo_accreditation_status missing"
+
+
+def test_CS2359_8zz_sec_h_animal_encounter_programs_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section H — zs_supp_animal_encounter_programs_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_encounter_programs_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_encounter_programs_available missing"
+
+
+def test_CS2360_8zz_sec_i_total_revenue_annual_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section I — zs_supp_total_revenue_annual must render with unit جنيه/سنة."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_total_revenue_annual']")
+    assert el.count() >= 1, "8ZZ: zs_supp_total_revenue_annual missing"
+    parent = el.locator("..")
+    assert "جنيه" in parent.inner_html(), "8ZZ: unit جنيه missing for total_revenue_annual"
+
+
+def test_CS2361_8zz_sec_i_seasonality_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section I — zs_supp_seasonality_level select must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_seasonality_level']")
+    assert el.count() >= 1, "8ZZ: zs_supp_seasonality_level missing"
+
+
+def test_CS2362_8zz_sec_j_net_operating_income_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section J — zs_supp_net_operating_income_annual must render with unit جنيه/سنة."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_net_operating_income_annual']")
+    assert el.count() >= 1, "8ZZ: zs_supp_net_operating_income_annual missing"
+    parent = el.locator("..")
+    assert "جنيه" in parent.inner_html(), "8ZZ: unit جنيه missing for net_operating_income_annual"
+
+
+def test_CS2363_8zz_sec_k_capex_required_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section K — zs_supp_capex_required must render with unit جنيه."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_capex_required']")
+    assert el.count() >= 1, "8ZZ: zs_supp_capex_required missing"
+    parent = el.locator("..")
+    assert "جنيه" in parent.inner_html(), "8ZZ: unit جنيه missing for capex_required"
+
+
+def test_CS2364_8zz_sec_l_operator_contract_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section L — zs_supp_operator_contract_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_operator_contract_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_operator_contract_available missing"
+
+
+def test_CS2365_8zz_sec_m_marketing_period_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section M — zs_supp_expected_marketing_period_months must render with unit شهر."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_expected_marketing_period_months']")
+    assert el.count() >= 1, "8ZZ: zs_supp_expected_marketing_period_months missing"
+    parent = el.locator("..")
+    assert "شهر" in parent.inner_html(), "8ZZ: unit شهر missing for expected_marketing_period_months"
+
+
+def test_CS2366_8zz_sec_n_animal_ownership_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section N — zs_supp_animal_ownership_dispute_status must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_ownership_dispute_status']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_ownership_dispute_status missing"
+
+
+def test_CS2367_8zz_sec_o_mortgage_lending_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — zs_supp_m_mortgage_lending_methodology select must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_mortgage_lending_methodology missing"
+
+
+def test_CS2368_8zz_sec_o_mortgage_lending_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — zs_supp_m_mortgage_lending_adjustment_pct must render with unit %."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_mortgage_lending_adjustment_pct']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_mortgage_lending_adjustment_pct missing"
+    parent = el.locator("..")
+    assert "%" in parent.inner_html(), "8ZZ: unit % missing for mortgage_lending_adjustment_pct"
+
+
+def test_CS2369_8zz_sec_o_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — zs_supp_m_sale_purchase_methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_sale_purchase_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_sale_purchase_methodology missing"
+
+
+def test_CS2370_8zz_sec_o_taxation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — zs_supp_m_taxation_methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_taxation_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_taxation_methodology missing"
+
+
+def test_CS2371_8zz_sec_o_liquidation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — zs_supp_m_liquidation_methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_liquidation_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_liquidation_methodology missing"
+
+
+def test_CS2372_8zz_sec_o_conservation_value_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — conservation_value_review (local) methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_conservation_value_review_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_conservation_value_review_methodology missing"
+
+
+def test_CS2373_8zz_sec_o_tourism_investment_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — tourism_investment_review (local) methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_tourism_investment_review_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_tourism_investment_review_methodology missing"
+
+
+def test_CS2374_8zz_sec_o_acquisition_investment_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — acquisition_investment (local) methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_acquisition_investment_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_acquisition_investment_methodology missing"
+
+
+def test_CS2375_8zz_sec_o_operator_contract_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — operator_contract_review (local) methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_operator_contract_review_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_operator_contract_review_methodology missing"
+
+
+def test_CS2376_8zz_sec_o_impairment_testing_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O — impairment_testing (local) methodology must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_impairment_testing_methodology']")
+    assert el.count() >= 1, "8ZZ: zs_supp_m_impairment_testing_methodology missing"
+
+
+def test_CS2377_8zz_sec_p_dangerous_animals_present_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section P — zs_supp_dangerous_animals_present must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_dangerous_animals_present']")
+    assert el.count() >= 1, "8ZZ: zs_supp_dangerous_animals_present missing"
+
+
+def test_CS2378_8zz_sec_p_animal_escape_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section P — zs_supp_animal_escape_risk_level select must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_escape_risk_level']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_escape_risk_level missing"
+
+
+def test_CS2379_8zz_sec_q_sustainability_features_chip_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section Q — zs_supp_sustainability_features must render 9 checkbox chips."""
+    _load_zoo_safari_supp(page, live_server)
+    chips = page.locator("[data-es-supp-field='zs_supp_sustainability_features']")
+    assert chips.count() == 9, f"8ZZ: expected 9 sustainability_features chips, got {chips.count()}"
+    first_val = chips.first.evaluate("e => e.value")
+    assert first_val, "8ZZ: first sustainability_features chip has no value"
+
+
+def test_CS2380_8zz_sec_q_sustainability_value_impact_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section Q — zs_supp_sustainability_value_impact_pct must render with unit %."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_sustainability_value_impact_pct']")
+    assert el.count() >= 1, "8ZZ: zs_supp_sustainability_value_impact_pct missing"
+    parent = el.locator("..")
+    assert "%" in parent.inner_html(), "8ZZ: unit % missing for sustainability_value_impact_pct"
+
+
+def test_CS2381_8zz_sec_r_climate_resilience_features_chip_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section R — zs_supp_climate_resilience_features must render 8 chips."""
+    _load_zoo_safari_supp(page, live_server)
+    chips = page.locator("[data-es-supp-field='zs_supp_climate_resilience_features']")
+    assert chips.count() == 8, f"8ZZ: expected 8 climate_resilience_features chips, got {chips.count()}"
+
+
+def test_CS2382_8zz_sec_r_heat_stress_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section R — zs_supp_heat_stress_risk_level must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_heat_stress_risk_level']")
+    assert el.count() >= 1, "8ZZ: zs_supp_heat_stress_risk_level missing"
+
+
+def test_CS2383_8zz_sec_s_gps_tracking_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section S — zs_supp_gps_tracking_for_safari_animals_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_gps_tracking_for_safari_animals_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_gps_tracking_for_safari_animals_available missing"
+
+
+def test_CS2384_8zz_sec_s_animal_records_system_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section S — zs_supp_animal_records_system_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_animal_records_system_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_animal_records_system_available missing"
+
+
+def test_CS2385_8zz_sec_t_doc_zoo_operating_license_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_zoo_operating_license doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_zoo_operating_license']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_zoo_operating_license missing"
+
+
+def test_CS2386_8zz_sec_t_doc_cites_documents_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_cites_documents doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_cites_documents']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_cites_documents missing"
+
+
+def test_CS2387_8zz_sec_t_doc_emergency_evacuation_plans_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_emergency_evacuation_plans doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_emergency_evacuation_plans']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_emergency_evacuation_plans missing"
+
+
+def test_CS2388_8zz_zs_methodology_opts_has_visitor_revenue_capitalization(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: _ZS_METHODOLOGY_OPTS must include visitor_revenue_capitalization."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_insurance_methodology']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "visitor_revenue_capitalization" in html, f"8ZZ: visitor_revenue_capitalization missing from _ZS_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2389_8zz_zs_methodology_opts_has_conservation_value_analysis(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: _ZS_METHODOLOGY_OPTS must include conservation_value_analysis."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_sale_purchase_methodology']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "conservation_value_analysis" in html, f"8ZZ: conservation_value_analysis missing from _ZS_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2390_8zz_zs_methodology_opts_has_replacement_cost_new_less_depreciation(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: _ZS_METHODOLOGY_OPTS must include replacement_cost_new_less_depreciation."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_taxation_methodology']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "replacement_cost_new_less_depreciation" in html, f"8ZZ: replacement_cost_new_less_depreciation missing. HTML: {html[:300]}"
+
+
+def test_CS2391_8zz_zs_methodology_opts_inherits_sales_comparison(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: _ZS_METHODOLOGY_OPTS must inherit sales_comparison from base."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_m_mortgage_lending_methodology']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "sales_comparison" in html, f"8ZZ: sales_comparison not inherited. HTML: {html[:300]}"
+
+
+def test_CS2392_8zz_no_mutation_timberland_does_not_have_zs_opts(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: timberland methodology must NOT contain visitor_revenue_capitalization (no base mutation)."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_methodology']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "visitor_revenue_capitalization" not in html, "8ZZ: visitor_revenue_capitalization leaked into timberland — _METHODOLOGY_OPTS mutated"
+
+
+def test_CS2393_8zz_sec_o_purpose_count_12_methodology_selects(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section O must have 12 methodology select fields (one per purpose)."""
+    _load_zoo_safari_supp(page, live_server)
+    count = 0
+    for purpose in ["mortgage_lending", "sale_purchase", "insurance", "ifrs_fair_value",
+                    "taxation", "liquidation", "litigation_dispute",
+                    "conservation_value_review", "tourism_investment_review",
+                    "acquisition_investment", "operator_contract_review", "impairment_testing"]:
+        el = page.locator(f"[data-es-supp-field='zs_supp_m_{purpose}_methodology']")
+        if el.count() >= 1:
+            count += 1
+    assert count == 12, f"8ZZ: expected 12 purpose methodology selects, found {count}"
+
+
+def test_CS2394_8zz_all_supp_fields_use_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: All zoo_safari supplemental fields must use data-es-supp-field attribute."""
+    _load_zoo_safari_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "data-es-supp-field" in html, "8ZZ: data-es-supp-field not found in supplemental panel"
+    assert "data-es-req-field" not in html, "8ZZ: data-es-req-field must not appear inside supplemental panel"
+
+
+def test_CS2395_8zz_zero_data_es_req_field_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Zero data-es-req-field elements inside #es-req-supp."""
+    _load_zoo_safari_supp(page, live_server)
+    req_fields = page.locator("#es-req-supp [data-es-req-field]")
+    assert req_fields.count() == 0, f"8ZZ: {req_fields.count()} data-es-req-field elements in supplemental — must be 0"
+
+
+def test_CS2396_8zz_existing_zoo_safari_static_form_intact(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Existing zoo_safari main-form (zs_) fields must still render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-req-field='zs_animal_species_count']")
+    assert el.count() >= 1, "8ZZ: existing zs_animal_species_count main-form field missing — regression"
+
+
+def test_CS2397_8zz_skipped_zs_animal_species_count_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Main-form zs_animal_species_count must NOT be duplicated in supplemental."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_animal_species_count']")
+    assert el.count() == 0, "8ZZ: main-form zs_animal_species_count duplicated in supplemental"
+
+
+def test_CS2398_8zz_skipped_zs_annual_visitors_count_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Main-form zs_annual_visitors_count must NOT be duplicated in supplemental."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_annual_visitors_count']")
+    assert el.count() == 0, "8ZZ: main-form zs_annual_visitors_count duplicated in supplemental"
+
+
+def test_CS2399_8zz_skipped_zs_cites_compliance_status_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Main-form zs_cites_compliance_status must NOT be duplicated in supplemental."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_cites_compliance_status']")
+    assert el.count() == 0, "8ZZ: main-form zs_cites_compliance_status duplicated in supplemental"
+
+
+def test_CS2400_8zz_isolation_timberland_no_zs_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: timberland must NOT render any zs_supp_ fields."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() == 0, "8ZZ: zs_supp_zoo_asset_type leaked into timberland"
+
+
+def test_CS2401_8zz_isolation_wellness_resort_no_zs_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: wellness_resort must NOT render any zs_supp_ fields."""
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() == 0, "8ZZ: zs_supp_zoo_asset_type leaked into wellness_resort"
+
+
+def test_CS2402_8zz_isolation_heritage_property_no_zs_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: heritage_property_detailed must NOT render any zs_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage_property_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() == 0, "8ZZ: zs_supp_zoo_asset_type leaked into heritage_property_detailed"
+
+
+def test_CS2403_8zz_isolation_agricultural_land_no_zs_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: agricultural_land must NOT render zs_supp_ supplemental fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() == 0, "8ZZ: zs_supp_zoo_asset_type leaked into agricultural_land"
+
+
+def test_CS2404_8zz_isolation_cold_storage_no_zs_supp_fields(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: cold_storage must NOT render any zs_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="cold_storage")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    assert el.count() == 0, "8ZZ: zs_supp_zoo_asset_type leaked into cold_storage"
+
+
+def test_CS2405_8zz_sec_a_zoo_asset_type_has_traditional_zoo_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: zs_supp_zoo_asset_type must include traditional_zoo option."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_zoo_asset_type']")
+    html = el.first.evaluate("e => e.outerHTML")
+    assert "traditional_zoo" in html, f"8ZZ: traditional_zoo option missing. HTML: {html[:300]}"
+
+
+def test_CS2406_8zz_sec_c_mammals_species_count_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section C — zs_supp_mammals_species_count must render with unit نوع."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_mammals_species_count']")
+    assert el.count() >= 1, "8ZZ: zs_supp_mammals_species_count missing"
+    parent = el.locator("..")
+    assert "نوع" in parent.inner_html(), "8ZZ: unit نوع missing for mammals_species_count"
+
+
+def test_CS2407_8zz_sec_b_total_site_area_hectares_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section B — zs_supp_total_site_area_hectares must render with unit هكتار."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_total_site_area_hectares']")
+    assert el.count() >= 1, "8ZZ: zs_supp_total_site_area_hectares missing"
+    parent = el.locator("..")
+    assert "هكتار" in parent.inner_html(), "8ZZ: unit هكتار missing for total_site_area_hectares"
+
+
+def test_CS2408_8zz_sec_q_water_consumption_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section Q — zs_supp_water_consumption_annual_m3 must render with unit م³/سنة."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_water_consumption_annual_m3']")
+    assert el.count() >= 1, "8ZZ: zs_supp_water_consumption_annual_m3 missing"
+    parent = el.locator("..")
+    assert "م³" in parent.inner_html(), "8ZZ: unit م³ missing for water_consumption_annual_m3"
+
+
+def test_CS2409_8zz_sec_q_electricity_consumption_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section Q — zs_supp_electricity_consumption_annual_kwh must render with unit kWh/سنة."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_electricity_consumption_annual_kwh']")
+    assert el.count() >= 1, "8ZZ: zs_supp_electricity_consumption_annual_kwh missing"
+    parent = el.locator("..")
+    assert "kWh" in parent.inner_html(), "8ZZ: unit kWh missing for electricity_consumption_annual_kwh"
+
+
+def test_CS2410_8zz_sec_e_safari_area_hectares_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section E — zs_supp_safari_area_hectares must render with unit هكتار."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_safari_area_hectares']")
+    assert el.count() >= 1, "8ZZ: zs_supp_safari_area_hectares missing"
+    parent = el.locator("..")
+    assert "هكتار" in parent.inner_html(), "8ZZ: unit هكتار missing for safari_area_hectares"
+
+
+def test_CS2411_8zz_sec_m_nearest_zoo_distance_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section M — zs_supp_nearest_competing_zoo_distance_km must render with unit كم."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_nearest_competing_zoo_distance_km']")
+    assert el.count() >= 1, "8ZZ: zs_supp_nearest_competing_zoo_distance_km missing"
+    parent = el.locator("..")
+    assert "كم" in parent.inner_html(), "8ZZ: unit كم missing for nearest_competing_zoo_distance_km"
+
+
+def test_CS2412_8zz_sec_r_climate_risk_value_impact_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section R — zs_supp_climate_risk_value_impact_pct must render with unit %."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_climate_risk_value_impact_pct']")
+    assert el.count() >= 1, "8ZZ: zs_supp_climate_risk_value_impact_pct missing"
+    parent = el.locator("..")
+    assert "%" in parent.inner_html(), "8ZZ: unit % missing for climate_risk_value_impact_pct"
+
+
+def test_CS2413_8zz_sec_t_doc_animal_welfare_reports_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_animal_welfare_reports doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_animal_welfare_reports']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_animal_welfare_reports missing"
+
+
+def test_CS2414_8zz_sec_t_doc_insurance_documents_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_insurance_documents doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_insurance_documents']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_insurance_documents missing"
+
+
+def test_CS2415_8zz_sec_t_doc_site_photos_and_plans_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section T — zs_doc_supp_site_photos_and_plans doc checkbox must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_doc_supp_site_photos_and_plans']")
+    assert el.count() >= 1, "8ZZ: zs_doc_supp_site_photos_and_plans missing"
+
+
+def test_CS2416_8zz_sec_p_emergency_response_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Section P — zs_supp_emergency_response_plan_available must render."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_supp_emergency_response_plan_available']")
+    assert el.count() >= 1, "8ZZ: zs_supp_emergency_response_plan_available missing"
+
+
+def test_CS2417_8zz_skipped_zs_enclosure_condition_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZ: Main-form zs_enclosure_condition must NOT be duplicated in supplemental."""
+    _load_zoo_safari_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='zs_enclosure_condition']")
+    assert el.count() == 0, "8ZZ: main-form zs_enclosure_condition duplicated in supplemental"

@@ -23669,3 +23669,711 @@ def test_CS2225_8zx_skipped_main_form_docs_not_in_supp_section_q(page: "Page", l
     _load_heritage_property_detailed_supp(page, live_server)
     el = page.locator("[data-es-supp-field='hpd_heritage_registration_decree']")
     assert el.count() == 0, "8ZX: main-form doc hpd_heritage_registration_decree duplicated in supplemental"
+
+
+# ── Phase 8ZY: timberland — Forest Asset Detailed Supplemental ──────────────
+
+def _load_timberland_supp(page: "Page", live_server: str) -> None:
+    """Load timberland profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="timberland")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2226_8zy_timberland_dropdown_option_exists(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: timberland option must exist in #asset-type dropdown."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    options = page.locator("#asset-type option[value='timberland']")
+    assert options.count() >= 1, "8ZY: timberland option missing from #asset-type dropdown"
+
+
+def test_CS2227_8zy_timberland_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: #es-req-supp must be visible after selecting timberland."""
+    _load_timberland_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZY: #es-req-supp not visible for timberland"
+
+
+def test_CS2228_8zy_timberland_supp_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Supplemental heading must contain the forest asset text."""
+    _load_timberland_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "غابة" in heading, f"8ZY: heading missing forest text. Got: {heading[:200]}"
+
+
+def test_CS2229_8zy_timberland_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Subtext must say local-only (no 'من سجل المتطلبات الأساسي')."""
+    _load_timberland_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert "لا يُرسل للتقرير" in subtext, f"8ZY: subtext missing local-only text. Got: {subtext[:200]}"
+    assert "من سجل المتطلبات الأساسي" not in subtext, f"8ZY: wrong subtext variant used for timberland"
+
+
+def test_CS2230_8zy_timberland_supp_section_count_18(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Exactly 18 supplemental sections must render."""
+    _load_timberland_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 18, f"8ZY: expected 18 sections, got {count}"
+
+
+def test_CS2231_8zy_timberland_section_a_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section A heading must contain 'تعريف'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "تعريف" in html, "8ZY: Section A heading missing"
+
+
+def test_CS2232_8zy_timberland_section_b_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section B heading must contain 'المساحة'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المساحة" in html, "8ZY: Section B heading missing"
+
+
+def test_CS2233_8zy_timberland_section_c_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section C heading must contain 'تكوين'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "تكوين" in html, "8ZY: Section C heading missing"
+
+
+def test_CS2234_8zy_timberland_section_d_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section D heading must contain 'مخزون'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مخزون" in html, "8ZY: Section D heading missing"
+
+
+def test_CS2235_8zy_timberland_section_e_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section E heading must contain 'النمو'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "النمو" in html, "8ZY: Section E heading missing"
+
+
+def test_CS2236_8zy_timberland_section_f_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section F heading must contain 'جودة'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "جودة" in html, "8ZY: Section F heading missing"
+
+
+def test_CS2237_8zy_timberland_section_g_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section G heading must contain 'الوصول'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الوصول" in html, "8ZY: Section G heading missing"
+
+
+def test_CS2238_8zy_timberland_section_h_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section H heading must contain 'الإيرادات'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الإيرادات" in html, "8ZY: Section H heading missing"
+
+
+def test_CS2239_8zy_timberland_section_i_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section I heading must contain 'CAPEX'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "CAPEX" in html, "8ZY: Section I heading missing"
+
+
+def test_CS2240_8zy_timberland_section_j_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section J heading must contain 'الشهادات'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الشهادات" in html, "8ZY: Section J heading missing"
+
+
+def test_CS2241_8zy_timberland_section_k_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section K heading must contain 'الكربون'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الكربون" in html, "8ZY: Section K heading missing"
+
+
+def test_CS2242_8zy_timberland_section_l_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section L heading must contain 'القانوني'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "القانوني" in html, "8ZY: Section L heading missing"
+
+
+def test_CS2243_8zy_timberland_section_m_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section M heading must contain 'السوق'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "السوق" in html, "8ZY: Section M heading missing"
+
+
+def test_CS2244_8zy_timberland_section_n_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section N heading must contain 'معاملات التعديل'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "معاملات التعديل" in html, "8ZY: Section N heading missing"
+
+
+def test_CS2245_8zy_timberland_section_o_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section O heading must contain 'المخاطر المناخية'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المخاطر المناخية" in html, "8ZY: Section O heading missing"
+
+
+def test_CS2246_8zy_timberland_section_p_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section P heading must contain 'الحماية'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الحماية" in html, "8ZY: Section P heading missing"
+
+
+def test_CS2247_8zy_timberland_section_q_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section Q heading must contain 'الرقمية'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الرقمية" in html, "8ZY: Section Q heading missing"
+
+
+def test_CS2248_8zy_timberland_section_r_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section R heading must contain 'مستندات'."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مستندات" in html, "8ZY: Section R heading missing"
+
+
+def test_CS2249_8zy_section_a_forest_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_forest_asset_type select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_asset_type']")
+    assert el.count() >= 1, "8ZY: ftl_supp_forest_asset_type not rendered"
+
+
+def test_CS2250_8zy_section_a_forest_asset_type_has_carbon_credit_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: forest_asset_type must include carbon_credit_forest option."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_asset_type']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "carbon_credit_forest" in html, f"8ZY: carbon_credit_forest option missing. HTML: {html[:300]}"
+
+
+def test_CS2251_8zy_section_a_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_operating_status renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_operating_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_operating_status not rendered"
+
+
+def test_CS2252_8zy_section_b_productive_area_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_productive_forest_area_hectares renders with هكتار unit."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_productive_forest_area_hectares']")
+    assert el.count() >= 1, "8ZY: ftl_supp_productive_forest_area_hectares not rendered"
+
+
+def test_CS2253_8zy_section_b_boundary_survey_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_boundary_survey_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_boundary_survey_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_boundary_survey_available not rendered"
+
+
+def test_CS2254_8zy_section_b_ownership_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_ownership_type select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_ownership_type']")
+    assert el.count() >= 1, "8ZY: ftl_supp_ownership_type not rendered"
+
+
+def test_CS2255_8zy_section_c_rotation_age_years_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_rotation_age_years number field renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_rotation_age_years']")
+    assert el.count() >= 1, "8ZY: ftl_supp_rotation_age_years not rendered"
+
+
+def test_CS2256_8zy_section_c_stocking_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_stocking_level select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_stocking_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_stocking_level not rendered"
+
+
+def test_CS2257_8zy_section_c_stand_density_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_stand_density_trees_per_hectare renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_stand_density_trees_per_hectare']")
+    assert el.count() >= 1, "8ZY: ftl_supp_stand_density_trees_per_hectare not rendered"
+
+
+def test_CS2258_8zy_section_d_merchantable_volume_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_merchantable_timber_volume_m3 renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_merchantable_timber_volume_m3']")
+    assert el.count() >= 1, "8ZY: ftl_supp_merchantable_timber_volume_m3 not rendered"
+
+
+def test_CS2259_8zy_section_d_annual_allowable_cut_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_annual_allowable_cut_m3 renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_annual_allowable_cut_m3']")
+    assert el.count() >= 1, "8ZY: ftl_supp_annual_allowable_cut_m3 not rendered"
+
+
+def test_CS2260_8zy_section_d_biomass_estimate_method_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_biomass_estimate_method select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_biomass_estimate_method']")
+    assert el.count() >= 1, "8ZY: ftl_supp_biomass_estimate_method not rendered"
+
+
+def test_CS2261_8zy_section_d_standing_biomass_tonnes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_standing_biomass_tonnes number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_standing_biomass_tonnes']")
+    assert el.count() >= 1, "8ZY: ftl_supp_standing_biomass_tonnes not rendered"
+
+
+def test_CS2262_8zy_section_e_mean_annual_increment_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_mean_annual_increment_m3_ha renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_mean_annual_increment_m3_ha']")
+    assert el.count() >= 1, "8ZY: ftl_supp_mean_annual_increment_m3_ha not rendered"
+
+
+def test_CS2263_8zy_section_e_forest_management_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_forest_management_plan_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_management_plan_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_forest_management_plan_available not rendered"
+
+
+def test_CS2264_8zy_section_e_replanting_area_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_replanting_area_hectares number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_replanting_area_hectares']")
+    assert el.count() >= 1, "8ZY: ftl_supp_replanting_area_hectares not rendered"
+
+
+def test_CS2265_8zy_section_f_tree_health_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_tree_health_condition select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_tree_health_condition']")
+    assert el.count() >= 1, "8ZY: ftl_supp_tree_health_condition not rendered"
+
+
+def test_CS2266_8zy_section_f_illegal_logging_history_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_illegal_logging_history_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_illegal_logging_history_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_illegal_logging_history_available not rendered"
+
+
+def test_CS2267_8zy_section_f_forest_degradation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_forest_degradation_level select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_degradation_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_forest_degradation_level not rendered"
+
+
+def test_CS2268_8zy_section_g_forest_road_length_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_forest_road_length_km number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_road_length_km']")
+    assert el.count() >= 1, "8ZY: ftl_supp_forest_road_length_km not rendered"
+
+
+def test_CS2269_8zy_section_g_distance_to_sawmill_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_distance_to_sawmill_km number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_distance_to_sawmill_km']")
+    assert el.count() >= 1, "8ZY: ftl_supp_distance_to_sawmill_km not rendered"
+
+
+def test_CS2270_8zy_section_g_terrain_slope_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_terrain_slope_level select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_terrain_slope_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_terrain_slope_level not rendered"
+
+
+def test_CS2271_8zy_section_h_ntfp_revenue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_non_timber_forest_products_revenue_annual renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_non_timber_forest_products_revenue_annual']")
+    assert el.count() >= 1, "8ZY: ftl_supp_non_timber_forest_products_revenue_annual not rendered"
+
+
+def test_CS2272_8zy_section_h_biodiversity_credit_revenue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_biodiversity_credit_revenue_annual renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_biodiversity_credit_revenue_annual']")
+    assert el.count() >= 1, "8ZY: ftl_supp_biodiversity_credit_revenue_annual not rendered"
+
+
+def test_CS2273_8zy_section_h_noi_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_net_operating_income_annual renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_net_operating_income_annual']")
+    assert el.count() >= 1, "8ZY: ftl_supp_net_operating_income_annual not rendered"
+
+
+def test_CS2274_8zy_section_i_silviculture_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_silviculture_cost_annual renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_silviculture_cost_annual']")
+    assert el.count() >= 1, "8ZY: ftl_supp_silviculture_cost_annual not rendered"
+
+
+def test_CS2275_8zy_section_i_capex_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_capex_required renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_capex_required']")
+    assert el.count() >= 1, "8ZY: ftl_supp_capex_required not rendered"
+
+
+def test_CS2276_8zy_section_i_replanting_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_replanting_cost_per_hectare renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_replanting_cost_per_hectare']")
+    assert el.count() >= 1, "8ZY: ftl_supp_replanting_cost_per_hectare not rendered"
+
+
+def test_CS2277_8zy_section_j_pefc_cert_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_pefc_certification_status select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_pefc_certification_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_pefc_certification_status not rendered"
+
+
+def test_CS2278_8zy_section_j_conservation_easement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_conservation_easement_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_conservation_easement_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_conservation_easement_available not rendered"
+
+
+def test_CS2279_8zy_section_j_protected_habitat_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_protected_habitat_presence bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_protected_habitat_presence']")
+    assert el.count() >= 1, "8ZY: ftl_supp_protected_habitat_presence not rendered"
+
+
+def test_CS2280_8zy_section_k_carbon_registered_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_carbon_project_registered bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_carbon_project_registered']")
+    assert el.count() >= 1, "8ZY: ftl_supp_carbon_project_registered not rendered"
+
+
+def test_CS2281_8zy_section_k_carbon_stock_tco2e_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_carbon_stock_estimate_tco2e number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_carbon_stock_estimate_tco2e']")
+    assert el.count() >= 1, "8ZY: ftl_supp_carbon_stock_estimate_tco2e not rendered"
+
+
+def test_CS2282_8zy_section_k_carbon_standard_has_verra_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: carbon_standard select must include verra_vcs option."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_carbon_standard']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "verra_vcs" in html, f"8ZY: verra_vcs option missing from carbon_standard. HTML: {html[:300]}"
+
+
+def test_CS2283_8zy_section_k_carbon_rights_ownership_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_carbon_rights_ownership_status select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_carbon_rights_ownership_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_carbon_rights_ownership_status not rendered"
+
+
+def test_CS2284_8zy_section_l_indigenous_rights_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_indigenous_or_community_rights_status select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_indigenous_or_community_rights_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_indigenous_or_community_rights_status not rendered"
+
+
+def test_CS2285_8zy_section_l_export_restrictions_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_timber_export_restrictions_status select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_timber_export_restrictions_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_timber_export_restrictions_status not rendered"
+
+
+def test_CS2286_8zy_section_l_legal_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_legal_dispute_status select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_legal_dispute_status']")
+    assert el.count() >= 1, "8ZY: ftl_supp_legal_dispute_status not rendered"
+
+
+def test_CS2287_8zy_section_m_timber_price_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_current_timber_price_per_m3 number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_current_timber_price_per_m3']")
+    assert el.count() >= 1, "8ZY: ftl_supp_current_timber_price_per_m3 not rendered"
+
+
+def test_CS2288_8zy_section_m_comparable_sales_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_comparable_timberland_sales_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_comparable_timberland_sales_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_comparable_timberland_sales_available not rendered"
+
+
+def test_CS2289_8zy_section_m_liquidity_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_liquidity_risk_level select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_liquidity_risk_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_liquidity_risk_level not rendered"
+
+
+def test_CS2290_8zy_section_n_mortgage_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section N mortgage_lending methodology select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_mortgage_lending_methodology not rendered"
+
+
+def test_CS2291_8zy_section_n_sale_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section N sale_purchase methodology select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_sale_purchase_methodology']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_sale_purchase_methodology not rendered"
+
+
+def test_CS2292_8zy_section_n_mortgage_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Section N mortgage adjustment_pct renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_adjustment_pct']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_mortgage_lending_adjustment_pct not rendered"
+
+
+def test_CS2293_8zy_section_n_land_expectation_value_opt_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include land_expectation_value."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "land_expectation_value" in html, f"8ZY: land_expectation_value missing from methodology opts. HTML: {html[:300]}"
+
+
+def test_CS2294_8zy_section_n_harvest_schedule_dcf_opt_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include harvest_schedule_dcf."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_sale_purchase_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "harvest_schedule_dcf" in html, f"8ZY: harvest_schedule_dcf missing from methodology opts. HTML: {html[:300]}"
+
+
+def test_CS2295_8zy_section_n_carbon_income_capitalization_opt_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include carbon_income_capitalization."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "carbon_income_capitalization" in html, f"8ZY: carbon_income_capitalization missing from methodology opts. HTML: {html[:300]}"
+
+
+def test_CS2296_8zy_section_n_carbon_credit_review_is_local(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: carbon_credit_review purpose methodology field must render."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_carbon_credit_review_methodology']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_carbon_credit_review_methodology not rendered"
+    # Verify adjustment_pct companion field also renders
+    el_pct = page.locator("[data-es-supp-field='ftl_supp_m_carbon_credit_review_adjustment_pct']")
+    assert el_pct.count() >= 1, "8ZY: ftl_supp_m_carbon_credit_review_adjustment_pct not rendered"
+
+
+def test_CS2297_8zy_section_n_forestry_investment_is_local(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: forestry_investment methodology must render with local advisory."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_forestry_investment_methodology']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_forestry_investment_methodology not rendered"
+
+
+def test_CS2298_8zy_section_n_impairment_testing_is_local(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: impairment_testing methodology must render."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_impairment_testing_methodology']")
+    assert el.count() >= 1, "8ZY: ftl_supp_m_impairment_testing_methodology not rendered"
+
+
+def test_CS2299_8zy_section_o_drought_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_drought_risk_level select renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_drought_risk_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_drought_risk_level not rendered"
+
+
+def test_CS2300_8zy_section_o_storm_windthrow_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_storm_windthrow_risk_level renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_storm_windthrow_risk_level']")
+    assert el.count() >= 1, "8ZY: ftl_supp_storm_windthrow_risk_level not rendered"
+
+
+def test_CS2301_8zy_section_o_climate_impact_pct_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_climate_risk_value_impact_pct number renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_climate_risk_value_impact_pct']")
+    assert el.count() >= 1, "8ZY: ftl_supp_climate_risk_value_impact_pct not rendered"
+
+
+def test_CS2302_8zy_section_p_firebreaks_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_firebreaks_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_firebreaks_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_firebreaks_available not rendered"
+
+
+def test_CS2303_8zy_section_p_risk_mitigation_features_chip_group(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_risk_mitigation_features checkbox_group chips render (9 chips expected)."""
+    _load_timberland_supp(page, live_server)
+    chips = page.locator("[data-es-supp-field='ftl_supp_risk_mitigation_features']")
+    count = chips.count()
+    assert count == 9, f"8ZY: expected 9 checkbox chips for risk_mitigation_features, got {count}"
+    first_val = chips.first.evaluate("e => e.value")
+    assert first_val == "firebreaks", f"8ZY: first chip value expected 'firebreaks', got '{first_val}'"
+
+
+def test_CS2304_8zy_section_q_gis_mapping_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_gis_mapping_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_gis_mapping_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_gis_mapping_available not rendered"
+
+
+def test_CS2305_8zy_section_q_chain_of_custody_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_supp_chain_of_custody_system_available bool renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_chain_of_custody_system_available']")
+    assert el.count() >= 1, "8ZY: ftl_supp_chain_of_custody_system_available not rendered"
+
+
+def test_CS2306_8zy_section_r_doc_harvest_plan_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_doc_supp_harvest_plan document checkbox renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_doc_supp_harvest_plan']")
+    assert el.count() >= 1, "8ZY: ftl_doc_supp_harvest_plan not rendered"
+
+
+def test_CS2307_8zy_section_r_doc_carbon_docs_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_doc_supp_carbon_docs document checkbox renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_doc_supp_carbon_docs']")
+    assert el.count() >= 1, "8ZY: ftl_doc_supp_carbon_docs not rendered"
+
+
+def test_CS2308_8zy_section_r_doc_gis_drone_maps_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: ftl_doc_supp_gis_drone_maps document checkbox renders."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_doc_supp_gis_drone_maps']")
+    assert el.count() >= 1, "8ZY: ftl_doc_supp_gis_drone_maps not rendered"
+
+
+def test_CS2309_8zy_unit_hectare_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: هكتار unit must appear in the supplemental panel."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "هكتار" in html, "8ZY: هكتار unit missing from timberland supplemental"
+
+
+def test_CS2310_8zy_unit_tco2e_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: tCO2e unit must appear in the supplemental panel."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "tCO2e" in html, "8ZY: tCO2e unit missing from timberland supplemental"
+
+
+def test_CS2311_8zy_unit_m3_per_ha_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: م³/هكتار unit must appear in the supplemental panel."""
+    _load_timberland_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "م³" in html, "8ZY: م³ unit missing from timberland supplemental"
+
+
+def test_CS2312_8zy_isolation_agricultural_land_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: agricultural_land profile must NOT render ftl_supp_ fields in supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    # dropdown value for agricultural_land is the Arabic label
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(800)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_asset_type']")
+    assert el.count() == 0, "8ZY: ftl_supp_forest_asset_type leaked into agricultural_land panel"
+
+
+def test_CS2313_8zy_isolation_zoo_safari_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: zoo_safari profile must NOT render ftl_supp_ fields in supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="zoo_safari")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(800)
+    el = page.locator("[data-es-supp-field='ftl_supp_forest_asset_type']")
+    assert el.count() == 0, "8ZY: ftl_supp_forest_asset_type leaked into zoo_safari panel"
+
+
+def test_CS2314_8zy_isolation_heritage_property_detailed_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: heritage_property_detailed must NOT show ftl_supp_ fields."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "ftl_supp_" not in html, "8ZY: ftl_supp_ fields leaked into heritage_property_detailed"
+
+
+def test_CS2315_8zy_isolation_wellness_resort_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: wellness_resort must NOT show ftl_supp_ fields."""
+    _load_wellness_resort_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "ftl_supp_" not in html, "8ZY: ftl_supp_ fields leaked into wellness_resort"
+
+
+def test_CS2316_8zy_attribute_guard_zero_req_field_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Zero data-es-req-field attributes must appear inside #es-req-supp."""
+    _load_timberland_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, f"8ZY: {count} data-es-req-field found inside supplemental — must be zero"
+
+
+def test_CS2317_8zy_ftl_methodology_opts_has_land_expectation_value(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include land_expectation_value (new, not in base)."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_sale_purchase_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "land_expectation_value" in html, f"8ZY: land_expectation_value missing. HTML: {html[:300]}"
+
+
+def test_CS2318_8zy_ftl_methodology_opts_has_conservation_easement_analysis(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include conservation_easement_analysis."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_insurance_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "conservation_easement_analysis" in html, f"8ZY: conservation_easement_analysis missing. HTML: {html[:300]}"
+
+
+def test_CS2319_8zy_ftl_methodology_opts_inherits_compensation_basis(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: _FTL_METHODOLOGY_OPTS must include compensation_basis (inherited from base)."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='ftl_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "compensation_basis" in html, f"8ZY: compensation_basis missing from _FTL_METHODOLOGY_OPTS. HTML: {html[:300]}"
+
+
+def test_CS2320_8zy_no_mutation_wellness_resort_does_not_have_ftl_opts(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: wellness_resort methodology must NOT contain land_expectation_value (no base mutation)."""
+    _load_wellness_resort_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='wr_supp_m_mortgage_lending_methodology']")
+    html = el.evaluate("e => e.outerHTML")
+    assert "land_expectation_value" not in html, "8ZY: land_expectation_value leaked into wellness_resort — _METHODOLOGY_OPTS mutated"
+
+
+def test_CS2321_8zy_skipped_main_form_field_tb_forest_area_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZY: Main-form tb_forest_area_hectares must NOT appear in supplemental."""
+    _load_timberland_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='tb_forest_area_hectares']")
+    assert el.count() == 0, "8ZY: main-form tb_forest_area_hectares duplicated in supplemental"

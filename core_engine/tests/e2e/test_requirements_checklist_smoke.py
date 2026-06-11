@@ -27994,3 +27994,726 @@ def test_CS2805_8zzc_sec_n_local_advisory_desc_present(page: "Page", live_server
     _load_intangible_supp(page, live_server)
     text = page.locator("#es-req-supp").inner_text()
     assert "لا يُطبَّق آلياً" in text or "لا يُرسَل للتقرير" in text, "8ZZC: Section N local advisory desc missing"
+
+
+# ── Phase 8ZZD: Fractional Ownership / Partial Interest ─────────────────────
+
+def _load_partial_interest_supp(page: "Page", live_server: str) -> None:
+    """Load partial_interest profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="ملكيات جزئية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS2806–CS2809: Panel, heading, subtext, section count ───────────────────
+
+def test_CS2806_8zzd_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: partial_interest supplemental panel renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZZD: supplemental panel not visible"
+
+
+def test_CS2807_8zzd_panel_heading_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: panel heading contains partial_interest text."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ملكيات جزئية" in text, "8ZZD: heading must contain 'ملكيات جزئية'"
+
+
+def test_CS2808_8zzd_panel_subtext_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: subtext region is rendered for partial_interest."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert len(text.strip()) > 100, "8ZZD: supplemental panel appears empty"
+
+
+def test_CS2809_8zzd_section_count_15(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: partial_interest supplemental has exactly 15 sections."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 15, f"8ZZD: expected 15 sections, got {count}"
+
+
+# ── CS2810–CS2824: Section headings ─────────────────────────────────────────
+
+def test_CS2810_8zzd_sec_a_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "أ. تعريف الملكية الجزئية وطبيعتها" in text, "8ZZD: Section A heading missing"
+
+
+def test_CS2811_8zzd_sec_b_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section B heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ب. الأصل الأساسي محل الملكية" in text, "8ZZD: Section B heading missing"
+
+
+def test_CS2812_8zzd_sec_c_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section C heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ج. نسبة الملكية والحقوق الاقتصادية" in text, "8ZZD: Section C heading missing"
+
+
+def test_CS2813_8zzd_sec_d_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section D heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "د. السيطرة والحوكمة وحقوق التصويت" in text, "8ZZD: Section D heading missing"
+
+
+def test_CS2814_8zzd_sec_e_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section E heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ه. القيود على النقل والسيولة" in text, "8ZZD: Section E heading missing"
+
+
+def test_CS2815_8zzd_sec_f_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "و. الخصومات والعلاوات التقييمية" in text, "8ZZD: Section F heading missing"
+
+
+def test_CS2816_8zzd_sec_g_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section G heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ز. الدخل والتوزيعات والتدفقات" in text, "8ZZD: Section G heading missing"
+
+
+def test_CS2817_8zzd_sec_h_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section H heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ح. الالتزامات والديون والرهون" in text, "8ZZD: Section H heading missing"
+
+
+def test_CS2818_8zzd_sec_i_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section I heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ط. اتفاقيات الشركاء والنزاعات" in text, "8ZZD: Section I heading missing"
+
+
+def test_CS2819_8zzd_sec_j_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section J heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ي. الخروج والبيع وآليات التسييل" in text, "8ZZD: Section J heading missing"
+
+
+def test_CS2820_8zzd_sec_k_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section K heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ك. السوق والمقارنات" in text, "8ZZD: Section K heading missing"
+
+
+def test_CS2821_8zzd_sec_l_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section L heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ل. الضرائب والمحاسبة والتقارير" in text, "8ZZD: Section L heading missing"
+
+
+def test_CS2822_8zzd_sec_m_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "م. معاملات التعديل حسب غرض التقييم" in text, "8ZZD: Section M heading missing"
+
+
+def test_CS2823_8zzd_sec_n_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section N heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ن. المخاطر القانونية والتنفيذية" in text, "8ZZD: Section N heading missing"
+
+
+def test_CS2824_8zzd_sec_o_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O heading present."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "س. مستندات إضافية مطلوبة" in text, "8ZZD: Section O heading missing"
+
+
+# ── CS2825–CS2829: Section A — all 5 fields ─────────────────────────────────
+
+def test_CS2825_8zzd_sec_a_fractional_interest_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A — fo_supp_a_fractional_interest_type renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_a_fractional_interest_type']").count() == 1, "8ZZD: fo_supp_a_fractional_interest_type missing"
+
+
+def test_CS2826_8zzd_sec_a_interest_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A — fo_supp_a_interest_status renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_a_interest_status']").count() == 1, "8ZZD: fo_supp_a_interest_status missing"
+
+
+def test_CS2827_8zzd_sec_a_legal_nature_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A — fo_supp_a_legal_nature renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_a_legal_nature']").count() == 1, "8ZZD: fo_supp_a_legal_nature missing"
+
+
+def test_CS2828_8zzd_sec_a_valuation_is_for_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A — fo_supp_a_valuation_is_for renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_a_valuation_is_for']").count() == 1, "8ZZD: fo_supp_a_valuation_is_for missing"
+
+
+def test_CS2829_8zzd_sec_a_interest_description_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A — fo_supp_a_interest_description renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_a_interest_description']").count() == 1, "8ZZD: fo_supp_a_interest_description missing"
+
+
+# ── CS2830–CS2832: Section B — sampled fields ───────────────────────────────
+
+def test_CS2830_8zzd_sec_b_underlying_asset_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section B — fo_supp_b_underlying_asset_type renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_b_underlying_asset_type']").count() == 1, "8ZZD: fo_supp_b_underlying_asset_type missing"
+
+
+def test_CS2831_8zzd_sec_b_full_value_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section B — fo_supp_b_underlying_asset_full_value_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_b_underlying_asset_full_value_available']").count() == 1, "8ZZD: fo_supp_b_underlying_asset_full_value_available missing"
+
+
+def test_CS2832_8zzd_sec_b_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section B — fo_supp_b_underlying_asset_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_b_underlying_asset_notes']").count() == 1, "8ZZD: fo_supp_b_underlying_asset_notes missing"
+
+
+# ── CS2833–CS2835: Section C — sampled fields ───────────────────────────────
+
+def test_CS2833_8zzd_sec_c_ownership_percentage_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section C — fo_supp_c_ownership_percentage renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_c_ownership_percentage']").count() == 1, "8ZZD: fo_supp_c_ownership_percentage missing"
+
+
+def test_CS2834_8zzd_sec_c_ownership_basis_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section C — fo_supp_c_ownership_basis renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_c_ownership_basis']").count() == 1, "8ZZD: fo_supp_c_ownership_basis missing"
+
+
+def test_CS2835_8zzd_sec_c_economic_rights_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section C — fo_supp_c_economic_rights_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_c_economic_rights_notes']").count() == 1, "8ZZD: fo_supp_c_economic_rights_notes missing"
+
+
+# ── CS2836–CS2838: Section D — sampled fields ───────────────────────────────
+
+def test_CS2836_8zzd_sec_d_control_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section D — fo_supp_d_control_level renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_d_control_level']").count() == 1, "8ZZD: fo_supp_d_control_level missing"
+
+
+def test_CS2837_8zzd_sec_d_voting_rights_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section D — fo_supp_d_voting_rights_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_d_voting_rights_available']").count() == 1, "8ZZD: fo_supp_d_voting_rights_available missing"
+
+
+def test_CS2838_8zzd_sec_d_governance_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section D — fo_supp_d_governance_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_d_governance_notes']").count() == 1, "8ZZD: fo_supp_d_governance_notes missing"
+
+
+# ── CS2839–CS2841: Section E — sampled fields ───────────────────────────────
+
+def test_CS2839_8zzd_sec_e_transfer_restrictions_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section E — fo_supp_e_transfer_restrictions_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_e_transfer_restrictions_available']").count() == 1, "8ZZD: fo_supp_e_transfer_restrictions_available missing"
+
+
+def test_CS2840_8zzd_sec_e_right_of_first_refusal_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section E — fo_supp_e_right_of_first_refusal_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_e_right_of_first_refusal_available']").count() == 1, "8ZZD: fo_supp_e_right_of_first_refusal_available missing"
+
+
+def test_CS2841_8zzd_sec_e_transferability_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section E — fo_supp_e_transferability_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_e_transferability_notes']").count() == 1, "8ZZD: fo_supp_e_transferability_notes missing"
+
+
+# ── CS2842–CS2845: Section F — discounts and DLOC/DLOM note ─────────────────
+
+def test_CS2842_8zzd_sec_f_lack_of_control_discount_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F — fo_supp_f_lack_of_control_discount_pct renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_f_lack_of_control_discount_pct']").count() == 1, "8ZZD: fo_supp_f_lack_of_control_discount_pct missing"
+
+
+def test_CS2843_8zzd_sec_f_lack_of_marketability_discount_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F — fo_supp_f_lack_of_marketability_discount_pct renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_f_lack_of_marketability_discount_pct']").count() == 1, "8ZZD: fo_supp_f_lack_of_marketability_discount_pct missing"
+
+
+def test_CS2844_8zzd_sec_f_discount_methodology_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F — fo_supp_f_discount_methodology_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_f_discount_methodology_notes']").count() == 1, "8ZZD: fo_supp_f_discount_methodology_notes missing"
+
+
+def test_CS2845_8zzd_sec_f_dloc_dlom_note_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F desc contains DLOC/DLOM sequential application warning."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "DLOC" in text and "DLOM" in text, "8ZZD: DLOC/DLOM note missing from Section F"
+
+
+# ── CS2846–CS2847: Section G — sampled fields ───────────────────────────────
+
+def test_CS2846_8zzd_sec_g_distributions_annual_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section G — fo_supp_g_distributions_received_annual renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_g_distributions_received_annual']").count() == 1, "8ZZD: fo_supp_g_distributions_received_annual missing"
+
+
+def test_CS2847_8zzd_sec_g_distribution_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section G — fo_supp_g_distribution_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_g_distribution_notes']").count() == 1, "8ZZD: fo_supp_g_distribution_notes missing"
+
+
+# ── CS2848–CS2849: Section H — sampled fields ───────────────────────────────
+
+def test_CS2848_8zzd_sec_h_interest_pledged_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section H — fo_supp_h_interest_pledged_or_mortgaged renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_h_interest_pledged_or_mortgaged']").count() == 1, "8ZZD: fo_supp_h_interest_pledged_or_mortgaged missing"
+
+
+def test_CS2849_8zzd_sec_h_guarantee_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section H — fo_supp_h_guarantee_or_obligation_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_h_guarantee_or_obligation_notes']").count() == 1, "8ZZD: fo_supp_h_guarantee_or_obligation_notes missing"
+
+
+# ── CS2850–CS2851: Section I — sampled fields ───────────────────────────────
+
+def test_CS2850_8zzd_sec_i_co_ownership_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section I — fo_supp_i_co_ownership_agreement_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_i_co_ownership_agreement_available']").count() == 1, "8ZZD: fo_supp_i_co_ownership_agreement_available missing"
+
+
+def test_CS2851_8zzd_sec_i_agreement_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section I — fo_supp_i_agreement_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_i_agreement_notes']").count() == 1, "8ZZD: fo_supp_i_agreement_notes missing"
+
+
+# ── CS2852–CS2853: Section J — sampled fields ───────────────────────────────
+
+def test_CS2852_8zzd_sec_j_exit_rights_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section J — fo_supp_j_exit_rights_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_j_exit_rights_available']").count() == 1, "8ZZD: fo_supp_j_exit_rights_available missing"
+
+
+def test_CS2853_8zzd_sec_j_exit_value_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section J — fo_supp_j_exit_value_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_j_exit_value_notes']").count() == 1, "8ZZD: fo_supp_j_exit_value_notes missing"
+
+
+# ── CS2854–CS2855: Section K — sampled fields ───────────────────────────────
+
+def test_CS2854_8zzd_sec_k_comparable_sales_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section K — fo_supp_k_comparable_partial_interest_sales_available renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_k_comparable_partial_interest_sales_available']").count() == 1, "8ZZD: fo_supp_k_comparable_partial_interest_sales_available missing"
+
+
+def test_CS2855_8zzd_sec_k_market_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section K — fo_supp_k_market_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_k_market_notes']").count() == 1, "8ZZD: fo_supp_k_market_notes missing"
+
+
+# ── CS2856–CS2857: Section L — sampled fields ───────────────────────────────
+
+def test_CS2856_8zzd_sec_l_accounting_standard_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section L — fo_supp_l_accounting_standard_context renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_l_accounting_standard_context']").count() == 1, "8ZZD: fo_supp_l_accounting_standard_context missing"
+
+
+def test_CS2857_8zzd_sec_l_accounting_tax_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section L — fo_supp_l_accounting_tax_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_l_accounting_tax_notes']").count() == 1, "8ZZD: fo_supp_l_accounting_tax_notes missing"
+
+
+# ── CS2858–CS2859: Section N — sampled fields ───────────────────────────────
+
+def test_CS2858_8zzd_sec_n_enforceability_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section N — fo_supp_n_ownership_enforceability_level renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_n_ownership_enforceability_level']").count() == 1, "8ZZD: fo_supp_n_ownership_enforceability_level missing"
+
+
+def test_CS2859_8zzd_sec_n_legal_risk_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section N — fo_supp_n_legal_risk_notes renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_n_legal_risk_notes']").count() == 1, "8ZZD: fo_supp_n_legal_risk_notes missing"
+
+
+# ── CS2860–CS2864: Section O — doc fields ───────────────────────────────────
+
+def test_CS2860_8zzd_sec_o_title_deed_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O — fo_doc_supp_title_deed_or_share_certificate renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_doc_supp_title_deed_or_share_certificate']").count() == 1, "8ZZD: fo_doc_supp_title_deed_or_share_certificate missing"
+
+
+def test_CS2861_8zzd_sec_o_co_ownership_agreement_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O — fo_doc_supp_co_ownership_agreement renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_doc_supp_co_ownership_agreement']").count() == 1, "8ZZD: fo_doc_supp_co_ownership_agreement missing"
+
+
+def test_CS2862_8zzd_sec_o_underlying_asset_valuation_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O — fo_doc_supp_underlying_asset_valuation_report renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_doc_supp_underlying_asset_valuation_report']").count() == 1, "8ZZD: fo_doc_supp_underlying_asset_valuation_report missing"
+
+
+def test_CS2863_8zzd_sec_o_dloc_dlom_studies_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O — fo_doc_supp_dloc_dlom_studies renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_doc_supp_dloc_dlom_studies']").count() == 1, "8ZZD: fo_doc_supp_dloc_dlom_studies missing"
+
+
+def test_CS2864_8zzd_sec_o_prior_valuation_reports_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section O — fo_doc_supp_prior_valuation_reports renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_doc_supp_prior_valuation_reports']").count() == 1, "8ZZD: fo_doc_supp_prior_valuation_reports missing"
+
+
+# ── CS2865–CS2877: Section M — all 13 purpose rows ──────────────────────────
+
+def test_CS2865_8zzd_sec_m_mortgage_lending_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — mortgage_lending methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").count() == 1, "8ZZD: fo_supp_m_mortgage_lending_methodology missing"
+
+
+def test_CS2866_8zzd_sec_m_sale_purchase_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — sale_purchase methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_sale_purchase_methodology']").count() == 1, "8ZZD: fo_supp_m_sale_purchase_methodology missing"
+
+
+def test_CS2867_8zzd_sec_m_insurance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — insurance methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_insurance_methodology']").count() == 1, "8ZZD: fo_supp_m_insurance_methodology missing"
+
+
+def test_CS2868_8zzd_sec_m_ifrs_fair_value_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — ifrs_fair_value methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_ifrs_fair_value_methodology']").count() == 1, "8ZZD: fo_supp_m_ifrs_fair_value_methodology missing"
+
+
+def test_CS2869_8zzd_sec_m_taxation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — taxation methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_taxation_methodology']").count() == 1, "8ZZD: fo_supp_m_taxation_methodology missing"
+
+
+def test_CS2870_8zzd_sec_m_liquidation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — liquidation methodology row renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_liquidation_methodology']").count() == 1, "8ZZD: fo_supp_m_liquidation_methodology missing"
+
+
+def test_CS2871_8zzd_sec_m_purchase_price_allocation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — purchase_price_allocation row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_purchase_price_allocation_methodology']").count() == 1, "8ZZD: fo_supp_m_purchase_price_allocation_methodology missing"
+
+
+def test_CS2872_8zzd_sec_m_impairment_testing_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — impairment_testing row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_impairment_testing_methodology']").count() == 1, "8ZZD: fo_supp_m_impairment_testing_methodology missing"
+
+
+def test_CS2873_8zzd_sec_m_shareholder_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — shareholder_dispute row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_shareholder_dispute_methodology']").count() == 1, "8ZZD: fo_supp_m_shareholder_dispute_methodology missing"
+
+
+def test_CS2874_8zzd_sec_m_inheritance_or_estate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — inheritance_or_estate row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_inheritance_or_estate_methodology']").count() == 1, "8ZZD: fo_supp_m_inheritance_or_estate_methodology missing"
+
+
+def test_CS2875_8zzd_sec_m_divorce_or_family_settlement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — divorce_or_family_settlement row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_divorce_or_family_settlement_methodology']").count() == 1, "8ZZD: fo_supp_m_divorce_or_family_settlement_methodology missing"
+
+
+def test_CS2876_8zzd_sec_m_litigation_dispute_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — litigation_dispute row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_litigation_dispute_methodology']").count() == 1, "8ZZD: fo_supp_m_litigation_dispute_methodology missing"
+
+
+def test_CS2877_8zzd_sec_m_internal_management_review_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M — internal_management_review row (local-only) renders."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='fo_supp_m_internal_management_review_methodology']").count() == 1, "8ZZD: fo_supp_m_internal_management_review_methodology missing"
+
+
+# ── CS2878–CS2879: Section M — advisory text ────────────────────────────────
+
+def test_CS2878_8zzd_sec_m_pro_rata_note_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M desc contains pro-rata advisory."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "pro-rata" in text, "8ZZD: pro-rata note missing from Section M"
+
+
+def test_CS2879_8zzd_sec_m_local_advisory_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M desc contains local-advisory text."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "لا يُطبَّق آلياً" in text or "لا يُرسَل للتقرير" in text, "8ZZD: Section M local advisory text missing"
+
+
+# ── CS2880–CS2888: _FO_METHODOLOGY_OPTS options ─────────────────────────────
+
+def test_CS2880_8zzd_fo_methodology_opts_gte_28(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology select has >= 28 options (20 base + 8 FO-specific)."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology'] option").count()
+    assert count >= 28, f"8ZZD: expected >= 28 options in FO methodology select, got {count}"
+
+
+def test_CS2881_8zzd_fo_methodology_has_pro_rata_nav(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes Pro-Rata NAV option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "pro_rata_nav_adjusted" in opts or "Pro-Rata NAV" in opts or "القيمة الصافية للأصول المعدّلة" in opts, "8ZZD: pro_rata_nav_adjusted option missing"
+
+
+def test_CS2882_8zzd_fo_methodology_has_capitalization_of_distributions(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes capitalization_of_distributions option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "capitalization_of_distributions" in opts or "رسملة التوزيعات" in opts, "8ZZD: capitalization_of_distributions option missing"
+
+
+def test_CS2883_8zzd_fo_methodology_has_comparable_partial_sales(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes comparable_partial_interest_sales option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "comparable_partial_interest_sales" in opts or "مقارنة صفقات الحصص الجزئية" in opts, "8ZZD: comparable_partial_interest_sales option missing"
+
+
+def test_CS2884_8zzd_fo_methodology_has_net_asset_value(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes net_asset_value_method option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "net_asset_value_method" in opts or "صافي قيمة الأصول" in opts, "8ZZD: net_asset_value_method option missing"
+
+
+def test_CS2885_8zzd_fo_methodology_has_option_pricing(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes option_pricing_method option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "option_pricing_method" in opts or "تسعير الخيارات" in opts, "8ZZD: option_pricing_method option missing"
+
+
+def test_CS2886_8zzd_fo_methodology_has_probability_weighted_return(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes probability_weighted_expected_return option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "probability_weighted_expected_return" in opts or "العائد المتوقع بالاحتمالية" in opts, "8ZZD: probability_weighted_expected_return option missing"
+
+
+def test_CS2887_8zzd_fo_methodology_has_dloc_analysis(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes discount_for_lack_of_control_analysis option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "discount_for_lack_of_control_analysis" in opts or "DLOC" in opts or "خصم عدم السيطرة" in opts, "8ZZD: discount_for_lack_of_control_analysis option missing"
+
+
+def test_CS2888_8zzd_fo_methodology_has_dlom_analysis(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO methodology includes discount_for_lack_of_marketability_analysis option."""
+    _load_partial_interest_supp(page, live_server)
+    opts = page.locator("[data-es-supp-field='fo_supp_m_mortgage_lending_methodology']").inner_text()
+    assert "discount_for_lack_of_marketability_analysis" in opts or "DLOM" in opts or "خصم عدم قابلية التسويق" in opts, "8ZZD: discount_for_lack_of_marketability_analysis option missing"
+
+
+# ── CS2889: No base mutation ─────────────────────────────────────────────────
+
+def test_CS2889_8zzd_fo_methodology_no_base_mutation(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: FO concat does not mutate base; WE methodology still has < 29 options."""
+    _load_partial_interest_supp(page, live_server)
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option").count()
+    assert count >= 26, f"8ZZD: WE methodology options too low after FO load, got {count}"
+    assert count < 29, f"8ZZD: WE methodology base mutated by FO concat? got {count}"
+
+
+# ── CS2890–CS2898: Integrity checks ─────────────────────────────────────────
+
+def test_CS2890_8zzd_all_supp_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: all partial_interest supplemental fields use data-es-supp-field."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-supp-field]").count()
+    assert count >= 184, f"8ZZD: expected >= 184 data-es-supp-field elements, got {count}"
+
+
+def test_CS2891_8zzd_no_data_es_req_field_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: zero data-es-req-field elements inside partial_interest supplemental panel."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, f"8ZZD: found {count} data-es-req-field inside supplemental (must be 0)"
+
+
+def test_CS2892_8zzd_fo_supp_field_count_gte_184(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: fo_supp_ supplemental fields >= 184."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    assert count >= 184, f"8ZZD: expected >= 184 fo_supp_ fields, got {count}"
+
+
+def test_CS2893_8zzd_fo_doc_supp_field_count_15(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: fo_doc_supp_ document fields == 15."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='fo_doc_supp_']").count()
+    assert count == 15, f"8ZZD: expected 15 fo_doc_supp_ fields, got {count}"
+
+
+def test_CS2894_8zzd_total_field_count_gte_199(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: total supplemental fields (fo_supp_ + fo_doc_supp_) >= 199."""
+    _load_partial_interest_supp(page, live_server)
+    fo_count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    doc_count = page.locator("[data-es-supp-field^='fo_doc_supp_']").count()
+    total = fo_count + doc_count
+    assert total >= 199, f"8ZZD: expected >= 199 total fields, got {total} ({fo_count} fo_supp_ + {doc_count} fo_doc_supp_)"
+
+
+def test_CS2895_8zzd_pi_main_form_fields_untouched(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: pi_ main-form fields still render after supplemental added."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="ملكيات جزئية")
+    pi_fields = [
+        'pi_ownership_pct', 'pi_interest_type', 'pi_total_owners_count',
+        'pi_has_restrictions', 'pi_base_asset_type', 'pi_base_asset_desc',
+        'pi_marketability', 'pi_discount_notes', 'pi_title_deed',
+    ]
+    for f in pi_fields:
+        count = page.locator(f"[data-es-req-field='{f}']").count()
+        assert count >= 1, f"8ZZD: main-form field '{f}' missing"
+
+
+def test_CS2896_8zzd_pi_fields_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: dedup-skipped pi_ fields do not appear as supplemental fields."""
+    _load_partial_interest_supp(page, live_server)
+    dedup_fields = [
+        'pi_ownership_pct', 'pi_interest_type', 'pi_total_owners_count',
+        'pi_has_restrictions', 'pi_restriction_notes', 'pi_base_asset_type',
+        'pi_base_asset_desc', 'pi_marketability', 'pi_discount_notes',
+        'pi_title_deed', 'pi_partition_deed', 'pi_court_records', 'pi_owners_ids',
+    ]
+    for f in dedup_fields:
+        count = page.locator(f"[data-es-supp-field='{f}']").count()
+        assert count == 0, f"8ZZD: dedup field '{f}' should NOT appear in supplemental"
+
+
+def test_CS2897_8zzd_isolation_intangible_no_fo_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: intangible supplemental has no fo_supp_ fields."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    assert count == 0, f"8ZZD: intangible shows {count} fo_supp_ fields (isolation failure)"
+
+
+def test_CS2898_8zzd_isolation_waterway_no_fo_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: waterway_easement supplemental has no fo_supp_ fields."""
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    assert count == 0, f"8ZZD: waterway_easement shows {count} fo_supp_ fields (isolation failure)"
+
+
+# ── CS2899–CS2901: Desc text checks ─────────────────────────────────────────
+
+def test_CS2899_8zzd_sec_a_explainer_text_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A desc contains partial-interest explainer."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "الحصة أو الحق الجزئي" in text, "8ZZD: Section A explainer must contain 'الحصة أو الحق الجزئي'"
+
+
+def test_CS2900_8zzd_sec_b_context_note_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section B desc contains 'سياق داعم فقط' note."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "سياق داعم فقط" in text, "8ZZD: Section B context note missing"
+
+
+def test_CS2901_8zzd_sec_f_sequential_application_note(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section F desc mentions sequential (تتابعياً) application of discounts."""
+    _load_partial_interest_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "تتابعياً" in text, "8ZZD: Section F sequential discount note missing"
+
+
+# ── CS2902–CS2905: Select-field option counts ────────────────────────────────
+
+def test_CS2902_8zzd_sec_a_fractional_interest_type_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section A fo_supp_a_fractional_interest_type has >= 3 options."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='fo_supp_a_fractional_interest_type'] option").count()
+    assert count >= 3, f"8ZZD: fo_supp_a_fractional_interest_type has < 3 options, got {count}"
+
+
+def test_CS2903_8zzd_sec_d_control_level_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section D fo_supp_d_control_level has >= 3 options."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='fo_supp_d_control_level'] option").count()
+    assert count >= 3, f"8ZZD: fo_supp_d_control_level has < 3 options, got {count}"
+
+
+def test_CS2904_8zzd_sec_m_fo_methodology_28_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M ifrs_fair_value row has >= 28 methodology options."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='fo_supp_m_ifrs_fair_value_methodology'] option").count()
+    assert count >= 28, f"8ZZD: fo_supp_m_ifrs_fair_value_methodology has < 28 options, got {count}"
+
+
+def test_CS2905_8zzd_sec_m_total_field_count_39(page: "Page", live_server: str) -> None:
+    """Phase 8ZZD: Section M has exactly 39 fields (13 purposes × 3 fields)."""
+    _load_partial_interest_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='fo_supp_m_']").count()
+    assert count == 39, f"8ZZD: expected 39 Section M fields (13×3), got {count}"

@@ -1,5 +1,5 @@
 """
-E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P/8Q/8R.1/8S.1 — Frontend Requirements Checklist Panel.
+E2E smoke tests for Phase 8B/8C/8C.1/8D/8E/8G/8H.1/8H.2B/8H.2D/8H.2E/8I/8J/8K/8L/8M/8N/8O/8P/8Q/8R.1/8S.1/8ZZE — Frontend Requirements Checklist Panel.
 
 Requires a running bridge_api server (managed by conftest.py) and Playwright.
 
@@ -304,6 +304,122 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS282 — (8R.1) marina document section shows upload hint text
   CS283 — (8R.1) marina panel has no composite_valuation.html link
   CS284 — (8R.1) regression guard: existing profiles (فندق, عمارة سكنية) still render form controls
+
+  CS2906 — (8ZZE) under_construction supplemental panel renders
+  CS2907 — (8ZZE) supplemental heading shows 'متطلبات تقييم استثمارات تحت الإنشاء'
+  CS2908 — (8ZZE) supplemental subtext uses local-only text
+  CS2909 — (8ZZE) #es-req-supp details count == 20 sections
+  CS2910 — (8ZZE) Section A heading 'أ. تعريف المشروع ونطاق التقييم'
+  CS2911 — (8ZZE) uc_supp_a_construction_asset_type select >= 5 options
+  CS2912 — (8ZZE) uc_supp_a_valuation_basis_for_construction select >= 4 options
+  CS2913 — (8ZZE) uc_supp_a_project_status select renders
+  CS2914 — (8ZZE) uc_supp_a_project_description textarea renders
+  CS2915 — (8ZZE) Section A desc contains 'أثناء مرحلة الإنشاء'
+  CS2916 — (8ZZE) Section B heading 'ب. الملكية والأرض والوضع القانوني'
+  CS2917 — (8ZZE) uc_supp_b_ownership_type select renders
+  CS2918 — (8ZZE) uc_supp_b_land_area_sqm number input renders
+  CS2919 — (8ZZE) uc_supp_b_title_deed_available bool select renders
+  CS2920 — (8ZZE) uc_supp_b_ownership_legal_notes textarea renders
+  CS2921 — (8ZZE) Section C heading 'ج. التراخيص والموافقات والتنظيم'
+  CS2922 — (8ZZE) uc_supp_c_building_permit_status select renders
+  CS2923 — (8ZZE) uc_supp_c_building_permit_number text input renders
+  CS2924 — (8ZZE) uc_supp_c_permit_risk_level select has >= 5 options
+  CS2925 — (8ZZE) uc_supp_c_regulatory_approval_notes textarea renders
+  CS2926 — (8ZZE) Section D heading 'د. المخططات والتصميم والمواصفات'
+  CS2927 — (8ZZE) uc_supp_d_specification_grade select renders
+  CS2928 — (8ZZE) uc_supp_d_gross_floor_area_sqm number input renders
+  CS2929 — (8ZZE) uc_supp_d_floors_count number input renders
+  CS2930 — (8ZZE) uc_supp_d_design_and_specs_notes textarea renders
+  CS2931 — (8ZZE) Section E heading 'ه. نسبة الإنجاز والحالة الفنية'
+  CS2932 — (8ZZE) uc_supp_e_financial_completion_pct number input renders
+  CS2933 — (8ZZE) uc_supp_e_quality_control_status select renders
+  CS2934 — (8ZZE) uc_supp_e_independent_engineer_report_available bool renders
+  CS2935 — (8ZZE) uc_supp_e_technical_defects_summary textarea renders
+  CS2936 — (8ZZE) Section F heading 'و. التكاليف والميزانية والتكلفة المتبقية'
+  CS2937 — (8ZZE) uc_supp_f_original_project_budget number input renders
+  CS2938 — (8ZZE) uc_supp_f_cost_escalation_risk_level select renders
+  CS2939 — (8ZZE) uc_supp_f_contingency_pct number input renders
+  CS2940 — (8ZZE) uc_supp_f_cost_budget_notes textarea renders
+  CS2941 — (8ZZE) Section G heading 'ز. الجدول الزمني والتأخير'
+  CS2942 — (8ZZE) uc_supp_g_delay_status select has >= 5 options
+  CS2943 — (8ZZE) uc_supp_g_delay_months number input renders
+  CS2944 — (8ZZE) uc_supp_g_delay_causes select has >= 5 options
+  CS2945 — (8ZZE) uc_supp_g_schedule_notes textarea renders
+  CS2946 — (8ZZE) Section H heading 'ح. المقاولين والاستشاريين والعقود'
+  CS2947 — (8ZZE) uc_supp_h_main_contractor_name text input renders
+  CS2948 — (8ZZE) uc_supp_h_contractor_performance_status select renders
+  CS2949 — (8ZZE) uc_supp_h_performance_bond_available bool renders
+  CS2950 — (8ZZE) uc_supp_h_contractor_contract_notes textarea renders
+  CS2951 — (8ZZE) Section I heading 'ط. التمويل والسيولة ومخاطر التوقف'
+  CS2952 — (8ZZE) uc_supp_i_funding_source select renders
+  CS2953 — (8ZZE) uc_supp_i_approved_financing_amount number input renders
+  CS2954 — (8ZZE) uc_supp_i_ability_to_fund_completion select renders
+  CS2955 — (8ZZE) uc_supp_i_financing_notes textarea renders
+  CS2956 — (8ZZE) Section J heading 'ي. المبيعات والحجوزات والتأجير المسبق'
+  CS2957 — (8ZZE) uc_supp_j_presales_available bool renders
+  CS2958 — (8ZZE) uc_supp_j_units_sold_count number input renders
+  CS2959 — (8ZZE) uc_supp_j_cancellation_risk_level select renders
+  CS2960 — (8ZZE) uc_supp_j_sales_leasing_notes textarea renders
+  CS2961 — (8ZZE) Section K heading 'ك. السوق والجدوى عند الاكتمال'
+  CS2962 — (8ZZE) uc_supp_k_market_demand_level select renders
+  CS2963 — (8ZZE) uc_supp_k_expected_gdv_gross_development_value number input renders
+  CS2964 — (8ZZE) uc_supp_k_feasibility_study_available bool renders
+  CS2965 — (8ZZE) uc_supp_k_market_feasibility_notes textarea renders
+  CS2966 — (8ZZE) Section L heading 'ل. البنية التحتية والمرافق والربط'
+  CS2967 — (8ZZE) uc_supp_l_electricity_connection_status select renders
+  CS2968 — (8ZZE) uc_supp_l_offsite_infrastructure_required bool renders
+  CS2969 — (8ZZE) uc_supp_l_utility_connection_fees_remaining number input renders
+  CS2970 — (8ZZE) uc_supp_l_infrastructure_readiness_notes textarea renders
+  CS2971 — (8ZZE) Section M heading 'م. المطالبات والنزاعات والتغييرات'
+  CS2972 — (8ZZE) uc_supp_m_variation_orders_approved_value number input renders
+  CS2973 — (8ZZE) uc_supp_m_contractor_claims_available bool renders
+  CS2974 — (8ZZE) uc_supp_m_unresolved_claims_amount number input renders
+  CS2975 — (8ZZE) uc_supp_m_claims_disputes_notes textarea renders
+  CS2976 — (8ZZE) Section N heading 'ن. المخاطر الفنية والإنشائية'
+  CS2977 — (8ZZE) uc_supp_n_structural_risk_level select renders
+  CS2978 — (8ZZE) uc_supp_n_fire_life_safety_risk_level select renders
+  CS2979 — (8ZZE) Section N all 11 risk selects render
+  CS2980 — (8ZZE) uc_supp_n_technical_risk_notes textarea renders
+  CS2981 — (8ZZE) Section O heading 'س. معاملات التعديل حسب غرض التقييم'
+  CS2982 — (8ZZE) uc_supp_o_mortgage_lending_methodology select renders
+  CS2983 — (8ZZE) uc_supp_o_mortgage_lending_methodology select >= 28 options
+  CS2984 — (8ZZE) Section O total field count == 39 (13 purposes x 3)
+  CS2985 — (8ZZE) local purpose (construction_financing_review) has help_ar rendered
+  CS2986 — (8ZZE) 'غرض محلي إرشادي فقط — لا يُرسل للتقرير' in supp HTML
+  CS2987 — (8ZZE) all 6 backend-mapped methodology selects have >= 28 options
+  CS2988 — (8ZZE) Section O desc contains 'جدول إرشادي محلّي'
+  CS2989 — (8ZZE) Section P heading 'ع. المحاسبة وIFRS'
+  CS2990 — (8ZZE) uc_supp_p_accounting_standard_context select renders
+  CS2991 — (8ZZE) uc_supp_p_accounting_classification select >= 4 options
+  CS2992 — (8ZZE) uc_supp_p_impairment_indicators_available bool renders
+  CS2993 — (8ZZE) uc_supp_p_impairment_or_accounting_notes textarea renders
+  CS2994 — (8ZZE) Section Q heading 'ف. الاستدامة والطاقة والمتطلبات الخضراء'
+  CS2995 — (8ZZE) uc_supp_q_green_building_target_certification select renders
+  CS2996 — (8ZZE) uc_supp_q_solar_ready_design_available bool renders
+  CS2997 — (8ZZE) uc_supp_q_sustainability_value_impact_pct number input renders
+  CS2998 — (8ZZE) uc_supp_q_sustainability_notes textarea renders
+  CS2999 — (8ZZE) Section R heading 'ص. المخاطر المناخية والإنشائية والتشغيلية'
+  CS3000 — (8ZZE) uc_supp_r_flood_risk_level select renders
+  CS3001 — (8ZZE) Section R all 11 climate/construction risk selects render
+  CS3002 — (8ZZE) uc_supp_r_climate_risk_value_impact_pct number input renders
+  CS3003 — (8ZZE) uc_supp_r_risk_notes textarea renders
+  CS3004 — (8ZZE) Section S heading 'ق. التوثيق الرقمي والمتابعة'
+  CS3005 — (8ZZE) uc_supp_s_bim_model_available bool renders
+  CS3006 — (8ZZE) uc_supp_s_digital_documentation_quality select renders
+  CS3007 — (8ZZE) uc_supp_s_digital_project_controls_notes textarea renders
+  CS3008 — (8ZZE) Section T heading 'ر. مستندات إضافية مطلوبة'
+  CS3009 — (8ZZE) Section T upload hint text visible
+  CS3010 — (8ZZE) uc_doc_supp_building_permit document checkbox renders
+  CS3011 — (8ZZE) uc_doc_supp_main_contractor_contract document checkbox renders
+  CS3012 — (8ZZE) all 19 uc_doc_supp_ document checkboxes render
+  CS3013 — (8ZZE) supp fields only use data-es-supp-field (no data-es-req-field in supp)
+  CS3014 — (8ZZE) no physical_completion_pct in supp (dedup: main form uc_completion_pct)
+  CS3015 — (8ZZE) no remaining_cost_to_complete in supp (dedup guard)
+  CS3016 — (8ZZE) total uc_supp_ field count == 274
+  CS3017 — (8ZZE) total uc_doc_supp_ field count == 19
+  CS3018 — (8ZZE) no #es-req-composite-link in under_construction panel
+  CS3019 — (8ZZE) regression guard: intangible supp still renders (8ZZC guard)
+  CS3020 — (8ZZE) regression guard: partial_interest supp still renders (8ZZD guard)
 """
 from __future__ import annotations
 
@@ -28717,3 +28833,929 @@ def test_CS2905_8zzd_sec_m_total_field_count_39(page: "Page", live_server: str) 
     _load_partial_interest_supp(page, live_server)
     count = page.locator("[data-es-supp-field^='fo_supp_m_']").count()
     assert count == 39, f"8ZZD: expected 39 Section M fields (13×3), got {count}"
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 8ZZE — Under Construction Detailed Supplemental (CS2906–CS3020)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _load_under_construction_supp(page, live_server):
+    """Load under_construction profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="استثمارات تحت الإنشاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+# ── CS2906–CS2909: Panel, heading, subtext, section count ───────────────────
+
+def test_CS2906_8zze_supp_panel_renders(page, live_server):
+    """Phase 8ZZE: under_construction supplemental panel renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZZE: supplemental panel not visible"
+
+
+def test_CS2907_8zze_supp_heading_text(page, live_server):
+    """Phase 8ZZE: supplemental heading shows correct Arabic text."""
+    _load_under_construction_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "متطلبات تقييم استثمارات تحت الإنشاء" in heading, \
+        f"8ZZE: expected UC heading, got: {heading[:80]}"
+
+
+def test_CS2908_8zze_supp_subtext_local_only(page, live_server):
+    """Phase 8ZZE: supplemental uses local-only subtext."""
+    _load_under_construction_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert ("لا يُرسل" in subtext or "إدخال محلي" in subtext
+            or "تفصيلية تكميلية" in subtext), \
+        f"8ZZE: expected local-only subtext, got: {subtext[:120]}"
+
+
+def test_CS2909_8zze_section_count_20(page, live_server):
+    """Phase 8ZZE: under_construction supplemental has exactly 20 sections."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 20, f"8ZZE: expected 20 sections, got {count}"
+
+
+# ── CS2910–CS2915: Section A ─────────────────────────────────────────────────
+
+def test_CS2910_8zze_sec_a_heading(page, live_server):
+    """Phase 8ZZE: Section A heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "أ. تعريف المشروع ونطاق التقييم" in text, "8ZZE: Section A heading missing"
+
+
+def test_CS2911_8zze_sec_a_construction_asset_type_options(page, live_server):
+    """Phase 8ZZE: Section A uc_supp_a_construction_asset_type select has >= 5 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_a_construction_asset_type'] option").count()
+    assert count >= 5, f"8ZZE: uc_supp_a_construction_asset_type has < 5 options, got {count}"
+
+
+def test_CS2912_8zze_sec_a_valuation_basis_options(page, live_server):
+    """Phase 8ZZE: Section A uc_supp_a_valuation_basis_for_construction select has >= 4 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_a_valuation_basis_for_construction'] option").count()
+    assert count >= 4, f"8ZZE: uc_supp_a_valuation_basis_for_construction has < 4 options, got {count}"
+
+
+def test_CS2913_8zze_sec_a_project_status_select_renders(page, live_server):
+    """Phase 8ZZE: Section A uc_supp_a_project_status select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_a_project_status']").count() == 1, \
+        "8ZZE: uc_supp_a_project_status missing"
+
+
+def test_CS2914_8zze_sec_a_project_description_textarea(page, live_server):
+    """Phase 8ZZE: Section A uc_supp_a_project_description textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_a_project_description']").count() == 1, \
+        "8ZZE: uc_supp_a_project_description missing"
+
+
+def test_CS2915_8zze_sec_a_desc_construction_context(page, live_server):
+    """Phase 8ZZE: Section A desc contains 'أثناء مرحلة الإنشاء'."""
+    _load_under_construction_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "أثناء مرحلة الإنشاء" in html, "8ZZE: Section A desc missing construction context"
+
+
+# ── CS2916–CS2920: Section B ─────────────────────────────────────────────────
+
+def test_CS2916_8zze_sec_b_heading(page, live_server):
+    """Phase 8ZZE: Section B heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ب. الملكية والأرض والوضع القانوني" in text, "8ZZE: Section B heading missing"
+
+
+def test_CS2917_8zze_sec_b_ownership_type_select(page, live_server):
+    """Phase 8ZZE: Section B uc_supp_b_ownership_type select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_b_ownership_type']").count() == 1, \
+        "8ZZE: uc_supp_b_ownership_type missing"
+
+
+def test_CS2918_8zze_sec_b_land_area_sqm_number_input(page, live_server):
+    """Phase 8ZZE: Section B uc_supp_b_land_area_sqm renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_b_land_area_sqm']")
+    assert el.count() == 1, "8ZZE: uc_supp_b_land_area_sqm missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_b_land_area_sqm not number input"
+
+
+def test_CS2919_8zze_sec_b_title_deed_bool(page, live_server):
+    """Phase 8ZZE: Section B uc_supp_b_title_deed_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_b_title_deed_available']").count() == 1, \
+        "8ZZE: uc_supp_b_title_deed_available missing"
+
+
+def test_CS2920_8zze_sec_b_legal_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section B uc_supp_b_ownership_legal_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_b_ownership_legal_notes']").count() == 1, \
+        "8ZZE: uc_supp_b_ownership_legal_notes missing"
+
+
+# ── CS2921–CS2925: Section C ─────────────────────────────────────────────────
+
+def test_CS2921_8zze_sec_c_heading(page, live_server):
+    """Phase 8ZZE: Section C heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ج. التراخيص والموافقات والتنظيم" in text, "8ZZE: Section C heading missing"
+
+
+def test_CS2922_8zze_sec_c_building_permit_status_select(page, live_server):
+    """Phase 8ZZE: Section C uc_supp_c_building_permit_status select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_c_building_permit_status']").count() == 1, \
+        "8ZZE: uc_supp_c_building_permit_status missing"
+
+
+def test_CS2923_8zze_sec_c_permit_number_text_input(page, live_server):
+    """Phase 8ZZE: Section C uc_supp_c_building_permit_number text input renders."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_c_building_permit_number']")
+    assert el.count() == 1, "8ZZE: uc_supp_c_building_permit_number missing"
+    assert el.get_attribute("type") == "text", "8ZZE: uc_supp_c_building_permit_number not text input"
+
+
+def test_CS2924_8zze_sec_c_permit_risk_level_options(page, live_server):
+    """Phase 8ZZE: Section C uc_supp_c_permit_risk_level has >= 5 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_c_permit_risk_level'] option").count()
+    assert count >= 5, f"8ZZE: uc_supp_c_permit_risk_level has < 5 options, got {count}"
+
+
+def test_CS2925_8zze_sec_c_regulatory_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section C uc_supp_c_regulatory_approval_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_c_regulatory_approval_notes']").count() == 1, \
+        "8ZZE: uc_supp_c_regulatory_approval_notes missing"
+
+
+# ── CS2926–CS2930: Section D ─────────────────────────────────────────────────
+
+def test_CS2926_8zze_sec_d_heading(page, live_server):
+    """Phase 8ZZE: Section D heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "د. المخططات والتصميم والمواصفات" in text, "8ZZE: Section D heading missing"
+
+
+def test_CS2927_8zze_sec_d_specification_grade_select(page, live_server):
+    """Phase 8ZZE: Section D uc_supp_d_specification_grade select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_d_specification_grade']").count() == 1, \
+        "8ZZE: uc_supp_d_specification_grade missing"
+
+
+def test_CS2928_8zze_sec_d_gross_floor_area_number_input(page, live_server):
+    """Phase 8ZZE: Section D uc_supp_d_gross_floor_area_sqm renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_d_gross_floor_area_sqm']")
+    assert el.count() == 1, "8ZZE: uc_supp_d_gross_floor_area_sqm missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_d_gross_floor_area_sqm not number input"
+
+
+def test_CS2929_8zze_sec_d_floors_count_number_input(page, live_server):
+    """Phase 8ZZE: Section D uc_supp_d_floors_count renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_d_floors_count']")
+    assert el.count() == 1, "8ZZE: uc_supp_d_floors_count missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_d_floors_count not number input"
+
+
+def test_CS2930_8zze_sec_d_design_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section D uc_supp_d_design_and_specs_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_d_design_and_specs_notes']").count() == 1, \
+        "8ZZE: uc_supp_d_design_and_specs_notes missing"
+
+
+# ── CS2931–CS2935: Section E ─────────────────────────────────────────────────
+
+def test_CS2931_8zze_sec_e_heading(page, live_server):
+    """Phase 8ZZE: Section E heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ه. نسبة الإنجاز والحالة الفنية" in text, "8ZZE: Section E heading missing"
+
+
+def test_CS2932_8zze_sec_e_financial_completion_pct_number(page, live_server):
+    """Phase 8ZZE: Section E uc_supp_e_financial_completion_pct renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_e_financial_completion_pct']")
+    assert el.count() == 1, "8ZZE: uc_supp_e_financial_completion_pct missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_e_financial_completion_pct not number input"
+
+
+def test_CS2933_8zze_sec_e_quality_control_status_select(page, live_server):
+    """Phase 8ZZE: Section E uc_supp_e_quality_control_status select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_e_quality_control_status']").count() == 1, \
+        "8ZZE: uc_supp_e_quality_control_status missing"
+
+
+def test_CS2934_8zze_sec_e_independent_engineer_bool(page, live_server):
+    """Phase 8ZZE: Section E uc_supp_e_independent_engineer_report_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_e_independent_engineer_report_available']").count() == 1, \
+        "8ZZE: uc_supp_e_independent_engineer_report_available missing"
+
+
+def test_CS2935_8zze_sec_e_defects_summary_textarea(page, live_server):
+    """Phase 8ZZE: Section E uc_supp_e_technical_defects_summary textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_e_technical_defects_summary']").count() == 1, \
+        "8ZZE: uc_supp_e_technical_defects_summary missing"
+
+
+# ── CS2936–CS2940: Section F ─────────────────────────────────────────────────
+
+def test_CS2936_8zze_sec_f_heading(page, live_server):
+    """Phase 8ZZE: Section F heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "و. التكاليف والميزانية والتكلفة المتبقية" in text, "8ZZE: Section F heading missing"
+
+
+def test_CS2937_8zze_sec_f_original_budget_number(page, live_server):
+    """Phase 8ZZE: Section F uc_supp_f_original_project_budget renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_f_original_project_budget']")
+    assert el.count() == 1, "8ZZE: uc_supp_f_original_project_budget missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_f_original_project_budget not number input"
+
+
+def test_CS2938_8zze_sec_f_cost_escalation_risk_select(page, live_server):
+    """Phase 8ZZE: Section F uc_supp_f_cost_escalation_risk_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_f_cost_escalation_risk_level']").count() == 1, \
+        "8ZZE: uc_supp_f_cost_escalation_risk_level missing"
+
+
+def test_CS2939_8zze_sec_f_contingency_pct_number(page, live_server):
+    """Phase 8ZZE: Section F uc_supp_f_contingency_pct renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_f_contingency_pct']")
+    assert el.count() == 1, "8ZZE: uc_supp_f_contingency_pct missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_f_contingency_pct not number input"
+
+
+def test_CS2940_8zze_sec_f_cost_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section F uc_supp_f_cost_budget_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_f_cost_budget_notes']").count() == 1, \
+        "8ZZE: uc_supp_f_cost_budget_notes missing"
+
+
+# ── CS2941–CS2945: Section G ─────────────────────────────────────────────────
+
+def test_CS2941_8zze_sec_g_heading(page, live_server):
+    """Phase 8ZZE: Section G heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ز. الجدول الزمني والتأخير" in text, "8ZZE: Section G heading missing"
+
+
+def test_CS2942_8zze_sec_g_delay_status_options(page, live_server):
+    """Phase 8ZZE: Section G uc_supp_g_delay_status has >= 5 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_g_delay_status'] option").count()
+    assert count >= 5, f"8ZZE: uc_supp_g_delay_status has < 5 options, got {count}"
+
+
+def test_CS2943_8zze_sec_g_delay_months_number(page, live_server):
+    """Phase 8ZZE: Section G uc_supp_g_delay_months renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_g_delay_months']")
+    assert el.count() == 1, "8ZZE: uc_supp_g_delay_months missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_g_delay_months not number input"
+
+
+def test_CS2944_8zze_sec_g_delay_causes_select_options(page, live_server):
+    """Phase 8ZZE: Section G uc_supp_g_delay_causes select has >= 5 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_g_delay_causes'] option").count()
+    assert count >= 5, f"8ZZE: uc_supp_g_delay_causes has < 5 options, got {count}"
+
+
+def test_CS2945_8zze_sec_g_schedule_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section G uc_supp_g_schedule_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_g_schedule_notes']").count() == 1, \
+        "8ZZE: uc_supp_g_schedule_notes missing"
+
+
+# ── CS2946–CS2950: Section H ─────────────────────────────────────────────────
+
+def test_CS2946_8zze_sec_h_heading(page, live_server):
+    """Phase 8ZZE: Section H heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ح. المقاولين والاستشاريين والعقود" in text, "8ZZE: Section H heading missing"
+
+
+def test_CS2947_8zze_sec_h_contractor_name_text_input(page, live_server):
+    """Phase 8ZZE: Section H uc_supp_h_main_contractor_name text input renders."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_h_main_contractor_name']")
+    assert el.count() == 1, "8ZZE: uc_supp_h_main_contractor_name missing"
+    assert el.get_attribute("type") == "text", "8ZZE: uc_supp_h_main_contractor_name not text input"
+
+
+def test_CS2948_8zze_sec_h_contractor_performance_select(page, live_server):
+    """Phase 8ZZE: Section H uc_supp_h_contractor_performance_status select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_h_contractor_performance_status']").count() == 1, \
+        "8ZZE: uc_supp_h_contractor_performance_status missing"
+
+
+def test_CS2949_8zze_sec_h_performance_bond_bool(page, live_server):
+    """Phase 8ZZE: Section H uc_supp_h_performance_bond_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_h_performance_bond_available']").count() == 1, \
+        "8ZZE: uc_supp_h_performance_bond_available missing"
+
+
+def test_CS2950_8zze_sec_h_contract_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section H uc_supp_h_contractor_contract_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_h_contractor_contract_notes']").count() == 1, \
+        "8ZZE: uc_supp_h_contractor_contract_notes missing"
+
+
+# ── CS2951–CS2955: Section I ─────────────────────────────────────────────────
+
+def test_CS2951_8zze_sec_i_heading(page, live_server):
+    """Phase 8ZZE: Section I heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ط. التمويل والسيولة ومخاطر التوقف" in text, "8ZZE: Section I heading missing"
+
+
+def test_CS2952_8zze_sec_i_funding_source_select(page, live_server):
+    """Phase 8ZZE: Section I uc_supp_i_funding_source select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_i_funding_source']").count() == 1, \
+        "8ZZE: uc_supp_i_funding_source missing"
+
+
+def test_CS2953_8zze_sec_i_approved_financing_number(page, live_server):
+    """Phase 8ZZE: Section I uc_supp_i_approved_financing_amount renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_i_approved_financing_amount']")
+    assert el.count() == 1, "8ZZE: uc_supp_i_approved_financing_amount missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_i_approved_financing_amount not number input"
+
+
+def test_CS2954_8zze_sec_i_ability_to_fund_select(page, live_server):
+    """Phase 8ZZE: Section I uc_supp_i_ability_to_fund_completion select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_i_ability_to_fund_completion']").count() == 1, \
+        "8ZZE: uc_supp_i_ability_to_fund_completion missing"
+
+
+def test_CS2955_8zze_sec_i_financing_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section I uc_supp_i_financing_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_i_financing_notes']").count() == 1, \
+        "8ZZE: uc_supp_i_financing_notes missing"
+
+
+# ── CS2956–CS2960: Section J ─────────────────────────────────────────────────
+
+def test_CS2956_8zze_sec_j_heading(page, live_server):
+    """Phase 8ZZE: Section J heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ي. المبيعات والحجوزات والتأجير المسبق" in text, "8ZZE: Section J heading missing"
+
+
+def test_CS2957_8zze_sec_j_presales_bool(page, live_server):
+    """Phase 8ZZE: Section J uc_supp_j_presales_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_j_presales_available']").count() == 1, \
+        "8ZZE: uc_supp_j_presales_available missing"
+
+
+def test_CS2958_8zze_sec_j_units_sold_count_number(page, live_server):
+    """Phase 8ZZE: Section J uc_supp_j_units_sold_count renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_j_units_sold_count']")
+    assert el.count() == 1, "8ZZE: uc_supp_j_units_sold_count missing"
+    assert el.get_attribute("type") == "number", "8ZZE: uc_supp_j_units_sold_count not number input"
+
+
+def test_CS2959_8zze_sec_j_cancellation_risk_select(page, live_server):
+    """Phase 8ZZE: Section J uc_supp_j_cancellation_risk_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_j_cancellation_risk_level']").count() == 1, \
+        "8ZZE: uc_supp_j_cancellation_risk_level missing"
+
+
+def test_CS2960_8zze_sec_j_sales_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section J uc_supp_j_sales_leasing_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_j_sales_leasing_notes']").count() == 1, \
+        "8ZZE: uc_supp_j_sales_leasing_notes missing"
+
+
+# ── CS2961–CS2965: Section K ─────────────────────────────────────────────────
+
+def test_CS2961_8zze_sec_k_heading(page, live_server):
+    """Phase 8ZZE: Section K heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ك. السوق والجدوى عند الاكتمال" in text, "8ZZE: Section K heading missing"
+
+
+def test_CS2962_8zze_sec_k_market_demand_select(page, live_server):
+    """Phase 8ZZE: Section K uc_supp_k_market_demand_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_k_market_demand_level']").count() == 1, \
+        "8ZZE: uc_supp_k_market_demand_level missing"
+
+
+def test_CS2963_8zze_sec_k_gdv_number_input(page, live_server):
+    """Phase 8ZZE: Section K uc_supp_k_expected_gdv_gross_development_value renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_k_expected_gdv_gross_development_value']")
+    assert el.count() == 1, "8ZZE: uc_supp_k_expected_gdv_gross_development_value missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_k_expected_gdv_gross_development_value not number input"
+
+
+def test_CS2964_8zze_sec_k_feasibility_bool(page, live_server):
+    """Phase 8ZZE: Section K uc_supp_k_feasibility_study_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_k_feasibility_study_available']").count() == 1, \
+        "8ZZE: uc_supp_k_feasibility_study_available missing"
+
+
+def test_CS2965_8zze_sec_k_market_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section K uc_supp_k_market_feasibility_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_k_market_feasibility_notes']").count() == 1, \
+        "8ZZE: uc_supp_k_market_feasibility_notes missing"
+
+
+# ── CS2966–CS2970: Section L ─────────────────────────────────────────────────
+
+def test_CS2966_8zze_sec_l_heading(page, live_server):
+    """Phase 8ZZE: Section L heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ل. البنية التحتية والمرافق والربط" in text, "8ZZE: Section L heading missing"
+
+
+def test_CS2967_8zze_sec_l_electricity_select(page, live_server):
+    """Phase 8ZZE: Section L uc_supp_l_electricity_connection_status select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_l_electricity_connection_status']").count() == 1, \
+        "8ZZE: uc_supp_l_electricity_connection_status missing"
+
+
+def test_CS2968_8zze_sec_l_offsite_infrastructure_bool(page, live_server):
+    """Phase 8ZZE: Section L uc_supp_l_offsite_infrastructure_required bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_l_offsite_infrastructure_required']").count() == 1, \
+        "8ZZE: uc_supp_l_offsite_infrastructure_required missing"
+
+
+def test_CS2969_8zze_sec_l_utility_fees_number(page, live_server):
+    """Phase 8ZZE: Section L uc_supp_l_utility_connection_fees_remaining renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_l_utility_connection_fees_remaining']")
+    assert el.count() == 1, "8ZZE: uc_supp_l_utility_connection_fees_remaining missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_l_utility_connection_fees_remaining not number input"
+
+
+def test_CS2970_8zze_sec_l_infrastructure_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section L uc_supp_l_infrastructure_readiness_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_l_infrastructure_readiness_notes']").count() == 1, \
+        "8ZZE: uc_supp_l_infrastructure_readiness_notes missing"
+
+
+# ── CS2971–CS2975: Section M ─────────────────────────────────────────────────
+
+def test_CS2971_8zze_sec_m_heading(page, live_server):
+    """Phase 8ZZE: Section M heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "م. المطالبات والنزاعات والتغييرات" in text, "8ZZE: Section M heading missing"
+
+
+def test_CS2972_8zze_sec_m_variation_orders_number(page, live_server):
+    """Phase 8ZZE: Section M uc_supp_m_variation_orders_approved_value renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_m_variation_orders_approved_value']")
+    assert el.count() == 1, "8ZZE: uc_supp_m_variation_orders_approved_value missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_m_variation_orders_approved_value not number input"
+
+
+def test_CS2973_8zze_sec_m_contractor_claims_bool(page, live_server):
+    """Phase 8ZZE: Section M uc_supp_m_contractor_claims_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_m_contractor_claims_available']").count() == 1, \
+        "8ZZE: uc_supp_m_contractor_claims_available missing"
+
+
+def test_CS2974_8zze_sec_m_unresolved_claims_number(page, live_server):
+    """Phase 8ZZE: Section M uc_supp_m_unresolved_claims_amount renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_m_unresolved_claims_amount']")
+    assert el.count() == 1, "8ZZE: uc_supp_m_unresolved_claims_amount missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_m_unresolved_claims_amount not number input"
+
+
+def test_CS2975_8zze_sec_m_claims_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section M uc_supp_m_claims_disputes_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_m_claims_disputes_notes']").count() == 1, \
+        "8ZZE: uc_supp_m_claims_disputes_notes missing"
+
+
+# ── CS2976–CS2980: Section N ─────────────────────────────────────────────────
+
+def test_CS2976_8zze_sec_n_heading(page, live_server):
+    """Phase 8ZZE: Section N heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ن. المخاطر الفنية والإنشائية" in text, "8ZZE: Section N heading missing"
+
+
+def test_CS2977_8zze_sec_n_structural_risk_select(page, live_server):
+    """Phase 8ZZE: Section N uc_supp_n_structural_risk_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_n_structural_risk_level']").count() == 1, \
+        "8ZZE: uc_supp_n_structural_risk_level missing"
+
+
+def test_CS2978_8zze_sec_n_fire_life_safety_risk_select(page, live_server):
+    """Phase 8ZZE: Section N uc_supp_n_fire_life_safety_risk_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_n_fire_life_safety_risk_level']").count() == 1, \
+        "8ZZE: uc_supp_n_fire_life_safety_risk_level missing"
+
+
+def test_CS2979_8zze_sec_n_all_11_risk_selects_render(page, live_server):
+    """Phase 8ZZE: Section N all 11 uc_supp_n_ risk selects render."""
+    _load_under_construction_supp(page, live_server)
+    risk_fields = [
+        'uc_supp_n_structural_risk_level', 'uc_supp_n_foundation_risk_level',
+        'uc_supp_n_waterproofing_risk_level', 'uc_supp_n_facade_risk_level',
+        'uc_supp_n_mep_coordination_risk_level', 'uc_supp_n_fire_life_safety_risk_level',
+        'uc_supp_n_material_quality_risk_level', 'uc_supp_n_workmanship_quality_risk_level',
+        'uc_supp_n_site_safety_risk_level', 'uc_supp_n_abandoned_site_deterioration_risk',
+        'uc_supp_n_vandalism_or_theft_risk_level',
+    ]
+    for field in risk_fields:
+        assert page.locator(f"[data-es-supp-field='{field}']").count() == 1, \
+            f"8ZZE: {field} missing"
+
+
+def test_CS2980_8zze_sec_n_technical_risk_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section N uc_supp_n_technical_risk_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_n_technical_risk_notes']").count() == 1, \
+        "8ZZE: uc_supp_n_technical_risk_notes missing"
+
+
+# ── CS2981–CS2988: Section O ─────────────────────────────────────────────────
+
+def test_CS2981_8zze_sec_o_heading(page, live_server):
+    """Phase 8ZZE: Section O heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "س. معاملات التعديل حسب غرض التقييم" in text, "8ZZE: Section O heading missing"
+
+
+def test_CS2982_8zze_sec_o_mortgage_lending_methodology_renders(page, live_server):
+    """Phase 8ZZE: Section O uc_supp_o_mortgage_lending_methodology select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_o_mortgage_lending_methodology']").count() == 1, \
+        "8ZZE: uc_supp_o_mortgage_lending_methodology missing"
+
+
+def test_CS2983_8zze_sec_o_methodology_28_options(page, live_server):
+    """Phase 8ZZE: Section O mortgage_lending_methodology select has >= 27 options (_UC_METHODOLOGY_OPTS)."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_o_mortgage_lending_methodology'] option").count()
+    assert count >= 27, f"8ZZE: mortgage_lending_methodology has < 27 options, got {count}"
+
+
+def test_CS2984_8zze_sec_o_total_field_count_39(page, live_server):
+    """Phase 8ZZE: Section O has exactly 39 fields (13 purposes × 3 fields)."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='uc_supp_o_']").count()
+    assert count == 39, f"8ZZE: expected 39 Section O fields (13×3), got {count}"
+
+
+def test_CS2985_8zze_sec_o_local_purpose_has_help_ar(page, live_server):
+    """Phase 8ZZE: Section O local-only purpose (construction_financing_review) renders help_ar."""
+    _load_under_construction_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "uc_supp_o_construction_financing_review_methodology" in html, \
+        "8ZZE: construction_financing_review methodology field not in HTML"
+    assert "غرض محلي إرشادي فقط" in html, \
+        "8ZZE: local advisory help_ar not found for construction_financing_review"
+
+
+def test_CS2986_8zze_sec_o_local_help_ar_text_present(page, live_server):
+    """Phase 8ZZE: Section O warning 'لا يُرسل للتقرير' in supp HTML."""
+    _load_under_construction_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "لا يُرسل للتقرير" in html, "8ZZE: local advisory warning text missing from Section O"
+
+
+def test_CS2987_8zze_sec_o_all_6_backend_methodology_28_options(page, live_server):
+    """Phase 8ZZE: Section O all 6 backend-mapped methodology selects have >= 27 options."""
+    _load_under_construction_supp(page, live_server)
+    for purpose in ('mortgage_lending', 'sale_purchase', 'insurance',
+                    'ifrs_fair_value', 'taxation', 'liquidation'):
+        count = page.locator(
+            f"[data-es-supp-field='uc_supp_o_{purpose}_methodology'] option"
+        ).count()
+        assert count >= 27, \
+            f"8ZZE: uc_supp_o_{purpose}_methodology has < 27 options, got {count}"
+
+
+def test_CS2988_8zze_sec_o_desc_contains_local_advisory(page, live_server):
+    """Phase 8ZZE: Section O desc contains 'جدول إرشادي محلّي'."""
+    _load_under_construction_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "جدول إرشادي محلّي" in html, "8ZZE: Section O desc missing 'جدول إرشادي محلّي'"
+
+
+# ── CS2989–CS2993: Section P ─────────────────────────────────────────────────
+
+def test_CS2989_8zze_sec_p_heading(page, live_server):
+    """Phase 8ZZE: Section P heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ع. المحاسبة" in text, "8ZZE: Section P heading missing"
+
+
+def test_CS2990_8zze_sec_p_accounting_standard_select(page, live_server):
+    """Phase 8ZZE: Section P uc_supp_p_accounting_standard_context select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_p_accounting_standard_context']").count() == 1, \
+        "8ZZE: uc_supp_p_accounting_standard_context missing"
+
+
+def test_CS2991_8zze_sec_p_accounting_classification_options(page, live_server):
+    """Phase 8ZZE: Section P uc_supp_p_accounting_classification select has >= 4 options."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='uc_supp_p_accounting_classification'] option").count()
+    assert count >= 4, f"8ZZE: uc_supp_p_accounting_classification has < 4 options, got {count}"
+
+
+def test_CS2992_8zze_sec_p_impairment_indicators_bool(page, live_server):
+    """Phase 8ZZE: Section P uc_supp_p_impairment_indicators_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_p_impairment_indicators_available']").count() == 1, \
+        "8ZZE: uc_supp_p_impairment_indicators_available missing"
+
+
+def test_CS2993_8zze_sec_p_accounting_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section P uc_supp_p_impairment_or_accounting_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_p_impairment_or_accounting_notes']").count() == 1, \
+        "8ZZE: uc_supp_p_impairment_or_accounting_notes missing"
+
+
+# ── CS2994–CS2998: Section Q ─────────────────────────────────────────────────
+
+def test_CS2994_8zze_sec_q_heading(page, live_server):
+    """Phase 8ZZE: Section Q heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ف. الاستدامة والطاقة والمتطلبات الخضراء" in text, "8ZZE: Section Q heading missing"
+
+
+def test_CS2995_8zze_sec_q_green_certification_select(page, live_server):
+    """Phase 8ZZE: Section Q uc_supp_q_green_building_target_certification select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_q_green_building_target_certification']").count() == 1, \
+        "8ZZE: uc_supp_q_green_building_target_certification missing"
+
+
+def test_CS2996_8zze_sec_q_solar_ready_bool(page, live_server):
+    """Phase 8ZZE: Section Q uc_supp_q_solar_ready_design_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_q_solar_ready_design_available']").count() == 1, \
+        "8ZZE: uc_supp_q_solar_ready_design_available missing"
+
+
+def test_CS2997_8zze_sec_q_sustainability_value_impact_number(page, live_server):
+    """Phase 8ZZE: Section Q uc_supp_q_sustainability_value_impact_pct renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_q_sustainability_value_impact_pct']")
+    assert el.count() == 1, "8ZZE: uc_supp_q_sustainability_value_impact_pct missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_q_sustainability_value_impact_pct not number input"
+
+
+def test_CS2998_8zze_sec_q_sustainability_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section Q uc_supp_q_sustainability_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_q_sustainability_notes']").count() == 1, \
+        "8ZZE: uc_supp_q_sustainability_notes missing"
+
+
+# ── CS2999–CS3003: Section R ─────────────────────────────────────────────────
+
+def test_CS2999_8zze_sec_r_heading(page, live_server):
+    """Phase 8ZZE: Section R heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ص. المخاطر المناخية والإنشائية والتشغيلية" in text, "8ZZE: Section R heading missing"
+
+
+def test_CS3000_8zze_sec_r_flood_risk_select(page, live_server):
+    """Phase 8ZZE: Section R uc_supp_r_flood_risk_level select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_r_flood_risk_level']").count() == 1, \
+        "8ZZE: uc_supp_r_flood_risk_level missing"
+
+
+def test_CS3001_8zze_sec_r_all_11_risk_selects_render(page, live_server):
+    """Phase 8ZZE: Section R all 11 climate/construction risk selects render."""
+    _load_under_construction_supp(page, live_server)
+    risk_fields = [
+        'uc_supp_r_flood_risk_level', 'uc_supp_r_heat_stress_risk_level',
+        'uc_supp_r_stormwater_risk_level', 'uc_supp_r_seismic_risk_level',
+        'uc_supp_r_fire_risk_during_construction', 'uc_supp_r_supply_chain_risk_level',
+        'uc_supp_r_labor_availability_risk_level',
+        'uc_supp_r_material_price_escalation_risk_level',
+        'uc_supp_r_regulatory_change_risk_level', 'uc_supp_r_market_downturn_risk_level',
+        'uc_supp_r_completion_risk_level',
+    ]
+    for field in risk_fields:
+        assert page.locator(f"[data-es-supp-field='{field}']").count() == 1, \
+            f"8ZZE: {field} missing"
+
+
+def test_CS3002_8zze_sec_r_climate_impact_pct_number(page, live_server):
+    """Phase 8ZZE: Section R uc_supp_r_climate_risk_value_impact_pct renders as number input."""
+    _load_under_construction_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='uc_supp_r_climate_risk_value_impact_pct']")
+    assert el.count() == 1, "8ZZE: uc_supp_r_climate_risk_value_impact_pct missing"
+    assert el.get_attribute("type") == "number", \
+        "8ZZE: uc_supp_r_climate_risk_value_impact_pct not number input"
+
+
+def test_CS3003_8zze_sec_r_risk_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section R uc_supp_r_risk_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_r_risk_notes']").count() == 1, \
+        "8ZZE: uc_supp_r_risk_notes missing"
+
+
+# ── CS3004–CS3007: Section S ─────────────────────────────────────────────────
+
+def test_CS3004_8zze_sec_s_heading(page, live_server):
+    """Phase 8ZZE: Section S heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ق. التوثيق الرقمي والمتابعة" in text, "8ZZE: Section S heading missing"
+
+
+def test_CS3005_8zze_sec_s_bim_model_bool(page, live_server):
+    """Phase 8ZZE: Section S uc_supp_s_bim_model_available bool renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_s_bim_model_available']").count() == 1, \
+        "8ZZE: uc_supp_s_bim_model_available missing"
+
+
+def test_CS3006_8zze_sec_s_digital_quality_select(page, live_server):
+    """Phase 8ZZE: Section S uc_supp_s_digital_documentation_quality select renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_s_digital_documentation_quality']").count() == 1, \
+        "8ZZE: uc_supp_s_digital_documentation_quality missing"
+
+
+def test_CS3007_8zze_sec_s_digital_controls_notes_textarea(page, live_server):
+    """Phase 8ZZE: Section S uc_supp_s_digital_project_controls_notes textarea renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_supp_s_digital_project_controls_notes']").count() == 1, \
+        "8ZZE: uc_supp_s_digital_project_controls_notes missing"
+
+
+# ── CS3008–CS3012: Section T (documents) ─────────────────────────────────────
+
+def test_CS3008_8zze_sec_t_heading(page, live_server):
+    """Phase 8ZZE: Section T heading present."""
+    _load_under_construction_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "ر. مستندات إضافية مطلوبة" in text, "8ZZE: Section T heading missing"
+
+
+def test_CS3009_8zze_sec_t_upload_hint_visible(page, live_server):
+    """Phase 8ZZE: Section T upload hint 'ارفع المستندات' visible."""
+    _load_under_construction_supp(page, live_server)
+    supp_text = page.locator("#es-req-supp").inner_text()
+    assert "ارفع المستندات" in supp_text, \
+        f"8ZZE: Section T upload hint not found. Got: {supp_text[:400]!r}"
+
+
+def test_CS3010_8zze_sec_t_building_permit_doc_checkbox(page, live_server):
+    """Phase 8ZZE: Section T uc_doc_supp_building_permit document checkbox renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_doc_supp_building_permit']").count() == 1, \
+        "8ZZE: uc_doc_supp_building_permit missing"
+
+
+def test_CS3011_8zze_sec_t_contractor_contract_doc_checkbox(page, live_server):
+    """Phase 8ZZE: Section T uc_doc_supp_main_contractor_contract document checkbox renders."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='uc_doc_supp_main_contractor_contract']").count() == 1, \
+        "8ZZE: uc_doc_supp_main_contractor_contract missing"
+
+
+def test_CS3012_8zze_sec_t_all_19_doc_checkboxes_render(page, live_server):
+    """Phase 8ZZE: Section T all 19 uc_doc_supp_ document checkboxes render."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='uc_doc_supp_']").count()
+    assert count == 19, f"8ZZE: expected 19 uc_doc_supp_ fields, got {count}"
+
+
+# ── CS3013–CS3017: Field integrity and dedup guards ──────────────────────────
+
+def test_CS3013_8zze_supp_uses_only_data_es_supp_field(page, live_server):
+    """Phase 8ZZE: supplemental panel uses only data-es-supp-field (no data-es-req-field)."""
+    _load_under_construction_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "data-es-req-field" not in supp_html, \
+        "8ZZE: data-es-req-field found inside #es-req-supp (must use data-es-supp-field only)"
+
+
+def test_CS3014_8zze_no_physical_completion_pct_in_supp(page, live_server):
+    """Phase 8ZZE: physical_completion_pct not in supp (dedup: main form uses uc_completion_pct)."""
+    _load_under_construction_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "physical_completion_pct" not in supp_html, \
+        "8ZZE: physical_completion_pct duplicated in supp (dedup violation)"
+
+
+def test_CS3015_8zze_no_remaining_cost_to_complete_in_supp(page, live_server):
+    """Phase 8ZZE: remaining_cost_to_complete not in supp (dedup guard)."""
+    _load_under_construction_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "remaining_cost_to_complete" not in supp_html, \
+        "8ZZE: remaining_cost_to_complete duplicated in supp (dedup guard)"
+
+
+def test_CS3016_8zze_total_uc_supp_field_count_274(page, live_server):
+    """Phase 8ZZE: total uc_supp_ supplemental field count == 274."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='uc_supp_']").count()
+    assert count == 274, f"8ZZE: expected 274 uc_supp_ fields, got {count}"
+
+
+def test_CS3017_8zze_total_uc_doc_supp_field_count_19(page, live_server):
+    """Phase 8ZZE: total uc_doc_supp_ document field count == 19."""
+    _load_under_construction_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='uc_doc_supp_']").count()
+    assert count == 19, f"8ZZE: expected 19 uc_doc_supp_ fields, got {count}"
+
+
+# ── CS3018–CS3020: Safety and regression guards ──────────────────────────────
+
+def test_CS3018_8zze_no_composite_link_in_panel(page, live_server):
+    """Phase 8ZZE: under_construction panel has no #es-req-composite-link."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("#es-req-composite-link").count() == 0, \
+        "8ZZE: #es-req-composite-link found in under_construction panel (must not exist)"
+
+
+def test_CS3019_8zze_regression_intangible_supp_still_renders(page, live_server):
+    """Phase 8ZZE regression: intangible supplemental still renders (8ZZC guard)."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZE regression: intangible supp no longer renders"
+    count = page.locator("[data-es-supp-field^='ia_supp_']").count()
+    assert count >= 150, f"8ZZE regression: intangible supp field count dropped, got {count}"
+
+
+def test_CS3020_8zze_regression_partial_interest_supp_still_renders(page, live_server):
+    """Phase 8ZZE regression: partial_interest supplemental still renders (8ZZD guard)."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZE regression: partial_interest supp no longer renders"
+    count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    assert count >= 184, f"8ZZE regression: partial_interest supp field count dropped, got {count}"

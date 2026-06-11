@@ -5961,7 +5961,7 @@ function _showIndexToast(msg, type) {
         'healthcare_facility':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منشأة طبية — نموذج محلّي لتجميع بيانات الترخيص الطبي والطاقة السريرية وعقود الإدارة. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'wellness_resort':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منتجع استشفاء علاجي — نموذج محلّي لتجميع بيانات التصنيف والخدمات العلاجية وعقد التشغيل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'educational_asset':            { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أصل تعليمي — نموذج محلّي لتجميع بيانات ترخيص وزارة التعليم والطاقة الاستيعابية والبيانات المالية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
-        'heritage_property_detailed':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية رسمية تشمل: رقم التسجيل الأثري، الحالة الإنشائية التفصيلية (أساس/رطوبة/تشقق)، تكاليف الترميم، والدخل الاقتصادي وقيود الاستثمار. مختلف عن «العقارات التاريخية» (بيانات موجزة) و«الموروث الثقافي» (تصنيف ثقافي/يونسكو). لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'heritage_property_detailed':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية رسمية تشمل: رقم التسجيل الأثري، الحالة الإنشائية التفصيلية (أساس/رطوبة/تشقق)، تكاليف الترميم، والدخل الاقتصادي وقيود الاستثمار. هذه الاستمارة لتقييم العقارات ذات القيمة التاريخية أو الثقافية أو المعمارية، سواء كانت مسجلة رسمياً أو ذات دلالة تاريخية غير مسجلة. لا تستخدم لمبنى قائم عادي؛ إذا لم توجد قيمة تاريخية أو قيود حفظ أو دلالة ثقافية، استخدم استمارة «مبنى قائم» أو الأصل المناسب. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'timberland':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'غابات طبيعية وتجارية — نموذج محلّي لتجميع بيانات المساحة والكتلة الحيوية وشهادات FSC والإيرادات والمخاطر البيئية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'zoo_safari':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حديقة حيوان / متنزه بري — نموذج محلّي لتجميع بيانات مجموعة الحيوانات والتراخيص ومتطلبات CITES وإيرادات الزوار. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'littoral_rights':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حقوق شاطئية وحرم البحر — تقييم الحق القانوني للواجهة الشاطئية (طول الواجهة، خطوط التراجع، حقوق الانتفاع والإيجار). هذا تقييم الحق القانوني، لا تقييم منشأة بحرية مادية — لتقييم مارينا يخوت أو ميناء بحري استخدم الخيار المناسب في «أصول البنية التحتية والنقل السيادية». لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
@@ -22196,6 +22196,17 @@ var _PROFILE_FORM_SCHEMA = {
                     { value: 'unknown',                label_ar: 'غير محدد' },
                   ], valid_values: [], group: 'identity', ui_required: false },
                 { name: 'hpd_supp_heritage_narrative_summary', field_type: 'textarea', label_ar: 'ملخص تاريخ العقار وأهميته', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_formal_protection_status', field_type: 'str', label_ar: 'حالة الحماية الرسمية',
+                  options: [
+                    { value: 'officially_registered',              label_ar: 'مسجَّل رسمياً' },
+                    { value: 'listed',                             label_ar: 'مُدرَج في قوائم الحماية' },
+                    { value: 'conservation_area_only',             label_ar: 'ضمن منطقة حفظ فقط' },
+                    { value: 'protected_facade_only',              label_ar: 'واجهة محمية فقط' },
+                    { value: 'pending_registration',               label_ar: 'قيد التسجيل' },
+                    { value: 'unregistered_but_significant',       label_ar: 'غير مسجَّل لكنه ذو دلالة تاريخية' },
+                    { value: 'not_protected',                      label_ar: 'غير محمي رسمياً' },
+                    { value: 'unknown',                            label_ar: 'غير محدد' },
+                  ], valid_values: [], group: 'identity', ui_required: false },
             ]},
             // B — التسجيل الأثري والقرارات الرسمية (+ GOST R 55528)
             { heading: 'B — التسجيل الأثري والقرارات الرسمية', color: '#1e40af', desc: 'التسجيل الرسمي وتفاصيل قرارات الحماية والحدود التراثية', fields: [
@@ -22236,6 +22247,16 @@ var _PROFILE_FORM_SCHEMA = {
                     { value: 'unknown',                  label_ar: 'غير محدد' },
                   ], valid_values: [], group: '', ui_required: false, help_ar: 'وفق نظام نطاقات الحماية الروسي GOST R 55528-2013' },
                 { name: 'hpd_supp_preservation_zone_registered_gost', field_type: 'bool', label_ar: 'نطاق الحماية مسجَّل رسمياً (GOST)', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_conservation_area_status', field_type: 'str', label_ar: 'وضع منطقة الحفظ',
+                  options: [
+                    { value: 'within_designated_conservation_area',  label_ar: 'داخل منطقة حفظ مُقرَّرة' },
+                    { value: 'adjacent_to_conservation_area',        label_ar: 'مجاور لمنطقة حفظ' },
+                    { value: 'within_buffer_zone',                   label_ar: 'ضمن نطاق الحرم/المنطقة العازلة' },
+                    { value: 'proposed_conservation_area',           label_ar: 'ضمن منطقة حفظ مقترَحة' },
+                    { value: 'outside_any_conservation_area',        label_ar: 'خارج أي منطقة حفظ' },
+                    { value: 'unknown',                              label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_buffer_zone_area_sqm', field_type: 'number', label_ar: 'مساحة النطاق العازل/الحرم', unit: 'م²', valid_values: [], group: '', ui_required: false },
             ]},
             // C — قيود الحظر والتدخلات المسموحة
             { heading: 'C — قيود الحظر والتدخلات المسموحة', color: '#dc2626', desc: 'مستوى تقييد التدخل المادي وأثره على القيمة', fields: [
@@ -22277,6 +22298,8 @@ var _PROFILE_FORM_SCHEMA = {
                 { name: 'hpd_supp_restriction_value_impact_pct',       field_type: 'float', label_ar: 'أثر القيود على القيمة (تقدير)',          unit_ar: '%', valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_permitted_intervention_summary',     field_type: 'textarea', label_ar: 'ملخص التدخلات المسموح بها',           valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_restriction_notes',                  field_type: 'textarea', label_ar: 'ملاحظات إضافية على القيود',           valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_demolition_prohibited', field_type: 'bool', label_ar: 'الهدم محظور رسمياً', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_additional_floors_restricted', field_type: 'bool', label_ar: 'إضافة طوابق مقيَّدة أو محظورة', valid_values: [], group: '', ui_required: false },
             ]},
             // D — الخصائص المعمارية والقيمة الثقافية
             { heading: 'D — الخصائص المعمارية والقيمة الثقافية', color: '#7c3aed', desc: 'الطراز المعماري والحقبة التاريخية ومستوى الأصالة', fields: [
@@ -22344,6 +22367,7 @@ var _PROFILE_FORM_SCHEMA = {
                     { value: 'original_doors_windows', label_ar: 'أبواب / شبابيك أصلية'    },
                   ], valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_cultural_significance_notes', field_type: 'textarea', label_ar: 'ملاحظات الأهمية الثقافية والمعمارية', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_architect_or_builder_known', field_type: 'bool', label_ar: 'المعماري/المنشئ الأصلي معروف', valid_values: [], group: '', ui_required: false },
             ]},
             // E — الحالة الإنشائية والأساسات (+ NTC 2018)
             { heading: 'E — الحالة الإنشائية والأساسات', color: '#b45309', desc: 'تقييم إنشائي للمبنى التراثي وفق معايير NTC 2018 الإيطالية', fields: [
@@ -22459,6 +22483,20 @@ var _PROFILE_FORM_SCHEMA = {
                   ], valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_archaeological_discovery_risk', field_type: 'bool', label_ar: 'خطر اكتشاف أثري أثناء أعمال الترميم', valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_material_condition_notes', field_type: 'textarea', label_ar: 'ملاحظات حالة المواد والتدهور البيئي', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_primary_construction_materials', field_type: 'checkbox_group', label_ar: 'المواد الإنشائية الأساسية',
+                  options: [
+                    { value: 'limestone',                   label_ar: 'حجر جيري' },
+                    { value: 'sandstone',                   label_ar: 'حجر رملي' },
+                    { value: 'brick',                       label_ar: 'طوب حراري / طابوق' },
+                    { value: 'mudbrick',                    label_ar: 'طوب ترابي / لبن' },
+                    { value: 'timber',                      label_ar: 'خشب' },
+                    { value: 'steel',                       label_ar: 'حديد / فولاذ' },
+                    { value: 'marble',                      label_ar: 'رخام' },
+                    { value: 'historic_plaster',            label_ar: 'جص تراثي / جبس تاريخي' },
+                    { value: 'tile',                        label_ar: 'بلاط / خزف' },
+                    { value: 'reinforced_concrete_additions', label_ar: 'إضافات خرسانة مسلَّحة' },
+                    { value: 'mixed',                       label_ar: 'مختلط' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             // G — المساحات والموقع والسياق التراثي
             { heading: 'G — المساحات والموقع والسياق التراثي', color: '#065f46', desc: 'المساحات والموقع والسياق العمراني المحيط بالعقار التراثي', fields: [
@@ -22497,6 +22535,15 @@ var _PROFILE_FORM_SCHEMA = {
                     { value: 'degraded_surrounding',       label_ar: 'متدهور — محيط متدهور'           },
                     { value: 'incompatible_development',   label_ar: 'رديء — تطوير منافٍ للطابع'      },
                     { value: 'unknown',                    label_ar: 'غير محدد'                        },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_parking_availability_quality', field_type: 'str', label_ar: 'جودة توافر مواقف السيارات',
+                  options: [
+                    { value: 'ample_dedicated_parking',     label_ar: 'مواقف خاصة كافية' },
+                    { value: 'limited_on_street',           label_ar: 'محدود / على الشارع' },
+                    { value: 'public_nearby',               label_ar: 'عام قريب' },
+                    { value: 'very_limited',                label_ar: 'شحيح جداً' },
+                    { value: 'none',                        label_ar: 'لا يوجد' },
+                    { value: 'unknown',                     label_ar: 'غير محدد' },
                   ], valid_values: [], group: '', ui_required: false },
             ]},
             // H — الترميم والصيانة وCAPEX
@@ -22644,6 +22691,22 @@ var _PROFILE_FORM_SCHEMA = {
                 { name: 'hpd_supp_tax_incentives_available',            field_type: 'bool',  label_ar: 'وجود حوافز ضريبية للمباني التراثية',      valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_adaptive_reuse_business_plan_available', field_type: 'bool', label_ar: 'وجود خطة أعمال لإعادة الاستخدام التكيّفي', valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_income_notes',                        field_type: 'textarea', label_ar: 'ملاحظات الدخل والاستخدام الاقتصادي', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_adaptive_reuse_options', field_type: 'checkbox_group', label_ar: 'خيارات إعادة التوظيف المتاحة',
+                  options: [
+                    { value: 'boutique_hotel',              label_ar: 'فندق بوتيك / سياحي' },
+                    { value: 'museum',                      label_ar: 'متحف' },
+                    { value: 'cultural_center',             label_ar: 'مركز ثقافي / معرض' },
+                    { value: 'restaurant_cafe',             label_ar: 'مطعم / مقهى' },
+                    { value: 'office',                      label_ar: 'مكاتب' },
+                    { value: 'boutique_retail',             label_ar: 'تجزئة متخصصة' },
+                    { value: 'residential',                 label_ar: 'سكني فاخر' },
+                    { value: 'event_space',                 label_ar: 'قاعة مناسبات / فعاليات' },
+                    { value: 'educational',                 label_ar: 'تعليمي / أكاديمي' },
+                    { value: 'mixed_use',                   label_ar: 'متعدد الاستخدامات' },
+                    { value: 'limited',                     label_ar: 'محدود بسبب القيود' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_cultural_program_revenue_annual', field_type: 'number', label_ar: 'إيراد البرامج الثقافية السنوي', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_retail_or_f_and_b_revenue_annual', field_type: 'number', label_ar: 'إيراد التجزئة أو F&B السنوي', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
             ]},
             // L — السوق وقابلية التسويق والقيمة التراثية
             { heading: 'L — السوق وقابلية التسويق والقيمة التراثية', color: '#0369a1', desc: 'مؤشرات السوق والعلاوة أو الخصم التراثي وندرة الأصل', fields: [
@@ -22712,6 +22775,7 @@ var _PROFILE_FORM_SCHEMA = {
                   ], valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_tourism_monetization_ceiling_notes', field_type: 'textarea', label_ar: 'ملاحظات سقف تحقيق الدخل السياحي', valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_market_notes',                       field_type: 'textarea', label_ar: 'ملاحظات السوق والقيمة التراثية',  valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_comparable_historical_sales_available', field_type: 'bool', label_ar: 'مبيعات مقارنة عقارات تاريخية متوفرة', valid_values: [], group: '', ui_required: false },
             ]},
             // M — معاملات التعديل حسب غرض التقييم (12 غرضاً: 6 قياسي + 6 محلي)
             { heading: 'M — معاملات التعديل حسب غرض التقييم', color: '#d4af37',
@@ -22802,6 +22866,25 @@ var _PROFILE_FORM_SCHEMA = {
                     { value: 'unknown', label_ar: 'غير محدد' },
                   ], valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_risk_notes', field_type: 'textarea', label_ar: 'ملاحظات المخاطر والتأمين', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_replacement_cost_insurable_basis_available', field_type: 'bool', label_ar: 'أساس التأمين على تكلفة الإحلال متوفر', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_public_liability_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر المسؤولية العامة',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' }, { value: 'severe', label_ar: 'حرج' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_construction_work_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر أعمال الترميم/البناء',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' }, { value: 'severe', label_ar: 'حرج' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_climate_deterioration_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر التدهور المناخي',
+                  options: [
+                    { value: 'low',     label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' },
+                    { value: 'high',    label_ar: 'مرتفع' }, { value: 'severe', label_ar: 'حرج' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             // O — الاستدامة المتوافقة مع الطابع التراثي
             { heading: 'O — الاستدامة المتوافقة مع الطابع التراثي', color: '#065f46', desc: 'مؤشرات الاستدامة البيئية والكفاءة الطاقوية بما يتوافق مع متطلبات الحفظ', fields: [
@@ -22824,6 +22907,19 @@ var _PROFILE_FORM_SCHEMA = {
                 { name: 'hpd_supp_water_harvesting_or_reuse_available', field_type: 'bool', label_ar: 'وجود نظام تجميع / إعادة استخدام المياه', valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_green_certification_available',        field_type: 'bool', label_ar: 'وجود شهادة استدامة خضراء',               valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_sustainability_notes',                 field_type: 'textarea', label_ar: 'ملاحظات الاستدامة',                   valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_electricity_consumption_annual_kwh', field_type: 'number', label_ar: 'استهلاك الكهرباء السنوي', unit: 'kWh', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_water_consumption_annual_m3', field_type: 'number', label_ar: 'استهلاك المياه السنوي', unit: 'م³', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_insulation_upgrade_possible', field_type: 'bool', label_ar: 'ترقية العزل الحراري ممكنة دون إضرار بالطابع', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_passive_cooling_features_available', field_type: 'bool', label_ar: 'عناصر التبريد الطبيعي/السلبي موجودة', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_water_reuse_possible', field_type: 'bool', label_ar: 'إعادة استخدام المياه ممكنة', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_embodied_carbon_preservation_benefit', field_type: 'str', label_ar: 'فائدة الكربون المتجسد من الحفظ (مقابل الهدم)',
+                  options: [
+                    { value: 'very_high',  label_ar: 'عالية جداً — توفير كربوني كبير' },
+                    { value: 'high',       label_ar: 'عالية' },
+                    { value: 'medium',     label_ar: 'متوسطة' },
+                    { value: 'low',        label_ar: 'منخفضة' },
+                    { value: 'unknown',    label_ar: 'غير محدد' },
+                  ], valid_values: [], group: '', ui_required: false },
             ]},
             // P — التوثيق الرقمي والمسح المعماري
             { heading: 'P — التوثيق الرقمي والمسح المعماري', color: '#374151', desc: 'أدوات التوثيق الرقمي والمسح المتقدم للعقار التراثي', fields: [
@@ -22836,6 +22932,8 @@ var _PROFILE_FORM_SCHEMA = {
                 { name: 'hpd_supp_conservation_method_statement_available',     field_type: 'bool', label_ar: 'وجود بيان منهجية الصون (Conservation Statement)',       valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_digital_archive_available',                   field_type: 'bool', label_ar: 'وجود أرشيف رقمي للصور والوثائق التاريخية',              valid_values: [], group: '', ui_required: false },
                 { name: 'hpd_supp_documentation_notes',                         field_type: 'textarea', label_ar: 'ملاحظات التوثيق الرقمي والمسح',                    valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_measured_drawings_available', field_type: 'bool', label_ar: 'مخططات مساحية ومقاسات موثَّقة متوفرة', valid_values: [], group: '', ui_required: false },
+                { name: 'hpd_supp_heritage_bim_available', field_type: 'bool', label_ar: 'نموذج BIM تراثي متوفر', valid_values: [], group: '', ui_required: false },
             ]},
             // Q — مستندات إضافية (8 مستندات جديدة — المستندات الموجودة في الاستمارة الرئيسية محذوفة تجنباً للتكرار)
             { heading: 'Q — مستندات إضافية', color: '#6b7280', desc: 'مستندات تكميلية تراثية تضاف لما هو مقدَّم في استمارة التقييم الرئيسية', fields: [

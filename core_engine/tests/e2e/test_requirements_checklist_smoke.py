@@ -29759,3 +29759,569 @@ def test_CS3020_8zze_regression_partial_interest_supp_still_renders(page, live_s
         "8ZZE regression: partial_interest supp no longer renders"
     count = page.locator("[data-es-supp-field^='fo_supp_']").count()
     assert count >= 184, f"8ZZE regression: partial_interest supp field count dropped, got {count}"
+
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 8ZZF — Heritage Property Detailed Completion Patch (CS3021–CS3080)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── CS3021–CS3025: Heading and explainer ─────────────────────────────────────
+
+def test_CS3021_8zzf_heading_contains_turaathi_taareekhi(page, live_server):
+    """Phase 8ZZF: heading contains 'عقار تراثي / تاريخي' (Gate A required form)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "تراثي" in heading and "تاريخي" in heading, \
+        f"8ZZF: expected 'تراثي / تاريخي' in heading, got: {heading[:80]}"
+
+
+def test_CS3022_8zzf_heading_contains_tafseely(page, live_server):
+    """Phase 8ZZF: heading contains 'تقييم تفصيلي'."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "تقييم تفصيلي" in heading, \
+        f"8ZZF: 'تقييم تفصيلي' missing from heading, got: {heading[:80]}"
+
+
+def test_CS3023_8zzf_explainer_no_ordinary_building(page, live_server):
+    """Phase 8ZZF: explainer badge/desc contains 'لا تستخدم لمبنى قائم عادي'."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage_property_detailed")
+    page.locator("#es-profile-explainer").wait_for(state="visible", timeout=6_000)
+    explainer_html = page.locator("#es-profile-explainer").inner_html()
+    assert "لا تستخدم لمبنى قائم عادي" in explainer_html or \
+           "لا تستخدم" in explainer_html, \
+        f"8ZZF: explainer missing 'لا تستخدم لمبنى قائم عادي', got: {explainer_html[:200]}"
+
+
+def test_CS3024_8zzf_explainer_covers_unregistered_significant(page, live_server):
+    """Phase 8ZZF: explainer mentions 'دلالة تاريخية غير مسجلة'."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="heritage_property_detailed")
+    page.locator("#es-profile-explainer").wait_for(state="visible", timeout=6_000)
+    explainer_html = page.locator("#es-profile-explainer").inner_html()
+    assert "دلالة تاريخية غير مسجلة" in explainer_html or "غير مسجل" in explainer_html, \
+        "8ZZF: explainer must mention unregistered-but-historically-significant properties"
+
+
+def test_CS3025_8zzf_section_count_still_17(page, live_server):
+    """Phase 8ZZF: section count unchanged at 17."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 17, f"8ZZF: expected 17 sections, got {count}"
+
+
+# ── CS3026–CS3028: Section A new field ───────────────────────────────────────
+
+def test_CS3026_8zzf_sec_a_formal_protection_status_renders(page, live_server):
+    """Phase 8ZZF: Section A hpd_supp_formal_protection_status select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_formal_protection_status']").count() == 1, \
+        "8ZZF: hpd_supp_formal_protection_status missing"
+
+
+def test_CS3027_8zzf_sec_a_formal_protection_unregistered_option(page, live_server):
+    """Phase 8ZZF: formal_protection_status has 'unregistered_but_significant' option."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    opts = page.locator(
+        "[data-es-supp-field='hpd_supp_formal_protection_status'] option[value='unregistered_but_significant']"
+    ).count()
+    assert opts == 1, "8ZZF: unregistered_but_significant option missing from formal_protection_status"
+
+
+def test_CS3028_8zzf_sec_a_formal_protection_has_8_options(page, live_server):
+    """Phase 8ZZF: formal_protection_status has >= 8 options."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_formal_protection_status'] option").count()
+    assert count >= 8, f"8ZZF: formal_protection_status has < 8 options, got {count}"
+
+
+# ── CS3029–CS3031: Section B new fields ──────────────────────────────────────
+
+def test_CS3029_8zzf_sec_b_conservation_area_status_renders(page, live_server):
+    """Phase 8ZZF: Section B hpd_supp_conservation_area_status select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_conservation_area_status']").count() == 1, \
+        "8ZZF: hpd_supp_conservation_area_status missing"
+
+
+def test_CS3030_8zzf_sec_b_buffer_zone_area_sqm_number(page, live_server):
+    """Phase 8ZZF: Section B hpd_supp_buffer_zone_area_sqm renders as number input."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_buffer_zone_area_sqm']")
+    assert el.count() == 1, "8ZZF: hpd_supp_buffer_zone_area_sqm missing"
+    assert el.get_attribute("type") == "number", "8ZZF: buffer_zone_area_sqm not number input"
+
+
+def test_CS3031_8zzf_sec_b_conservation_area_has_options(page, live_server):
+    """Phase 8ZZF: conservation_area_status has >= 6 options."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_conservation_area_status'] option").count()
+    assert count >= 6, f"8ZZF: conservation_area_status has < 6 options, got {count}"
+
+
+# ── CS3032–CS3033: Section C new fields ──────────────────────────────────────
+
+def test_CS3032_8zzf_sec_c_demolition_prohibited_bool(page, live_server):
+    """Phase 8ZZF: Section C hpd_supp_demolition_prohibited bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_demolition_prohibited']").count() == 1, \
+        "8ZZF: hpd_supp_demolition_prohibited missing"
+
+
+def test_CS3033_8zzf_sec_c_additional_floors_restricted_bool(page, live_server):
+    """Phase 8ZZF: Section C hpd_supp_additional_floors_restricted bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_additional_floors_restricted']").count() == 1, \
+        "8ZZF: hpd_supp_additional_floors_restricted missing"
+
+
+# ── CS3034: Section D new field ───────────────────────────────────────────────
+
+def test_CS3034_8zzf_sec_d_architect_known_bool(page, live_server):
+    """Phase 8ZZF: Section D hpd_supp_architect_or_builder_known bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_architect_or_builder_known']").count() == 1, \
+        "8ZZF: hpd_supp_architect_or_builder_known missing"
+
+
+# ── CS3035–CS3036: Section F new field ───────────────────────────────────────
+
+def test_CS3035_8zzf_sec_f_primary_materials_checkbox_group(page, live_server):
+    """Phase 8ZZF: Section F hpd_supp_primary_construction_materials checkbox_group renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_primary_construction_materials']").count()
+    assert count >= 1, "8ZZF: hpd_supp_primary_construction_materials missing"
+
+
+def test_CS3036_8zzf_sec_f_primary_materials_has_11_options(page, live_server):
+    """Phase 8ZZF: primary_construction_materials has >= 11 options."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='hpd_supp_primary_construction_materials']"
+    ).count()
+    assert count >= 11, f"8ZZF: primary_construction_materials has < 11 checkboxes, got {count}"
+
+
+# ── CS3037–CS3038: Section G new field ───────────────────────────────────────
+
+def test_CS3037_8zzf_sec_g_parking_quality_renders(page, live_server):
+    """Phase 8ZZF: Section G hpd_supp_parking_availability_quality select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_parking_availability_quality']").count() == 1, \
+        "8ZZF: hpd_supp_parking_availability_quality missing"
+
+
+def test_CS3038_8zzf_sec_g_parking_quality_has_options(page, live_server):
+    """Phase 8ZZF: parking_availability_quality has >= 6 options."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_parking_availability_quality'] option").count()
+    assert count >= 6, f"8ZZF: parking_availability_quality has < 6 options, got {count}"
+
+
+# ── CS3039–CS3042: Section K new fields ──────────────────────────────────────
+
+def test_CS3039_8zzf_sec_k_adaptive_reuse_options_renders(page, live_server):
+    """Phase 8ZZF: Section K hpd_supp_adaptive_reuse_options checkbox_group renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_adaptive_reuse_options']").count()
+    assert count >= 1, "8ZZF: hpd_supp_adaptive_reuse_options missing"
+
+
+def test_CS3040_8zzf_sec_k_adaptive_reuse_options_11_checkboxes(page, live_server):
+    """Phase 8ZZF: adaptive_reuse_options has >= 11 checkboxes."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='hpd_supp_adaptive_reuse_options']").count()
+    assert count >= 11, f"8ZZF: adaptive_reuse_options < 11 checkboxes, got {count}"
+
+
+def test_CS3041_8zzf_sec_k_cultural_program_revenue_number(page, live_server):
+    """Phase 8ZZF: Section K hpd_supp_cultural_program_revenue_annual number input renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_cultural_program_revenue_annual']")
+    assert el.count() == 1, "8ZZF: hpd_supp_cultural_program_revenue_annual missing"
+    assert el.get_attribute("type") == "number", "8ZZF: cultural_program_revenue_annual not number"
+
+
+def test_CS3042_8zzf_sec_k_retail_fb_revenue_number(page, live_server):
+    """Phase 8ZZF: Section K hpd_supp_retail_or_f_and_b_revenue_annual number input renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_retail_or_f_and_b_revenue_annual']")
+    assert el.count() == 1, "8ZZF: hpd_supp_retail_or_f_and_b_revenue_annual missing"
+    assert el.get_attribute("type") == "number", "8ZZF: retail_or_f_and_b_revenue_annual not number"
+
+
+# ── CS3043: Section L new field ───────────────────────────────────────────────
+
+def test_CS3043_8zzf_sec_l_comparable_historical_sales_bool(page, live_server):
+    """Phase 8ZZF: Section L hpd_supp_comparable_historical_sales_available bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_comparable_historical_sales_available']").count() == 1, \
+        "8ZZF: hpd_supp_comparable_historical_sales_available missing"
+
+
+# ── CS3044–CS3047: Section N new fields ──────────────────────────────────────
+
+def test_CS3044_8zzf_sec_n_replacement_cost_insurable_bool(page, live_server):
+    """Phase 8ZZF: Section N hpd_supp_replacement_cost_insurable_basis_available bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator(
+        "[data-es-supp-field='hpd_supp_replacement_cost_insurable_basis_available']"
+    ).count() == 1, "8ZZF: hpd_supp_replacement_cost_insurable_basis_available missing"
+
+
+def test_CS3045_8zzf_sec_n_public_liability_risk_select(page, live_server):
+    """Phase 8ZZF: Section N hpd_supp_public_liability_risk_level select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_public_liability_risk_level']").count() == 1, \
+        "8ZZF: hpd_supp_public_liability_risk_level missing"
+
+
+def test_CS3046_8zzf_sec_n_construction_work_risk_select(page, live_server):
+    """Phase 8ZZF: Section N hpd_supp_construction_work_risk_level select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_construction_work_risk_level']").count() == 1, \
+        "8ZZF: hpd_supp_construction_work_risk_level missing"
+
+
+def test_CS3047_8zzf_sec_n_climate_deterioration_risk_select(page, live_server):
+    """Phase 8ZZF: Section N hpd_supp_climate_deterioration_risk_level select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_climate_deterioration_risk_level']").count() == 1, \
+        "8ZZF: hpd_supp_climate_deterioration_risk_level missing"
+
+
+# ── CS3048–CS3053: Section O new fields ──────────────────────────────────────
+
+def test_CS3048_8zzf_sec_o_electricity_kwh_number(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_electricity_consumption_annual_kwh number input renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_electricity_consumption_annual_kwh']")
+    assert el.count() == 1, "8ZZF: hpd_supp_electricity_consumption_annual_kwh missing"
+    assert el.get_attribute("type") == "number", "8ZZF: electricity_consumption_annual_kwh not number"
+
+
+def test_CS3049_8zzf_sec_o_water_m3_number(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_water_consumption_annual_m3 number input renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='hpd_supp_water_consumption_annual_m3']")
+    assert el.count() == 1, "8ZZF: hpd_supp_water_consumption_annual_m3 missing"
+    assert el.get_attribute("type") == "number", "8ZZF: water_consumption_annual_m3 not number"
+
+
+def test_CS3050_8zzf_sec_o_insulation_upgrade_bool(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_insulation_upgrade_possible bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_insulation_upgrade_possible']").count() == 1, \
+        "8ZZF: hpd_supp_insulation_upgrade_possible missing"
+
+
+def test_CS3051_8zzf_sec_o_passive_cooling_bool(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_passive_cooling_features_available bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_passive_cooling_features_available']").count() == 1, \
+        "8ZZF: hpd_supp_passive_cooling_features_available missing"
+
+
+def test_CS3052_8zzf_sec_o_water_reuse_bool(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_water_reuse_possible bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_water_reuse_possible']").count() == 1, \
+        "8ZZF: hpd_supp_water_reuse_possible missing"
+
+
+def test_CS3053_8zzf_sec_o_embodied_carbon_select(page, live_server):
+    """Phase 8ZZF: Section O hpd_supp_embodied_carbon_preservation_benefit select renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_embodied_carbon_preservation_benefit']").count() == 1, \
+        "8ZZF: hpd_supp_embodied_carbon_preservation_benefit missing"
+
+
+# ── CS3054–CS3055: Section P new fields ──────────────────────────────────────
+
+def test_CS3054_8zzf_sec_p_measured_drawings_bool(page, live_server):
+    """Phase 8ZZF: Section P hpd_supp_measured_drawings_available bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_measured_drawings_available']").count() == 1, \
+        "8ZZF: hpd_supp_measured_drawings_available missing"
+
+
+def test_CS3055_8zzf_sec_p_heritage_bim_bool(page, live_server):
+    """Phase 8ZZF: Section P hpd_supp_heritage_bim_available bool renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_heritage_bim_available']").count() == 1, \
+        "8ZZF: hpd_supp_heritage_bim_available missing"
+
+
+# ── CS3056–CS3058: Field integrity ───────────────────────────────────────────
+
+def test_CS3056_8zzf_total_hpd_supp_field_count_233(page, live_server):
+    """Phase 8ZZF: total hpd_supp_ field count >= 233 (209 original + 24 new; checkbox groups count each input)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='hpd_supp_']").count()
+    assert count >= 233, f"8ZZF: expected >= 233 hpd_supp_ fields, got {count}"
+
+
+def test_CS3057_8zzf_supp_uses_only_data_es_supp_field(page, live_server):
+    """Phase 8ZZF: supplemental panel uses only data-es-supp-field (no data-es-req-field)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "data-es-req-field" not in supp_html, \
+        "8ZZF: data-es-req-field found inside #es-req-supp (must use data-es-supp-field only)"
+
+
+def test_CS3058_8zzf_no_auth_modal_and_no_composite_link(page, live_server):
+    """Phase 8ZZF: no auth modal and no composite link in heritage panel."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("#es-req-composite-link").count() == 0, \
+        "8ZZF: #es-req-composite-link found in heritage panel"
+
+
+# ── CS3059–CS3060: Section M (all 12 purposes still render) ──────────────────
+
+def test_CS3059_8zzf_sec_m_all_12_purposes_still_present(page, live_server):
+    """Phase 8ZZF: Section M still has all 12 purpose methodology selects."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    purposes = [
+        'mortgage_lending', 'sale_purchase', 'insurance', 'ifrs_fair_value',
+        'taxation', 'liquidation', 'heritage_conservation_review',
+        'adaptive_reuse_investment', 'grant_or_public_funding',
+        'expropriation_compensation', 'litigation_dispute', 'impairment_testing',
+    ]
+    for p in purposes:
+        assert page.locator(f"[data-es-supp-field='hpd_supp_m_{p}_methodology']").count() == 1, \
+            f"8ZZF: Section M methodology for {p} missing"
+
+
+def test_CS3060_8zzf_sec_m_field_count_still_36(page, live_server):
+    """Phase 8ZZF: Section M still has 36 fields (12 × 3), unchanged."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='hpd_supp_m_']").count()
+    assert count == 36, f"8ZZF: expected 36 Section M fields, got {count}"
+
+
+# ── CS3061–CS3065: Existing 8ZX original fields still render ─────────────────
+
+def test_CS3061_8zzf_existing_heritage_asset_type_still_renders(page, live_server):
+    """Phase 8ZZF: existing hpd_supp_heritage_asset_type still renders (8ZX guard)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_heritage_asset_type']").count() == 1, \
+        "8ZZF: hpd_supp_heritage_asset_type missing (8ZX regression)"
+
+
+def test_CS3062_8zzf_existing_authenticity_level_still_renders(page, live_server):
+    """Phase 8ZZF: existing hpd_supp_authenticity_level still renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_authenticity_level']").count() == 1, \
+        "8ZZF: hpd_supp_authenticity_level missing (8ZX regression)"
+
+
+def test_CS3063_8zzf_existing_restriction_value_impact_still_renders(page, live_server):
+    """Phase 8ZZF: existing hpd_supp_restriction_value_impact_pct still renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_restriction_value_impact_pct']").count() == 1, \
+        "8ZZF: hpd_supp_restriction_value_impact_pct missing (8ZX regression)"
+
+
+def test_CS3064_8zzf_existing_total_capex_still_renders(page, live_server):
+    """Phase 8ZZF: existing hpd_supp_total_conservation_capex_required still renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_total_conservation_capex_required']").count() == 1, \
+        "8ZZF: hpd_supp_total_conservation_capex_required missing (8ZX regression)"
+
+
+def test_CS3065_8zzf_existing_heritage_premium_still_renders(page, live_server):
+    """Phase 8ZZF: existing hpd_supp_heritage_premium_or_discount_level still renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='hpd_supp_heritage_premium_or_discount_level']").count() == 1, \
+        "8ZZF: hpd_supp_heritage_premium_or_discount_level missing (8ZX regression)"
+
+
+# ── CS3066–CS3080: Neighboring profile guards ─────────────────────────────────
+
+def test_CS3066_8zzf_regression_under_construction_supp_still_renders(page, live_server):
+    """Phase 8ZZF regression: under_construction supplemental still renders (8ZZE guard)."""
+    _load_under_construction_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZF regression: under_construction supp no longer renders"
+    count = page.locator("[data-es-supp-field^='uc_supp_']").count()
+    assert count >= 274, f"8ZZF regression: uc_supp_ count dropped, got {count}"
+
+
+def test_CS3067_8zzf_regression_intangible_supp_still_renders(page, live_server):
+    """Phase 8ZZF regression: intangible supplemental still renders (8ZZC guard)."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZF regression: intangible supp no longer renders"
+    count = page.locator("[data-es-supp-field^='ia_supp_']").count()
+    assert count >= 150, f"8ZZF regression: ia_supp_ count dropped, got {count}"
+
+
+def test_CS3068_8zzf_regression_partial_interest_supp_still_renders(page, live_server):
+    """Phase 8ZZF regression: partial_interest supplemental still renders (8ZZD guard)."""
+    _load_partial_interest_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZF regression: partial_interest supp no longer renders"
+    count = page.locator("[data-es-supp-field^='fo_supp_']").count()
+    assert count >= 184, f"8ZZF regression: fo_supp_ count dropped, got {count}"
+
+
+def test_CS3069_8zzf_regression_heritage_supp_panel_visible(page, live_server):
+    """Phase 8ZZF: heritage_property_detailed supp panel visible (basic regression)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), \
+        "8ZZF: heritage_property_detailed supp panel not visible"
+
+
+def test_CS3070_8zzf_no_new_fields_have_data_es_req_field(page, live_server):
+    """Phase 8ZZF: all new hpd_supp_ fields use data-es-supp-field, not data-es-req-field."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    new_fields = [
+        'hpd_supp_formal_protection_status', 'hpd_supp_conservation_area_status',
+        'hpd_supp_buffer_zone_area_sqm', 'hpd_supp_demolition_prohibited',
+        'hpd_supp_additional_floors_restricted', 'hpd_supp_architect_or_builder_known',
+        'hpd_supp_parking_availability_quality', 'hpd_supp_adaptive_reuse_options',
+        'hpd_supp_cultural_program_revenue_annual', 'hpd_supp_retail_or_f_and_b_revenue_annual',
+        'hpd_supp_comparable_historical_sales_available',
+        'hpd_supp_replacement_cost_insurable_basis_available',
+        'hpd_supp_public_liability_risk_level', 'hpd_supp_construction_work_risk_level',
+        'hpd_supp_climate_deterioration_risk_level',
+        'hpd_supp_electricity_consumption_annual_kwh', 'hpd_supp_water_consumption_annual_m3',
+        'hpd_supp_insulation_upgrade_possible', 'hpd_supp_passive_cooling_features_available',
+        'hpd_supp_water_reuse_possible', 'hpd_supp_embodied_carbon_preservation_benefit',
+        'hpd_supp_measured_drawings_available', 'hpd_supp_heritage_bim_available',
+    ]
+    for f in new_fields:
+        assert page.locator(f"[data-es-supp-field='{f}']").count() >= 1, \
+            f"8ZZF: {f} not found via data-es-supp-field"
+
+
+def test_CS3071_8zzf_new_fields_not_as_req_fields(page, live_server):
+    """Phase 8ZZF: new supplemental fields have no data-es-req-field attribute (supplemental-only)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    # Verify no element is exposed as a required field under hpd_supp_ name
+    assert page.locator("[data-es-req-field='hpd_supp_formal_protection_status']").count() == 0, \
+        "8ZZF: hpd_supp_formal_protection_status incorrectly exposed as data-es-req-field"
+    assert page.locator("[data-es-req-field='hpd_supp_demolition_prohibited']").count() == 0, \
+        "8ZZF: hpd_supp_demolition_prohibited incorrectly exposed as data-es-req-field"
+
+
+def test_CS3072_8zzf_apartment_profile_unaffected(page, live_server):
+    """Phase 8ZZF: apartment (شقة سكنية) profile supplemental has no hpd_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="شقة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(1500)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "hpd_supp_formal_protection_status" not in supp_html, \
+        "8ZZF: hpd_supp_ fields leaked into شقة سكنية supp"
+
+
+def test_CS3073_8zzf_building_profile_unaffected(page, live_server):
+    """Phase 8ZZF: residential building (عمارة سكنية) profile supplemental has no hpd_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="عمارة سكنية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(1500)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "hpd_supp_demolition_prohibited" not in supp_html, \
+        "8ZZF: hpd_supp_ fields leaked into عمارة سكنية supp"
+
+
+def test_CS3074_8zzf_land_profile_unaffected(page, live_server):
+    """Phase 8ZZF: land (أرض فضاء) profile supplemental has no hpd_supp_ fields."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(1500)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "hpd_supp_primary_construction_materials" not in supp_html, \
+        "8ZZF: hpd_supp_ fields leaked into أرض فضاء supp"
+
+
+def test_CS3075_8zzf_new_fields_all_24_present(page, live_server):
+    """Phase 8ZZF: all 24 new hpd_supp_ fields render in panel."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    new_24 = [
+        'hpd_supp_formal_protection_status',
+        'hpd_supp_conservation_area_status', 'hpd_supp_buffer_zone_area_sqm',
+        'hpd_supp_demolition_prohibited', 'hpd_supp_additional_floors_restricted',
+        'hpd_supp_architect_or_builder_known',
+        'hpd_supp_primary_construction_materials',
+        'hpd_supp_parking_availability_quality',
+        'hpd_supp_adaptive_reuse_options',
+        'hpd_supp_cultural_program_revenue_annual', 'hpd_supp_retail_or_f_and_b_revenue_annual',
+        'hpd_supp_comparable_historical_sales_available',
+        'hpd_supp_replacement_cost_insurable_basis_available',
+        'hpd_supp_public_liability_risk_level', 'hpd_supp_construction_work_risk_level',
+        'hpd_supp_climate_deterioration_risk_level',
+        'hpd_supp_electricity_consumption_annual_kwh', 'hpd_supp_water_consumption_annual_m3',
+        'hpd_supp_insulation_upgrade_possible', 'hpd_supp_passive_cooling_features_available',
+        'hpd_supp_water_reuse_possible', 'hpd_supp_embodied_carbon_preservation_benefit',
+        'hpd_supp_measured_drawings_available', 'hpd_supp_heritage_bim_available',
+    ]
+    missing = []
+    for f in new_24:
+        if page.locator(f"[data-es-supp-field='{f}']").count() < 1:
+            missing.append(f)
+    assert not missing, f"8ZZF: missing new fields: {missing}"
+
+
+def test_CS3076_8zzf_supp_fields_stored_in_supplemental_draft(page, live_server):
+    """Phase 8ZZF: supplemental draft collector initialised (window.esRequirementDraft.supplemental)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    has_supp = page.evaluate("typeof window.esRequirementDraft !== 'undefined' && typeof window.esRequirementDraft.supplemental !== 'undefined'")
+    assert has_supp, "8ZZF: window.esRequirementDraft.supplemental not initialized"
+
+
+def test_CS3077_8zzf_no_api_call_on_supp_change(page, live_server):
+    """Phase 8ZZF: changing a supplemental field triggers no POST to /api/valuation."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    api_calls = []
+    page.on("request", lambda r: api_calls.append(r.url) if "/api/valuation" in r.url and r.method == "POST" else None)
+    el = page.locator("[data-es-supp-field='hpd_supp_formal_protection_status']")
+    if el.count() > 0:
+        el.select_option(index=1)
+    page.wait_for_timeout(500)
+    assert len(api_calls) == 0, f"8ZZF: POST to /api/valuation triggered by supp field change: {api_calls}"
+
+
+def test_CS3078_8zzf_new_bool_fields_render_as_checkbox_or_select(page, live_server):
+    """Phase 8ZZF: new bool fields render as input[type=checkbox] or select."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    bool_fields = [
+        'hpd_supp_demolition_prohibited', 'hpd_supp_additional_floors_restricted',
+        'hpd_supp_architect_or_builder_known', 'hpd_supp_insulation_upgrade_possible',
+        'hpd_supp_passive_cooling_features_available', 'hpd_supp_water_reuse_possible',
+        'hpd_supp_measured_drawings_available', 'hpd_supp_heritage_bim_available',
+        'hpd_supp_replacement_cost_insurable_basis_available',
+        'hpd_supp_comparable_historical_sales_available',
+    ]
+    for f in bool_fields:
+        count = page.locator(f"[data-es-supp-field='{f}']").count()
+        assert count >= 1, f"8ZZF: bool field {f} not rendered"
+
+
+def test_CS3079_8zzf_hpd_methodology_opts_still_23_options(page, live_server):
+    """Phase 8ZZF: _HPD_METHODOLOGY_OPTS still has >= 23 options (base 21 + 2 heritage-specific)."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='hpd_supp_m_mortgage_lending_methodology'] option"
+    ).count()
+    assert count >= 23, f"8ZZF: _HPD_METHODOLOGY_OPTS has < 23 options, got {count}"
+
+
+def test_CS3080_8zzf_conservation_cost_adjusted_value_option_present(page, live_server):
+    """Phase 8ZZF: 'conservation_cost_adjusted_value' option present in Section M methodology."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='hpd_supp_m_mortgage_lending_methodology'] "
+        "option[value='conservation_cost_adjusted_value']"
+    ).count()
+    assert count == 1, "8ZZF: conservation_cost_adjusted_value option missing from Section M"

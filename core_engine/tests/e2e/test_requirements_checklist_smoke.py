@@ -26671,3 +26671,753 @@ def test_CS2615_8zza_sec_l_sale_purchase_methodology_renders(page: "Page", live_
     _load_riparian_rights_supp(page, live_server)
     el = page.locator("[data-es-supp-field='rr_supp_m_sale_purchase_methodology']")
     assert el.count() >= 1, "8ZZA: rr_supp_m_sale_purchase_methodology not found"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 8ZZB — Waterway Easement Detailed Supplemental (CS2616–CS2720)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _load_waterway_easement_supp(page: "Page", live_server: str) -> None:
+    """Load waterway_easement profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="waterway_easement")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2616_8zzb_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: supplemental panel renders for waterway_easement."""
+    _load_waterway_easement_supp(page, live_server)
+    supp = page.locator("#es-req-supp")
+    assert supp.count() >= 1, "8ZZB: #es-req-supp not found"
+    assert supp.is_visible(), "8ZZB: #es-req-supp not visible"
+
+
+def test_CS2617_8zzb_heading_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: supplemental heading contains 'ارتفاق مجرى مائي'."""
+    _load_waterway_easement_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "ارتفاق مجرى مائي" in html, "8ZZB: heading missing 'ارتفاق مجرى مائي'"
+
+
+def test_CS2618_8zzb_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: local-data subtext renders."""
+    _load_waterway_easement_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "لا يُرسل" in html, "8ZZB: subtext not found"
+
+
+def test_CS2619_8zzb_sec_a_easement_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_waterway_easement_type renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_waterway_easement_type']")
+    assert el.count() >= 1, "8ZZB: we_supp_waterway_easement_type not found"
+
+
+def test_CS2620_8zzb_sec_a_right_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_status renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_status not found"
+
+
+def test_CS2621_8zzb_sec_a_right_holder_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_holder_type renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_holder_type']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_holder_type not found"
+
+
+def test_CS2622_8zzb_sec_a_right_attached_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_attached_to_property renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_attached_to_property']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_attached_to_property not found"
+
+
+def test_CS2623_8zzb_sec_a_right_separable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_separable_from_land renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_separable_from_land']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_separable_from_land not found"
+
+
+def test_CS2624_8zzb_sec_a_right_transferability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_transferability renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_transferability']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_transferability not found"
+
+
+def test_CS2625_8zzb_sec_a_legal_right_summary_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_legal_right_summary textarea renders (Section A)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_legal_right_summary']")
+    assert el.count() >= 1, "8ZZB: we_supp_legal_right_summary not found"
+
+
+def test_CS2626_8zzb_sec_b_waterway_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_waterway_type renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_waterway_type']")
+    assert el.count() >= 1, "8ZZB: we_supp_waterway_type not found"
+
+
+def test_CS2627_8zzb_sec_b_legal_passage_width_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_legal_passage_width_m renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_legal_passage_width_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_legal_passage_width_m not found"
+
+
+def test_CS2628_8zzb_sec_b_usable_nav_width_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_usable_navigation_width_m renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_usable_navigation_width_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_usable_navigation_width_m not found"
+
+
+def test_CS2629_8zzb_sec_b_design_channel_depth_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_design_channel_depth_m renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_design_channel_depth_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_design_channel_depth_m not found"
+
+
+def test_CS2630_8zzb_sec_b_current_channel_depth_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_current_channel_depth_m renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_current_channel_depth_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_current_channel_depth_m not found"
+
+
+def test_CS2631_8zzb_sec_b_boundary_route_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_boundary_and_route_notes textarea renders (Section B)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_boundary_and_route_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_boundary_and_route_notes not found"
+
+
+def test_CS2632_8zzb_sec_c_max_vessel_loa_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_max_vessel_loa_m renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_max_vessel_loa_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_max_vessel_loa_m not found"
+
+
+def test_CS2633_8zzb_sec_c_max_vessel_beam_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_max_vessel_beam_m renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_max_vessel_beam_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_max_vessel_beam_m not found"
+
+
+def test_CS2634_8zzb_sec_c_max_vessel_draft_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_max_vessel_draft_m renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_max_vessel_draft_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_max_vessel_draft_m not found"
+
+
+def test_CS2635_8zzb_sec_c_vessel_type_allowed_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_vessel_type_allowed renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_vessel_type_allowed']")
+    assert el.count() >= 1, "8ZZB: we_supp_vessel_type_allowed not found"
+
+
+def test_CS2636_8zzb_sec_c_navigation_hours_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_hours renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_hours']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_hours not found"
+
+
+def test_CS2637_8zzb_sec_c_constraints_summary_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_constraints_summary textarea renders (Section C)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_constraints_summary']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_constraints_summary not found"
+
+
+def test_CS2638_8zzb_sec_d_access_right_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_access_right renders (Section D)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_access_right']")
+    assert el.count() >= 1, "8ZZB: we_supp_access_right not found"
+
+
+def test_CS2639_8zzb_sec_d_right_to_exclude_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_to_exclude_others_available renders (Section D)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_to_exclude_others_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_to_exclude_others_available not found"
+
+
+def test_CS2640_8zzb_sec_d_right_to_charge_toll_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_to_charge_access_or_toll_fees renders (Section D)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_to_charge_access_or_toll_fees']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_to_charge_access_or_toll_fees not found"
+
+
+def test_CS2641_8zzb_sec_d_right_to_dredge_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_to_dredge_or_maintain_channel renders (Section D)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_to_dredge_or_maintain_channel']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_to_dredge_or_maintain_channel not found"
+
+
+def test_CS2642_8zzb_sec_d_access_rights_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_access_rights_notes textarea renders (Section D)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_access_rights_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_access_rights_notes not found"
+
+
+def test_CS2643_8zzb_sec_e_public_nav_rights_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_public_navigation_rights_present renders (Section E)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_public_navigation_rights_present']")
+    assert el.count() >= 1, "8ZZB: we_supp_public_navigation_rights_present not found"
+
+
+def test_CS2644_8zzb_sec_e_third_party_easements_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_third_party_easements_available renders (Section E)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_third_party_easements_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_third_party_easements_available not found"
+
+
+def test_CS2645_8zzb_sec_e_right_conflict_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_right_conflict_status renders (Section E)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_right_conflict_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_right_conflict_status not found"
+
+
+def test_CS2646_8zzb_sec_e_third_party_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_third_party_rights_notes textarea renders (Section E)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_third_party_rights_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_third_party_rights_notes not found"
+
+
+def test_CS2647_8zzb_sec_f_desilting_obligation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_desilting_obligation_status renders (Section F)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_desilting_obligation_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_desilting_obligation_status not found"
+
+
+def test_CS2648_8zzb_sec_f_bathymetry_survey_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_bathymetry_survey_available renders (Section F)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_bathymetry_survey_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_bathymetry_survey_available not found"
+
+
+def test_CS2649_8zzb_sec_f_dredging_permit_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_dredging_permit_required renders (Section F)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_dredging_permit_required']")
+    assert el.count() >= 1, "8ZZB: we_supp_dredging_permit_required not found"
+
+
+def test_CS2650_8zzb_sec_f_dredging_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_dredging_and_maintenance_notes textarea renders (Section F)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_dredging_and_maintenance_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_dredging_and_maintenance_notes not found"
+
+
+def test_CS2651_8zzb_sec_g_bridge_crossings_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_bridge_crossings_present renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_bridge_crossings_present']")
+    assert el.count() >= 1, "8ZZB: we_supp_bridge_crossings_present not found"
+
+
+def test_CS2652_8zzb_sec_g_bridge_clearance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_bridge_clearance_m renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_bridge_clearance_m']")
+    assert el.count() >= 1, "8ZZB: we_supp_bridge_clearance_m not found"
+
+
+def test_CS2653_8zzb_sec_g_lock_or_gate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_lock_or_gate_present renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_lock_or_gate_present']")
+    assert el.count() >= 1, "8ZZB: we_supp_lock_or_gate_present not found"
+
+
+def test_CS2654_8zzb_sec_g_overhead_lines_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_overhead_lines_present renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_overhead_lines_present']")
+    assert el.count() >= 1, "8ZZB: we_supp_overhead_lines_present not found"
+
+
+def test_CS2655_8zzb_sec_g_obstruction_removal_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_obstruction_removal_cost_estimate renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_obstruction_removal_cost_estimate']")
+    assert el.count() >= 1, "8ZZB: we_supp_obstruction_removal_cost_estimate not found"
+
+
+def test_CS2656_8zzb_sec_g_obstruction_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_obstruction_constraints_notes textarea renders (Section G)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_obstruction_constraints_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_obstruction_constraints_notes not found"
+
+
+def test_CS2657_8zzb_sec_h_navigation_aids_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_aids_available renders (Section H)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_aids_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_aids_available not found"
+
+
+def test_CS2658_8zzb_sec_h_safety_signage_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_safety_signage_available renders (Section H)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_safety_signage_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_safety_signage_available not found"
+
+
+def test_CS2659_8zzb_sec_h_emergency_access_route_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_emergency_access_route_available renders (Section H)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_emergency_access_route_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_emergency_access_route_available not found"
+
+
+def test_CS2660_8zzb_sec_h_channel_safety_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_channel_safety_risk_level renders (Section H)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_channel_safety_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_channel_safety_risk_level not found"
+
+
+def test_CS2661_8zzb_sec_h_safety_management_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_safety_management_notes textarea renders (Section H)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_safety_management_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_safety_management_notes not found"
+
+
+def test_CS2662_8zzb_sec_i_env_permit_required_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_environmental_permit_required renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_environmental_permit_required']")
+    assert el.count() >= 1, "8ZZB: we_supp_environmental_permit_required not found"
+
+
+def test_CS2663_8zzb_sec_i_water_quality_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_water_quality_status renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_water_quality_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_water_quality_status not found"
+
+
+def test_CS2664_8zzb_sec_i_protected_habitat_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_protected_habitat_presence renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_protected_habitat_presence']")
+    assert el.count() >= 1, "8ZZB: we_supp_protected_habitat_presence not found"
+
+
+def test_CS2665_8zzb_sec_i_dredging_env_restrictions_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_dredging_environmental_restrictions renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_dredging_environmental_restrictions']")
+    assert el.count() >= 1, "8ZZB: we_supp_dredging_environmental_restrictions not found"
+
+
+def test_CS2666_8zzb_sec_i_pollution_liability_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_pollution_liability_risk_level renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_pollution_liability_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_pollution_liability_risk_level not found"
+
+
+def test_CS2667_8zzb_sec_i_env_liability_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_environmental_liability_notes textarea renders (Section I)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_environmental_liability_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_environmental_liability_notes not found"
+
+
+def test_CS2668_8zzb_sec_j_title_deed_references_we_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_title_deed_references_waterway_easement renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_title_deed_references_waterway_easement']")
+    assert el.count() >= 1, "8ZZB: we_supp_title_deed_references_waterway_easement not found"
+
+
+def test_CS2669_8zzb_sec_j_easement_registered_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_easement_registered_on_title renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_easement_registered_on_title']")
+    assert el.count() >= 1, "8ZZB: we_supp_easement_registered_on_title not found"
+
+
+def test_CS2670_8zzb_sec_j_concession_agreement_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_concession_or_use_agreement_available renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_concession_or_use_agreement_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_concession_or_use_agreement_available not found"
+
+
+def test_CS2671_8zzb_sec_j_mortgage_or_lien_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_mortgage_or_lien_affecting_right renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_mortgage_or_lien_affecting_right']")
+    assert el.count() >= 1, "8ZZB: we_supp_mortgage_or_lien_affecting_right not found"
+
+
+def test_CS2672_8zzb_sec_j_legal_dispute_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_legal_dispute_status renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_legal_dispute_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_legal_dispute_status not found"
+
+
+def test_CS2673_8zzb_sec_j_legal_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_legal_notes textarea renders (Section J)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_legal_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_legal_notes not found"
+
+
+def test_CS2674_8zzb_sec_k_income_generating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_income_generating_status renders (Section K)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_income_generating_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_income_generating_status not found"
+
+
+def test_CS2675_8zzb_sec_k_toll_passage_revenue_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_toll_or_passage_revenue_annual renders (Section K)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_toll_or_passage_revenue_annual']")
+    assert el.count() >= 1, "8ZZB: we_supp_toll_or_passage_revenue_annual not found"
+
+
+def test_CS2676_8zzb_sec_k_annual_maintenance_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_annual_maintenance_cost renders (Section K)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_annual_maintenance_cost']")
+    assert el.count() >= 1, "8ZZB: we_supp_annual_maintenance_cost not found"
+
+
+def test_CS2677_8zzb_sec_k_net_economic_benefit_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_net_economic_benefit_annual renders (Section K)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_net_economic_benefit_annual']")
+    assert el.count() >= 1, "8ZZB: we_supp_net_economic_benefit_annual not found"
+
+
+def test_CS2678_8zzb_sec_k_economic_value_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_economic_value_notes textarea renders (Section K)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_economic_value_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_economic_value_notes not found"
+
+
+def test_CS2679_8zzb_sec_l_comparable_we_available_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_comparable_waterway_easements_available renders (Section L)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_comparable_waterway_easements_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_comparable_waterway_easements_available not found"
+
+
+def test_CS2680_8zzb_sec_l_marketability_level_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_marketability_level renders (Section L)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_marketability_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_marketability_level not found"
+
+
+def test_CS2681_8zzb_sec_l_liquidity_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_liquidity_risk_level renders (Section L)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_liquidity_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_liquidity_risk_level not found"
+
+
+def test_CS2682_8zzb_sec_l_nav_access_scarcity_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_access_scarcity_level renders (Section L)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_access_scarcity_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_access_scarcity_level not found"
+
+
+def test_CS2683_8zzb_sec_l_market_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_market_notes textarea renders (Section L)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_market_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_market_notes not found"
+
+
+def test_CS2684_8zzb_sec_m_mortgage_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_mortgage_lending_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_mortgage_lending_methodology not found"
+
+
+def test_CS2685_8zzb_sec_m_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_sale_purchase_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_sale_purchase_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_sale_purchase_methodology not found"
+
+
+def test_CS2686_8zzb_sec_m_ifrs_fair_value_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_ifrs_fair_value_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_ifrs_fair_value_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_ifrs_fair_value_methodology not found"
+
+
+def test_CS2687_8zzb_sec_m_taxation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_taxation_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_taxation_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_taxation_methodology not found"
+
+
+def test_CS2688_8zzb_sec_m_liquidation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_liquidation_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_liquidation_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_liquidation_methodology not found"
+
+
+def test_CS2689_8zzb_sec_m_marina_support_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_marina_support_value_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_marina_support_value_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_marina_support_value_methodology not found"
+
+
+def test_CS2690_8zzb_sec_m_seaport_support_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_seaport_support_value_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_seaport_support_value_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_seaport_support_value_methodology not found"
+
+
+def test_CS2691_8zzb_sec_m_industrial_support_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_industrial_support_value_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_industrial_support_value_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_industrial_support_value_methodology not found"
+
+
+def test_CS2692_8zzb_sec_m_tourism_nav_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_tourism_navigation_support_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_tourism_navigation_support_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_tourism_navigation_support_methodology not found"
+
+
+def test_CS2693_8zzb_sec_m_expropriation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_expropriation_compensation_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_expropriation_compensation_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_expropriation_compensation_methodology not found"
+
+
+def test_CS2694_8zzb_sec_m_impairment_testing_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_m_impairment_testing_methodology renders (Section M)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_impairment_testing_methodology']")
+    assert el.count() >= 1, "8ZZB: we_supp_m_impairment_testing_methodology not found"
+
+
+def test_CS2695_8zzb_we_methodology_has_toll_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: mortgage methodology select has toll_or_access_fee_capitalization option."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option[value='toll_or_access_fee_capitalization']")
+    assert el.count() >= 1, "8ZZB: toll_or_access_fee_capitalization option not found in WE methodology"
+
+
+def test_CS2696_8zzb_we_methodology_has_avoided_cost_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: mortgage methodology select has avoided_cost_method option."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option[value='avoided_cost_method']")
+    assert el.count() >= 1, "8ZZB: avoided_cost_method option not found in WE methodology"
+
+
+def test_CS2697_8zzb_we_methodology_has_concession_dcf_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: mortgage methodology select has concession_dcf option."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option[value='concession_dcf']")
+    assert el.count() >= 1, "8ZZB: concession_dcf option not found in WE methodology"
+
+
+def test_CS2698_8zzb_sec_n_depth_loss_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_depth_loss_risk_level renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_depth_loss_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_depth_loss_risk_level not found"
+
+
+def test_CS2699_8zzb_sec_n_siltation_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_siltation_risk_level renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_siltation_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_siltation_risk_level not found"
+
+
+def test_CS2700_8zzb_sec_n_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_flood_risk_level renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_flood_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_flood_risk_level not found"
+
+
+def test_CS2701_8zzb_sec_n_nav_closure_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_closure_risk_level renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_closure_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_closure_risk_level not found"
+
+
+def test_CS2702_8zzb_sec_n_climate_risk_value_impact_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_climate_risk_value_impact_pct renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_climate_risk_value_impact_pct']")
+    assert el.count() >= 1, "8ZZB: we_supp_climate_risk_value_impact_pct not found"
+
+
+def test_CS2703_8zzb_sec_n_adaptation_cost_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_adaptation_cost_estimate renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_adaptation_cost_estimate']")
+    assert el.count() >= 1, "8ZZB: we_supp_adaptation_cost_estimate not found"
+
+
+def test_CS2704_8zzb_sec_n_nav_climate_risk_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_navigation_climate_risk_notes textarea renders (Section N)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_navigation_climate_risk_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_navigation_climate_risk_notes not found"
+
+
+def test_CS2705_8zzb_sec_o_public_liability_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_public_liability_risk_level renders (Section O)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_public_liability_risk_level']")
+    assert el.count() >= 1, "8ZZB: we_supp_public_liability_risk_level not found"
+
+
+def test_CS2706_8zzb_sec_o_insurance_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_insurance_status renders (Section O)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_insurance_status']")
+    assert el.count() >= 1, "8ZZB: we_supp_insurance_status not found"
+
+
+def test_CS2707_8zzb_sec_o_public_liability_insurance_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_public_liability_insurance_available renders (Section O)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_public_liability_insurance_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_public_liability_insurance_available not found"
+
+
+def test_CS2708_8zzb_sec_o_safety_liability_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_safety_liability_notes textarea renders (Section O)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_safety_liability_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_safety_liability_notes not found"
+
+
+def test_CS2709_8zzb_sec_p_gps_survey_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_gps_survey_available renders (Section P)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_gps_survey_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_gps_survey_available not found"
+
+
+def test_CS2710_8zzb_sec_p_bathymetry_model_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_bathymetry_model_available renders (Section P)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_bathymetry_model_available']")
+    assert el.count() >= 1, "8ZZB: we_supp_bathymetry_model_available not found"
+
+
+def test_CS2711_8zzb_sec_p_digital_doc_quality_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_digital_documentation_quality renders (Section P)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_digital_documentation_quality']")
+    assert el.count() >= 1, "8ZZB: we_supp_digital_documentation_quality not found"
+
+
+def test_CS2712_8zzb_sec_p_digital_doc_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_supp_digital_documentation_notes textarea renders (Section P)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_supp_digital_documentation_notes']")
+    assert el.count() >= 1, "8ZZB: we_supp_digital_documentation_notes not found"
+
+
+def test_CS2713_8zzb_sec_q_doc_easement_deed_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_doc_supp_easement_deed renders (Section Q)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_doc_supp_easement_deed']")
+    assert el.count() >= 1, "8ZZB: we_doc_supp_easement_deed not found"
+
+
+def test_CS2714_8zzb_sec_q_doc_cadastral_map_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_doc_supp_cadastral_route_map renders (Section Q)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_doc_supp_cadastral_route_map']")
+    assert el.count() >= 1, "8ZZB: we_doc_supp_cadastral_route_map not found"
+
+
+def test_CS2715_8zzb_sec_q_doc_nav_authority_approvals_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_doc_supp_navigation_authority_approvals renders (Section Q)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_doc_supp_navigation_authority_approvals']")
+    assert el.count() >= 1, "8ZZB: we_doc_supp_navigation_authority_approvals not found"
+
+
+def test_CS2716_8zzb_sec_q_doc_dredging_report_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_doc_supp_dredging_siltation_report renders (Section Q)."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_doc_supp_dredging_siltation_report']")
+    assert el.count() >= 1, "8ZZB: we_doc_supp_dredging_siltation_report not found"
+
+
+def test_CS2717_8zzb_sec_q_doc_count_gte_9(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: Section Q has >= 9 we_doc_supp_ fields."""
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='we_doc_supp_']").count()
+    assert count >= 9, f"8ZZB: expected >= 9 we_doc_supp_ fields, got {count}"
+
+
+def test_CS2718_8zzb_we_supp_field_count_gte_60(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: total we_supp_ supplemental fields >= 60."""
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='we_supp_']").count()
+    assert count >= 60, f"8ZZB: expected >= 60 we_supp_ fields, got {count}"
+
+
+def test_CS2719_8zzb_dedup_waterway_length_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: we_waterway_length_m (main form) must not appear as supp field."""
+    _load_waterway_easement_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='we_waterway_length_m']")
+    assert el.count() == 0, "8ZZB: we_waterway_length_m must NOT appear in supplemental"
+
+
+def test_CS2720_8zzb_we_methodology_no_base_mutation(page: "Page", live_server: str) -> None:
+    """Phase 8ZZB: WE methodology select has 20 base + 6 WE-specific = >= 26 options (concat, no mutation)."""
+    _load_waterway_easement_supp(page, live_server)
+    opt_count = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option").count()
+    assert opt_count >= 26, f"8ZZB: expected >= 26 options in WE methodology select (base 20 + 6 WE), got {opt_count}"

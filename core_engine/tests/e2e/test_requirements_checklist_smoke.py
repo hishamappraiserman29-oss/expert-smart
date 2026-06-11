@@ -27421,3 +27421,576 @@ def test_CS2720_8zzb_we_methodology_no_base_mutation(page: "Page", live_server: 
     _load_waterway_easement_supp(page, live_server)
     opt_count = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option").count()
     assert opt_count >= 26, f"8ZZB: expected >= 26 options in WE methodology select (base 20 + 6 WE), got {opt_count}"
+
+
+# ── Phase 8ZZC: Intangible Asset Detailed Supplemental ───────────────────────
+
+
+def _load_intangible_supp(page: "Page", live_server: str) -> None:
+    """Load intangible profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أصول معنوية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2721_8zzc_intangible_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: intangible supplemental panel renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZZC: supplemental panel not visible"
+
+
+def test_CS2722_8zzc_intangible_supp_heading_text(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: intangible supplemental heading shows correct Arabic text."""
+    _load_intangible_supp(page, live_server)
+    heading = page.locator("#es-req-supp-header").inner_text()
+    assert "متطلبات تقييم أصول معنوية" in heading, f"8ZZC: expected intangible heading, got: {heading[:80]}"
+
+
+def test_CS2723_8zzc_intangible_supp_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: intangible supplemental uses local-only subtext."""
+    _load_intangible_supp(page, live_server)
+    subtext = page.locator("#es-req-supp-subtext").inner_text()
+    assert "إدخال محلي" in subtext, f"8ZZC: expected local-only subtext, got: {subtext[:80]}"
+
+
+def test_CS2724_8zzc_intangible_supp_section_count_17(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: intangible supplemental renders exactly 17 sections (<details> elements)."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count == 17, f"8ZZC: expected 17 sections, got {count}"
+
+
+def test_CS2725_8zzc_section_a_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section A heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "نظرة عامة" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section A heading missing"
+
+
+def test_CS2726_8zzc_section_b_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section B heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "الحقوق القانونية" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section B heading missing"
+
+
+def test_CS2727_8zzc_section_c_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section C heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "السياق السوقي" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section C heading missing"
+
+
+def test_CS2728_8zzc_section_d_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section D heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "بيانات الإيرادات" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section D heading missing"
+
+
+def test_CS2729_8zzc_section_e_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section E heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "تحليل الإتاوة" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section E heading missing"
+
+
+def test_CS2730_8zzc_section_f_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section F heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "الأرباح الفائضة" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section F heading missing"
+
+
+def test_CS2731_8zzc_section_g_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section G heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "العمر الاقتصادي النافع" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section G heading missing"
+
+
+def test_CS2732_8zzc_section_h_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section H heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "مقاربة السوق" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section H heading missing"
+
+
+def test_CS2733_8zzc_section_i_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section I heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "مقاربة التكلفة" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section I heading missing"
+
+
+def test_CS2734_8zzc_section_j_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section J heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "Greenfield" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section J heading missing"
+
+
+def test_CS2735_8zzc_section_k_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section K heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "مؤشرات الانخفاض" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section K heading missing"
+
+
+def test_CS2736_8zzc_section_l_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section L heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "تحليل الحساسية" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section L heading missing"
+
+
+def test_CS2737_8zzc_section_m_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section M heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "التآزر" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section M heading missing"
+
+
+def test_CS2738_8zzc_section_n_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "المنهجية حسب غرض" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section N heading missing"
+
+
+def test_CS2739_8zzc_section_o_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section O heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "الحقوق التعاقدية" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section O heading missing"
+
+
+def test_CS2740_8zzc_section_p_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section P heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "قيود النقل" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section P heading missing"
+
+
+def test_CS2741_8zzc_section_q_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q heading renders."""
+    _load_intangible_supp(page, live_server)
+    assert "قائمة المستندات" in page.locator("#es-req-supp").inner_text(), "8ZZC: Section Q heading missing"
+
+
+def test_CS2742_8zzc_sec_a_asset_origin_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section A — ia_supp_asset_origin field renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_asset_origin']").count() == 1, "8ZZC: ia_supp_asset_origin missing"
+
+
+def test_CS2743_8zzc_sec_a_operating_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section A — ia_supp_operating_status field renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_operating_status']").count() == 1, "8ZZC: ia_supp_operating_status missing"
+
+
+def test_CS2744_8zzc_sec_b_economic_useful_life_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section B — ia_supp_economic_useful_life_years renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_economic_useful_life_years']").count() == 1, "8ZZC: ia_supp_economic_useful_life_years missing"
+
+
+def test_CS2745_8zzc_sec_b_indefinite_useful_life_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section B — ia_supp_indefinite_useful_life renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_indefinite_useful_life']").count() == 1, "8ZZC: ia_supp_indefinite_useful_life missing"
+
+
+def test_CS2746_8zzc_sec_c_active_market_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section C — ia_supp_active_market_exists renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_active_market_exists']").count() == 1, "8ZZC: ia_supp_active_market_exists missing"
+
+
+def test_CS2747_8zzc_sec_d_revenue_growth_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section D — ia_supp_revenue_growth_rate_pct renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_revenue_growth_rate_pct']").count() == 1, "8ZZC: ia_supp_revenue_growth_rate_pct missing"
+
+
+def test_CS2748_8zzc_sec_e_rfr_applicable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section E — RFR — ia_supp_rfr_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_rfr_applicable']").count() == 1, "8ZZC: ia_supp_rfr_applicable missing"
+
+
+def test_CS2749_8zzc_sec_e_rfr_royalty_rate_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section E — RFR — ia_supp_rfr_royalty_rate_pct renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_rfr_royalty_rate_pct']").count() == 1, "8ZZC: ia_supp_rfr_royalty_rate_pct missing"
+
+
+def test_CS2750_8zzc_sec_e_rfr_concluded_value_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section E — RFR — ia_supp_rfr_concluded_value renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_rfr_concluded_value']").count() == 1, "8ZZC: ia_supp_rfr_concluded_value missing"
+
+
+def test_CS2751_8zzc_sec_f_meem_applicable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section F — MEEM — ia_supp_meem_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_meem_applicable']").count() == 1, "8ZZC: ia_supp_meem_applicable missing"
+
+
+def test_CS2752_8zzc_sec_f_meem_excess_earnings_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section F — MEEM — ia_supp_meem_excess_earnings_year1 renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_meem_excess_earnings_year1']").count() == 1, "8ZZC: ia_supp_meem_excess_earnings_year1 missing"
+
+
+def test_CS2753_8zzc_sec_f_meem_concluded_value_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section F — MEEM — ia_supp_meem_concluded_value renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_meem_concluded_value']").count() == 1, "8ZZC: ia_supp_meem_concluded_value missing"
+
+
+def test_CS2754_8zzc_sec_g_uel_concluded_life_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section G — IAS 38 UEL — ia_supp_uel_concluded_useful_life_years renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_uel_concluded_useful_life_years']").count() == 1, "8ZZC: ia_supp_uel_concluded_useful_life_years missing"
+
+
+def test_CS2755_8zzc_sec_g_uel_amortization_method_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section G — IAS 38 UEL — ia_supp_uel_amortization_method renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_uel_amortization_method']").count() == 1, "8ZZC: ia_supp_uel_amortization_method missing"
+
+
+def test_CS2756_8zzc_sec_h_market_approach_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section H — ia_supp_market_approach_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_market_approach_applicable']").count() == 1, "8ZZC: ia_supp_market_approach_applicable missing"
+
+
+def test_CS2757_8zzc_sec_h_market_comp1_description_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section H — ia_supp_market_comp1_description renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_market_comp1_description']").count() == 1, "8ZZC: ia_supp_market_comp1_description missing"
+
+
+def test_CS2758_8zzc_sec_i_cost_approach_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section I — ia_supp_cost_approach_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_cost_approach_applicable']").count() == 1, "8ZZC: ia_supp_cost_approach_applicable missing"
+
+
+def test_CS2759_8zzc_sec_j_waw_applicable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section J — WAW — ia_supp_waw_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_waw_applicable']").count() == 1, "8ZZC: ia_supp_waw_applicable missing"
+
+
+def test_CS2760_8zzc_sec_j_greenfield_applicable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section J — Greenfield — ia_supp_greenfield_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_greenfield_applicable']").count() == 1, "8ZZC: ia_supp_greenfield_applicable missing"
+
+
+def test_CS2761_8zzc_sec_j_greenfield_concluded_value_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section J — Greenfield — ia_supp_greenfield_concluded_value renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_greenfield_concluded_value']").count() == 1, "8ZZC: ia_supp_greenfield_concluded_value missing"
+
+
+def test_CS2762_8zzc_sec_k_impairment_triggered_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section K — IAS 36 — ia_supp_impairment_review_triggered renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_impairment_review_triggered']").count() == 1, "8ZZC: ia_supp_impairment_review_triggered missing"
+
+
+def test_CS2763_8zzc_sec_k_cgu_identification_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section K — IAS 36 — ia_supp_cgu_identification renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_cgu_identification']").count() == 1, "8ZZC: ia_supp_cgu_identification missing"
+
+
+def test_CS2764_8zzc_sec_k_impairment_loss_recognized_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section K — IAS 36 — ia_supp_impairment_loss_recognized renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_impairment_loss_recognized']").count() == 1, "8ZZC: ia_supp_impairment_loss_recognized missing"
+
+
+def test_CS2765_8zzc_sec_l_sensitivity_driver1_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section L — ia_supp_sensitivity_key_driver_1 renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_sensitivity_key_driver_1']").count() == 1, "8ZZC: ia_supp_sensitivity_key_driver_1 missing"
+
+
+def test_CS2766_8zzc_sec_l_scenario_base_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section L — ia_supp_concluded_value_base_scenario renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_concluded_value_base_scenario']").count() == 1, "8ZZC: ia_supp_concluded_value_base_scenario missing"
+
+
+def test_CS2767_8zzc_sec_m_ppa_applicable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section M — IFRS 3/PPA — ia_supp_ppa_applicable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_ppa_applicable']").count() == 1, "8ZZC: ia_supp_ppa_applicable missing"
+
+
+def test_CS2768_8zzc_sec_m_ppa_synergy_notes_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section M — IFRS 3/PPA — ia_supp_ppa_synergy_notes renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_ppa_synergy_notes']").count() == 1, "8ZZC: ia_supp_ppa_synergy_notes missing"
+
+
+def test_CS2769_8zzc_sec_n_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — sale_purchase methodology row renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_sale_purchase_methodology']").count() == 1, "8ZZC: ia_supp_n_sale_purchase_methodology missing"
+
+
+def test_CS2770_8zzc_sec_n_ifrs_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — ifrs_fair_value methodology row renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_ifrs_fair_value_methodology']").count() == 1, "8ZZC: ia_supp_n_ifrs_fair_value_methodology missing"
+
+
+def test_CS2771_8zzc_sec_n_12_purpose_rows_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — all 12 purpose methodology rows render."""
+    _load_intangible_supp(page, live_server)
+    purposes = [
+        'sale_purchase', 'mortgage_lending', 'insurance', 'ifrs_fair_value',
+        'taxation', 'liquidation', 'investment_or_acquisition',
+        'purchase_price_allocation', 'impairment_testing', 'licensing_negotiation',
+        'investment_decision', 'internal_management_review',
+    ]
+    for p in purposes:
+        count = page.locator(f"[data-es-supp-field='ia_supp_n_{p}_methodology']").count()
+        assert count == 1, f"8ZZC: Section N purpose '{p}' methodology field missing"
+
+
+def test_CS2772_8zzc_sec_n_ppa_local_only_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — local-only PPA methodology field renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_purchase_price_allocation_methodology']").count() == 1, "8ZZC: PPA local-only methodology field missing"
+
+
+def test_CS2773_8zzc_sec_n_impairment_testing_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — local-only impairment_testing methodology field renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_impairment_testing_methodology']").count() == 1, "8ZZC: impairment_testing methodology missing"
+
+
+def test_CS2774_8zzc_sec_n_licensing_negotiation_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — local-only licensing_negotiation methodology renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_licensing_negotiation_methodology']").count() == 1, "8ZZC: licensing_negotiation methodology missing"
+
+
+def test_CS2775_8zzc_sec_n_internal_mgmt_review_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — local-only internal_management_review methodology renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_internal_management_review_methodology']").count() == 1, "8ZZC: internal_management_review methodology missing"
+
+
+def test_CS2776_8zzc_sec_o_contractual_right_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section O — ia_supp_contractual_right_type renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_contractual_right_type']").count() == 1, "8ZZC: ia_supp_contractual_right_type missing"
+
+
+def test_CS2777_8zzc_sec_p_change_of_control_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section P — ia_supp_change_of_control_clause renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_change_of_control_clause']").count() == 1, "8ZZC: ia_supp_change_of_control_clause missing"
+
+
+def test_CS2778_8zzc_sec_q_royalty_rate_study_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q — ia_doc_supp_royalty_rate_study renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_doc_supp_royalty_rate_study']").count() == 1, "8ZZC: ia_doc_supp_royalty_rate_study missing"
+
+
+def test_CS2779_8zzc_sec_q_ppa_report_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q — ia_doc_supp_ppa_allocation_report renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_doc_supp_ppa_allocation_report']").count() == 1, "8ZZC: ia_doc_supp_ppa_allocation_report missing"
+
+
+def test_CS2780_8zzc_sec_q_impairment_test_doc_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q — ia_doc_supp_impairment_test_documentation renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_doc_supp_impairment_test_documentation']").count() == 1, "8ZZC: ia_doc_supp_impairment_test_documentation missing"
+
+
+def test_CS2781_8zzc_sec_q_doc_field_count_14(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q has exactly 14 ia_doc_supp_ document fields."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ia_doc_supp_']").count()
+    assert count == 14, f"8ZZC: expected 14 ia_doc_supp_ fields, got {count}"
+
+
+def test_CS2782_8zzc_ia_supp_field_count_gte_170(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: total ia_supp_ supplemental fields >= 170."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ia_supp_']").count()
+    assert count >= 170, f"8ZZC: expected >= 170 ia_supp_ fields, got {count}"
+
+
+def test_CS2783_8zzc_ia_methodology_opts_gte_26(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: IA methodology select has >= 26 options (20 base + 6 IA-specific)."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_n_sale_purchase_methodology'] option").count()
+    assert count >= 26, f"8ZZC: expected >= 26 options in IA methodology select, got {count}"
+
+
+def test_CS2784_8zzc_ia_methodology_no_base_mutation(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: IA methodology concat does not mutate base; WE methodology still has ~26 options."""
+    _load_intangible_supp(page, live_server)
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='we_supp_m_mortgage_lending_methodology'] option").count()
+    assert count >= 26, f"8ZZC: WE methodology options wrong after IA load, got {count}"
+    assert count < 33, f"8ZZC: WE methodology base mutated by IA concat? got {count}"
+
+
+def test_CS2785_8zzc_all_supp_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: every intangible supplemental field uses data-es-supp-field attribute."""
+    _load_intangible_supp(page, live_server)
+    supp_count = page.locator("#es-req-supp [data-es-supp-field]").count()
+    assert supp_count >= 170, f"8ZZC: expected >= 170 data-es-supp-field elements, got {supp_count}"
+
+
+def test_CS2786_8zzc_no_data_es_req_field_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: zero data-es-req-field elements inside intangible supplemental panel."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("#es-req-supp [data-es-req-field]").count()
+    assert count == 0, f"8ZZC: found {count} data-es-req-field inside supplemental (must be 0)"
+
+
+def test_CS2787_8zzc_existing_main_form_untouched(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: existing intangible main-form fields (it_ prefix) still render."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أصول معنوية")
+    it_fields = [
+        'it_asset_type', 'it_asset_name', 'it_owner_name', 'it_registration_number',
+        'it_expiry_date', 'it_income_generating', 'it_annual_revenue',
+        'it_registration_cert', 'it_ownership_proof',
+    ]
+    for f in it_fields:
+        count = page.locator(f"[data-es-req-field='{f}']").count()
+        assert count >= 1, f"8ZZC: main-form field '{f}' missing after supplemental added"
+
+
+def test_CS2788_8zzc_dedup_it_fields_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: dedup-skipped it_ fields do not appear as supplemental fields."""
+    _load_intangible_supp(page, live_server)
+    dedup_fields = [
+        'it_asset_type', 'it_owner_name', 'it_registration_number',
+        'it_rights_duration_yr', 'it_expiry_date', 'it_income_generating',
+        'it_annual_revenue', 'it_registration_cert', 'it_ownership_proof',
+        'it_financial_records', 'it_license_agreement',
+    ]
+    for f in dedup_fields:
+        count = page.locator(f"[data-es-supp-field='{f}']").count()
+        assert count == 0, f"8ZZC: dedup field '{f}' should NOT appear in supplemental"
+
+
+def test_CS2789_8zzc_isolation_waterway_no_ia_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: waterway_easement supplemental has no ia_supp_ fields."""
+    _load_waterway_easement_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ia_supp_']").count()
+    assert count == 0, f"8ZZC: waterway_easement shows {count} ia_supp_ fields (isolation failure)"
+
+
+def test_CS2790_8zzc_sec_a_explainer_ias38_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section A desc contains IAS 38 reference."""
+    _load_intangible_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "IAS 38" in text, "8ZZC: Section A explainer must reference IAS 38"
+
+
+def test_CS2791_8zzc_sec_n_methodology_has_rfr_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: IA methodology select includes Relief from Royalty (RFR) option."""
+    _load_intangible_supp(page, live_server)
+    options_text = page.locator("[data-es-supp-field='ia_supp_n_ifrs_fair_value_methodology']").inner_text()
+    assert "RFR" in options_text or "الإعفاء من الإتاوة" in options_text, "8ZZC: RFR option missing from IA methodology select"
+
+
+def test_CS2792_8zzc_sec_n_methodology_has_meem_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: IA methodology select includes MEEM option."""
+    _load_intangible_supp(page, live_server)
+    options_text = page.locator("[data-es-supp-field='ia_supp_n_ifrs_fair_value_methodology']").inner_text()
+    assert "MEEM" in options_text or "الأرباح الفائضة" in options_text, "8ZZC: MEEM option missing from IA methodology select"
+
+
+def test_CS2793_8zzc_sec_n_methodology_has_greenfield_option(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: IA methodology select includes Greenfield option."""
+    _load_intangible_supp(page, live_server)
+    options_text = page.locator("[data-es-supp-field='ia_supp_n_ifrs_fair_value_methodology']").inner_text()
+    assert "Greenfield" in options_text or "الانطلاق من الصفر" in options_text, "8ZZC: Greenfield option missing from IA methodology select"
+
+
+def test_CS2794_8zzc_sec_g_uel_methodology_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section G UEL methodology select has >= 3 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_uel_methodology'] option").count()
+    assert count >= 3, f"8ZZC: UEL methodology select has < 3 options, got {count}"
+
+
+def test_CS2795_8zzc_sec_k_impairment_trigger_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section K impairment trigger reason select has >= 4 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_impairment_trigger_reason'] option").count()
+    assert count >= 4, f"8ZZC: impairment trigger reason has < 4 options, got {count}"
+
+
+def test_CS2796_8zzc_sec_a_standalone_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section A standalone_or_grouped select has >= 2 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_standalone_or_grouped'] option").count()
+    assert count >= 2, f"8ZZC: standalone_or_grouped select has < 2 options, got {count}"
+
+
+def test_CS2797_8zzc_sec_e_rfr_rate_basis_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section E RFR royalty rate basis select has >= 3 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_rfr_royalty_rate_basis'] option").count()
+    assert count >= 3, f"8ZZC: RFR royalty rate basis select has < 3 options, got {count}"
+
+
+def test_CS2798_8zzc_sec_o_contractual_type_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section O contractual right type select has >= 5 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_contractual_right_type'] option").count()
+    assert count >= 5, f"8ZZC: contractual_right_type select has < 5 options, got {count}"
+
+
+def test_CS2799_8zzc_sec_p_assignability_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section P assignability restriction select has >= 3 options."""
+    _load_intangible_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ia_supp_assignability_restriction'] option").count()
+    assert count >= 3, f"8ZZC: assignability_restriction select has < 3 options, got {count}"
+
+
+def test_CS2800_8zzc_sec_q_engagement_letter_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section Q — ia_doc_supp_valuation_engagement_letter renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_doc_supp_valuation_engagement_letter']").count() == 1, "8ZZC: ia_doc_supp_valuation_engagement_letter missing"
+
+
+def test_CS2801_8zzc_sec_b_transferable_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section B — ia_supp_transferable renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_transferable']").count() == 1, "8ZZC: ia_supp_transferable missing"
+
+
+def test_CS2802_8zzc_sec_d_ebitda_margin_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section D — ia_supp_ebitda_margin_pct renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_ebitda_margin_pct']").count() == 1, "8ZZC: ia_supp_ebitda_margin_pct missing"
+
+
+def test_CS2803_8zzc_sec_n_investment_or_acquisition_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N — investment_or_acquisition (backend-mapped) renders."""
+    _load_intangible_supp(page, live_server)
+    assert page.locator("[data-es-supp-field='ia_supp_n_investment_or_acquisition_methodology']").count() == 1, "8ZZC: investment_or_acquisition methodology missing"
+
+
+def test_CS2804_8zzc_total_field_count_gte_180(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: total supplemental fields (ia_supp_ + ia_doc_supp_) >= 180."""
+    _load_intangible_supp(page, live_server)
+    ia_count = page.locator("[data-es-supp-field^='ia_supp_']").count()
+    doc_count = page.locator("[data-es-supp-field^='ia_doc_supp_']").count()
+    total = ia_count + doc_count
+    assert total >= 180, f"8ZZC: expected >= 180 total fields, got {total} ({ia_count} ia_supp_ + {doc_count} ia_doc_supp_)"
+
+
+def test_CS2805_8zzc_sec_n_local_advisory_desc_present(page: "Page", live_server: str) -> None:
+    """Phase 8ZZC: Section N local advisory desc text is present."""
+    _load_intangible_supp(page, live_server)
+    text = page.locator("#es-req-supp").inner_text()
+    assert "لا يُطبَّق آلياً" in text or "لا يُرسَل للتقرير" in text, "8ZZC: Section N local advisory desc missing"

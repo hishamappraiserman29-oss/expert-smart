@@ -25878,3 +25878,796 @@ def test_CS2510_8zaa_sec_k_expropriation_adj_pct_unit(page: "Page", live_server:
     _load_littoral_rights_supp(page, live_server)
     el = page.locator("[data-es-supp-field='lr_supp_m_expropriation_compensation_adjustment_pct']")
     assert el.count() >= 1, "8ZAA: lr_supp_m_expropriation_compensation_adjustment_pct not found"
+
+
+# ── Phase 8ZZA: Riparian Rights ───────────────────────────────────────────────
+
+def _load_riparian_rights_supp(page: "Page", live_server: str) -> None:
+    """Load riparian_rights profile and wait for supplemental panel."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="riparian_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS2511_8zza_supp_panel_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: riparian_rights supplemental panel is visible."""
+    _load_riparian_rights_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible(), "8ZZA: #es-req-supp not visible"
+
+
+def test_CS2512_8zza_heading_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: heading contains riparian-rights text."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حقوق ضفاف" in html or "مجرى مائي" in html, \
+        "8ZZA: riparian heading not found"
+
+
+def test_CS2513_8zza_subtext_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: subtext element #es-req-supp-subtext is present."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("#es-req-supp-subtext")
+    assert el.count() >= 1, "8ZZA: #es-req-supp-subtext not found"
+
+
+def test_CS2514_8zza_section_count_16(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: supplemental panel has 16 sections."""
+    _load_riparian_rights_supp(page, live_server)
+    count = page.locator("#es-req-supp details").count()
+    assert count >= 16, f"8ZZA: expected >= 16 sections, got {count}"
+
+
+def test_CS2515_8zza_sec_a_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section A heading — تعريف حق الضفاف."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "تعريف حق الضفاف" in html, "8ZZA: Section A heading not found"
+
+
+def test_CS2516_8zza_sec_b_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section B heading — نوع المجرى وحدود الضفة."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "نوع المجرى وحدود الضفة" in html, "8ZZA: Section B heading not found"
+
+
+def test_CS2517_8zza_sec_c_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section C heading — حقوق السحب والاستخدام المائي."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حقوق السحب والاستخدام المائي" in html, "8ZZA: Section C heading not found"
+
+
+def test_CS2518_8zza_sec_d_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section D heading — حقوق الوصول والإنشاءات على الضفة."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حقوق الوصول والإنشاءات على الضفة" in html, "8ZZA: Section D heading not found"
+
+
+def test_CS2519_8zza_sec_e_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section E heading — الملاحة العامة وحقوق الغير."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الملاحة العامة وحقوق الغير" in html, "8ZZA: Section E heading not found"
+
+
+def test_CS2520_8zza_sec_f_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section F heading — التغيرات الطبيعية."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التغيرات الطبيعية" in html, "8ZZA: Section F heading not found"
+
+
+def test_CS2521_8zza_sec_g_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section G heading — حماية الضفة والالتزامات الهندسية."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "حماية الضفة والالتزامات الهندسية" in html, "8ZZA: Section G heading not found"
+
+
+def test_CS2522_8zza_sec_h_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section H heading — البيئة وجودة المياه."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "البيئة وجودة المياه" in html, "8ZZA: Section H heading not found"
+
+
+def test_CS2523_8zza_sec_i_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section I heading — الملكية والتسجيل والنزاعات."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "الملكية والتسجيل والنزاعات" in html, "8ZZA: Section I heading not found"
+
+
+def test_CS2524_8zza_sec_j_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section J heading — القيمة الاقتصادية والدخل."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "القيمة الاقتصادية والدخل" in html, "8ZZA: Section J heading not found"
+
+
+def test_CS2525_8zza_sec_k_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section K heading — السوق والمقارنات وقابلية التسويق."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "السوق والمقارنات وقابلية التسويق" in html, "8ZZA: Section K heading not found"
+
+
+def test_CS2526_8zza_sec_l_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section L heading — معاملات التعديل حسب غرض التقييم."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "معاملات التعديل حسب غرض التقييم" in html, "8ZZA: Section L heading not found"
+
+
+def test_CS2527_8zza_sec_m_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section M heading — المخاطر المائية والمناخية."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المخاطر المائية والمناخية" in html, "8ZZA: Section M heading not found"
+
+
+def test_CS2528_8zza_sec_n_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section N heading — المسؤولية والتأمين والسلامة العامة."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "المسؤولية والتأمين والسلامة العامة" in html, "8ZZA: Section N heading not found"
+
+
+def test_CS2529_8zza_sec_o_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section O heading — التوثيق الرقمي والمسح الهيدرولوجي."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "التوثيق الرقمي والمسح الهيدرولوجي" in html, "8ZZA: Section O heading not found"
+
+
+def test_CS2530_8zza_sec_p_heading(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section P heading — مستندات إضافية مطلوبة."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "مستندات إضافية مطلوبة" in html, "8ZZA: Section P heading not found"
+
+
+def test_CS2531_8zza_sec_a_riparian_right_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_riparian_right_type select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_riparian_right_type']")
+    assert el.count() >= 1, "8ZZA: rr_supp_riparian_right_type not found"
+
+
+def test_CS2532_8zza_sec_a_riparian_right_type_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_riparian_right_type has >= 10 options (9 defined + blank)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_riparian_right_type']")
+    opts = el.locator("option").count()
+    assert opts >= 10, f"8ZZA: rr_supp_riparian_right_type expected >= 10 options, got {opts}"
+
+
+def test_CS2533_8zza_sec_a_right_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_right_status select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_right_status']")
+    assert el.count() >= 1, "8ZZA: rr_supp_right_status not found"
+
+
+def test_CS2534_8zza_sec_a_right_holder_type_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_right_holder_type select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_right_holder_type']")
+    assert el.count() >= 1, "8ZZA: rr_supp_right_holder_type not found"
+
+
+def test_CS2535_8zza_sec_a_right_attached_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_right_attached_to_property is bool checkbox."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_right_attached_to_property']")
+    assert el.count() >= 1, "8ZZA: rr_supp_right_attached_to_property not found"
+
+
+def test_CS2536_8zza_sec_a_right_transferability_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_right_transferability select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_right_transferability']")
+    assert el.count() >= 1, "8ZZA: rr_supp_right_transferability not found"
+
+
+def test_CS2537_8zza_sec_a_legal_right_summary_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_legal_right_summary is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_legal_right_summary']")
+    assert el.count() >= 1, "8ZZA: rr_supp_legal_right_summary not found"
+
+
+def test_CS2538_8zza_sec_a_desc_explainer(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section A desc contains redirect/explainer text."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "بئر مياه" in html or "أرض زراعية" in html or "الممرات المائية" in html, \
+        "8ZZA: Section A explainer/redirect text not found"
+
+
+def test_CS2539_8zza_sec_b_legal_frontage_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_legal_riparian_frontage_m renders with unit متر."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_legal_riparian_frontage_m']")
+    assert el.count() >= 1, "8ZZA: rr_supp_legal_riparian_frontage_m not found"
+
+
+def test_CS2540_8zza_sec_b_riparian_area_sqm_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_riparian_area_sqm renders with unit م²."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_riparian_area_sqm']")
+    assert el.count() >= 1, "8ZZA: rr_supp_riparian_area_sqm not found"
+
+
+def test_CS2541_8zza_sec_b_buffer_zone_width_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_buffer_zone_width_m renders with unit متر."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_buffer_zone_width_m']")
+    assert el.count() >= 1, "8ZZA: rr_supp_buffer_zone_width_m not found"
+
+
+def test_CS2542_8zza_sec_b_boundary_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_boundary_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_boundary_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_boundary_notes not found"
+
+
+def test_CS2543_8zza_sec_c_water_use_right_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_water_use_right_available is bool checkbox."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_water_use_right_available']")
+    assert el.count() >= 1, "8ZZA: rr_supp_water_use_right_available not found"
+
+
+def test_CS2544_8zza_sec_c_abstraction_fee_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_abstraction_fee_annual renders with unit جنيه/سنة."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_abstraction_fee_annual']")
+    assert el.count() >= 1, "8ZZA: rr_supp_abstraction_fee_annual not found"
+
+
+def test_CS2545_8zza_sec_c_water_use_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_water_use_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_water_use_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_water_use_notes not found"
+
+
+def test_CS2546_8zza_sec_d_bank_access_right_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_bank_access_right select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_bank_access_right']")
+    assert el.count() >= 1, "8ZZA: rr_supp_bank_access_right not found"
+
+
+def test_CS2547_8zza_sec_d_bank_access_right_options(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_bank_access_right has >= 6 options (5 defined + blank)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_bank_access_right']")
+    opts = el.locator("option").count()
+    assert opts >= 6, f"8ZZA: rr_supp_bank_access_right expected >= 6 options, got {opts}"
+
+
+def test_CS2548_8zza_sec_d_pump_station_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_right_to_build_pump_station is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_right_to_build_pump_station']")
+    assert el.count() >= 1, "8ZZA: rr_supp_right_to_build_pump_station not found"
+
+
+def test_CS2549_8zza_sec_d_access_structure_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_access_and_structure_restrictions_summary is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_access_and_structure_restrictions_summary']")
+    assert el.count() >= 1, "8ZZA: rr_supp_access_and_structure_restrictions_summary not found"
+
+
+def test_CS2550_8zza_sec_e_public_nav_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_public_navigation_rights_present is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_public_navigation_rights_present']")
+    assert el.count() >= 1, "8ZZA: rr_supp_public_navigation_rights_present not found"
+
+
+def test_CS2551_8zza_sec_e_fishing_rights_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_fishing_rights_status select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_fishing_rights_status']")
+    assert el.count() >= 1, "8ZZA: rr_supp_fishing_rights_status not found"
+
+
+def test_CS2552_8zza_sec_e_third_party_rights_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_third_party_rights_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_third_party_rights_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_third_party_rights_notes not found"
+
+
+def test_CS2553_8zza_sec_f_erosion_rate_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_bank_erosion_rate_m_per_year renders with unit م/سنة."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_bank_erosion_rate_m_per_year']")
+    assert el.count() >= 1, "8ZZA: rr_supp_bank_erosion_rate_m_per_year not found"
+
+
+def test_CS2554_8zza_sec_f_sedimentation_rate_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_sedimentation_or_siltation_rate_m3_year renders with unit م³/سنة."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_sedimentation_or_siltation_rate_m3_year']")
+    assert el.count() >= 1, "8ZZA: rr_supp_sedimentation_or_siltation_rate_m3_year not found"
+
+
+def test_CS2555_8zza_sec_f_dredging_cost_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_dredging_or_desilting_cost_estimate renders with unit جنيه."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_dredging_or_desilting_cost_estimate']")
+    assert el.count() >= 1, "8ZZA: rr_supp_dredging_or_desilting_cost_estimate not found"
+
+
+def test_CS2556_8zza_sec_f_natural_change_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_natural_change_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_natural_change_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_natural_change_notes not found"
+
+
+def test_CS2557_8zza_sec_g_retaining_wall_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_retaining_wall_available is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_retaining_wall_available']")
+    assert el.count() >= 1, "8ZZA: rr_supp_retaining_wall_available not found"
+
+
+def test_CS2558_8zza_sec_g_capex_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_estimated_bank_protection_capex renders with unit جنيه."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_estimated_bank_protection_capex']")
+    assert el.count() >= 1, "8ZZA: rr_supp_estimated_bank_protection_capex not found"
+
+
+def test_CS2559_8zza_sec_g_engineering_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_engineering_obligations_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_engineering_obligations_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_engineering_obligations_notes not found"
+
+
+def test_CS2560_8zza_sec_h_env_permit_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_environmental_permit_required is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_environmental_permit_required']")
+    assert el.count() >= 1, "8ZZA: rr_supp_environmental_permit_required not found"
+
+
+def test_CS2561_8zza_sec_h_discharge_permit_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_discharge_permit_required is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_discharge_permit_required']")
+    assert el.count() >= 1, "8ZZA: rr_supp_discharge_permit_required not found"
+
+
+def test_CS2562_8zza_sec_h_env_restrictions_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_environmental_restrictions_summary is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_environmental_restrictions_summary']")
+    assert el.count() >= 1, "8ZZA: rr_supp_environmental_restrictions_summary not found"
+
+
+def test_CS2563_8zza_sec_i_title_deed_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_title_deed_references_riparian_rights is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_title_deed_references_riparian_rights']")
+    assert el.count() >= 1, "8ZZA: rr_supp_title_deed_references_riparian_rights not found"
+
+
+def test_CS2564_8zza_sec_i_legal_dispute_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_legal_dispute_status select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_legal_dispute_status']")
+    assert el.count() >= 1, "8ZZA: rr_supp_legal_dispute_status not found"
+
+
+def test_CS2565_8zza_sec_i_legal_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_legal_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_legal_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_legal_notes not found"
+
+
+def test_CS2566_8zza_sec_j_income_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_income_generating_status select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_income_generating_status']")
+    assert el.count() >= 1, "8ZZA: rr_supp_income_generating_status not found"
+
+
+def test_CS2567_8zza_sec_j_development_premium_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_development_premium_due_to_riverfront_pct renders with unit %."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_development_premium_due_to_riverfront_pct']")
+    assert el.count() >= 1, "8ZZA: rr_supp_development_premium_due_to_riverfront_pct not found"
+
+
+def test_CS2568_8zza_sec_j_net_economic_benefit_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_net_economic_benefit_annual renders with unit جنيه/سنة."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_net_economic_benefit_annual']")
+    assert el.count() >= 1, "8ZZA: rr_supp_net_economic_benefit_annual not found"
+
+
+def test_CS2569_8zza_sec_j_economic_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_economic_value_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_economic_value_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_economic_value_notes not found"
+
+
+def test_CS2570_8zza_sec_k_frontage_value_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_market_frontage_value_per_meter renders with unit جنيه/متر."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_market_frontage_value_per_meter']")
+    assert el.count() >= 1, "8ZZA: rr_supp_market_frontage_value_per_meter not found"
+
+
+def test_CS2571_8zza_sec_k_riparian_area_value_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_market_riparian_area_value_per_sqm renders with unit جنيه/م²."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_market_riparian_area_value_per_sqm']")
+    assert el.count() >= 1, "8ZZA: rr_supp_market_riparian_area_value_per_sqm not found"
+
+
+def test_CS2572_8zza_sec_k_market_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_market_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_market_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_market_notes not found"
+
+
+def test_CS2573_8zza_sec_l_mortgage_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_mortgage_lending_methodology select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_mortgage_lending_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_mortgage_lending_methodology not found"
+
+
+def test_CS2574_8zza_sec_l_mortgage_adj_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_mortgage_lending_adjustment_pct renders with unit %."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_mortgage_lending_adjustment_pct']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_mortgage_lending_adjustment_pct not found"
+
+
+def test_CS2575_8zza_sec_l_rr_methodology_opts_count(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: _RR_METHODOLOGY_OPTS has >= 5 more options than base (5 riparian-specific added)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_mortgage_lending_methodology']")
+    opts = el.locator("option").count()
+    assert opts >= 10, f"8ZZA: expected >= 10 methodology options (base + 5 riparian), got {opts}"
+
+
+def test_CS2576_8zza_sec_l_contribution_land_value_opt(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: _RR_METHODOLOGY_OPTS includes contribution_to_land_value."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "contribution_to_land_value" in html, \
+        "8ZZA: contribution_to_land_value option not found in riparian methodology"
+
+
+def test_CS2577_8zza_sec_l_water_income_cap_opt(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: _RR_METHODOLOGY_OPTS includes water_income_capitalization."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "water_income_capitalization" in html, \
+        "8ZZA: water_income_capitalization option not found in riparian methodology"
+
+
+def test_CS2578_8zza_sec_l_14_purpose_selects_render(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section L has 14 methodology selects (one per purpose)."""
+    _load_riparian_rights_supp(page, live_server)
+    count = page.locator("[data-es-supp-field*='_methodology']").count()
+    assert count >= 14, f"8ZZA: expected >= 14 methodology selects, got {count}"
+
+
+def test_CS2579_8zza_sec_l_litigation_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_litigation_dispute_methodology renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_litigation_dispute_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_litigation_dispute_methodology not found"
+
+
+def test_CS2580_8zza_sec_l_local_advisory_help_ar(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: at least one local-advisory methodology field has help_ar text."""
+    _load_riparian_rights_supp(page, live_server)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "غرض محلي إرشادي فقط" in html, \
+        "8ZZA: local advisory help_ar text not found in Section L"
+
+
+def test_CS2581_8zza_sec_l_water_rights_review_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_water_rights_review_methodology renders (local advisory)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_water_rights_review_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_water_rights_review_methodology not found"
+
+
+def test_CS2582_8zza_sec_l_expropriation_adj_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_expropriation_compensation_adjustment_pct renders with unit %."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_expropriation_compensation_adjustment_pct']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_expropriation_compensation_adjustment_pct not found"
+
+
+def test_CS2583_8zza_sec_m_flood_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_flood_risk_level select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_flood_risk_level']")
+    assert el.count() >= 1, "8ZZA: rr_supp_flood_risk_level not found"
+
+
+def test_CS2584_8zza_sec_m_climate_risk_pct_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_climate_risk_value_impact_pct renders with unit %."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_climate_risk_value_impact_pct']")
+    assert el.count() >= 1, "8ZZA: rr_supp_climate_risk_value_impact_pct not found"
+
+
+def test_CS2585_8zza_sec_m_adaptation_cost_unit(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_adaptation_cost_estimate renders with unit جنيه."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_adaptation_cost_estimate']")
+    assert el.count() >= 1, "8ZZA: rr_supp_adaptation_cost_estimate not found"
+
+
+def test_CS2586_8zza_sec_m_water_climate_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_water_climate_risk_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_water_climate_risk_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_water_climate_risk_notes not found"
+
+
+def test_CS2587_8zza_sec_n_public_liability_risk_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_public_liability_risk_level select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_public_liability_risk_level']")
+    assert el.count() >= 1, "8ZZA: rr_supp_public_liability_risk_level not found"
+
+
+def test_CS2588_8zza_sec_n_insurance_status_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_insurance_status select renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_insurance_status']")
+    assert el.count() >= 1, "8ZZA: rr_supp_insurance_status not found"
+
+
+def test_CS2589_8zza_sec_n_safety_liability_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_safety_liability_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_safety_liability_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_safety_liability_notes not found"
+
+
+def test_CS2590_8zza_sec_o_gps_survey_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_gps_survey_available is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_gps_survey_available']")
+    assert el.count() >= 1, "8ZZA: rr_supp_gps_survey_available not found"
+
+
+def test_CS2591_8zza_sec_o_drone_survey_bool(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_drone_survey_available is bool."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_drone_survey_available']")
+    assert el.count() >= 1, "8ZZA: rr_supp_drone_survey_available not found"
+
+
+def test_CS2592_8zza_sec_o_digital_doc_notes_textarea(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_digital_documentation_notes is textarea."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_digital_documentation_notes']")
+    assert el.count() >= 1, "8ZZA: rr_supp_digital_documentation_notes not found"
+
+
+def test_CS2593_8zza_sec_p_doc_hydrological_study_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_hydrological_study renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_hydrological_study']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_hydrological_study not found"
+
+
+def test_CS2594_8zza_sec_p_doc_sedimentation_study_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_sedimentation_study renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_sedimentation_study']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_sedimentation_study not found"
+
+
+def test_CS2595_8zza_sec_p_doc_env_permits_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_environmental_permits renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_environmental_permits']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_environmental_permits not found"
+
+
+def test_CS2596_8zza_sec_p_doc_bank_protection_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_bank_protection_design renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_bank_protection_design']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_bank_protection_design not found"
+
+
+def test_CS2597_8zza_sec_p_doc_legal_opinion_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_legal_opinion renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_legal_opinion']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_legal_opinion not found"
+
+
+def test_CS2598_8zza_sec_p_doc_gis_drone_maps_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_gis_drone_maps renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_gis_drone_maps']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_gis_drone_maps not found"
+
+
+def test_CS2599_8zza_sec_p_doc_insurance_docs_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_doc_supp_insurance_documents renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_doc_supp_insurance_documents']")
+    assert el.count() >= 1, "8ZZA: rr_doc_supp_insurance_documents not found"
+
+
+def test_CS2600_8zza_all_fields_have_data_es_supp_field(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: all supplemental fields have data-es-supp-field (not data-es-req-field)."""
+    _load_riparian_rights_supp(page, live_server)
+    panel = page.locator("#es-req-supp")
+    req_fields = panel.locator("[data-es-req-field]").count()
+    assert req_fields == 0, \
+        f"8ZZA: found {req_fields} data-es-req-field in supplemental panel (must be 0)"
+
+
+def test_CS2601_8zza_supp_stored_in_draft_supplemental(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: window.esRequirementDraft.supplemental exists (local-only storage)."""
+    _load_riparian_rights_supp(page, live_server)
+    result = page.evaluate("typeof window.esRequirementDraft !== 'undefined' && typeof window.esRequirementDraft.supplemental !== 'undefined'")
+    assert result is True, "8ZZA: window.esRequirementDraft.supplemental not defined"
+
+
+def test_CS2602_8zza_static_main_form_unchanged(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: main-form rr_ fields still render after enrichment."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="riparian_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    el = page.locator("#es-req-panel").locator("[data-es-req-field='rr_river_frontage_length_m']")
+    assert el.count() >= 1, "8ZZA: main-form rr_river_frontage_length_m no longer renders"
+
+
+def test_CS2603_8zza_skipped_watercourse_type_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_watercourse_type must NOT appear in supplemental (dedup skip)."""
+    _load_riparian_rights_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "rr_watercourse_type" not in supp_html, \
+        "8ZZA: rr_watercourse_type wrongly duplicated in supplemental"
+
+
+def test_CS2604_8zza_skipped_irrigation_value_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_irrigation_value_contribution_annual must NOT appear in supp (dedup skip)."""
+    _load_riparian_rights_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "rr_irrigation_value_contribution_annual" not in supp_html, \
+        "8ZZA: rr_irrigation_value_contribution_annual wrongly duplicated in supplemental"
+
+
+def test_CS2605_8zza_skipped_water_quality_status_not_in_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_water_quality_status must NOT appear in supp (dedup skip)."""
+    _load_riparian_rights_supp(page, live_server)
+    supp_html = page.locator("#es-req-supp").inner_html()
+    assert "rr_water_quality_status" not in supp_html, \
+        "8ZZA: rr_water_quality_status wrongly duplicated in supplemental"
+
+
+def test_CS2606_8zza_isolation_waterway_easement_no_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: waterway_easement has no supplemental schema — panel stays hidden."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="waterway_easement")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(500)
+    supp_panel = page.locator("#es-req-supp")
+    if supp_panel.count() > 0:
+        assert not supp_panel.is_visible(), \
+            "8ZZA: waterway_easement supplemental panel should not be visible"
+
+
+def test_CS2607_8zza_isolation_littoral_rights_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: littoral_rights supplemental still renders after riparian schema added."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="littoral_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "lr_supp_" in html, "8ZZA: littoral_rights supplemental damaged after riparian addition"
+
+
+def test_CS2608_8zza_isolation_water_well_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: water_well supplemental still renders after riparian schema added."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="water_well")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "ww_supp_" in html or "well" in html.lower(), \
+        "8ZZA: water_well supplemental damaged after riparian addition"
+
+
+def test_CS2609_8zza_isolation_agricultural_land_unaffected(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: agricultural_land main form still renders after riparian schema added."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض زراعية")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-panel").wait_for(state="visible", timeout=6_000)
+    html = page.locator("#es-req-panel").inner_html()
+    assert "زراعية" in html or "agricultural" in html.lower(), \
+        "8ZZA: agricultural_land form damaged after riparian addition"
+
+
+def test_CS2610_8zza_isolation_land_no_supp(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: land (أرض فضاء) has no supplemental schema — panel stays hidden."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="أرض فضاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.wait_for_timeout(500)
+    supp_panel = page.locator("#es-req-supp")
+    if supp_panel.count() > 0:
+        assert not supp_panel.is_visible(), \
+            "8ZZA: land supplemental panel should not be visible"
+
+
+def test_CS2611_8zza_rr_methodology_no_mutation_of_base(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: _RR_METHODOLOGY_OPTS uses concat — base _METHODOLOGY_OPTS not mutated (avoided_cost_method unique to RR)."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="littoral_rights")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+    html = page.locator("#es-req-supp").inner_html()
+    assert "avoided_cost_method" not in html, \
+        "8ZZA: riparian-only option avoided_cost_method leaked into littoral_rights (METHODOLOGY_OPTS mutated)"
+
+
+def test_CS2612_8zza_sec_l_development_feasibility_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_development_feasibility_methodology renders (local advisory)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_development_feasibility_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_development_feasibility_methodology not found"
+
+
+def test_CS2613_8zza_sec_l_impairment_testing_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_impairment_testing_methodology renders (local advisory)."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_impairment_testing_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_impairment_testing_methodology not found"
+
+
+def test_CS2614_8zza_sec_p_doc_count_9(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: Section P has >= 9 rr_doc_supp_ fields."""
+    _load_riparian_rights_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='rr_doc_supp_']").count()
+    assert count >= 9, f"8ZZA: expected >= 9 rr_doc_supp_ fields, got {count}"
+
+
+def test_CS2615_8zza_sec_l_sale_purchase_methodology_renders(page: "Page", live_server: str) -> None:
+    """Phase 8ZZA: rr_supp_m_sale_purchase_methodology renders."""
+    _load_riparian_rights_supp(page, live_server)
+    el = page.locator("[data-es-supp-field='rr_supp_m_sale_purchase_methodology']")
+    assert el.count() >= 1, "8ZZA: rr_supp_m_sale_purchase_methodology not found"

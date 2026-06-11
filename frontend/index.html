@@ -6764,6 +6764,15 @@ function _showIndexToast(msg, type) {
         { value: 'cost_to_cure_or_protection_cost', label_ar: 'تكلفة المعالجة / الحماية الساحلية (Cost to Cure)' },
     ]);
 
+    // ── Phase 8ZZA: riparian-rights-specific methodology options ─────────────────
+    var _RR_METHODOLOGY_OPTS = _METHODOLOGY_OPTS.concat([
+        { value: 'contribution_to_land_value',           label_ar: 'مساهمة الحق في قيمة الأرض (Contribution to Land Value)' },
+        { value: 'avoided_cost_method',                  label_ar: 'طريقة التكلفة المُتجنَّبة (Avoided Cost Method)' },
+        { value: 'water_income_capitalization',          label_ar: 'رسملة دخل حقوق المياه (Water Income Capitalization)' },
+        { value: 'paired_sales_analysis',                label_ar: 'تحليل المبيعات المزدوجة (Paired Sales Analysis)' },
+        { value: 'cost_to_cure_or_bank_protection_cost', label_ar: 'تكلفة المعالجة / حماية الضفة (Cost to Cure)' },
+    ]);
+
     var _PROFILE_FORM_SCHEMA = {
         'hotel': { sections: [
             { heading: 'بيانات الأرض والمبنى', color: '#d4af37', desc: '', fields: [
@@ -9654,7 +9663,8 @@ function _showIndexToast(msg, type) {
                 }).join('');
             ctrlHtml = '<select id="' + fid + '" name="' + f.name + '"'
                 + ' data-es-supp-field="' + f.name + '" style="' + inputCss + '">' + inlineOpts + '</select>';
-            return '<div class="es-field">' + labelHtml + ctrlHtml + '</div>';
+            var helpHtmlOpts = f.help_ar ? '<div class="es-field-help">' + f.help_ar + '</div>' : '';
+            return '<div class="es-field">' + labelHtml + ctrlHtml + helpHtmlOpts + '</div>';
         }
         if (f.field_type === 'list' && f.valid_values && f.valid_values.length) {
             var listChips = f.valid_values.map(function(v) {
@@ -24064,6 +24074,362 @@ function _showIndexToast(msg, type) {
                 { name: 'lr_doc_supp_insurance_documents', field_type: 'bool', label_ar: 'وثائق التأمين والمسؤولية العامة', group: 'document', valid_values: [], ui_required: false },
             ]},
         ],
+        // ── Phase 8ZZA: Riparian Rights Detailed Supplemental ───────────────────────
+        'riparian_rights': [
+            { heading: 'تعريف حق الضفاف وطبيعته القانونية', color: '#6f82b3', desc: 'هذه الاستمارة لتقييم الحق القانوني والاقتصادي المرتبط بضفاف الأنهار والمجاري المائية وحقوق الاستخدام أو السحب أو الوصول، وليست لتقييم بئر مياه أو أرض زراعية أو ممر ملاحي أو أصل مادي. إذا كنت تقيّم بئر مياه استخدم «بئر مياه / آبار جوفية»، وإذا كنت تقيّم أرضاً زراعية استخدم «أرض زراعية»، وإذا كنت تقيّم ممراً ملاحياً استخدم «الممرات المائية وحقوق الارتفاق الملاحية».', fields: [
+                { name: 'rr_supp_riparian_right_type', field_type: 'str', label_ar: 'نوع حق الضفاف', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'riverbank_frontage_right', label_ar: 'حق واجهة ضفة نهرية (Riverbank Frontage Right)' },
+                    { value: 'canal_bank_right', label_ar: 'حق ضفة قناة/ترعة (Canal Bank Right)' },
+                    { value: 'stream_or_watercourse_right', label_ar: 'حق مجرى مائي طبيعي (Stream/Watercourse Right)' },
+                    { value: 'irrigation_access_right', label_ar: 'حق وصول للري (Irrigation Access Right)' },
+                    { value: 'water_abstraction_right', label_ar: 'حق سحب المياه (Water Abstraction Right)' },
+                    { value: 'water_discharge_right', label_ar: 'حق تصريف المياه (Water Discharge Right)' },
+                    { value: 'bank_structure_right', label_ar: 'حق إنشاء على الضفة (Bank Structure Right)' },
+                    { value: 'recreational_access_right', label_ar: 'حق وصول ترفيهي/سياحي (Recreational Access Right)' },
+                    { value: 'mixed_riparian_rights', label_ar: 'حقوق مختلطة (Mixed Riparian Rights)' },
+                    { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_right_status', field_type: 'str', label_ar: 'حالة الحق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'registered', label_ar: 'مسجَّل رسمياً' }, { value: 'contractual', label_ar: 'تعاقدي' }, { value: 'statutory', label_ar: 'قانوني تشريعي' },
+                    { value: 'concession_based', label_ar: 'بموجب امتياز' }, { value: 'customary', label_ar: 'عرفي' }, { value: 'government_approval_required', label_ar: 'يتطلب موافقة حكومية' },
+                    { value: 'disputed', label_ar: 'متنازَع عليه' }, { value: 'unverified', label_ar: 'غير مُتحقَّق منه' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_right_holder_type', field_type: 'str', label_ar: 'نوع حامل الحق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'adjacent_land_owner', label_ar: 'مالك الأرض المجاورة' }, { value: 'agricultural_operator', label_ar: 'مشغّل زراعي' },
+                    { value: 'industrial_operator', label_ar: 'مشغّل صناعي' }, { value: 'hotel_or_resort_operator', label_ar: 'مشغّل فندق/منتجع' },
+                    { value: 'developer', label_ar: 'مطوّر عقاري' }, { value: 'concessionaire', label_ar: 'حامل امتياز' },
+                    { value: 'government_entity', label_ar: 'جهة حكومية' }, { value: 'community_or_public_right', label_ar: 'حق مجتمعي/عام' },
+                    { value: 'mixed', label_ar: 'مختلط' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_right_attached_to_property', field_type: 'bool', label_ar: 'الحق ملتصق بقطعة الأرض المجاورة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_separable_from_land', field_type: 'bool', label_ar: 'يمكن فصل الحق عن الأرض', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_transferability', field_type: 'str', label_ar: 'قابلية نقل الحق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'freely_transferable', label_ar: 'قابل للنقل بحرية' }, { value: 'transferable_with_approval', label_ar: 'قابل للنقل بموافقة' },
+                    { value: 'non_transferable', label_ar: 'غير قابل للنقل' }, { value: 'unclear', label_ar: 'غير واضح' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_legal_right_summary', field_type: 'textarea', label_ar: 'ملخص الحق القانوني', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'نوع المجرى وحدود الضفة', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_legal_riparian_frontage_m', field_type: 'float', label_ar: 'الواجهة القانونية للضفة', unit: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_usable_bank_frontage_m', field_type: 'float', label_ar: 'الواجهة القابلة للاستخدام', unit: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bank_depth_or_buffer_width_m', field_type: 'float', label_ar: 'عمق الضفة / عرض المنطقة العازلة', unit: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_riparian_area_sqm', field_type: 'float', label_ar: 'مساحة حرم الضفة', unit: 'م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_cadastral_map_available', field_type: 'bool', label_ar: 'خريطة مساحية متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bank_boundary_defined', field_type: 'bool', label_ar: 'حدود الضفة محددة رسمياً', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_watercourse_centerline_or_edge_defined', field_type: 'bool', label_ar: 'خط محور/حافة المجرى محدد', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_high_water_line_defined', field_type: 'bool', label_ar: 'خط المنسوب العالي للمياه محدد', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_low_water_line_defined', field_type: 'bool', label_ar: 'خط المنسوب المنخفض للمياه محدد', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_riparian_buffer_zone_defined', field_type: 'bool', label_ar: 'المنطقة العازلة للضفة محددة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_buffer_zone_width_m', field_type: 'float', label_ar: 'عرض المنطقة العازلة', unit: 'متر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_encroachment_or_boundary_dispute_status', field_type: 'str', label_ar: 'حالة التعدي / نزاع الحدود', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_known_issue', label_ar: 'لا توجد مشكلة' }, { value: 'possible_encroachment', label_ar: 'تعدٍّ محتمل' }, { value: 'confirmed_encroachment', label_ar: 'تعدٍّ مؤكد' },
+                    { value: 'boundary_dispute', label_ar: 'نزاع حدودي' }, { value: 'under_review', label_ar: 'قيد المراجعة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_boundary_notes', field_type: 'textarea', label_ar: 'ملاحظات الحدود', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'حقوق السحب والاستخدام المائي', color: '#6f82b3', desc: 'ملاحظة: حصص السحب هنا تخص المجرى السطحي — لا تُكرِّر بيانات بئر جوفية.', fields: [
+                { name: 'rr_supp_water_use_right_available', field_type: 'bool', label_ar: 'حق استخدام مائي رسمي متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_water_quota_defined', field_type: 'bool', label_ar: 'حصة مائية محددة بموجب ترخيص', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_seasonal_abstraction_restrictions', field_type: 'str', label_ar: 'قيود السحب الموسمية', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_seasonal_restriction', label_ar: 'لا قيود موسمية' }, { value: 'dry_season_restriction', label_ar: 'قيود في موسم الجفاف' },
+                    { value: 'year_round_restriction', label_ar: 'قيود طوال العام' }, { value: 'variable_by_authority', label_ar: 'متغيّرة بقرار الجهة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_drought_restriction_applicable', field_type: 'bool', label_ar: 'تنطبق قيود الجفاف', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_water_metering_required', field_type: 'bool', label_ar: 'عدادات المياه مطلوبة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_water_meter_installed', field_type: 'bool', label_ar: 'عداد مياه مثبَّت', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_abstraction_fee_annual', field_type: 'float', label_ar: 'رسوم السحب السنوية', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_over_abstraction_violation_status', field_type: 'str', label_ar: 'حالة مخالفة الإفراط في السحب', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_violation', label_ar: 'لا مخالفة' }, { value: 'past_violation_resolved', label_ar: 'مخالفة سابقة — محلولة' },
+                    { value: 'active_violation', label_ar: 'مخالفة قائمة' }, { value: 'under_investigation', label_ar: 'قيد التحقيق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_water_use_notes', field_type: 'textarea', label_ar: 'ملاحظات الاستخدام المائي', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'حقوق الوصول والإنشاءات على الضفة', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_bank_access_right', field_type: 'str', label_ar: 'حق الوصول القانوني للضفة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'private_exclusive', label_ar: 'خاص حصري' }, { value: 'shared_access', label_ar: 'مشترك' }, { value: 'public_access_required', label_ar: 'وصول عام إلزامي' },
+                    { value: 'controlled_access', label_ar: 'وصول مُتحكَّم به' }, { value: 'no_legal_access', label_ar: 'لا وصول قانوني' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_right_to_build_pump_station', field_type: 'bool', label_ar: 'حق إنشاء محطة ضخ', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_install_intake_structure', field_type: 'bool', label_ar: 'حق تركيب مأخذ مياه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_install_outfall_structure', field_type: 'bool', label_ar: 'حق تركيب مخرج تصريف', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_build_retaining_wall', field_type: 'bool', label_ar: 'حق إنشاء جدار ساند', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_build_bank_protection', field_type: 'bool', label_ar: 'حق إنشاء حماية للضفة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_operate_recreational_facilities', field_type: 'bool', label_ar: 'حق إنشاء/تشغيل مرافق ترفيهية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_cross_bank_for_access', field_type: 'bool', label_ar: 'حق عبور الضفة للوصول', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_public_access_easement_available', field_type: 'bool', label_ar: 'ارتفاق وصول عام قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_third_party_easements_available', field_type: 'bool', label_ar: 'ارتفاقات لأطراف ثالثة قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_access_and_structure_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص قيود الوصول والإنشاءات', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الملاحة العامة وحقوق الغير', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_public_navigation_rights_present', field_type: 'bool', label_ar: 'حقوق الملاحة العامة قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_navigational_restrictions_affecting_right', field_type: 'str', label_ar: 'قيود ملاحية تؤثر على الحق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_restriction', label_ar: 'لا قيود' }, { value: 'partial_restriction', label_ar: 'قيود جزئية' }, { value: 'full_restriction', label_ar: 'قيود كاملة' },
+                    { value: 'seasonal_restriction', label_ar: 'قيود موسمية' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_public_path_or_towpath_present', field_type: 'bool', label_ar: 'ممر عام / طريق جرّ قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_customary_community_use_present', field_type: 'bool', label_ar: 'استخدام مجتمعي عرفي قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_fishing_rights_status', field_type: 'str', label_ar: 'حالة حقوق الصيد', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'exclusive_fishing_right', label_ar: 'حق صيد حصري' }, { value: 'shared_fishing_right', label_ar: 'حق صيد مشترك' },
+                    { value: 'public_fishing_permitted', label_ar: 'صيد عام مسموح' }, { value: 'fishing_prohibited', label_ar: 'صيد ممنوع' },
+                    { value: 'not_applicable', label_ar: 'لا ينطبق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_third_party_water_use_rights_present', field_type: 'bool', label_ar: 'حقوق استخدام مائي لأطراف ثالثة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_upstream_downstream_dependency_level', field_type: 'str', label_ar: 'مستوى الاعتماد على المجرى (أعلى/أسفل)', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_neighboring_owner_rights_conflict_status', field_type: 'str', label_ar: 'تعارض حقوق المالكين المجاورين', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_conflict', label_ar: 'لا تعارض' }, { value: 'possible_conflict', label_ar: 'تعارض محتمل' }, { value: 'confirmed_conflict', label_ar: 'تعارض مؤكد' },
+                    { value: 'under_resolution', label_ar: 'قيد الحل' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_public_authority_control_level', field_type: 'str', label_ar: 'مستوى سيطرة الجهات العامة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_third_party_rights_notes', field_type: 'textarea', label_ar: 'ملاحظات حقوق الغير', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التغيرات الطبيعية: الطمي والتآكل وتغير المجرى', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_bank_erosion_rate_m_per_year', field_type: 'float', label_ar: 'معدل تآكل الضفة', unit: 'م/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_sedimentation_or_siltation_rate_m3_year', field_type: 'float', label_ar: 'معدل الترسيب/الطمي', unit: 'م³/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_accretion_or_alluvion_present', field_type: 'bool', label_ar: 'طمي/إضافة أرض طبيعية قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_river_course_change_risk_level', field_type: 'str', label_ar: 'مستوى خطر تغيير مسار النهر', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_bank_stability_condition', field_type: 'str', label_ar: 'حالة استقرار الضفة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'stable', label_ar: 'مستقرة' }, { value: 'minor_erosion', label_ar: 'تآكل طفيف' }, { value: 'moderate_erosion', label_ar: 'تآكل معتدل' },
+                    { value: 'severe_erosion', label_ar: 'تآكل شديد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_historical_bankline_study_available', field_type: 'bool', label_ar: 'دراسة تاريخية لخط الضفة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_hydrological_study_available', field_type: 'bool', label_ar: 'دراسة هيدرولوجية متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_sedimentation_study_available', field_type: 'bool', label_ar: 'دراسة الطمي/الترسيب متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_dredging_or_desilting_required', field_type: 'bool', label_ar: 'تكريك/تطهير مطلوب', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_dredging_or_desilting_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة التكريك/التطهير', unit: 'جنيه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_to_benefit_from_alluvion_or_accretion', field_type: 'bool', label_ar: 'حق الاستفادة من الطمي/الترسيب الطبيعي', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_liability_for_erosion_or_bank_failure', field_type: 'str', label_ar: 'مسؤولية التآكل/انهيار الضفة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'owner_liability', label_ar: 'مسؤولية المالك' }, { value: 'shared_liability', label_ar: 'مسؤولية مشتركة' },
+                    { value: 'authority_liability', label_ar: 'مسؤولية الجهة الحكومية' }, { value: 'no_clear_liability', label_ar: 'لا مسؤولية واضحة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_natural_change_notes', field_type: 'textarea', label_ar: 'ملاحظات التغيرات الطبيعية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'حماية الضفة والالتزامات الهندسية', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_bank_protection_assets_available', field_type: 'bool', label_ar: 'أصول حماية الضفة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_retaining_wall_available', field_type: 'bool', label_ar: 'جدار ساند قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_retaining_wall_condition', field_type: 'str', label_ar: 'حالة الجدار الساند', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'good', label_ar: 'جيدة' }, { value: 'average', label_ar: 'متوسطة' }, { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor', label_ar: 'سيئة' }, { value: 'not_applicable', label_ar: 'لا ينطبق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_revetment_or_riprap_available', field_type: 'bool', label_ar: 'كسوة/أحجار حماية (Revetment/Riprap) قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_embankment_available', field_type: 'bool', label_ar: 'ردم/سد ترابي قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_embankment_condition', field_type: 'str', label_ar: 'حالة الردم/السد الترابي', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'good', label_ar: 'جيدة' }, { value: 'average', label_ar: 'متوسطة' }, { value: 'needs_maintenance', label_ar: 'تحتاج صيانة' },
+                    { value: 'poor', label_ar: 'سيئة' }, { value: 'not_applicable', label_ar: 'لا ينطبق' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_flood_defense_available', field_type: 'bool', label_ar: 'منشآت الحماية من الفيضان قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_drainage_outfalls_available', field_type: 'bool', label_ar: 'مخارج صرف قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bank_protection_maintenance_obligation', field_type: 'str', label_ar: 'التزام صيانة حماية الضفة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'owner_obligation', label_ar: 'التزام المالك' }, { value: 'shared_obligation', label_ar: 'التزام مشترك' },
+                    { value: 'authority_obligation', label_ar: 'التزام الجهة الحكومية' }, { value: 'no_formal_obligation', label_ar: 'لا التزام رسمي' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_estimated_bank_protection_capex', field_type: 'float', label_ar: 'تقدير نفقات حماية الضفة الرأسمالية', unit: 'جنيه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bank_failure_repair_liability', field_type: 'str', label_ar: 'مسؤولية إصلاح انهيار الضفة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'owner_liability', label_ar: 'مسؤولية المالك' }, { value: 'shared_liability', label_ar: 'مشتركة' },
+                    { value: 'authority_liability', label_ar: 'جهة حكومية' }, { value: 'unclear', label_ar: 'غير واضحة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_engineering_obligations_notes', field_type: 'textarea', label_ar: 'ملاحظات الالتزامات الهندسية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'البيئة وجودة المياه والتصاريح', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_environmental_permit_required', field_type: 'bool', label_ar: 'تصريح بيئي مطلوب', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_environmental_permit_status', field_type: 'str', label_ar: 'حالة التصريح البيئي', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'obtained', label_ar: 'مُستحصَل عليه' }, { value: 'pending', label_ar: 'قيد الاستحصال' }, { value: 'not_obtained', label_ar: 'لم يُستحصَل بعد' },
+                    { value: 'not_required', label_ar: 'غير مطلوب' }, { value: 'expired', label_ar: 'منتهي الصلاحية' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_protected_habitat_presence', field_type: 'bool', label_ar: 'موئل طبيعي محمي قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_riparian_vegetation_protection_required', field_type: 'bool', label_ar: 'حماية الغطاء النباتي للضفة مطلوبة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_wetland_or_sensitive_ecosystem_presence', field_type: 'bool', label_ar: 'أراضٍ رطبة / نظام بيئي حساس', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_discharge_permit_required', field_type: 'bool', label_ar: 'تصريح الصرف مطلوب', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_discharge_permit_status', field_type: 'str', label_ar: 'حالة تصريح الصرف', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'obtained', label_ar: 'مُستحصَل عليه' }, { value: 'pending', label_ar: 'قيد الاستحصال' }, { value: 'not_obtained', label_ar: 'لم يُستحصَل بعد' },
+                    { value: 'not_required', label_ar: 'غير مطلوب' }, { value: 'expired', label_ar: 'منتهي الصلاحية' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_pollution_liability_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر المسؤولية من التلوث', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_water_quality_obligations_summary', field_type: 'textarea', label_ar: 'ملخص التزامات جودة المياه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_environmental_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص القيود البيئية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_environmental_liability_notes', field_type: 'textarea', label_ar: 'ملاحظات المسؤولية البيئية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'الملكية والتسجيل والنزاعات', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_title_deed_references_riparian_rights', field_type: 'bool', label_ar: 'سند الملكية يُشير إلى حقوق الضفة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_right_registered_on_title', field_type: 'bool', label_ar: 'الحق مسجَّل في سند الملكية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_concession_or_use_agreement_available', field_type: 'bool', label_ar: 'عقد امتياز/حق انتفاع متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_concession_remaining_years', field_type: 'float', label_ar: 'السنوات المتبقية من الامتياز', unit: 'سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_government_approval_for_transfer_required', field_type: 'bool', label_ar: 'موافقة حكومية لنقل الحق مطلوبة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_mortgage_or_lien_affecting_right', field_type: 'str', label_ar: 'رهن/حق حجز على الحق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_mortgage_or_lien', label_ar: 'لا رهن أو حجز' }, { value: 'mortgage_registered', label_ar: 'رهن مسجَّل' },
+                    { value: 'lien_registered', label_ar: 'حجز مسجَّل' }, { value: 'multiple_encumbrances', label_ar: 'أعباء متعددة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_legal_dispute_status', field_type: 'str', label_ar: 'حالة النزاع القانوني', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_dispute', label_ar: 'لا نزاع' }, { value: 'possible_dispute', label_ar: 'نزاع محتمل' }, { value: 'confirmed_dispute', label_ar: 'نزاع مؤكد' },
+                    { value: 'in_litigation', label_ar: 'في التقاضي' }, { value: 'resolved', label_ar: 'محلول' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_neighboring_owner_dispute_status', field_type: 'str', label_ar: 'نزاع مع المالكين المجاورين', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_dispute', label_ar: 'لا نزاع' }, { value: 'possible_dispute', label_ar: 'نزاع محتمل' }, { value: 'confirmed_dispute', label_ar: 'نزاع مؤكد' },
+                    { value: 'resolved', label_ar: 'محلول' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_public_authority_dispute_status', field_type: 'str', label_ar: 'نزاع مع جهة حكومية', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_dispute', label_ar: 'لا نزاع' }, { value: 'possible_dispute', label_ar: 'نزاع محتمل' }, { value: 'confirmed_dispute', label_ar: 'نزاع مؤكد' },
+                    { value: 'resolved', label_ar: 'محلول' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_water_authority_dispute_status', field_type: 'str', label_ar: 'نزاع مع جهة المياه/الري', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'no_dispute', label_ar: 'لا نزاع' }, { value: 'possible_dispute', label_ar: 'نزاع محتمل' }, { value: 'confirmed_dispute', label_ar: 'نزاع مؤكد' },
+                    { value: 'resolved', label_ar: 'محلول' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_historical_claims_or_customary_rights_status', field_type: 'str', label_ar: 'حالة المطالبات التاريخية/الحقوق العرفية', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'none_known', label_ar: 'لا شيء معروف' }, { value: 'possible', label_ar: 'محتملة' }, { value: 'confirmed', label_ar: 'مؤكدة' },
+                    { value: 'resolved', label_ar: 'محلولة' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_legal_opinion_available', field_type: 'bool', label_ar: 'رأي قانوني متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_legal_notes', field_type: 'textarea', label_ar: 'ملاحظات قانونية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'القيمة الاقتصادية والدخل', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_income_generating_status', field_type: 'str', label_ar: 'حالة توليد الدخل', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'income_generating', label_ar: 'مولِّد دخل' }, { value: 'potential_income', label_ar: 'دخل محتمل' },
+                    { value: 'cost_saving', label_ar: 'توفير تكلفة' }, { value: 'no_income', label_ar: 'لا دخل' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_industrial_water_saving_value_annual', field_type: 'float', label_ar: 'قيمة التوفير المائي للصناعة', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_recreational_access_revenue_annual', field_type: 'float', label_ar: 'إيرادات الوصول الترفيهي', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bank_facility_concession_revenue_annual', field_type: 'float', label_ar: 'إيرادات امتياز مرافق الضفة', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_aquaculture_support_value_annual', field_type: 'float', label_ar: 'قيمة دعم الاستزراع السمكي', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_hospitality_or_tourism_value_contribution_annual', field_type: 'float', label_ar: 'مساهمة قيمة الضيافة/السياحة', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_development_premium_due_to_riverfront_pct', field_type: 'float', label_ar: 'علاوة التطوير بسبب الواجهة النهرية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_market_rent_premium_due_to_water_access_pct', field_type: 'float', label_ar: 'علاوة الإيجار بسبب الوصول المائي', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_market_sale_premium_due_to_riverfront_pct', field_type: 'float', label_ar: 'علاوة البيع بسبب الواجهة النهرية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_annual_maintenance_cost', field_type: 'float', label_ar: 'تكلفة الصيانة السنوية (إجمالي)', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_annual_water_fees_or_charges', field_type: 'float', label_ar: 'الرسوم والتكاليف المائية السنوية', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_net_economic_benefit_annual', field_type: 'float', label_ar: 'صافي المنفعة الاقتصادية السنوية', unit: 'جنيه/سنة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_economic_value_notes', field_type: 'textarea', label_ar: 'ملاحظات القيمة الاقتصادية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'السوق والمقارنات وقابلية التسويق', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_comparable_riparian_rights_available', field_type: 'bool', label_ar: 'صفقات حقوق ضفاف مقارنة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_comparable_riverfront_sales_available', field_type: 'bool', label_ar: 'مبيعات واجهة نهرية مقارنة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_comparable_water_access_transactions_available', field_type: 'bool', label_ar: 'صفقات وصول مائي مقارنة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_market_frontage_value_per_meter', field_type: 'float', label_ar: 'قيمة السوق لكل متر واجهة', unit: 'جنيه/متر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_market_riparian_area_value_per_sqm', field_type: 'float', label_ar: 'قيمة السوق لكل م² حرم الضفة', unit: 'جنيه/م²', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_buyer_pool_depth', field_type: 'str', label_ar: 'عمق قاعدة المشترين', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'deep', label_ar: 'عميقة' }, { value: 'moderate', label_ar: 'معتدلة' }, { value: 'shallow', label_ar: 'ضحلة' }, { value: 'very_limited', label_ar: 'محدودة جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_marketability_level', field_type: 'str', label_ar: 'مستوى قابلية التسويق', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالية' }, { value: 'medium', label_ar: 'متوسطة' }, { value: 'low', label_ar: 'منخفضة' }, { value: 'very_limited', label_ar: 'محدودة جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_expected_marketing_period_months', field_type: 'float', label_ar: 'فترة التسويق المتوقعة', unit: 'شهر', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_liquidity_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر السيولة', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'low', label_ar: 'منخفض' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'high', label_ar: 'عالٍ' }, { value: 'very_high', label_ar: 'عالٍ جداً' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_water_access_scarcity_level', field_type: 'str', label_ar: 'مستوى ندرة الوصول المائي', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'scarce', label_ar: 'نادر' }, { value: 'limited', label_ar: 'محدود' }, { value: 'moderate', label_ar: 'معتدل' }, { value: 'abundant', label_ar: 'وفير' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_regulatory_discount_level', field_type: 'str', label_ar: 'مستوى الخصم التنظيمي', valid_values: [], group: '', ui_required: false, options: [
+                    { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'none', label_ar: 'لا يوجد' }, { value: 'unknown', label_ar: 'غير محدد' },
+                ]},
+                { name: 'rr_supp_market_notes', field_type: 'textarea', label_ar: 'ملاحظات السوق', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'معاملات التعديل حسب غرض التقييم', color: '#6f82b3', desc: 'جدول إرشادي محلي فقط — لا يُطبَّق آلياً ولا يُرسَل للتقرير.', fields: [
+                { name: 'rr_supp_m_mortgage_lending_methodology', field_type: 'str', label_ar: 'منهجية — رهن/تمويل بنكي', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_mortgage_lending_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — رهن/تمويل', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_mortgage_lending_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — رهن/تمويل', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_sale_purchase_methodology', field_type: 'str', label_ar: 'منهجية — بيع/شراء', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_sale_purchase_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — بيع/شراء', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_sale_purchase_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — بيع/شراء', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_insurance_methodology', field_type: 'str', label_ar: 'منهجية — تأمين', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_insurance_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — تأمين', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_insurance_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — تأمين', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_ifrs_fair_value_methodology', field_type: 'str', label_ar: 'منهجية — القيمة العادلة (IFRS)', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_ifrs_fair_value_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — القيمة العادلة', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_ifrs_fair_value_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — القيمة العادلة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_taxation_methodology', field_type: 'str', label_ar: 'منهجية — ضريبة', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_taxation_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — ضريبة', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_taxation_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — ضريبة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_liquidation_methodology', field_type: 'str', label_ar: 'منهجية — تصفية', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_liquidation_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — تصفية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_liquidation_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — تصفية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_litigation_dispute_methodology', field_type: 'str', label_ar: 'منهجية — نزاعات قضائية', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_litigation_dispute_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — نزاعات قضائية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_litigation_dispute_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — نزاعات قضائية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_agricultural_support_value_methodology', field_type: 'str', label_ar: 'منهجية — دعم قيمة أرض زراعية', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_agricultural_support_value_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — دعم أرض زراعية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_agricultural_support_value_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — دعم أرض زراعية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_industrial_support_value_methodology', field_type: 'str', label_ar: 'منهجية — دعم قيمة أصل صناعي', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_industrial_support_value_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — دعم أصل صناعي', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_industrial_support_value_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — دعم أصل صناعي', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_hospitality_support_value_methodology', field_type: 'str', label_ar: 'منهجية — دعم قيمة فندق/منتجع', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_hospitality_support_value_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — دعم فندق/منتجع', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_hospitality_support_value_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — دعم فندق/منتجع', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_development_feasibility_methodology', field_type: 'str', label_ar: 'منهجية — دراسة جدوى تطوير', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_development_feasibility_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — جدوى تطوير', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_development_feasibility_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — جدوى تطوير', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_water_rights_review_methodology', field_type: 'str', label_ar: 'منهجية — مراجعة حقوق مياه', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_water_rights_review_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — حقوق مياه', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_water_rights_review_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — حقوق مياه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_expropriation_compensation_methodology', field_type: 'str', label_ar: 'منهجية — نزع ملكية/تعويض', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_expropriation_compensation_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — نزع ملكية', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_expropriation_compensation_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — نزع ملكية', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_impairment_testing_methodology', field_type: 'str', label_ar: 'منهجية — اختبار اضمحلال', help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], group: '', ui_required: false, options: _RR_METHODOLOGY_OPTS },
+                { name: 'rr_supp_m_impairment_testing_adjustment_pct', field_type: 'float', label_ar: 'معامل التعديل — اضمحلال', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_m_impairment_testing_adjustment_rationale', field_type: 'textarea', label_ar: 'مبرر التعديل — اضمحلال', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المخاطر المائية والمناخية', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_flood_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الفيضان', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_drought_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الجفاف', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_water_scarcity_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر شح المياه', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_riverbank_erosion_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر تآكل الضفة', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_sedimentation_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الترسيب', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_contamination_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر التلوث', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_water_level_variability_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر تذبذب منسوب المياه', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_upstream_abstraction_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر السحب من المجرى الأعلى', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_regulatory_restriction_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر القيود التنظيمية', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_climate_risk_value_impact_pct', field_type: 'float', label_ar: 'تأثير مخاطر المناخ على القيمة', unit: '%', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_insurance_availability_for_watercourse_risks', field_type: 'str', label_ar: 'توافر تأمين لمخاطر المجرى المائي', valid_values: [], group: '', ui_required: false, options: [ { value: 'available', label_ar: 'متاح' }, { value: 'limited', label_ar: 'محدود' }, { value: 'not_available', label_ar: 'غير متاح' }, { value: 'prohibitively_expensive', label_ar: 'مرتفع التكلفة' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_climate_adaptation_required', field_type: 'bool', label_ar: 'تكيّف مناخي مطلوب', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_adaptation_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة التكيّف المناخي', unit: 'جنيه', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_water_climate_risk_notes', field_type: 'textarea', label_ar: 'ملاحظات المخاطر المائية والمناخية', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'المسؤولية والتأمين والسلامة العامة', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_public_liability_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر المسؤولية العامة', valid_values: [], group: '', ui_required: false, options: [ { value: 'high', label_ar: 'عالٍ' }, { value: 'medium', label_ar: 'متوسط' }, { value: 'low', label_ar: 'منخفض' }, { value: 'negligible', label_ar: 'ضئيل جداً' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_bank_safety_obligation_available', field_type: 'bool', label_ar: 'التزام سلامة الضفة قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_drowning_or_accident_history_available', field_type: 'bool', label_ar: 'سجل غرق/حوادث موثَّق', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_unstable_bank_warning_required', field_type: 'bool', label_ar: 'تحذير ضفة غير مستقرة مطلوب', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_public_access_safety_controls_available', field_type: 'bool', label_ar: 'ضوابط أمان الوصول العام قائمة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_insurance_status', field_type: 'str', label_ar: 'حالة التأمين', valid_values: [], group: '', ui_required: false, options: [ { value: 'fully_insured', label_ar: 'مُؤمَّن بالكامل' }, { value: 'partially_insured', label_ar: 'مُؤمَّن جزئياً' }, { value: 'not_insured', label_ar: 'غير مُؤمَّن' }, { value: 'insurance_required', label_ar: 'تأمين مطلوب' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_public_liability_insurance_available', field_type: 'bool', label_ar: 'تأمين المسؤولية العامة قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_flood_or_water_damage_insurance_available', field_type: 'bool', label_ar: 'تأمين الفيضان/الضرر المائي قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_pollution_liability_insurance_available', field_type: 'bool', label_ar: 'تأمين مسؤولية التلوث قائم', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_insurance_exclusions_summary', field_type: 'textarea', label_ar: 'ملخص استثناءات التأمين', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_safety_liability_notes', field_type: 'textarea', label_ar: 'ملاحظات المسؤولية والسلامة', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'التوثيق الرقمي والمسح الهيدرولوجي', color: '#6f82b3', desc: '', fields: [
+                { name: 'rr_supp_gps_survey_available', field_type: 'bool', label_ar: 'مسح GPS متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_drone_survey_available', field_type: 'bool', label_ar: 'مسح طائرة مسيّرة متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_satellite_bankline_analysis_available', field_type: 'bool', label_ar: 'تحليل خط الضفة بالأقمار الاصطناعية متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_gis_boundary_layer_available', field_type: 'bool', label_ar: 'طبقة GIS لحدود الضفة متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_hydrological_model_available', field_type: 'bool', label_ar: 'نموذج هيدرولوجي متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_bathymetry_or_channel_survey_available', field_type: 'bool', label_ar: 'مسح قيعان/قناة (Bathymetry) متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_water_level_monitoring_available', field_type: 'bool', label_ar: 'رصد منسوب المياه متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_photographic_evidence_available', field_type: 'bool', label_ar: 'توثيق مصوَّر متاح', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_historical_aerial_imagery_available', field_type: 'bool', label_ar: 'صور جوية تاريخية متاحة', valid_values: [], group: '', ui_required: false },
+                { name: 'rr_supp_digital_documentation_quality', field_type: 'str', label_ar: 'جودة التوثيق الرقمي', valid_values: [], group: '', ui_required: false, options: [ { value: 'complete', label_ar: 'مكتمل' }, { value: 'partial', label_ar: 'جزئي' }, { value: 'weak', label_ar: 'ضعيف' }, { value: 'not_available', label_ar: 'غير متاح' }, { value: 'unknown', label_ar: 'غير محدد' } ] },
+                { name: 'rr_supp_digital_documentation_notes', field_type: 'textarea', label_ar: 'ملاحظات التوثيق الرقمي', valid_values: [], group: '', ui_required: false },
+            ]},
+            { heading: 'مستندات إضافية مطلوبة', color: '#6f82b3', desc: 'يُرجى إرفاق المستندات التالية عند توافرها:', fields: [
+                { name: 'rr_doc_supp_hydrological_study', field_type: 'bool', label_ar: 'تقرير هيدرولوجي / دراسة منسوب المياه', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_sedimentation_study', field_type: 'bool', label_ar: 'دراسة الطمي والترسيب والتكريك', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_environmental_permits', field_type: 'bool', label_ar: 'التصاريح البيئية وتصاريح الصرف', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_discharge_permit', field_type: 'bool', label_ar: 'تصاريح إنشاء مضخة/مأخذ/مخرج صرف', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_bank_protection_design', field_type: 'bool', label_ar: 'مخططات/تصاميم حماية الضفة الهندسية', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_legal_opinion', field_type: 'bool', label_ar: 'رأي قانوني في حقوق الضفة', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_gis_drone_maps', field_type: 'bool', label_ar: 'خرائط GIS/Drone/صور أقمار اصطناعية', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_income_data', field_type: 'bool', label_ar: 'بيانات الدخل/المنفعة الاقتصادية (إن وجدت)', group: 'document', valid_values: [], ui_required: false },
+                { name: 'rr_doc_supp_insurance_documents', field_type: 'bool', label_ar: 'وثائق التأمين والمسؤولية العامة', group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ],
+        // ── End Phase 8ZZA — Riparian Rights Detailed Supplemental ──────────────────
         // ── End Phase 8ZAA — Littoral Rights Detailed Supplemental ───────────────────
         // ── End Phase 8ZY — Timberland Forest Asset Detailed Supplemental ────────────
 
@@ -24121,8 +24487,10 @@ function _showIndexToast(msg, type) {
             ? 'متطلبات تقييم حديقة حيوان / متنزه بري — تقييم تفصيلي'
             : registryCode === 'littoral_rights'
             ? 'متطلبات تقييم حقوق ساحلية / واجهة بحرية — تقييم تفصيلي'
+            : registryCode === 'riparian_rights'
+            ? 'متطلبات تقييم حقوق ضفاف / مجرى مائي — تقييم تفصيلي'
             : 'متطلبات تقييم الوحدة السكنية — شقة / فيلا';
-        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well' || registryCode === 'serviced_apartments' || registryCode === 'floating_hotel' || registryCode === 'airport' || registryCode === 'seaport' || registryCode === 'marina' || registryCode === 'data_center' || registryCode === 'cold_storage' || registryCode === 'wellness_resort' || registryCode === 'heritage_property_detailed' || registryCode === 'timberland' || registryCode === 'zoo_safari' || registryCode === 'littoral_rights')
+        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well' || registryCode === 'serviced_apartments' || registryCode === 'floating_hotel' || registryCode === 'airport' || registryCode === 'seaport' || registryCode === 'marina' || registryCode === 'data_center' || registryCode === 'cold_storage' || registryCode === 'wellness_resort' || registryCode === 'heritage_property_detailed' || registryCode === 'timberland' || registryCode === 'zoo_safari' || registryCode === 'littoral_rights' || registryCode === 'riparian_rights')
             ? 'الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.'
             : 'الحقول أعلاه من سجل المتطلبات الأساسي. الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.';
         var html = '<div id="es-req-supp-header" style="border-top:2px solid #374151;margin-top:14px;padding-top:10px;">';

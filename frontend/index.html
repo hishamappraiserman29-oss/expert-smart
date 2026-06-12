@@ -1354,6 +1354,7 @@
                 </optgroup>
                 <optgroup label="أصول حيوية وطبيعية واستكشافية استثنائية">
                     <option value="heritage_property_detailed">عقار تراثي/تاريخي — استمارة تقييم تفصيلية</option>
+                    <option value="architectural_cultural_heritage_detailed">الموروث الثقافي المعماري — تقييم تفصيلي</option>
                     <option value="timberland">غابات طبيعية وتجارية</option>
                     <option value="zoo_safari">حديقة حيوان / متنزه بري</option>
                 </optgroup>
@@ -5811,6 +5812,7 @@ function _showIndexToast(msg, type) {
         'healthcare_facility':          'healthcare_facility',
         'wellness_resort':              'wellness_resort',
         'educational_asset':            'educational_asset',
+        'architectural_cultural_heritage_detailed': 'architectural_cultural_heritage_detailed',
         'heritage_property_detailed':   'heritage_property_detailed',
         'timberland':                   'timberland',
         'zoo_safari':                   'zoo_safari',
@@ -5919,6 +5921,7 @@ function _showIndexToast(msg, type) {
         'healthcare_facility':          { type: 'form', titleAr: 'منشأة طبية — تقييم تفصيلي' },
         'wellness_resort':              { type: 'form', titleAr: 'منتجع استشفاء علاجي' },
         'educational_asset':            { type: 'form', titleAr: 'أصل تعليمي — تقييم تفصيلي' },
+        'architectural_cultural_heritage_detailed': { type: 'form', titleAr: 'الموروث الثقافي المعماري — تقييم تفصيلي' },
         'heritage_property_detailed':   { type: 'form', titleAr: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية' },
         'timberland':                   { type: 'form', titleAr: 'غابات طبيعية وتجارية' },
         'zoo_safari':                   { type: 'form', titleAr: 'حديقة حيوان / متنزه بري' },
@@ -5961,6 +5964,7 @@ function _showIndexToast(msg, type) {
         'healthcare_facility':          { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منشأة طبية — نموذج محلّي لتجميع بيانات الترخيص الطبي والطاقة السريرية وعقود الإدارة. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'wellness_resort':              { badge: 'نموذج محلي', color: '#6f82b3', desc: 'منتجع استشفاء علاجي — نموذج محلّي لتجميع بيانات التصنيف والخدمات العلاجية وعقد التشغيل. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'educational_asset':            { badge: 'نموذج محلي', color: '#6f82b3', desc: 'أصل تعليمي — نموذج محلّي لتجميع بيانات ترخيص وزارة التعليم والطاقة الاستيعابية والبيانات المالية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
+        'architectural_cultural_heritage_detailed': { badge: 'نموذج محلي', color: '#6f82b3', desc: 'هذه الاستمارة لتقييم أصل مبني يحمل قيمة ثقافية أو معمارية أو مجتمعية، مثل مبنى تقليدي أو طراز معماري مميز أو نسيج عمراني تاريخي. لا تستخدم هذه الاستمارة لتقييم مبنى قائم عادي، ولا لتقييم أصل معنوي منفصل؛ إذا لم توجد قيمة ثقافية أو معمارية واضحة استخدم استمارة مبنى قائم أو الأصل المناسب. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'heritage_property_detailed':   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'عقار تراثي/تاريخي — استمارة تقييم تفصيلية رسمية تشمل: رقم التسجيل الأثري، الحالة الإنشائية التفصيلية (أساس/رطوبة/تشقق)، تكاليف الترميم، والدخل الاقتصادي وقيود الاستثمار. هذه الاستمارة لتقييم العقارات ذات القيمة التاريخية أو الثقافية أو المعمارية، سواء كانت مسجلة رسمياً أو ذات دلالة تاريخية غير مسجلة. لا تستخدم لمبنى قائم عادي؛ إذا لم توجد قيمة تاريخية أو قيود حفظ أو دلالة ثقافية، استخدم استمارة «مبنى قائم» أو الأصل المناسب. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'timberland':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'غابات طبيعية وتجارية — نموذج محلّي لتجميع بيانات المساحة والكتلة الحيوية وشهادات FSC والإيرادات والمخاطر البيئية. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
         'zoo_safari':                   { badge: 'نموذج محلي', color: '#6f82b3', desc: 'حديقة حيوان / متنزه بري — نموذج محلّي لتجميع بيانات مجموعة الحيوانات والتراخيص ومتطلبات CITES وإيرادات الزوار. لن يتم إرسال هذه البيانات إلى التقرير في هذه المرحلة.' },
@@ -6737,6 +6741,13 @@ function _showIndexToast(msg, type) {
     var _HPD_METHODOLOGY_OPTS = _METHODOLOGY_OPTS.concat([
         { value: 'conservation_cost_adjusted_value', label_ar: 'القيمة بعد تعديل تكلفة الصون/الترميم' },
         { value: 'adaptive_reuse_dcf',               label_ar: 'DCF إعادة الاستخدام التكيّفي' },
+    ]);
+
+    // ── Phase 8ZZG: architectural-cultural-heritage-specific methodology options ──
+    var _ACH_METHODOLOGY_OPTS = _METHODOLOGY_OPTS.concat([
+        { value: 'conservation_cost_adjusted_value', label_ar: 'القيمة بعد تعديل تكلفة الصون/الترميم' },
+        { value: 'adaptive_reuse_dcf',               label_ar: 'DCF إعادة الاستخدام التكيّفي' },
+        { value: 'cultural_significance_adjustment', label_ar: 'تعديل قيمة الدلالة الثقافية' },
     ]);
 
     // ── Phase 8ZY: timberland/forest-specific methodology options ────────────────
@@ -26087,6 +26098,294 @@ var _PROFILE_FORM_SCHEMA = {
         // ── End Phase 8ZZE — Under Construction Detailed Supplemental ──────────────────────
         // ── End Phase 8ZZC — Intangible Asset Detailed Supplemental ──────────────────
         // ── End Phase 8ZX — Heritage Property Detailed Supplemental ───────────────
+
+        // ── Phase 8ZZG: Architectural Cultural Heritage Detailed Supplemental ─────────────
+        'architectural_cultural_heritage_detailed': [
+            { section: 'A', title_ar: 'هوية الأصل والتصنيف الثقافي التراثي', color: '#7c3aed', fields: [
+                { name: 'ach_supp_a_cultural_heritage_asset_type', field_type: 'str', label_ar: 'نوع الأصل الثقافي التراثي', options: [{value:'traditional_building',label_ar:'مبنى تقليدي'},{value:'historical_urban_fabric',label_ar:'نسيج عمراني تاريخي'},{value:'distinctive_architectural_style',label_ar:'طراز معماري مميز'},{value:'heritage_district',label_ar:'حي تراثي'},{value:'historic_street',label_ar:'شارع تاريخي'},{value:'cultural_monument',label_ar:'معلم ثقافي'},{value:'other',label_ar:'أخرى'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_a_cultural_significance_level', field_type: 'str', label_ar: 'مستوى الأهمية الثقافية', options: [{value:'exceptional',label_ar:'استثنائي'},{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_a_formal_or_informal_status', field_type: 'str', label_ar: 'الوضع الرسمي أو غير الرسمي', options: [{value:'formally_registered',label_ar:'مسجل رسمياً'},{value:'informally_recognized',label_ar:'معترف به غير رسمي'},{value:'pending_registration',label_ar:'قيد التسجيل'},{value:'unregistered',label_ar:'غير مسجل'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_a_current_use', field_type: 'str', label_ar: 'الاستخدام الحالي', options: [{value:'residential',label_ar:'سكني'},{value:'commercial',label_ar:'تجاري'},{value:'institutional',label_ar:'مؤسسي'},{value:'cultural',label_ar:'ثقافي'},{value:'tourism',label_ar:'سياحي'},{value:'mixed',label_ar:'مختلط'},{value:'vacant',label_ar:'شاغر'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_a_proposed_use_or_adaptive_reuse', field_type: 'str', label_ar: 'الاستخدام المقترح أو إعادة الاستخدام التكيّفي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_a_cultural_heritage_summary', field_type: 'textarea', label_ar: 'ملخص التراث الثقافي', valid_values: [], ui_required: false },
+            ]},
+            { section: 'B', title_ar: 'القيمة الثقافية والمجتمعية', color: '#8b5cf6', fields: [
+                { name: 'ach_supp_b_cultural_memory_association_available', field_type: 'bool', label_ar: 'توافر ارتباط بذاكرة ثقافية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_community_identity_value_level', field_type: 'str', label_ar: 'مستوى قيمة الهوية المجتمعية', options: [{value:'very_high',label_ar:'مرتفع جداً'},{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_symbolic_value_level', field_type: 'str', label_ar: 'مستوى القيمة الرمزية', options: [{value:'very_high',label_ar:'مرتفع جداً'},{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_association_with_historical_person_or_event', field_type: 'bool', label_ar: 'ارتباط بشخصية تاريخية أو حدث', valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_association_with_traditional_craft_or_use', field_type: 'bool', label_ar: 'ارتباط بحرفة تقليدية أو استخدام تراثي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_local_narrative_or_oral_history_available', field_type: 'bool', label_ar: 'توافر روايات محلية أو تاريخ شفهي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_public_recognition_level', field_type: 'str', label_ar: 'مستوى الاعتراف العام', options: [{value:'national',label_ar:'وطني'},{value:'regional',label_ar:'إقليمي'},{value:'local',label_ar:'محلي'},{value:'unrecognized',label_ar:'غير معترف به'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_cultural_programming_potential', field_type: 'str', label_ar: 'إمكانية البرمجة الثقافية', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_educational_interpretation_potential', field_type: 'str', label_ar: 'إمكانية التفسير التعليمي', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_b_cultural_value_notes', field_type: 'textarea', label_ar: 'ملاحظات القيمة الثقافية', valid_values: [], ui_required: false },
+            ]},
+            { section: 'C', title_ar: 'الأهمية المعمارية والتاريخية', color: '#a78bfa', fields: [
+                { name: 'ach_supp_c_architectural_style', field_type: 'str', label_ar: 'الطراز المعماري', options: [{value:'islamic_traditional',label_ar:'إسلامي تقليدي'},{value:'coptic',label_ar:'قبطي'},{value:'ottoman',label_ar:'عثماني'},{value:'khedival',label_ar:'خديوي'},{value:'art_deco',label_ar:'آرت ديكو'},{value:'modernist',label_ar:'حداثي'},{value:'vernacular',label_ar:'محلي عرفي'},{value:'mixed',label_ar:'مختلط'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_construction_period_or_year', field_type: 'str', label_ar: 'فترة أو سنة البناء', valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_architect_or_master_builder_known', field_type: 'bool', label_ar: 'المعماري أو المعلم المنشئ معروف', valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_original_use', field_type: 'str', label_ar: 'الاستخدام الأصلي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_authenticity_level', field_type: 'str', label_ar: 'مستوى الأصالة', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'compromised',label_ar:'منتقص'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_integrity_level', field_type: 'str', label_ar: 'مستوى التكامل', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'poor',label_ar:'ضعيف'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_rarity_level', field_type: 'str', label_ar: 'مستوى الندرة', options: [{value:'unique',label_ar:'فريد'},{value:'rare',label_ar:'نادر'},{value:'uncommon',label_ar:'غير شائع'},{value:'common',label_ar:'شائع'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_representativeness_level', field_type: 'str', label_ar: 'مستوى التمثيلية', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_c_architectural_value_notes', field_type: 'textarea', label_ar: 'ملاحظات القيمة المعمارية', valid_values: [], ui_required: false },
+            ]},
+            { section: 'D', title_ar: 'العناصر المميزة للطابع والحالة المادية', color: '#c084fc', fields: [
+                { name: 'ach_supp_d_character_defining_elements', field_type: 'checkbox_group', label_ar: 'العناصر المميزة للطابع', options: [{value:'mashrabiya',label_ar:'مشربية'},{value:'courtyard',label_ar:'فناء داخلي'},{value:'arched_arcade',label_ar:'رواق مقوّس'},{value:'pointed_arch',label_ar:'عقد مدبّب'},{value:'muqarnas',label_ar:'مقرنصات'},{value:'ornamental_plasterwork',label_ar:'أعمال جص زخرفية'},{value:'traditional_wooden_ceiling',label_ar:'سقف خشبي تقليدي'},{value:'original_stone_facade',label_ar:'واجهة حجرية أصلية'},{value:'original_brick_facade',label_ar:'واجهة طوب أصلية'},{value:'decorative_tile_work',label_ar:'أعمال بلاط زخرفية'},{value:'historic_staircase',label_ar:'سلم تاريخي'},{value:'original_entrance_gate',label_ar:'بوابة مدخل أصلية'},{value:'traditional_ventilation_tower',label_ar:'برج تهوية تقليدي'},{value:'carved_stone_columns',label_ar:'أعمدة حجرية منحوتة'},{value:'historic_ironwork',label_ar:'أعمال حديد تاريخية'},{value:'traditional_courtyard_fountain',label_ar:'نافورة فناء تقليدية'},{value:'other',label_ar:'أخرى'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_decorative_elements_condition', field_type: 'str', label_ar: 'حالة العناصر الزخرفية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'missing',label_ar:'مفقودة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_traditional_craftsmanship_quality', field_type: 'str', label_ar: 'جودة الحرفية التقليدية', options: [{value:'exceptional',label_ar:'استثنائية'},{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_original_materials_percentage', field_type: 'float', label_ar: 'نسبة المواد الأصلية (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_inappropriate_replacements_available', field_type: 'bool', label_ar: 'وجود استبدالات غير ملائمة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_reversible_alterations_available', field_type: 'bool', label_ar: 'وجود تعديلات قابلة للعكس', valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_lost_elements_reconstruction_potential', field_type: 'str', label_ar: 'إمكانية إعادة بناء العناصر المفقودة', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'not_applicable',label_ar:'لا ينطبق'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_d_element_condition_notes', field_type: 'textarea', label_ar: 'ملاحظات حالة العناصر', valid_values: [], ui_required: false },
+            ]},
+            { section: 'E', title_ar: 'البيئة التراثية والسياق العمراني', color: '#d97706', fields: [
+                { name: 'ach_supp_e_heritage_context_type', field_type: 'str', label_ar: 'نوع السياق التراثي', options: [{value:'heritage_district',label_ar:'حي تراثي'},{value:'historic_city_centre',label_ar:'مركز مدينة تاريخي'},{value:'traditional_neighbourhood',label_ar:'حي تقليدي'},{value:'standalone_monument',label_ar:'معلم مستقل'},{value:'conservation_area',label_ar:'منطقة صون'},{value:'urban_fringe',label_ar:'هامش عمراني'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_contribution_to_streetscape_level', field_type: 'str', label_ar: 'مستوى المساهمة في المشهد الشارعي', options: [{value:'landmark',label_ar:'معلم بارز'},{value:'significant',label_ar:'مؤثر'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_surrounding_context_quality', field_type: 'str', label_ar: 'جودة السياق المحيط', options: [{value:'well_preserved',label_ar:'محفوظ جيداً'},{value:'partially_altered',label_ar:'مُعدَّل جزئياً'},{value:'significantly_altered',label_ar:'مُعدَّل بشكل كبير'},{value:'degraded',label_ar:'متدهور'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_visual_corridor_or_viewline_importance', field_type: 'str', label_ar: 'أهمية الممر البصري أو محور الرؤية', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_setting_integrity_level', field_type: 'str', label_ar: 'مستوى تكامل البيئة المحيطة', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'poor',label_ar:'ضعيف'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_urban_pressure_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر الضغط العمراني', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_proximity_to_cultural_route', field_type: 'str', label_ar: 'القرب من مسار ثقافي سياحي', options: [{value:'on_route',label_ar:'على المسار'},{value:'adjacent',label_ar:'مجاور'},{value:'nearby',label_ar:'قريب'},{value:'remote',label_ar:'بعيد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_tourism_route_visibility', field_type: 'str', label_ar: 'مستوى الظهور في المسارات السياحية', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_e_site_context_notes', field_type: 'textarea', label_ar: 'ملاحظات سياق الموقع', valid_values: [], ui_required: false },
+            ]},
+            { section: 'F', title_ar: 'التسجيل التراثي والاعتراف الرسمي', color: '#b45309', fields: [
+                { name: 'ach_supp_f_official_registration_available', field_type: 'bool', label_ar: 'توافر تسجيل رسمي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_registration_decision_number', field_type: 'str', label_ar: 'رقم قرار التسجيل', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_registration_decision_date', field_type: 'str', label_ar: 'تاريخ قرار التسجيل', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_issuing_authority', field_type: 'str', label_ar: 'الجهة المصدِرة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_listing_grade_or_category', field_type: 'str', label_ar: 'درجة أو فئة الإدراج', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_conservation_area_status', field_type: 'str', label_ar: 'وضع منطقة الصون', options: [{value:'inside_conservation_area',label_ar:'داخل منطقة صون'},{value:'buffer_zone',label_ar:'منطقة حزام عازل'},{value:'adjacent',label_ar:'مجاورة'},{value:'outside',label_ar:'خارجها'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_protected_elements_defined', field_type: 'bool', label_ar: 'تحديد العناصر المحمية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_protected_elements_summary', field_type: 'textarea', label_ar: 'ملخص العناصر المحمية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_buffer_zone_defined', field_type: 'bool', label_ar: 'تحديد المنطقة العازلة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_buffer_zone_area_sqm', field_type: 'float', label_ar: 'مساحة المنطقة العازلة (م²)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_cultural_authority_recognition_available', field_type: 'bool', label_ar: 'توافر اعتراف هيئة ثقافية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_ngo_or_academic_recognition_available', field_type: 'bool', label_ar: 'توافر اعتراف أكاديمي أو منظمة غير حكومية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_community_petition_or_local_recognition_available', field_type: 'bool', label_ar: 'توافر عريضة مجتمعية أو اعتراف محلي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_f_recognition_status_notes', field_type: 'textarea', label_ar: 'ملاحظات وضع الاعتراف', valid_values: [], ui_required: false },
+            ]},
+            { section: 'G', title_ar: 'قيود الصون والاشتراطات التنظيمية', color: '#92400e', fields: [
+                { name: 'ach_supp_g_intervention_restriction_level', field_type: 'str', label_ar: 'مستوى قيود التدخل', options: [{value:'strict',label_ar:'صارمة'},{value:'moderate',label_ar:'معتدلة'},{value:'light',label_ar:'خفيفة'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_demolition_prohibited', field_type: 'bool', label_ar: 'الهدم محظور', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_facade_alteration_prohibited', field_type: 'bool', label_ar: 'تغيير الواجهة محظور', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_interior_modification_restrictions', field_type: 'str', label_ar: 'قيود التعديل الداخلي', options: [{value:'full_restriction',label_ar:'قيد كامل'},{value:'partial_restriction',label_ar:'قيد جزئي'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_material_replacement_restrictions', field_type: 'str', label_ar: 'قيود استبدال المواد', options: [{value:'strict',label_ar:'صارمة'},{value:'moderate',label_ar:'معتدلة'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_signage_restrictions', field_type: 'str', label_ar: 'قيود اللافتات', options: [{value:'strict',label_ar:'صارمة'},{value:'moderate',label_ar:'معتدلة'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_additional_floors_restricted', field_type: 'bool', label_ar: 'الطوابق الإضافية مقيدة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_authority_approval_required', field_type: 'bool', label_ar: 'موافقة الجهة المختصة مطلوبة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_community_or_public_consultation_required', field_type: 'bool', label_ar: 'التشاور المجتمعي أو العام مطلوب', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_permitted_intervention_summary', field_type: 'textarea', label_ar: 'ملخص التدخلات المسموح بها', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_restriction_value_impact_pct', field_type: 'float', label_ar: 'تأثير القيود على القيمة (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_g_restriction_notes', field_type: 'textarea', label_ar: 'ملاحظات القيود', valid_values: [], ui_required: false },
+            ]},
+            { section: 'H', title_ar: 'الحالة الإنشائية والتقنية', color: '#6b7280', fields: [
+                { name: 'ach_supp_h_structural_system', field_type: 'str', label_ar: 'النظام الإنشائي', options: [{value:'load_bearing_stone',label_ar:'حجر حامل للأحمال'},{value:'load_bearing_brick',label_ar:'طوب حامل للأحمال'},{value:'rcc_frame',label_ar:'إطار خرساني مسلح'},{value:'timber_frame',label_ar:'إطار خشبي'},{value:'mixed_masonry',label_ar:'بناء مختلط'},{value:'adobe',label_ar:'طوب لبن'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_foundation_condition', field_type: 'str', label_ar: 'حالة الأساسات', options: [{value:'sound',label_ar:'سليمة'},{value:'minor_issues',label_ar:'مشاكل بسيطة'},{value:'moderate_issues',label_ar:'مشاكل متوسطة'},{value:'severe_issues',label_ar:'مشاكل جسيمة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_structural_condition', field_type: 'str', label_ar: 'الحالة الإنشائية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'critical',label_ar:'حرجة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_roof_structure_condition', field_type: 'str', label_ar: 'حالة هيكل السقف', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'failed',label_ar:'فاشلة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_facade_condition', field_type: 'str', label_ar: 'حالة الواجهة', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'critical',label_ar:'حرجة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_interior_condition', field_type: 'str', label_ar: 'الحالة الداخلية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'critical',label_ar:'حرجة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_structural_cracks_available', field_type: 'bool', label_ar: 'وجود شقوق إنشائية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_settlement_or_deformation_available', field_type: 'bool', label_ar: 'وجود هبوط أو تشوه', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_timber_decay_available', field_type: 'bool', label_ar: 'وجود تحلل خشبي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_metal_corrosion_available', field_type: 'bool', label_ar: 'وجود تآكل معدني', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_emergency_stabilization_required', field_type: 'bool', label_ar: 'تثبيت طارئ مطلوب', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_structural_report_available', field_type: 'bool', label_ar: 'توافر تقرير إنشائي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_h_technical_condition_notes', field_type: 'textarea', label_ar: 'ملاحظات الحالة التقنية', valid_values: [], ui_required: false },
+            ]},
+            { section: 'I', title_ar: 'تحلل وتدهور المواد', color: '#4b5563', fields: [
+                { name: 'ach_supp_i_primary_construction_materials', field_type: 'checkbox_group', label_ar: 'مواد البناء الأساسية', options: [{value:'limestone',label_ar:'حجر جيري'},{value:'sandstone',label_ar:'حجر رملي'},{value:'fired_brick',label_ar:'طوب محروق'},{value:'adobe_mud_brick',label_ar:'طوب لبن طيني'},{value:'timber',label_ar:'خشب'},{value:'marble',label_ar:'رخام'},{value:'traditional_plaster',label_ar:'جص تقليدي'},{value:'glazed_tiles',label_ar:'بلاط مزجج'},{value:'cast_iron',label_ar:'حديد زهر'},{value:'rubble_stone',label_ar:'حجر ركام'},{value:'other',label_ar:'أخرى'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_moisture_risk_level', field_type: 'str', label_ar: 'مستوى خطر الرطوبة', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_rising_damp_available', field_type: 'bool', label_ar: 'وجود رطوبة صاعدة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_salt_crystallization_available', field_type: 'bool', label_ar: 'وجود تبلور ملحي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_plaster_detachment_available', field_type: 'bool', label_ar: 'وجود تقشر جص', valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_stone_or_brick_deterioration_level', field_type: 'str', label_ar: 'مستوى تدهور الحجر أو الطوب', options: [{value:'severe',label_ar:'شديد'},{value:'moderate',label_ar:'متوسط'},{value:'minor',label_ar:'بسيط'},{value:'none',label_ar:'لا يوجد'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_biological_growth_or_mold_available', field_type: 'bool', label_ar: 'وجود نمو بيولوجي أو عفن', valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_termite_or_pest_damage_available', field_type: 'bool', label_ar: 'وجود أضرار نمل أبيض أو آفات', valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_weathering_exposure_level', field_type: 'str', label_ar: 'مستوى التعرض للتجوية', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'protected',label_ar:'محمي'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_drainage_around_building_quality', field_type: 'str', label_ar: 'جودة الصرف حول المبنى', options: [{value:'good',label_ar:'جيدة'},{value:'adequate',label_ar:'كافية'},{value:'poor',label_ar:'ضعيفة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_i_material_decay_notes', field_type: 'textarea', label_ar: 'ملاحظات تحلل المواد', valid_values: [], ui_required: false },
+            ]},
+            { section: 'J', title_ar: 'تكاليف الصون الرأسمالية والصيانة', color: '#374151', fields: [
+                { name: 'ach_supp_j_conservation_plan_available', field_type: 'bool', label_ar: 'توافر خطة صون', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_last_restoration_year', field_type: 'int', label_ar: 'سنة آخر ترميم', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_restoration_quality', field_type: 'str', label_ar: 'جودة الترميم', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_restoration_required', field_type: 'bool', label_ar: 'ترميم مطلوب', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_deferred_maintenance_cost', field_type: 'float', label_ar: 'تكلفة الصيانة المؤجلة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_urgent_stabilization_cost', field_type: 'float', label_ar: 'تكلفة التثبيت العاجل', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_facade_restoration_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة ترميم الواجهة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_specialist_material_repair_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة إصلاح المواد المتخصصة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_decorative_element_restoration_cost', field_type: 'float', label_ar: 'تكلفة ترميم العناصر الزخرفية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_structural_repair_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة الإصلاح الإنشائي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_moisture_treatment_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة معالجة الرطوبة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_mep_upgrade_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة تطوير الأنظمة الميكانيكية والكهربائية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_fire_safety_upgrade_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة تطوير السلامة من الحريق', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_accessibility_upgrade_cost_estimate', field_type: 'float', label_ar: 'تقدير تكلفة تطوير إمكانية الوصول', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_total_conservation_capex_required', field_type: 'float', label_ar: 'إجمالي النفقات الرأسمالية للصون المطلوبة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_maintenance_plan_available', field_type: 'bool', label_ar: 'توافر خطة صيانة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_j_conservation_capex_notes', field_type: 'textarea', label_ar: 'ملاحظات النفقات الرأسمالية للصون', valid_values: [], ui_required: false },
+            ]},
+            { section: 'K', title_ar: 'إعادة الاستخدام التكيّفي وإمكانية العائد', color: '#065f46', fields: [
+                { name: 'ach_supp_k_adaptive_reuse_feasibility', field_type: 'str', label_ar: 'جدوى إعادة الاستخدام التكيّفي', options: [{value:'highly_feasible',label_ar:'ميسور جداً'},{value:'feasible',label_ar:'ميسور'},{value:'challenging',label_ar:'صعب'},{value:'not_feasible',label_ar:'غير ميسور'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_adaptive_reuse_options', field_type: 'checkbox_group', label_ar: 'خيارات إعادة الاستخدام التكيّفي', options: [{value:'boutique_hotel',label_ar:'فندق بوتيك'},{value:'cultural_centre',label_ar:'مركز ثقافي'},{value:'museum_gallery',label_ar:'متحف أو معرض'},{value:'restaurant_cafe',label_ar:'مطعم أو مقهى'},{value:'office_space',label_ar:'مساحة مكتبية'},{value:'creative_hub',label_ar:'مركز إبداعي'},{value:'educational_facility',label_ar:'منشأة تعليمية'},{value:'community_space',label_ar:'فضاء مجتمعي'},{value:'retail_heritage',label_ar:'تجزئة تراثية'},{value:'wellness_spa',label_ar:'مرافق صحية وسبا'},{value:'event_venue',label_ar:'قاعة فعاليات'},{value:'artists_studios',label_ar:'استوديوهات فنانين'},{value:'other',label_ar:'أخرى'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_cultural_program_revenue_annual', field_type: 'float', label_ar: 'إيرادات البرامج الثقافية السنوية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_tourism_or_ticketing_revenue_annual', field_type: 'float', label_ar: 'إيرادات السياحة أو التذاكر السنوية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_events_revenue_annual', field_type: 'float', label_ar: 'إيرادات الفعاليات السنوية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_retail_or_f_and_b_revenue_annual', field_type: 'float', label_ar: 'إيرادات التجزئة أو المأكل والمشرب السنوية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_rental_income_annual', field_type: 'float', label_ar: 'الدخل الإيجاري السنوي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_grants_or_subsidies_available', field_type: 'bool', label_ar: 'توافر منح أو إعانات', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_grants_or_subsidies_amount', field_type: 'float', label_ar: 'مبلغ المنح أو الإعانات', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_tax_incentives_available', field_type: 'bool', label_ar: 'توافر حوافز ضريبية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_net_operating_income_annual', field_type: 'float', label_ar: 'صافي الدخل التشغيلي السنوي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_k_adaptive_reuse_notes', field_type: 'textarea', label_ar: 'ملاحظات إعادة الاستخدام التكيّفي', valid_values: [], ui_required: false },
+            ]},
+            { section: 'L', title_ar: 'الملكية القانونية والأعباء', color: '#1e3a5f', fields: [
+                { name: 'ach_supp_l_ownership_type', field_type: 'str', label_ar: 'نوع الملكية', options: [{value:'private',label_ar:'خاصة'},{value:'government',label_ar:'حكومية'},{value:'waqf',label_ar:'وقف'},{value:'institutional',label_ar:'مؤسسية'},{value:'mixed',label_ar:'مختلطة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_legal_status', field_type: 'str', label_ar: 'الوضع القانوني', options: [{value:'clear_title',label_ar:'ملكية نظيفة'},{value:'disputed',label_ar:'متنازع عليها'},{value:'unregistered',label_ar:'غير مسجلة'},{value:'in_probate',label_ar:'تحت الفصل القضائي'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_title_deed_available', field_type: 'bool', label_ar: 'توافر صك الملكية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_heritage_restriction_registered_on_title', field_type: 'bool', label_ar: 'قيود التراث مسجلة على الصك', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_conservation_easement_available', field_type: 'bool', label_ar: 'توافر ارتفاق صون', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_public_access_obligation_available', field_type: 'bool', label_ar: 'توافر التزام وصول عام', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_community_use_obligation_available', field_type: 'bool', label_ar: 'توافر التزام استخدام مجتمعي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_lease_or_usufruct_status', field_type: 'str', label_ar: 'وضع الإيجار أو حق الانتفاع', options: [{value:'leased',label_ar:'مؤجَّر'},{value:'usufruct',label_ar:'حق انتفاع'},{value:'owner_occupied',label_ar:'مالك شاغل'},{value:'vacant',label_ar:'شاغر'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_tenant_protection_or_rent_control_status', field_type: 'str', label_ar: 'وضع حماية المستأجر أو السيطرة على الإيجار', options: [{value:'applicable',label_ar:'منطبق'},{value:'not_applicable',label_ar:'غير منطبق'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_government_preemption_right_available', field_type: 'bool', label_ar: 'توافر حق الشفعة الحكومية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_transfer_approval_required', field_type: 'bool', label_ar: 'موافقة نقل الملكية مطلوبة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_mortgage_or_lien_status', field_type: 'str', label_ar: 'وضع الرهن أو الحجز', options: [{value:'unencumbered',label_ar:'غير محمَّل'},{value:'mortgaged',label_ar:'مرهون'},{value:'lien_exists',label_ar:'يوجد حجز'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_legal_dispute_status', field_type: 'str', label_ar: 'وضع النزاع القانوني', options: [{value:'none',label_ar:'لا يوجد'},{value:'pending',label_ar:'قيد النظر'},{value:'resolved',label_ar:'محسوم'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_encroachment_status', field_type: 'str', label_ar: 'وضع التعدي', options: [{value:'none',label_ar:'لا يوجد'},{value:'minor',label_ar:'بسيط'},{value:'significant',label_ar:'كبير'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_l_legal_restrictions_summary', field_type: 'textarea', label_ar: 'ملخص القيود القانونية', valid_values: [], ui_required: false },
+            ]},
+            { section: 'M', title_ar: 'الأدلة السوقية والسيولة', color: '#1e40af', fields: [
+                { name: 'ach_supp_m_marketability_level', field_type: 'str', label_ar: 'مستوى قابلية التسويق', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'very_low',label_ar:'منخفض جداً'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_buyer_pool_depth', field_type: 'str', label_ar: 'عمق مجموعة المشترين', options: [{value:'deep',label_ar:'عميق'},{value:'moderate',label_ar:'متوسط'},{value:'shallow',label_ar:'ضحل'},{value:'very_shallow',label_ar:'ضحل جداً'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_expected_marketing_period_months', field_type: 'float', label_ar: 'فترة التسويق المتوقعة (أشهر)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_comparable_cultural_heritage_sales_available', field_type: 'bool', label_ar: 'توافر مبيعات تراث ثقافي مماثلة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_comparable_adaptive_reuse_projects_available', field_type: 'bool', label_ar: 'توافر مشاريع إعادة استخدام تكيّفية مماثلة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_cultural_heritage_premium_or_discount_level', field_type: 'str', label_ar: 'مستوى علاوة أو خصم التراث الثقافي', options: [{value:'significant_premium',label_ar:'علاوة كبيرة'},{value:'moderate_premium',label_ar:'علاوة متوسطة'},{value:'neutral',label_ar:'محايد'},{value:'moderate_discount',label_ar:'خصم متوسط'},{value:'significant_discount',label_ar:'خصم كبير'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_tourism_demand_level', field_type: 'str', label_ar: 'مستوى الطلب السياحي', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_cultural_district_demand_level', field_type: 'str', label_ar: 'مستوى طلب الحي الثقافي', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_grant_funding_potential_level', field_type: 'str', label_ar: 'مستوى إمكانية تمويل المنح', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_liquidity_risk_level', field_type: 'str', label_ar: 'مستوى مخاطر السيولة', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_market_evidence_quality', field_type: 'str', label_ar: 'جودة الأدلة السوقية', options: [{value:'strong',label_ar:'قوية'},{value:'moderate',label_ar:'متوسطة'},{value:'weak',label_ar:'ضعيفة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_m_market_notes', field_type: 'textarea', label_ar: 'ملاحظات السوق', valid_values: [], ui_required: false },
+            ]},
+            { section: 'N', title_ar: 'غرض التقييم وتوجيه المنهجية', color: '#1d4ed8', desc_ar: 'توجيه محلي فقط — لا يُطبَّق تلقائياً على تقرير التقييم', fields: [
+                { name: 'ach_supp_n_mortgage_lending_methodology', field_type: 'str', label_ar: 'منهجية الرهن العقاري', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_mortgage_lending_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل الرهن العقاري (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_mortgage_lending_note', field_type: 'str', label_ar: 'ملاحظة الرهن العقاري', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_sale_purchase_methodology', field_type: 'str', label_ar: 'منهجية البيع والشراء', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_sale_purchase_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل البيع والشراء (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_sale_purchase_note', field_type: 'str', label_ar: 'ملاحظة البيع والشراء', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_insurance_methodology', field_type: 'str', label_ar: 'منهجية التأمين', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_insurance_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل التأمين (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_insurance_note', field_type: 'str', label_ar: 'ملاحظة التأمين', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_ifrs_fair_value_methodology', field_type: 'str', label_ar: 'منهجية القيمة العادلة IFRS', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_ifrs_fair_value_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل القيمة العادلة IFRS (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_ifrs_fair_value_note', field_type: 'str', label_ar: 'ملاحظة القيمة العادلة IFRS', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_taxation_methodology', field_type: 'str', label_ar: 'منهجية الضريبة', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_taxation_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل الضريبة (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_taxation_note', field_type: 'str', label_ar: 'ملاحظة الضريبة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_liquidation_methodology', field_type: 'str', label_ar: 'منهجية التصفية', options: _ACH_METHODOLOGY_OPTS, valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_liquidation_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل التصفية (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_liquidation_note', field_type: 'str', label_ar: 'ملاحظة التصفية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_heritage_conservation_review_methodology', field_type: 'str', label_ar: 'منهجية مراجعة صون التراث', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_heritage_conservation_review_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل مراجعة صون التراث (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_heritage_conservation_review_note', field_type: 'str', label_ar: 'ملاحظة مراجعة صون التراث', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_adaptive_reuse_investment_methodology', field_type: 'str', label_ar: 'منهجية استثمار إعادة الاستخدام التكيّفي', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_adaptive_reuse_investment_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل استثمار إعادة الاستخدام التكيّفي (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_adaptive_reuse_investment_note', field_type: 'str', label_ar: 'ملاحظة استثمار إعادة الاستخدام التكيّفي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_cultural_value_review_methodology', field_type: 'str', label_ar: 'منهجية مراجعة القيمة الثقافية', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_cultural_value_review_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل مراجعة القيمة الثقافية (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_cultural_value_review_note', field_type: 'str', label_ar: 'ملاحظة مراجعة القيمة الثقافية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_grant_or_public_funding_methodology', field_type: 'str', label_ar: 'منهجية المنح أو التمويل العام', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_grant_or_public_funding_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل المنح أو التمويل العام (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_grant_or_public_funding_note', field_type: 'str', label_ar: 'ملاحظة المنح أو التمويل العام', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_expropriation_compensation_methodology', field_type: 'str', label_ar: 'منهجية تعويض الاستملاك', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_expropriation_compensation_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل تعويض الاستملاك (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_expropriation_compensation_note', field_type: 'str', label_ar: 'ملاحظة تعويض الاستملاك', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_litigation_dispute_methodology', field_type: 'str', label_ar: 'منهجية التقاضي والنزاعات', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_litigation_dispute_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل التقاضي والنزاعات (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_litigation_dispute_note', field_type: 'str', label_ar: 'ملاحظة التقاضي والنزاعات', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_impairment_testing_methodology', field_type: 'str', label_ar: 'منهجية اختبار الانخفاض في القيمة', options: _ACH_METHODOLOGY_OPTS, help_ar: 'غرض محلي إرشادي فقط — لا يُرسل للتقرير', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_impairment_testing_adjustment_pct', field_type: 'float', label_ar: 'نسبة تعديل اختبار الانخفاض في القيمة (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_n_impairment_testing_note', field_type: 'str', label_ar: 'ملاحظة اختبار الانخفاض في القيمة', valid_values: [], ui_required: false },
+            ]},
+            { section: 'O', title_ar: 'التأمين وتقييم المخاطر', color: '#dc2626', fields: [
+                { name: 'ach_supp_o_insurance_availability_status', field_type: 'str', label_ar: 'وضع توافر التأمين', options: [{value:'available',label_ar:'متاح'},{value:'limited',label_ar:'محدود'},{value:'not_available',label_ar:'غير متاح'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_heritage_or_cultural_asset_insurance_available', field_type: 'bool', label_ar: 'توافر تأمين على الأصل التراثي أو الثقافي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_replacement_cost_insurable_basis_available', field_type: 'bool', label_ar: 'أساس التأمين على تكلفة الاستبدال متاح', valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_fire_risk_level', field_type: 'str', label_ar: 'مستوى خطر الحريق', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_flood_risk_level', field_type: 'str', label_ar: 'مستوى خطر الفيضان', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_seismic_risk_level', field_type: 'str', label_ar: 'مستوى الخطر الزلزالي', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_vandalism_risk_level', field_type: 'str', label_ar: 'مستوى خطر التخريب', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_neglect_risk_level', field_type: 'str', label_ar: 'مستوى خطر الإهمال', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_development_pressure_risk_level', field_type: 'str', label_ar: 'مستوى خطر الضغط التطويري', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_climate_deterioration_risk_level', field_type: 'str', label_ar: 'مستوى خطر التدهور المناخي', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_loss_of_authenticity_risk_level', field_type: 'str', label_ar: 'مستوى خطر فقدان الأصالة', options: [{value:'high',label_ar:'مرتفع'},{value:'moderate',label_ar:'متوسط'},{value:'low',label_ar:'منخفض'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_insurance_exclusions_summary', field_type: 'textarea', label_ar: 'ملخص استثناءات التأمين', valid_values: [], ui_required: false },
+                { name: 'ach_supp_o_risk_notes', field_type: 'textarea', label_ar: 'ملاحظات المخاطر', valid_values: [], ui_required: false },
+            ]},
+            { section: 'P', title_ar: 'الاستدامة والأداء البيئي', color: '#059669', fields: [
+                { name: 'ach_supp_p_energy_efficiency_rating', field_type: 'str', label_ar: 'تصنيف كفاءة الطاقة', options: [{value:'a_plus',label_ar:'A+'},{value:'a',label_ar:'A'},{value:'b',label_ar:'B'},{value:'c',label_ar:'C'},{value:'d',label_ar:'D'},{value:'e',label_ar:'E'},{value:'f',label_ar:'F'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_electricity_consumption_annual_kwh', field_type: 'float', label_ar: 'استهلاك الكهرباء السنوي (كيلوواط/ساعة)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_water_consumption_annual_m3', field_type: 'float', label_ar: 'استهلاك المياه السنوي (م³)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_heritage_compatible_energy_upgrade_available', field_type: 'bool', label_ar: 'توافر ترقية طاقة متوافقة مع التراث', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_insulation_upgrade_possible', field_type: 'bool', label_ar: 'ترقية العزل ممكنة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_solar_panels_allowed', field_type: 'bool', label_ar: 'الألواح الشمسية مسموح بها', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_led_lighting_available', field_type: 'bool', label_ar: 'إضاءة LED متاحة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_passive_cooling_features_available', field_type: 'bool', label_ar: 'توافر ميزات التبريد السلبي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_natural_ventilation_quality', field_type: 'str', label_ar: 'جودة التهوية الطبيعية', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_water_reuse_possible', field_type: 'bool', label_ar: 'إعادة استخدام المياه ممكنة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_embodied_carbon_preservation_benefit', field_type: 'str', label_ar: 'فائدة الحفظ على الكربون المجسَّد', options: [{value:'high',label_ar:'مرتفعة'},{value:'moderate',label_ar:'متوسطة'},{value:'low',label_ar:'منخفضة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_sustainability_features', field_type: 'checkbox_group', label_ar: 'ميزات الاستدامة', options: [{value:'rainwater_harvesting',label_ar:'جمع مياه الأمطار'},{value:'solar_thermal_panels',label_ar:'ألواح شمسية حرارية'},{value:'natural_daylighting',label_ar:'إضاءة طبيعية بالنهار'},{value:'passive_cooling_wind_catchers',label_ar:'تبريد سلبي بملتقطات الهواء'},{value:'traditional_courtyard_cooling',label_ar:'تبريد الفناء التقليدي'},{value:'green_roof_compatible',label_ar:'متوافق مع السقف الأخضر'},{value:'energy_monitoring_system',label_ar:'نظام مراقبة الطاقة'},{value:'water_recycling_system',label_ar:'نظام إعادة تدوير المياه'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_sustainability_value_impact_pct', field_type: 'float', label_ar: 'تأثير الاستدامة على القيمة (%)', valid_values: [], ui_required: false },
+                { name: 'ach_supp_p_sustainability_notes', field_type: 'textarea', label_ar: 'ملاحظات الاستدامة', valid_values: [], ui_required: false },
+            ]},
+            { section: 'Q', title_ar: 'التوثيق الرقمي والتسجيل', color: '#0f766e', fields: [
+                { name: 'ach_supp_q_measured_drawings_available', field_type: 'bool', label_ar: 'توافر رسومات مقاسة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_photographic_survey_available', field_type: 'bool', label_ar: 'توافر مسح فوتوغرافي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_3d_laser_scan_available', field_type: 'bool', label_ar: 'توافر مسح ليزري ثلاثي الأبعاد', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_drone_survey_available', field_type: 'bool', label_ar: 'توافر مسح بطائرة مسيّرة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_bim_model_available', field_type: 'bool', label_ar: 'توافر نموذج BIM', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_archival_research_available', field_type: 'bool', label_ar: 'توافر بحث أرشيفي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_oral_history_recording_available', field_type: 'bool', label_ar: 'توافر تسجيل تاريخ شفهي', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_material_analysis_report_available', field_type: 'bool', label_ar: 'توافر تقرير تحليل المواد', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_condition_survey_available', field_type: 'bool', label_ar: 'توافر مسح الحالة', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_significance_statement_available', field_type: 'bool', label_ar: 'توافر بيان الأهمية', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_conservation_method_statement_available', field_type: 'bool', label_ar: 'توافر بيان منهجية الصون', valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_digital_record_quality', field_type: 'str', label_ar: 'جودة السجل الرقمي', options: [{value:'excellent',label_ar:'ممتازة'},{value:'good',label_ar:'جيدة'},{value:'fair',label_ar:'مقبولة'},{value:'poor',label_ar:'ضعيفة'},{value:'unknown',label_ar:'غير محدد'}], valid_values: [], ui_required: false },
+                { name: 'ach_supp_q_digital_documentation_notes', field_type: 'textarea', label_ar: 'ملاحظات التوثيق الرقمي', valid_values: [], ui_required: false },
+            ]},
+            { section: 'R', title_ar: 'قائمة تحقق الوثائق', color: '#374151', fields: [
+                { name: 'ach_doc_supp_title_deed_copy', field_type: 'bool', label_ar: 'نسخة صك الملكية', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_heritage_listing_decision', field_type: 'bool', label_ar: 'قرار الإدراج في سجل التراث', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_conservation_management_plan', field_type: 'bool', label_ar: 'خطة إدارة الصون', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_structural_survey_report', field_type: 'bool', label_ar: 'تقرير المسح الإنشائي', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_condition_survey_report', field_type: 'bool', label_ar: 'تقرير مسح الحالة', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_measured_architectural_drawings', field_type: 'bool', label_ar: 'الرسومات المعمارية المقاسة', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_photographic_survey_report', field_type: 'bool', label_ar: 'تقرير المسح الفوتوغرافي', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_material_analysis_report', field_type: 'bool', label_ar: 'تقرير تحليل المواد', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_historical_archival_research', field_type: 'bool', label_ar: 'البحث الأرشيفي التاريخي', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_conservation_cost_estimates', field_type: 'bool', label_ar: 'تقديرات تكلفة الصون', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_income_and_revenue_projections', field_type: 'bool', label_ar: 'توقعات الدخل والإيرادات', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_environmental_impact_assessment', field_type: 'bool', label_ar: 'تقييم الأثر البيئي', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_planning_authority_approval_letter', field_type: 'bool', label_ar: 'خطاب موافقة هيئة التخطيط', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_cultural_authority_recognition_letter', field_type: 'bool', label_ar: 'خطاب اعتراف الهيئة الثقافية', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_insurance_policy_or_valuation', field_type: 'bool', label_ar: 'وثيقة التأمين أو التقييم', group: 'document', valid_values: [], ui_required: false },
+                { name: 'ach_doc_supp_adaptive_reuse_feasibility_study', field_type: 'bool', label_ar: 'دراسة جدوى إعادة الاستخدام التكيّفي', group: 'document', valid_values: [], ui_required: false },
+            ]},
+        ],
+        // ── End Phase 8ZZG — Architectural Cultural Heritage Detailed Supplemental ──
+
+        // ── End Phase 8ZZE — Under Construction Detailed Supplemental ──────────────────────
+        // ── End Phase 8ZZC — Intangible Asset Detailed Supplemental ──────────────────
+        // ── End Phase 8ZX — Heritage Property Detailed Supplemental ───────────────
     };
 
     function _renderSupplemental(registryCode) {
@@ -26132,6 +26431,8 @@ var _PROFILE_FORM_SCHEMA = {
             ? 'متطلبات تقييم مخزن تبريد — تقييم تفصيلي'
             : registryCode === 'wellness_resort'
             ? 'متطلبات تقييم منتجع استشفاء علاجي — تقييم تفصيلي'
+            : registryCode === 'architectural_cultural_heritage_detailed'
+            ? 'متطلبات تقييم موروث ثقافي معماري — تقييم تفصيلي'
             : registryCode === 'heritage_property_detailed'
             ? 'متطلبات تقييم عقار تراثي / تاريخي — تقييم تفصيلي'
             : registryCode === 'timberland'
@@ -26151,7 +26452,7 @@ var _PROFILE_FORM_SCHEMA = {
             : registryCode === 'under_construction'
             ? 'متطلبات تقييم استثمارات تحت الإنشاء — تقييم تفصيلي'
             : 'متطلبات تقييم الوحدة السكنية — شقة / فيلا';
-        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well' || registryCode === 'serviced_apartments' || registryCode === 'floating_hotel' || registryCode === 'airport' || registryCode === 'seaport' || registryCode === 'marina' || registryCode === 'data_center' || registryCode === 'cold_storage' || registryCode === 'wellness_resort' || registryCode === 'heritage_property_detailed' || registryCode === 'timberland' || registryCode === 'zoo_safari' || registryCode === 'littoral_rights' || registryCode === 'riparian_rights' || registryCode === 'waterway_easement' || registryCode === 'intangible' || registryCode === 'partial_interest' || registryCode === 'under_construction')
+        var subtext = (registryCode === 'building_full' || registryCode === 'existing_building_detailed' || registryCode === 'hotel_resort_detailed' || registryCode === 'industrial_logistics_facility_detailed' || registryCode === 'retail_shop_detailed' || registryCode === 'healthcare_facility' || registryCode === 'prefabricated_factory' || registryCode === 'educational_asset' || registryCode === 'mine' || registryCode === 'water_well' || registryCode === 'serviced_apartments' || registryCode === 'floating_hotel' || registryCode === 'airport' || registryCode === 'seaport' || registryCode === 'marina' || registryCode === 'data_center' || registryCode === 'cold_storage' || registryCode === 'wellness_resort' || registryCode === 'heritage_property_detailed' || registryCode === 'timberland' || registryCode === 'zoo_safari' || registryCode === 'littoral_rights' || registryCode === 'riparian_rights' || registryCode === 'waterway_easement' || registryCode === 'intangible' || registryCode === 'partial_interest' || registryCode === 'under_construction' || registryCode === 'architectural_cultural_heritage_detailed')
             ? 'الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.'
             : 'الحقول أعلاه من سجل المتطلبات الأساسي. الحقول التالية بيانات تفصيلية تكميلية — إدخال محلي لا يُرسل للتقرير حالياً.';
         var html = '<div id="es-req-supp-header" style="border-top:2px solid #374151;margin-top:14px;padding-top:10px;">';

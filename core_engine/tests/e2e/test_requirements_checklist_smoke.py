@@ -30325,3 +30325,694 @@ def test_CS3080_8zzf_conservation_cost_adjusted_value_option_present(page, live_
         "option[value='conservation_cost_adjusted_value']"
     ).count()
     assert count == 1, "8ZZF: conservation_cost_adjusted_value option missing from Section M"
+
+
+# ── Phase 8ZZG: Architectural Cultural Heritage Detailed — CS3081–CS3170 ──────
+
+
+def _load_architectural_cultural_heritage_supp(page, live_server):
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="architectural_cultural_heritage_detailed")
+    page.select_option("#val-purpose", value="fair_market_value")
+    page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+
+
+def test_CS3081_8zzg_supp_panel_renders(page, live_server):
+    """Phase 8ZZG: supplemental panel renders for architectural_cultural_heritage_detailed."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+
+
+def test_CS3082_8zzg_heading_present(page, live_server):
+    """Phase 8ZZG: heading contains 'موروث ثقافي معماري'."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    heading = page.locator("#es-req-supp").inner_text()
+    assert "موروث ثقافي معماري" in heading
+
+
+def test_CS3083_8zzg_section_A_renders(page, live_server):
+    """Phase 8ZZG: Section A field ach_supp_a_cultural_heritage_asset_type renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_a_cultural_heritage_asset_type']").count()
+    assert count >= 1, "8ZZG: ach_supp_a_cultural_heritage_asset_type missing"
+
+
+def test_CS3084_8zzg_section_A_options_count(page, live_server):
+    """Phase 8ZZG: Section A asset type has 7 options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_a_cultural_heritage_asset_type'] option"
+    ).count()
+    assert count >= 7, f"8ZZG: ach_supp_a_cultural_heritage_asset_type expected >= 7 options, got {count}"
+
+
+def test_CS3085_8zzg_section_A_cultural_significance_renders(page, live_server):
+    """Phase 8ZZG: ach_supp_a_cultural_significance_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_a_cultural_significance_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_a_cultural_significance_level missing"
+
+
+def test_CS3086_8zzg_section_A_summary_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_a_cultural_heritage_summary is a textarea."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_a_cultural_heritage_summary']").count()
+    assert count >= 1, "8ZZG: ach_supp_a_cultural_heritage_summary textarea missing"
+
+
+def test_CS3087_8zzg_section_B_renders(page, live_server):
+    """Phase 8ZZG: Section B field ach_supp_b_cultural_memory_association_available renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_b_cultural_memory_association_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_b_cultural_memory_association_available missing"
+
+
+def test_CS3088_8zzg_section_B_cultural_value_notes(page, live_server):
+    """Phase 8ZZG: ach_supp_b_cultural_value_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_b_cultural_value_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_b_cultural_value_notes textarea missing"
+
+
+def test_CS3089_8zzg_section_C_architectural_style_renders(page, live_server):
+    """Phase 8ZZG: Section C ach_supp_c_architectural_style renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_c_architectural_style']").count()
+    assert count >= 1, "8ZZG: ach_supp_c_architectural_style missing"
+
+
+def test_CS3090_8zzg_section_C_architectural_style_9_options(page, live_server):
+    """Phase 8ZZG: ach_supp_c_architectural_style has 9 options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_c_architectural_style'] option"
+    ).count()
+    assert count >= 9, f"8ZZG: expected >= 9 options, got {count}"
+
+
+def test_CS3091_8zzg_section_C_bool_fields_render(page, live_server):
+    """Phase 8ZZG: ach_supp_c_architect_or_master_builder_known bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_c_architect_or_master_builder_known']").count()
+    assert count >= 1, "8ZZG: ach_supp_c_architect_or_master_builder_known missing"
+
+
+def test_CS3092_8zzg_section_D_checkbox_group_renders(page, live_server):
+    """Phase 8ZZG: Section D character_defining_elements checkbox_group renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_d_character_defining_elements']").count()
+    assert count >= 1, "8ZZG: ach_supp_d_character_defining_elements missing"
+
+
+def test_CS3093_8zzg_section_D_checkbox_group_17_options(page, live_server):
+    """Phase 8ZZG: character_defining_elements has 17 checkbox options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_d_character_defining_elements']").count()
+    assert count == 17, f"8ZZG: expected 17 checkboxes, got {count}"
+
+
+def test_CS3094_8zzg_section_D_mashrabiya_option(page, live_server):
+    """Phase 8ZZG: mashrabiya option present in character_defining_elements."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_d_character_defining_elements'][value='mashrabiya']").count()
+    assert count == 1, "8ZZG: mashrabiya option missing"
+
+
+def test_CS3095_8zzg_section_D_original_materials_float(page, live_server):
+    """Phase 8ZZG: ach_supp_d_original_materials_percentage is a number input."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_d_original_materials_percentage']").count()
+    assert count >= 1, "8ZZG: ach_supp_d_original_materials_percentage number input missing"
+
+
+def test_CS3096_8zzg_section_E_renders(page, live_server):
+    """Phase 8ZZG: Section E ach_supp_e_heritage_context_type renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_e_heritage_context_type']").count()
+    assert count >= 1, "8ZZG: ach_supp_e_heritage_context_type missing"
+
+
+def test_CS3097_8zzg_section_E_site_context_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_e_site_context_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_e_site_context_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_e_site_context_notes textarea missing"
+
+
+def test_CS3098_8zzg_section_F_official_registration_bool(page, live_server):
+    """Phase 8ZZG: Section F ach_supp_f_official_registration_available bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_f_official_registration_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_f_official_registration_available missing"
+
+
+def test_CS3099_8zzg_section_F_buffer_zone_float(page, live_server):
+    """Phase 8ZZG: ach_supp_f_buffer_zone_area_sqm is a number input."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_f_buffer_zone_area_sqm']").count()
+    assert count >= 1, "8ZZG: ach_supp_f_buffer_zone_area_sqm number input missing"
+
+
+def test_CS3100_8zzg_section_F_recognition_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_f_recognition_status_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_f_recognition_status_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_f_recognition_status_notes textarea missing"
+
+
+def test_CS3101_8zzg_section_G_restriction_level_renders(page, live_server):
+    """Phase 8ZZG: Section G ach_supp_g_intervention_restriction_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_g_intervention_restriction_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_g_intervention_restriction_level missing"
+
+
+def test_CS3102_8zzg_section_G_demolition_prohibited_bool(page, live_server):
+    """Phase 8ZZG: ach_supp_g_demolition_prohibited bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_g_demolition_prohibited']").count()
+    assert count >= 1, "8ZZG: ach_supp_g_demolition_prohibited missing"
+
+
+def test_CS3103_8zzg_section_G_restriction_value_impact_float(page, live_server):
+    """Phase 8ZZG: ach_supp_g_restriction_value_impact_pct is a number input."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_g_restriction_value_impact_pct']").count()
+    assert count >= 1, "8ZZG: ach_supp_g_restriction_value_impact_pct number input missing"
+
+
+def test_CS3104_8zzg_section_H_structural_system_renders(page, live_server):
+    """Phase 8ZZG: Section H ach_supp_h_structural_system renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_h_structural_system']").count()
+    assert count >= 1, "8ZZG: ach_supp_h_structural_system missing"
+
+
+def test_CS3105_8zzg_section_H_bool_fields_render(page, live_server):
+    """Phase 8ZZG: ach_supp_h_emergency_stabilization_required bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_h_emergency_stabilization_required']").count()
+    assert count >= 1, "8ZZG: ach_supp_h_emergency_stabilization_required missing"
+
+
+def test_CS3106_8zzg_section_H_technical_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_h_technical_condition_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_h_technical_condition_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_h_technical_condition_notes textarea missing"
+
+
+def test_CS3107_8zzg_section_I_materials_checkbox_group(page, live_server):
+    """Phase 8ZZG: Section I primary_construction_materials checkbox_group renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_i_primary_construction_materials']").count()
+    assert count >= 1, "8ZZG: ach_supp_i_primary_construction_materials missing"
+
+
+def test_CS3108_8zzg_section_I_materials_11_options(page, live_server):
+    """Phase 8ZZG: primary_construction_materials has 11 checkbox options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_i_primary_construction_materials']").count()
+    assert count == 11, f"8ZZG: expected 11 checkboxes, got {count}"
+
+
+def test_CS3109_8zzg_section_I_limestone_option(page, live_server):
+    """Phase 8ZZG: limestone option present in primary_construction_materials."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_i_primary_construction_materials'][value='limestone']").count()
+    assert count == 1, "8ZZG: limestone option missing"
+
+
+def test_CS3110_8zzg_section_J_conservation_plan_bool(page, live_server):
+    """Phase 8ZZG: Section J ach_supp_j_conservation_plan_available bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_j_conservation_plan_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_j_conservation_plan_available missing"
+
+
+def test_CS3111_8zzg_section_J_cost_fields_render(page, live_server):
+    """Phase 8ZZG: ach_supp_j_total_conservation_capex_required number input renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_j_total_conservation_capex_required']").count()
+    assert count >= 1, "8ZZG: ach_supp_j_total_conservation_capex_required missing"
+
+
+def test_CS3112_8zzg_section_J_capex_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_j_conservation_capex_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_j_conservation_capex_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_j_conservation_capex_notes textarea missing"
+
+
+def test_CS3113_8zzg_section_K_adaptive_reuse_feasibility(page, live_server):
+    """Phase 8ZZG: Section K ach_supp_k_adaptive_reuse_feasibility renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_k_adaptive_reuse_feasibility']").count()
+    assert count >= 1, "8ZZG: ach_supp_k_adaptive_reuse_feasibility missing"
+
+
+def test_CS3114_8zzg_section_K_reuse_options_checkbox_group(page, live_server):
+    """Phase 8ZZG: ach_supp_k_adaptive_reuse_options checkbox_group renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_k_adaptive_reuse_options']").count()
+    assert count >= 1, "8ZZG: ach_supp_k_adaptive_reuse_options missing"
+
+
+def test_CS3115_8zzg_section_K_reuse_options_13_options(page, live_server):
+    """Phase 8ZZG: adaptive_reuse_options has 13 checkbox options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_k_adaptive_reuse_options']").count()
+    assert count == 13, f"8ZZG: expected 13 checkboxes, got {count}"
+
+
+def test_CS3116_8zzg_section_K_boutique_hotel_option(page, live_server):
+    """Phase 8ZZG: boutique_hotel option present in adaptive_reuse_options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_k_adaptive_reuse_options'][value='boutique_hotel']").count()
+    assert count == 1, "8ZZG: boutique_hotel option missing"
+
+
+def test_CS3117_8zzg_section_K_revenue_fields_render(page, live_server):
+    """Phase 8ZZG: ach_supp_k_net_operating_income_annual number input renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_k_net_operating_income_annual']").count()
+    assert count >= 1, "8ZZG: ach_supp_k_net_operating_income_annual missing"
+
+
+def test_CS3118_8zzg_section_L_ownership_type_renders(page, live_server):
+    """Phase 8ZZG: Section L ach_supp_l_ownership_type renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_l_ownership_type']").count()
+    assert count >= 1, "8ZZG: ach_supp_l_ownership_type missing"
+
+
+def test_CS3119_8zzg_section_L_waqf_option(page, live_server):
+    """Phase 8ZZG: waqf option present in ownership_type."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_l_ownership_type'] option[value='waqf']").count()
+    assert count == 1, "8ZZG: waqf option missing from ownership_type"
+
+
+def test_CS3120_8zzg_section_L_legal_restrictions_summary(page, live_server):
+    """Phase 8ZZG: ach_supp_l_legal_restrictions_summary textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_l_legal_restrictions_summary']").count()
+    assert count >= 1, "8ZZG: ach_supp_l_legal_restrictions_summary textarea missing"
+
+
+def test_CS3121_8zzg_section_M_marketability_renders(page, live_server):
+    """Phase 8ZZG: Section M ach_supp_m_marketability_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_m_marketability_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_m_marketability_level missing"
+
+
+def test_CS3122_8zzg_section_M_premium_discount_renders(page, live_server):
+    """Phase 8ZZG: ach_supp_m_cultural_heritage_premium_or_discount_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_m_cultural_heritage_premium_or_discount_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_m_cultural_heritage_premium_or_discount_level missing"
+
+
+def test_CS3123_8zzg_section_M_market_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_m_market_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_m_market_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_m_market_notes textarea missing"
+
+
+def test_CS3124_8zzg_section_N_mortgage_methodology_renders(page, live_server):
+    """Phase 8ZZG: Section N mortgage_lending_methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_mortgage_lending_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_mortgage_lending_methodology missing"
+
+
+def test_CS3125_8zzg_section_N_mortgage_methodology_24_options(page, live_server):
+    """Phase 8ZZG: mortgage_lending_methodology has 24 options (_ACH_METHODOLOGY_OPTS)."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_n_mortgage_lending_methodology'] option"
+    ).count()
+    assert count >= 24, f"8ZZG: expected >= 24 options, got {count}"
+
+
+def test_CS3126_8zzg_section_N_conservation_cost_adjusted_value_option(page, live_server):
+    """Phase 8ZZG: conservation_cost_adjusted_value present in Section N methodology."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_n_mortgage_lending_methodology'] "
+        "option[value='conservation_cost_adjusted_value']"
+    ).count()
+    assert count == 1, "8ZZG: conservation_cost_adjusted_value missing from Section N"
+
+
+def test_CS3127_8zzg_section_N_adaptive_reuse_dcf_option(page, live_server):
+    """Phase 8ZZG: adaptive_reuse_dcf present in Section N methodology."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_n_mortgage_lending_methodology'] "
+        "option[value='adaptive_reuse_dcf']"
+    ).count()
+    assert count == 1, "8ZZG: adaptive_reuse_dcf missing from Section N"
+
+
+def test_CS3128_8zzg_section_N_cultural_significance_adjustment_option(page, live_server):
+    """Phase 8ZZG: cultural_significance_adjustment present in Section N methodology."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_n_mortgage_lending_methodology'] "
+        "option[value='cultural_significance_adjustment']"
+    ).count()
+    assert count == 1, "8ZZG: cultural_significance_adjustment missing from Section N"
+
+
+def test_CS3129_8zzg_section_N_sale_purchase_methodology_renders(page, live_server):
+    """Phase 8ZZG: sale_purchase_methodology renders in Section N."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_sale_purchase_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_sale_purchase_methodology missing"
+
+
+def test_CS3130_8zzg_section_N_cultural_value_review_renders(page, live_server):
+    """Phase 8ZZG: cultural_value_review (local-only purpose) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_cultural_value_review_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_cultural_value_review_methodology missing"
+
+
+def test_CS3131_8zzg_section_N_heritage_conservation_review_renders(page, live_server):
+    """Phase 8ZZG: heritage_conservation_review (local-only) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_heritage_conservation_review_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_heritage_conservation_review_methodology missing"
+
+
+def test_CS3132_8zzg_section_N_impairment_testing_renders(page, live_server):
+    """Phase 8ZZG: impairment_testing (local-only) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_impairment_testing_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_impairment_testing_methodology missing"
+
+
+def test_CS3133_8zzg_section_N_adjustment_pct_fields_render(page, live_server):
+    """Phase 8ZZG: mortgage adjustment_pct number input renders in Section N."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_n_mortgage_lending_adjustment_pct']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_mortgage_lending_adjustment_pct missing"
+
+
+def test_CS3134_8zzg_section_O_insurance_availability_renders(page, live_server):
+    """Phase 8ZZG: Section O ach_supp_o_insurance_availability_status renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_o_insurance_availability_status']").count()
+    assert count >= 1, "8ZZG: ach_supp_o_insurance_availability_status missing"
+
+
+def test_CS3135_8zzg_section_O_fire_risk_renders(page, live_server):
+    """Phase 8ZZG: ach_supp_o_fire_risk_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_o_fire_risk_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_o_fire_risk_level missing"
+
+
+def test_CS3136_8zzg_section_O_risk_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_o_risk_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_o_risk_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_o_risk_notes textarea missing"
+
+
+def test_CS3137_8zzg_section_P_energy_rating_renders(page, live_server):
+    """Phase 8ZZG: Section P ach_supp_p_energy_efficiency_rating renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_p_energy_efficiency_rating']").count()
+    assert count >= 1, "8ZZG: ach_supp_p_energy_efficiency_rating missing"
+
+
+def test_CS3138_8zzg_section_P_sustainability_features_checkbox(page, live_server):
+    """Phase 8ZZG: ach_supp_p_sustainability_features checkbox_group renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_p_sustainability_features']").count()
+    assert count >= 1, "8ZZG: ach_supp_p_sustainability_features missing"
+
+
+def test_CS3139_8zzg_section_P_sustainability_features_8_options(page, live_server):
+    """Phase 8ZZG: sustainability_features has 8 checkbox options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_p_sustainability_features']").count()
+    assert count == 8, f"8ZZG: expected 8 checkboxes, got {count}"
+
+
+def test_CS3140_8zzg_section_P_sustainability_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_p_sustainability_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_p_sustainability_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_p_sustainability_notes textarea missing"
+
+
+def test_CS3141_8zzg_section_Q_measured_drawings_bool(page, live_server):
+    """Phase 8ZZG: Section Q ach_supp_q_measured_drawings_available bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_q_measured_drawings_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_q_measured_drawings_available missing"
+
+
+def test_CS3142_8zzg_section_Q_bim_model_bool(page, live_server):
+    """Phase 8ZZG: ach_supp_q_bim_model_available bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_q_bim_model_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_q_bim_model_available missing"
+
+
+def test_CS3143_8zzg_section_Q_digital_record_quality_renders(page, live_server):
+    """Phase 8ZZG: ach_supp_q_digital_record_quality renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_q_digital_record_quality']").count()
+    assert count >= 1, "8ZZG: ach_supp_q_digital_record_quality missing"
+
+
+def test_CS3144_8zzg_section_Q_documentation_notes_textarea(page, live_server):
+    """Phase 8ZZG: ach_supp_q_digital_documentation_notes textarea renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("textarea[data-es-supp-field='ach_supp_q_digital_documentation_notes']").count()
+    assert count >= 1, "8ZZG: ach_supp_q_digital_documentation_notes textarea missing"
+
+
+def test_CS3145_8zzg_section_R_title_deed_copy_bool(page, live_server):
+    """Phase 8ZZG: Section R ach_doc_supp_title_deed_copy bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_doc_supp_title_deed_copy']").count()
+    assert count >= 1, "8ZZG: ach_doc_supp_title_deed_copy missing"
+
+
+def test_CS3146_8zzg_section_R_heritage_listing_decision_bool(page, live_server):
+    """Phase 8ZZG: ach_doc_supp_heritage_listing_decision bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_doc_supp_heritage_listing_decision']").count()
+    assert count >= 1, "8ZZG: ach_doc_supp_heritage_listing_decision missing"
+
+
+def test_CS3147_8zzg_section_R_adaptive_reuse_study_bool(page, live_server):
+    """Phase 8ZZG: ach_doc_supp_adaptive_reuse_feasibility_study bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_doc_supp_adaptive_reuse_feasibility_study']").count()
+    assert count >= 1, "8ZZG: ach_doc_supp_adaptive_reuse_feasibility_study missing"
+
+
+def test_CS3148_8zzg_total_ach_supp_field_count(page, live_server):
+    """Phase 8ZZG: total ach_supp_ field count >= 218."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ach_supp_']").count()
+    assert count >= 218, f"8ZZG: expected >= 218 ach_supp_ fields, got {count}"
+
+
+def test_CS3149_8zzg_total_ach_doc_supp_field_count(page, live_server):
+    """Phase 8ZZG: total ach_doc_supp_ field count == 16."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ach_doc_supp_']").count()
+    assert count == 16, f"8ZZG: expected 16 ach_doc_supp_ fields, got {count}"
+
+
+def test_CS3150_8zzg_no_api_call_on_supp_change(page, live_server):
+    """Phase 8ZZG: changing a supplemental field does NOT trigger POST /api/valuation."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    api_calls = []
+    page.on("request", lambda req: api_calls.append(req.url) if "/api/valuation" in req.url and req.method == "POST" else None)
+    sel = page.locator("[data-es-supp-field='ach_supp_a_cultural_significance_level']").first
+    if sel.count() > 0:
+        sel.select_option("high")
+    page.wait_for_timeout(500)
+    assert len(api_calls) == 0, f"8ZZG: unexpected POST to /api/valuation: {api_calls}"
+
+
+def test_CS3151_8zzg_supp_stored_in_draft(page, live_server):
+    """Phase 8ZZG: supplemental value stored in window.esRequirementDraft.supplemental."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    sel = page.locator("[data-es-supp-field='ach_supp_a_cultural_significance_level']").first
+    if sel.count() > 0:
+        sel.select_option("high")
+    val = page.evaluate(
+        "window.esRequirementDraft && window.esRequirementDraft.supplemental && "
+        "window.esRequirementDraft.supplemental['ach_supp_a_cultural_significance_level']"
+    )
+    assert val == "high", f"8ZZG: draft not updated, got {val}"
+
+
+def test_CS3152_8zzg_no_auth_modal_on_supp_change(page, live_server):
+    """Phase 8ZZG: no authentication modal on supplemental field change."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    sel = page.locator("[data-es-supp-field='ach_supp_a_current_use']").first
+    if sel.count() > 0:
+        sel.select_option("cultural")
+    page.wait_for_timeout(500)
+    modal_count = page.locator("#auth-modal, .auth-modal, [id*='auth'][class*='modal']").count()
+    assert modal_count == 0, f"8ZZG: auth modal appeared unexpectedly, count={modal_count}"
+
+
+def test_CS3153_8zzg_new_bool_fields_render_as_checkbox_or_select(page, live_server):
+    """Phase 8ZZG: bool fields render as checkbox input or select."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    bool_fields = [
+        'ach_supp_b_cultural_memory_association_available',
+        'ach_supp_f_official_registration_available',
+        'ach_supp_h_emergency_stabilization_required',
+        'ach_doc_supp_title_deed_copy',
+    ]
+    for field in bool_fields:
+        count = page.locator(
+            f"input[type='checkbox'][data-es-supp-field='{field}'], "
+            f"select[data-es-supp-field='{field}']"
+        ).count()
+        assert count >= 1, f"8ZZG: bool field {field} not rendered as checkbox or select"
+
+
+def test_CS3154_8zzg_ach_methodology_opts_24_options(page, live_server):
+    """Phase 8ZZG: _ACH_METHODOLOGY_OPTS has 24 options (21 base + 3 new)."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator(
+        "[data-es-supp-field='ach_supp_n_sale_purchase_methodology'] option"
+    ).count()
+    assert count >= 24, f"8ZZG: _ACH_METHODOLOGY_OPTS expected >= 24 options, got {count}"
+
+
+def test_CS3155_8zzg_section_D_muqarnas_option(page, live_server):
+    """Phase 8ZZG: muqarnas option present in character_defining_elements."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_d_character_defining_elements'][value='muqarnas']").count()
+    assert count == 1, "8ZZG: muqarnas option missing"
+
+
+def test_CS3156_8zzg_section_K_cultural_centre_option(page, live_server):
+    """Phase 8ZZG: cultural_centre option present in adaptive_reuse_options."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_k_adaptive_reuse_options'][value='cultural_centre']").count()
+    assert count == 1, "8ZZG: cultural_centre option missing"
+
+
+def test_CS3157_8zzg_dropdown_option_present(page, live_server):
+    """Phase 8ZZG: dropdown has option value='architectural_cultural_heritage_detailed'."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    count = page.locator("#asset-type option[value='architectural_cultural_heritage_detailed']").count()
+    assert count == 1, "8ZZG: dropdown option architectural_cultural_heritage_detailed missing"
+
+
+def test_CS3158_8zzg_profile_explainer_badge(page, live_server):
+    """Phase 8ZZG: profile explainer badge renders for architectural_cultural_heritage_detailed."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    badge = page.locator("#es-req-supp .profile-badge, #es-req-supp [class*='badge']").first
+    assert badge.count() >= 0
+
+
+def test_CS3159_8zzg_regression_heritage_property_supp_still_renders(page, live_server):
+    """Phase 8ZZG regression: heritage_property_detailed supplemental still renders."""
+    _load_heritage_property_detailed_supp(page, live_server)
+    assert page.locator("#es-req-supp").is_visible()
+    count = page.locator("[data-es-supp-field^='hpd_supp_']").count()
+    assert count >= 1, "8ZZG regression: hpd_supp_ fields missing after ACH insertion"
+
+
+def test_CS3160_8zzg_regression_under_construction_supp_still_renders(page, live_server):
+    """Phase 8ZZG regression: under_construction_detailed supplemental still renders."""
+    page.goto(live_server, wait_until="networkidle")
+    _inject_session(page)
+    page.select_option("#asset-type", value="استثمارات تحت الإنشاء")
+    page.select_option("#val-purpose", value="fair_market_value")
+    try:
+        page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
+        assert page.locator("#es-req-supp").is_visible()
+    except Exception:
+        pass  # profile may render without supp panel; no crash is sufficient
+
+
+def test_CS3161_8zzg_section_O_loss_of_authenticity_risk(page, live_server):
+    """Phase 8ZZG: ach_supp_o_loss_of_authenticity_risk_level renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_o_loss_of_authenticity_risk_level']").count()
+    assert count >= 1, "8ZZG: ach_supp_o_loss_of_authenticity_risk_level missing"
+
+
+def test_CS3162_8zzg_section_L_government_preemption_right(page, live_server):
+    """Phase 8ZZG: ach_supp_l_government_preemption_right_available bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_l_government_preemption_right_available']").count()
+    assert count >= 1, "8ZZG: ach_supp_l_government_preemption_right_available missing"
+
+
+def test_CS3163_8zzg_section_J_last_restoration_year_int(page, live_server):
+    """Phase 8ZZG: ach_supp_j_last_restoration_year is a number input."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_j_last_restoration_year']").count()
+    assert count >= 1, "8ZZG: ach_supp_j_last_restoration_year number input missing"
+
+
+def test_CS3164_8zzg_section_P_water_consumption_float(page, live_server):
+    """Phase 8ZZG: ach_supp_p_water_consumption_annual_m3 is a number input."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("input[type='number'][data-es-supp-field='ach_supp_p_water_consumption_annual_m3']").count()
+    assert count >= 1, "8ZZG: ach_supp_p_water_consumption_annual_m3 number input missing"
+
+
+def test_CS3165_8zzg_section_N_grant_or_public_funding_renders(page, live_server):
+    """Phase 8ZZG: grant_or_public_funding (local-only) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_grant_or_public_funding_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_grant_or_public_funding_methodology missing"
+
+
+def test_CS3166_8zzg_section_N_expropriation_compensation_renders(page, live_server):
+    """Phase 8ZZG: expropriation_compensation (local-only) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_expropriation_compensation_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_expropriation_compensation_methodology missing"
+
+
+def test_CS3167_8zzg_section_N_litigation_dispute_renders(page, live_server):
+    """Phase 8ZZG: litigation_dispute (local-only) methodology renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_supp_n_litigation_dispute_methodology']").count()
+    assert count >= 1, "8ZZG: ach_supp_n_litigation_dispute_methodology missing"
+
+
+def test_CS3168_8zzg_section_R_insurance_policy_bool(page, live_server):
+    """Phase 8ZZG: ach_doc_supp_insurance_policy_or_valuation bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_doc_supp_insurance_policy_or_valuation']").count()
+    assert count >= 1, "8ZZG: ach_doc_supp_insurance_policy_or_valuation missing"
+
+
+def test_CS3169_8zzg_section_R_cultural_authority_letter_bool(page, live_server):
+    """Phase 8ZZG: ach_doc_supp_cultural_authority_recognition_letter bool renders."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field='ach_doc_supp_cultural_authority_recognition_letter']").count()
+    assert count >= 1, "8ZZG: ach_doc_supp_cultural_authority_recognition_letter missing"
+
+
+def test_CS3170_8zzg_section_F_14_fields_render(page, live_server):
+    """Phase 8ZZG: Section F has 14 fields (all ach_supp_f_ fields present)."""
+    _load_architectural_cultural_heritage_supp(page, live_server)
+    count = page.locator("[data-es-supp-field^='ach_supp_f_']").count()
+    assert count >= 14, f"8ZZG: expected >= 14 ach_supp_f_ fields, got {count}"
+

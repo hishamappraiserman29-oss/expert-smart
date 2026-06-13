@@ -1090,6 +1090,53 @@
     .es-brand-contact span { font-size: 0.75rem; color: rgba(212,175,55,0.80); font-weight: 600; letter-spacing: 0.3px; }
     /* ── End Phase 2 CSS ─────────────────────────────────────────────────── */
 
+    /* ── Phase 3: Simple Valuation Tab ──────────────────────────────────── */
+    .sv-wrapper { max-width: 700px; margin: 30px auto; }
+    .sv-intro { text-align: center; margin-bottom: 28px; }
+    .sv-title { font-size: 1.6rem; font-weight: 900; color: var(--gold); margin: 0 0 8px; }
+    .sv-subtitle { color: #9ca3af; font-size: 0.95rem; margin: 0; }
+    .sv-form { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; }
+    .sv-field { margin-bottom: 18px; }
+    .sv-row { display: flex; gap: 16px; }
+    .sv-row .sv-field { flex: 1; margin-bottom: 18px; }
+    .sv-label { display: block; font-size: 0.9rem; font-weight: 700; color: #d1d5db; margin-bottom: 6px; }
+    .sv-req { color: var(--gold); }
+    .sv-input, .sv-textarea, .sv-select {
+        width: 100%; box-sizing: border-box;
+        background: #0f172a; border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text);
+        font-family: 'Tajawal', sans-serif; font-size: 0.95rem;
+        padding: 10px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .sv-input:focus, .sv-textarea:focus, .sv-select:focus { border-color: var(--gold); }
+    .sv-textarea { resize: vertical; }
+    .sv-btn {
+        width: 100%; padding: 13px; margin-top: 6px;
+        background: linear-gradient(135deg, var(--gold), #b8960d);
+        border: none; border-radius: 10px; color: #000;
+        font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
+        font-weight: 900; cursor: pointer; transition: opacity 0.2s;
+    }
+    .sv-btn:hover:not(:disabled) { opacity: 0.88; }
+    .sv-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .sv-result-panel { margin-top: 22px; }
+    .sv-result-card { background: var(--bg-card); border: 1px solid var(--gold); border-radius: var(--radius); padding: 24px; }
+    .sv-result-header { font-size: 0.9rem; color: #9ca3af; font-weight: 700; margin-bottom: 10px; text-align: center; }
+    .sv-result-value { font-size: 2.4rem; font-weight: 900; color: var(--gold); text-align: center; margin-bottom: 20px; }
+    .sv-result-value span { font-size: 1.1rem; color: #9ca3af; }
+    .sv-result-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 16px; }
+    .sv-result-table td { padding: 9px 12px; border: 1px solid rgba(212,175,55,0.15); }
+    .sv-result-table td:first-child { color: #9ca3af; font-weight: 700; width: 35%; }
+    .sv-dl-btn {
+        display: inline-block; padding: 9px 22px;
+        background: rgba(212,175,55,0.12); border: 1px solid var(--gold);
+        border-radius: 8px; color: var(--gold);
+        font-family: 'Tajawal', sans-serif; font-size: 0.9rem;
+        font-weight: 700; text-decoration: none; transition: background 0.2s;
+    }
+    .sv-dl-btn:hover { background: rgba(212,175,55,0.25); }
+    /* ── End Phase 3 CSS ─────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
@@ -1215,13 +1262,142 @@
         </div>
     </div>
 
-    <!-- Workspace: التقييم السريع ─────────────────────────────────────────── -->
+    <!-- Workspace: التقييم المبسّط ─────────────────────────────────────────── -->
     <div class="es-workspace" id="ws-valuation" role="tabpanel">
-        <div class="es-ws-placeholder">
-            <i class="fas fa-home"></i>
-            <div>التقييم السريع — قريباً</div>
-            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">تقييم مبسّط بإدخال الموقع ووصف العقار فقط.</div>
+
+        <div class="sv-wrapper">
+            <div class="sv-intro">
+                <h2 class="sv-title">تقييم عقاري مبسّط</h2>
+                <p class="sv-subtitle">أدخل بيانات العقار الأساسية للحصول على تقدير سريع للقيمة السوقية.</p>
+            </div>
+
+            <div class="sv-form">
+                <!-- 1. نطاق الدراسة -->
+                <div class="sv-field">
+                    <label class="sv-label" for="sv-location">نطاق الدراسة <span class="sv-req">*</span></label>
+                    <input id="sv-location" type="text" class="sv-input" placeholder="مثال: حي المهندسين، الجيزة">
+                </div>
+
+                <!-- 2. وصف الأصل العقاري -->
+                <div class="sv-field">
+                    <label class="sv-label" for="sv-description">وصف الأصل العقاري <span class="sv-req">*</span></label>
+                    <textarea id="sv-description" class="sv-textarea" rows="3" placeholder="صف العقار باختصار: الطابق، التشطيب، المميزات الرئيسية…"></textarea>
+                </div>
+
+                <!-- 3. المساحة  +  4. نوع العقار المبسّط -->
+                <div class="sv-row">
+                    <div class="sv-field">
+                        <label class="sv-label" for="sv-area">المساحة (م²) <span class="sv-req">*</span></label>
+                        <input id="sv-area" type="number" class="sv-input" placeholder="مثال: 120" min="1">
+                    </div>
+                    <div class="sv-field">
+                        <label class="sv-label" for="sv-property-type">نوع العقار <span class="sv-req">*</span></label>
+                        <select id="sv-property-type" class="sv-select">
+                            <option value="">— اختر النوع —</option>
+                            <option value="شقة سكنية">شقة سكنية</option>
+                            <option value="فيلا">فيلا / منزل</option>
+                            <option value="أرض">أرض</option>
+                            <option value="محل تجاري">محل تجاري</option>
+                            <option value="عمارة سكنية">عمارة سكنية</option>
+                            <option value="مستودع">مستودع / مخزن</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 5. حالة العقار -->
+                <div class="sv-field">
+                    <label class="sv-label" for="sv-condition">حالة العقار <span class="sv-req">*</span></label>
+                    <select id="sv-condition" class="sv-select">
+                        <option value="">— اختر الحالة —</option>
+                        <option value="ممتازة">ممتازة</option>
+                        <option value="جيدة">جيدة</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="تحتاج صيانة">تحتاج صيانة</option>
+                    </select>
+                </div>
+
+                <button id="sv-submit-btn" type="button" class="sv-btn" onclick="svGenerate()">
+                    تقييم العقار <i class="fas fa-calculator"></i>
+                </button>
+            </div>
+
+            <!-- Result panel — filled dynamically by svGenerate() -->
+            <div id="sv-result" class="sv-result-panel" style="display:none;"></div>
         </div>
+
+        <script>
+        async function svGenerate() {
+            var btn      = document.getElementById('sv-submit-btn');
+            var resultEl = document.getElementById('sv-result');
+            var location = (document.getElementById('sv-location').value    || '').trim();
+            var desc     = (document.getElementById('sv-description').value || '').trim();
+            var area     = parseFloat(document.getElementById('sv-area').value) || 0;
+            var propType = document.getElementById('sv-property-type').value;
+            var cond     = document.getElementById('sv-condition').value;
+
+            if (!location)          { alert('يرجى إدخال نطاق الدراسة.'); return; }
+            if (desc.length < 5)    { alert('يرجى إدخال وصف مختصر للعقار.'); return; }
+            if (!area || area <= 0) { alert('يرجى إدخال المساحة.'); return; }
+            if (!propType)          { alert('يرجى اختيار نوع العقار.'); return; }
+            if (!cond)              { alert('يرجى اختيار حالة العقار.'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = 'جاري التقييم… <i class="fas fa-spinner fa-spin"></i>';
+            resultEl.style.display = 'none';
+
+            try {
+                var payload = {
+                    location:          location,
+                    description:       desc + ' — الحالة: ' + cond,
+                    area:              area,
+                    property_type:     propType,
+                    condition:         cond,
+                    valuation_purpose: 'fair_market_value',
+                    report_style:      'legacy',
+                    expert:            'م. هشام المهدي'
+                };
+                var resp = await window.esFetch('/api/valuation', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload)
+                });
+                var data = await resp.json();
+                if (data.status === 'success') {
+                    var mv = typeof data.market_value === 'number'
+                        ? data.market_value.toLocaleString('en-US', { maximumFractionDigits: 0 })
+                        : '—';
+                    var dlBtn = data.excel_url
+                        ? '<a href="' + data.excel_url + '" target="_blank" class="sv-dl-btn">' +
+                          '<i class="fas fa-file-excel"></i> تحميل تقرير Excel</a>'
+                        : '';
+                    resultEl.innerHTML =
+                        '<div class="sv-result-card">' +
+                            '<div class="sv-result-header">نتيجة التقييم المبسّط</div>' +
+                            '<div class="sv-result-value">' + mv + ' <span>ج.م</span></div>' +
+                            '<table class="sv-result-table">' +
+                                '<tr><td>رقم التقرير:</td><td dir="ltr">' + (data.report_id || '—') + '</td></tr>' +
+                                '<tr><td>الموقع / النطاق:</td><td>' + location + '</td></tr>' +
+                                '<tr><td>نوع العقار:</td><td>' + propType + '</td></tr>' +
+                                '<tr><td>المساحة:</td><td dir="ltr">' + area.toLocaleString() + ' م²</td></tr>' +
+                                '<tr><td>الحالة:</td><td>' + cond + '</td></tr>' +
+                            '</table>' +
+                            dlBtn +
+                        '</div>';
+                    resultEl.style.display = 'block';
+                } else {
+                    alert('خطأ: ' + (data.message || JSON.stringify(data)));
+                }
+            } catch (e) {
+                if (e.message !== 'ES_AUTH_401' && e.message !== 'ES_AUTH_403') {
+                    alert('تعذّر الاتصال بالخادم. تأكّد أنه يعمل محليّاً.\n' + e);
+                }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'تقييم العقار <i class="fas fa-calculator"></i>';
+            }
+        }
+        </script>
+
     </div>
 
     <!-- Workspace: التقييم المحترف — Active Default ────────────────────── -->

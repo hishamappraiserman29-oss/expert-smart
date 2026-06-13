@@ -1332,27 +1332,27 @@
                             </select>
                         </div>
 
-                        <!-- Level 2: المحافظة / الإمارة / الولاية — placeholder -->
+                        <!-- Level 2: المحافظة / الإمارة / الولاية -->
                         <div class="geo-level">
                             <label class="geo-level-label">المحافظة / الإمارة / الولاية</label>
-                            <select class="geo-select" id="geo-province" disabled>
+                            <select class="geo-select" id="geo-province" disabled onchange="geoSync()">
                                 <option value="">— اختر الدولة أولاً —</option>
                             </select>
-                            <div class="geo-placeholder-note">سيتم إضافة التقسيمات الداخلية تدريجيًا</div>
+                            <div class="geo-placeholder-note" id="geo-province-note">سيتم إضافة التقسيمات الداخلية تدريجيًا</div>
                         </div>
 
-                        <!-- Level 3: المدينة — placeholder -->
+                        <!-- Level 3: المدينة -->
                         <div class="geo-level">
                             <label class="geo-level-label">المدينة</label>
-                            <select class="geo-select" id="geo-city" disabled>
+                            <select class="geo-select" id="geo-city" disabled onchange="geoSync()">
                                 <option value="">— اختر المحافظة أولاً —</option>
                             </select>
                         </div>
 
-                        <!-- Level 4: الحي / النطاق التفصيلي — placeholder -->
+                        <!-- Level 4: الحي / النطاق التفصيلي -->
                         <div class="geo-level">
                             <label class="geo-level-label">الحي / النطاق التفصيلي</label>
-                            <input type="text" class="geo-select" id="geo-district" disabled placeholder="سيتم تفعيله لاحقاً">
+                            <input type="text" class="geo-select" id="geo-district" disabled oninput="geoSync()" placeholder="سيتم تفعيله لاحقاً">
                         </div>
 
                     </div>
@@ -1406,13 +1406,95 @@
         </div>
 
         <script>
+        /* ── Phase 5: Geo Registry (EG + SA; other 20 countries = country-name only) ── */
+        var GEO_REGISTRY = {
+            EG: {
+                provinces: {
+                    'القاهرة':             { cities: ['وسط البلد','المعادي','مدينة نصر','مصر الجديدة','الزمالك','التجمع الخامس','الرحاب','مدينتي','العاصمة الإدارية'] },
+                    'الجيزة':              { cities: ['الدقي','المهندسين','الهرم','فيصل','6 أكتوبر','الشيخ زايد','زايد الجديدة'] },
+                    'الإسكندرية':          { cities: ['سموحة','برج العرب الجديدة','الساحل الشمالي','العلمين الجديدة','رأس الحكمة'] },
+                    'محافظات الدلتا':      { cities: ['المنصورة','طنطا','الزقازيق','دمياط'] },
+                    'محافظات الصعيد':      { cities: ['أسيوط','سوهاج','المنيا','الأقصر','أسوان'] },
+                    'مدن القناة':          { cities: ['بورسعيد','الإسماعيلية','السويس'] },
+                    'البحر الأحمر وسيناء': { cities: ['الغردقة','شرم الشيخ','العين السخنة','مرسى علم'] }
+                }
+            },
+            SA: {
+                provinces: {
+                    'منطقة الرياض':         { cities: ['الرياض','الدرعية','الخرج'] },
+                    'منطقة مكة المكرمة':    { cities: ['مكة المكرمة','جدة','الطائف','أبحر'] },
+                    'المدينة المنورة':       { cities: ['المدينة المنورة','ينبع'] },
+                    'المنطقة الشرقية':      { cities: ['الدمام','الخبر','الظهران','الجبيل الصناعية','الأحساء'] },
+                    'منطقة عسير':           { cities: ['أبها','خميس مشيط'] },
+                    'تبوك':                 { cities: ['تبوك','نيوم (NEOM)'] },
+                    'القصيم':               { cities: ['بريدة','عنيزة'] },
+                    'جازان ونجران':         { cities: ['جازان','نجران'] }
+                }
+            }
+        };
+
         function geoSync() {
-            var countryEl  = document.getElementById('geo-country');
-            var locationEl = document.getElementById('sv-location');
-            var opt = countryEl.options[countryEl.selectedIndex];
-            locationEl.value = (opt && opt.value)
-                ? (opt.getAttribute('data-name') || opt.text.trim())
-                : '';
+            var countryEl = document.getElementById('geo-country');
+            var provEl    = document.getElementById('geo-province');
+            var cityEl    = document.getElementById('geo-city');
+            var distEl    = document.getElementById('geo-district');
+            var locEl     = document.getElementById('sv-location');
+            var noteEl    = document.getElementById('geo-province-note');
+
+            var code = countryEl.value;
+            var reg  = GEO_REGISTRY[code] || null;
+
+            // ── Level 2: Province ──────────────────────────────────────────
+            var prevProv = provEl.value;
+            if (reg) {
+                var ph = '<option value="">— اختر المحافظة —</option>';
+                Object.keys(reg.provinces).forEach(function(p) {
+                    ph += '<option value="' + p + '">' + p + '</option>';
+                });
+                provEl.innerHTML = ph;
+                if (prevProv && reg.provinces[prevProv]) provEl.value = prevProv;
+                provEl.disabled = false;
+                if (noteEl) noteEl.style.display = 'none';
+            } else {
+                provEl.innerHTML = '<option value="">— اختر الدولة أولاً —</option>';
+                provEl.value     = '';
+                provEl.disabled  = true;
+                if (noteEl) noteEl.style.display = 'block';
+            }
+
+            // ── Level 3: City ──────────────────────────────────────────────
+            var provVal  = provEl.value;
+            var prevCity = cityEl.value;
+            if (reg && provVal && reg.provinces[provVal]) {
+                var ch = '<option value="">— اختر المدينة —</option>';
+                reg.provinces[provVal].cities.forEach(function(c) {
+                    ch += '<option value="' + c + '">' + c + '</option>';
+                });
+                cityEl.innerHTML = ch;
+                if (prevCity && reg.provinces[provVal].cities.indexOf(prevCity) >= 0) cityEl.value = prevCity;
+                cityEl.disabled  = false;
+            } else {
+                cityEl.innerHTML = '<option value="">— اختر المحافظة أولاً —</option>';
+                cityEl.value     = '';
+                cityEl.disabled  = true;
+            }
+
+            // ── Level 4: District ──────────────────────────────────────────
+            var cityVal = cityEl.value;
+            if (cityVal) {
+                distEl.disabled    = false;
+                distEl.placeholder = 'الحي / النطاق التفصيلي (اختياري)';
+            } else {
+                distEl.disabled    = true;
+                distEl.placeholder = 'سيتم تفعيله لاحقاً';
+                distEl.value       = '';
+            }
+
+            // ── Location string → #sv-location (district — city — province — country) ──
+            var opt         = countryEl.options[countryEl.selectedIndex];
+            var countryName = (opt && opt.value) ? (opt.getAttribute('data-name') || opt.text.trim()) : '';
+            var parts = [distEl.value.trim(), cityVal, provVal, countryName].filter(Boolean);
+            locEl.value = parts.join(' — ');
         }
 
         async function svGenerate() {

@@ -1137,6 +1137,29 @@
     .sv-dl-btn:hover { background: rgba(212,175,55,0.25); }
     /* ── End Phase 3 CSS ─────────────────────────────────────────────────── */
 
+    /* ── Phase 4: Unified Geo Selector ──────────────────────────────────── */
+    .geo-group { margin-bottom: 18px; }
+    .geo-group-title {
+        font-size: 0.78rem; font-weight: 900; color: var(--gold);
+        letter-spacing: 0.8px; margin-bottom: 12px;
+        padding-bottom: 6px; border-bottom: 1px solid rgba(212,175,55,0.2);
+        text-transform: uppercase;
+    }
+    .geo-levels { display: flex; flex-direction: column; gap: 10px; }
+    .geo-level { display: flex; flex-direction: column; gap: 3px; }
+    .geo-level-label { font-size: 0.78rem; color: #6b7280; font-weight: 600; }
+    .geo-select {
+        width: 100%; box-sizing: border-box;
+        background: #0f172a; border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text);
+        font-family: 'Tajawal', sans-serif; font-size: 0.92rem;
+        padding: 9px 12px; outline: none; transition: border-color 0.2s;
+    }
+    .geo-select:focus { border-color: var(--gold); }
+    .geo-select:disabled { opacity: 0.4; cursor: not-allowed; background: #080d18; color: #4b5563; }
+    .geo-placeholder-note { font-size: 0.72rem; color: #374151; margin-top: 2px; }
+    /* ── End Phase 4 CSS ─────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
@@ -1272,10 +1295,67 @@
             </div>
 
             <div class="sv-form">
-                <!-- 1. نطاق الدراسة -->
-                <div class="sv-field">
-                    <label class="sv-label" for="sv-location">نطاق الدراسة <span class="sv-req">*</span></label>
-                    <input id="sv-location" type="text" class="sv-input" placeholder="مثال: حي المهندسين، الجيزة">
+                <!-- 1. نطاق الدراسة الجغرافي (Phase 4 — Unified Geo Selector) -->
+                <!-- sv-location is a hidden compat field; geoSync() populates it from geo-country -->
+                <input type="hidden" id="sv-location">
+                <div class="geo-group">
+                    <div class="geo-group-title">نطاق الدراسة الجغرافي</div>
+                    <div class="geo-levels">
+
+                        <!-- Level 1: الدولة / القطر — مفعَّل الآن (22 دولة عربية) -->
+                        <div class="geo-level">
+                            <label class="geo-level-label">الدولة / القطر <span class="sv-req">*</span></label>
+                            <select class="geo-select" id="geo-country" onchange="geoSync()">
+                                <option value="" data-name="">— اختر الدولة —</option>
+                                <option value="EG" data-name="مصر">مصر</option>
+                                <option value="SA" data-name="المملكة العربية السعودية">المملكة العربية السعودية</option>
+                                <option value="AE" data-name="الإمارات العربية المتحدة">الإمارات العربية المتحدة</option>
+                                <option value="KW" data-name="الكويت">الكويت</option>
+                                <option value="QA" data-name="قطر">قطر</option>
+                                <option value="BH" data-name="البحرين">البحرين</option>
+                                <option value="OM" data-name="عُمان">عُمان</option>
+                                <option value="JO" data-name="الأردن">الأردن</option>
+                                <option value="PS" data-name="فلسطين">فلسطين</option>
+                                <option value="LB" data-name="لبنان">لبنان</option>
+                                <option value="SY" data-name="سوريا">سوريا</option>
+                                <option value="IQ" data-name="العراق">العراق</option>
+                                <option value="YE" data-name="اليمن">اليمن</option>
+                                <option value="LY" data-name="ليبيا">ليبيا</option>
+                                <option value="TN" data-name="تونس">تونس</option>
+                                <option value="DZ" data-name="الجزائر">الجزائر</option>
+                                <option value="MA" data-name="المغرب">المغرب</option>
+                                <option value="MR" data-name="موريتانيا">موريتانيا</option>
+                                <option value="SD" data-name="السودان">السودان</option>
+                                <option value="SO" data-name="الصومال">الصومال</option>
+                                <option value="DJ" data-name="جيبوتي">جيبوتي</option>
+                                <option value="KM" data-name="جزر القمر">جزر القمر</option>
+                            </select>
+                        </div>
+
+                        <!-- Level 2: المحافظة / الإمارة / الولاية — placeholder -->
+                        <div class="geo-level">
+                            <label class="geo-level-label">المحافظة / الإمارة / الولاية</label>
+                            <select class="geo-select" id="geo-province" disabled>
+                                <option value="">— اختر الدولة أولاً —</option>
+                            </select>
+                            <div class="geo-placeholder-note">سيتم إضافة التقسيمات الداخلية تدريجيًا</div>
+                        </div>
+
+                        <!-- Level 3: المدينة — placeholder -->
+                        <div class="geo-level">
+                            <label class="geo-level-label">المدينة</label>
+                            <select class="geo-select" id="geo-city" disabled>
+                                <option value="">— اختر المحافظة أولاً —</option>
+                            </select>
+                        </div>
+
+                        <!-- Level 4: الحي / النطاق التفصيلي — placeholder -->
+                        <div class="geo-level">
+                            <label class="geo-level-label">الحي / النطاق التفصيلي</label>
+                            <input type="text" class="geo-select" id="geo-district" disabled placeholder="سيتم تفعيله لاحقاً">
+                        </div>
+
+                    </div>
                 </div>
 
                 <!-- 2. وصف الأصل العقاري -->
@@ -1326,6 +1406,15 @@
         </div>
 
         <script>
+        function geoSync() {
+            var countryEl  = document.getElementById('geo-country');
+            var locationEl = document.getElementById('sv-location');
+            var opt = countryEl.options[countryEl.selectedIndex];
+            locationEl.value = (opt && opt.value)
+                ? (opt.getAttribute('data-name') || opt.text.trim())
+                : '';
+        }
+
         async function svGenerate() {
             var btn      = document.getElementById('sv-submit-btn');
             var resultEl = document.getElementById('sv-result');
@@ -1335,7 +1424,7 @@
             var propType = document.getElementById('sv-property-type').value;
             var cond     = document.getElementById('sv-condition').value;
 
-            if (!location)          { alert('يرجى إدخال نطاق الدراسة.'); return; }
+            if (!location)          { alert('يرجى اختيار الدولة / نطاق الدراسة.'); return; }
             if (desc.length < 5)    { alert('يرجى إدخال وصف مختصر للعقار.'); return; }
             if (!area || area <= 0) { alert('يرجى إدخال المساحة.'); return; }
             if (!propType)          { alert('يرجى اختيار نوع العقار.'); return; }

@@ -8322,6 +8322,7 @@ def api_valuation_requirements():
             "label_ar":    f.label_ar,
             "group":       f.group,
             "ui_required": f.ui_required,
+            "field_owner": f.field_owner,
         }
         for f in reqs.metadata_fields
     ]

@@ -118,6 +118,14 @@ class FieldSpec:
         False — optional in the UI (default).
         Deliberately independent of `required` so new fields do not
         break runtime validate_result() on existing valuation results.
+    field_owner
+        Ownership layer for this field.  One of:
+        "engine"      — computed approach value; role is always "engine_value".
+        "universal"   — common across all asset types (from _COMMON user fields).
+        "asset"       — specific to one asset type (legacy weight/feature fields).
+        "enrichment"  — Phase 8H.2A user-facing form fields and document items.
+        "purpose"     — purpose-specific adjustment field (reserved; none yet).
+        Invariant: role=="engine_value"  ⟹  field_owner=="engine".
     """
 
     name:         str
@@ -129,6 +137,7 @@ class FieldSpec:
     label_ar:     str  = ""
     group:        str  = ""             # "document" | ""
     ui_required:  bool = False
+    field_owner:  str  = "universal"    # "engine" | "universal" | "asset" | "enrichment" | "purpose"
 
 
 @dataclass(frozen=True)
@@ -157,22 +166,22 @@ _COMMON: tuple[FieldSpec, ...] = (
     FieldSpec(
         "comparable", True, "float",
         "Comparable-sales approach value (EGP)",
-        role="engine_value",
+        role="engine_value", field_owner="engine",
     ),
     FieldSpec(
         "income", True, "float",
         "Income-capitalization approach value (EGP)",
-        role="engine_value",
+        role="engine_value", field_owner="engine",
     ),
-    FieldSpec("client_name",    False, "str",   "Client or borrower name",                 label_ar="اسم العميل"),
-    FieldSpec("location",       False, "str",   "Property address or location description", label_ar="الموقع"),
-    FieldSpec("area",           False, "float", "Floor / land area (sqm)",                 label_ar="المساحة (م²)"),
-    FieldSpec("valuation_date", False, "str",   "Date of valuation (YYYY-MM-DD)",           label_ar="تاريخ التقييم"),
-    FieldSpec("appraiser_name", False, "str",   "Appraiser full name",                      label_ar="اسم المقيّم"),
+    FieldSpec("client_name",    False, "str",   "Client or borrower name",                 label_ar="اسم العميل",    field_owner="universal"),
+    FieldSpec("location",       False, "str",   "Property address or location description", label_ar="الموقع",        field_owner="universal"),
+    FieldSpec("area",           False, "float", "Floor / land area (sqm)",                 label_ar="المساحة (م²)",  field_owner="universal"),
+    FieldSpec("valuation_date", False, "str",   "Date of valuation (YYYY-MM-DD)",           label_ar="تاريخ التقييم", field_owner="universal"),
+    FieldSpec("appraiser_name", False, "str",   "Appraiser full name",                      label_ar="اسم المقيّم",   field_owner="universal"),
     FieldSpec(
         "comparables", False, "list",
         "List of comparable sales dicts",
-        role="engine_value",
+        role="engine_value", field_owner="engine",
     ),
 )
 
@@ -181,101 +190,101 @@ _RESIDENTIAL: tuple[FieldSpec, ...] = _COMMON + (
     FieldSpec(
         "cost", True, "float",
         "Cost-approach value (EGP) — all three approaches apply for improved property",
-        role="engine_value",
+        role="engine_value", field_owner="engine",
     ),
     FieldSpec(
         "ownership_type", False, "str",
         "Ownership type driving weight preset",
         ("owner_occupied", "rental", "mixed"),
-        label_ar="نوع الملكية",
+        label_ar="نوع الملكية", field_owner="asset",
     ),
     FieldSpec(
         "quality_tier", False, "str",
         "Build-quality tier affecting post-reconciliation adjustment",
         ("luxury", "standard", "economy", "heritage"),
-        label_ar="درجة الجودة",
+        label_ar="درجة الجودة", field_owner="asset",
     ),
-    FieldSpec("age_years", False, "int", "Building age in years", label_ar="عمر المبنى (سنة)"),
+    FieldSpec("age_years", False, "int", "Building age in years", label_ar="عمر المبنى (سنة)", field_owner="asset"),
 
     # ── New user-input / form fields (Phase 8H.2A) ───────────────────────────
     FieldSpec("area_sqm",     False, "float", "Floor area (sqm)",
-              label_ar="المساحة (م²)", ui_required=True),
+              label_ar="المساحة (م²)", ui_required=True, field_owner="enrichment"),
     FieldSpec("floor_number", False, "int",   "Floor number within the building",
-              label_ar="رقم الطابق", ui_required=True),
+              label_ar="رقم الطابق", ui_required=True, field_owner="enrichment"),
     FieldSpec("rooms_count",  False, "int",   "Number of rooms",
-              label_ar="عدد الغرف", ui_required=True),
+              label_ar="عدد الغرف", ui_required=True, field_owner="enrichment"),
     FieldSpec(
         "finishing_level", False, "str",
         "Finishing level of the unit",
         ("shell", "semi_finished", "standard_finished", "luxury_finished"),
         label_ar="مستوى التشطيب",
-        ui_required=True,
+        ui_required=True, field_owner="enrichment",
     ),
     FieldSpec("building_age", False, "int", "Building age in years (user-facing form field)",
-              label_ar="عمر المبنى (سنة)"),
+              label_ar="عمر المبنى (سنة)", field_owner="enrichment"),
     FieldSpec(
         "elevator_available", False, "str",
         "Elevator available in the building",
         ("yes", "no"),
-        label_ar="يوجد مصعد",
+        label_ar="يوجد مصعد", field_owner="enrichment",
     ),
     FieldSpec(
         "parking_available", False, "str",
         "Dedicated parking space available",
         ("yes", "no"),
-        label_ar="يوجد موقف سيارة",
+        label_ar="يوجد موقف سيارة", field_owner="enrichment",
     ),
     FieldSpec(
         "legal_status", False, "str",
         "Legal / title status of the property",
         ("registered_title", "preliminary_contract", "allocation", "unknown"),
         label_ar="الحالة القانونية",
-        ui_required=True,
+        ui_required=True, field_owner="enrichment",
     ),
     FieldSpec(
         "view_quality", False, "str",
         "View quality from the unit",
         ("ordinary", "good", "premium"),
-        label_ar="جودة الإطلالة",
+        label_ar="جودة الإطلالة", field_owner="enrichment",
     ),
     FieldSpec("services_available", False, "str",
-              "Available building services (free text)", label_ar="الخدمات المتاحة"),
+              "Available building services (free text)", label_ar="الخدمات المتاحة", field_owner="enrichment"),
 
     # ── Residential document checklist items ─────────────────────────────────
     FieldSpec("ownership_document",   False, "bool",
               "Ownership deed / title document",
-              label_ar="سند الملكية", group="document"),
+              label_ar="سند الملكية", group="document", field_owner="enrichment"),
     FieldSpec("site_croquis_or_location", False, "bool",
               "Site croquis or location map",
-              label_ar="كروكي الموقع", group="document"),
+              label_ar="كروكي الموقع", group="document", field_owner="enrichment"),
     FieldSpec("recent_photos",        False, "bool",
               "Recent property photos",
-              label_ar="صور حديثة للعقار", group="document"),
+              label_ar="صور حديثة للعقار", group="document", field_owner="enrichment"),
     FieldSpec("nearby_sale_comparables_if_available", False, "bool",
               "Nearby sale comparables (if available)",
-              label_ar="مقارنات بيع قريبة (إن وجدت)", group="document"),
+              label_ar="مقارنات بيع قريبة (إن وجدت)", group="document", field_owner="enrichment"),
 )
 
 _COMMERCIAL: tuple[FieldSpec, ...] = _COMMON + (
     FieldSpec(
         "cost", True, "float",
         "Cost-approach value (EGP) — all three approaches apply for improved property",
-        role="engine_value",
+        role="engine_value", field_owner="engine",
     ),
-    FieldSpec("annual_rent",    False, "float", "Annual rental income (EGP)",          label_ar="الإيجار السنوي (ج.م.)"),
-    FieldSpec("cap_rate",       False, "float", "Capitalization rate (0.0–1.0)",        label_ar="معدل الرسملة"),
+    FieldSpec("annual_rent",    False, "float", "Annual rental income (EGP)",          label_ar="الإيجار السنوي (ج.م.)", field_owner="asset"),
+    FieldSpec("cap_rate",       False, "float", "Capitalization rate (0.0–1.0)",        label_ar="معدل الرسملة",          field_owner="asset"),
     FieldSpec(
         "development_stage", False, "str",
         "Development stage driving weight preset",
         ("stabilized", "core", "new_construction", "redevelopment"),
-        label_ar="مرحلة التطوير",
+        label_ar="مرحلة التطوير", field_owner="asset",
     ),
-    FieldSpec("occupancy_rate", False, "float", "Occupancy rate (0.0–1.0)",             label_ar="نسبة الإشغال"),
+    FieldSpec("occupancy_rate", False, "float", "Occupancy rate (0.0–1.0)",             label_ar="نسبة الإشغال",          field_owner="asset"),
     FieldSpec(
         "property_class", False, "str",
         "Building grade for post-reconciliation adjustment",
         ("class_a", "class_b", "class_c"),
-        label_ar="فئة المبنى",
+        label_ar="فئة المبنى", field_owner="asset",
     ),
 )
 
@@ -285,81 +294,81 @@ _LAND: tuple[FieldSpec, ...] = _COMMON + (
         "hbu", False, "str",
         "Highest-and-best-use driving weight preset (cost weight = 0 for land)",
         ("residential", "commercial", "mixed_use", "industrial", "agricultural", "speculative"),
-        label_ar="أفضل استخدام (HBU)",
+        label_ar="أفضل استخدام (HBU)", field_owner="asset",
     ),
     FieldSpec(
         "location_desirability", False, "str",
         "Location desirability multiplier",
         ("prime", "good", "standard", "secondary", "remote"),
-        label_ar="جاذبية الموقع",
+        label_ar="جاذبية الموقع", field_owner="asset",
     ),
     FieldSpec(
         "zoning", False, "str",
         "Zoning restriction multiplier",
         ("unrestricted", "general_commercial", "residential_only", "restricted"),
-        label_ar="التخطيط العمراني",
+        label_ar="التخطيط العمراني", field_owner="asset",
     ),
     FieldSpec(
         "development_feasibility", False, "str",
         "Development feasibility multiplier",
         ("ready_to_build", "feasible", "challenging", "very_difficult"),
-        label_ar="جدوى التطوير",
+        label_ar="جدوى التطوير", field_owner="asset",
     ),
 
     # ── New user-input / form fields (Phase 8H.2A) ───────────────────────────
     FieldSpec("land_area_sqm",  False, "float", "Land area (sqm)",
-              label_ar="مساحة الأرض (م²)", ui_required=True),
+              label_ar="مساحة الأرض (م²)", ui_required=True, field_owner="enrichment"),
     FieldSpec("frontage_m",     False, "float", "Street frontage width (m)",
-              label_ar="واجهة الأرض (م)", ui_required=True),
+              label_ar="واجهة الأرض (م)", ui_required=True, field_owner="enrichment"),
     FieldSpec("street_width_m", False, "float", "Adjacent street width (m)",
-              label_ar="عرض الشارع (م)", ui_required=True),
+              label_ar="عرض الشارع (م)", ui_required=True, field_owner="enrichment"),
     FieldSpec(
         "zoning_type", False, "str",
         "Zoning classification",
         ("residential", "commercial", "administrative", "mixed_use", "agricultural", "unknown"),
         label_ar="نوع التخطيط العمراني",
-        ui_required=True,
+        ui_required=True, field_owner="enrichment",
     ),
     FieldSpec(
         "utilities_available", False, "list",
         "Available utilities on the plot",
         ("electricity", "water", "sewage", "gas", "paved_road"),
-        label_ar="الخدمات المتاحة",
+        label_ar="الخدمات المتاحة", field_owner="enrichment",
     ),
     FieldSpec(
         "buildability_status", False, "str",
         "Buildability and planning constraints",
         ("buildable", "needs_verification", "planning_restrictions", "unknown"),
         label_ar="حالة قابلية البناء",
-        ui_required=True,
+        ui_required=True, field_owner="enrichment",
     ),
     FieldSpec(
         "legal_status", False, "str",
         "Legal / title status of the land",
         ("registered_title", "preliminary_contract", "allocation", "unknown"),
         label_ar="الحالة القانونية",
-        ui_required=True,
+        ui_required=True, field_owner="enrichment",
     ),
 
     # ── Land document checklist items ─────────────────────────────────────────
     FieldSpec("ownership_document",    False, "bool",
               "Ownership deed / title document",
-              label_ar="سند الملكية", group="document"),
+              label_ar="سند الملكية", group="document", field_owner="enrichment"),
     FieldSpec("site_plan_or_croquis",  False, "bool",
               "Site plan or croquis",
-              label_ar="كروكي المخطط", group="document"),
+              label_ar="كروكي المخطط", group="document", field_owner="enrichment"),
     FieldSpec("area_statement",        False, "bool",
               "Area statement / survey certificate",
-              label_ar="بيان مساحة", group="document"),
+              label_ar="بيان مساحة", group="document", field_owner="enrichment"),
     FieldSpec("coordinates_or_map_location", False, "bool",
               "GPS coordinates or map location",
-              label_ar="إحداثيات / موقع خرائطي", group="document"),
+              label_ar="إحداثيات / موقع خرائطي", group="document", field_owner="enrichment"),
     FieldSpec("site_photos",           False, "bool",
               "Site photographs",
-              label_ar="صور الموقع", group="document"),
+              label_ar="صور الموقع", group="document", field_owner="enrichment"),
     FieldSpec("building_regulations_if_available", False, "bool",
               "Building regulations (if available)",
-              label_ar="اشتراطات البناء (إن وجدت)", group="document"),
+              label_ar="اشتراطات البناء (إن وجدت)", group="document", field_owner="enrichment"),
 )
 
 

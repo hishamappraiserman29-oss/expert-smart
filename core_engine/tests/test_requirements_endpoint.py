@@ -343,3 +343,74 @@ def test_REQ15_dynamic_fields_also_enriched(client):
         assert not missing, (
             f"dynamic_fields entry '{entry.get('name')}' missing keys: {missing}"
         )
+
+
+# ══ Phase 5 — field_owner serialization tests (REQ16 – REQ17) ════════════════
+
+
+# ── REQ16 ─────────────────────────────────────────────────────────────────────
+
+def test_REQ16_checklist_items_expose_field_owner(client):
+    """Every checklist_item entry carries the field_owner key (Phase 5 metadata)."""
+    _ALLOWED_OWNERS = {"engine", "universal", "asset", "enrichment", "purpose"}
+    for asset_type in ("residential", "commercial", "land"):
+        resp = client.get(
+            f"/api/valuation/requirements?asset_type={asset_type}&purpose=market_value",
+            headers=_auth(),
+        )
+        assert resp.status_code == 200
+        items = resp.get_json()["checklist_items"]
+        assert len(items) > 0, f"No checklist_items returned for {asset_type}"
+        for item in items:
+            assert "field_owner" in item, (
+                f"[{asset_type}] checklist_item '{item.get('name')}' "
+                f"missing 'field_owner' key"
+            )
+            assert item["field_owner"] in _ALLOWED_OWNERS, (
+                f"[{asset_type}] '{item['name']}' has invalid "
+                f"field_owner={item['field_owner']!r}"
+            )
+
+
+# ── REQ17 ─────────────────────────────────────────────────────────────────────
+
+def test_REQ17_field_owner_values_correct_in_response(client):
+    """Engine fields carry field_owner='engine'; enrichment fields carry 'enrichment'."""
+    resp = client.get(
+        "/api/valuation/requirements?asset_type=residential&purpose=market_value",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    field_map = {i["name"]: i for i in resp.get_json()["checklist_items"]}
+
+    # Engine fields
+    for name in ("comparable", "cost", "income", "comparables"):
+        assert name in field_map, f"Engine field '{name}' missing from residential response"
+        assert field_map[name]["field_owner"] == "engine", (
+            f"Engine field '{name}' must have field_owner='engine', "
+            f"got {field_map[name]['field_owner']!r}"
+        )
+
+    # Universal user fields
+    for name in ("client_name", "location", "area", "valuation_date", "appraiser_name"):
+        assert name in field_map, f"Universal field '{name}' missing from residential response"
+        assert field_map[name]["field_owner"] == "universal", (
+            f"Universal field '{name}' must have field_owner='universal', "
+            f"got {field_map[name]['field_owner']!r}"
+        )
+
+    # Asset-specific legacy fields
+    for name in ("ownership_type", "quality_tier", "age_years"):
+        assert name in field_map, f"Asset field '{name}' missing from residential response"
+        assert field_map[name]["field_owner"] == "asset", (
+            f"Asset field '{name}' must have field_owner='asset', "
+            f"got {field_map[name]['field_owner']!r}"
+        )
+
+    # Enrichment fields
+    for name in ("area_sqm", "finishing_level", "legal_status", "ownership_document"):
+        assert name in field_map, f"Enrichment field '{name}' missing from residential response"
+        assert field_map[name]["field_owner"] == "enrichment", (
+            f"Enrichment field '{name}' must have field_owner='enrichment', "
+            f"got {field_map[name]['field_owner']!r}"
+        )

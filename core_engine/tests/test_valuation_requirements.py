@@ -558,3 +558,166 @@ def test_RM37_validate_result_backward_compatible():
         f"Land legacy fixture must not produce errors after 8H.2A. "
         f"Got: {errors}"
     )
+
+
+# ══ Phase 5 — Ownership & De-duplication tests (RM38 – RM45) ════════════════
+
+_ALLOWED_OWNERS: frozenset[str] = frozenset({
+    "engine", "universal", "asset", "enrichment", "purpose",
+})
+
+
+# ── RM38 — FieldSpec carries field_owner attribute ────────────────────────────
+
+def test_RM38_fieldspec_has_field_owner_attribute():
+    """FieldSpec exposes field_owner with correct default."""
+    spec = FieldSpec("test_field", False, "str", "A test field")
+    assert hasattr(spec, "field_owner"), "FieldSpec must have 'field_owner' attribute"
+    assert spec.field_owner == "universal", (
+        f"Default field_owner must be 'universal', got {spec.field_owner!r}"
+    )
+
+
+# ── RM39 — engine_value role ⟹ field_owner="engine" ─────────────────────────
+
+def test_RM39_engine_value_role_implies_engine_owner():
+    """Every field with role='engine_value' must have field_owner='engine'."""
+    for asset_type in ("residential", "commercial", "land"):
+        reqs = get_requirements(asset_type, "market_value")
+        for spec in reqs.metadata_fields:
+            if spec.role == "engine_value":
+                assert spec.field_owner == "engine", (
+                    f"[{asset_type}] Field '{spec.name}' has role='engine_value' "
+                    f"but field_owner={spec.field_owner!r}; expected 'engine'"
+                )
+
+
+# ── RM40 — Universal user fields carry field_owner="universal" ───────────────
+
+def test_RM40_universal_fields_have_universal_owner():
+    """_COMMON user-input fields appear with field_owner='universal' in every asset type."""
+    universal_names = {"client_name", "location", "area", "valuation_date", "appraiser_name"}
+    for asset_type in ("residential", "commercial", "land"):
+        reqs = get_requirements(asset_type, "market_value")
+        field_map = {f.name: f for f in reqs.metadata_fields}
+        for name in universal_names:
+            assert name in field_map, (
+                f"Universal field '{name}' missing from {asset_type} metadata_fields"
+            )
+            assert field_map[name].field_owner == "universal", (
+                f"[{asset_type}] Field '{name}' must have field_owner='universal', "
+                f"got {field_map[name].field_owner!r}"
+            )
+
+
+# ── RM41 — Asset-specific legacy fields carry field_owner="asset" ─────────────
+
+def test_RM41_asset_specific_legacy_fields_have_asset_owner():
+    """Legacy weight/feature fields for each asset type have field_owner='asset'."""
+    cases = {
+        "residential": {"ownership_type", "quality_tier", "age_years"},
+        "commercial":  {"annual_rent", "cap_rate", "development_stage",
+                        "occupancy_rate", "property_class"},
+        "land":        {"hbu", "location_desirability", "zoning", "development_feasibility"},
+    }
+    for asset_type, field_names in cases.items():
+        reqs = get_requirements(asset_type, "market_value")
+        field_map = {f.name: f for f in reqs.metadata_fields}
+        for name in field_names:
+            assert name in field_map, (
+                f"Asset field '{name}' missing from {asset_type} metadata_fields"
+            )
+            assert field_map[name].field_owner == "asset", (
+                f"[{asset_type}] Field '{name}' must have field_owner='asset', "
+                f"got {field_map[name].field_owner!r}"
+            )
+
+
+# ── RM42 — Phase 8H.2A enrichment fields carry field_owner="enrichment" ──────
+
+def test_RM42_enrichment_fields_have_enrichment_owner():
+    """Phase 8H.2A form fields and document items have field_owner='enrichment'."""
+    cases = {
+        "residential": {
+            "area_sqm", "floor_number", "rooms_count", "finishing_level",
+            "building_age", "elevator_available", "parking_available",
+            "legal_status", "view_quality", "services_available",
+            "ownership_document", "site_croquis_or_location",
+            "recent_photos", "nearby_sale_comparables_if_available",
+        },
+        "land": {
+            "land_area_sqm", "frontage_m", "street_width_m",
+            "zoning_type", "utilities_available", "buildability_status",
+            "legal_status",
+            "ownership_document", "site_plan_or_croquis", "area_statement",
+            "coordinates_or_map_location", "site_photos",
+            "building_regulations_if_available",
+        },
+    }
+    for asset_type, field_names in cases.items():
+        reqs = get_requirements(asset_type, "market_value")
+        field_map = {f.name: f for f in reqs.metadata_fields}
+        for name in field_names:
+            assert name in field_map, (
+                f"Enrichment field '{name}' missing from {asset_type} metadata_fields"
+            )
+            assert field_map[name].field_owner == "enrichment", (
+                f"[{asset_type}] Field '{name}' must have field_owner='enrichment', "
+                f"got {field_map[name].field_owner!r}"
+            )
+
+
+# ── RM43 — No duplicate field names within any single asset type ──────────────
+
+def test_RM43_no_duplicate_field_names_within_asset_type():
+    """Within each (asset_type, purpose) combination, all field names are unique."""
+    for (asset_type, purpose), reqs in REQUIREMENTS_MATRIX.items():
+        names = [f.name for f in reqs.metadata_fields]
+        seen: set[str] = set()
+        duplicates: list[str] = []
+        for name in names:
+            if name in seen:
+                duplicates.append(name)
+            seen.add(name)
+        assert not duplicates, (
+            f"Duplicate field names in ({asset_type!r}, {purpose!r}): {duplicates}"
+        )
+
+
+# ── RM44 — All field_owner values are from the allowed set ───────────────────
+
+def test_RM44_field_owner_values_in_allowed_set():
+    """Every FieldSpec.field_owner must be one of the five approved values."""
+    for (asset_type, purpose), reqs in REQUIREMENTS_MATRIX.items():
+        for spec in reqs.metadata_fields:
+            assert spec.field_owner in _ALLOWED_OWNERS, (
+                f"[{asset_type}/{purpose}] Field '{spec.name}' has invalid "
+                f"field_owner={spec.field_owner!r}. Allowed: {sorted(_ALLOWED_OWNERS)}"
+            )
+
+
+# ── RM45 — purpose-owned fields are not tagged as "asset" ────────────────────
+
+def test_RM45_purpose_fields_not_tagged_as_asset():
+    """No field may simultaneously have field_owner='purpose' and field_owner='asset'.
+
+    This is structurally enforced (field_owner is a single string), but also
+    confirms the rule: purpose-adjustment fields must not carry 'asset' ownership,
+    so future contributors cannot accidentally miscategorise a purpose-specific
+    field as asset-owned.
+    """
+    for (asset_type, purpose), reqs in REQUIREMENTS_MATRIX.items():
+        purpose_fields = [
+            f.name for f in reqs.metadata_fields if f.field_owner == "purpose"
+        ]
+        # None of the purpose-tagged fields may also appear tagged as "asset"
+        # (structurally impossible for the same FieldSpec, but guard against
+        # a field appearing twice under different owners in the same list)
+        all_asset_names = {
+            f.name for f in reqs.metadata_fields if f.field_owner == "asset"
+        }
+        conflicts = [n for n in purpose_fields if n in all_asset_names]
+        assert not conflicts, (
+            f"[{asset_type}/{purpose}] Fields tagged both 'purpose' and 'asset': "
+            f"{conflicts}"
+        )

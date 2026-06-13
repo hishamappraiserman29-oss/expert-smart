@@ -1041,6 +1041,50 @@
                                                       border-radius: 8px; padding: 12px 14px; }
     /* ── End Phase 8N CSS ───────────────────────────────────────────────────── */
 
+    /* ── Phase 1: Four-Tab Navigation Shell ───────────────────────────────── */
+    .es-tab-nav {
+        display: flex;
+        gap: 0;
+        margin: 14px 0 0;
+        border-bottom: 2px solid rgba(212,175,55,0.3);
+        direction: rtl;
+        overflow-x: auto;
+    }
+    .es-tab-btn {
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #9ca3af;
+        cursor: pointer;
+        font-family: 'Tajawal', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: -2px;
+        padding: 10px 22px;
+        transition: color 0.2s, border-color 0.2s;
+        white-space: nowrap;
+    }
+    .es-tab-btn:hover { color: var(--gold-light); }
+    .es-tab-btn.es-tab-active {
+        border-bottom-color: var(--gold);
+        color: var(--gold);
+    }
+    .es-workspace { display: none; }
+    .es-workspace.es-ws-active { display: block; }
+    .es-ws-placeholder {
+        text-align: center;
+        padding: 60px 20px;
+        color: #4b5563;
+        font-size: 1rem;
+    }
+    .es-ws-placeholder i {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 12px;
+        color: rgba(212,175,55,0.2);
+    }
+    /* ── End Phase 1 CSS ──────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
@@ -1131,6 +1175,45 @@
             setInterval(loadGrowth, 30 * 60 * 1000);
         })();
     </script>
+
+    <!-- ══ Phase 1: Four-Tab Navigation Shell ══════════════════════════════ -->
+    <nav class="es-tab-nav" id="es-main-tabs" role="tablist" aria-label="التنقل الرئيسي">
+        <button class="es-tab-btn"               id="es-tab-chat"         onclick="esShowTab('chat')"         type="button" role="tab">💬 الشات</button>
+        <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
+        <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
+        <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab">📊 التقييم المجمع</button>
+    </nav>
+    <script>
+    function esShowTab(tab) {
+        document.querySelectorAll('.es-workspace').forEach(function(ws) { ws.classList.remove('es-ws-active'); });
+        document.querySelectorAll('.es-tab-btn').forEach(function(btn) { btn.classList.remove('es-tab-active'); btn.removeAttribute('aria-selected'); });
+        var ws  = document.getElementById('ws-'      + tab);
+        var btn = document.getElementById('es-tab-' + tab);
+        if (ws)  ws.classList.add('es-ws-active');
+        if (btn) { btn.classList.add('es-tab-active'); btn.setAttribute('aria-selected', 'true'); }
+    }
+    </script>
+
+    <!-- Workspace: الشات ─────────────────────────────────────────────────── -->
+    <div class="es-workspace" id="ws-chat" role="tabpanel">
+        <div class="es-ws-placeholder">
+            <i class="fas fa-comments"></i>
+            <div>مساحة الشات — قريباً</div>
+            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">مساعد ذكي للأسئلة العقارية العامة والتحليل الاستثماري.</div>
+        </div>
+    </div>
+
+    <!-- Workspace: التقييم السريع ─────────────────────────────────────────── -->
+    <div class="es-workspace" id="ws-valuation" role="tabpanel">
+        <div class="es-ws-placeholder">
+            <i class="fas fa-home"></i>
+            <div>التقييم السريع — قريباً</div>
+            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">تقييم مبسّط بإدخال الموقع ووصف العقار فقط.</div>
+        </div>
+    </div>
+
+    <!-- Workspace: التقييم المحترف — Active Default ────────────────────── -->
+    <div class="es-workspace es-ws-active" id="ws-professional" role="tabpanel">
 
     <div class="info-grid">
         <div class="field-group">
@@ -2704,7 +2787,20 @@
             <div id="console-pulse-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.3s;"></div>
         </div>
     </div>
-</div>
+
+    </div><!-- /ws-professional -->
+
+    <!-- Workspace: التقييم المجمع ─────────────────────────────────────────── -->
+    <div class="es-workspace" id="ws-composite" role="tabpanel">
+        <div class="es-ws-placeholder">
+            <i class="fas fa-layer-group"></i>
+            <div>التقييم المجمع — قريباً</div>
+            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">تقييم متعدد المكونات والمحافظ العقارية المركّبة.</div>
+        </div>
+    </div>
+    <!-- ══ End Phase 1: Four-Tab Navigation Shell ══════════════════════════ -->
+
+</div><!-- /container -->
 
 <script>
     function activateDualComparison() {

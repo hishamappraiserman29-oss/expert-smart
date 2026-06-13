@@ -33,6 +33,7 @@ for _p in (str(_CORE), str(_ROOT)):
 os.chdir(str(_CORE))
 
 from adapters.valuation_requirements import (  # noqa: E402
+    ASSET_TYPE_TO_FAMILY_ID,
     REQUIREMENTS_MATRIX,
     SUPPORTED_ASSET_TYPES,
     SUPPORTED_PURPOSES,
@@ -92,10 +93,13 @@ def _land(overrides: dict | None = None) -> _Result:
 # ── RM01 — Supported asset types ─────────────────────────────────────────────
 
 def test_RM01_supported_asset_types_contains_all_three():
+    # Phase 9.1: three legacy types + hotel + industrial = 5 total
     assert "residential" in SUPPORTED_ASSET_TYPES
     assert "commercial"  in SUPPORTED_ASSET_TYPES
     assert "land"        in SUPPORTED_ASSET_TYPES
-    assert len(SUPPORTED_ASSET_TYPES) == 3
+    assert "hotel"       in SUPPORTED_ASSET_TYPES
+    assert "industrial"  in SUPPORTED_ASSET_TYPES
+    assert len(SUPPORTED_ASSET_TYPES) == 5
 
 
 # ── RM02 — Each asset type has at least one purpose ───────────────────────────
@@ -720,4 +724,168 @@ def test_RM45_purpose_fields_not_tagged_as_asset():
         assert not conflicts, (
             f"[{asset_type}/{purpose}] Fields tagged both 'purpose' and 'asset': "
             f"{conflicts}"
+        )
+
+
+# ── Phase 9.1 — hotel / industrial batch tests ───────────────────────────────
+
+# ── RM46 — hotel is supported with at least one purpose ──────────────────────
+
+def test_RM46_hotel_is_supported():
+    """hotel must appear in SUPPORTED_ASSET_TYPES and have supported purposes."""
+    assert "hotel" in SUPPORTED_ASSET_TYPES
+    purposes = SUPPORTED_PURPOSES_BY_ASSET_TYPE.get("hotel", set())
+    assert len(purposes) >= 1, "hotel has no supported purposes"
+    assert "market_value" in purposes
+
+
+# ── RM47 — industrial is supported with at least one purpose ─────────────────
+
+def test_RM47_industrial_is_supported():
+    """industrial must appear in SUPPORTED_ASSET_TYPES and have supported purposes."""
+    assert "industrial" in SUPPORTED_ASSET_TYPES
+    purposes = SUPPORTED_PURPOSES_BY_ASSET_TYPE.get("industrial", set())
+    assert len(purposes) >= 1, "industrial has no supported purposes"
+    assert "market_value" in purposes
+
+
+# ── RM48 — hotel/market_value requirements are non-empty ─────────────────────
+
+def test_RM48_hotel_market_value_fields_nonempty():
+    """get_requirements('hotel', 'market_value') returns non-empty metadata_fields."""
+    reqs = get_requirements("hotel", "market_value")
+    assert reqs.asset_type == "hotel"
+    assert reqs.purpose == "market_value"
+    assert len(reqs.metadata_fields) >= 1, "hotel/market_value has no metadata_fields"
+
+
+# ── RM49 — industrial/market_value requirements are non-empty ────────────────
+
+def test_RM49_industrial_market_value_fields_nonempty():
+    """get_requirements('industrial', 'market_value') returns non-empty metadata_fields."""
+    reqs = get_requirements("industrial", "market_value")
+    assert reqs.asset_type == "industrial"
+    assert reqs.purpose == "market_value"
+    assert len(reqs.metadata_fields) >= 1, "industrial/market_value has no metadata_fields"
+
+
+# ── RM50 — hotel fields contain required hotel-specific codes ─────────────────
+
+def test_RM50_hotel_fields_contain_hotel_specific():
+    """hotel metadata_fields must include key hotel-specific field codes."""
+    reqs = get_requirements("hotel", "market_value")
+    codes = {f.name for f in reqs.metadata_fields}
+    required = {"total_rooms", "occupancy_rate", "average_daily_rate",
+                "revpar", "star_rating", "land_area", "building_area"}
+    missing = required - codes
+    assert not missing, f"hotel/market_value missing field codes: {sorted(missing)}"
+
+
+# ── RM51 — industrial fields contain required industrial-specific codes ────────
+
+def test_RM51_industrial_fields_contain_industrial_specific():
+    """industrial metadata_fields must include key industrial-specific field codes."""
+    reqs = get_requirements("industrial", "market_value")
+    codes = {f.name for f in reqs.metadata_fields}
+    required = {"land_area", "building_area", "clear_height_or_clear_span",
+                "loading_bays", "warehouse_or_factory_type", "licensing_status"}
+    missing = required - codes
+    assert not missing, f"industrial/market_value missing field codes: {sorted(missing)}"
+
+
+# ── RM52 — hotel linked to hospitality_entertainment family ──────────────────
+
+def test_RM52_hotel_family_linkage():
+    """ASSET_TYPE_TO_FAMILY_ID maps hotel → hospitality_entertainment."""
+    assert ASSET_TYPE_TO_FAMILY_ID.get("hotel") == "hospitality_entertainment"
+
+
+# ── RM53 — industrial linked to advanced_industrial_logistics family ──────────
+
+def test_RM53_industrial_family_linkage():
+    """ASSET_TYPE_TO_FAMILY_ID maps industrial → advanced_industrial_logistics."""
+    assert ASSET_TYPE_TO_FAMILY_ID.get("industrial") == "advanced_industrial_logistics"
+
+
+# ── RM54 — hotel/industrial FieldSpec serialisation matches existing shape ────
+
+def test_RM54_hotel_industrial_fieldspec_shape():
+    """hotel and industrial FieldSpec objects carry all 10 expected attributes."""
+    import dataclasses
+    expected_fields = {
+        "name", "required", "field_type", "description", "valid_values",
+        "role", "label_ar", "group", "ui_required", "field_owner",
+    }
+    for asset_type in ("hotel", "industrial"):
+        reqs = get_requirements(asset_type, "market_value")
+        for spec in reqs.metadata_fields:
+            actual = {f.name for f in dataclasses.fields(spec)}
+            assert actual == expected_fields, (
+                f"[{asset_type}] FieldSpec shape mismatch: {actual}"
+            )
+
+
+# ── RM55 — engine_value fields in hotel/industrial have field_owner="engine" ──
+
+def test_RM55_hotel_industrial_engine_fields_owner():
+    """role='engine_value' ⟹ field_owner='engine' for hotel and industrial."""
+    for asset_type in ("hotel", "industrial"):
+        reqs = get_requirements(asset_type, "market_value")
+        for spec in reqs.metadata_fields:
+            if spec.role == "engine_value":
+                assert spec.field_owner == "engine", (
+                    f"[{asset_type}] '{spec.name}' has role='engine_value' "
+                    f"but field_owner={spec.field_owner!r}"
+                )
+
+
+# ── RM56 — legacy residential/commercial/land behavior unchanged ──────────────
+
+def test_RM56_legacy_asset_types_unaffected():
+    """Adding hotel/industrial must not break residential/commercial/land requirements."""
+    for asset_type in ("residential", "commercial", "land"):
+        reqs = get_requirements(asset_type, "market_value")
+        assert len(reqs.metadata_fields) >= 1, (
+            f"Legacy asset_type '{asset_type}' lost all metadata_fields"
+        )
+        # Engine fields must still be present
+        engine_names = {f.name for f in reqs.metadata_fields if f.role == "engine_value"}
+        assert "comparable" in engine_names, (
+            f"[{asset_type}] Engine field 'comparable' is missing"
+        )
+        assert "income" in engine_names, (
+            f"[{asset_type}] Engine field 'income' is missing"
+        )
+
+
+# ── RM57 — hotel/industrial all four supported purposes work ──────────────────
+
+@pytest.mark.parametrize("asset_type,purpose", [
+    ("hotel",      "market_value"),
+    ("hotel",      "investment_analysis"),
+    ("hotel",      "insurance"),
+    ("hotel",      "liquidation"),
+    ("industrial", "market_value"),
+    ("industrial", "investment_analysis"),
+    ("industrial", "insurance"),
+    ("industrial", "liquidation"),
+])
+def test_RM57_hotel_industrial_all_purposes(asset_type, purpose):
+    """All four supported purposes work for both hotel and industrial."""
+    reqs = get_requirements(asset_type, purpose)
+    assert reqs.asset_type == asset_type
+    assert reqs.purpose == purpose
+    assert len(reqs.metadata_fields) >= 1
+
+
+# ── RM58 — hotel/industrial no duplicate field names ─────────────────────────
+
+def test_RM58_hotel_industrial_no_duplicate_field_names():
+    """No duplicate field names within hotel or industrial metadata_fields."""
+    for asset_type in ("hotel", "industrial"):
+        reqs = get_requirements(asset_type, "market_value")
+        names = [f.name for f in reqs.metadata_fields]
+        duplicates = [n for n in names if names.count(n) > 1]
+        assert not duplicates, (
+            f"[{asset_type}] Duplicate field names: {sorted(set(duplicates))}"
         )

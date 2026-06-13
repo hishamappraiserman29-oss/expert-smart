@@ -65,6 +65,9 @@ SUPPORTED_ASSET_TYPES: frozenset[str] = frozenset({
     "residential",
     "commercial",
     "land",
+    # Phase 9.1 — Batch 1: specialised asset types via asset_families registry
+    "hotel",
+    "industrial",
 })
 
 SUPPORTED_PURPOSES_BY_ASSET_TYPE: dict[str, frozenset[str]] = {
@@ -83,6 +86,19 @@ SUPPORTED_PURPOSES_BY_ASSET_TYPE: dict[str, frozenset[str]] = {
     "land": frozenset({
         "market_value",
         "investment_analysis",
+        "liquidation",
+    }),
+    # Phase 9.1 — Batch 1 specialised types
+    "hotel": frozenset({
+        "market_value",
+        "investment_analysis",
+        "insurance",
+        "liquidation",
+    }),
+    "industrial": frozenset({
+        "market_value",
+        "investment_analysis",
+        "insurance",
         "liquidation",
     }),
 }
@@ -372,6 +388,106 @@ _LAND: tuple[FieldSpec, ...] = _COMMON + (
 )
 
 
+# ── Phase 9.1 — Hotel (hospitality_entertainment) field definitions ───────────
+
+_HOTEL: tuple[FieldSpec, ...] = _COMMON + (
+    # Engine approach value — cost approach applies for improved hotel property
+    FieldSpec(
+        "cost", True, "float",
+        "Cost-approach value (SAR) — applies for improved hospitality property",
+        role="engine_value", field_owner="engine",
+    ),
+    # Asset-specific operational fields
+    FieldSpec("hotel_name",            False, "str",   "Hotel name or brand",                         label_ar="اسم الفندق",                  field_owner="asset"),
+    FieldSpec("total_rooms",           False, "int",   "Total number of guest rooms",                 label_ar="إجمالي الغرف",                field_owner="asset"),
+    FieldSpec("occupied_rooms",        False, "int",   "Average occupied rooms",                      label_ar="الغرف المشغولة",              field_owner="asset"),
+    FieldSpec("occupancy_rate",        False, "float", "Occupancy rate (0.0–1.0)",                    label_ar="نسبة الإشغال",                field_owner="asset"),
+    FieldSpec("average_daily_rate",    False, "float", "Average daily rate (ADR) per room (SAR)",     label_ar="متوسط السعر اليومي (ريال)",  field_owner="asset"),
+    FieldSpec("revpar",                False, "float", "Revenue per available room (RevPAR) (SAR)",   label_ar="الإيراد لكل غرفة متاحة",     field_owner="asset"),
+    FieldSpec("food_beverage_revenue", False, "float", "Annual food & beverage revenue (SAR)",        label_ar="إيراد المطاعم والمشروبات",    field_owner="asset"),
+    FieldSpec("operating_expense_ratio", False, "float", "Operating expense ratio (0.0–1.0)",         label_ar="نسبة المصروفات التشغيلية",   field_owner="asset"),
+    FieldSpec(
+        "star_rating", False, "str",
+        "Hotel star classification",
+        ("1_star", "2_star", "3_star", "4_star", "5_star", "unclassified"),
+        label_ar="التصنيف النجمي", field_owner="asset",
+    ),
+    FieldSpec("hotel_brand_or_operator", False, "str", "Hotel brand or management operator",          label_ar="العلامة التجارية / المشغّل", field_owner="asset"),
+    FieldSpec("land_area",             False, "float", "Land area (sqm)",                             label_ar="مساحة الأرض (م²)",            field_owner="asset", ui_required=True),
+    FieldSpec("building_area",         False, "float", "Total built-up area (sqm)",                   label_ar="المساحة المبنية الإجمالية (م²)", field_owner="asset", ui_required=True),
+    # Legal / document fields
+    FieldSpec(
+        "legal_status", False, "str",
+        "Legal / title status of the hotel property",
+        ("registered_title", "preliminary_contract", "allocation", "unknown"),
+        label_ar="الحالة القانونية",
+        ui_required=True, field_owner="enrichment",
+    ),
+    FieldSpec("title_deed", False, "bool",
+              "Ownership title deed / deed of conveyance",
+              label_ar="سند الملكية", group="document", field_owner="enrichment"),
+)
+
+
+# ── Phase 9.1 — Industrial (advanced_industrial_logistics) field definitions ──
+
+_INDUSTRIAL: tuple[FieldSpec, ...] = _COMMON + (
+    # Engine approach value
+    FieldSpec(
+        "cost", True, "float",
+        "Cost-approach value (SAR) — applies for improved industrial property",
+        role="engine_value", field_owner="engine",
+    ),
+    # Asset-specific operational fields
+    FieldSpec("industrial_property_name", False, "str",   "Industrial property / facility name",     label_ar="اسم المنشأة الصناعية",       field_owner="asset"),
+    FieldSpec("land_area",                False, "float", "Land area (sqm)",                         label_ar="مساحة الأرض (م²)",            field_owner="asset", ui_required=True),
+    FieldSpec("building_area",            False, "float", "Total built-up area (sqm)",               label_ar="المساحة المبنية الإجمالية (م²)", field_owner="asset", ui_required=True),
+    FieldSpec("clear_height_or_clear_span", False, "float", "Clear height / clear span (m)",         label_ar="الارتفاع الصافي / الامتداد الصافي (م)", field_owner="asset"),
+    FieldSpec("loading_bays",             False, "int",   "Number of loading bays / docks",          label_ar="عدد منافذ التحميل",           field_owner="asset"),
+    FieldSpec("power_capacity",           False, "float", "Available electrical power capacity (kVA)", label_ar="سعة الطاقة الكهربائية (كيلوفولت أمبير)", field_owner="asset"),
+    FieldSpec("floor_load_capacity",      False, "float", "Floor load capacity (kg/m²)",             label_ar="قدرة تحمّل الأرضية (كجم/م²)", field_owner="asset"),
+    FieldSpec(
+        "access_roads_quality", False, "str",
+        "Quality of access roads to the facility",
+        ("paved_highway", "paved_local", "unpaved", "unknown"),
+        label_ar="جودة طرق الوصول", field_owner="asset",
+    ),
+    FieldSpec(
+        "warehouse_or_factory_type", False, "str",
+        "Primary use classification",
+        ("warehouse", "factory", "workshop", "mixed_industrial", "logistics_hub", "other"),
+        label_ar="نوع المستودع / المصنع", field_owner="asset",
+    ),
+    FieldSpec("occupancy_rate",           False, "float", "Occupancy rate (0.0–1.0)",               label_ar="نسبة الإشغال",                field_owner="asset"),
+    FieldSpec("operating_expense_ratio",  False, "float", "Operating expense ratio (0.0–1.0)",      label_ar="نسبة المصروفات التشغيلية",   field_owner="asset"),
+    FieldSpec(
+        "licensing_status", False, "str",
+        "Municipal / industrial licensing status",
+        ("licensed", "pending_renewal", "unlicensed", "unknown"),
+        label_ar="حالة الترخيص", field_owner="asset",
+    ),
+    FieldSpec(
+        "environmental_compliance", False, "str",
+        "Environmental compliance status",
+        ("compliant", "minor_issues", "major_issues", "not_assessed"),
+        label_ar="الامتثال البيئي", field_owner="asset",
+    ),
+    # Document checklist
+    FieldSpec("title_deed", False, "bool",
+              "Ownership title deed / deed of conveyance",
+              label_ar="سند الملكية", group="document", field_owner="enrichment"),
+)
+
+
+# ── Metadata linkage: asset_type → asset_families.py family_id ───────────────
+# Informational only — no engine logic.  Mirrors asset_families.ASSET_FAMILIES_REGISTRY.
+
+ASSET_TYPE_TO_FAMILY_ID: dict[str, str] = {
+    "hotel":      "hospitality_entertainment",
+    "industrial": "advanced_industrial_logistics",
+}
+
+
 # ── Build the matrix ──────────────────────────────────────────────────────────
 
 def _build_matrix() -> dict[tuple[str, str], ValuationRequirements]:
@@ -379,6 +495,8 @@ def _build_matrix() -> dict[tuple[str, str], ValuationRequirements]:
         "residential": _RESIDENTIAL,
         "commercial":  _COMMERCIAL,
         "land":        _LAND,
+        "hotel":       _HOTEL,
+        "industrial":  _INDUSTRIAL,
     }
     matrix: dict[tuple[str, str], ValuationRequirements] = {}
     for asset_type, purposes in SUPPORTED_PURPOSES_BY_ASSET_TYPE.items():

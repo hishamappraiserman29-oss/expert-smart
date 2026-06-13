@@ -78,11 +78,11 @@ def test_REQ02_missing_purpose(client):
 def test_REQ03_unknown_asset_type(client):
     """Unrecognised asset_type → 400."""
     resp = client.get(
-        "/api/valuation/requirements?asset_type=industrial&purpose=market_value",
+        "/api/valuation/requirements?asset_type=nonexistent_type&purpose=market_value",
         headers=_auth(),
     )
     assert resp.status_code == 400
-    assert "industrial" in resp.get_json()["message"]
+    assert "nonexistent_type" in resp.get_json()["message"]
 
 
 # ── REQ04 ─────────────────────────────────────────────────────────────────────
@@ -413,4 +413,101 @@ def test_REQ17_field_owner_values_correct_in_response(client):
         assert field_map[name]["field_owner"] == "enrichment", (
             f"Enrichment field '{name}' must have field_owner='enrichment', "
             f"got {field_map[name]['field_owner']!r}"
+        )
+
+
+# ── Phase 9.1 — hotel / industrial endpoint tests ────────────────────────────
+
+
+# ── REQ18 — hotel + market_value → 200, checklist_items non-empty ────────────
+
+def test_REQ18_hotel_market_value_200(client):
+    """GET …?asset_type=hotel&purpose=market_value returns 200 with checklist_items."""
+    resp = client.get(
+        "/api/valuation/requirements?asset_type=hotel&purpose=market_value",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200, (
+        f"Expected 200 for hotel/market_value, got {resp.status_code}: {resp.data}"
+    )
+    data = resp.get_json()
+    assert data["asset_type"] == "hotel"
+    assert data["purpose"] == "market_value"
+    assert "checklist_items" in data, "Response missing 'checklist_items'"
+    assert len(data["checklist_items"]) >= 1, "hotel/market_value checklist_items is empty"
+
+    # Spot-check enriched keys are present on each item
+    enriched_keys = {"name", "required", "field_type", "description",
+                     "valid_values", "role", "label_ar", "group",
+                     "ui_required", "field_owner"}
+    for item in data["checklist_items"]:
+        missing = enriched_keys - set(item.keys())
+        assert not missing, (
+            f"hotel checklist item missing keys: {sorted(missing)}"
+        )
+
+
+# ── REQ19 — industrial + market_value → 200, checklist_items non-empty ───────
+
+def test_REQ19_industrial_market_value_200(client):
+    """GET …?asset_type=industrial&purpose=market_value returns 200 with checklist_items."""
+    resp = client.get(
+        "/api/valuation/requirements?asset_type=industrial&purpose=market_value",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200, (
+        f"Expected 200 for industrial/market_value, got {resp.status_code}: {resp.data}"
+    )
+    data = resp.get_json()
+    assert data["asset_type"] == "industrial"
+    assert data["purpose"] == "market_value"
+    assert "checklist_items" in data, "Response missing 'checklist_items'"
+    assert len(data["checklist_items"]) >= 1, "industrial/market_value checklist_items is empty"
+
+    # Spot-check enriched keys
+    enriched_keys = {"name", "required", "field_type", "description",
+                     "valid_values", "role", "label_ar", "group",
+                     "ui_required", "field_owner"}
+    for item in data["checklist_items"]:
+        missing = enriched_keys - set(item.keys())
+        assert not missing, (
+            f"industrial checklist item missing keys: {sorted(missing)}"
+        )
+
+
+# ── REQ20 — hotel asset-specific fields appear in response ───────────────────
+
+def test_REQ20_hotel_asset_specific_fields_in_response(client):
+    """hotel/market_value response includes key hotel-specific fields."""
+    resp = client.get(
+        "/api/valuation/requirements?asset_type=hotel&purpose=market_value",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    field_map = {item["name"]: item for item in resp.get_json()["checklist_items"]}
+    for code in ("total_rooms", "occupancy_rate", "average_daily_rate",
+                 "revpar", "star_rating"):
+        assert code in field_map, f"Hotel field '{code}' missing from checklist_items"
+        assert field_map[code]["field_owner"] == "asset", (
+            f"Hotel field '{code}' must be field_owner='asset', "
+            f"got {field_map[code]['field_owner']!r}"
+        )
+
+
+# ── REQ21 — industrial asset-specific fields appear in response ───────────────
+
+def test_REQ21_industrial_asset_specific_fields_in_response(client):
+    """industrial/market_value response includes key industrial-specific fields."""
+    resp = client.get(
+        "/api/valuation/requirements?asset_type=industrial&purpose=market_value",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    field_map = {item["name"]: item for item in resp.get_json()["checklist_items"]}
+    for code in ("land_area", "building_area", "clear_height_or_clear_span",
+                 "loading_bays", "warehouse_or_factory_type"):
+        assert code in field_map, f"Industrial field '{code}' missing from checklist_items"
+        assert field_map[code]["field_owner"] == "asset", (
+            f"Industrial field '{code}' must be field_owner='asset', "
+            f"got {field_map[code]['field_owner']!r}"
         )

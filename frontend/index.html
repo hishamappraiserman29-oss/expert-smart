@@ -1816,6 +1816,127 @@
         </div>
     </div>
 
+    <!-- ── Phase 10: Professional Registry Selectors ──────────────────── -->
+    <div id="prof-registry-section" style="margin:10px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+        <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">سجل الأصول والمسارات المهنية</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
+            <div>
+                <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">عائلة الأصل</label>
+                <select id="prof-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value)">
+                    <option value="">-- اختر العائلة --</option>
+                    <option value="hospitality_entertainment">ضيافة وترفيه</option>
+                    <option value="sports_event_venues">رياضة وفعاليات</option>
+                    <option value="advanced_industrial_logistics">صناعة ولوجستيات</option>
+                    <option value="tech_energy_infrastructure">تقنية وطاقة وبنية تحتية</option>
+                    <option value="specialized_medical_science">طبي وعلمي متخصص</option>
+                    <option value="agri_environmental_assets">زراعي وبيئي</option>
+                    <option value="underground_special_assets">تحت الأرض وخاص</option>
+                    <option value="cemetery_memorial_assets">مقابر وتذكارية</option>
+                    <option value="heritage_cultural_assets">تراث وثقافة</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">النوع الفرعي</label>
+                <select id="prof-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                    <option value="">-- اختر النوع الفرعي --</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">مسار الغرض</label>
+                <select id="prof-purpose-route" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubRoutes(this.value)">
+                    <option value="">-- اختر المسار --</option>
+                    <optgroup label="القيمة السوقية">
+                        <option value="standard_market_value">القيمة السوقية القياسية</option>
+                        <option value="market_value_with_habu">القيمة السوقية وفق HABU</option>
+                        <option value="sales_comparison_market_value">مقارنة المبيعات</option>
+                    </optgroup>
+                    <optgroup label="التحليل الاستثماري">
+                        <option value="acquisition_synergy_value">قيمة التآزر الاستثماري</option>
+                        <option value="development_feasibility">جدوى التطوير</option>
+                        <option value="dcf_investment_value">DCF - التدفق النقدي المخصوم</option>
+                        <option value="reit_nav">صندوق استثمار عقاري NAV</option>
+                        <option value="asset_backed_securitization">التوريق المدعوم بالأصول</option>
+                        <option value="asset_swap">مقايضة الأصول</option>
+                    </optgroup>
+                    <optgroup label="الرهن والتمويل">
+                        <option value="secured_lending_value">قيمة الإقراض المضمون</option>
+                        <option value="bank_risk_haircut">خصم مخاطر البنك</option>
+                        <option value="ltv_assessment">تقييم نسبة القرض للقيمة</option>
+                    </optgroup>
+                    <optgroup label="التصفية وإعادة الهيكلة">
+                        <option value="forced_sale">البيع الاضطراري</option>
+                        <option value="court_liquidation">التصفية القضائية</option>
+                        <option value="bankruptcy_restructuring">إعادة هيكلة الإفلاس</option>
+                        <option value="going_concern_vs_liquidation">استمرارية العمل مقابل التصفية</option>
+                    </optgroup>
+                    <optgroup label="التأمين">
+                        <option value="reinstatement_cost_new">تكلفة إعادة البناء بالجديد</option>
+                        <option value="policy_issuance">إصدار وثيقة التأمين</option>
+                        <option value="damage_assessment">تقييم الأضرار</option>
+                        <option value="loss_adjustment">تسوية الخسائر</option>
+                    </optgroup>
+                    <optgroup label="القيمة الإيجارية السوقية">
+                        <option value="net_rent">الإيجار الصافي</option>
+                        <option value="gross_rent">الإيجار الإجمالي</option>
+                        <option value="lease_renewal">تجديد عقد الإيجار</option>
+                        <option value="rent_review">مراجعة الإيجار</option>
+                    </optgroup>
+                    <optgroup label="التقييم الضريبي">
+                        <option value="mass_appraisal">التقييم الجماعي</option>
+                        <option value="property_tax">ضريبة العقار</option>
+                        <option value="government_rating">التصنيف الحكومي</option>
+                    </optgroup>
+                    <optgroup label="التقارير المالية">
+                        <option value="ifrs_13_fair_value">القيمة العادلة IFRS 13</option>
+                        <option value="ias_16_revaluation">إعادة التقييم IAS 16</option>
+                        <option value="impairment_review">مراجعة الانخفاض في القيمة</option>
+                        <option value="disclosure_support">دعم الإفصاح</option>
+                    </optgroup>
+                    <optgroup label="حقوق الملكية والمصالح">
+                        <option value="usufruct_right">حق الانتفاع</option>
+                        <option value="bare_ownership">الملكية العارية</option>
+                        <option value="minority_interest">حصة الأقلية</option>
+                        <option value="inheritance_partition">تقسيم الميراث</option>
+                        <option value="undivided_share">الحصة المشاعة</option>
+                    </optgroup>
+                    <optgroup label="عدم اليقين في التقييم">
+                        <option value="sensitivity_analysis">تحليل الحساسية</option>
+                        <option value="scenario_analysis">تحليل السيناريوهات</option>
+                        <option value="probability_weighted_value">القيمة المرجحة بالاحتمالات</option>
+                        <option value="stress_case">حالة الضغط</option>
+                    </optgroup>
+                    <optgroup label="البيئة والاستدامة">
+                        <option value="remediation_cost">تكلفة المعالجة البيئية</option>
+                        <option value="green_premium">علاوة المباني الخضراء</option>
+                        <option value="carbon_credit_value">قيمة أرصدة الكربون</option>
+                        <option value="environmental_liability">المسؤولية البيئية</option>
+                    </optgroup>
+                    <optgroup label="التقاضي والتعويض">
+                        <option value="court_damages">أضرار قضائية</option>
+                        <option value="diminution_in_value">انخفاض القيمة</option>
+                        <option value="cost_to_cure_lit">تكلفة المعالجة (تقاضي)</option>
+                        <option value="eminent_domain">نزع الملكية للمنفعة العامة</option>
+                        <option value="severance_damage">أضرار الفصل</option>
+                        <option value="compulsory_acquisition_compensation">تعويض الاستملاك الإجباري</option>
+                    </optgroup>
+                    <optgroup label="الخصخصة والأصول السيادية">
+                        <option value="public_to_private_conversion">التحويل من عام إلى خاص</option>
+                        <option value="concession_value">قيمة الامتياز</option>
+                        <option value="labor_liability_adjustment">تعديل مسؤولية العمالة</option>
+                        <option value="infrastructure_modernization">تحديث البنية التحتية</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div>
+                <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">المسار الفرعي</label>
+                <select id="prof-purpose-subroute" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                    <option value="">-- اختر المسار الفرعي --</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <!-- ── End Phase 10: Professional Registry Selectors ────────────────── -->
+
     <!-- ── Phase 8I: Profile Explainer ──────────────────────────────────── -->
     <div id="es-profile-explainer" style="display:none; margin:8px 0 4px; padding:8px 12px; background:rgba(31,41,55,0.7); border:1px solid #374151; border-radius:7px; font-size:0.8rem; line-height:1.5;">
         <span id="es-profile-badge" style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:0.72rem; font-weight:600; margin-left:8px; border:1px solid transparent;"></span>
@@ -1837,6 +1958,61 @@
         <div id="es-req-notes" style="margin-top:4px; font-size:0.78rem; color:#f59e0b;"></div>
     </div>
     <!-- ── End Phase 8B/8C ──────────────────────────────────────────────── -->
+
+    <!-- ── Phase 10: Purpose Integration Matrix Panel ──────────────────── -->
+    <div id="prof-matrix-panel" style="margin:10px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px; font-size:0.8rem;">
+        <div style="font-weight:bold; color:var(--gold-light); margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">
+            مصفوفة تكامل الغرض — القيمة السوقية وفق HABU
+            <span style="font-size:0.7rem; color:#9ca3af; font-weight:normal; margin-right:8px;">(قراءة فقط)</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 14px; margin-bottom:8px; font-size:0.75rem; color:#9ca3af;">
+            <div><span style="color:#e5e7eb;">المجموعة:</span> القيمة السوقية</div>
+            <div><span style="color:#e5e7eb;">المسار:</span> market_value_with_habu</div>
+            <div><span style="color:#e5e7eb;">أساس التقييم:</span> Market Value</div>
+            <div><span style="color:#e5e7eb;">مستوى IFRS الافتراضي:</span> Level 2</div>
+            <div><span style="color:#e5e7eb;">موافقة بشرية مطلوبة:</span> نعم</div>
+            <div><span style="color:#e5e7eb;">تقرير نهائي بدون موافقة:</span> لا</div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px;">
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">1. حقول واجهة المستخدم (UI Fields)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">property_id · asset_type · purpose · location_id · area_sqm · transaction_date · comparable_sales_count · habu_scenario</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">2. تعيين قاعدة البيانات (DB Mapping)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">properties · comparables · habu_scenarios · locations · transactions</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">3. مدخلات المحرك (Engine Inputs)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_price_per_sqm · location_factor · age_depreciation · habu_adjustment_factor · quality_score</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">4. مقارنات السوق (Market Comparables)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">sale_price · sale_date · area_sqm · location · property_type · adjusted_price_per_sqm</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">5. الإثراء الآلي (Agentic Enrichment)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_trend_index · neighborhood_score · infrastructure_score — <span style="color:#f59e0b;">الحالة الافتراضية: pending_human_review</span></div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">6. قواعد التحقق (Validation Rules)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">area_sqm ≥ 1 · comparable_count ≥ 3 · habu_scenario ∈ {highest_use, current_use} · date لا تتجاوز اليوم</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">7. موافقة بشرية (Human Approval)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">مطلوبة عند وجود إثراء آلي · حالة التقرير بدون موافقة: draft_pending_human_review · الحالات المسموحة: pending_human_review · approved · rejected</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">8. إفصاح التقرير (Report Disclosure)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">valuation_date · effective_date · habu_assumption · market_conditions_note · comparable_summary · ifrs_level_disclosure</div>
+            </details>
+            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
+                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">9. عقد المخرجات (Output Contract)</summary>
+                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
+            </details>
+        </div>
+    </div>
+    <!-- ── End Phase 10: Purpose Integration Matrix Panel ───────────────── -->
 
     <div class="ai-section">
         <div class="quality-header-bar">
@@ -27153,6 +27329,135 @@ var _PROFILE_FORM_SCHEMA = {
     });
 }());
 // ══ End Phase 8B/8C/8G/8H.1 ═════════════════════════════════════════════════
+</script>
+
+<script>
+// ══ Phase 10: Professional Registry — Cascading Selectors ════════════════════
+(function () {
+    'use strict';
+
+    var PROF_FAMILY_SUBTYPES = {
+        hospitality_entertainment: [
+            {v:'hotel',a:'فندق'},{v:'cinema',a:'سينما'},{v:'theater',a:'مسرح'},
+            {v:'opera_house',a:'دار أوبرا'},{v:'theme_park',a:'مدينة ألعاب'},
+            {v:'indoor_ski_slope',a:'منحدر تزلج مغطى'},{v:'casino',a:'كازينو'}
+        ],
+        sports_event_venues: [
+            {v:'stadium',a:'ملعب رياضي'},{v:'indoor_arena',a:'قاعة مغلقة'},
+            {v:'padel_tennis_courts',a:'ملاعب بادل تنس'},{v:'squash_courts',a:'ملاعب إسكواش'},
+            {v:'racecourse',a:'ميدان سباق خيل'},{v:'motorsport_circuit',a:'حلبة سباق سيارات'},
+            {v:'golf_course',a:'ملعب جولف'}
+        ],
+        advanced_industrial_logistics: [
+            {v:'industrial',a:'صناعي'},{v:'prefabricated_factory',a:'مصنع جاهز'},
+            {v:'self_storage',a:'مخازن التخزين الذاتي'},{v:'container_yard',a:'ساحة حاويات'},
+            {v:'parking_structure',a:'مبنى مواقف سيارات'}
+        ],
+        tech_energy_infrastructure: [
+            {v:'telecom_tower',a:'برج اتصالات'},{v:'solar_farm',a:'مزرعة طاقة شمسية'}
+        ],
+        specialized_medical_science: [
+            {v:'hospital',a:'مستشفى'},{v:'school',a:'مدرسة'},
+            {v:'life_sciences_lab',a:'مختبر علوم الحياة'},{v:'bio_bank',a:'بنك بيولوجي'}
+        ],
+        agri_environmental_assets: [
+            {v:'agtech_hydroponic',a:'زراعة هيدروبونيك تقنية'},
+            {v:'greenhouse',a:'بيت زجاجي'},{v:'smart_farm',a:'مزرعة ذكية'}
+        ],
+        underground_special_assets: [
+            {v:'repurposed_cave',a:'كهف معاد توظيفه'},{v:'underground_bunker',a:'ملجأ تحت الأرض'}
+        ],
+        cemetery_memorial_assets: [
+            {v:'cemetery',a:'مقبرة'},{v:'memorial_park',a:'حديقة تذكارية'}
+        ],
+        heritage_cultural_assets: [
+            {v:'heritage_property',a:'عقار تراثي'},{v:'architectural_heritage',a:'تراث معماري'},
+            {v:'cultural_landmark',a:'معلم ثقافي'},{v:'adaptive_reuse_heritage',a:'إعادة توظيف تراثي'}
+        ]
+    };
+
+    var PROF_ROUTE_SUBROUTES = {
+        standard_market_value:        [{v:'observed_market_inputs',a:'مدخلات السوق الملاحظة'},{v:'comparable_adjustment',a:'تعديل المقارنات'}],
+        market_value_with_habu:       [{v:'observed_market_inputs',a:'مدخلات السوق الملاحظة'},{v:'habu_required',a:'HABU مطلوب'},{v:'comparable_adjustment',a:'تعديل المقارنات'}],
+        sales_comparison_market_value:[{v:'comparable_adjustment',a:'تعديل المقارنات'}],
+        acquisition_synergy_value:    [{v:'wacc_based',a:'مبني على WACC'},{v:'target_irr_based',a:'مبني على IRR المستهدف'}],
+        development_feasibility:      [{v:'wacc_based',a:'مبني على WACC'},{v:'terminal_cap_rate_based',a:'مبني على معدل الرسملة النهائي'}],
+        dcf_investment_value:         [{v:'wacc_based',a:'مبني على WACC'},{v:'target_irr_based',a:'مبني على IRR المستهدف'},{v:'terminal_cap_rate_based',a:'مبني على معدل الرسملة النهائي'}],
+        reit_nav:                     [{v:'portfolio_nav_based',a:'مبني على NAV المحفظة'}],
+        asset_backed_securitization:  [{v:'portfolio_nav_based',a:'مبني على NAV المحفظة'}],
+        asset_swap:                   [{v:'wacc_based',a:'مبني على WACC'}],
+        secured_lending_value:        [{v:'stable_income_basis',a:'أساس الدخل المستقر'},{v:'remaining_economic_life',a:'العمر الاقتصادي المتبقي'}],
+        bank_risk_haircut:            [{v:'credit_risk_buffer',a:'احتياطي مخاطر الائتمان'},{v:'remaining_economic_life',a:'العمر الاقتصادي المتبقي'}],
+        ltv_assessment:               [{v:'stable_income_basis',a:'أساس الدخل المستقر'},{v:'credit_risk_buffer',a:'احتياطي مخاطر الائتمان'}],
+        forced_sale:                  [{v:'time_pressure_discount',a:'خصم ضغط الوقت'},{v:'auction_costs',a:'تكاليف المزاد'}],
+        court_liquidation:            [{v:'time_pressure_discount',a:'خصم ضغط الوقت'},{v:'creditor_recovery_basis',a:'أساس استرداد الدائنين'}],
+        bankruptcy_restructuring:     [{v:'creditor_recovery_basis',a:'أساس استرداد الدائنين'},{v:'auction_costs',a:'تكاليف المزاد'}],
+        going_concern_vs_liquidation: [{v:'time_pressure_discount',a:'خصم ضغط الوقت'},{v:'creditor_recovery_basis',a:'أساس استرداد الدائنين'}],
+        reinstatement_cost_new:       [{v:'debris_removal',a:'إزالة الأنقاض'},{v:'professional_fees',a:'رسوم المهنيين'},{v:'construction_inflation',a:'تضخم تكاليف البناء'}],
+        policy_issuance:              [{v:'debris_removal',a:'إزالة الأنقاض'},{v:'professional_fees',a:'رسوم المهنيين'}],
+        damage_assessment:            [{v:'cost_to_cure',a:'تكلفة المعالجة'},{v:'debris_removal',a:'إزالة الأنقاض'}],
+        loss_adjustment:              [{v:'cost_to_cure',a:'تكلفة المعالجة'},{v:'construction_inflation',a:'تضخم تكاليف البناء'}],
+        net_rent:                     [{v:'gla_based',a:'مبني على GLA'},{v:'operating_cost_pass_through',a:'تمرير التكاليف التشغيلية'}],
+        gross_rent:                   [{v:'gla_based',a:'مبني على GLA'},{v:'rent_free_period_adjustment',a:'تعديل فترة الإيجار المجاني'}],
+        lease_renewal:                [{v:'rent_free_period_adjustment',a:'تعديل فترة الإيجار المجاني'},{v:'operating_cost_pass_through',a:'تمرير التكاليف التشغيلية'}],
+        rent_review:                  [{v:'gla_based',a:'مبني على GLA'}],
+        mass_appraisal:               [{v:'cadastral_value',a:'القيمة المساحية'},{v:'street_factor',a:'معامل الشارع'},{v:'exemption_rate',a:'معدل الإعفاء'}],
+        property_tax:                 [{v:'cadastral_value',a:'القيمة المساحية'},{v:'exemption_rate',a:'معدل الإعفاء'}],
+        government_rating:            [{v:'street_factor',a:'معامل الشارع'},{v:'cadastral_value',a:'القيمة المساحية'}],
+        ifrs_13_fair_value:           [{v:'level_1_inputs',a:'مدخلات المستوى 1'},{v:'level_2_inputs',a:'مدخلات المستوى 2'},{v:'level_3_inputs',a:'مدخلات المستوى 3'}],
+        ias_16_revaluation:           [{v:'revaluation_surplus',a:'فائض إعادة التقييم'},{v:'level_2_inputs',a:'مدخلات المستوى 2'}],
+        impairment_review:            [{v:'level_3_inputs',a:'مدخلات المستوى 3'}],
+        disclosure_support:           [{v:'level_1_inputs',a:'مدخلات المستوى 1'},{v:'level_2_inputs',a:'مدخلات المستوى 2'},{v:'level_3_inputs',a:'مدخلات المستوى 3'}],
+        usufruct_right:               [{v:'remaining_term_value',a:'قيمة المدة المتبقية'},{v:'income_right_basis',a:'أساس حق الدخل'}],
+        bare_ownership:               [{v:'dlom_adjustment',a:'تعديل DLOM'},{v:'remaining_term_value',a:'قيمة المدة المتبقية'}],
+        minority_interest:            [{v:'dloc_adjustment',a:'تعديل DLOC'},{v:'dlom_adjustment',a:'تعديل DLOM'}],
+        inheritance_partition:        [{v:'dloc_adjustment',a:'تعديل DLOC'}],
+        undivided_share:              [{v:'dloc_adjustment',a:'تعديل DLOC'},{v:'dlom_adjustment',a:'تعديل DLOM'}],
+        sensitivity_analysis:         [{v:'optimistic_base_pessimistic',a:'متفائل / أساس / متشائم'},{v:'discount_rate_shock',a:'صدمة معدل الخصم'}],
+        scenario_analysis:            [{v:'optimistic_base_pessimistic',a:'متفائل / أساس / متشائم'},{v:'vacancy_shock',a:'صدمة معدل الشواغر'}],
+        probability_weighted_value:   [{v:'optimistic_base_pessimistic',a:'متفائل / أساس / متشائم'},{v:'market_price_decline',a:'انخفاض أسعار السوق'}],
+        stress_case:                  [{v:'discount_rate_shock',a:'صدمة معدل الخصم'},{v:'vacancy_shock',a:'صدمة معدل الشواغر'},{v:'market_price_decline',a:'انخفاض أسعار السوق'}],
+        remediation_cost:             [{v:'soil_remediation',a:'معالجة التربة'},{v:'water_treatment',a:'معالجة المياه'}],
+        green_premium:                [{v:'energy_savings',a:'وفورات الطاقة'},{v:'carbon_credit_income',a:'دخل أرصدة الكربون'}],
+        carbon_credit_value:          [{v:'carbon_credit_income',a:'دخل أرصدة الكربون'}],
+        environmental_liability:      [{v:'soil_remediation',a:'معالجة التربة'},{v:'water_treatment',a:'معالجة المياه'}],
+        court_damages:                [{v:'before_after_value',a:'القيمة قبل وبعد'},{v:'repair_cost_basis',a:'أساس تكلفة الإصلاح'}],
+        diminution_in_value:          [{v:'before_after_value',a:'القيمة قبل وبعد'},{v:'remaining_land_damage',a:'ضرر الأرض المتبقية'}],
+        cost_to_cure_lit:             [{v:'repair_cost_basis',a:'أساس تكلفة الإصلاح'}],
+        eminent_domain:               [{v:'before_after_value',a:'القيمة قبل وبعد'},{v:'partial_take',a:'الاستملاك الجزئي'},{v:'remaining_land_damage',a:'ضرر الأرض المتبقية'}],
+        severance_damage:             [{v:'partial_take',a:'الاستملاك الجزئي'},{v:'remaining_land_damage',a:'ضرر الأرض المتبقية'}],
+        compulsory_acquisition_compensation:[{v:'before_after_value',a:'القيمة قبل وبعد'},{v:'partial_take',a:'الاستملاك الجزئي'}],
+        public_to_private_conversion: [{v:'commercialized_noi',a:'صافي الدخل التشغيلي المُسوَّق'},{v:'sovereign_constraints',a:'قيود السيادة'}],
+        concession_value:             [{v:'commercialized_noi',a:'صافي الدخل التشغيلي المُسوَّق'},{v:'capex_modernization',a:'نفقات رأس المال للتحديث'}],
+        labor_liability_adjustment:   [{v:'transferred_liabilities',a:'الالتزامات المحوَّلة'},{v:'sovereign_constraints',a:'قيود السيادة'}],
+        infrastructure_modernization: [{v:'capex_modernization',a:'نفقات رأس المال للتحديث'},{v:'transferred_liabilities',a:'الالتزامات المحوَّلة'}]
+    };
+
+    window.profFilterSubtypes = function (familyId) {
+        var sel = document.getElementById('prof-asset-subtype');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- اختر النوع الفرعي --</option>';
+        (PROF_FAMILY_SUBTYPES[familyId] || []).forEach(function (item) {
+            var opt = document.createElement('option');
+            opt.value = item.v;
+            opt.textContent = item.a;
+            sel.appendChild(opt);
+        });
+    };
+
+    window.profFilterSubRoutes = function (routeId) {
+        var sel = document.getElementById('prof-purpose-subroute');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- اختر المسار الفرعي --</option>';
+        (PROF_ROUTE_SUBROUTES[routeId] || []).forEach(function (item) {
+            var opt = document.createElement('option');
+            opt.value = item.v;
+            opt.textContent = item.a;
+            sel.appendChild(opt);
+        });
+    };
+}());
+// ══ End Phase 10 ══════════════════════════════════════════════════════════════
 </script>
 
 </body>

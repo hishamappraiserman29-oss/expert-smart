@@ -1085,13 +1085,25 @@
     }
     /* ── End Phase 1 CSS ──────────────────────────────────────────────────── */
 
+    /* ── Phase 2: Brand contact sub-block ───────────────────────────────── */
+    .es-brand-contact { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+    .es-brand-contact span { font-size: 0.75rem; color: rgba(212,175,55,0.80); font-weight: 600; letter-spacing: 0.3px; }
+    /* ── End Phase 2 CSS ─────────────────────────────────────────────────── */
+
     </style>
 </head>
 <body>
 
 <div class="container">
     <header class="header">
-        <div class="logo">Expert<span>_Smart</span></div>
+        <div>
+            <div class="logo">ALHADY<span> FOR REAL PROPERTY</span></div>
+            <div class="es-brand-contact">
+                <span>خبير التقييم هشام المهدي</span>
+                <span dir="ltr">Tel / WhatsApp: 01222230128</span>
+                <span dir="ltr">Email: APPRAISERMAN29@GMAIL.COM</span>
+            </div>
+        </div>
         <div style="display:flex; align-items:center; gap:25px;">
             <div id="validation-stamp" style="padding: 5px 15px; border: 2px dashed rgba(212,175,55,0.5); border-radius: 5px; color: var(--gold); font-weight: bold; font-family: monospace; letter-spacing: 1px;">
                 [ ختم الحالة الذكي: ⚠ غير مكتمل ]
@@ -5719,7 +5731,7 @@ function _showIndexToast(msg, type) {
 <!-- ══ Auth #7b — Login Modal ══════════════════════════════════════════ -->
 <div id="es-login-modal" role="dialog" aria-modal="true" aria-labelledby="es-login-title">
   <div id="es-login-box">
-    <h3 id="es-login-title">تسجيل الدخول — EXPERT SMART</h3>
+    <h3 id="es-login-title">تسجيل الدخول — ALHADY FOR REAL PROPERTY</h3>
     <p>الصق رمز JWT الخاص بك (يُنشئه المسؤول عبر <code>generate_token()</code> أو واجهة الأوامر).</p>
     <textarea id="es-token-input" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
     <div id="es-login-error"></div>

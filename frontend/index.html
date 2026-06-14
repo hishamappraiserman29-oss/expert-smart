@@ -1277,13 +1277,66 @@
     </script>
 
     <!-- Workspace: الشات ─────────────────────────────────────────────────── -->
+    <!-- ── Phase 12: Real Estate Chat Tab ───────────────────────────────── -->
     <div class="es-workspace" id="ws-chat" role="tabpanel">
-        <div class="es-ws-placeholder">
-            <i class="fas fa-comments"></i>
-            <div>مساحة الشات — قريباً</div>
-            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">مساعد ذكي للأسئلة العقارية العامة والتحليل الاستثماري.</div>
+
+        <!-- Scope notice -->
+        <div id="chat-scope-note" style="padding:10px 14px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:8px; font-size:0.8rem; color:#9ca3af; margin:8px 0; line-height:1.6;">
+            <span style="color:var(--gold-light); font-weight:bold;">المستشار العقاري الذكي</span> —
+            هذا الشات مخصص للأسئلة العامة عن العقارات، التقييم العقاري، الاستثمار العقاري، أساليب التقييم، والمفاهيم المهنية.
+            <strong style="color:#f59e0b;">لا يصدر هذا الشات تقرير تقييم رسمي ولا يعدل بيانات التقييم.</strong>
         </div>
+
+        <!-- Health status -->
+        <div id="chat-health-badge" style="display:none; font-size:0.75rem; padding:3px 10px; border-radius:4px; margin-bottom:6px; display:inline-block;"></div>
+
+        <!-- Suggested questions -->
+        <div style="margin:8px 0 10px; display:flex; flex-wrap:wrap; gap:6px;">
+            <button onclick="chatFill('ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟</button>
+            <button onclick="chatFill('متى أستخدم طريقة الدخل في التقييم؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">متى أستخدم طريقة الدخل؟</button>
+            <button onclick="chatFill('ما معنى أعلى وأفضل استغلال HABU؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">ما معنى HABU؟</button>
+            <button onclick="chatFill('ما الفرق بين معدل الرسملة ومعدل الخصم؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">Cap Rate vs Discount Rate</button>
+            <button onclick="chatFill('كيف يؤثر غرض التقييم على مضاعف القيمة؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">أثر الغرض على القيمة</button>
+        </div>
+
+        <!-- Input form -->
+        <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+            <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:4px;">السؤال العقاري *</label>
+            <textarea id="chat-question" rows="3" placeholder="مثال: ما الفرق بين طريقة المقارنة وطريقة الدخل في التقييم العقاري؟"
+                style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:6px; padding:8px 10px; font-size:0.82rem; font-family:inherit; resize:vertical; line-height:1.5;"></textarea>
+            <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:8px; align-items:end;">
+                <div>
+                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">الموقع (اختياري)</label>
+                    <input type="text" id="chat-location" placeholder="مثال: الرياض، جدة…"
+                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.78rem;">
+                </div>
+                <div>
+                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">نوع العقار (اختياري)</label>
+                    <input type="text" id="chat-property-type" placeholder="مثال: فيلا، مكتب، مستودع…"
+                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.78rem;">
+                </div>
+                <button id="chat-send-btn" onclick="chatSend()"
+                    style="background:#d4af37; color:#000; font-weight:900; border:none; padding:8px 18px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:inherit; white-space:nowrap; height:fit-content;">
+                    ⬡ إرسال
+                </button>
+            </div>
+            <div style="margin-top:6px; display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" id="chat-web-toggle" style="width:13px; height:13px; accent-color:#d4af37; cursor:pointer;">
+                <label for="chat-web-toggle" style="font-size:0.72rem; color:#6b7280; cursor:pointer; margin:0;">تفعيل البحث على الويب (use_web)</label>
+            </div>
+        </div>
+        <div id="chat-error" style="display:none; padding:7px 12px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:6px; color:#ef4444; font-size:0.8rem; margin:4px 0;"></div>
+
+        <!-- Response area -->
+        <div id="chat-response-area" style="display:none; margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+            <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">رد المستشار</div>
+            <div id="chat-answer-text" style="font-size:0.85rem; color:#e5e7eb; line-height:1.7; white-space:pre-wrap;"></div>
+            <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07);"></div>
+            <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#6b7280; display:flex; gap:14px; flex-wrap:wrap;"></div>
+        </div>
+
     </div>
+    <!-- ── End Phase 12: Real Estate Chat Tab ────────────────────────── -->
 
     <!-- Workspace: التقييم المبسّط ─────────────────────────────────────────── -->
     <div class="es-workspace" id="ws-valuation" role="tabpanel">
@@ -27885,6 +27938,195 @@ var _PROFILE_FORM_SCHEMA = {
 
 }());
 // ══ End Phase 11 ══════════════════════════════════════════════════════════════
+</script>
+
+<script>
+// ══ Phase 12: Real Estate Chat Tab ════════════════════════════════════════════
+(function () {
+    'use strict';
+
+    var _chatHealthy = null;  // null=unknown, true=ready, false=disabled
+
+    // ── Check advisor health once on load ────────────────────────────────
+    function chatCheckHealth() {
+        var badge = document.getElementById('chat-health-badge');
+        fetch('/api/advisor/health')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                _chatHealthy = d.rag_ready === true;
+                if (badge) {
+                    badge.style.display = 'inline-block';
+                    if (_chatHealthy) {
+                        badge.textContent = '● المستشار جاهز';
+                        badge.style.background = 'rgba(16,185,129,0.12)';
+                        badge.style.color = '#10b981';
+                        badge.style.border = '1px solid rgba(16,185,129,0.3)';
+                    } else {
+                        badge.textContent = '○ المستشار غير متاح حالياً';
+                        badge.style.background = 'rgba(107,114,128,0.12)';
+                        badge.style.color = '#9ca3af';
+                        badge.style.border = '1px solid rgba(107,114,128,0.3)';
+                    }
+                }
+            })
+            .catch(function () {
+                _chatHealthy = false;
+                if (badge) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = '○ تعذّر الاتصال بالمستشار';
+                    badge.style.background = 'rgba(107,114,128,0.12)';
+                    badge.style.color = '#9ca3af';
+                    badge.style.border = '1px solid rgba(107,114,128,0.3)';
+                }
+            });
+    }
+
+    // ── Fill question from suggestion chip ───────────────────────────────
+    window.chatFill = function (text) {
+        var el = document.getElementById('chat-question');
+        if (el) { el.value = text; el.focus(); }
+    };
+
+    // ── Send question ─────────────────────────────────────────────────────
+    window.chatSend = function () {
+        var errEl  = document.getElementById('chat-error');
+        var respEl = document.getElementById('chat-response-area');
+        if (errEl)  { errEl.style.display = 'none'; errEl.textContent = ''; }
+        if (respEl) respEl.style.display = 'none';
+
+        var question = (document.getElementById('chat-question') || {}).value || '';
+        question = question.trim();
+        if (!question) {
+            if (errEl) { errEl.textContent = 'يرجى كتابة سؤال أولاً.'; errEl.style.display = 'block'; }
+            return;
+        }
+
+        if (_chatHealthy === false) {
+            chatShowFallback(question);
+            return;
+        }
+
+        var location     = ((document.getElementById('chat-location') || {}).value || '').trim();
+        var propertyType = ((document.getElementById('chat-property-type') || {}).value || '').trim();
+        var useWeb       = !!(document.getElementById('chat-web-toggle') || {}).checked;
+        var btn          = document.getElementById('chat-send-btn');
+
+        if (btn) { btn.disabled = true; btn.textContent = '⬡ جارٍ…'; }
+
+        var payload = { question: question };
+        if (location)     payload.location = location;
+        if (propertyType) payload.property_type = propertyType;
+        if (useWeb)       payload.use_web = true;
+
+        window.esFetch('/api/advisor', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        })
+        .then(function (r) {
+            return r.json().then(function (d) { return { status: r.status, data: d }; });
+        })
+        .then(function (res) {
+            if (btn) { btn.disabled = false; btn.textContent = '⬡ إرسال'; }
+            if (res.status === 401) {
+                if (errEl) { errEl.textContent = 'يلزم تسجيل الدخول لاستخدام المستشار.'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (res.data && res.data.status === 'error') {
+                if (errEl) { errEl.textContent = res.data.message || 'خطأ في الطلب.'; errEl.style.display = 'block'; }
+                return;
+            }
+            chatShowResponse(res.data);
+        })
+        .catch(function (err) {
+            if (btn) { btn.disabled = false; btn.textContent = '⬡ إرسال'; }
+            if (_chatHealthy === false) {
+                chatShowFallback(question);
+            } else {
+                if (errEl) { errEl.textContent = 'خطأ في الاتصال: ' + err; errEl.style.display = 'block'; }
+            }
+        });
+    };
+
+    // ── Render advisor response ───────────────────────────────────────────
+    function chatShowResponse(data) {
+        var respEl    = document.getElementById('chat-response-area');
+        var answerEl  = document.getElementById('chat-answer-text');
+        var sourcesEl = document.getElementById('chat-sources-list');
+        var metaEl    = document.getElementById('chat-meta-bar');
+        if (!respEl) return;
+
+        if (answerEl) {
+            answerEl.textContent = (data && data.answer) ? data.answer :
+                'تعذّر الحصول على رد. يرجى المحاولة مجدداً أو التحقق من إعدادات المستشار.';
+        }
+
+        if (sourcesEl && data && data.sources && data.sources.length > 0) {
+            var html = '<div style="font-size:0.72rem; color:#9ca3af; margin-bottom:4px;">المصادر:</div>';
+            data.sources.forEach(function (s, i) {
+                var label = (typeof s === 'string') ? s : (s.title || s.source || JSON.stringify(s));
+                html += '<div style="font-size:0.75rem; color:#6b7280; padding:2px 0;">• ' + _chatEsc(label) + '</div>';
+            });
+            sourcesEl.innerHTML = html;
+            sourcesEl.style.display = 'block';
+        } else if (sourcesEl) {
+            sourcesEl.style.display = 'none';
+        }
+
+        if (metaEl) {
+            var parts = [];
+            if (data && data.confidence != null) parts.push('الثقة: ' + Math.round(data.confidence * 100) + '%');
+            if (data && data.mode)               parts.push('الوضع: ' + _chatEsc(data.mode));
+            if (data && data.docs_used != null)  parts.push('مستندات: ' + data.docs_used);
+            if (data && data.elapsed_s != null)  parts.push('الوقت: ' + (+data.elapsed_s).toFixed(1) + 'ث');
+            if (parts.length > 0) {
+                metaEl.textContent = parts.join(' · ');
+                metaEl.style.display = 'flex';
+            } else {
+                metaEl.style.display = 'none';
+            }
+        }
+
+        respEl.style.display = 'block';
+    }
+
+    // ── Fallback when RAG is unavailable ─────────────────────────────────
+    function chatShowFallback(question) {
+        var respEl   = document.getElementById('chat-response-area');
+        var answerEl = document.getElementById('chat-answer-text');
+        var sourcesEl = document.getElementById('chat-sources-list');
+        var metaEl   = document.getElementById('chat-meta-bar');
+        if (!respEl || !answerEl) return;
+        answerEl.textContent =
+            'المستشار العقاري غير متاح حالياً (الخادم الذكي قيد الإعداد).\n\n' +
+            'سؤالك: «' + question + '»\n\n' +
+            'يمكنك تجربة الأسئلة مجدداً عند توفّر المستشار، ' +
+            'أو الرجوع إلى قائمة المتطلبات في تبويب «التقييم المحترف» للمفاهيم التقنية.';
+        if (sourcesEl) sourcesEl.style.display = 'none';
+        if (metaEl)    metaEl.style.display = 'none';
+        respEl.style.display = 'block';
+    }
+
+    // ── Utility ───────────────────────────────────────────────────────────
+    function _chatEsc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Wire DOMContentLoaded ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () { chatCheckHealth(); });
+
+    // ── Enter key sends on textarea ───────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        var q = document.getElementById('chat-question');
+        if (q) {
+            q.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); window.chatSend(); }
+            });
+        }
+    });
+
+}());
+// ══ End Phase 12 ══════════════════════════════════════════════════════════════
 </script>
 
 </body>

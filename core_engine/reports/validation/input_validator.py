@@ -26,7 +26,10 @@ from .rules import (
 
 # ── Valid profile keys ────────────────────────────────────────────────────────
 
-_VALID_PROFILES: frozenset[str] = frozenset({"legacy", "detailed", "professional_template"})
+_VALID_PROFILES: frozenset[str] = frozenset({
+    "legacy", "detailed", "professional_template",
+    "external_pdf", "internal_detailed",
+})
 
 
 # ── Public API ────────────────────────────────────────────────────────────────

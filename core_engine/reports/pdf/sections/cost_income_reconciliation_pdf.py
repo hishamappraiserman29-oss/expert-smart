@@ -34,7 +34,10 @@ _SECTION_GAP: float = 4.0
 
 # ── Valid profile keys ────────────────────────────────────────────────────────
 
-_VALID_PROFILES: frozenset[str] = frozenset({"legacy", "detailed", "professional_template"})
+_VALID_PROFILES: frozenset[str] = frozenset({
+    "legacy", "detailed", "professional_template",
+    "external_pdf", "internal_detailed",
+})
 
 
 # ── Orchestrator ──────────────────────────────────────────────────────────────

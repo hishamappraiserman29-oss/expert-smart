@@ -23,6 +23,19 @@ from ..pdf_components import (
 )
 from ..pdf_theme import DEFAULT, PDFTheme
 
+try:
+    from reports.report_identity import (
+        APPRAISER_EMAIL,
+        APPRAISER_NAME,
+        APPRAISER_TEL,
+        FIRM_NAME,
+    )
+except ImportError:
+    FIRM_NAME       = "ALHADY FOR REAL PROPERTY"
+    APPRAISER_NAME  = "خبير التقييم هشام المهدي"
+    APPRAISER_TEL   = "01222230128"
+    APPRAISER_EMAIL = "APPRAISERMAN29@GMAIL.COM"
+
 # ── Layout helpers (supplement frozen PDFTheme) ───────────────────────────────
 
 _A4_W: float = 210.0
@@ -35,8 +48,11 @@ def _cw(theme: PDFTheme) -> float:
 
 # ── Valid profile keys ────────────────────────────────────────────────────────
 
-_VALID_PROFILES: frozenset[str] = frozenset({"legacy", "detailed", "professional_template"})
-_KPI_PROFILES: frozenset[str] = frozenset({"detailed", "professional_template"})
+_VALID_PROFILES: frozenset[str] = frozenset({
+    "legacy", "detailed", "professional_template",
+    "external_pdf", "internal_detailed",
+})
+_KPI_PROFILES: frozenset[str] = frozenset({"detailed", "professional_template", "internal_detailed"})
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -77,6 +93,18 @@ def render_main_report(
         )
 
     th = theme
+
+    # ── Firm identity banner (Phase 14) ──────────────────────────────
+    draw_banner(pdf, FIRM_NAME, font_family=font_family, theme=th)
+
+    # ── Contact block ─────────────────────────────────────────────────
+    draw_section_header(pdf, "بيانات الخبير والتواصل", font_family=font_family, theme=th)
+    _row(pdf, "خبير التقييم",   APPRAISER_NAME,  font_family, th)
+    _row(pdf, "Tel / WhatsApp", APPRAISER_TEL,   font_family, th)
+    _row(pdf, "Email",          APPRAISER_EMAIL, font_family, th)
+
+    pdf.ln(_PARA_GAP)
+    draw_divider(pdf, theme=th)
 
     # ── Title banner ─────────────────────────────────────────────────
     draw_banner(pdf, "تقرير التقييم العقاري", font_family=font_family, theme=th)

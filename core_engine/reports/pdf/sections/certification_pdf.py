@@ -37,7 +37,10 @@ def _cw(theme: PDFTheme) -> float:
 
 # ── Valid profile keys ────────────────────────────────────────────────────────
 
-_VALID_PROFILES: frozenset[str] = frozenset({"legacy", "detailed", "professional_template"})
+_VALID_PROFILES: frozenset[str] = frozenset({
+    "legacy", "detailed", "professional_template",
+    "external_pdf", "internal_detailed",
+})
 
 # ── Standard Arabic Text Blocks (original boilerplate) ───────────────────────
 

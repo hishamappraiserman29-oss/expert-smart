@@ -3326,13 +3326,77 @@
     </div><!-- /ws-professional -->
 
     <!-- Workspace: التقييم المجمع ─────────────────────────────────────────── -->
+    <!-- ── Phase 11: Composite Valuation Tab ───────────────────────────── -->
     <div class="es-workspace" id="ws-composite" role="tabpanel">
-        <div class="es-ws-placeholder">
-            <i class="fas fa-layer-group"></i>
-            <div>التقييم المجمع — قريباً</div>
-            <div style="font-size:0.82rem;margin-top:6px;color:#374151;">تقييم متعدد المكونات والمحافظ العقارية المركّبة.</div>
+
+        <!-- Auth error (shown if no session) -->
+        <div id="cmp-auth-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:8px; font-size:0.82rem; color:#ef4444; margin:8px 0;">
+            ⚠ يلزم تسجيل الدخول لاستخدام التقييم المجمّع. سجّل دخولك من الصفحة الرئيسية.
         </div>
+
+        <!-- Schema loading indicator -->
+        <div id="cmp-loading" style="text-align:center; padding:20px; color:#9ca3af; font-size:0.82rem;">
+            <span style="font-size:1.3rem; display:block; margin-bottom:6px;">⬡</span>
+            جارٍ تحميل مخطط التقييم المجمّع…
+        </div>
+
+        <!-- Main form (shown after schema loads) -->
+        <div id="cmp-form" style="display:none;">
+
+            <!-- Section 1: Composite Type + Global Purpose -->
+            <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+                <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">نوع التقييم المجمّع</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
+                    <div>
+                        <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">نوع المجمّع</label>
+                        <select id="cmp-composite-type" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                            <option value="multi_component">أصل متعدد المكونات</option>
+                            <option value="portfolio">محفظة عقارية</option>
+                            <option value="mixed_use">مشروع متعدد الاستخدامات</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">غرض التقييم العام</label>
+                        <select id="cmp-global-purpose" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;"></select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Component List -->
+            <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+                <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">مكوّنات العقار</div>
+                <div id="cmp-components-list"></div>
+                <button onclick="cmpAddComponent()" style="margin-top:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:5px 14px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
+                    + إضافة مكوّن
+                </button>
+            </div>
+
+            <!-- Section 3: Synergy + Submit -->
+            <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px; display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end;">
+                <div>
+                    <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">نسبة تعديل التآزر % <span style="color:#6b7280;">(اختياري)</span></label>
+                    <input type="number" id="cmp-synergy" step="0.1" min="-100" max="100" placeholder="0.0"
+                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                </div>
+                <button id="cmp-submit-btn" onclick="cmpSubmit()"
+                    style="background:#d4af37; color:#000; font-weight:900; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-size:0.85rem; white-space:nowrap; font-family:inherit;">
+                    ⬡ احسب القيمة المجمّعة
+                </button>
+            </div>
+            <div id="cmp-submit-error" style="display:none; padding:8px 12px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:6px; color:#ef4444; font-size:0.82rem; margin:4px 0;"></div>
+
+            <!-- Section 4: Results + Composite Report Area -->
+            <div id="cmp-results" style="display:none; margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+                <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">
+                    نتائج التقييم المجمّع
+                    <span id="cmp-result-type-badge" style="font-size:0.7rem; color:#9ca3af; font-weight:normal; margin-right:8px;"></span>
+                </div>
+                <div id="cmp-results-body"></div>
+            </div>
+
+        </div><!-- /#cmp-form -->
     </div>
+    <!-- ── End Phase 11: Composite Valuation Tab ─────────────────────── -->
     <!-- ══ End Phase 1: Four-Tab Navigation Shell ══════════════════════════ -->
 
 </div><!-- /container -->
@@ -27458,6 +27522,369 @@ var _PROFILE_FORM_SCHEMA = {
     };
 }());
 // ══ End Phase 10 ══════════════════════════════════════════════════════════════
+</script>
+
+<script>
+// ══ Phase 11: Composite Valuation Tab ═════════════════════════════════════════
+(function () {
+    'use strict';
+
+    var _cmpSchema = null;
+    var _cmpSeq    = 0;
+    var _cmpInited = false;
+
+    var CMP_TYPE_LABELS = {
+        multi_component: 'أصل متعدد المكونات',
+        portfolio:       'محفظة عقارية',
+        mixed_use:       'مشروع متعدد الاستخدامات'
+    };
+
+    // ── Init (called once on DOMContentLoaded) ────────────────────────────
+    function cmpInit() {
+        if (_cmpInited) return;
+        _cmpInited = true;
+        var sess = null;
+        try { sess = JSON.parse(localStorage.getItem('es_auth') || 'null'); } catch (e) {}
+        if (!sess || !sess.token) {
+            var authErr = document.getElementById('cmp-auth-error');
+            var loading = document.getElementById('cmp-loading');
+            if (authErr) authErr.style.display = 'block';
+            if (loading) loading.style.display = 'none';
+            return;
+        }
+        cmpLoadSchema();
+    }
+
+    // ── Schema loading ────────────────────────────────────────────────────
+    function cmpLoadSchema() {
+        window.esFetch('/api/valuation/composite/schema')
+            .then(function (r) { return r.json(); })
+            .then(function (schema) {
+                _cmpSchema = schema;
+                cmpPopulateGlobalPurpose(schema.purposes);
+                var loading = document.getElementById('cmp-loading');
+                var form    = document.getElementById('cmp-form');
+                if (loading) loading.style.display = 'none';
+                if (form)    form.style.display = 'block';
+                cmpAddComponent();
+            })
+            .catch(function (err) {
+                var loading = document.getElementById('cmp-loading');
+                if (loading) loading.innerHTML =
+                    '<div style="color:#ef4444; font-size:0.82rem;">فشل تحميل مخطط التقييم المجمّع: ' + err + '</div>';
+            });
+    }
+
+    // ── Global purpose dropdown ───────────────────────────────────────────
+    function cmpPopulateGlobalPurpose(purposes) {
+        var sel = document.getElementById('cmp-global-purpose');
+        if (!sel) return;
+        sel.innerHTML = '';
+        purposes.forEach(function (p) {
+            var opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Component HTML template ───────────────────────────────────────────
+    function cmpCompHTML(idx) {
+        return (
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
+                '<span style="color:#d4af37; font-weight:700; font-size:0.82rem;">مكوّن #' + (idx + 1) + '</span>' +
+                '<button onclick="cmpRemoveComponent(' + idx + ')" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); color:#ef4444; padding:3px 10px; border-radius:5px; cursor:pointer; font-family:inherit; font-size:0.75rem;">✕ حذف</button>' +
+            '</div>' +
+            '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px;">' +
+                '<div>' +
+                    '<label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">نوع الأصل *</label>' +
+                    '<select id="cmp-asset-type-' + idx + '" onchange="cmpOnTypeChange(' + idx + ')" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:4px 6px; font-size:0.78rem;"><option value="">-- اختر نوع الأصل --</option></select>' +
+                '</div>' +
+                '<div>' +
+                    '<label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">الاسم (اختياري)</label>' +
+                    '<input type="text" id="cmp-name-' + idx + '" placeholder="مثال: برج أ — الطابق 3" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:4px 6px; font-size:0.78rem;">' +
+                '</div>' +
+                '<div>' +
+                    '<label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">المساحة (م²) *</label>' +
+                    '<input type="number" id="cmp-area-' + idx + '" min="0.01" step="0.01" placeholder="100" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:4px 6px; font-size:0.78rem;">' +
+                '</div>' +
+                '<div>' +
+                    '<label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">السعر الأساسي (ريال/م²) *</label>' +
+                    '<input type="number" id="cmp-rate-' + idx + '" min="0.01" step="0.01" placeholder="5000" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:4px 6px; font-size:0.78rem;">' +
+                '</div>' +
+            '</div>' +
+            '<div id="cmp-attrs-' + idx + '" style="display:none; margin-top:6px;"></div>' +
+            '<div style="display:flex; align-items:center; gap:8px; margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05);">' +
+                '<input type="checkbox" id="cmp-override-chk-' + idx + '" onchange="cmpOnOverrideChange(' + idx + ')" style="width:14px; height:14px; accent-color:#d4af37; cursor:pointer; flex-shrink:0;">' +
+                '<label for="cmp-override-chk-' + idx + '" style="font-size:0.75rem; color:#9ca3af; cursor:pointer; margin:0;">تخصيص غرض مختلف لهذا المكوّن</label>' +
+            '</div>' +
+            '<div id="cmp-override-purpose-' + idx + '" style="display:none; margin-top:4px;">' +
+                '<label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">غرض مخصص</label>' +
+                '<select id="cmp-purpose-' + idx + '" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:4px 6px; font-size:0.78rem;"></select>' +
+            '</div>'
+        );
+    }
+
+    // ── Add component ─────────────────────────────────────────────────────
+    window.cmpAddComponent = function () {
+        var idx  = _cmpSeq++;
+        var wrap = document.createElement('div');
+        wrap.id        = 'cmp-comp-' + idx;
+        wrap.style.cssText = 'background:rgba(0,0,0,0.15); border:1px solid rgba(212,175,55,0.15); border-radius:6px; padding:8px 10px; margin-bottom:8px;';
+        wrap.innerHTML = cmpCompHTML(idx);
+        var list = document.getElementById('cmp-components-list');
+        if (list) list.appendChild(wrap);
+        cmpPopulateAssetSelect(idx);
+        cmpPopulatePurposeSelect(idx);
+    };
+
+    // ── Remove component ──────────────────────────────────────────────────
+    window.cmpRemoveComponent = function (idx) {
+        var el = document.getElementById('cmp-comp-' + idx);
+        if (el) el.remove();
+    };
+
+    // ── Populate asset type select ────────────────────────────────────────
+    function cmpPopulateAssetSelect(idx) {
+        var sel = document.getElementById('cmp-asset-type-' + idx);
+        if (!sel || !_cmpSchema) return;
+        sel.innerHTML = '<option value="">-- اختر نوع الأصل --</option>';
+        _cmpSchema.asset_types.forEach(function (t) {
+            var opt = document.createElement('option');
+            opt.value = t.name;
+            opt.textContent = t.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Populate per-component purpose select ─────────────────────────────
+    function cmpPopulatePurposeSelect(idx) {
+        var sel = document.getElementById('cmp-purpose-' + idx);
+        if (!sel || !_cmpSchema) return;
+        sel.innerHTML = '';
+        _cmpSchema.purposes.forEach(function (p) {
+            var opt = document.createElement('option');
+            opt.value = p.name;
+            opt.textContent = p.name;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Schema-driven specific attributes on type change ──────────────────
+    window.cmpOnTypeChange = function (idx) {
+        var sel      = document.getElementById('cmp-asset-type-' + idx);
+        var typeName = sel ? sel.value : '';
+        var attrsDiv = document.getElementById('cmp-attrs-' + idx);
+        if (!attrsDiv) return;
+        if (!typeName || !_cmpSchema) { attrsDiv.style.display = 'none'; attrsDiv.innerHTML = ''; return; }
+        var typeSpec = _cmpSchema.asset_types.find(function (t) { return t.name === typeName; });
+        if (!typeSpec || !typeSpec.attributes || typeSpec.attributes.length === 0) {
+            attrsDiv.style.display = 'none'; attrsDiv.innerHTML = ''; return;
+        }
+        var html = '<div style="font-size:0.72rem; color:#6b7280; margin-bottom:4px;">السمات الخاصة بنوع الأصل</div>';
+        html += '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px;">';
+        typeSpec.attributes.forEach(function (attr) {
+            html += '<div><label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">' + attr.name + ' <span style="color:#555;">(' + attr.type + ')</span></label>';
+            if (attr.type === 'bool') {
+                html += '<select id="cmp-attr-' + idx + '-' + attr.name + '" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:3px 5px; font-size:0.75rem;"><option value="true">نعم</option><option value="false">لا</option></select>';
+            } else {
+                var itype = (attr.type === 'int' || attr.type === 'float') ? 'number' : 'text';
+                var step  = attr.type === 'float' ? ' step="0.01"' : (attr.type === 'int' ? ' step="1"' : '');
+                html += '<input type="' + itype + '"' + step + ' id="cmp-attr-' + idx + '-' + attr.name + '" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:4px; padding:3px 5px; font-size:0.75rem;">';
+            }
+            html += '</div>';
+        });
+        html += '</div>';
+        attrsDiv.innerHTML = html;
+        attrsDiv.style.display = 'block';
+    };
+
+    // ── Per-component purpose override toggle ─────────────────────────────
+    window.cmpOnOverrideChange = function (idx) {
+        var chk  = document.getElementById('cmp-override-chk-' + idx);
+        var wrap = document.getElementById('cmp-override-purpose-' + idx);
+        if (wrap) wrap.style.display = (chk && chk.checked) ? 'block' : 'none';
+    };
+
+    // ── Build POST payload ─────────────────────────────────────────────────
+    function cmpBuildPayload() {
+        var globalPurpose = (document.getElementById('cmp-global-purpose') || {}).value || '';
+        var compDivs      = document.querySelectorAll('[id^="cmp-comp-"]');
+        var components    = [];
+        var purposes      = [];
+        var errors        = [];
+
+        compDivs.forEach(function (div, pos) {
+            var idx      = parseInt(div.id.replace('cmp-comp-', ''), 10);
+            var label    = 'المكوّن #' + (pos + 1);
+            var assetSel = document.getElementById('cmp-asset-type-' + idx);
+            var nameEl   = document.getElementById('cmp-name-' + idx);
+            var areaEl   = document.getElementById('cmp-area-' + idx);
+            var rateEl   = document.getElementById('cmp-rate-' + idx);
+            var assetType = assetSel ? assetSel.value : '';
+            var name      = (nameEl && nameEl.value.trim()) ? nameEl.value.trim() : label;
+            var area      = areaEl ? parseFloat(areaEl.value) : NaN;
+            var rate      = rateEl ? parseFloat(rateEl.value) : NaN;
+
+            if (!assetType) { errors.push(label + ': يجب اختيار نوع الأصل'); return; }
+            if (isNaN(area) || area <= 0) { errors.push(label + ': المساحة يجب أن تكون رقماً موجباً'); return; }
+            if (isNaN(rate) || rate <= 0) { errors.push(label + ': السعر الأساسي يجب أن يكون رقماً موجباً'); return; }
+
+            var typeSpec = _cmpSchema ? _cmpSchema.asset_types.find(function (t) { return t.name === assetType; }) : null;
+            var specific = {};
+            if (typeSpec && typeSpec.attributes) {
+                typeSpec.attributes.forEach(function (attr) {
+                    var el  = document.getElementById('cmp-attr-' + idx + '-' + attr.name);
+                    var raw = el ? el.value.trim() : '';
+                    if (raw !== '') {
+                        if (attr.type === 'int')   specific[attr.name] = parseInt(raw, 10);
+                        else if (attr.type === 'float') specific[attr.name] = parseFloat(raw);
+                        else if (attr.type === 'bool')  specific[attr.name] = (raw === 'true');
+                        else                             specific[attr.name] = raw;
+                    }
+                });
+            }
+
+            var chk       = document.getElementById('cmp-override-chk-' + idx);
+            var purSel    = document.getElementById('cmp-purpose-' + idx);
+            var purpose   = (chk && chk.checked && purSel) ? purSel.value : globalPurpose;
+
+            components.push({ id: 'c' + idx, name: name, asset_type: assetType,
+                area_sqm: area, base_rate_per_sqm: rate,
+                specific_attributes: specific, purpose: purpose });
+            purposes.push(purpose);
+        });
+
+        if (errors.length > 0)    return { errors: errors };
+        if (components.length === 0) return { errors: ['يجب إضافة مكوّن واحد على الأقل'] };
+
+        var synergyEl = document.getElementById('cmp-synergy');
+        var synergy   = synergyEl ? parseFloat(synergyEl.value) : 0;
+        if (isNaN(synergy)) synergy = 0;
+
+        return { payload: { components: components, purposes: purposes,
+            synergy_adjustment_percent: synergy } };
+    }
+
+    // ── Submit ─────────────────────────────────────────────────────────────
+    window.cmpSubmit = function () {
+        var errDiv  = document.getElementById('cmp-submit-error');
+        var results = document.getElementById('cmp-results');
+        if (errDiv)  { errDiv.style.display = 'none'; errDiv.textContent = ''; }
+        if (results) results.style.display = 'none';
+
+        var built = cmpBuildPayload();
+        if (built.errors) {
+            if (errDiv) { errDiv.textContent = built.errors.join(' | '); errDiv.style.display = 'block'; }
+            return;
+        }
+
+        var btn = document.getElementById('cmp-submit-btn');
+        if (btn) { btn.disabled = true; btn.textContent = '⬡ جارٍ الحساب…'; }
+
+        window.esFetch('/api/valuation/composite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(built.payload),
+        })
+        .then(function (r) {
+            return r.json().then(function (d) { return { status: r.status, data: d }; });
+        })
+        .then(function (res) {
+            if (btn) { btn.disabled = false; btn.textContent = '⬡ احسب القيمة المجمّعة'; }
+            cmpRenderResults(res.status, res.data);
+        })
+        .catch(function (err) {
+            if (btn) { btn.disabled = false; btn.textContent = '⬡ احسب القيمة المجمّعة'; }
+            if (errDiv) { errDiv.textContent = 'خطأ في الاتصال: ' + err; errDiv.style.display = 'block'; }
+        });
+    };
+
+    // ── Render results ─────────────────────────────────────────────────────
+    function cmpRenderResults(httpStatus, data) {
+        var resultsDiv = document.getElementById('cmp-results');
+        var body       = document.getElementById('cmp-results-body');
+        var badge      = document.getElementById('cmp-result-type-badge');
+        if (!resultsDiv || !body) return;
+        resultsDiv.style.display = 'block';
+
+        var typeEl = document.getElementById('cmp-composite-type');
+        var typeKey = typeEl ? typeEl.value : '';
+        if (badge) badge.textContent = '— ' + (CMP_TYPE_LABELS[typeKey] || typeKey);
+
+        var html = '';
+
+        if (data.validation && data.validation.issues && data.validation.issues.length > 0) {
+            html += '<div style="margin-bottom:8px;">';
+            html += '<div style="color:#f1d592; font-size:0.8rem; font-weight:700; margin-bottom:4px;">تنبيهات التحقق:</div>';
+            data.validation.issues.forEach(function (issue) {
+                var isBlocking = issue.severity === 'blocking' || issue.severity === 'error';
+                html += '<div style="font-size:0.78rem; padding:3px 8px; border-radius:4px; margin-bottom:2px; background:' +
+                    (isBlocking ? 'rgba(239,68,68,0.1)' : 'rgba(212,175,55,0.07)') + '; color:' +
+                    (isBlocking ? '#ef4444' : '#f1d592') + ';">[' + _cmpEsc(issue.code) + '] ' + _cmpEsc(issue.message) + '</div>';
+            });
+            html += '</div>';
+        }
+
+        if (data.status === 'rejected') {
+            html += '<div style="color:#ef4444; font-size:0.82rem; padding:8px; background:rgba(239,68,68,0.08); border-radius:5px;">❌ رُفض الطلب — ' + data.validation.blocking_count + ' خطأ حاجب. راجع التنبيهات أعلاه.</div>';
+            body.innerHTML = html; return;
+        }
+
+        if (data.aggregation) {
+            var agg = data.aggregation;
+            html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">';
+            html += '<div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:10px;">' +
+                '<div style="color:#9ca3af; font-size:0.72rem;">إجمالي القيمة الأساسية</div>' +
+                '<div style="font-size:1.3rem; font-weight:900; color:#10b981;">' + _cmpFmt(agg.total_baseline) + '</div>' +
+                '<div style="color:#9ca3af; font-size:0.72rem;">ريال</div>' +
+            '</div>';
+            html += '<div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.28); border-radius:8px; padding:10px;">' +
+                '<div style="color:#9ca3af; font-size:0.72rem;">إجمالي القيمة بعد التعديل والتآزر</div>' +
+                '<div style="font-size:1.3rem; font-weight:900; color:#d4af37;">' + _cmpFmt(agg.total_adjusted_after_synergy) + '</div>' +
+                '<div style="color:#9ca3af; font-size:0.72rem;">ريال (تعديل التآزر: ' + (agg.synergy_adjustment_percent || 0) + '%)</div>' +
+            '</div>';
+            html += '</div>';
+            if (data.summary && data.summary.note) {
+                html += '<div style="font-size:0.75rem; color:#f1d592; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:5px; padding:5px 8px; margin-bottom:8px;">⚠ ' + _cmpEsc(data.summary.note) + '</div>';
+            }
+        }
+
+        if (data.components && data.components.length > 0) {
+            html += '<div style="font-size:0.8rem; color:#f1d592; font-weight:700; margin-bottom:6px;">تفاصيل المكوّنات (' + data.components.length + '):</div>';
+            html += '<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:8px;">';
+            data.components.forEach(function (c) {
+                html += '<div style="background:rgba(255,255,255,0.025); border:1px solid rgba(255,255,255,0.07); border-radius:6px; padding:8px;">' +
+                    '<div style="font-weight:700; color:#f1d592; margin-bottom:4px; font-size:0.82rem;">' + _cmpEsc(c.name || c.component_id || '—') + '</div>' +
+                    '<div style="font-size:0.75rem; color:#9ca3af; margin-bottom:2px;">نوع الأصل: <span style="color:#e5e7eb;">' + _cmpEsc(c.asset_type) + '</span></div>' +
+                    '<div style="font-size:0.75rem; color:#9ca3af; margin-bottom:2px;">الغرض: <span style="color:#e5e7eb;">' + _cmpEsc(c.purpose) + '</span></div>' +
+                    '<div style="font-size:0.75rem; color:#9ca3af; margin-bottom:2px;">القيمة الأساسية: <span style="color:#10b981;">' + _cmpFmt(c.baseline_value) + '</span></div>' +
+                    '<div style="font-size:0.75rem; color:#9ca3af; margin-bottom:2px;">المضاعف: <span style="color:#e5e7eb;">' + (c.multiplier_applied || '—') + '</span></div>' +
+                    '<div style="font-size:0.75rem; color:#9ca3af;">القيمة المعدَّلة: <span style="color:#d4af37; font-weight:700;">' + _cmpFmt(c.adjusted_value) + '</span></div>' +
+                    (c.deep_route_deferred ? '<div style="font-size:0.72rem; color:#f1d592; margin-top:3px;">⏳ مسار DCF مؤجَّل</div>' : '') +
+                    (c.notes && c.notes.length ? c.notes.map(function (n) { return '<div style="font-size:0.72rem; color:#f1d592; margin-top:2px;">• ' + _cmpEsc(n) + '</div>'; }).join('') : '') +
+                '</div>';
+            });
+            html += '</div>';
+        }
+
+        body.innerHTML = html;
+    }
+
+    // ── Utilities ──────────────────────────────────────────────────────────
+    function _cmpFmt(n) {
+        if (n == null || isNaN(n)) return '—';
+        return (+n).toLocaleString('ar-SA', { maximumFractionDigits: 2 });
+    }
+    function _cmpEsc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── Wire DOMContentLoaded ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () { cmpInit(); });
+
+}());
+// ══ End Phase 11 ══════════════════════════════════════════════════════════════
 </script>
 
 </body>

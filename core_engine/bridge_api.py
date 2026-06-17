@@ -7101,6 +7101,105 @@ def image_analyze():
         return _safe_err(e)
 
 
+# ── Phase 20 compatibility alias ─────────────────────────────────────────
+# /api/image/geo-analyze → /api/image/analyze  (same handler; legacy alias
+# used by index.html and sovereign_brain.html).  Non-breaking — delegates
+# entirely to image_analyze().
+@app.route("/api/image/geo-analyze", methods=["POST", "OPTIONS"])
+def image_geo_analyze():
+    """Legacy alias for /api/image/analyze (Phase 20 compat)."""
+    return image_analyze()
+
+
+# ── Phase 20 legacy stubs — sovereign.html endpoints not yet wired ────────
+# These endpoints are called by sovereign.html (legacy page, not served at /).
+# They return 501 with a descriptive message so the page degrades gracefully
+# instead of showing network errors.  Full wiring is a Phase 21 task.
+
+@app.route("/api/market-sweep", methods=["POST", "OPTIONS"])
+def legacy_market_sweep():
+    """Phase 20 stub — sovereign.html market sweep (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "market-sweep is a legacy sovereign endpoint; use /api/radar/* for live data",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/bank-audit", methods=["POST", "OPTIONS"])
+def legacy_bank_audit():
+    """Phase 20 stub — sovereign.html bank audit (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "bank-audit is a legacy sovereign endpoint; use /api/banking/collateral/value or /api/banking/ltv/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/fund-valuation", methods=["POST", "OPTIONS"])
+def legacy_fund_valuation():
+    """Phase 20 stub — sovereign.html fund valuation (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "fund-valuation is a legacy sovereign endpoint; use /api/funds/fair-value/assess or /api/funds/nav/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/tax-pilot", methods=["POST", "OPTIONS"])
+def legacy_tax_pilot():
+    """Phase 20 stub — sovereign.html tax pilot (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "tax-pilot is a legacy sovereign endpoint; tax engine available via /api/government/tax/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/master-report", methods=["POST", "OPTIONS"])
+def legacy_master_report():
+    """Phase 20 stub — sovereign.html master report (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "master-report is a legacy sovereign endpoint; use /api/valuation/report for full reports",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/report/generate", methods=["POST", "OPTIONS"])
+def legacy_report_generate():
+    """Phase 20 stub — sovereign.html report/generate (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "report/generate is a legacy sovereign endpoint; use /api/valuation/report",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/session/update", methods=["POST", "OPTIONS"])
+def legacy_session_update():
+    """Phase 20 stub — sovereign_v2.html session update (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "session/update is a legacy sovereign endpoint",
+        "legacy": True,
+    }), 501
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: EIA Assessment — تقييم الأثر البيئي (ADDITIVE)
 # ═══════════════════════════════════════════════════════════════════════════

@@ -1276,17 +1276,18 @@
     }
     </script>
 
-    <!-- Workspace: الشات ────────────────────────────────────────────── -->
-    <!-- ══ Phase 12: Real Estate Chat Tab (Premium Landing) ════════════════════════════ -->
+    <!-- Workspace: الشات ───────────────────────────────────────────────── -->
+    <!-- ══ Phase 12: Real Estate Chat Tab (Advisory Landing) ═════════════════════════════ -->
     <style>
-    /* ══ Chat Premium Landing ════════════════════════════════════════════════════════─ */
+    /* ══ Chat Advisory Landing ══════════════════════════════════════════════════════════════════ */
     #ws-chat { padding: 0; }
 
+    /* — Hero —————————————————————————————————————————————————————————— */
     .chat-hero {
         text-align: center;
-        padding: 40px 24px 28px;
-        background: linear-gradient(160deg, rgba(212,175,55,0.09) 0%, rgba(212,175,55,0.03) 55%, rgba(15,23,42,0) 100%);
-        border-bottom: 1px solid rgba(212,175,55,0.18);
+        padding: 38px 24px 26px;
+        background: linear-gradient(155deg, rgba(30,41,59,0.95) 0%, rgba(15,23,42,0.98) 100%);
+        border-bottom: 1px solid rgba(16,185,129,0.18);
         border-radius: 14px 14px 0 0;
         margin-bottom: 20px;
         position: relative;
@@ -1295,32 +1296,23 @@
     .chat-hero::before {
         content: '';
         position: absolute;
-        top: -80px; right: -80px;
-        width: 240px; height: 240px;
-        background: radial-gradient(circle, rgba(212,175,55,0.07) 0%, transparent 70%);
+        top: -70px; right: -70px;
+        width: 220px; height: 220px;
+        background: radial-gradient(circle, rgba(16,185,129,0.07) 0%, transparent 70%);
         pointer-events: none;
     }
     .chat-hero::after {
         content: '';
         position: absolute;
-        bottom: -60px; left: -60px;
+        bottom: -50px; left: -50px;
         width: 180px; height: 180px;
-        background: radial-gradient(circle, rgba(16,185,129,0.04) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(212,175,55,0.05) 0%, transparent 70%);
         pointer-events: none;
     }
     .chat-hero-icon {
         font-size: 2.2rem;
         margin-bottom: 10px;
-        filter: drop-shadow(0 0 12px rgba(212,175,55,0.3));
-    }
-    .chat-hero-title {
-        margin: 0 0 12px;
-        font-size: 1.75rem;
-        color: #d4af37;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        text-shadow: 0 0 40px rgba(212,175,55,0.2);
+        filter: drop-shadow(0 0 10px rgba(16,185,129,0.25));
     }
     .chat-status-row {
         display: flex;
@@ -1334,11 +1326,11 @@
         display: inline-flex;
         align-items: center;
         gap: 7px;
-        background: rgba(16,185,129,0.1);
-        border: 1px solid rgba(16,185,129,0.28);
+        background: rgba(16,185,129,0.12);
+        border: 1px solid rgba(16,185,129,0.32);
         border-radius: 20px;
-        padding: 5px 14px;
-        font-size: 0.75rem;
+        padding: 5px 15px;
+        font-size: 0.76rem;
         color: #10b981;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
         font-weight: 600;
@@ -1349,19 +1341,27 @@
         background: #10b981;
         border-radius: 50%;
         flex-shrink: 0;
-        box-shadow: 0 0 6px #10b981, 0 0 14px rgba(16,185,129,0.45);
-        animation: chat-pulse-dot 2.2s ease-in-out infinite;
+        animation: chat-pulse-dot 2s ease-in-out infinite;
     }
     @keyframes chat-pulse-dot {
         0%, 100% { box-shadow: 0 0 4px #10b981, 0 0 8px rgba(16,185,129,0.3); opacity: 1; }
-        50%       { box-shadow: 0 0 10px #10b981, 0 0 22px rgba(16,185,129,0.6); opacity: 0.85; }
+        50%       { box-shadow: 0 0 10px #10b981, 0 0 22px rgba(16,185,129,0.65); opacity: 0.8; }
     }
+    .chat-hero-title {
+        margin: 0 0 10px;
+        font-size: 1.65rem;
+        color: #f1f5f9;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+    .chat-hero-title span { color: #10b981; }
     .chat-hero-sub {
         margin: 0 auto;
-        font-size: 0.88rem;
-        color: #9ca3af;
+        font-size: 0.86rem;
+        color: #94a3b8;
         line-height: 1.85;
-        max-width: 540px;
+        max-width: 560px;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
     }
     #chat-health-badge {
@@ -1372,6 +1372,8 @@
         margin-top: 8px;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
     }
+
+    /* — Disclaimer ———————————————————————————————————————————————————— */
     .chat-disclaimer {
         display: flex;
         align-items: flex-start;
@@ -1379,100 +1381,232 @@
         padding: 13px 16px;
         background: rgba(245,158,11,0.07);
         border: 1px solid rgba(245,158,11,0.22);
-        border-right: 3px solid rgba(245,158,11,0.6);
+        border-right: 3px solid rgba(245,158,11,0.55);
         border-radius: 10px;
         font-size: 0.8rem;
-        color: #9ca3af;
-        margin: 0 0 20px;
-        line-height: 1.75;
+        color: #94a3b8;
+        margin: 0 0 22px;
+        line-height: 1.8;
         direction: rtl;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
     }
     .chat-disclaimer-icon { font-size: 1.05rem; flex-shrink: 0; margin-top: 2px; }
-    .chat-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 0 0 22px;
+
+    /* — Section header ———————————————————————————————————————————————— */
+    .chat-section-hdr {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        margin: 0 0 12px;
         direction: rtl;
-    }
-    .chat-pill {
-        background: rgba(212,175,55,0.06);
-        border: 1px solid rgba(212,175,55,0.2);
-        color: #c9a227;
-        padding: 6px 15px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-size: 0.76rem;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        transition: background 0.18s, border-color 0.18s, transform 0.13s, color 0.15s;
-        white-space: nowrap;
-        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
-    .chat-pill:hover {
-        background: rgba(212,175,55,0.15);
-        border-color: rgba(212,175,55,0.45);
-        transform: translateY(-1px);
-        color: #d4af37;
+    .chat-section-hdr::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(255,255,255,0.07);
     }
-    .chat-pill:active { transform: translateY(0); }
-    .chat-cards-grid {
+
+    /* — 4 Dispute Cards —————————————————————————————————————————————— */
+    .chat-dispute-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 10px;
-        margin: 0 0 22px;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+        margin: 0 0 24px;
         direction: rtl;
     }
-    .chat-card {
-        background: rgba(255,255,255,0.025);
-        border: 1px solid rgba(212,175,55,0.14);
-        border-radius: 12px;
-        padding: 14px 15px 13px;
+    .chat-dispute-card {
+        background: rgba(30,41,59,0.6);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 14px;
+        padding: 18px 18px 16px;
         cursor: pointer;
         text-align: right;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        color: #e2e8f0;
-        font-size: 0.83rem;
-        line-height: 1.65;
-        transition: background 0.18s, border-color 0.18s, transform 0.14s, box-shadow 0.18s;
+        transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
         position: relative;
         overflow: hidden;
     }
-    .chat-card::after {
+    .chat-dispute-card::before {
         content: '';
         position: absolute;
         top: 0; right: 0;
-        width: 3px; height: 100%;
-        background: linear-gradient(180deg, #d4af37 0%, transparent 100%);
+        width: 4px; height: 100%;
+        background: linear-gradient(180deg, #10b981, rgba(16,185,129,0));
         opacity: 0;
-        transition: opacity 0.18s;
+        transition: opacity 0.2s;
     }
-    .chat-card:hover {
-        background: rgba(212,175,55,0.07);
-        border-color: rgba(212,175,55,0.32);
+    .chat-dispute-card:hover {
+        background: rgba(30,41,59,0.9);
+        border-color: rgba(16,185,129,0.3);
         transform: translateY(-2px);
-        box-shadow: 0 5px 18px rgba(212,175,55,0.1);
+        box-shadow: 0 6px 22px rgba(16,185,129,0.1);
     }
-    .chat-card:hover::after { opacity: 1; }
-    .chat-card:active { transform: translateY(0); }
-    .chat-card-lbl {
+    .chat-dispute-card:hover::before { opacity: 1; }
+    .chat-dispute-card:active { transform: translateY(0); }
+    .chat-dispute-card-icon {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
         display: block;
-        font-size: 0.68rem;
-        color: #d4af37;
-        margin-bottom: 5px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
     }
+    .chat-dispute-card-title {
+        font-size: 0.93rem;
+        color: #f1f5f9;
+        font-weight: 700;
+        margin-bottom: 7px;
+        line-height: 1.4;
+    }
+    .chat-dispute-card-desc {
+        font-size: 0.78rem;
+        color: #94a3b8;
+        line-height: 1.7;
+    }
+
+    /* — Suggestion Chips ————————————————————————————————————————————— */
+    .chat-chips-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 0 0 24px;
+        direction: rtl;
+    }
+    .chat-chip {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.77rem;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        transition: background 0.18s, border-color 0.18s, color 0.15s, transform 0.13s;
+        white-space: nowrap;
+        line-height: 1.4;
+    }
+    .chat-chip:hover {
+        background: rgba(16,185,129,0.1);
+        border-color: rgba(16,185,129,0.35);
+        color: #10b981;
+        transform: translateY(-1px);
+    }
+    .chat-chip:active { transform: translateY(0); }
+
+    /* — Lead Capture Form ————————————————————————————————————————— */
+    .chat-lead-box {
+        background: rgba(16,185,129,0.04);
+        border: 1px solid rgba(16,185,129,0.18);
+        border-radius: 14px;
+        padding: 20px 20px 16px;
+        margin: 0 0 24px;
+        direction: rtl;
+    }
+    .chat-lead-title {
+        font-size: 0.93rem;
+        color: #10b981;
+        font-weight: 700;
+        margin: 0 0 14px;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .chat-lead-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    .chat-lead-field-wrap { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+    .chat-lead-label {
+        font-size: 0.72rem;
+        color: #64748b;
+        font-weight: 600;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+    .chat-lead-input {
+        width: 100%;
+        background: #0f172a;
+        color: #e2e8f0;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        box-sizing: border-box;
+        direction: rtl;
+        transition: border-color 0.15s;
+    }
+    .chat-lead-input:focus { outline: none; border-color: rgba(16,185,129,0.4); }
+    .chat-lead-textarea-field {
+        width: 100%;
+        background: #0f172a;
+        color: #e2e8f0;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 9px 12px;
+        font-size: 0.8rem;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        resize: vertical;
+        line-height: 1.65;
+        box-sizing: border-box;
+        direction: rtl;
+        transition: border-color 0.15s;
+        min-height: 72px;
+    }
+    .chat-lead-textarea-field:focus { outline: none; border-color: rgba(16,185,129,0.4); }
+    .chat-lead-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .chat-lead-btn {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: #fff;
+        font-weight: 700;
+        border: none;
+        padding: 9px 24px;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: 0.86rem;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s;
+        white-space: nowrap;
+    }
+    .chat-lead-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+    .chat-lead-btn:active { transform: translateY(0); }
+    .chat-lead-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+    .chat-lead-placeholder-note {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        line-height: 1.6;
+    }
+    #chat-lead-sent {
+        display: none;
+        font-size: 0.82rem;
+        color: #10b981;
+        background: rgba(16,185,129,0.08);
+        border: 1px solid rgba(16,185,129,0.2);
+        border-radius: 7px;
+        padding: 8px 12px;
+        margin-top: 10px;
+        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
+        direction: rtl;
+    }
+
+    /* — Input Console —————————————————————————————————————————————— */
     .chat-console {
         background: rgba(255,255,255,0.025);
-        border: 1px solid rgba(212,175,55,0.2);
+        border: 1px solid rgba(212,175,55,0.18);
         border-radius: 14px;
-        padding: 18px 18px 15px;
+        padding: 18px 18px 14px;
         margin-bottom: 12px;
     }
     .chat-console-lbl {
         font-size: 0.76rem;
-        color: #6b7280;
+        color: #64748b;
         display: block;
         margin-bottom: 9px;
         font-weight: 700;
@@ -1484,7 +1618,7 @@
         width: 100%;
         background: #0f172a;
         color: #f1f5f9;
-        border: 1px solid rgba(212,175,55,0.22);
+        border: 1px solid rgba(212,175,55,0.2);
         border-radius: 10px;
         padding: 12px 15px;
         font-size: 0.87rem;
@@ -1494,12 +1628,12 @@
         box-sizing: border-box;
         direction: rtl;
         transition: border-color 0.18s, box-shadow 0.18s;
-        min-height: 90px;
+        min-height: 88px;
     }
     #chat-question:focus {
         outline: none;
-        border-color: rgba(212,175,55,0.5);
-        box-shadow: 0 0 0 3px rgba(212,175,55,0.08);
+        border-color: rgba(16,185,129,0.45);
+        box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
     }
     .chat-ctx-row {
         display: grid;
@@ -1509,7 +1643,7 @@
     }
     .chat-ctx-lbl {
         font-size: 0.7rem;
-        color: #6b7280;
+        color: #64748b;
         display: block;
         margin-bottom: 4px;
         font-weight: 500;
@@ -1520,7 +1654,7 @@
         width: 100%;
         background: #0f172a;
         color: #e5e7eb;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.07);
         border-radius: 8px;
         padding: 7px 12px;
         font-size: 0.78rem;
@@ -1529,10 +1663,7 @@
         direction: rtl;
         transition: border-color 0.15s;
     }
-    .chat-ctx-input:focus {
-        outline: none;
-        border-color: rgba(212,175,55,0.38);
-    }
+    .chat-ctx-input:focus { outline: none; border-color: rgba(16,185,129,0.38); }
     .chat-actions-row {
         display: flex;
         align-items: center;
@@ -1547,14 +1678,14 @@
         align-items: center;
         gap: 7px;
         font-size: 0.73rem;
-        color: #6b7280;
+        color: #64748b;
         cursor: pointer;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
         user-select: none;
     }
     .chat-toggle-lbl input[type="checkbox"] {
         width: 15px; height: 15px;
-        accent-color: #d4af37;
+        accent-color: #10b981;
         cursor: pointer;
         flex-shrink: 0;
     }
@@ -1569,119 +1700,147 @@
         font-size: 0.9rem;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
         white-space: nowrap;
-        transition: transform 0.14s, box-shadow 0.15s, opacity 0.15s;
+        transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s;
         letter-spacing: 0.01em;
     }
-    #chat-send-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 5px 18px rgba(212,175,55,0.38);
-    }
+    #chat-send-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(212,175,55,0.35); }
     #chat-send-btn:active { transform: translateY(0); box-shadow: none; }
     #chat-send-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
-    @media (max-width: 560px) {
-        .chat-hero-title { font-size: 1.35rem; }
+
+    /* — Mobile —————————————————————————————————————————————————————————————— */
+    @media (max-width: 600px) {
+        .chat-hero-title { font-size: 1.3rem; }
         .chat-hero { padding: 28px 16px 20px; }
-        .chat-cards-grid { grid-template-columns: 1fr; }
+        .chat-dispute-grid { grid-template-columns: 1fr; }
         .chat-ctx-row { grid-template-columns: 1fr; }
+        .chat-lead-row { grid-template-columns: 1fr; }
         .chat-actions-row { flex-direction: column; align-items: stretch; }
         #chat-send-btn { text-align: center; }
     }
     </style>
     <div class="es-workspace" id="ws-chat" role="tabpanel">
 
-        <!-- ── Premium Hero ───────────────────────────────────────────────────────────────── -->
+        <!-- ── Premium Hero ────────────────────────────────────────────────────────────────────────────── -->
         <div class="chat-hero">
-            <div class="chat-hero-icon">🏛️</div>
+            <div class="chat-hero-icon">&#9878;&#65039;</div>
             <div class="chat-status-row">
                 <div class="chat-status-pill">
                     <span class="chat-dot-glow"></span>
-                    <span>المستشار جاهز</span>
+                    <span>الخبير متصل الآن</span>
                 </div>
             </div>
-            <h2 class="chat-hero-title">المساعد العقاري الذكي</h2>
-            <p class="chat-hero-sub">اسأل عن التقييم العقاري، الاستثمار العقاري، طرق التقييم، والمفاهيم المهنية.</p>
+            <h2 class="chat-hero-title">المستشار <span>العقاري والضريبي</span> الذكي</h2>
+            <p class="chat-hero-sub">حلول إرشادية للطعون الضريبية، نزاعات الورثة والمحاكم، وتقييم المنشآت ذات الطبيعة الخاصة.</p>
             <div id="chat-health-badge" style="display:none; font-size:0.72rem; padding:3px 11px; border-radius:12px; margin-top:8px;"></div>
         </div>
 
-        <!-- ── Disclaimer ─────────────────────────────────────────────────────────────────── -->
+        <!-- ── Disclaimer ──────────────────────────────────────────────────────────────────────── -->
         <div id="chat-scope-note" class="chat-disclaimer">
-            <span class="chat-disclaimer-icon">⚠️</span>
+            <span class="chat-disclaimer-icon">&#9888;&#65039;</span>
             <span>
-                <strong style="color:#f59e0b; display:block; margin-bottom:3px;">للإرشاد والأسئلة العامة فقط</strong>
-                هذا الشات للإرشاد والأسئلة العامة فقط، ولا يُعد تقرير تقييم رسمي ولا يُعتمد كقيمة نهائية للعقار.
+                <strong style="color:#f59e0b; display:block; margin-bottom:3px;">هذا الشات للإرشاد والأسئلة العامة فقط.</strong>
+                ولا يُعد استشارة قانونية أو تقرير تقييم رسمي. في حال تعقد الحالة الفنية أو القانونية، يمكنك ترك بياناتك ليتواصل معك الخبير مباشرة لإعداد التقرير الرسمي المعتمد.
                 <strong style="color:#f59e0b;">لا يُعدّل بيانات التقييم ولا يُولّد تقارير رسمية.</strong>
             </span>
         </div>
 
-        <!-- ── Category Pills ─────────────────────────────────────────────────────────────── -->
-        <div id="chat-category-chips" class="chat-pills">
-            <button class="chat-pill" onclick="chatCategoryFill('التقييم العقاري')">🏠 التقييم العقاري</button>
-            <button class="chat-pill" onclick="chatCategoryFill('الاستثمار العقاري')">📈 الاستثمار العقاري</button>
-            <button class="chat-pill" onclick="chatCategoryFill('طرق التقييم')">⚖️ طرق التقييم</button>
-            <button class="chat-pill" onclick="chatCategoryFill('المصطلحات المهنية')">📚 المصطلحات المهنية</button>
-            <button class="chat-pill" onclick="chatCategoryFill('التمويل والرهن')">🏦 التمويل والرهن</button>
-            <button class="chat-pill" onclick="chatCategoryFill('التأمين والتعويضات')">🛡️ التأمين والتعويضات</button>
-            <button class="chat-pill" onclick="chatCategoryFill('IFRS 13')">📊 IFRS 13</button>
-            <button class="chat-pill" onclick="chatCategoryFill('أعلى وأفضل استغلال')">&#10024; أعلى وأفضل استغلال</button>
-        </div>
-
-        <!-- ── Suggestion Cards ─────────────────────────────────────────────────────────── -->
-        <div id="chat-suggested-cards" class="chat-cards-grid">
-            <button class="chat-card" onclick="chatFill('متى أستخدم DCF في التقييم العقاري؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                متى أستخدم DCF في التقييم العقاري؟
+        <!-- ── 4 Dispute Category Cards (#chat-suggested-cards repurposed) ─────────────── -->
+        <div class="chat-section-hdr">&#9878;&#65039; مجالات الاستشارة التخصصية</div>
+        <div id="chat-suggested-cards" class="chat-dispute-grid">
+            <button class="chat-dispute-card" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار غير مستغل؟')">
+                <span class="chat-dispute-card-icon">&#127963;&#65039;</span>
+                <div class="chat-dispute-card-title">الطعون والضرائب العقارية</div>
+                <div class="chat-dispute-card-desc">إرشاد مبدئي لحالات الضرائب العقارية، الوحدات السكنية والتجارية، والمصانع والمنشآت الخاصة.</div>
             </button>
-            <button class="chat-card" onclick="chatFill('ما الفرق بين NOI و Cash Flow؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                ما الفرق بين NOI و Cash Flow؟
+            <button class="chat-dispute-card" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">
+                <span class="chat-dispute-card-icon">&#9878;&#65039;</span>
+                <div class="chat-dispute-card-title">الفرز والتجنيب للمحاكم</div>
+                <div class="chat-dispute-card-desc">مساعدة أولية في فهم نزاعات الورثة، التركات، والقسمة العادلة وفقًا لأسس التقييم المهني.</div>
             </button>
-            <button class="chat-card" onclick="chatFill('كيف يتم حساب معدل الرسملة؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                كيف يتم حساب معدل الرسملة؟
+            <button class="chat-dispute-card" onclick="chatFill('كيف أقيّم جدوى استثمارية لمشروع عقاري على أسس أعلى وأفضل استغلال HBU؟')">
+                <span class="chat-dispute-card-icon">&#128202;</span>
+                <div class="chat-dispute-card-title">الاستثمار والجدوى الاقتصادية</div>
+                <div class="chat-dispute-card-desc">أسئلة عن أعلى وأفضل استغلال HBU، الجدوى الاستثمارية، والتمويل والرهن العقاري.</div>
             </button>
-            <button class="chat-card" onclick="chatFill('ما معنى أعلى وأفضل استغلال؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                ما معنى أعلى وأفضل استغلال؟
-            </button>
-            <button class="chat-card" onclick="chatFill('متى أستخدم طريقة المقارنة السوقية؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                متى أستخدم طريقة المقارنة السوقية؟
-            </button>
-            <button class="chat-card" onclick="chatFill('ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟
-            </button>
-            <button class="chat-card" onclick="chatFill('ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟
-            </button>
-            <button class="chat-card" onclick="chatFill('ما علاقة الغرض من التقييم بطريقة الحساب؟')">
-                <span class="chat-card-lbl">💡 مقترَح</span>
-                ما علاقة الغرض من التقييم بطريقة الحساب؟
+            <button class="chat-dispute-card" onclick="chatFill('ما المنهجية المناسبة لتقييم مستشفى أو فندق أو مصنع كأصل متخصص؟')">
+                <span class="chat-dispute-card-icon">&#127959;&#65039;</span>
+                <div class="chat-dispute-card-title">تقييم الأصول المتخصصة</div>
+                <div class="chat-dispute-card-desc">إرشاد حول تقييم المستشفيات، الفنادق، المصانع، المباني التراثية، والأصول غير التقليدية.</div>
             </button>
         </div>
 
-        <!-- ── Input Console ──────────────────────────────────────────────────────────────── -->
+        <!-- ── Suggestion Chips (#chat-category-chips) ───────────────────────────────── -->
+        <div class="chat-section-hdr">&#128172; أسئلة شائعة</div>
+        <div id="chat-category-chips" class="chat-chips-wrap">
+            <button class="chat-chip" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
+            <button class="chat-chip" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟</button>
+            <button class="chat-chip" onclick="chatFill('كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟')">كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟</button>
+            <button class="chat-chip" onclick="chatFill('كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟')">كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟</button>
+            <button class="chat-chip" onclick="chatFill('ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟')">ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟</button>
+            <button class="chat-chip" onclick="chatFill('متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟')">متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟</button>
+            <button class="chat-chip" onclick="chatFill('ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟')">ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟</button>
+            <button class="chat-chip" onclick="chatFill('ما المستندات المطلوبة لتقييم أصل متخصص؟')">ما المستندات المطلوبة لتقييم أصل متخصص؟</button>
+        </div>
+
+        <!-- ── Lead Capture Form (UI-only placeholder — no backend endpoint) ─────────────── -->
+        <div class="chat-lead-box">
+            <div class="chat-lead-title">&#128203; طلب بحث حالة واستشارة عاجلة مع المهندس الخبير</div>
+            <div class="chat-lead-row">
+                <div>
+                    <label class="chat-lead-label">الاسم بالكامل *</label>
+                    <input type="text" id="chat-lead-name" class="chat-lead-input"
+                        placeholder="مثال: محمد علي الخولي، شركة النور..." dir="rtl">
+                </div>
+                <div>
+                    <label class="chat-lead-label">رقم الهاتف / واتسآب *</label>
+                    <input type="tel" id="chat-lead-phone" class="chat-lead-input"
+                        placeholder="مثال: 01012345678" dir="ltr">
+                </div>
+            </div>
+            <div class="chat-lead-field-wrap">
+                <label class="chat-lead-label">نوع العقار والموقع</label>
+                <input type="text" id="chat-lead-prop" class="chat-lead-input"
+                    placeholder="مثال: مصنع بالتجمع الخامس القاهرة، فندق بشرم الشيخ..." dir="rtl">
+            </div>
+            <div class="chat-lead-field-wrap">
+                <label class="chat-lead-label">ملخص المشكلة أو النزاع القضائي</label>
+                <textarea id="chat-lead-summary" class="chat-lead-textarea-field" rows="3"
+                    placeholder="صف حالتك باختصار: نوع النزاع، الجهة المختصة، والمطلوب..." dir="rtl"></textarea>
+            </div>
+            <div class="chat-lead-actions">
+                <button id="chat-lead-btn" class="chat-lead-btn" onclick="chatLeadSubmit()">
+                    &#128203; إرسال طلب الاستشارة
+                </button>
+                <span class="chat-lead-placeholder-note">
+                    &#9432; سيتم تفعيل إرسال الطلبات في مرحلة لاحقة.
+                </span>
+            </div>
+            <div id="chat-lead-sent" style="display:none; font-size:0.82rem; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:7px; padding:9px 13px; margin-top:10px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
+                &#10003; شكرًا على طلبك. سيتم تفعيل إرسال الطلبات في مرحلة لاحقة. بإمكانك في الوقت الحالي أدرج سؤالك في صندوق الشات أدناه.
+            </div>
+        </div>
+
+        <!-- ── Input Console ──────────────────────────────────────────────────────────────────────── -->
         <div class="chat-console">
-            <span class="chat-console-lbl">&#9999;&#65039; سؤالك العقاري</span>
+            <span class="chat-console-lbl">&#9999;&#65039; سؤالك العقاري أو الضريبي</span>
             <textarea id="chat-question" rows="3" dir="rtl"
-                placeholder="اكتب سؤالك عن التقييم أو الاستثمار العقاري… مثال: ما الفرق بين طريقة المقارنة وطريقة الدخل؟"></textarea>
+                placeholder="اكتب سؤالك عن التقييم أو الضرائب أو الاستثمار العقاري... مثال: كيف أطعن على تقدير ضريبة عقارية؟"></textarea>
             <div class="chat-ctx-row">
                 <div>
                     <label class="chat-ctx-lbl">&#128205; الموقع (اختياري)</label>
                     <input type="text" id="chat-location" class="chat-ctx-input"
-                        placeholder="مثال: القاهرة، الرياض…" dir="rtl">
+                        placeholder="مثال: القاهرة، الرياض، دبي…" dir="rtl">
                 </div>
                 <div>
                     <label class="chat-ctx-lbl">&#127970; نوع العقار (اختياري)</label>
                     <input type="text" id="chat-property-type" class="chat-ctx-input"
-                        placeholder="مثال: شقة، مكتب، مستودع…" dir="rtl">
+                        placeholder="مثال: شقة، مصنع، فندق، مستشفى…" dir="rtl">
                 </div>
             </div>
             <div class="chat-actions-row">
                 <label class="chat-toggle-lbl">
                     <input type="checkbox" id="chat-web-toggle">
-                    <span>تفعيل البحث على الويب</span>
+                    <span>تفعيل التقصي القانوني والبحث <span style="color:#10b981;font-size:0.68rem;">(قريبًا)</span></span>
                 </label>
                 <button id="chat-send-btn" onclick="document.getElementById('chat-empty-state').style.display='none'; chatSend();">
                     إرسال &#10148;
@@ -1691,31 +1850,37 @@
 
         <div id="chat-error" style="display:none; padding:9px 13px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:8px; color:#ef4444; font-size:0.8rem; margin:6px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;"></div>
 
-        <!-- ── Empty State ─────────────────────────────────────────────────────────────────── -->
-        <div id="chat-empty-state" style="text-align:center; padding:24px 16px; color:#6b7280; font-size:0.82rem; line-height:1.75; border:1px dashed rgba(212,175,55,0.13); border-radius:10px; margin:8px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
-            <div style="font-size:1.5rem; margin-bottom:8px; opacity:0.4;">&#128172;</div>
-            <div style="color:#9ca3af; font-size:0.85rem; font-weight:700; margin-bottom:7px;">ابدأ محادثتك العقارية</div>
-            <div>اختر سؤالاً مقترَحاً من البطاقات أعلاه، أو اكتب سؤالك واضغط <strong style="color:#d4af37;">إرسال &#10148;</strong><br>المساعد متخصص في التقييم العقاري، الاستثمار، والمفاهيم المهنية.</div>
+        <!-- ── Empty State ───────────────────────────────────────────────────────────────────── -->
+        <div id="chat-empty-state" style="text-align:center; padding:22px 16px; color:#64748b; font-size:0.82rem; line-height:1.75; border:1px dashed rgba(16,185,129,0.15); border-radius:10px; margin:8px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
+            <div style="font-size:1.4rem; margin-bottom:8px; opacity:0.4;">&#128172;</div>
+            <div style="color:#94a3b8; font-size:0.85rem; font-weight:700; margin-bottom:6px;">ابدأ محادثتك العقارية</div>
+            <div>اختر بطاقة نزاع أو سؤالاً مقترحًا أعلاه، أو اكتب سؤالك واضغط <strong style="color:#d4af37;">إرسال &#10148;</strong><br>المستشار متخصص في التقييم والضرائب ونزاعات العقار.</div>
         </div>
 
-        <!-- ── Response Area ──────────────────────────────────────────────────────────────── -->
-        <div id="chat-response-area" style="display:none; margin:10px 0; padding:16px 18px; background:rgba(255,255,255,0.025); border:1px solid rgba(212,175,55,0.22); border-radius:12px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
-            <div style="font-size:0.8rem; color:#d4af37; font-weight:700; margin-bottom:10px; border-bottom:1px solid rgba(212,175,55,0.18); padding-bottom:8px; direction:rtl;">🏛️ رد المستشار العقاري</div>
-            <div id="chat-answer-text" style="font-size:0.87rem; color:#e5e7eb; line-height:1.85; white-space:pre-wrap; direction:rtl;"></div>
+        <!-- ── Response Area ──────────────────────────────────────────────────────────────────────── -->
+        <div id="chat-response-area" style="display:none; margin:10px 0; padding:16px 18px; background:rgba(30,41,59,0.5); border:1px solid rgba(16,185,129,0.2); border-radius:12px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <div style="font-size:0.8rem; color:#10b981; font-weight:700; margin-bottom:10px; border-bottom:1px solid rgba(16,185,129,0.15); padding-bottom:8px; direction:rtl;">&#128202; رد المستشار العقاري والضريبي</div>
+            <div id="chat-answer-text" style="font-size:0.87rem; color:#e2e8f0; line-height:1.85; white-space:pre-wrap; direction:rtl;"></div>
             <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07); direction:rtl;"></div>
-            <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#6b7280; flex-wrap:wrap; gap:14px; direction:rtl;"></div>
+            <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#64748b; flex-wrap:wrap; gap:14px; direction:rtl;"></div>
         </div>
 
-        <!-- ── chatCategoryFill helper ───────────────────────────────────────────────────── -->
+        <!-- ── Helpers ────────────────────────────────────────────────────────────────────────────── -->
         <script>
         window.chatCategoryFill = function (cat) {
             var el = document.getElementById('chat-question');
             if (el) { el.value = 'اسألني عن ' + cat + ': '; el.focus(); }
         };
+        window.chatLeadSubmit = function () {
+            var btn  = document.getElementById('chat-lead-btn');
+            var sent = document.getElementById('chat-lead-sent');
+            if (btn)  { btn.disabled = true; btn.textContent = '✓ تم الاستلام'; }
+            if (sent) { sent.style.display = 'block'; }
+        };
         <\/script>
 
     </div>
-    <!-- ══ End Phase 12: Real Estate Chat Tab ═══════════════════════════════════════════════ -->
+    <!-- ══ End Phase 12: Real Estate Chat Tab ════════════════════════════════════════════════════════════════ -->
 
     <!-- Workspace: التقييم المبسّط ─────────────────────────────────────────── -->
     <div class="es-workspace" id="ws-valuation" role="tabpanel">

@@ -27650,7 +27650,7 @@ var _PROFILE_FORM_SCHEMA = {
 
     // ── Schema loading ────────────────────────────────────────────────────
     function cmpLoadSchema() {
-        window.esFetch('/api/valuation/composite/schema')
+        window.esFetch('/api/valuation/composite/schema', { suppressAuthModal: true })
             .then(function (r) { return r.json(); })
             .then(function (schema) {
                 _cmpSchema = schema;
@@ -27663,6 +27663,12 @@ var _PROFILE_FORM_SCHEMA = {
             })
             .catch(function (err) {
                 var loading = document.getElementById('cmp-loading');
+                if (err && err.message === 'ES_AUTH_401') {
+                    if (loading) loading.style.display = 'none';
+                    var authErr = document.getElementById('cmp-auth-error');
+                    if (authErr) authErr.style.display = 'block';
+                    return;
+                }
                 if (loading) loading.innerHTML =
                     '<div style="color:#ef4444; font-size:0.82rem;">فشل تحميل مخطط التقييم المجمّع: ' + err + '</div>';
             });

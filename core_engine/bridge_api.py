@@ -682,13 +682,17 @@ def serve_index():
 
 @app.route("/<path:path>")
 def serve_static(path):
-    """يُقدّم ملفات CSS/JS/fonts/images من مجلد frontend/"""
+    """يُقدّم ملفات CSS/JS/fonts/images من مجلد frontend/
+
+    SEC-022: uses send_from_directory directly so werkzeug's safe_join() guards
+    against path-traversal — no os.path.isfile() probe outside the frontend dir.
+    """
     from flask import send_from_directory
-    full = os.path.join(_FRONTEND_DIR, path)
-    if os.path.isfile(full):
+    from werkzeug.exceptions import NotFound
+    try:
         return send_from_directory(_FRONTEND_DIR, path)
-    # fallback: 404 عادي بدلاً من traceback
-    return jsonify({"error": "file not found"}), 404
+    except NotFound:
+        return jsonify({"error": "file not found"}), 404
 
 # ═══════════════════════════════════════════════════════════════════════════
 # محرك التقييم

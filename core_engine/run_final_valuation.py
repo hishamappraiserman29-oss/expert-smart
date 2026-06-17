@@ -29,7 +29,9 @@ _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT_DIR = os.path.join(_CORE_DIR, "..")
 sys.path.insert(0, _CORE_DIR)
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-warnings.filterwarnings("ignore")
+# Suppress third-party library deprecation noise only; do not hide security warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 OUTPUT_DIR  = os.path.join(_CORE_DIR, "outputs", "reports")
 EXCEL_PATH  = os.path.join(OUTPUT_DIR, "Final_Valuation_Report.xlsx")

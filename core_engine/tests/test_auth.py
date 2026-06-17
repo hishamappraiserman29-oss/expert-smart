@@ -15,7 +15,7 @@ if str(_CORE) not in sys.path:
 
 from auth.tokens import AuthError, generate_token, verify_token
 
-_TEST_SECRET = "test-secret-for-unit-tests-only"
+_TEST_SECRET = "test-secret-for-unit-tests-only!!"  # 32 bytes — meets RFC 7518 §3.2
 
 
 @pytest.fixture(autouse=True)
@@ -104,7 +104,7 @@ class TestVerifyToken:
 
     def test_wrong_secret_rejected(self, monkeypatch):
         token = generate_token("alice")
-        monkeypatch.setenv("JWT_SECRET", "different-secret")
+        monkeypatch.setenv("JWT_SECRET", "a-different-secret-32-bytes-min!!")
         with pytest.raises(AuthError, match="invalid"):
             verify_token(token)
 

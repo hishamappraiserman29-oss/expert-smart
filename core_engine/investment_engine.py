@@ -22,7 +22,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 import xlsxwriter
 
-warnings.filterwarnings("ignore")
+# Suppress third-party library deprecation noise only; do not hide security warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 _CORE_DIR = os.path.dirname(os.path.abspath(__file__))
 

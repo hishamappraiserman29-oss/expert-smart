@@ -1276,67 +1276,107 @@
     }
     </script>
 
-    <!-- Workspace: الشات ─────────────────────────────────────────────────── -->
-    <!-- ── Phase 12: Real Estate Chat Tab ───────────────────────────────── -->
+    <!-- Workspace: الشات ────────────────────────────────────────────────── -->
+    <!-- ── Phase 12: Real Estate Chat Tab (UX Enhanced) ─────────────────── -->
     <div class="es-workspace" id="ws-chat" role="tabpanel">
 
-        <!-- Scope notice -->
-        <div id="chat-scope-note" style="padding:10px 14px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:8px; font-size:0.8rem; color:#9ca3af; margin:8px 0; line-height:1.6;">
-            <span style="color:var(--gold-light); font-weight:bold;">المستشار العقاري الذكي</span> —
-            هذا الشات مخصص للأسئلة العامة عن العقارات، التقييم العقاري، الاستثمار العقاري، أساليب التقييم، والمفاهيم المهنية.
-            <strong style="color:#f59e0b;">لا يصدر هذا الشات تقرير تقييم رسمي ولا يعدل بيانات التقييم.</strong>
+        <!-- ── Hero Landing Header ──────────────────────────────────── -->
+        <div style="text-align:center; padding:28px 16px 20px; background:linear-gradient(135deg,rgba(212,175,55,0.06) 0%,rgba(212,175,55,0.02) 100%); border-bottom:1px solid rgba(212,175,55,0.14); margin-bottom:16px; border-radius:10px 10px 0 0;">
+            <div style="font-size:1.8rem; margin-bottom:8px;">🏛️</div>
+            <h2 style="margin:0 0 6px; font-size:1.3rem; color:#d4af37; font-weight:700; letter-spacing:0.01em;">المساعد العقاري الذكي</h2>
+            <p style="margin:0 auto; font-size:0.84rem; color:#9ca3af; line-height:1.7; max-width:520px;">اسأل عن التقييم العقاري، الاستثمار العقاري، طرق التقييم، والمفاهيم المهنية.</p>
         </div>
 
-        <!-- Health status -->
-        <div id="chat-health-badge" style="display:none; font-size:0.75rem; padding:3px 10px; border-radius:4px; margin-bottom:6px; display:inline-block;"></div>
-
-        <!-- Suggested questions -->
-        <div style="margin:8px 0 10px; display:flex; flex-wrap:wrap; gap:6px;">
-            <button onclick="chatFill('ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟</button>
-            <button onclick="chatFill('متى أستخدم طريقة الدخل في التقييم؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">متى أستخدم طريقة الدخل؟</button>
-            <button onclick="chatFill('ما معنى أعلى وأفضل استغلال HABU؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">ما معنى HABU؟</button>
-            <button onclick="chatFill('ما الفرق بين معدل الرسملة ومعدل الخصم؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">Cap Rate vs Discount Rate</button>
-            <button onclick="chatFill('كيف يؤثر غرض التقييم على مضاعف القيمة؟')" style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); color:#d4af37; padding:4px 10px; border-radius:12px; cursor:pointer; font-size:0.75rem; font-family:inherit;">أثر الغرض على القيمة</button>
+        <!-- ── Usage Disclaimer ───────────────────────────────────────── -->
+        <div id="chat-scope-note" style="display:flex; align-items:flex-start; gap:10px; padding:10px 14px; background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius:8px; font-size:0.8rem; color:#9ca3af; margin:0 0 14px; line-height:1.6;">
+            <span style="font-size:1rem; flex-shrink:0; margin-top:1px;">⚠️</span>
+            <span><strong style="color:#f59e0b; display:block; margin-bottom:2px;">للإرشاد والأسئلة العامة فقط</strong>هذا الشات للإرشاد والأسئلة العامة فقط، ولا يُعد تقرير تقييم رسمي ولا يعتمد كقيمة نهائية للعقار. <strong style="color:#f59e0b;">لا يُعدِّل بيانات التقييم ولا يُولِّد تقارير رسمية.</strong></span>
         </div>
 
-        <!-- Input form -->
-        <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
-            <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:4px;">السؤال العقاري *</label>
-            <textarea id="chat-question" rows="3" placeholder="مثال: ما الفرق بين طريقة المقارنة وطريقة الدخل في التقييم العقاري؟"
-                style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:6px; padding:8px 10px; font-size:0.82rem; font-family:inherit; resize:vertical; line-height:1.5;"></textarea>
-            <div style="display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-top:8px; align-items:end;">
+        <!-- ── Health Badge ─────────────────────────────────────────────────── -->
+        <div id="chat-health-badge" style="display:none; font-size:0.75rem; padding:3px 10px; border-radius:4px; margin-bottom:10px;"></div>
+
+        <!-- ── Category Chips ────────────────────────────────────────────── -->
+        <div id="chat-category-chips" style="margin:0 0 14px; display:flex; flex-wrap:wrap; gap:6px;">
+            <button onclick="chatCategoryFill('التقييم العقاري')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">🏠 التقييم العقاري</button>
+            <button onclick="chatCategoryFill('الاستثمار العقاري')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">📈 الاستثمار العقاري</button>
+            <button onclick="chatCategoryFill('طرق التقييم')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">⚖️ طرق التقييم</button>
+            <button onclick="chatCategoryFill('المصطلحات المهنية')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">📚 المصطلحات المهنية</button>
+            <button onclick="chatCategoryFill('التمويل والرهن')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">🏦 التمويل والرهن</button>
+            <button onclick="chatCategoryFill('التأمين والتعويضات')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">🛡️ التأمين والتعويضات</button>
+            <button onclick="chatCategoryFill('IFRS 13')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">📊 IFRS 13</button>
+            <button onclick="chatCategoryFill('أعلى وأفضل استغلال')" style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.22); color:#d4af37; padding:5px 12px; border-radius:16px; cursor:pointer; font-size:0.75rem; font-family:inherit;">✨ أعلى وأفضل استغلال</button>
+        </div>
+
+        <!-- ── Suggested Question Cards ───────────────────────────────────────── -->
+        <div id="chat-suggested-cards" style="margin:0 0 16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:8px;">
+            <button onclick="chatFill('ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟</button>
+            <button onclick="chatFill('متى أستخدم طريقة المقارنة السوقية؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>متى أستخدم طريقة المقارنة السوقية؟</button>
+            <button onclick="chatFill('ما معنى أعلى وأفضل استغلال؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>ما معنى أعلى وأفضل استغلال؟</button>
+            <button onclick="chatFill('كيف يتم حساب معدل الرسملة؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>كيف يتم حساب معدل الرسملة؟</button>
+            <button onclick="chatFill('ما الفرق بين NOI و Cash Flow؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>ما الفرق بين NOI و Cash Flow؟</button>
+            <button onclick="chatFill('متى أستخدم DCF في التقييم العقاري؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>متى أستخدم DCF في التقييم العقاري؟</button>
+            <button onclick="chatFill('ما علاقة الغرض من التقييم بطريقة الحساب؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>ما علاقة الغرض من التقييم بطريقة الحساب؟</button>
+            <button onclick="chatFill('ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟')" style="background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.18); border-radius:10px; padding:10px 12px; cursor:pointer; text-align:right; font-family:inherit; color:#e5e7eb; font-size:0.8rem; line-height:1.5;" onmouseover="this.style.background='rgba(212,175,55,0.08)';this.style.borderColor='rgba(212,175,55,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(212,175,55,0.18)'"><span style="display:block; font-size:0.7rem; color:#d4af37; margin-bottom:4px;">💡 مقترَح</span>ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟</button>
+        </div>
+
+        <!-- ── Input Form ───────────────────────────────────────────────────── -->
+        <div style="margin:0 0 8px; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.22); border-radius:10px;">
+            <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:6px; font-weight:600;">✏️ سؤالك العقاري</label>
+            <textarea id="chat-question" rows="3" dir="rtl"
+                placeholder="اكتب سؤالك عن التقييم أو الاستثمار العقاري… مثال: ما الفرق بين طريقة المقارنة وطريقة الدخل؟"
+                style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid rgba(212,175,55,0.25); border-radius:8px; padding:10px 12px; font-size:0.85rem; font-family:inherit; resize:vertical; line-height:1.6; box-sizing:border-box;"></textarea>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
                 <div>
-                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">الموقع (اختياري)</label>
-                    <input type="text" id="chat-location" placeholder="مثال: الرياض، جدة…"
-                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.78rem;">
+                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:3px;">📍 الموقع (اختياري)</label>
+                    <input type="text" id="chat-location" placeholder="مثال: القاهرة، الرياض…" dir="rtl"
+                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:6px; padding:6px 10px; font-size:0.78rem; font-family:inherit; box-sizing:border-box;">
                 </div>
                 <div>
-                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:2px;">نوع العقار (اختياري)</label>
-                    <input type="text" id="chat-property-type" placeholder="مثال: فيلا، مكتب، مستودع…"
-                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.78rem;">
+                    <label style="font-size:0.72rem; color:#9ca3af; display:block; margin-bottom:3px;">🏢 نوع العقار (اختياري)</label>
+                    <input type="text" id="chat-property-type" placeholder="مثال: شقة، مكتب، مستودع…" dir="rtl"
+                        style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:6px; padding:6px 10px; font-size:0.78rem; font-family:inherit; box-sizing:border-box;">
                 </div>
-                <button id="chat-send-btn" onclick="chatSend()"
-                    style="background:#d4af37; color:#000; font-weight:900; border:none; padding:8px 18px; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:inherit; white-space:nowrap; height:fit-content;">
-                    ⬡ إرسال
+            </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="chat-web-toggle" style="width:14px; height:14px; accent-color:#d4af37; cursor:pointer;">
+                    <label for="chat-web-toggle" style="font-size:0.72rem; color:#6b7280; cursor:pointer; margin:0;">تفعيل البحث على الويب</label>
+                </div>
+                <button id="chat-send-btn" onclick="document.getElementById('chat-empty-state').style.display='none'; chatSend();"
+                    style="background:#d4af37; color:#000; font-weight:900; border:none; padding:9px 22px; border-radius:8px; cursor:pointer; font-size:0.88rem; font-family:inherit; white-space:nowrap;">
+                    إرسال ➤
                 </button>
             </div>
-            <div style="margin-top:6px; display:flex; align-items:center; gap:6px;">
-                <input type="checkbox" id="chat-web-toggle" style="width:13px; height:13px; accent-color:#d4af37; cursor:pointer;">
-                <label for="chat-web-toggle" style="font-size:0.72rem; color:#6b7280; cursor:pointer; margin:0;">تفعيل البحث على الويب (use_web)</label>
-            </div>
         </div>
-        <div id="chat-error" style="display:none; padding:7px 12px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:6px; color:#ef4444; font-size:0.8rem; margin:4px 0;"></div>
 
-        <!-- Response area -->
-        <div id="chat-response-area" style="display:none; margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
-            <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">رد المستشار</div>
-            <div id="chat-answer-text" style="font-size:0.85rem; color:#e5e7eb; line-height:1.7; white-space:pre-wrap;"></div>
-            <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07);"></div>
-            <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#6b7280; display:flex; gap:14px; flex-wrap:wrap;"></div>
+        <div id="chat-error" style="display:none; padding:8px 12px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:6px; color:#ef4444; font-size:0.8rem; margin:6px 0;"></div>
+
+        <!-- ── Empty State ───────────────────────────────────────────────────── -->
+        <div id="chat-empty-state" style="text-align:center; padding:24px 16px; color:#6b7280; font-size:0.82rem; line-height:1.7; border:1px dashed rgba(212,175,55,0.12); border-radius:10px; margin:8px 0;">
+            <div style="font-size:1.5rem; margin-bottom:8px; opacity:0.45;">💬</div>
+            <div style="color:#9ca3af; font-size:0.85rem; font-weight:600; margin-bottom:6px;">ابدأ محادثتك العقارية</div>
+            <div>اختر سؤالاً مقترَحاً من البطاقات أعلاه، أو اكتب سؤالك واضغط <strong style="color:#d4af37;">إرسال ➤</strong><br>المساعد متخصص في التقييم العقاري، الاستثمار، والمفاهيم المهنية.</div>
         </div>
+
+        <!-- ── Response Area ─────────────────────────────────────────────────── -->
+        <div id="chat-response-area" style="display:none; margin:10px 0; padding:14px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.22); border-radius:10px;">
+            <div style="font-size:0.8rem; color:#d4af37; font-weight:700; margin-bottom:10px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:8px;">🏛️ رد المستشار العقاري</div>
+            <div id="chat-answer-text" style="font-size:0.87rem; color:#e5e7eb; line-height:1.8; white-space:pre-wrap;"></div>
+            <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07);"></div>
+            <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#6b7280; flex-wrap:wrap; gap:14px;"></div>
+        </div>
+
+        <!-- ── chatCategoryFill helper ─────────────────────────────────────── -->
+        <script>
+        window.chatCategoryFill = function (cat) {
+            var el = document.getElementById('chat-question');
+            if (el) { el.value = 'اسألني عن ' + cat + ': '; el.focus(); }
+        };
+        <\/script>
 
     </div>
-    <!-- ── End Phase 12: Real Estate Chat Tab ────────────────────────── -->
+    <!-- ── End Phase 12: Real Estate Chat Tab ─────────────────────── -->
 
     <!-- Workspace: التقييم المبسّط ─────────────────────────────────────────── -->
     <div class="es-workspace" id="ws-valuation" role="tabpanel">

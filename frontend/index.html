@@ -1395,7 +1395,7 @@
     /* — Section header ———————————————————————————————————————————————— */
     .chat-section-hdr {
         font-size: 0.8rem;
-        color: #64748b;
+        color: #94a3b8;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
@@ -1510,7 +1510,7 @@
     }
     .chat-console-lbl {
         font-size: 0.76rem;
-        color: #64748b;
+        color: #94a3b8;
         display: block;
         margin-bottom: 9px;
         font-weight: 700;
@@ -1539,6 +1539,8 @@
         border-color: rgba(16,185,129,0.45);
         box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
     }
+    #chat-question::placeholder { color: rgba(148,163,184,0.6); }
+    .chat-ctx-input::placeholder { color: rgba(148,163,184,0.55); }
     .chat-ctx-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1547,7 +1549,7 @@
     }
     .chat-ctx-lbl {
         font-size: 0.7rem;
-        color: #64748b;
+        color: #94a3b8;
         display: block;
         margin-bottom: 4px;
         font-weight: 500;
@@ -1557,8 +1559,8 @@
     .chat-ctx-input {
         width: 100%;
         background: #0f172a;
-        color: #e5e7eb;
-        border: 1px solid rgba(255,255,255,0.07);
+        color: #e2e8f0;
+        border: 1px solid rgba(148,163,184,0.3);
         border-radius: 8px;
         padding: 7px 12px;
         font-size: 0.78rem;
@@ -1567,7 +1569,7 @@
         direction: rtl;
         transition: border-color 0.15s;
     }
-    .chat-ctx-input:focus { outline: none; border-color: rgba(16,185,129,0.38); }
+    .chat-ctx-input:focus { outline: none; border-color: rgba(16,185,129,0.55); box-shadow: 0 0 0 2px rgba(16,185,129,0.1); }
     .chat-actions-row {
         display: flex;
         align-items: center;
@@ -1582,7 +1584,7 @@
         align-items: center;
         gap: 7px;
         font-size: 0.73rem;
-        color: #64748b;
+        color: #94a3b8;
         cursor: pointer;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
         user-select: none;
@@ -1676,7 +1678,7 @@
         <!-- ── Suggestion Chips (#chat-category-chips) ───────────────────────────────── -->
         <div class="chat-section-hdr">&#128172; أسئلة شائعة</div>
         <div id="chat-category-chips" class="chat-chips-wrap" data-testid="chat-suggestions">
-            <button class="chat-chip" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
+            <button class="chat-chip" data-testid="chat-suggestion-card" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
             <button class="chat-chip" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟</button>
             <button class="chat-chip" onclick="chatFill('كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟')">كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟</button>
             <button class="chat-chip" onclick="chatFill('كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟')">كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟</button>
@@ -1722,7 +1724,7 @@
                 </div>
             </div>
             <div class="chat-actions-row">
-                <label class="chat-toggle-lbl">
+                <label class="chat-toggle-lbl" onclick="return chatWebToggleClick(event)">
                     <input type="checkbox" id="chat-web-toggle">
                     <span>تفعيل التقصي القانوني والبحث <span style="color:#10b981;font-size:0.68rem;">(قريبًا)</span></span>
                 </label>
@@ -1742,11 +1744,67 @@
         </div>
 
         <!-- ── Response Area ──────────────────────────────────────────────────────────────────────── -->
-        <div id="chat-response-area" style="display:none; margin:10px 0; padding:16px 18px; background:rgba(30,41,59,0.5); border:1px solid rgba(16,185,129,0.2); border-radius:12px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
-            <div style="font-size:0.8rem; color:#10b981; font-weight:700; margin-bottom:10px; border-bottom:1px solid rgba(16,185,129,0.15); padding-bottom:8px; direction:rtl;">&#128202; رد المستشار العقاري والضريبي</div>
+        <div id="chat-response-area" data-testid="chat-answer-area" style="display:none; margin:10px 0; padding:16px 18px; background:rgba(30,41,59,0.5); border:1px solid rgba(16,185,129,0.2); border-radius:12px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <div data-testid="chat-answer-card" style="font-size:0.8rem; color:#10b981; font-weight:700; margin-bottom:10px; border-bottom:1px solid rgba(16,185,129,0.15); padding-bottom:8px; direction:rtl;">&#128202; إجابة إرشادية</div>
             <div id="chat-answer-text" style="font-size:0.87rem; color:#e2e8f0; line-height:1.85; white-space:pre-wrap; direction:rtl;"></div>
             <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07); direction:rtl;"></div>
             <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#64748b; flex-wrap:wrap; gap:14px; direction:rtl;"></div>
+            <div id="chat-expert-cta" style="display:none; margin-top:14px; padding:10px 14px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.18); border-radius:8px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; display:none;">
+                <span style="font-size:0.82rem; color:#94a3b8;">هل تريد مراجعة هذه الحالة مع الخبير؟</span>
+                <button onclick="chatShowLeadForm()" style="margin-right:12px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; padding:4px 14px; border-radius:16px; cursor:pointer; font-size:0.8rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">نعم، اتواصل مع الخبير</button>
+            </div>
+        </div>
+
+        <!-- ── Expert Contact Card ───────────────────────────────────────────────────────────── -->
+        <div data-testid="expert-contact-card" style="margin:18px 0 8px; padding:14px 18px; background:rgba(30,41,59,0.6); border:1px solid rgba(212,175,55,0.25); border-radius:12px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <span style="font-size:1.2rem;">&#128100;</span>
+                <div>
+                    <div style="font-size:0.9rem; font-weight:700; color:#d4af37;">طلب تواصل مع خبير التقييم</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">إذا كانت حالتك تحتاج تقريرًا رسميًا أو مراجعة مستندات، اترك بياناتك ليتواصل معك الخبير.</div>
+                </div>
+            </div>
+            <button onclick="chatShowLeadForm()" style="width:100%; padding:9px 0; background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#d4af37; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:600; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                أريد تواصل الخبير &#9660;
+            </button>
+        </div>
+
+        <!-- ── Expert Lead Form ──────────────────────────────────────────────────────────────── -->
+        <div id="chat-lead-form-wrap" data-testid="expert-lead-form" style="display:none; margin:0 0 18px; padding:18px 20px; background:rgba(15,23,42,0.7); border:1px solid rgba(212,175,55,0.2); border-radius:12px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <div style="font-size:0.9rem; font-weight:700; color:#d4af37; margin-bottom:4px;">&#128203; طلب تواصل مع خبير التقييم</div>
+            <div style="font-size:0.77rem; color:#94a3b8; margin-bottom:14px;">إذا كانت حالتك تحتاج تقريرًا رسميًا أو مراجعة مستندات، اترك بياناتك ليتواصل معك الخبير.</div>
+            <div style="display:grid; gap:10px;">
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">الاسم بالكامل *</label>
+                    <input id="lead-name" data-testid="expert-lead-name" type="text" dir="rtl" placeholder="محمد أحمد…" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                </div>
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">رقم الهاتف / واتساب *</label>
+                    <input id="lead-phone" data-testid="expert-lead-phone" type="tel" dir="ltr" placeholder="01xxxxxxxxx" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; text-align:right;">
+                </div>
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">البريد الإلكتروني (اختياري)</label>
+                    <input id="lead-email" data-testid="expert-lead-email" type="email" dir="ltr" placeholder="example@email.com" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; text-align:right;">
+                </div>
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">نوع العقار</label>
+                    <input id="lead-property" data-testid="expert-lead-property" type="text" dir="rtl" placeholder="شقة، مصنع، فندق، أرض…" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                </div>
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">الموقع</label>
+                    <input id="lead-location" data-testid="expert-lead-location" type="text" dir="rtl" placeholder="القاهرة، الرياض، دبي…" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                </div>
+                <div>
+                    <label style="font-size:0.77rem; color:#94a3b8; display:block; margin-bottom:3px;">ملخص الحالة أو سبب طلب التواصل</label>
+                    <textarea id="lead-summary" data-testid="expert-lead-summary" rows="3" dir="rtl" placeholder="اكتب نبذة عن حالتك…" style="width:100%; box-sizing:border-box; padding:8px 12px; background:rgba(30,41,59,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:7px; color:#e2e8f0; font-size:0.83rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; resize:vertical;"></textarea>
+                </div>
+            </div>
+            <button data-testid="expert-lead-submit" onclick="chatSubmitLead()" style="margin-top:14px; width:100%; padding:11px 0; background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4); color:#d4af37; border-radius:9px; cursor:pointer; font-size:0.88rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                طلب تواصل مع الخبير &#128203;
+            </button>
+            <div id="chat-lead-confirm" data-testid="expert-lead-confirmation" style="display:none; margin-top:12px; padding:10px 14px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:8px; color:#10b981; font-size:0.82rem; text-align:center; direction:rtl;">
+                &#10003; تم تسجيل طلبك مبدئيًا. سيتم تفعيل إرسال الطلبات للخبير عند ربط نظام التواصل.
+            </div>
         </div>
 
         <!-- ── Helpers ────────────────────────────────────────────────────────────────────────────── -->
@@ -28425,12 +28483,12 @@ var _PROFILE_FORM_SCHEMA = {
         var question = (document.getElementById('chat-question') || {}).value || '';
         question = question.trim();
         if (!question) {
-            if (errEl) { errEl.textContent = 'يرجى كتابة سؤال أولاً.'; errEl.style.display = 'block'; }
+            if (errEl) { errEl.textContent = 'من فضلك اكتب سؤالك أولًا.'; errEl.style.display = 'block'; }
             return;
         }
 
         if (_chatHealthy === false) {
-            chatShowFallback(question);
+            chatShowAdvisoryFallback(question);
             return;
         }
 
@@ -28458,26 +28516,18 @@ var _PROFILE_FORM_SCHEMA = {
         .then(function (res) {
             if (btn) { btn.disabled = false; btn.textContent = '⬡ إرسال'; }
             if (res.status === 401) {
-                if (errEl) { errEl.textContent = 'يلزم تسجيل الدخول لاستخدام المستشار.'; errEl.style.display = 'block'; }
+                chatShowAdvisoryFallback(question);
                 return;
             }
             if (res.data && res.data.status === 'error') {
-                if (errEl) { errEl.textContent = res.data.message || 'خطأ في الطلب.'; errEl.style.display = 'block'; }
+                chatShowAdvisoryFallback(question);
                 return;
             }
             chatShowResponse(res.data);
         })
         .catch(function (err) {
             if (btn) { btn.disabled = false; btn.textContent = '⬡ إرسال'; }
-            if (err && err.message === 'ES_AUTH_401') {
-                if (errEl) { errEl.textContent = 'يلزم تسجيل الدخول لاستخدام المستشار.'; errEl.style.display = 'block'; }
-                return;
-            }
-            if (_chatHealthy === false) {
-                chatShowFallback(question);
-            } else {
-                if (errEl) { errEl.textContent = 'خطأ في الاتصال: ' + err; errEl.style.display = 'block'; }
-            }
+            chatShowAdvisoryFallback(question);
         });
     };
 
@@ -28521,24 +28571,160 @@ var _PROFILE_FORM_SCHEMA = {
         }
 
         respEl.style.display = 'block';
+        var ctaEl = document.getElementById('chat-expert-cta');
+        if (ctaEl) ctaEl.style.display = 'block';
     }
 
-    // ── Fallback when RAG is unavailable ─────────────────────────────────
-    function chatShowFallback(question) {
-        var respEl   = document.getElementById('chat-response-area');
-        var answerEl = document.getElementById('chat-answer-text');
+    // ── Advisory fallback (frontend-only, no backend required) ───────────
+    function _chatNormQ(s) {
+        return (s || '').toLowerCase()
+            .replace(/[ً-ٰٟ]/g, '')
+            .replace(/[؟?،,\.!;:«»]/g, '')
+            .replace(/\s+/g, ' ').trim();
+    }
+
+    var _CHAT_KNOWN_QA = [
+        { k: ['ما الفرق بين معدل الخصم ومعدل الرسملة'],
+          a: 'معدل الرسملة (Cap Rate) يُستخدم غالبًا عندما يكون لدينا صافي دخل تشغيلي مستقر (NOI) لسنة واحدة، فيحوّل هذا الدخل إلى قيمة رأسمالية.\n\nأما معدل الخصم فيُستخدم في تحليل التدفقات النقدية DCF لخصم إيرادات ومصروفات مستقبلية على عدة سنوات إلى قيمتها الحالية.\n\nببساطة:\n• معدل الرسملة → يقرأ صافي دخل تشغيلي (NOI) مستقرًا في لحظة معينة.\n• معدل الخصم → يقرأ رحلة الاستثمار عبر الزمن والمخاطر عبر التدفقات النقدية DCF.\n\nمثال توضيحي (للاسترشاد فقط):\n• رسملة الدخل: NOI = 1,000,000 ريال ÷ معدل رسملة 10% = قيمة 10,000,000 ريال.\n• DCF بسيط (3 سنوات بمعدل خصم 12%): القيمة الحالية الإجمالية ≈ 2,273,000 ريال لتدفقات متصاعدة.\n\nتنبيه مهني: الخطأ الشائع استخدام معدل الرسملة مع دخل غير مستقر؛ DCF هو الأنسب في هذه الحالة.\n\nلا يُستخدم كل منهما بديلًا عن الآخر؛ الاختيار يعتمد على طبيعة العقار واستقرار دخله.' },
+        { k: ['ما الفرق بين دراسة الجدوى والتقييم العقاري'],
+          a: 'دراسة الجدوى تختبر هل المشروع مجدٍ اقتصاديًا قبل التنفيذ، وتنظر للمستقبل من خلال تكاليف المشروع والإيرادات المتوقعة والتدفقات النقدية.\n\nالتقييم العقاري يقدّر قيمة أصل في تاريخ محدد ولغرض محدد (بيع، رهن، ضريبة، نزاع…)، ويلتزم بغرض ومنهجية واضحة ويُصدَر بتقرير رسمي موقّع.\n\n• الجدوى: هل يستحق المشروع التنفيذ؟\n• التقييم: ما قيمة هذا الأصل الآن؟' },
+        { k: ['كيف أعمل دراسة جدوى لمشروع عقاري'],
+          a: 'لإعداد دراسة جدوى عقارية:\n1. حدّد فكرة المشروع والموقع ونطاقه.\n2. قدّر التكلفة الإجمالية (أرض + إنشاء + تجهيزات + مصاريف).\n3. قدّر الإيرادات المتوقعة (مبيعات / إيجارات / خدمات).\n4. ابنِ التدفقات النقدية السنوية.\n5. احسب مؤشرات الجدوى: ROI، NPV، IRR، فترة الاسترداد.\n6. حلّل المخاطر وحساسية الأسعار.\n7. اربطها بمفهوم أعلى وأفضل استغلال للموقع.\n\nمثال توضيحي (للاسترشاد فقط):\n• تكلفة الأرض 5,000,000 ريال + تكلفة الإنشاء 12,000,000 ريال = إجمالي التكلفة 17,000,000 ريال.\n• إيرادات المبيعات المتوقعة = 22,000,000 ريال.\n• ROI = (22,000,000 - 17,000,000) ÷ 17,000,000 = 29.4% (مبدئي قبل الخصم والمخاطر).\n\nالجدوى لا تُعدّ تقييمًا رسميًا ولا تُغني عنه.' },
+        { k: ['ما معنى أعلى وأفضل استغلال في الأراضي والعقارات', 'ما معنى أعلى وأفضل استغلال'],
+          a: 'أعلى وأفضل استغلال (HBU) هو الاستخدام الذي يحقق أعلى قيمة للعقار وفق أربعة شروط:\n1. ممكن قانونًا (مسموح به وفق التخطيط).\n2. ممكن فنيًا (يمكن تنفيذه بالإمكانات المتاحة).\n3. مجدٍ ماليًا (يحقق عائدًا مناسبًا).\n4. الأعلى إنتاجية (أقصى قيمة من بين البدائل).\n\nلا يُفترض دائمًا أن الاستخدام الحالي هو أعلى وأفضل استغلال، وهو مفهوم محوري في تقييم الأراضي والمشروعات التطويرية.' },
+        { k: ['متى أستخدم dcf في الاستثمار العقاري'],
+          a: 'تستخدم تحليل DCF (التدفقات النقدية المخصومة) عندما:\n• تتغير التدفقات النقدية من سنة لأخرى.\n• للمشروعات ذات مراحل تطوير أو تشغيل متعددة.\n• الأصول التشغيلية: فنادق، مولات، مستشفيات.\n• تريد قياس العائد مع مراعاة الزمن والمخاطر.\n\nأما العقارات البسيطة ذات الدخل المستقر، فقد يكفي أسلوب رسملة الدخل دون الحاجة لـ DCF.' },
+        { k: ['ما الفرق بين تقرير مبسط وتقرير تقييم احترافي'],
+          a: 'التقرير المبسط:\n• إرشادي ومختصر، يعتمد على بيانات محدودة.\n• لا يُستخدم للأغراض الرسمية (رهن، نزاع، ضريبة).\n\nالتقرير الاحترافي الكامل:\n• له نطاق عمل محدد وغرض تقييم واضح.\n• يتضمن: مصادر البيانات، المنهجية، الافتراضات، الإفصاحات.\n• موقّع ومعتمد من خبير مرخّص، يُقبل في المحاكم والبنوك.\n\nلا يُغني التقرير المبسط عن التقرير الاحترافي في الأغراض الرسمية.' },
+        { k: ['كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل',
+               'كيف أطعن على تقدير الضرائب العقارية لعقار غير مستغل'],
+          a: 'للطعن على تقدير الضريبة العقارية:\n1. راجع الإخطار الضريبي وتحقق من مهلة الطعن (حساسة زمنيًا).\n2. اجمع المستندات: سند الملكية، رسومات الموقع، عقود الإيجار إن وجدت.\n3. أثبت الوضع التشغيلي وعدم الاستغلال بأدلة واضحة.\n4. أعدّ أو استعن بتقرير تقييم فني مستقل يدعم موقفك.\n5. قدّم الطعن للجهة المختصة ضمن المهلة القانونية.\n\nمهلة الطعن يجب التحقق منها من الإخطار الرسمي. هذا توجيه عام وليس استشارة قانونية.' },
+        { k: ['كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب'],
+          a: 'في قضايا الفرز والتجنيب، تعتمد المحكمة على:\n• تعيين خبير قضائي أو لجنة خبراء لتقييم العقار.\n• يفحص الخبير: الموقع، المستندات، مساحة حصة كل وارث، قابلية القسمة.\n• تتأثر القيمة بعوامل: الموقع، الحالة، الإشغال، الحقوق والقيود المسجلة.\n• إذا تعذّرت القسمة العينية، يُلجأ إلى التقييم للبيع والتوزيع.\n\nلا توجد إجابة محددة دون مراجعة المستندات.' },
+        { k: ['متى يكون تقرير التكلفة الاستبدالية drc مناسبا',
+               'متى يكون تقرير التكلفة الاستبدالية drc مناسبًا'],
+          a: 'تقرير التكلفة الاستبدالية (DRC) مناسب لـ:\n• الأصول الخاصة التي نادرًا ما تُباع في السوق.\n• مبانٍ متخصصة: مصانع، مستشفيات، مدارس، منشآت حكومية.\n• الأصول التراثية ذات الطابع الخاص.\n\nيعتمد على: تكلفة الاستبدال جديدًا مطروحًا منها الإهلاك المادي والتقادم.\n\nمثال توضيحي (للاسترشاد فقط):\n• تكلفة الإنشاء جديدًا = 20,000,000 ريال × (1 - نسبة إهلاك 30%) = 14,000,000 ريال (التكلفة الاستبدالية المُهلَكة).\n\nلا يُستخدم DRC إذا كانت مقارنات سوقية كافية متاحة.' },
+        { k: ['كيف أحسب العائد المتوقع من مشروع عقاري'],
+          a: 'لحساب العائد المتوقع:\n1. قدّر الإيرادات السنوية (مبيعات / إيجارات).\n2. اطرح التكاليف التشغيلية والصيانة.\n3. احسب صافي التدفقات النقدية.\n4. استخدم المؤشرات:\n   • ROI = صافي الربح ÷ التكلفة الإجمالية.\n   • NPV = القيمة الحالية الصافية مع خصم التدفقات النقدية.\n   • IRR = معدل العائد الداخلي.\n   • فترة الاسترداد = مدة استرداد رأس المال.\n5. راعِ نسبة الإشغال والمخاطر ومصاريف الصيانة.\n\nمثال توضيحي (للاسترشاد فقط):\n• عقار بسعر شراء 10,000,000 ريال؛ إيجار سنوي 900,000 ريال؛ مصروفات تشغيلية 150,000 ريال.\n• NOI = 900,000 - 150,000 = 750,000 ريال.\n• العائد الصافي = 750,000 ÷ 10,000,000 = 7.5%.' },
+        { k: ['كيف أحدد أعلى وأفضل استغلال لأرض فضاء'],
+          a: 'لتحديد أعلى وأفضل استغلال لأرض فضاء:\n1. افحص الاشتراطات التخطيطية والتراخيص المسموحة.\n2. حلّل الموقع والبيئة المحيطة والطلب السوقي.\n3. قيّم البدائل الممكنة: سكني، تجاري، مختلط، تطوير…\n4. احسب العائد المتوقع من كل بديل وفق DCF أو رسملة الدخل.\n5. اختر البديل الأعلى قيمة وفق معايير HBU الأربعة.\n\nالتحليل يتطلب مراجعة فنية وبيانات سوقية محلية.' },
+        { k: ['كيف أقرر هل أشتري العقار أم أستثمر في تطويره'],
+          a: 'لاتخاذ القرار بين الشراء أو التطوير:\n• إذا كانت القيمة السوقية تعكس الاستخدام الحالي فقط وهناك إمكانية تطوير → التطوير قد يكون أكثر إنتاجية.\n• احسب تكلفة التطوير مقابل العائد المتوقع.\n• قارن بين قيمة الشراء المباشر وقيمة المطوَّر بعد خصم التكاليف والمخاطر.\n• راعِ الوقت والتمويل والمخاطر التشغيلية.\n\nأداة التقييم المفيدة هنا: الـ DCF وتحليل أعلى وأفضل استغلال.' },
+        { k: ['ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة'],
+          a: 'أهم مخاطر الاستثمار العقاري المؤثرة على القيمة:\n• مخاطر السوق: تذبذب الأسعار والعرض والطلب.\n• مخاطر الإشغال: خلو الوحدات وانخفاض الإيجارات.\n• مخاطر التمويل: تغير أسعار الفائدة والرهن.\n• مخاطر تشغيلية: تكاليف الصيانة وإدارة العقار.\n• مخاطر قانونية: نزاعات وقيود تخطيطية وتغير التشريعات.\n• مخاطر الموقع: تغير البيئة المحيطة أو البنية التحتية.\n\nكل نوع من هذه المخاطر يؤثر على معدل الخصم والتقييم النهائي.' },
+        { k: ['ما المستندات المطلوبة لتقييم أصل متخصص'],
+          a: 'المستندات المطلوبة عادةً لتقييم أصل متخصص:\n• سند الملكية أو وثيقة التسجيل.\n• مخططات الموقع والمباني.\n• رخص البناء والتشغيل.\n• قوائم مالية (إيرادات، مصروفات، تشغيل).\n• عقود الإيجار أو الاستغلال القائمة.\n• تقارير الصيانة والبنية التحتية.\n\nقد تختلف المستندات حسب نوع الأصل (مصنع، فندق، مستشفى…).' },
+        { k: ['كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي'],
+          a: 'التقييم لأغراض التأمين:\n• يركز على تكلفة الاستبدال أو إعادة البناء (Reinstatement Value).\n• يُقدّر ما يكلفه إعادة الأصل لحالته دون مراعاة أسعار السوق.\n\nالتقييم للتمويل البنكي (الرهن):\n• يُقدّر القيمة السوقية العادلة وقت التقييم.\n• يهتم البنك بقيمة التصفية السريعة في حالة التعثر.\n\nالفرق الجوهري: التأمين → تكلفة الاستبدال. البنك → قيمة السوق والتصفية.' },
+        { k: ['ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة'],
+          a: 'الإجراءات المهنية لتقييم عقار متنازع عليه بين الورثة:\n1. تحديد نطاق التقييم وغرضه (قسمة، بيع، فرز وتجنيب).\n2. جمع المستندات: سند الملكية، وثيقة الوراثة، المخططات.\n3. معاينة العقار وتحديد حالته وإشغاله.\n4. اختيار المنهجية المناسبة للعقار.\n5. إعداد تقرير رسمي مفصّل وموقّع.\n6. تقديم التقرير للجهة القضائية أو أطراف التسوية.\n\nيُنصح أن يكون المقيّم محايدًا وغير طرف في النزاع.' },
+        { k: ['كيف أقيم جدوى استثمارية لمشروع عقاري على أسس أعلى وأفضل استغلال hbu',
+               'كيف أقيّم جدوى استثمارية لمشروع عقاري على أسس أعلى وأفضل استغلال hbu'],
+          a: 'لتقييم الجدوى الاستثمارية على أسس HBU:\n1. حدّد أعلى وأفضل استغلال للموقع وفق المعايير الأربعة.\n2. ابنِ نموذج التدفقات النقدية DCF للاستخدام المقترح.\n3. احسب NPV وIRR للمشروع.\n4. قارن مع بدائل الاستخدام الأخرى.\n5. قيّم جدوى التطوير مقابل الاحتفاظ أو البيع.\n\nالجمع بين HBU والـ DCF يعطي صورة متكاملة عن القرار الاستثماري الأمثل.' },
+        { k: ['ما المنهجية المناسبة لتقييم مستشفى أو فندق أو مصنع كأصل متخصص'],
+          a: 'تقييم الأصول المتخصصة (مستشفى، فندق، مصنع) يعتمد على:\n• منهجية التكلفة الاستبدالية (DRC) عندما تندر المقارنات السوقية.\n• منهجية الدخل (DCF أو رسملة الدخل) للأصول ذات دخل تشغيلي.\n• المقارنة السوقية إذا توفرت بيانات كافية عن أصول مشابهة.\n\nغالبًا يُستخدم مزيج من المناهج للتحقق المتبادل حسب: الغرض، البيانات المتاحة، وطبيعة الأصل.' }
+    ];
+
+    function _getChatDirectAnswer(question) {
+        var qn = _chatNormQ(question);
+        for (var i = 0; i < _CHAT_KNOWN_QA.length; i++) {
+            var entry = _CHAT_KNOWN_QA[i];
+            for (var j = 0; j < entry.k.length; j++) {
+                var kn = _chatNormQ(entry.k[j]);
+                if (qn === kn || qn.indexOf(kn) !== -1 || kn.indexOf(qn) !== -1) {
+                    return entry.a;
+                }
+            }
+        }
+        return null;
+    }
+
+    var _CHAT_DISCLAIMER = '\n\n─────────────────────────\n' +
+        'هذه إجابة إرشادية عامة وليست تقرير تقييم رسمي أو استشارة قانونية نهائية.\n' +
+        'إذا كانت الحالة مرتبطة بتقرير رسمي أو نزاع أو ضرائب أو تمويل، يمكن للخبير مراجعة المستندات وإصدار تقرير معتمد.';
+
+    function chatShowAdvisoryFallback(question) {
+        var respEl    = document.getElementById('chat-response-area');
+        var answerEl  = document.getElementById('chat-answer-text');
         var sourcesEl = document.getElementById('chat-sources-list');
-        var metaEl   = document.getElementById('chat-meta-bar');
+        var metaEl    = document.getElementById('chat-meta-bar');
+        var ctaEl     = document.getElementById('chat-expert-cta');
         if (!respEl || !answerEl) return;
-        answerEl.textContent =
-            'المستشار العقاري غير متاح حالياً (الخادم الذكي قيد الإعداد).\n\n' +
-            'سؤالك: «' + question + '»\n\n' +
-            'يمكنك تجربة الأسئلة مجدداً عند توفّر المستشار، ' +
-            'أو الرجوع إلى قائمة المتطلبات في تبويب «التقييم المحترف» للمفاهيم التقنية.';
+
+        var direct = _getChatDirectAnswer(question);
+        var text;
+
+        if (direct) {
+            text = direct + _CHAT_DISCLAIMER;
+        } else {
+            var q = (question || '').toLowerCase();
+            var cats = [
+                { re: /خصم|رسمل|noi|دخل|إيجار|مؤجر|تأجير|تشغيلي|رسملة|cap/, t: 'تقييم العقارات المدرّة للدخل يعتمد على تحليل صافي الدخل التشغيلي (NOI)، ومعدل الرسملة (Cap Rate).\n\nإذا كان الدخل الإيجاري مستقرًا، تُستخدم رسملة الدخل.\nأما إذا كان الدخل متغيرًا أو المشروع في طور تطوير، فيُستخدم تحليل DCF.\n\nللحصول على إجابة أدق: ما نوع العقار؟ وما موقعه؟ وما الغرض من التقييم؟' },
+                { re: /جدوى|roi|irr|npv|dcf|عائد|تدفق|استثمار|مشروع/, t: 'دراسات الجدوى العقارية تتضمن: التكلفة الإجمالية، الإيرادات المتوقعة، التدفقات النقدية، ومعدل العائد (ROI/IRR).\n\nللمساعدة بشكل أدق: نوع المشروع، الموقع، ونطاق التطوير.' },
+                { re: /ضري|ضرائب|طعن|اعتراض|إخطار|وعاء/, t: 'المسائل الضريبية العقارية تشمل: الطعن على التقدير الضريبي وإثبات الوضع التشغيلي.\n\nمهلة الطعن حساسة زمنيًا.\n\nللمساعدة بشكل دقيق: ما نوع العقار؟ وما تاريخ الإخطار الضريبي؟' },
+                { re: /ورث|فرز|تجنيب|محكمة|قضا|نزاع|وراثة|قسمة|إرث/, t: 'في قضايا الميراث والفرز، يُعيَّن خبير قضائي لتقييم العقار وتحديد حصة كل وارث.\n\nللمساعدة بشكل أدق: ما نوع العقار؟ وما الموقع؟ وهل توجد مستندات ملكية؟' },
+                { re: /تأمين|استبدال|drc|تكلفة الإنشاء|إعادة البناء/, t: 'تقييم التأمين يعتمد على تكلفة الاستبدال (DRC).\n\nمثال: تكلفة 20,000,000 ريال × (1 - 30% إهلاك) = 14,000,000 ريال.\n\nللمساعدة بشكل أدق: ما نوع المنشأة؟ وما الغرض من التقييم؟' },
+                { re: /رهن|تمويل|بنك|ltv|قرض|نسبة التمويل|ائتمان|مصرف/, t: 'تقييم التمويل البنكي يعتمد على القيمة السوقية. نسبة LTV تتراوح عادةً 60–80%.\n\nللمساعدة بشكل أدق: ما نوع العقار؟ وما موقعه؟ وما قيمة التمويل المطلوب؟' },
+                { re: /قيمة سوقية|قيمة استثمارية|سوق عقاري|market value/, t: 'القيمة السوقية هي أعلى سعر يتفق عليه بائع ومشترٍ في ظروف عادية.\n\nالقيمة الاستثمارية قد تختلف بسبب الأهداف الخاصة للمستثمر.\n\nللمساعدة بشكل أدق: ما نوع العقار؟ وما الغرض من التقييم؟' },
+                { re: /hbu|أعلى وأفضل استغلال|أعلى استغلال|best use/, t: 'أعلى وأفضل استغلال (HBU) يُحدد البديل الأعلى قيمة وفق: الجواز القانوني، الإمكان الفني، الجدوى المالية، الأعلى إنتاجية.\n\nللمساعدة بشكل أدق: ما موقع الأرض؟ وما التراخيص المتاحة؟' },
+                { re: /مقارنة|comparable|cma|بيانات سوق|مبيعات مقارنة|عينات/, t: 'منهجية المقارنة السوقية تعتمد على مبيعات عقارات مشابهة في الموقع والمساحة والحالة.\n\nللمساعدة بشكل أدق: ما نوع العقار؟ وما الموقع التقريبي؟' },
+                { re: /avm|rppi|مؤشر أسعار|stratification|تقييم آلي/, t: 'الأنظمة الآلية (AVM) وتقييمات المؤشرات (RPPI) تُستخدم للأغراض الإحصائية لا للتقييم الرسمي.\n\nللمساعدة بشكل أدق: ما الغرض من التقييم؟ وما نوع العقار؟' }
+            ];
+            var catText = null;
+            for (var ci = 0; ci < cats.length; ci++) {
+                if (cats[ci].re.test(q)) { catText = cats[ci].t; break; }
+            }
+            if (!catText) {
+                catText = 'لمساعدتك بشكل دقيق في هذه الحالة، نحتاج معرفة:\n• نوع العقار (أرض / سكني / تجاري / صناعي / متخصص)\n• الموقع (المدينة / الحي / المنطقة)\n• الغرض من التقييم (بيع / رهن / ضريبة / نزاع / تأمين / جدوى)\n• المستندات المتاحة (سند ملكية / رخص / قوائم مالية)\n\nيمكن للخبير المرخّص تقديم تقييم رسمي معتمد بعد مراجعة هذه المعطيات.';
+            }
+            text = 'بخصوص سؤالك: «' + question + '»\n\n' + catText + _CHAT_DISCLAIMER;
+        }
+
+        answerEl.textContent = text;
         if (sourcesEl) sourcesEl.style.display = 'none';
         if (metaEl)    metaEl.style.display = 'none';
+        if (ctaEl)     ctaEl.style.display = 'block';
         respEl.style.display = 'block';
     }
+
+    // ── Show lead form ────────────────────────────────────────────────────
+    window.chatShowLeadForm = function () {
+        var wrap = document.getElementById('chat-lead-form-wrap');
+        if (wrap) {
+            wrap.style.display = 'block';
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
+
+    // ── Submit lead form (frontend-only confirmation, no data sent) ───────
+    window.chatSubmitLead = function () {
+        var nameVal  = (document.getElementById('lead-name')  || {}).value || '';
+        var phoneVal = (document.getElementById('lead-phone') || {}).value || '';
+        if (!nameVal.trim() || !phoneVal.trim()) {
+            var errEl = document.getElementById('chat-error');
+            if (errEl) { errEl.textContent = 'يرجى إدخال الاسم ورقم الهاتف على الأقل.'; errEl.style.display = 'block'; }
+            return;
+        }
+        var confirmEl = document.getElementById('chat-lead-confirm');
+        if (confirmEl) {
+            confirmEl.style.display = 'block';
+            confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    };
+
+    // ── Web/legal toggle — disabled until future phase ────────────────────
+    window.chatWebToggleClick = function (e) {
+        var cb = document.getElementById('chat-web-toggle');
+        if (cb) cb.checked = false;
+        var errEl = document.getElementById('chat-error');
+        if (errEl) {
+            errEl.textContent = 'سيتم تفعيل البحث القانوني والويب في مرحلة لاحقة.';
+            errEl.style.display = 'block';
+            setTimeout(function () { if (errEl) errEl.style.display = 'none'; }, 3500);
+        }
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        return false;
+    };
 
     // ── Utility ───────────────────────────────────────────────────────────
     function _chatEsc(s) {

@@ -2013,6 +2013,106 @@
 
         <!-- ── نتيجة التقييم ────────────────────────────────────────── -->
         <div id="sv-result" style="display:none;" data-testid="simple-valuation-output"></div>
+        <!-- ── طلب اعتماد التقرير ───────────────────────────────────── -->
+        <div id="sv-cert-request" style="display:none;margin-top:1.5rem;"
+            data-testid="simple-valuation-cert-request-card">
+
+            <div class="ai-section" style="border-color:rgba(212,175,55,0.3);">
+                <!-- Header -->
+                <div style="margin-bottom:16px;">
+                    <h3 style="color:var(--gold);font-size:1.05rem;font-weight:900;margin:0 0 6px;">
+                        📜 طلب اعتماد التقرير من الخبير
+                    </h3>
+                    <p style="color:#9ca3af;font-size:0.85rem;margin:0;line-height:1.65;">
+                        إذا كنت ترغب في استخدام التقرير أمام جهة رسمية أو قضائية أو تمويلية،
+                        يمكن للخبير مراجعة البيانات والمنهجية والمصادر ثم إرسال النسخة المعتمدة إليك.
+                    </p>
+                </div>
+
+                <!-- Delivery note -->
+                <div data-testid="simple-cert-delivery-note"
+                    style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#a5b4fc;margin-bottom:16px;line-height:1.7;">
+                    بعد مراجعة الخبير واعتماد التقرير، يتم إرسال النسخة المعتمدة للمستخدم حسب
+                    طريقة الاستلام المختارة: <strong>واتساب</strong> أو <strong>البريد الإلكتروني</strong>.<br>
+                    <span style="color:#6b7280;font-size:0.78rem;">
+                        في هذه المرحلة يتم تسجيل الطلب مبدئيًا داخل الواجهة فقط، وسيتم ربط
+                        الإرسال الفعلي بنظام البريد أو واتساب لاحقًا.
+                    </span>
+                </div>
+
+                <!-- Form fields -->
+                <div class="info-grid"
+                    style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px;">
+
+                    <div class="field-group">
+                        <label>الاسم بالكامل *</label>
+                        <input id="sv-cert-name" type="text" class="input-box"
+                            data-testid="simple-cert-name"
+                            placeholder="محمد أحمد…"
+                            dir="rtl">
+                    </div>
+
+                    <div class="field-group">
+                        <label>رقم الهاتف / واتساب *</label>
+                        <input id="sv-cert-phone" type="tel" class="input-box"
+                            data-testid="simple-cert-phone"
+                            placeholder="01xxxxxxxxx"
+                            dir="ltr" style="text-align:right;">
+                    </div>
+
+                    <div class="field-group">
+                        <label>البريد الإلكتروني</label>
+                        <input id="sv-cert-email" type="email" class="input-box"
+                            data-testid="simple-cert-email"
+                            placeholder="example@email.com"
+                            dir="ltr" style="text-align:right;">
+                    </div>
+
+                    <div class="field-group">
+                        <label>طريقة استلام التقرير المعتمد *</label>
+                        <select id="sv-cert-delivery" class="input-box"
+                            data-testid="simple-cert-delivery-method">
+                            <option value="">— اختر طريقة الاستلام —</option>
+                            <option value="واتساب">واتساب</option>
+                            <option value="البريد الإلكتروني">البريد الإلكتروني</option>
+                            <option value="واتساب والبريد الإلكتروني">واتساب والبريد الإلكتروني</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="field-group" style="margin-bottom:16px;">
+                    <label>ملخص الطلب أو ملاحظات للخبير</label>
+                    <textarea id="sv-cert-notes" class="input-box" rows="2"
+                        data-testid="simple-cert-notes"
+                        style="resize:vertical;"
+                        placeholder="مثال: أحتاج التقرير للبنك / المحكمة / الضرائب / البيع والشراء…"></textarea>
+                </div>
+
+                <!-- Inline validation error -->
+                <div id="sv-cert-error"
+                    style="display:none;color:#fca5a5;font-size:0.82rem;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:8px 12px;margin-bottom:12px;"
+                    role="alert"></div>
+
+                <!-- Submit -->
+                <button id="sv-cert-submit-btn" type="button"
+                    onclick="svSubmitCertRequest()"
+                    data-testid="simple-cert-submit"
+                    style="width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:10px;color:#000;font-family:'Tajawal',sans-serif;font-size:1rem;font-weight:900;cursor:pointer;transition:opacity 0.2s;">
+                    📨 طلب مراجعة واعتماد التقرير
+                </button>
+
+                <!-- Confirmation -->
+                <div id="sv-cert-confirm"
+                    data-testid="simple-cert-confirmation"
+                    style="display:none;margin-top:14px;padding:14px 18px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;color:#10b981;font-size:0.88rem;text-align:center;line-height:1.7;">
+                    ✓ تم تسجيل طلب اعتماد التقرير مبدئيًا.
+                    سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة
+                    حسب طريقة الاستلام المختارة عند تفعيل نظام التواصل.
+                </div>
+
+            </div>
+        </div>
 
         <script>
         /* ── GEO_REGISTRY (Phase 5 — EG + SA) ────────────────────────────── */
@@ -2197,8 +2297,50 @@
                 + '</div>';
 
             resultEl.style.display = 'block';
+            /* show the cert-request card below the draft result */
+            var certCard = document.getElementById('sv-cert-request');
+            if (certCard) certCard.style.display = 'block';
             btn.disabled = false;
             btn.innerHTML = 'إصدار تقرير تقييم مبدئي <i class="fas fa-file-alt"></i>';
+        }
+
+        /* ── certified report request handler ── */
+        function svSubmitCertRequest() {
+            var nameVal     = (document.getElementById('sv-cert-name')     || {}).value || '';
+            var phoneVal    = (document.getElementById('sv-cert-phone')    || {}).value || '';
+            var emailVal    = (document.getElementById('sv-cert-email')    || {}).value || '';
+            var deliveryVal = (document.getElementById('sv-cert-delivery') || {}).value || '';
+            var errEl       = document.getElementById('sv-cert-error');
+            var confirmEl   = document.getElementById('sv-cert-confirm');
+
+            /* reset */
+            if (errEl)     { errEl.style.display = 'none'; errEl.textContent = ''; }
+            if (confirmEl) { confirmEl.style.display = 'none'; }
+
+            /* validate */
+            if (!nameVal.trim()) {
+                if (errEl) { errEl.textContent = 'يرجى إدخال الاسم بالكامل.'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!phoneVal.trim() && !emailVal.trim()) {
+                if (errEl) { errEl.textContent = 'يرجى إدخال رقم الهاتف أو البريد الإلكتروني على الأقل.'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!deliveryVal) {
+                if (errEl) { errEl.textContent = 'يرجى اختيار طريقة استلام التقرير المعتمد.'; errEl.style.display = 'block'; }
+                return;
+            }
+
+            /* frontend-only confirmation — no real email/WhatsApp sent */
+            if (confirmEl) {
+                confirmEl.style.display = 'block';
+                confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            var submitBtn = document.getElementById('sv-cert-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.6';
+            }
         }
 
         /* ── initialise valuation date to today ── */

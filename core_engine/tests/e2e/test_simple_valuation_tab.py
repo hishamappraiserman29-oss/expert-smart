@@ -479,3 +479,153 @@ def test_SV_expert_cta_mentions_expert_review(page: Page, live_server: str) -> N
     expect(cta).to_be_visible(timeout=8_000)
     text = cta.inner_text()
     assert "الخبير" in text
+
+
+# ---------------------------------------------------------------------------
+# Task-C tests — certified report request card
+# ---------------------------------------------------------------------------
+
+def _generate_draft(page: Page, live_server: str) -> None:
+    """Helper: navigate to tab, mock API, fill form, click generate."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    page.locator("[data-testid='simple-valuation-output']").wait_for(state="visible", timeout=8_000)
+
+
+def test_SV_cert_card_visible_after_generate(page: Page, live_server: str) -> None:
+    """After generating the draft report, the certified request card becomes visible."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-cert-request-card']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_card_title_contains_request_text(page: Page, live_server: str) -> None:
+    """The certified request card title contains the expected Arabic heading."""
+    _generate_draft(page, live_server)
+    text = page.locator("[data-testid='simple-valuation-cert-request-card']").inner_text(timeout=5_000)
+    assert "طلب اعتماد التقرير" in text
+
+
+def test_SV_cert_delivery_note_visible(page: Page, live_server: str) -> None:
+    """The delivery note is visible inside the certified request card."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-delivery-note']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_delivery_note_mentions_whatsapp(page: Page, live_server: str) -> None:
+    """The delivery note mentions WhatsApp as a delivery option."""
+    _generate_draft(page, live_server)
+    text = page.locator("[data-testid='simple-cert-delivery-note']").inner_text(timeout=5_000)
+    assert "واتساب" in text
+
+
+def test_SV_cert_delivery_note_mentions_email(page: Page, live_server: str) -> None:
+    """The delivery note mentions email as a delivery option."""
+    _generate_draft(page, live_server)
+    text = page.locator("[data-testid='simple-cert-delivery-note']").inner_text(timeout=5_000)
+    assert "البريد الإلكتروني" in text
+
+
+def test_SV_cert_name_field_visible(page: Page, live_server: str) -> None:
+    """Name field is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-name']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_phone_field_visible(page: Page, live_server: str) -> None:
+    """Phone/WhatsApp field is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-phone']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_email_field_visible(page: Page, live_server: str) -> None:
+    """Email field is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-email']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_delivery_method_visible(page: Page, live_server: str) -> None:
+    """Delivery method selector is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-delivery-method']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_delivery_method_options(page: Page, live_server: str) -> None:
+    """Delivery method selector has all three options: WhatsApp, Email, Both."""
+    _generate_draft(page, live_server)
+    select = page.locator("[data-testid='simple-cert-delivery-method']")
+    options = select.locator("option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "واتساب" in flat
+    assert "البريد الإلكتروني" in flat
+    assert "واتساب والبريد الإلكتروني" in flat
+
+
+def test_SV_cert_notes_field_visible(page: Page, live_server: str) -> None:
+    """Notes/summary field is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-notes']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_submit_button_visible(page: Page, live_server: str) -> None:
+    """Submit button is visible in the certified request form."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-cert-submit']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_empty_submit_no_confirmation(page: Page, live_server: str) -> None:
+    """Submitting with empty fields does NOT show the confirmation div."""
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-submit']").click()
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_hidden()
+
+
+def test_SV_cert_submit_with_name_and_phone(page: Page, live_server: str) -> None:
+    """Filling name + phone + delivery method then submitting shows confirmation."""
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("محمد اختبار")
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_submit_with_name_and_email(page: Page, live_server: str) -> None:
+    """Filling name + email + delivery method then submitting shows confirmation."""
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("أحمد اختبار")
+    page.locator("[data-testid='simple-cert-email']").fill("test@example.com")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("البريد الإلكتروني")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=5_000)
+
+
+def test_SV_cert_confirmation_no_false_send_claim(page: Page, live_server: str) -> None:
+    """Confirmation text does NOT claim a real email or WhatsApp was actually sent right now."""
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("مستخدم اختبار")
+    page.locator("[data-testid='simple-cert-phone']").fill("01099999999")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب والبريد الإلكتروني")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=5_000)
+    text = confirm.inner_text()
+    # Must NOT contain definite past-tense delivery claims:
+    # "تم الإرسال" = the sending is done; "أُرسل" = was sent (instant past)
+    # Note: "يتم إرسال … عند تفعيل نظام التواصل" (will be sent upon activation) is acceptable.
+    assert "تم الإرسال" not in text
+    assert "أُرسل" not in text
+    # Must contain the "عند تفعيل" conditional clause or similar to show it's pending
+    assert any(phrase in text for phrase in ["عند تفعيل", "مبدئيًا", "سيتم", "لاحقًا"])
+
+
+def test_SV_cert_card_hidden_before_generate(page: Page, live_server: str) -> None:
+    """The certified request card is NOT visible before the generate button is clicked."""
+    _go_to_simple_valuation_tab(page, live_server)
+    card = page.locator("[data-testid='simple-valuation-cert-request-card']")
+    expect(card).to_be_hidden()

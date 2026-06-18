@@ -1260,7 +1260,7 @@
 
     <!-- ══ Phase 1: Four-Tab Navigation Shell ══════════════════════════════ -->
     <nav class="es-tab-nav" id="es-main-tabs" role="tablist" aria-label="التنقل الرئيسي">
-        <button class="es-tab-btn"               id="es-tab-chat"         onclick="esShowTab('chat')"         type="button" role="tab">💬 الشات</button>
+        <button class="es-tab-btn"               id="es-tab-chat"         onclick="esShowTab('chat')"         type="button" role="tab" data-testid="chat-tab">💬 الشات</button>
         <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab">📊 التقييم المجمع</button>
@@ -1486,8 +1486,10 @@
         font-size: 0.77rem;
         font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
         transition: background 0.18s, border-color 0.18s, color 0.15s, transform 0.13s;
-        white-space: nowrap;
+        white-space: normal;
+        word-break: break-word;
         line-height: 1.4;
+        text-align: right;
     }
     .chat-chip:hover {
         background: rgba(16,185,129,0.1);
@@ -1620,7 +1622,7 @@
         #chat-send-btn { text-align: center; }
     }
     </style>
-    <div class="es-workspace" id="ws-chat" role="tabpanel">
+    <div class="es-workspace" id="ws-chat" role="tabpanel" data-testid="chat-landing">
 
         <!-- ── Premium Hero ────────────────────────────────────────────────────────────────────────────── -->
         <div class="chat-hero">
@@ -1631,18 +1633,18 @@
                     <span>الخبير متصل الآن</span>
                 </div>
             </div>
-            <h2 class="chat-hero-title">المستشار <span>العقاري والضريبي</span> الذكي</h2>
-            <p class="chat-hero-sub">حلول إرشادية للطعون الضريبية، نزاعات الورثة والمحاكم، وتقييم المنشآت ذات الطبيعة الخاصة.</p>
+            <h2 class="chat-hero-title" data-testid="chat-title">المستشار <span>العقاري والضريبي</span> الذكي</h2>
+            <p class="chat-hero-sub">اسأل عن التقييم العقاري، الاستثمار العقاري، دراسات الجدوى، طرق التقييم، والمفاهيم المهنية.</p>
             <div id="chat-health-badge" style="display:none; font-size:0.72rem; padding:3px 11px; border-radius:12px; margin-top:8px;"></div>
         </div>
 
         <!-- ── Disclaimer ──────────────────────────────────────────────────────────────────────── -->
-        <div id="chat-scope-note" class="chat-disclaimer">
+        <div id="chat-scope-note" class="chat-disclaimer" data-testid="chat-disclaimer">
             <span class="chat-disclaimer-icon">&#9888;&#65039;</span>
             <span>
                 <strong style="color:#f59e0b; display:block; margin-bottom:3px;">هذا الشات للإرشاد والأسئلة العامة فقط.</strong>
-                ولا يُعد استشارة قانونية أو تقرير تقييم رسمي. في حال تعقد الحالة الفنية أو القانونية، يمكنك ترك بياناتك ليتواصل معك الخبير مباشرة لإعداد التقرير الرسمي المعتمد.
-                <strong style="color:#f59e0b;">لا يُعدّل بيانات التقييم ولا يُولّد تقارير رسمية.</strong>
+                ولا يُعد تقرير تقييم رسمي ولا يعتمد كقيمة نهائية للعقار.
+                <strong style="color:#f59e0b;">لا يُعدِّل بيانات التقييم ولا يُولِّد تقارير رسمية.</strong>
             </span>
         </div>
 
@@ -1673,7 +1675,7 @@
 
         <!-- ── Suggestion Chips (#chat-category-chips) ───────────────────────────────── -->
         <div class="chat-section-hdr">&#128172; أسئلة شائعة</div>
-        <div id="chat-category-chips" class="chat-chips-wrap">
+        <div id="chat-category-chips" class="chat-chips-wrap" data-testid="chat-suggestions">
             <button class="chat-chip" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
             <button class="chat-chip" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟</button>
             <button class="chat-chip" onclick="chatFill('كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟')">كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟</button>
@@ -1684,11 +1686,29 @@
             <button class="chat-chip" onclick="chatFill('ما المستندات المطلوبة لتقييم أصل متخصص؟')">ما المستندات المطلوبة لتقييم أصل متخصص؟</button>
         </div>
 
+        <!-- ── Feasibility Section ───────────────────────────────────────────────────────────── -->
+        <div class="chat-section-hdr" style="margin-top:8px;">&#128200; دراسات الجدوى والاستثمار العقاري</div>
+        <div data-testid="chat-feasibility-section" style="margin-bottom:22px; direction:rtl;">
+            <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 12px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; line-height:1.7;">
+                اسأل عن جدوى المشروعات العقارية، أعلى وأفضل استغلال، العائد المتوقع، التدفقات النقدية، ومخاطر الاستثمار.
+            </p>
+            <div class="chat-chips-wrap" style="margin-bottom:14px;">
+                <button class="chat-chip" onclick="chatFill('كيف أعمل دراسة جدوى لمشروع عقاري؟')">كيف أعمل دراسة جدوى لمشروع عقاري؟</button>
+                <button class="chat-chip" onclick="chatFill('ما الفرق بين دراسة الجدوى والتقييم العقاري؟')">ما الفرق بين دراسة الجدوى والتقييم العقاري؟</button>
+                <button class="chat-chip" onclick="chatFill('كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟')">كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟</button>
+                <button class="chat-chip" onclick="chatFill('متى أستخدم DCF في الاستثمار العقاري؟')">متى أستخدم DCF في الاستثمار العقاري؟</button>
+                <button class="chat-chip" onclick="chatFill('كيف أحسب العائد المتوقع من مشروع عقاري؟')">كيف أحسب العائد المتوقع من مشروع عقاري؟</button>
+                <button class="chat-chip" onclick="chatFill('ما الفرق بين معدل الخصم ومعدل الرسملة؟')">ما الفرق بين معدل الخصم ومعدل الرسملة؟</button>
+                <button class="chat-chip" onclick="chatFill('كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟')">كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟</button>
+                <button class="chat-chip" onclick="chatFill('ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟')">ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟</button>
+            </div>
+        </div>
+
         <!-- ── Input Console ──────────────────────────────────────────────────────────────────────── -->
         <div class="chat-console">
             <span class="chat-console-lbl">&#9999;&#65039; سؤالك العقاري أو الضريبي</span>
-            <textarea id="chat-question" rows="3" dir="rtl"
-                placeholder="اكتب سؤالك عن التقييم أو الضرائب أو الاستثمار العقاري... مثال: كيف أطعن على تقدير ضريبة عقارية؟"></textarea>
+            <textarea id="chat-question" rows="3" dir="rtl" data-testid="chat-input"
+                placeholder="اكتب سؤالك عن التقييم أو الاستثمار أو دراسات الجدوى العقارية..."></textarea>
             <div class="chat-ctx-row">
                 <div>
                     <label class="chat-ctx-lbl">&#128205; الموقع (اختياري)</label>
@@ -1706,7 +1726,7 @@
                     <input type="checkbox" id="chat-web-toggle">
                     <span>تفعيل التقصي القانوني والبحث <span style="color:#10b981;font-size:0.68rem;">(قريبًا)</span></span>
                 </label>
-                <button id="chat-send-btn" onclick="document.getElementById('chat-empty-state').style.display='none'; chatSend();">
+                <button id="chat-send-btn" data-testid="chat-send-button" onclick="document.getElementById('chat-empty-state').style.display='none'; chatSend();">
                     إرسال &#10148;
                 </button>
             </div>
@@ -28430,6 +28450,7 @@ var _PROFILE_FORM_SCHEMA = {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(payload),
+            suppressAuthModal: true,
         })
         .then(function (r) {
             return r.json().then(function (d) { return { status: r.status, data: d }; });
@@ -28448,6 +28469,10 @@ var _PROFILE_FORM_SCHEMA = {
         })
         .catch(function (err) {
             if (btn) { btn.disabled = false; btn.textContent = '⬡ إرسال'; }
+            if (err && err.message === 'ES_AUTH_401') {
+                if (errEl) { errEl.textContent = 'يلزم تسجيل الدخول لاستخدام المستشار.'; errEl.style.display = 'block'; }
+                return;
+            }
             if (_chatHealthy === false) {
                 chatShowFallback(question);
             } else {

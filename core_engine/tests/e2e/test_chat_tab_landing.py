@@ -251,3 +251,77 @@ def test_CS_chat_unknown_generic_question(page: Page, live_server: str) -> None:
     assert "الموقع" in text, "Must ask for location"
     assert "الغرض" in text, "Must ask for purpose"
     assert "المستندات" in text, "Must ask for documents"
+
+
+# ---------------------------------------------------------------------------
+# New tests: category fallback numerical examples + web toggle (22 → 28)
+# ---------------------------------------------------------------------------
+
+def test_CS_chat_income_category_noi_numerical(page: Page, live_server: str) -> None:
+    """Income/rental question triggers NOI category with معدل الرسملة and 5,000,000 example."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "إزاي أقيم محل مؤجر بعقد طويل؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "إيجار" in text or "دخل" in text, "Income category must mention إيجار or دخل"
+    assert "NOI" in text or "صافي الدخل" in text, "Income category must mention NOI"
+    assert "معدل الرسملة" in text, "Income category must mention معدل الرسملة"
+    assert "5,000,000" in text or "5000000" in text, "Income category must show 5,000,000 example"
+    assert "إرشادية" in text, "Answer must contain advisory disclaimer"
+
+
+def test_CS_chat_cma_category_numerical(page: Page, live_server: str) -> None:
+    """Market-comparison question triggers CMA category with سعر المتر and 2,850,000 example."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "عندي شقة 120 متر وعايز أعرف أستخدم مقارنات السوق إزاي")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "مقارن" in text, "CMA category must mention مقارن / مقارنة / مقارنات"
+    assert "سعر المتر" in text, "CMA category must mention سعر المتر"
+    assert "120" in text, "Answer area must contain 120 (from question echo or example)"
+    assert "2,850,000" in text or "2850000" in text, "CMA category must show 2,850,000 example"
+
+
+def test_CS_chat_mortgage_ltv_numerical(page: Page, live_server: str) -> None:
+    """Mortgage question triggers LTV category with 5,950,000 maximum loan example."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "البنك بيحسب قيمة الرهن على أساس إيه؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "رهن" in text or "تمويل" in text, "Mortgage category must mention رهن or تمويل"
+    assert "LTV" in text, "Mortgage category must mention LTV"
+    assert "5,950,000" in text or "5950000" in text, "Mortgage category must show 5,950,000 example"
+
+
+def test_CS_chat_tax_appeal_advisory(page: Page, live_server: str) -> None:
+    """Tax question triggers tax-appeal category with إخطار and مستندات guidance."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "وصلني تقدير ضريبة عقارية عالي أعمل إيه؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "ضريبة" in text or "الضريبي" in text, "Tax category must mention ضريبة"
+    assert "إخطار" in text or "مستندات" in text, "Tax category must mention إخطار or مستندات"
+    assert "إرشادية" in text, "Answer must contain advisory disclaimer"
+
+
+def test_CS_chat_generic_context_request(page: Page, live_server: str) -> None:
+    """Unknown question triggers generic fallback asking for نوع العقار, الموقع, الغرض, المستندات."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "عندي حالة خاصة ومش عارف أبدأ منين")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "نوع العقار" in text, "Generic fallback must ask for نوع العقار"
+    assert "الموقع" in text, "Generic fallback must ask for الموقع"
+    assert "الغرض" in text, "Generic fallback must ask for الغرض"
+    assert "المستندات" in text, "Generic fallback must ask for المستندات"
+
+
+def test_CS_chat_web_toggle_shows_coming_soon(page: Page, live_server: str) -> None:
+    """Web search toggle shows 'coming later' message; checkbox stays unchecked; no external call."""
+    _open_chat_tab(page, live_server)
+    # Click the toggle label
+    page.locator("[data-testid='chat-web-toggle-label']").click()
+    # Error element should become visible with the 'coming later' message
+    err = page.locator("#chat-error")
+    expect(err).to_be_visible(timeout=3_000)
+    msg_text = err.inner_text()
+    assert "سيتم تفعيل البحث" in msg_text or "مرحلة لاحقة" in msg_text, (
+        f"Expected coming-soon message, got: {msg_text!r}"
+    )
+    # Checkbox must remain unchecked (chatWebToggleClick unchecks it)
+    assert not page.locator("#chat-web-toggle").is_checked()

@@ -264,3 +264,218 @@ def test_SV_chat_tab_still_works(page: Page, live_server: str) -> None:
     _go_to_simple_valuation_tab(page, live_server)
     page.locator("[data-testid='chat-tab']").click()
     expect(page.locator("[data-testid='chat-landing']")).to_be_visible(timeout=5_000)
+
+
+# ---------------------------------------------------------------------------
+# Task-B tests — date, purpose, output policy, enriched output
+# ---------------------------------------------------------------------------
+
+def test_SV_date_field_visible(page: Page, live_server: str) -> None:
+    """Valuation date field is visible in the form."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-date']")).to_be_visible()
+
+
+def test_SV_date_field_defaults_to_today(page: Page, live_server: str) -> None:
+    """Valuation date field has a non-empty default value (today's date)."""
+    _go_to_simple_valuation_tab(page, live_server)
+    val = page.locator("[data-testid='simple-valuation-date']").input_value()
+    assert val, "Date field should default to today (non-empty)"
+    # Must be a valid YYYY-MM-DD pattern
+    import re
+    assert re.match(r"^\d{4}-\d{2}-\d{2}$", val), f"Unexpected date format: {val}"
+
+
+def test_SV_date_field_is_type_date(page: Page, live_server: str) -> None:
+    """Date field has type=date (native date picker)."""
+    _go_to_simple_valuation_tab(page, live_server)
+    el = page.locator("[data-testid='simple-valuation-date']")
+    assert el.get_attribute("type") == "date"
+
+
+def test_SV_purpose_badge_visible(page: Page, live_server: str) -> None:
+    """Fixed purpose badge is visible in the form."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-purpose']")).to_be_visible()
+
+
+def test_SV_purpose_badge_shows_market_value(page: Page, live_server: str) -> None:
+    """Purpose badge contains the Arabic text القيمة السوقية."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-valuation-purpose']").inner_text()
+    assert "القيمة السوقية" in text
+
+
+def test_SV_purpose_is_not_an_editable_select(page: Page, live_server: str) -> None:
+    """Purpose element does NOT have a <select> child — it is not an editable dropdown."""
+    _go_to_simple_valuation_tab(page, live_server)
+    # The purpose badge must not be a select itself
+    el = page.locator("[data-testid='simple-valuation-purpose']")
+    assert el.evaluate("e => e.tagName.toLowerCase()") != "select"
+    # And no nested select for purpose
+    nested = page.locator("[data-testid='simple-valuation-purpose'] select")
+    expect(nested).to_have_count(0)
+
+
+def test_SV_output_policy_visible(page: Page, live_server: str) -> None:
+    """Output policy note is visible in the form (before the generate button)."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-output-policy']")).to_be_visible()
+
+
+def test_SV_output_policy_mentions_draft(page: Page, live_server: str) -> None:
+    """Output policy note mentions draft-only output (مبدئي)."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-valuation-output-policy']").inner_text()
+    assert "مبدئي" in text
+
+
+def test_SV_output_policy_mentions_excel_internal(page: Page, live_server: str) -> None:
+    """Output policy note mentions Excel as internal (Excel داخلي or similar)."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-valuation-output-policy']").inner_text()
+    assert "Excel" in text
+
+
+def test_SV_output_policy_mentions_pdf_for_user(page: Page, live_server: str) -> None:
+    """Output policy note mentions PDF for the ordinary user."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-valuation-output-policy']").inner_text()
+    assert "PDF" in text
+
+
+def test_SV_output_contains_date(page: Page, live_server: str) -> None:
+    """After generating, the valuation date appears in the output table."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "تاريخ" in output.inner_text()
+
+
+def test_SV_output_contains_purpose(page: Page, live_server: str) -> None:
+    """After generating, القيمة السوقية appears in the output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "القيمة السوقية" in output.inner_text()
+
+
+def test_SV_output_contains_description(page: Page, live_server: str) -> None:
+    """After generating, the description entered by the user appears in the output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "شقة سكنية في المعادي" in output.inner_text()
+
+
+def test_SV_output_contains_notes_when_filled(page: Page, live_server: str) -> None:
+    """After generating, user-entered notes appear in the output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("#sv-notes").fill("ملاحظة خاصة للاختبار")
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "ملاحظة خاصة للاختبار" in output.inner_text()
+
+
+def test_SV_output_omits_notes_row_when_empty(page: Page, live_server: str) -> None:
+    """After generating with no notes, the ملاحظات row is NOT in the output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    # Ensure notes field is empty
+    page.locator("#sv-notes").fill("")
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    # The notes row label should not appear when notes is empty
+    table_html = output.locator("table").inner_html()
+    assert "ملاحظات:" not in table_html
+
+
+def test_SV_file_policy_note_visible_in_output(page: Page, live_server: str) -> None:
+    """After generating, the file-policy note is visible in the output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    policy = page.locator("[data-testid='simple-valuation-file-policy']")
+    expect(policy).to_be_visible(timeout=8_000)
+
+
+def test_SV_file_policy_mentions_pdf_and_excel(page: Page, live_server: str) -> None:
+    """File-policy note in output mentions both PDF (user copy) and Excel (expert/admin)."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    text = page.locator("[data-testid='simple-valuation-file-policy']").inner_text(timeout=8_000)
+    assert "PDF" in text
+    assert "Excel" in text
+
+
+def test_SV_no_direct_excel_download_link_in_output(page: Page, live_server: str) -> None:
+    """Even when the API returns an excel_url, no direct Excel download link appears in the output."""
+    def _handle_with_excel(route: Route) -> None:
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({
+                "status": "success",
+                "market_value": 1_800_000,
+                "report_id": "DRAFT-XLS-001",
+                "excel_url": "/api/reports/DRAFT-XLS-001.xlsx",
+            }),
+        )
+    page.route("**/api/valuation", _handle_with_excel)
+
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+
+    # No anchor tag pointing to an xlsx/excel file should be rendered
+    excel_links = output.locator("a[href*='.xlsx'], a[href*='excel']")
+    expect(excel_links).to_have_count(0)
+
+
+def test_SV_expert_cta_mentions_expert_review(page: Page, live_server: str) -> None:
+    """Expert CTA in output mentions requesting certified review from the expert."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    cta = page.locator("[data-testid='simple-valuation-expert-cta']")
+    expect(cta).to_be_visible(timeout=8_000)
+    text = cta.inner_text()
+    assert "الخبير" in text

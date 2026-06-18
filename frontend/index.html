@@ -1943,6 +1943,24 @@
                         </select>
                     </div>
                 </div>
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin-top:14px;">
+                    <div class="field-group">
+                        <label>تاريخ التقييم</label>
+                        <input id="sv-date" type="date" class="input-box"
+                            data-testid="simple-valuation-date"
+                            style="color:#d1d5db;">
+                    </div>
+                    <div class="field-group">
+                        <label>الغرض من التقييم</label>
+                        <div data-testid="simple-valuation-purpose"
+                            style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.35);border-radius:10px;padding:11px 14px;color:var(--gold);font-weight:700;font-size:0.95rem;">
+                            القيمة السوقية
+                        </div>
+                        <div style="font-size:0.78rem;color:#6b7280;margin-top:6px;line-height:1.5;">
+                            الغرض في هذا المسار المبسط هو تقدير قيمة سوقية مبدئية فقط.
+                        </div>
+                    </div>
+                </div>
                 <div class="field-group" style="margin-top:14px;">
                     <label>ملاحظات إضافية (اختياري)</label>
                     <textarea id="sv-notes" class="input-box" rows="2"
@@ -1970,7 +1988,21 @@
                 </div>
             </div>
 
-            <!-- 4. زر الإصدار -->
+            <!-- 4. مخرجات هذا المسار -->
+            <div class="ai-section" data-testid="simple-valuation-output-policy"
+                style="margin-bottom:1.5rem;border-color:rgba(212,175,55,0.2);">
+                <h3 style="color:var(--gold);font-size:0.95rem;font-weight:700;margin:0 0 10px;">
+                    📋 مخرجات هذا المسار
+                </h3>
+                <ul style="margin:0;padding-right:18px;color:#d1d5db;font-size:0.85rem;line-height:1.85;">
+                    <li>هذا المسار يصدر <strong style="color:var(--gold);">تقرير تقييم مبدئي واحد فقط</strong> للمستخدم.</li>
+                    <li>التقرير غير معتمد ولا يُستخدم أمام الجهات الرسمية أو القضائية أو التمويلية قبل مراجعة واعتماد الخبير.</li>
+                    <li><span style="color:#9ca3af;">نسخة المستخدم:</span> <strong>تقرير مبدئي PDF فقط</strong> عند تفعيل التصدير.</li>
+                    <li><span style="color:#9ca3af;">نسخة الخبير/الإدارة:</span> <strong>Excel داخلي تفصيلي + PDF معتمد</strong> بعد المراجعة — لا تُعرض للمستخدم الخارجي كملف افتراضي.</li>
+                </ul>
+            </div>
+
+            <!-- 5. زر الإصدار -->
             <button id="sv-submit-btn" type="button"
                 onclick="svGenerate()"
                 data-testid="simple-valuation-generate"
@@ -2078,6 +2110,8 @@
             var area     = parseFloat(document.getElementById('sv-area').value) || 0;
             var propType = document.getElementById('sv-property-type').value;
             var cond     = document.getElementById('sv-condition').value;
+            var valDate  = (document.getElementById('sv-date')  ? document.getElementById('sv-date').value  : '') || '';
+            var notes    = (document.getElementById('sv-notes') ? document.getElementById('sv-notes').value : '').trim();
 
             if (!location)          { alert('يرجى اختيار الدولة / نطاق الدراسة.'); return; }
             if (desc.length < 5)    { alert('يرجى إدخال وصف مختصر للعقار.'); return; }
@@ -2136,19 +2170,28 @@
                 + mvHtml
                 + '<table class="sv-result-table" style="margin-top:10px;">'
                 + (reportId ? '<tr><td>رقم التقرير:</td><td dir="ltr">' + reportId + '</td></tr>' : '')
+                + (valDate  ? '<tr><td>تاريخ التقييم:</td><td dir="ltr">' + valDate + '</td></tr>' : '')
+                + '<tr><td>الغرض:</td><td style="color:var(--gold);font-weight:700;">القيمة السوقية</td></tr>'
                 + '<tr><td>الموقع / النطاق:</td><td>' + location + '</td></tr>'
+                + '<tr><td>وصف الأصل:</td><td>' + desc + '</td></tr>'
                 + '<tr><td>نوع العقار:</td><td>' + propType + '</td></tr>'
                 + '<tr><td>المساحة:</td><td dir="ltr">' + area.toLocaleString() + ' م²</td></tr>'
                 + '<tr><td>الحالة:</td><td>' + cond + '</td></tr>'
+                + (notes ? '<tr><td>ملاحظات:</td><td>' + notes + '</td></tr>' : '')
                 + '</table>'
-                + (dlBtn ? '<div style="margin-top:12px;">' + dlBtn + '</div>' : '')
-                + '<div data-testid="simple-valuation-draft-warning" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#fca5a5;margin-top:16px;line-height:1.7;">'
-                + '⚠️ هذا التقرير مبدئي (Draft) وغير معتمد. لا يُستخدم كتقرير رسمي أمام الجهات الحكومية أو القضائية أو التمويلية قبل مراجعته واعتماده من خبير التقييم.'
+                + '<div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:#a5b4fc;margin-top:14px;line-height:1.7;"'
+                + ' data-testid="simple-valuation-file-policy">'
+                + '📄 نسخة المستخدم: تقرير مبدئي PDF فقط عند تفعيل التصدير. '
+                + 'نسخة الخبير/الإدارة: Excel داخلي تفصيلي + PDF معتمد بعد المراجعة — لا تُعرض للمستخدم الخارجي.'
+                + '</div>'
+                + '<div data-testid="simple-valuation-draft-warning" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#fca5a5;margin-top:14px;line-height:1.7;">'
+                + '⚠️ تقرير مبدئي (Draft) غير معتمد. '
+                + 'للحصول على تقرير تقييم معتمد، تواصل مع الخبير لمراجعة البيانات والمنهجية وإصدار النسخة المعتمدة.'
                 + '</div>'
                 + '<div data-testid="simple-valuation-expert-cta" style="background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:14px 16px;margin-top:14px;text-align:center;">'
-                + '<div style="color:#d1d5db;font-size:0.9rem;margin-bottom:10px;">هل ترغب في مراجعة التقرير واعتماده من الخبير؟</div>'
-                + '<button onclick="esShowTab(\'es-tab-chat\')" style="background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:8px;color:#000;font-family:\'Tajawal\',sans-serif;font-size:0.95rem;font-weight:900;padding:10px 22px;cursor:pointer;">'
-                + 'طلب مراجعة واعتماد التقرير من الخبير'
+                + '<div style="color:#d1d5db;font-size:0.9rem;margin-bottom:10px;">للحصول على تقرير تقييم معتمد، تواصل مع الخبير لمراجعة البيانات والمنهجية وإصدار النسخة المعتمدة.</div>'
+                + '<button onclick="esShowTab(\'chat\')" style="background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:8px;color:#000;font-family:\'Tajawal\',sans-serif;font-size:0.95rem;font-weight:900;padding:10px 22px;cursor:pointer;">'
+                + 'تواصل مع الخبير لمراجعة واعتماد التقرير'
                 + '</button>'
                 + '</div>'
                 + '</div>';
@@ -2157,6 +2200,18 @@
             btn.disabled = false;
             btn.innerHTML = 'إصدار تقرير تقييم مبدئي <i class="fas fa-file-alt"></i>';
         }
+
+        /* ── initialise valuation date to today ── */
+        (function initSvDate() {
+            var el = document.getElementById('sv-date');
+            if (el && !el.value) {
+                var today = new Date();
+                var y = today.getFullYear();
+                var m = String(today.getMonth() + 1).padStart(2, '0');
+                var d = String(today.getDate()).padStart(2, '0');
+                el.value = y + '-' + m + '-' + d;
+            }
+        }());
         </script>
 
     </div>

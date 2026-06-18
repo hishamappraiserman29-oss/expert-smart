@@ -1497,104 +1497,6 @@
     }
     .chat-chip:active { transform: translateY(0); }
 
-    /* — Lead Capture Form ————————————————————————————————————————— */
-    .chat-lead-box {
-        background: rgba(16,185,129,0.04);
-        border: 1px solid rgba(16,185,129,0.18);
-        border-radius: 14px;
-        padding: 20px 20px 16px;
-        margin: 0 0 24px;
-        direction: rtl;
-    }
-    .chat-lead-title {
-        font-size: 0.93rem;
-        color: #10b981;
-        font-weight: 700;
-        margin: 0 0 14px;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .chat-lead-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 10px;
-    }
-    .chat-lead-field-wrap { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-    .chat-lead-label {
-        font-size: 0.72rem;
-        color: #64748b;
-        font-weight: 600;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-    }
-    .chat-lead-input {
-        width: 100%;
-        background: #0f172a;
-        color: #e2e8f0;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 8px;
-        padding: 8px 12px;
-        font-size: 0.8rem;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        box-sizing: border-box;
-        direction: rtl;
-        transition: border-color 0.15s;
-    }
-    .chat-lead-input:focus { outline: none; border-color: rgba(16,185,129,0.4); }
-    .chat-lead-textarea-field {
-        width: 100%;
-        background: #0f172a;
-        color: #e2e8f0;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 8px;
-        padding: 9px 12px;
-        font-size: 0.8rem;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        resize: vertical;
-        line-height: 1.65;
-        box-sizing: border-box;
-        direction: rtl;
-        transition: border-color 0.15s;
-        min-height: 72px;
-    }
-    .chat-lead-textarea-field:focus { outline: none; border-color: rgba(16,185,129,0.4); }
-    .chat-lead-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
-    .chat-lead-btn {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: #fff;
-        font-weight: 700;
-        border: none;
-        padding: 9px 24px;
-        border-radius: 9px;
-        cursor: pointer;
-        font-size: 0.86rem;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        transition: transform 0.14s, box-shadow 0.14s, opacity 0.14s;
-        white-space: nowrap;
-    }
-    .chat-lead-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
-    .chat-lead-btn:active { transform: translateY(0); }
-    .chat-lead-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-    .chat-lead-placeholder-note {
-        font-size: 0.75rem;
-        color: #64748b;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        line-height: 1.6;
-    }
-    #chat-lead-sent {
-        display: none;
-        font-size: 0.82rem;
-        color: #10b981;
-        background: rgba(16,185,129,0.08);
-        border: 1px solid rgba(16,185,129,0.2);
-        border-radius: 7px;
-        padding: 8px 12px;
-        margin-top: 10px;
-        font-family: Tajawal, 'Segoe UI', Tahoma, Arial, sans-serif;
-        direction: rtl;
-    }
 
     /* — Input Console —————————————————————————————————————————————— */
     .chat-console {
@@ -1713,7 +1615,7 @@
         .chat-hero { padding: 28px 16px 20px; }
         .chat-dispute-grid { grid-template-columns: 1fr; }
         .chat-ctx-row { grid-template-columns: 1fr; }
-        .chat-lead-row { grid-template-columns: 1fr; }
+
         .chat-actions-row { flex-direction: column; align-items: stretch; }
         #chat-send-btn { text-align: center; }
     }
@@ -1782,44 +1684,6 @@
             <button class="chat-chip" onclick="chatFill('ما المستندات المطلوبة لتقييم أصل متخصص؟')">ما المستندات المطلوبة لتقييم أصل متخصص؟</button>
         </div>
 
-        <!-- ── Lead Capture Form (UI-only placeholder — no backend endpoint) ─────────────── -->
-        <div class="chat-lead-box">
-            <div class="chat-lead-title">&#128203; طلب بحث حالة واستشارة عاجلة مع المهندس الخبير</div>
-            <div class="chat-lead-row">
-                <div>
-                    <label class="chat-lead-label">الاسم بالكامل *</label>
-                    <input type="text" id="chat-lead-name" class="chat-lead-input"
-                        placeholder="مثال: محمد علي الخولي، شركة النور..." dir="rtl">
-                </div>
-                <div>
-                    <label class="chat-lead-label">رقم الهاتف / واتسآب *</label>
-                    <input type="tel" id="chat-lead-phone" class="chat-lead-input"
-                        placeholder="مثال: 01012345678" dir="ltr">
-                </div>
-            </div>
-            <div class="chat-lead-field-wrap">
-                <label class="chat-lead-label">نوع العقار والموقع</label>
-                <input type="text" id="chat-lead-prop" class="chat-lead-input"
-                    placeholder="مثال: مصنع بالتجمع الخامس القاهرة، فندق بشرم الشيخ..." dir="rtl">
-            </div>
-            <div class="chat-lead-field-wrap">
-                <label class="chat-lead-label">ملخص المشكلة أو النزاع القضائي</label>
-                <textarea id="chat-lead-summary" class="chat-lead-textarea-field" rows="3"
-                    placeholder="صف حالتك باختصار: نوع النزاع، الجهة المختصة، والمطلوب..." dir="rtl"></textarea>
-            </div>
-            <div class="chat-lead-actions">
-                <button id="chat-lead-btn" class="chat-lead-btn" onclick="chatLeadSubmit()">
-                    &#128203; إرسال طلب الاستشارة
-                </button>
-                <span class="chat-lead-placeholder-note">
-                    &#9432; سيتم تفعيل إرسال الطلبات في مرحلة لاحقة.
-                </span>
-            </div>
-            <div id="chat-lead-sent" style="display:none; font-size:0.82rem; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:7px; padding:9px 13px; margin-top:10px; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
-                &#10003; شكرًا على طلبك. سيتم تفعيل إرسال الطلبات في مرحلة لاحقة. بإمكانك في الوقت الحالي أدرج سؤالك في صندوق الشات أدناه.
-            </div>
-        </div>
-
         <!-- ── Input Console ──────────────────────────────────────────────────────────────────────── -->
         <div class="chat-console">
             <span class="chat-console-lbl">&#9999;&#65039; سؤالك العقاري أو الضريبي</span>
@@ -1871,13 +1735,7 @@
             var el = document.getElementById('chat-question');
             if (el) { el.value = 'اسألني عن ' + cat + ': '; el.focus(); }
         };
-        window.chatLeadSubmit = function () {
-            var btn  = document.getElementById('chat-lead-btn');
-            var sent = document.getElementById('chat-lead-sent');
-            if (btn)  { btn.disabled = true; btn.textContent = '✓ تم الاستلام'; }
-            if (sent) { sent.style.display = 'block'; }
-        };
-        <\/script>
+<\/script>
 
     </div>
     <!-- ══ End Phase 12: Real Estate Chat Tab ════════════════════════════════════════════════════════════════ -->

@@ -1813,99 +1813,104 @@
             var el = document.getElementById('chat-question');
             if (el) { el.value = 'اسألني عن ' + cat + ': '; el.focus(); }
         };
-<\/script>
+        </script>
 
     </div>
     <!-- ══ End Phase 12: Real Estate Chat Tab ════════════════════════════════════════════════════════════════ -->
 
-    <!-- Workspace: التقييم المبسّط ─────────────────────────────────────────── -->
-    <div class="es-workspace" id="ws-valuation" role="tabpanel">
+    <!-- Workspace: التقييم المبسط ─────────────────────────────────────────────── -->
+    <div class="es-workspace" id="ws-valuation" role="tabpanel" data-testid="simple-valuation-tab">
 
-        <div class="sv-wrapper">
-            <div class="sv-intro">
-                <h2 class="sv-title">تقييم عقاري مبسّط</h2>
-                <p class="sv-subtitle">أدخل بيانات العقار الأساسية للحصول على تقدير سريع للقيمة السوقية.</p>
+        <!-- ── بطاقة العنوان ────────────────────────────────────── -->
+        <div class="ai-section" data-testid="simple-valuation-header" style="margin-bottom:1.5rem;">
+            <div style="text-align:center; margin-bottom:14px;">
+                <h2 style="color:var(--gold);font-size:1.55rem;font-weight:900;margin:0 0 8px;">التقييم العقاري المبسط</h2>
+                <p style="color:#9ca3af;font-size:0.95rem;margin:0;">أدخل بيانات العقار الأساسية للحصول على تقرير تقييم مبدئي غير معتمد.</p>
+            </div>
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 16px;font-size:0.83rem;color:#fca5a5;line-height:1.7;text-align:right;">
+                ⚠️ هذا التقرير مبدئي وغير معتمد، ولا يُستخدم كتقرير رسمي أمام الجهات الحكومية أو القضائية أو التمويلية قبل مراجعته واعتماده من خبير التقييم.
+            </div>
+        </div>
+
+        <!-- ── النموذج ───────────────────────────────────────────── -->
+        <div data-testid="simple-valuation-form">
+
+            <!-- 1. نطاق الدراسة الجغرافي -->
+            <input type="hidden" id="sv-location">
+            <div class="ai-section" style="margin-bottom:1.5rem;" data-testid="simple-valuation-location">
+                <h3 style="color:var(--gold);font-size:1rem;font-weight:700;margin:0 0 14px;">
+                    نطاق الدراسة الجغرافي <span style="color:#ef4444;font-size:0.8rem;"> *</span>
+                </h3>
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+                    <div class="field-group">
+                        <label>الدولة / القطر</label>
+                        <select class="input-box" id="geo-country" onchange="geoSync()">
+                            <option value="" data-name="">— اختر الدولة —</option>
+                            <option value="EG" data-name="مصر">مصر</option>
+                            <option value="SA" data-name="المملكة العربية السعودية">المملكة العربية السعودية</option>
+                            <option value="AE" data-name="الإمارات العربية المتحدة">الإمارات العربية المتحدة</option>
+                            <option value="KW" data-name="الكويت">الكويت</option>
+                            <option value="QA" data-name="قطر">قطر</option>
+                            <option value="BH" data-name="البحرين">البحرين</option>
+                            <option value="OM" data-name="عُمان">عُمان</option>
+                            <option value="JO" data-name="الأردن">الأردن</option>
+                            <option value="PS" data-name="فلسطين">فلسطين</option>
+                            <option value="LB" data-name="لبنان">لبنان</option>
+                            <option value="SY" data-name="سوريا">سوريا</option>
+                            <option value="IQ" data-name="العراق">العراق</option>
+                            <option value="YE" data-name="اليمن">اليمن</option>
+                            <option value="LY" data-name="ليبيا">ليبيا</option>
+                            <option value="TN" data-name="تونس">تونس</option>
+                            <option value="DZ" data-name="الجزائر">الجزائر</option>
+                            <option value="MA" data-name="المغرب">المغرب</option>
+                            <option value="MR" data-name="موريتانيا">موريتانيا</option>
+                            <option value="SD" data-name="السودان">السودان</option>
+                            <option value="SO" data-name="الصومال">الصومال</option>
+                            <option value="DJ" data-name="جيبوتي">جيبوتي</option>
+                            <option value="KM" data-name="جزر القمر">جزر القمر</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>المحافظة / الإمارة / الولاية</label>
+                        <select class="input-box" id="geo-province" disabled onchange="geoSync()">
+                            <option value="">— اختر الدولة أولاً —</option>
+                        </select>
+                        <div class="geo-placeholder-note" id="geo-province-note">سيتم إضافة التقسيمات الداخلية تدريجيًا</div>
+                    </div>
+                    <div class="field-group">
+                        <label>المدينة</label>
+                        <select class="input-box" id="geo-city" disabled onchange="geoSync()">
+                            <option value="">— اختر المحافظة أولاً —</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>الحي / النطاق التفصيلي</label>
+                        <input type="text" class="input-box" id="geo-district" disabled oninput="geoSync()" placeholder="سيتم تفعيله لاحقاً">
+                    </div>
+                </div>
             </div>
 
-            <div class="sv-form">
-                <!-- 1. نطاق الدراسة الجغرافي (Phase 4 — Unified Geo Selector) -->
-                <!-- sv-location is a hidden compat field; geoSync() populates it from geo-country -->
-                <input type="hidden" id="sv-location">
-                <div class="geo-group">
-                    <div class="geo-group-title">نطاق الدراسة الجغرافي</div>
-                    <div class="geo-levels">
-
-                        <!-- Level 1: الدولة / القطر — مفعَّل الآن (22 دولة عربية) -->
-                        <div class="geo-level">
-                            <label class="geo-level-label">الدولة / القطر <span class="sv-req">*</span></label>
-                            <select class="geo-select" id="geo-country" onchange="geoSync()">
-                                <option value="" data-name="">— اختر الدولة —</option>
-                                <option value="EG" data-name="مصر">مصر</option>
-                                <option value="SA" data-name="المملكة العربية السعودية">المملكة العربية السعودية</option>
-                                <option value="AE" data-name="الإمارات العربية المتحدة">الإمارات العربية المتحدة</option>
-                                <option value="KW" data-name="الكويت">الكويت</option>
-                                <option value="QA" data-name="قطر">قطر</option>
-                                <option value="BH" data-name="البحرين">البحرين</option>
-                                <option value="OM" data-name="عُمان">عُمان</option>
-                                <option value="JO" data-name="الأردن">الأردن</option>
-                                <option value="PS" data-name="فلسطين">فلسطين</option>
-                                <option value="LB" data-name="لبنان">لبنان</option>
-                                <option value="SY" data-name="سوريا">سوريا</option>
-                                <option value="IQ" data-name="العراق">العراق</option>
-                                <option value="YE" data-name="اليمن">اليمن</option>
-                                <option value="LY" data-name="ليبيا">ليبيا</option>
-                                <option value="TN" data-name="تونس">تونس</option>
-                                <option value="DZ" data-name="الجزائر">الجزائر</option>
-                                <option value="MA" data-name="المغرب">المغرب</option>
-                                <option value="MR" data-name="موريتانيا">موريتانيا</option>
-                                <option value="SD" data-name="السودان">السودان</option>
-                                <option value="SO" data-name="الصومال">الصومال</option>
-                                <option value="DJ" data-name="جيبوتي">جيبوتي</option>
-                                <option value="KM" data-name="جزر القمر">جزر القمر</option>
-                            </select>
-                        </div>
-
-                        <!-- Level 2: المحافظة / الإمارة / الولاية -->
-                        <div class="geo-level">
-                            <label class="geo-level-label">المحافظة / الإمارة / الولاية</label>
-                            <select class="geo-select" id="geo-province" disabled onchange="geoSync()">
-                                <option value="">— اختر الدولة أولاً —</option>
-                            </select>
-                            <div class="geo-placeholder-note" id="geo-province-note">سيتم إضافة التقسيمات الداخلية تدريجيًا</div>
-                        </div>
-
-                        <!-- Level 3: المدينة -->
-                        <div class="geo-level">
-                            <label class="geo-level-label">المدينة</label>
-                            <select class="geo-select" id="geo-city" disabled onchange="geoSync()">
-                                <option value="">— اختر المحافظة أولاً —</option>
-                            </select>
-                        </div>
-
-                        <!-- Level 4: الحي / النطاق التفصيلي -->
-                        <div class="geo-level">
-                            <label class="geo-level-label">الحي / النطاق التفصيلي</label>
-                            <input type="text" class="geo-select" id="geo-district" disabled oninput="geoSync()" placeholder="سيتم تفعيله لاحقاً">
-                        </div>
-
-                    </div>
+            <!-- 2. بيانات العقار الأساسية -->
+            <div class="ai-section" style="margin-bottom:1.5rem;">
+                <h3 style="color:var(--gold);font-size:1rem;font-weight:700;margin:0 0 14px;">بيانات العقار الأساسية</h3>
+                <div class="field-group" style="margin-bottom:14px;">
+                    <label>وصف الأصل العقاري <span style="color:#ef4444;"> *</span></label>
+                    <textarea id="sv-description" class="input-box" rows="3"
+                        placeholder="صف العقار باختصار: الطابق، التشطيب، المميزات الرئيسية…"
+                        data-testid="simple-valuation-description"
+                        style="resize:vertical;"></textarea>
                 </div>
-
-                <!-- 2. وصف الأصل العقاري -->
-                <div class="sv-field">
-                    <label class="sv-label" for="sv-description">وصف الأصل العقاري <span class="sv-req">*</span></label>
-                    <textarea id="sv-description" class="sv-textarea" rows="3" placeholder="صف العقار باختصار: الطابق، التشطيب، المميزات الرئيسية…"></textarea>
-                </div>
-
-                <!-- 3. المساحة  +  4. نوع العقار المبسّط -->
-                <div class="sv-row">
-                    <div class="sv-field">
-                        <label class="sv-label" for="sv-area">المساحة (م²) <span class="sv-req">*</span></label>
-                        <input id="sv-area" type="number" class="sv-input" placeholder="مثال: 120" min="1">
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));">
+                    <div class="field-group">
+                        <label>المساحة (م²) <span style="color:#ef4444;"> *</span></label>
+                        <input id="sv-area" type="number" class="input-box"
+                            placeholder="مثال: 120" min="1"
+                            data-testid="simple-valuation-area">
                     </div>
-                    <div class="sv-field">
-                        <label class="sv-label" for="sv-property-type">نوع العقار <span class="sv-req">*</span></label>
-                        <select id="sv-property-type" class="sv-select">
+                    <div class="field-group">
+                        <label>نوع العقار <span style="color:#ef4444;"> *</span></label>
+                        <select id="sv-property-type" class="input-box"
+                            data-testid="simple-valuation-property-type">
                             <option value="">— اختر النوع —</option>
                             <option value="شقة سكنية">شقة سكنية</option>
                             <option value="فيلا">فيلا / منزل</option>
@@ -1915,31 +1920,70 @@
                             <option value="مستودع">مستودع / مخزن</option>
                         </select>
                     </div>
+                    <div class="field-group">
+                        <label>حالة العقار <span style="color:#ef4444;"> *</span></label>
+                        <select id="sv-condition" class="input-box"
+                            data-testid="simple-valuation-condition">
+                            <option value="">— اختر الحالة —</option>
+                            <option value="ممتازة">ممتازة</option>
+                            <option value="جيدة">جيدة</option>
+                            <option value="متوسطة">متوسطة</option>
+                            <option value="تحتاج صيانة">تحتاج صيانة</option>
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label>مستوى التشطيب (اختياري)</label>
+                        <select id="sv-finishing" class="input-box">
+                            <option value="">— اختر إن وجد —</option>
+                            <option value="سوبر لوكس">سوبر لوكس</option>
+                            <option value="لوكس">لوكس</option>
+                            <option value="عادي">عادي</option>
+                            <option value="نصف تشطيب">نصف تشطيب</option>
+                            <option value="بدون تشطيب">بدون تشطيب</option>
+                        </select>
+                    </div>
                 </div>
-
-                <!-- 5. حالة العقار -->
-                <div class="sv-field">
-                    <label class="sv-label" for="sv-condition">حالة العقار <span class="sv-req">*</span></label>
-                    <select id="sv-condition" class="sv-select">
-                        <option value="">— اختر الحالة —</option>
-                        <option value="ممتازة">ممتازة</option>
-                        <option value="جيدة">جيدة</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="تحتاج صيانة">تحتاج صيانة</option>
-                    </select>
+                <div class="field-group" style="margin-top:14px;">
+                    <label>ملاحظات إضافية (اختياري)</label>
+                    <textarea id="sv-notes" class="input-box" rows="2"
+                        placeholder="أي معلومات إضافية تودّ إضافتها…"
+                        style="resize:vertical;"></textarea>
                 </div>
-
-                <button id="sv-submit-btn" type="button" class="sv-btn" onclick="svGenerate()">
-                    تقييم العقار <i class="fas fa-calculator"></i>
-                </button>
             </div>
 
-            <!-- Result panel — filled dynamically by svGenerate() -->
-            <div id="sv-result" class="sv-result-panel" style="display:none;"></div>
+            <!-- 3. سياق سريع -->
+            <div class="ai-section" style="margin-bottom:1.5rem;">
+                <h3 style="color:var(--gold);font-size:1rem;font-weight:700;margin:0 0 12px;">سياق سريع (اختياري)</h3>
+                <div style="display:flex;flex-wrap:wrap;gap:18px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#d1d5db;font-size:0.9rem;">
+                        <input type="checkbox" id="sv-rented" style="accent-color:var(--gold);width:16px;height:16px;">
+                        هل العقار مؤجر؟
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#d1d5db;font-size:0.9rem;">
+                        <input type="checkbox" id="sv-dispute" style="accent-color:var(--gold);width:16px;height:16px;">
+                        هل يوجد نزاع أو غرض ضريبي؟
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#d1d5db;font-size:0.9rem;">
+                        <input type="checkbox" id="sv-approx-only" style="accent-color:var(--gold);width:16px;height:16px;">
+                        الغرض معرفة القيمة التقريبية فقط
+                    </label>
+                </div>
+            </div>
+
+            <!-- 4. زر الإصدار -->
+            <button id="sv-submit-btn" type="button"
+                onclick="svGenerate()"
+                data-testid="simple-valuation-generate"
+                style="width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:10px;color:#000;font-family:'Tajawal',sans-serif;font-size:1.1rem;font-weight:900;cursor:pointer;transition:opacity 0.2s;margin-bottom:1.5rem;">
+                إصدار تقرير تقييم مبدئي <i class="fas fa-file-alt"></i>
+            </button>
         </div>
 
+        <!-- ── نتيجة التقييم ────────────────────────────────────────── -->
+        <div id="sv-result" style="display:none;" data-testid="simple-valuation-output"></div>
+
         <script>
-        /* ── Phase 5: Geo Registry (EG + SA; other 20 countries = country-name only) ── */
+        /* ── GEO_REGISTRY (Phase 5 — EG + SA) ────────────────────────────── */
         var GEO_REGISTRY = {
             EG: {
                 provinces: {
@@ -1977,7 +2021,6 @@
             var code = countryEl.value;
             var reg  = GEO_REGISTRY[code] || null;
 
-            // ── Level 2: Province ──────────────────────────────────────────
             var prevProv = provEl.value;
             if (reg) {
                 var ph = '<option value="">— اختر المحافظة —</option>';
@@ -1995,7 +2038,6 @@
                 if (noteEl) noteEl.style.display = 'block';
             }
 
-            // ── Level 3: City ──────────────────────────────────────────────
             var provVal  = provEl.value;
             var prevCity = cityEl.value;
             if (reg && provVal && reg.provinces[provVal]) {
@@ -2012,7 +2054,6 @@
                 cityEl.disabled  = true;
             }
 
-            // ── Level 4: District ──────────────────────────────────────────
             var cityVal = cityEl.value;
             if (cityVal) {
                 distEl.disabled    = false;
@@ -2023,7 +2064,6 @@
                 distEl.value       = '';
             }
 
-            // ── Location string → #sv-location (district — city — province — country) ──
             var opt         = countryEl.options[countryEl.selectedIndex];
             var countryName = (opt && opt.value) ? (opt.getAttribute('data-name') || opt.text.trim()) : '';
             var parts = [distEl.value.trim(), cityVal, provVal, countryName].filter(Boolean);
@@ -2046,8 +2086,12 @@
             if (!cond)              { alert('يرجى اختيار حالة العقار.'); return; }
 
             btn.disabled = true;
-            btn.innerHTML = 'جاري التقييم… <i class="fas fa-spinner fa-spin"></i>';
+            btn.innerHTML = 'جارٍ إصدار التقرير… <i class="fas fa-spinner fa-spin"></i>';
             resultEl.style.display = 'none';
+
+            var mvHtml   = '<div style="color:#9ca3af;font-size:0.88rem;text-align:center;padding:10px 0;">سجّل الدخول للحصول على القيمة التقديرية المحسوبة.</div>';
+            var dlBtn    = '';
+            var reportId = '';
 
             try {
                 var payload = {
@@ -2063,42 +2107,55 @@
                 var resp = await window.esFetch('/api/valuation', {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify(payload)
+                    body:    JSON.stringify(payload),
+                    suppressAuthModal: true
                 });
                 var data = await resp.json();
                 if (data.status === 'success') {
                     var mv = typeof data.market_value === 'number'
                         ? data.market_value.toLocaleString('en-US', { maximumFractionDigits: 0 })
-                        : '—';
-                    var dlBtn = data.excel_url
-                        ? '<a href="' + data.excel_url + '" target="_blank" class="sv-dl-btn">' +
-                          '<i class="fas fa-file-excel"></i> تحميل تقرير Excel</a>'
-                        : '';
-                    resultEl.innerHTML =
-                        '<div class="sv-result-card">' +
-                            '<div class="sv-result-header">نتيجة التقييم المبسّط</div>' +
-                            '<div class="sv-result-value">' + mv + ' <span>ج.م</span></div>' +
-                            '<table class="sv-result-table">' +
-                                '<tr><td>رقم التقرير:</td><td dir="ltr">' + (data.report_id || '—') + '</td></tr>' +
-                                '<tr><td>الموقع / النطاق:</td><td>' + location + '</td></tr>' +
-                                '<tr><td>نوع العقار:</td><td>' + propType + '</td></tr>' +
-                                '<tr><td>المساحة:</td><td dir="ltr">' + area.toLocaleString() + ' م²</td></tr>' +
-                                '<tr><td>الحالة:</td><td>' + cond + '</td></tr>' +
-                            '</table>' +
-                            dlBtn +
-                        '</div>';
-                    resultEl.style.display = 'block';
-                } else {
-                    alert('خطأ: ' + (data.message || JSON.stringify(data)));
+                        : null;
+                    if (mv) {
+                        mvHtml = '<div style="font-size:2.1rem;font-weight:900;color:var(--gold);text-align:center;margin:14px 0 6px;">' + mv +
+                                 ' <span style="font-size:1rem;color:#9ca3af;">ج.م</span></div>';
+                    }
+                    if (data.excel_url) {
+                        dlBtn = '<a href="' + data.excel_url + '" target="_blank" class="sv-dl-btn">'
+                              + '<i class="fas fa-file-excel"></i> تحميل تقرير Excel</a>';
+                    }
+                    reportId = data.report_id || '';
                 }
             } catch (e) {
-                if (e.message !== 'ES_AUTH_401' && e.message !== 'ES_AUTH_403') {
-                    alert('تعذّر الاتصال بالخادم. تأكّد أنه يعمل محليّاً.\n' + e);
-                }
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'تقييم العقار <i class="fas fa-calculator"></i>';
+                /* auth / network errors — result shown from entered data */
             }
+
+            resultEl.innerHTML =
+                '<div class="sv-result-card">'
+                + '<div style="font-size:1rem;font-weight:900;color:var(--gold);text-align:center;margin-bottom:14px;border-bottom:1px solid rgba(212,175,55,0.2);padding-bottom:10px;">'
+                + 'تقرير تقييم مبدئي غير معتمد</div>'
+                + mvHtml
+                + '<table class="sv-result-table" style="margin-top:10px;">'
+                + (reportId ? '<tr><td>رقم التقرير:</td><td dir="ltr">' + reportId + '</td></tr>' : '')
+                + '<tr><td>الموقع / النطاق:</td><td>' + location + '</td></tr>'
+                + '<tr><td>نوع العقار:</td><td>' + propType + '</td></tr>'
+                + '<tr><td>المساحة:</td><td dir="ltr">' + area.toLocaleString() + ' م²</td></tr>'
+                + '<tr><td>الحالة:</td><td>' + cond + '</td></tr>'
+                + '</table>'
+                + (dlBtn ? '<div style="margin-top:12px;">' + dlBtn + '</div>' : '')
+                + '<div data-testid="simple-valuation-draft-warning" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:0.82rem;color:#fca5a5;margin-top:16px;line-height:1.7;">'
+                + '⚠️ هذا التقرير مبدئي (Draft) وغير معتمد. لا يُستخدم كتقرير رسمي أمام الجهات الحكومية أو القضائية أو التمويلية قبل مراجعته واعتماده من خبير التقييم.'
+                + '</div>'
+                + '<div data-testid="simple-valuation-expert-cta" style="background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:14px 16px;margin-top:14px;text-align:center;">'
+                + '<div style="color:#d1d5db;font-size:0.9rem;margin-bottom:10px;">هل ترغب في مراجعة التقرير واعتماده من الخبير؟</div>'
+                + '<button onclick="esShowTab(\'es-tab-chat\')" style="background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:8px;color:#000;font-family:\'Tajawal\',sans-serif;font-size:0.95rem;font-weight:900;padding:10px 22px;cursor:pointer;">'
+                + 'طلب مراجعة واعتماد التقرير من الخبير'
+                + '</button>'
+                + '</div>'
+                + '</div>';
+
+            resultEl.style.display = 'block';
+            btn.disabled = false;
+            btn.innerHTML = 'إصدار تقرير تقييم مبدئي <i class="fas fa-file-alt"></i>';
         }
         </script>
 

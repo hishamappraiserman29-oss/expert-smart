@@ -12172,6 +12172,12 @@ def admin_audit_endpoint():
 from composite_routes import register as _register_composite  # Wave 4
 _register_composite(app, require_auth)
 
+from tax_appeal_routes import register as _register_tax_appeal  # Tax Appeal Phase 1-3
+_register_tax_appeal(app, require_auth, limiter)
+
+from shared_request_routes import register as _register_shared_requests  # Shared Request Backend
+_register_shared_requests(app, require_auth, limiter)
+
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:
     from dev_auth import register as _register_dev_auth   # DEV ONLY — see dev_auth.py

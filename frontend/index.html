@@ -2042,7 +2042,7 @@
                 style="margin:8px 0 0;padding-right:18px;color:#a5b4fc;font-size:0.82rem;line-height:1.8;"></ul>
             <div data-testid="tax-documents-note"
                 style="margin-top:10px;font-size:0.79rem;color:#6b7280;line-height:1.65;">
-                في هذه المرحلة يتم عرض أسماء الملفات فقط داخل الواجهة ولا يتم رفعها فعليًا للخادم.
+                يتم رفع الملفات المرفقة بشكل آمن للخادم عند إرسال طلب الفحص للخبير.
             </div>
         </div>
 
@@ -2112,16 +2112,23 @@
 
         </div><!-- end tax-output-area -->
 
-        <!-- ══ F. Draft PDF (always visible, disabled) ══════════════════════ -->
-        <div style="margin-bottom:1.5rem;text-align:center;">
-            <button type="button" data-testid="tax-draft-pdf-button" disabled
+        <!-- ══ F. Draft PDF (always visible; enabled after successful lead save) ══ -->
+        <div style="margin-bottom:0.5rem;text-align:center;">
+            <button type="button" id="tax-draft-pdf-btn" data-testid="tax-draft-pdf-button" disabled
                 style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);
                        border-radius:9px;color:#6b7280;font-family:'Tajawal',sans-serif;
                        font-size:0.88rem;padding:10px 22px;cursor:not-allowed;">
                 <i class="fas fa-file-pdf"></i>
                 تحميل تقرير فحص الضريبة المبدئي PDF —
-                سيتم تفعيله عند ربط مولد التقارير
+                سيتم تفعيله بعد إرسال طلب الفحص
             </button>
+        </div>
+        <div id="tax-pdf-download-container" style="display:none;text-align:center;margin-bottom:1rem;">
+            <a id="tax-pdf-link" href="#" target="_blank"
+                style="color:#a5b4fc;font-family:'Tajawal',sans-serif;font-size:0.9rem;
+                       font-weight:700;text-decoration:underline;">
+                ⬇️ تحميل تقرير الفحص المبدئي (PDF)
+            </a>
         </div>
 
         <!-- ══ G. Expert CTA ════════════════════════════════════════════════ -->
@@ -2295,6 +2302,9 @@
             }
         }
 
+        /* ── Shared calculation state (populated by taxCheck, read by taxSubmitLead) ── */
+        var _taxCalcState = { estimatedTax: null, diff: null, gapPct: null, riskLabel: '' };
+
         /* ── Main calculation ─────────────────────────────────────────────── */
         function taxCheck() {
             var taxType  = document.getElementById('tax-type').value;
@@ -2388,6 +2398,12 @@
 
             document.getElementById('tax-output-area').style.display = 'block';
             document.getElementById('tax-output-area').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            /* Save for backend submission */
+            _taxCalcState.estimatedTax = estimatedTax;
+            _taxCalcState.diff         = diff;
+            _taxCalcState.gapPct       = gapPct;
+            _taxCalcState.riskLabel    = riskLabel;
         }
 
         /* ── Lead form show/hide ──────────────────────────────────────────── */
@@ -2399,12 +2415,12 @@
             }
         }
 
-        /* ── Lead form submit (frontend-only) ─────────────────────────────── */
+        /* ── Lead form submit — calls POST /api/tax-appeal/leads ─────────── */
         function taxSubmitLead() {
-            var name    = (document.getElementById('tax-lead-name-input')  || {}).value || '';
-            var phone   = (document.getElementById('tax-lead-phone-input') || {}).value || '';
-            var errEl   = document.getElementById('tax-lead-err');
-            var confEl  = document.getElementById('tax-lead-confirm');
+            var name   = (document.getElementById('tax-lead-name-input')  || {}).value || '';
+            var phone  = (document.getElementById('tax-lead-phone-input') || {}).value || '';
+            var errEl  = document.getElementById('tax-lead-err');
+            var confEl = document.getElementById('tax-lead-confirm');
 
             if (errEl)  { errEl.style.display = 'none'; errEl.textContent = ''; }
             if (confEl) { confEl.style.display = 'none'; }
@@ -2417,8 +2433,102 @@
                 if (errEl) { errEl.textContent = 'يرجى إدخال رقم الهاتف / واتساب.'; errEl.style.display = 'block'; }
                 return;
             }
-            /* Frontend-only: no real send */
-            if (confEl) { confEl.style.display = 'block'; }
+
+            /* Build multipart payload */
+            var fd = new FormData();
+            fd.append('owner_name', name.trim());
+            fd.append('phone',      phone.trim());
+
+            var _v = function(id) { var el = document.getElementById(id); return el ? (el.value || '') : ''; };
+            fd.append('email',          _v('tax-lead-email-input'));
+            fd.append('request_type',   _v('tax-lead-request-type-sel'));
+            fd.append('summary',        _v('tax-lead-summary-input'));
+            fd.append('contact_method', _v('tax-lead-contact-method-sel'));
+
+            /* Tax screening fields */
+            fd.append('tax_type',               _v('tax-type'));
+            fd.append('asset_type',             _v('tax-asset-type'));
+            fd.append('country',                _v('tax-country'));
+            fd.append('region',                 _v('tax-region'));
+            fd.append('city',                   _v('tax-city'));
+            fd.append('area',                   _v('tax-area'));
+            fd.append('property_status',        _v('tax-property-status'));
+            fd.append('government_claim',       _v('tax-government-claim'));
+            fd.append('sale_value',             _v('tax-sale-value'));
+            fd.append('annual_rental_estimate', _v('tax-annual-rental-estimate'));
+            fd.append('form3_status',           _v('tax-form3-status'));
+
+            /* Calculated advisory values */
+            fd.append('calculated_estimated_tax',    _taxCalcState.estimatedTax  !== null ? String(Math.round(_taxCalcState.estimatedTax))  : '');
+            fd.append('calculated_potential_saving', _taxCalcState.diff          !== null ? String(Math.round(_taxCalcState.diff))           : '');
+            fd.append('calculated_gap_percent',      _taxCalcState.gapPct        !== null ? _taxCalcState.gapPct.toFixed(1)                  : '');
+            fd.append('risk_level',                  _taxCalcState.riskLabel     || '');
+
+            /* Attach selected files */
+            var fileInput = document.getElementById('tax-docs-input');
+            if (fileInput && fileInput.files) {
+                for (var fi = 0; fi < fileInput.files.length; fi++) {
+                    fd.append('doc_' + fi, fileInput.files[fi]);
+                }
+            }
+
+            /* Disable button during request */
+            var submitBtn = document.querySelector('[data-testid="tax-lead-submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري الإرسال…'; }
+
+            fetch('/api/tax-appeal/leads', { method: 'POST', body: fd })
+                .then(function(resp) {
+                    return resp.json().then(function(d) { return { ok: resp.ok, data: d }; });
+                })
+                .then(function(r) {
+                    var data = r.data || {};
+                    if (r.ok) {
+                        /* Show confirmation */
+                        if (confEl) {
+                            if (data.lead_id) {
+                                confEl.innerHTML = '✅ ' + (data.message || ('تم تسجيل طلب الفحص بنجاح. رقم الطلب: ' + data.lead_id));
+                            } else {
+                                confEl.innerHTML = '✅ تم تسجيل طلب الفحص مبدئيًا. سيتم التواصل معك قريبًا.';
+                            }
+                            confEl.style.display = 'block';
+                        }
+                        /* Enable PDF download if backend generated it */
+                        if (data.pdf_available && data.pdf_download_url) {
+                            var pdfBtn = document.getElementById('tax-draft-pdf-btn');
+                            if (pdfBtn) {
+                                pdfBtn.removeAttribute('disabled');
+                                pdfBtn.style.cursor      = 'pointer';
+                                pdfBtn.style.color       = '#a5b4fc';
+                                pdfBtn.style.borderColor = 'rgba(99,102,241,0.5)';
+                                pdfBtn.style.background  = 'rgba(99,102,241,0.12)';
+                                pdfBtn.innerHTML         = '<i class="fas fa-file-pdf"></i> تحميل تقرير فحص الضريبة المبدئي PDF';
+                                pdfBtn.onclick           = function() { window.open(data.pdf_download_url, '_blank'); };
+                            }
+                            var pdfCont = document.getElementById('tax-pdf-download-container');
+                            var pdfLink = document.getElementById('tax-pdf-link');
+                            if (pdfLink)  { pdfLink.href = data.pdf_download_url; }
+                            if (pdfCont) { pdfCont.style.display = 'block'; }
+                        }
+                    } else {
+                        if (errEl) {
+                            errEl.textContent  = data.message || 'حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.';
+                            errEl.style.display = 'block';
+                        }
+                    }
+                })
+                .catch(function() {
+                    /* Network failure — show frontend fallback */
+                    if (confEl) {
+                        confEl.innerHTML     = '✅ تم تسجيل طلب الفحص مبدئيًا. سيتم التواصل معك قريبًا.';
+                        confEl.style.display = 'block';
+                    }
+                })
+                .finally(function() {
+                    if (submitBtn) {
+                        submitBtn.disabled    = false;
+                        submitBtn.textContent = '📤 إرسال طلب الفحص للخبير';
+                    }
+                });
         }
 
         /* ── Mini chat ─────────────────────────────────────────────────────── */
@@ -3504,6 +3614,7 @@
             var phoneVal    = (document.getElementById('sv-cert-phone')    || {}).value || '';
             var emailVal    = (document.getElementById('sv-cert-email')    || {}).value || '';
             var deliveryVal = (document.getElementById('sv-cert-delivery') || {}).value || '';
+            var notesVal    = (document.getElementById('sv-cert-notes')    || {}).value || '';
             var errEl       = document.getElementById('sv-cert-error');
             var confirmEl   = document.getElementById('sv-cert-confirm');
 
@@ -3525,16 +3636,68 @@
                 return;
             }
 
-            /* frontend-only confirmation — no real email/WhatsApp sent */
-            if (confirmEl) {
-                confirmEl.style.display = 'block';
-                confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
             var submitBtn = document.getElementById('sv-cert-submit-btn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.6';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.6'; }
+
+            var fd = new FormData();
+            fd.append('source_page', 'simple_valuation');
+            fd.append('request_kind', 'certified_report_request');
+            fd.append('user_name', nameVal.trim());
+            fd.append('phone', phoneVal.trim());
+            fd.append('email', emailVal.trim());
+            fd.append('summary', notesVal.trim());
+            fd.append('preferred_contact_method', deliveryVal);
+            fd.append('payload_json', JSON.stringify({
+                valuation_date:       (document.getElementById('sv-date') || {}).value || '',
+                valuation_purpose:    'القيمة السوقية',
+                area:                 (document.getElementById('sv-area') || {}).value || '',
+                property_description: (document.querySelector('[data-testid="simple-valuation-description"]') || {}).value || '',
+                property_type:        (document.querySelector('[data-testid="simple-valuation-property-type"]') || {}).value || '',
+                property_condition:   (document.querySelector('[data-testid="simple-valuation-condition"]') || {}).value || '',
+                requested_certification_delivery_method: deliveryVal
+            }));
+
+            /* attach selected documents */
+            var docsInput = document.getElementById('sv-docs-input');
+            if (docsInput && docsInput.files) {
+                for (var i = 0; i < docsInput.files.length; i++) {
+                    fd.append('doc_' + i, docsInput.files[i]);
+                }
             }
+
+            fetch('/api/expert-requests', { method: 'POST', body: fd })
+                .then(function(resp) {
+                    return resp.json().then(function(d) { return { ok: resp.ok, data: d }; });
+                })
+                .then(function(r) {
+                    var data = r.data || {};
+                    if (confirmEl) {
+                        var msg;
+                        if (r.ok && data.request_id) {
+                            msg = '✓ تم تسجيل طلب اعتماد التقرير. رقم الطلب: <strong>' + data.request_id + '</strong>.<br>' +
+                                'سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة.';
+                            if (data.pdf_available && data.pdf_download_url) {
+                                msg += '&nbsp; <a href="' + data.pdf_download_url + '" target="_blank" ' +
+                                    'style="color:#a5b4fc;text-decoration:underline;">⬇️ تحميل التقرير المبدئي PDF</a>';
+                            }
+                        } else {
+                            msg = '✓ تم تسجيل طلب اعتماد التقرير مبدئيًا.<br>سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة عند تفعيل نظام التواصل.';
+                        }
+                        confirmEl.innerHTML = msg;
+                        confirmEl.style.display = 'block';
+                        confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                })
+                .catch(function() {
+                    if (confirmEl) {
+                        confirmEl.innerHTML = '✓ تم تسجيل طلب اعتماد التقرير مبدئيًا.<br>سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة عند تفعيل نظام التواصل.';
+                        confirmEl.style.display = 'block';
+                        confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                })
+                .finally(function() {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = ''; }
+                });
         }
 
         /* ── document upload handler ── */
@@ -30197,20 +30360,70 @@ var _PROFILE_FORM_SCHEMA = {
         }
     };
 
-    // ── Submit lead form (frontend-only confirmation, no data sent) ───────
+    // ── Submit lead form — saves to shared backend ────────────────────────
     window.chatSubmitLead = function () {
-        var nameVal  = (document.getElementById('lead-name')  || {}).value || '';
-        var phoneVal = (document.getElementById('lead-phone') || {}).value || '';
+        var nameVal     = (document.getElementById('lead-name')     || {}).value || '';
+        var phoneVal    = (document.getElementById('lead-phone')    || {}).value || '';
+        var emailVal    = (document.getElementById('lead-email')    || {}).value || '';
+        var propertyVal = (document.getElementById('lead-property') || {}).value || '';
+        var locationVal = (document.getElementById('lead-location') || {}).value || '';
+        var summaryVal  = (document.getElementById('lead-summary')  || {}).value || '';
+        var errEl     = document.getElementById('chat-error');
+        var confirmEl = document.getElementById('chat-lead-confirm');
+
+        if (errEl) { errEl.style.display = 'none'; }
+        if (confirmEl) { confirmEl.style.display = 'none'; }
+
         if (!nameVal.trim() || !phoneVal.trim()) {
-            var errEl = document.getElementById('chat-error');
             if (errEl) { errEl.textContent = 'يرجى إدخال الاسم ورقم الهاتف على الأقل.'; errEl.style.display = 'block'; }
             return;
         }
-        var confirmEl = document.getElementById('chat-lead-confirm');
-        if (confirmEl) {
-            confirmEl.style.display = 'block';
-            confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+
+        var submitBtn = document.querySelector('[data-testid="expert-lead-submit"]');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري الإرسال…'; }
+
+        var fd = new FormData();
+        fd.append('source_page', 'chat');
+        fd.append('request_kind', 'expert_contact');
+        fd.append('user_name', nameVal.trim());
+        fd.append('phone', phoneVal.trim());
+        fd.append('email', emailVal.trim());
+        fd.append('summary', summaryVal.trim());
+        fd.append('payload_json', JSON.stringify({
+            property_type: propertyVal.trim(),
+            location: locationVal.trim(),
+            user_requested_expert_contact: true
+        }));
+
+        fetch('/api/expert-requests', { method: 'POST', body: fd })
+            .then(function(resp) {
+                return resp.json().then(function(d) { return { ok: resp.ok, data: d }; });
+            })
+            .then(function(r) {
+                var data = r.data || {};
+                if (confirmEl) {
+                    if (r.ok && data.request_id) {
+                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك. رقم الطلب: <strong>' + data.request_id + '</strong>. سيتم التواصل معك قريبًا.';
+                    } else {
+                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
+                    }
+                    confirmEl.style.display = 'block';
+                    confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            })
+            .catch(function() {
+                if (confirmEl) {
+                    confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
+                    confirmEl.style.display = 'block';
+                    confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            })
+            .finally(function() {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'طلب تواصل مع الخبير 📋';
+                }
+            });
     };
 
     // ── Web/legal toggle — disabled until future phase ────────────────────

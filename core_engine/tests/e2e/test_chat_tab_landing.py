@@ -325,3 +325,67 @@ def test_CS_chat_web_toggle_shows_coming_soon(page: Page, live_server: str) -> N
     )
     # Checkbox must remain unchecked (chatWebToggleClick unchecks it)
     assert not page.locator("#chat-web-toggle").is_checked()
+
+
+# ---------------------------------------------------------------------------
+# Shared Backend integration tests — Chat expert lead form
+# ---------------------------------------------------------------------------
+
+def test_CS_chat_expert_lead_saves_to_backend(page: Page, live_server: str) -> None:
+    """Chat expert lead form posts to /api/expert-requests and shows confirmation."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-CHAT0001",
+        "source_page":     "chat",
+        "request_kind":    "expert_contact",
+        "message":         "تم تسجيل الطلب بنجاح. رقم الطلب: REQ-CHAT0001.",
+        "pdf_available":   False,
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='expert-contact-card'] button").click()
+    page.locator("[data-testid='expert-lead-form']").wait_for(state="visible", timeout=3_000)
+
+    page.locator("[data-testid='expert-lead-name']").fill("أحمد محمد اختبار")
+    page.locator("[data-testid='expert-lead-phone']").fill("01012345678")
+    page.locator("[data-testid='expert-lead-submit']").click()
+
+    confirm = page.locator("[data-testid='expert-lead-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "تم" in confirm.inner_text()
+
+
+def test_CS_chat_expert_lead_confirmation_has_request_id(page: Page, live_server: str) -> None:
+    """Chat expert lead confirmation includes the request_id from the backend."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-CHATID01",
+        "message":         "تم تسجيل الطلب بنجاح. رقم الطلب: REQ-CHATID01.",
+        "pdf_available":   False,
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='expert-contact-card'] button").click()
+    page.locator("[data-testid='expert-lead-form']").wait_for(state="visible", timeout=3_000)
+
+    page.locator("[data-testid='expert-lead-name']").fill("اختبار ID")
+    page.locator("[data-testid='expert-lead-phone']").fill("01099999999")
+    page.locator("[data-testid='expert-lead-submit']").click()
+
+    confirm = page.locator("[data-testid='expert-lead-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "REQ-CHATID01" in confirm.inner_text()

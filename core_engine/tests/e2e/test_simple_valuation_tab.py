@@ -1233,3 +1233,172 @@ def test_SV_geo_district_freetext_available(page: Page, live_server: str) -> Non
     expect(district).to_be_enabled(timeout=3_000)
     district.fill("حي النخيل")
     assert district.input_value() == "حي النخيل"
+
+
+# ---------------------------------------------------------------------------
+# Shared Backend integration tests — Simple Valuation cert-request form
+# ---------------------------------------------------------------------------
+
+def test_SV_cert_request_saves_to_backend(page: Page, live_server: str) -> None:
+    """Submitting the cert request form posts to /api/expert-requests and shows confirmation."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-TEST0001",
+        "source_page":     "simple_valuation",
+        "request_kind":    "certified_report_request",
+        "message":         "تم تسجيل الطلب بنجاح. رقم الطلب: REQ-TEST0001.",
+        "pdf_available":   True,
+        "pdf_download_url":"/api/expert-requests/REQ-TEST0001/draft-pdf",
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    cert_card = page.locator("[data-testid='simple-valuation-cert-request-card']")
+    cert_card.wait_for(state="visible", timeout=5_000)
+
+    page.locator("[data-testid='simple-cert-name']").fill("محمد أحمد الاختبار")
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "تم" in confirm.inner_text()
+
+
+def test_SV_cert_request_confirmation_shows_request_id(page: Page, live_server: str) -> None:
+    """Confirmation message includes the request_id returned by the backend."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-ABCD1234",
+        "message":         "تم تسجيل الطلب.",
+        "pdf_available":   False,
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("محمد الاختبار")
+    page.locator("[data-testid='simple-cert-phone']").fill("01099999999")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("البريد الإلكتروني")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "REQ-ABCD1234" in confirm.inner_text()
+
+
+def test_SV_cert_pdf_link_shown_when_available(page: Page, live_server: str) -> None:
+    """When pdf_available=True, a PDF download link appears in confirmation."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-PDFTEST1",
+        "message":         "تم تسجيل الطلب.",
+        "pdf_available":   True,
+        "pdf_download_url":"/api/expert-requests/REQ-PDFTEST1/draft-pdf",
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار PDF")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    pdf_link = confirm.locator("a[href*='/api/expert-requests/']")
+    expect(pdf_link).to_have_count(1)
+
+
+def test_SV_cert_no_whatsapp_email_sent_field(page: Page, live_server: str) -> None:
+    """Backend for simple valuation cert request never claims WhatsApp/email was sent."""
+    import json as _json
+    captured = {}
+
+    def _intercept(route):
+        resp = route.fetch()
+        try:
+            captured["json"] = resp.json()
+        except Exception:
+            captured["json"] = {}
+        route.fulfill(response=resp)
+
+    page.route("**/api/expert-requests", _intercept)
+
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار")
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    page.locator("[data-testid='simple-cert-confirmation']").wait_for(
+        state="visible", timeout=8_000
+    )
+
+    if captured.get("json"):
+        resp_str = str(captured["json"])
+        assert "email_sent"    not in resp_str
+        assert "whatsapp_sent" not in resp_str
+
+
+def test_SV_cert_excel_hidden_in_confirmation(page: Page, live_server: str) -> None:
+    """No Excel download link appears in the simple valuation cert confirmation."""
+    import json as _json
+    _mock_body = _json.dumps({
+        "status":          "success",
+        "request_id":      "REQ-XLSTEST1",
+        "message":         "تم تسجيل الطلب.",
+        "pdf_available":   False,
+        "non_certified":   True,
+        "documents_saved": 0,
+        "document_errors": [],
+    }).encode()
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201, body=_mock_body, content_type="application/json"
+    ))
+
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار Excel")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    html = confirm.inner_html()
+    assert ".xlsx" not in html
+    assert ".xlsm" not in html

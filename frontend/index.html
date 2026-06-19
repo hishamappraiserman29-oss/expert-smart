@@ -1261,6 +1261,7 @@
     <!-- ══ Phase 1: Four-Tab Navigation Shell ══════════════════════════════ -->
     <nav class="es-tab-nav" id="es-main-tabs" role="tablist" aria-label="التنقل الرئيسي">
         <button class="es-tab-btn"               id="es-tab-chat"         onclick="esShowTab('chat')"         type="button" role="tab" data-testid="chat-tab">💬 الشات</button>
+        <button class="es-tab-btn"               id="es-tab-tax"          onclick="esShowTab('tax')"          type="button" role="tab" data-testid="tax-tab">🧾 فاحص الضرائب والطعون</button>
         <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab">📊 التقييم المجمع</button>
@@ -1817,6 +1818,688 @@
 
     </div>
     <!-- ══ End Phase 12: Real Estate Chat Tab ════════════════════════════════════════════════════════════════ -->
+
+
+    <!-- ══ Tax Appeal Workspace ══════════════════════════════════════════════════════ -->
+    <style>
+    /* ── Tax Appeal Page ──────────────────────────────────────────────────────────── */
+    #ws-tax { padding: 0; }
+
+    .tax-hero {
+        text-align: center;
+        padding: 32px 24px 20px;
+        background: linear-gradient(155deg, rgba(6,25,40,0.97) 0%, rgba(3,7,18,0.99) 100%);
+        border-bottom: 1px solid rgba(16,185,129,0.2);
+        border-radius: 14px 14px 0 0;
+    }
+
+    .tax-emergency-banner {
+        background: linear-gradient(90deg, rgba(239,68,68,0.13) 0%, rgba(245,158,11,0.10) 100%);
+        border: 1px solid rgba(239,68,68,0.45);
+        border-radius: 10px;
+        padding: 12px 18px;
+        font-size: 0.84rem;
+        color: #fca5a5;
+        line-height: 1.7;
+        margin: 0 0 1.5rem;
+    }
+
+    .tax-risk-bar-wrap {
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        height: 18px;
+        overflow: hidden;
+        margin: 8px 0;
+        position: relative;
+    }
+    .tax-risk-bar-fill {
+        height: 100%;
+        border-radius: 8px;
+        transition: width 0.6s ease, background 0.4s;
+    }
+    .tax-savings-table td { padding: 6px 10px; font-size: 0.88rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .tax-savings-table td:first-child { color: #9ca3af; }
+    .tax-savings-table td:last-child  { font-weight: 700; color: #f9fafb; }
+
+    .tax-mini-chat-box {
+        background: linear-gradient(160deg, #0f1d2e 0%, #030712 100%);
+        border: 1px solid rgba(16,185,129,0.25);
+        border-radius: 12px;
+        padding: 18px;
+        margin-top: 1.5rem;
+    }
+    .tax-msg-bubble {
+        background: rgba(16,185,129,0.08);
+        border: 1px solid rgba(16,185,129,0.2);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 10px;
+        font-size: 0.88rem;
+        color: #d1fae5;
+        line-height: 1.7;
+    }
+    </style>
+
+    <div class="es-workspace" id="ws-tax" role="tabpanel" data-testid="tax-page" style="padding:1.5rem;">
+
+        <!-- ── Hero ──────────────────────────────────────────────────────── -->
+        <div class="tax-hero" style="margin:-1.5rem -1.5rem 1.5rem;border-radius:0;">
+            <div style="font-size:2.2rem;margin-bottom:10px;">🧾</div>
+            <h2 style="color:var(--gold);font-size:1.5rem;font-weight:900;margin:0 0 8px;">فاحص الضرائب والطعون العقارية</h2>
+            <p style="color:#9ca3af;font-size:0.92rem;margin:0;max-width:700px;margin:0 auto;line-height:1.7;">
+                أداة مبدئية لفحص مطالبات الضرائب العقارية وضريبة التصرفات، وتقدير مخاطر المغالاة قبل طلب تقرير خبير معتمد.
+            </p>
+        </div>
+
+        <!-- ── Emergency Banner ──────────────────────────────────────────── -->
+        <div class="tax-emergency-banner" data-testid="tax-emergency-banner">
+            ⚠️ <strong>تنبيه مهم:</strong> مواعيد الطعن على المطالبات الضريبية قد تكون قصيرة ومقيدة بتاريخ استلام الإخطار.
+            راجع تاريخ الاستلام والمستندات الرسمية قبل اتخاذ أي إجراء.
+            <br>
+            <span style="color:#fbbf24;font-size:0.82rem;">
+                قد تكون مهلة الطعن 60 يومًا من تاريخ استلام المطالبة في بعض الحالات، ويجب التحقق من الإخطار والمصدر الرسمي.
+                هذا إشعار استرشادي وليس حكمًا قانونيًا نهائيًا.
+            </span>
+        </div>
+
+        <!-- ══ A. Smart Input Console ══════════════════════════════════════ -->
+        <div class="ai-section" style="margin-bottom:1.5rem;" data-testid="tax-input-section">
+            <h3 style="color:var(--gold);font-size:1rem;font-weight:700;margin:0 0 16px;">📋 بيانات الفحص الضريبي</h3>
+
+            <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
+
+                <!-- نوع الضريبة -->
+                <div class="field-group">
+                    <label>نوع الضريبة <span style="color:#ef4444;">*</span></label>
+                    <select class="input-box" id="tax-type" data-testid="tax-type-select" onchange="taxTypeChanged()">
+                        <option value="">— اختر نوع الضريبة —</option>
+                        <option value="annual">الضرائب العقارية السنوية</option>
+                        <option value="transfer">ضريبة التصرفات العقارية 2.5%</option>
+                    </select>
+                </div>
+
+                <!-- نوع الأصل -->
+                <div class="field-group">
+                    <label>نوع الأصل <span style="color:#ef4444;">*</span></label>
+                    <select class="input-box" id="tax-asset-type" data-testid="tax-asset-type">
+                        <option value="">— اختر نوع الأصل —</option>
+                        <option value="residential">سكني</option>
+                        <option value="commercial">تجاري / إداري</option>
+                        <option value="industrial">صناعي / مصنع / مستودع</option>
+                        <option value="special">منشأة ذات طبيعة خاصة</option>
+                        <option value="land">أرض</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+
+                <!-- الدولة -->
+                <div class="field-group">
+                    <label>الدولة</label>
+                    <select class="input-box" id="tax-country" data-testid="tax-country">
+                        <option value="EG" selected>مصر</option>
+                        <option value="SA">المملكة العربية السعودية</option>
+                        <option value="AE">الإمارات العربية المتحدة</option>
+                        <option value="KW">الكويت</option>
+                        <option value="QA">قطر</option>
+                        <option value="JO">الأردن</option>
+                        <option value="other">دولة أخرى</option>
+                    </select>
+                </div>
+
+                <!-- المحافظة / المنطقة -->
+                <div class="field-group">
+                    <label>المحافظة / المنطقة</label>
+                    <input type="text" class="input-box" id="tax-region" data-testid="tax-region"
+                        placeholder="مثال: القاهرة، الجيزة، الإسكندرية…">
+                </div>
+
+                <!-- المدينة / الحي -->
+                <div class="field-group">
+                    <label>المدينة / الحي</label>
+                    <input type="text" class="input-box" id="tax-city" data-testid="tax-city"
+                        placeholder="مثال: مدينة نصر، المعادي، الزمالك…">
+                </div>
+
+                <!-- المساحة -->
+                <div class="field-group">
+                    <label>المساحة الإجمالية (م²) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" class="input-box" id="tax-area" data-testid="tax-area"
+                        placeholder="مثال: 500" min="1">
+                </div>
+
+                <!-- حالة العقار -->
+                <div class="field-group">
+                    <label>حالة العقار</label>
+                    <select class="input-box" id="tax-property-status" data-testid="tax-property-status">
+                        <option value="">— اختر الحالة —</option>
+                        <option value="operating">يعمل / مستغل</option>
+                        <option value="closed">مغلق</option>
+                        <option value="construction">تحت الإنشاء</option>
+                        <option value="idle">غير مستغل</option>
+                        <option value="needs-inspection">يحتاج فحص</option>
+                    </select>
+                </div>
+
+                <!-- قيمة المطالبة الحكومية -->
+                <div class="field-group">
+                    <label>قيمة المطالبة الحكومية (ج.م) <span style="color:#ef4444;">*</span></label>
+                    <input type="number" class="input-box" id="tax-government-claim" data-testid="tax-government-claim"
+                        placeholder="مثال: 40000" min="0">
+                </div>
+
+            </div>
+
+            <!-- ── Conditional: Transfer Tax ─────────────────────────────── -->
+            <div id="tax-transfer-fields" style="display:none;margin-top:8px;">
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
+                    <div class="field-group">
+                        <label>قيمة التصرف / سعر البيع (ج.م) <span style="color:#ef4444;">*</span></label>
+                        <input type="number" class="input-box" id="tax-sale-value" data-testid="tax-sale-value"
+                            placeholder="مثال: 1000000" min="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Conditional: Annual Tax ─────────────────────────────── -->
+            <div id="tax-annual-fields" style="display:none;margin-top:8px;">
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
+                    <div class="field-group">
+                        <label>القيمة الإيجارية السنوية المقدرة (ج.م) — إن وجدت</label>
+                        <input type="number" class="input-box" id="tax-annual-rental-estimate"
+                            data-testid="tax-annual-rental-estimate"
+                            placeholder="مثال: 120000 — اتركه فارغًا إن كانت غير معروفة" min="0">
+                    </div>
+                    <div class="field-group">
+                        <label>هل يوجد نموذج 3 ضرائب؟</label>
+                        <select class="input-box" id="tax-form3-status" data-testid="tax-form3-status">
+                            <option value="">— اختر —</option>
+                            <option value="yes">نعم</option>
+                            <option value="no">لا</option>
+                            <option value="unsure">غير متأكد</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end input section -->
+
+        <!-- ══ B. Documents ════════════════════════════════════════════════ -->
+        <div class="ai-section" style="margin-bottom:1.5rem;border-color:rgba(99,102,241,0.3);"
+            data-testid="tax-documents-section">
+            <h3 style="color:#a5b4fc;font-size:0.95rem;font-weight:700;margin:0 0 10px;">
+                📎 مستندات الفحص الضريبي
+            </h3>
+            <input type="file" id="tax-docs-input" data-testid="tax-documents-input"
+                multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                style="display:none;" onchange="taxHandleDocs(this.files)">
+            <button type="button" data-testid="tax-documents-upload-btn"
+                onclick="document.getElementById('tax-docs-input').click()"
+                style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;
+                       color:#a5b4fc;font-family:'Tajawal',sans-serif;font-size:0.88rem;padding:8px 16px;cursor:pointer;">
+                <i class="fas fa-paperclip"></i> إرفاق نموذج 3 ضرائب أو مستندات العقار
+            </button>
+            <ul id="tax-docs-list" data-testid="tax-documents-list"
+                style="margin:8px 0 0;padding-right:18px;color:#a5b4fc;font-size:0.82rem;line-height:1.8;"></ul>
+            <div data-testid="tax-documents-note"
+                style="margin-top:10px;font-size:0.79rem;color:#6b7280;line-height:1.65;">
+                في هذه المرحلة يتم عرض أسماء الملفات فقط داخل الواجهة ولا يتم رفعها فعليًا للخادم.
+            </div>
+        </div>
+
+        <!-- ══ C. Check Button ═════════════════════════════════════════════ -->
+        <button type="button" id="tax-check-btn" data-testid="tax-check-button"
+            onclick="taxCheck()"
+            style="width:100%;padding:15px;background:linear-gradient(135deg,#10b981,#059669);
+                   border:none;border-radius:10px;color:#fff;font-family:'Tajawal',sans-serif;
+                   font-size:1.1rem;font-weight:900;cursor:pointer;margin-bottom:1.5rem;">
+            🔍 تحقق الآن
+        </button>
+
+        <!-- ══ D+E. Output Dashboard ════════════════════════════════════════ -->
+        <div id="tax-output-area" data-testid="tax-output-dashboard" style="display:none;">
+
+            <!-- Risk Gauge -->
+            <div class="ai-section" style="margin-bottom:1.5rem;border-color:rgba(16,185,129,0.3);"
+                data-testid="tax-overvaluation-gauge">
+                <h3 style="color:#10b981;font-size:0.95rem;font-weight:700;margin:0 0 12px;">
+                    📊 مؤشر مخاطر المغالاة
+                </h3>
+                <div id="tax-risk-label"
+                    style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#f9fafb;">—</div>
+                <div class="tax-risk-bar-wrap">
+                    <div id="tax-risk-bar-fill" class="tax-risk-bar-fill" style="width:0%;background:#10b981;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#6b7280;margin-top:4px;">
+                    <span>طبيعي</span><span>يحتاج مراجعة</span><span>مرتفع / يستدعي فحص خبير</span>
+                </div>
+            </div>
+
+            <!-- Savings Card -->
+            <div class="ai-section" style="margin-bottom:1.5rem;border-color:rgba(212,175,55,0.3);">
+                <h3 style="color:var(--gold);font-size:0.95rem;font-weight:700;margin:0 0 12px;">
+                    💰 مؤشر الوفر المحتمل
+                </h3>
+                <table class="tax-savings-table" style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td>المطالبة الحكومية</td>
+                        <td id="tax-gov-claim-out" data-testid="tax-government-claim-output">—</td>
+                    </tr>
+                    <tr>
+                        <td>الضريبة / التكلفة الاسترشادية المحسوبة</td>
+                        <td id="tax-est-tax-out" data-testid="tax-estimated-fair-tax-output">—</td>
+                    </tr>
+                    <tr>
+                        <td>الفرق المحتمل</td>
+                        <td id="tax-saving-out" data-testid="tax-potential-saving-output"
+                            style="color:#10b981;">—</td>
+                    </tr>
+                    <tr id="tax-gap-pct-row" style="display:none;">
+                        <td>نسبة الفجوة</td>
+                        <td id="tax-gap-pct-out" style="color:#f59e0b;">—</td>
+                    </tr>
+                </table>
+                <div id="tax-calc-note" style="font-size:0.78rem;color:#6b7280;margin-top:10px;line-height:1.6;"></div>
+            </div>
+
+            <!-- Advisory Warning -->
+            <div data-testid="tax-draft-warning"
+                style="background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.3);
+                       border-radius:10px;padding:12px 16px;font-size:0.83rem;color:#fca5a5;
+                       margin-bottom:1.5rem;line-height:1.7;">
+                ⚠️ هذه نتيجة فحص مبدئي غير معتمد، ولا تُستخدم كطعن رسمي أو تقرير خبير قبل مراجعة المستندات والبيانات.
+                المعدلات المستخدمة استرشادية وقد تختلف عن التطبيق الرسمي.
+            </div>
+
+        </div><!-- end tax-output-area -->
+
+        <!-- ══ F. Draft PDF (always visible, disabled) ══════════════════════ -->
+        <div style="margin-bottom:1.5rem;text-align:center;">
+            <button type="button" data-testid="tax-draft-pdf-button" disabled
+                style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);
+                       border-radius:9px;color:#6b7280;font-family:'Tajawal',sans-serif;
+                       font-size:0.88rem;padding:10px 22px;cursor:not-allowed;">
+                <i class="fas fa-file-pdf"></i>
+                تحميل تقرير فحص الضريبة المبدئي PDF —
+                سيتم تفعيله عند ربط مولد التقارير
+            </button>
+        </div>
+
+        <!-- ══ G. Expert CTA ════════════════════════════════════════════════ -->
+        <div style="text-align:center;margin-bottom:1.5rem;">
+            <button type="button" data-testid="tax-expert-cta-button"
+                onclick="taxShowLeadForm()"
+                style="background:linear-gradient(135deg,var(--gold),#b8960d);
+                       border:none;border-radius:10px;color:#000;font-family:'Tajawal',sans-serif;
+                       font-size:1rem;font-weight:900;padding:14px 30px;cursor:pointer;">
+                📜 إعداد تقرير فني معتمد وتقديم طعن عبر الخبير
+            </button>
+        </div>
+
+        <!-- ══ G+H. Lead Form ════════════════════════════════════════════════ -->
+        <div id="tax-lead-form" data-testid="tax-lead-form"
+            style="display:none;margin-bottom:1.5rem;">
+            <div class="ai-section" style="border-color:rgba(212,175,55,0.35);">
+                <h3 style="color:var(--gold);font-size:1.05rem;font-weight:900;margin:0 0 14px;">
+                    📝 طلب فحص خبير وإعداد طعن رسمي
+                </h3>
+
+                <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
+                    <div class="field-group">
+                        <label>اسم المالك أو الشركة بالكامل <span style="color:#ef4444;">*</span></label>
+                        <input type="text" class="input-box" id="tax-lead-name-input"
+                            data-testid="tax-lead-name" placeholder="الاسم الرباعي أو اسم الشركة…" dir="rtl">
+                    </div>
+                    <div class="field-group">
+                        <label>رقم الهاتف / واتساب <span style="color:#ef4444;">*</span></label>
+                        <input type="tel" class="input-box" id="tax-lead-phone-input"
+                            data-testid="tax-lead-phone" placeholder="مثال: 01012345678" dir="ltr">
+                    </div>
+                    <div class="field-group">
+                        <label>البريد الإلكتروني (اختياري)</label>
+                        <input type="email" class="input-box" id="tax-lead-email-input"
+                            data-testid="tax-lead-email" placeholder="example@domain.com" dir="ltr">
+                    </div>
+                    <div class="field-group">
+                        <label>نوع الطلب</label>
+                        <select class="input-box" id="tax-lead-request-type-sel"
+                            data-testid="tax-lead-request-type">
+                            <option value="">— اختر نوع الطلب —</option>
+                            <option value="review-claim">مراجعة مطالبة ضرائب عقارية</option>
+                            <option value="appeal-report">إعداد تقرير فني للطعن</option>
+                            <option value="form3-check">فحص نموذج 3 ضرائب</option>
+                            <option value="transfer-tax">ضريبة تصرفات عقارية</option>
+                            <option value="consultation">استشارة أولية</option>
+                        </select>
+                    </div>
+                    <div class="field-group" style="grid-column: 1 / -1;">
+                        <label>ملخص الحالة</label>
+                        <textarea class="input-box" id="tax-lead-summary-input"
+                            data-testid="tax-lead-summary" rows="3"
+                            placeholder="اذكر أهم تفاصيل المطالبة أو الحالة…"
+                            style="resize:vertical;"></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label>طريقة التواصل المفضلة</label>
+                        <select class="input-box" id="tax-lead-contact-method-sel"
+                            data-testid="tax-lead-contact-method">
+                            <option value="">— اختر —</option>
+                            <option value="whatsapp">واتساب</option>
+                            <option value="email">البريد الإلكتروني</option>
+                            <option value="phone">اتصال هاتفي</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="tax-lead-err"
+                    style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);
+                           border-radius:8px;padding:10px 14px;font-size:0.83rem;color:#fca5a5;margin-bottom:12px;"></div>
+
+                <button type="button" data-testid="tax-lead-submit" onclick="taxSubmitLead()"
+                    style="width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),#b8960d);
+                           border:none;border-radius:9px;color:#000;font-family:'Tajawal',sans-serif;
+                           font-size:1rem;font-weight:900;cursor:pointer;">
+                    📤 إرسال طلب الفحص للخبير
+                </button>
+
+                <div id="tax-lead-confirm" data-testid="tax-lead-confirmation"
+                    style="display:none;margin-top:14px;background:rgba(16,185,129,0.08);
+                           border:1px solid rgba(16,185,129,0.3);border-radius:8px;
+                           padding:12px 16px;font-size:0.88rem;color:#6ee7b7;line-height:1.7;">
+                    ✅ تم تسجيل طلب الفحص مبدئيًا. سيتم ربط الإرسال الفعلي للخبير عند تفعيل نظام التواصل.
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ I. Mini Tax Chat ══════════════════════════════════════════════ -->
+        <div class="tax-mini-chat-box" data-testid="tax-mini-chat">
+            <h4 style="color:#10b981;font-size:0.95rem;font-weight:700;margin:0 0 12px;">
+                💬 اسأل عن الضرائب العقارية والطعون
+            </h4>
+
+            <!-- Quick prompts -->
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                <button type="button" onclick="taxMiniChatQuick('form3-deadline')"
+                    style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);
+                           border-radius:20px;color:#6ee7b7;font-family:'Tajawal',sans-serif;
+                           font-size:0.78rem;padding:5px 12px;cursor:pointer;">
+                    ما أهمية تاريخ استلام نموذج 3 ضرائب؟
+                </button>
+                <button type="button" onclick="taxMiniChatQuick('prove-factory-idle')"
+                    style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);
+                           border-radius:20px;color:#6ee7b7;font-family:'Tajawal',sans-serif;
+                           font-size:0.78rem;padding:5px 12px;cursor:pointer;">
+                    كيف أثبت أن المصنع متوقف؟
+                </button>
+                <button type="button" onclick="taxMiniChatQuick('is-it-official')"
+                    style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);
+                           border-radius:20px;color:#6ee7b7;font-family:'Tajawal',sans-serif;
+                           font-size:0.78rem;padding:5px 12px;cursor:pointer;">
+                    هل نتيجة الفاحص تعتبر طعن رسمي؟
+                </button>
+            </div>
+
+            <div style="display:flex;gap:8px;">
+                <input type="text" class="input-box" id="tax-mini-chat-input-field"
+                    data-testid="tax-mini-chat-input"
+                    placeholder="اكتب سؤالك عن الضرائب العقارية أو الطعن أو نموذج 3 ضرائب..."
+                    onkeydown="if(event.key==='Enter')taxSendMiniChat()"
+                    style="flex:1;font-size:0.87rem;padding:10px 14px;">
+                <button type="button" data-testid="tax-mini-chat-send"
+                    onclick="taxSendMiniChat()"
+                    style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);
+                           border-radius:8px;color:#10b981;font-family:'Tajawal',sans-serif;
+                           font-size:0.88rem;padding:10px 18px;cursor:pointer;white-space:nowrap;">
+                    إرسال
+                </button>
+            </div>
+
+            <div id="tax-mini-chat-answer" data-testid="tax-mini-chat-answer" style="display:none;"></div>
+
+            <div id="tax-mini-chat-expert-cta" data-testid="tax-mini-chat-expert-cta" style="display:none;margin-top:10px;text-align:center;">
+                <button type="button" onclick="taxShowLeadForm()"
+                    style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);
+                           border-radius:8px;color:var(--gold);font-family:'Tajawal',sans-serif;
+                           font-size:0.84rem;font-weight:700;padding:8px 18px;cursor:pointer;">
+                    📜 طلب فحص من الخبير
+                </button>
+            </div>
+        </div>
+
+        <!-- ══ JavaScript ════════════════════════════════════════════════════ -->
+        <script>
+        /* ── Tax Advisory Config (all values are advisory / frontend-only) ── */
+        var TAX_ADVISORY_CONFIG = {
+            transferRate:       0.025,
+            annualAdvisoryRate: 0.10,
+            appealDaysAdvisory: 60
+        };
+
+        /* ── Tax type conditional fields ─────────────────────────────────── */
+        function taxTypeChanged() {
+            var t = document.getElementById('tax-type').value;
+            document.getElementById('tax-transfer-fields').style.display = (t === 'transfer') ? '' : 'none';
+            document.getElementById('tax-annual-fields').style.display   = (t === 'annual')   ? '' : 'none';
+        }
+
+        /* ── Document display (no upload) ─────────────────────────────────── */
+        function taxHandleDocs(files) {
+            var listEl = document.getElementById('tax-docs-list');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+            if (!files || !files.length) return;
+            for (var i = 0; i < files.length; i++) {
+                var li = document.createElement('li');
+                var kb = files[i].size > 0 ? Math.round(files[i].size / 1024) + ' KB' : '—';
+                li.textContent = files[i].name + '  (' + kb + ')';
+                listEl.appendChild(li);
+            }
+        }
+
+        /* ── Main calculation ─────────────────────────────────────────────── */
+        function taxCheck() {
+            var taxType  = document.getElementById('tax-type').value;
+            var govClaim = parseFloat(document.getElementById('tax-government-claim').value) || 0;
+            var area     = parseFloat(document.getElementById('tax-area').value) || 0;
+
+            var estimatedTax = null;
+            var calcNote     = '';
+            var missing      = false;
+
+            if (taxType === 'transfer') {
+                var saleVal = parseFloat(document.getElementById('tax-sale-value').value) || 0;
+                if (saleVal > 0) {
+                    estimatedTax = saleVal * TAX_ADVISORY_CONFIG.transferRate;
+                    calcNote = 'تم الحساب بمعدل 2.5% استرشادي من قيمة التصرف (' +
+                               saleVal.toLocaleString('ar-EG') + ' ج.م). هذا تقدير مبدئي وليس حكمًا قانونيًا.';
+                } else {
+                    missing  = true;
+                    calcNote = 'لا يمكن احتساب الضريبة الاسترشادية دون إدخال قيمة التصرف / سعر البيع.';
+                }
+            } else if (taxType === 'annual') {
+                var rentalEst = parseFloat(document.getElementById('tax-annual-rental-estimate').value) || 0;
+                if (rentalEst > 0) {
+                    estimatedTax = rentalEst * TAX_ADVISORY_CONFIG.annualAdvisoryRate;
+                    calcNote = 'تم الحساب بمعدل استرشادي 10% من القيمة الإيجارية السنوية المقدرة. ' +
+                               'المعدل قابل للتعديل وليس حكمًا قانونيًا نهائيًا.';
+                } else {
+                    missing  = true;
+                    calcNote = 'لا يمكن تقدير الضريبة العادلة بدقة دون قيمة إيجارية أو بيانات سوقية. ' +
+                               'يمكن استخدام الفحص المبدئي فقط لتحديد الحاجة لمراجعة خبير.';
+                }
+            } else {
+                calcNote = 'يرجى اختيار نوع الضريبة أولاً.';
+                missing  = true;
+            }
+
+            /* Risk calculation */
+            var riskLabel = '—';
+            var riskPct   = 0;
+            var riskColor = '#10b981';
+            var diff      = null;
+            var gapPct    = null;
+
+            if (!missing && estimatedTax !== null && govClaim > 0) {
+                diff    = govClaim - estimatedTax;
+                gapPct  = estimatedTax > 0 ? ((diff / estimatedTax) * 100) : null;
+                var ratio = estimatedTax > 0 ? (govClaim / estimatedTax) : 0;
+
+                if (ratio <= 1.10) {
+                    riskLabel = '✅ طبيعي — المطالبة ضمن النطاق الاسترشادي';
+                    riskPct   = 20;
+                    riskColor = '#10b981';
+                } else if (ratio <= 1.35) {
+                    riskLabel = '⚠️ يحتاج مراجعة — فجوة ملحوظة بين المطالبة والتقدير';
+                    riskPct   = 60;
+                    riskColor = '#f59e0b';
+                } else {
+                    riskLabel = '🔴 مرتفع / يستدعي فحص خبير — فجوة كبيرة';
+                    riskPct   = 95;
+                    riskColor = '#ef4444';
+                }
+            } else if (missing) {
+                riskLabel = 'يحتاج بيانات إضافية';
+                riskPct   = 10;
+                riskColor = '#6b7280';
+            } else if (govClaim <= 0) {
+                riskLabel = 'أدخل قيمة المطالبة الحكومية للحساب';
+                riskPct   = 5;
+                riskColor = '#6b7280';
+            }
+
+            /* Update UI */
+            document.getElementById('tax-risk-label').textContent      = riskLabel;
+            document.getElementById('tax-risk-bar-fill').style.width   = riskPct + '%';
+            document.getElementById('tax-risk-bar-fill').style.background = riskColor;
+
+            var fmt = function(n) { return n !== null && !isNaN(n) ? Math.round(n).toLocaleString('ar-EG') + ' ج.م' : '—'; };
+
+            document.getElementById('tax-gov-claim-out').textContent  = govClaim > 0 ? fmt(govClaim)     : '—';
+            document.getElementById('tax-est-tax-out').textContent    = estimatedTax !== null ? fmt(estimatedTax) : 'غير قابل للحساب بدقة من البيانات الحالية.';
+            document.getElementById('tax-saving-out').textContent     = diff !== null ? fmt(diff) : '—';
+
+            if (gapPct !== null) {
+                document.getElementById('tax-gap-pct-row').style.display = '';
+                document.getElementById('tax-gap-pct-out').textContent   = gapPct.toFixed(1) + '%';
+            } else {
+                document.getElementById('tax-gap-pct-row').style.display = 'none';
+            }
+
+            document.getElementById('tax-calc-note').textContent = calcNote;
+
+            document.getElementById('tax-output-area').style.display = 'block';
+            document.getElementById('tax-output-area').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        /* ── Lead form show/hide ──────────────────────────────────────────── */
+        function taxShowLeadForm() {
+            var f = document.getElementById('tax-lead-form');
+            if (f) {
+                f.style.display = 'block';
+                f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        /* ── Lead form submit (frontend-only) ─────────────────────────────── */
+        function taxSubmitLead() {
+            var name    = (document.getElementById('tax-lead-name-input')  || {}).value || '';
+            var phone   = (document.getElementById('tax-lead-phone-input') || {}).value || '';
+            var errEl   = document.getElementById('tax-lead-err');
+            var confEl  = document.getElementById('tax-lead-confirm');
+
+            if (errEl)  { errEl.style.display = 'none'; errEl.textContent = ''; }
+            if (confEl) { confEl.style.display = 'none'; }
+
+            if (!name.trim()) {
+                if (errEl) { errEl.textContent = 'يرجى إدخال الاسم بالكامل.'; errEl.style.display = 'block'; }
+                return;
+            }
+            if (!phone.trim()) {
+                if (errEl) { errEl.textContent = 'يرجى إدخال رقم الهاتف / واتساب.'; errEl.style.display = 'block'; }
+                return;
+            }
+            /* Frontend-only: no real send */
+            if (confEl) { confEl.style.display = 'block'; }
+        }
+
+        /* ── Mini chat ─────────────────────────────────────────────────────── */
+        var TAX_MINI_CHAT_ANSWERS = {
+            'form3-deadline': {
+                q: 'ما أهمية تاريخ استلام نموذج 3 ضرائب؟',
+                a: 'نموذج 3 ضرائب هو الإشعار الرسمي بالمطالبة الضريبية. تاريخ استلامه يُحدد نقطة بداية احتساب مهل الطعن. ' +
+                   'قد تكون المهلة 60 يومًا في بعض الحالات، لكن يجب التحقق من الإخطار الرسمي والمصدر القانوني. ' +
+                   'لا تتأخر في مراجعة التاريخ بمجرد استلام النموذج.',
+                showCta: true
+            },
+            'prove-factory-idle': {
+                q: 'كيف أثبت أن المصنع متوقف؟',
+                a: 'لإثبات توقف المصنع قد تحتاج: قراءات عدادات الكهرباء والمياه (انخفاض حاد)، سجل إنتاجي أو مخزون صفري، ' +
+                   'شهادة من اتحاد المستثمرين أو الغرفة التجارية، تقرير خبير هندسي معتمد، صور موثقة بتاريخ، ' +
+                   'رخصة موقوفة أو غير مجددة. هذه وثائق إضافية وليست ضمانة قانونية. استعن بخبير لتقييم قوة المستندات.',
+                showCta: true
+            },
+            'is-it-official': {
+                q: 'هل نتيجة الفاحص تعتبر طعن رسمي؟',
+                a: 'لا. نتيجة الفاحص هي فحص مبدئي غير معتمد. لتقديم طعن رسمي تحتاج تقرير خبير تقييم معتمد وإجراءات قانونية رسمية.',
+                showCta: false
+            }
+        };
+
+        function taxMiniChatQuick(key) {
+            var entry = TAX_MINI_CHAT_ANSWERS[key];
+            if (!entry) return;
+            var inEl = document.getElementById('tax-mini-chat-input-field');
+            if (inEl) inEl.value = entry.q;
+            taxShowChatAnswer(entry.a, entry.showCta);
+        }
+
+        function taxSendMiniChat() {
+            var inEl = document.getElementById('tax-mini-chat-input-field');
+            var q    = inEl ? inEl.value.trim() : '';
+            if (!q) return;
+
+            /* Keyword matching */
+            var qLower = q.toLowerCase();
+            var matched = null;
+
+            if (qLower.indexOf('نموذج 3') >= 0 || qLower.indexOf('form3') >= 0 || qLower.indexOf('استلام') >= 0 || qLower.indexOf('موعد') >= 0 || qLower.indexOf('مهلة') >= 0) {
+                matched = TAX_MINI_CHAT_ANSWERS['form3-deadline'];
+            } else if (qLower.indexOf('مصنع') >= 0 || qLower.indexOf('متوقف') >= 0 || qLower.indexOf('مغلق') >= 0 || qLower.indexOf('أثبت') >= 0 || qLower.indexOf('تثبت') >= 0) {
+                matched = TAX_MINI_CHAT_ANSWERS['prove-factory-idle'];
+            } else if (qLower.indexOf('طعن رسمي') >= 0 || qLower.indexOf('رسمي') >= 0 || qLower.indexOf('فاحص') >= 0 || qLower.indexOf('معتمد') >= 0) {
+                matched = TAX_MINI_CHAT_ANSWERS['is-it-official'];
+            } else if (
+                qLower.indexOf('ضريبة') >= 0 || qLower.indexOf('مطالبة') >= 0 ||
+                qLower.indexOf('طعن') >= 0   || qLower.indexOf('عقار') >= 0 ||
+                qLower.indexOf('تصرفات') >= 0|| qLower.indexOf('نموذج') >= 0 ||
+                qLower.indexOf('إيجاري') >= 0|| qLower.indexOf('تقييم') >= 0 ||
+                qLower.indexOf('خبير') >= 0  || qLower.indexOf('مهلة') >= 0
+            ) {
+                taxShowChatAnswer(
+                    'سؤالك يتعلق بالضرائب العقارية أو الطعون. للحصول على إجابة دقيقة، يُنصح بمراجعة خبير ضرائب عقارية معتمد. ' +
+                    'يمكنك استخدام الفاحص أعلاه لتقدير المخاطر وطلب مراجعة متخصصة.', true);
+                return;
+            } else {
+                taxShowChatAnswer(
+                    'هذا الشات مخصص لأسئلة الضرائب العقارية والطعون فقط. يرجى طرح سؤال يتعلق بالضرائب أو الطعون العقارية.', false);
+                return;
+            }
+
+            if (matched) taxShowChatAnswer(matched.a, matched.showCta);
+        }
+
+        function taxShowChatAnswer(answer, showCta) {
+            var ansEl  = document.getElementById('tax-mini-chat-answer');
+            var ctaEl  = document.getElementById('tax-mini-chat-expert-cta');
+            if (ansEl) {
+                ansEl.style.display = 'block';
+                ansEl.innerHTML = '<div class="tax-msg-bubble">' + answer + '</div>';
+            }
+            if (ctaEl) ctaEl.style.display = showCta ? 'block' : 'none';
+        }
+        </script>
+
+    </div><!-- end ws-tax -->
+    <!-- ══ End Tax Appeal Workspace ══════════════════════════════════════════ -->
 
     <!-- Workspace: التقييم المبسط ─────────────────────────────────────────────── -->
     <div class="es-workspace" id="ws-valuation" role="tabpanel" data-testid="simple-valuation-tab">

@@ -504,7 +504,8 @@ def test_SV_cert_card_title_contains_request_text(page: Page, live_server: str) 
     """The certified request card title contains the expected Arabic heading."""
     _generate_draft(page, live_server)
     text = page.locator("[data-testid='simple-valuation-cert-request-card']").inner_text(timeout=5_000)
-    assert "طلب اعتماد التقرير" in text
+    # Updated title in Task E: "طلب مراجعة واعتماد التقرير من خبير التقييم"
+    assert "اعتماد التقرير" in text
 
 
 def test_SV_cert_delivery_note_visible(page: Page, live_server: str) -> None:
@@ -629,3 +630,606 @@ def test_SV_cert_card_hidden_before_generate(page: Page, live_server: str) -> No
     _go_to_simple_valuation_tab(page, live_server)
     card = page.locator("[data-testid='simple-valuation-cert-request-card']")
     expect(card).to_be_hidden()
+
+
+# ---------------------------------------------------------------------------
+# Task-D tests — documents upload, mic dictation, expanded geography
+# ---------------------------------------------------------------------------
+
+# ── Documents (Part A) ──────────────────────────────────────────────────────
+
+def test_SV_docs_section_visible(page: Page, live_server: str) -> None:
+    """Documents section card is visible in the form."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-documents-section']")).to_be_visible()
+
+
+def test_SV_docs_upload_btn_visible(page: Page, live_server: str) -> None:
+    """Paperclip/upload button is visible in the documents section."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-documents-upload-btn']")).to_be_visible()
+
+
+def test_SV_docs_input_exists_and_accepts_multiple(page: Page, live_server: str) -> None:
+    """The hidden file input exists, accepts multiple files, and the right MIME types."""
+    _go_to_simple_valuation_tab(page, live_server)
+    el = page.locator("[data-testid='simple-documents-input']")
+    assert el.get_attribute("multiple") is not None
+    accept = el.get_attribute("accept") or ""
+    for ext in [".pdf", ".jpg", ".png", ".doc", ".docx"]:
+        assert ext in accept, f"Extension {ext} not in accept attr"
+
+
+def test_SV_docs_selecting_files_shows_names(page: Page, live_server: str) -> None:
+    """Selecting test files via the input displays their names in the file list."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "عقد_البيع.pdf",   "mimeType": "application/pdf",  "buffer": b"fake-pdf"},
+        {"name": "صورة_العقار.jpg", "mimeType": "image/jpeg",        "buffer": b"fake-jpg"},
+    ])
+    file_list = page.locator("[data-testid='simple-documents-list']")
+    expect(file_list).to_be_visible()
+    list_text = file_list.inner_text()
+    assert "عقد_البيع.pdf" in list_text
+    assert "صورة_العقار.jpg" in list_text
+
+
+def test_SV_docs_note_mentions_not_uploaded(page: Page, live_server: str) -> None:
+    """The documents policy note states that files are not actually uploaded yet."""
+    _go_to_simple_valuation_tab(page, live_server)
+    note_text = page.locator("[data-testid='simple-documents-note']").inner_text()
+    # Accept either old or new phrasing (updated in Task E)
+    assert "لا يتم رفع" in note_text or "لا يتم رفعها فعليًا" in note_text
+
+
+def test_SV_docs_output_includes_file_names(page: Page, live_server: str) -> None:
+    """After generating, selected document names appear in the draft output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    # Attach files AFTER navigation so the page is already loaded
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "وثيقة_الملكية.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "وثيقة_الملكية.pdf" in output.inner_text()
+
+
+def test_SV_docs_output_notes_not_uploaded(page: Page, live_server: str) -> None:
+    """Draft output clarifies that attached documents were not actually uploaded."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "test_doc.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    text = output.inner_text()
+    assert "لم يتم رفعها فعليًا" in text or "ستُرسل مع طلب الاعتماد" in text
+
+
+# ── Microphone (Part B) ─────────────────────────────────────────────────────
+
+def test_SV_mic_description_visible(page: Page, live_server: str) -> None:
+    """Mic button for property description is visible in the form."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-mic-description']")).to_be_visible()
+
+
+def test_SV_mic_notes_visible(page: Page, live_server: str) -> None:
+    """Mic button for additional notes is visible in the form."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-mic-notes']")).to_be_visible()
+
+
+def test_SV_mic_cert_notes_visible_after_generate(page: Page, live_server: str) -> None:
+    """Mic button for cert-request notes is visible after generating the draft."""
+    _generate_draft(page, live_server)
+    expect(page.locator("[data-testid='simple-mic-cert-notes']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_mic_unsupported_browser_shows_message(page: Page, live_server: str) -> None:
+    """Clicking mic when Web Speech API is unavailable shows the unsupported message."""
+    _go_to_simple_valuation_tab(page, live_server)
+    # Disable the Speech API in this page context
+    page.evaluate("delete window.SpeechRecognition; delete window.webkitSpeechRecognition;")
+    page.locator("[data-testid='simple-mic-description']").click()
+    status = page.locator("[data-testid='simple-voice-status']")
+    expect(status).to_be_visible(timeout=3_000)
+    assert "غير مدعوم" in status.inner_text()
+
+
+# ── Geography (Part C) ──────────────────────────────────────────────────────
+
+def test_SV_geo_country_selector_visible(page: Page, live_server: str) -> None:
+    """Country selector with data-testid is visible."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-country']")).to_be_visible()
+
+
+def test_SV_geo_egypt_shows_governorates(page: Page, live_server: str) -> None:
+    """Selecting Egypt populates the region selector with all key governorates."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("EG")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for gov in ["القاهرة", "الجيزة", "الغربية", "الإسكندرية", "الدقهلية", "الشرقية"]:
+        assert gov in flat, f"Governorate '{gov}' missing from EG province list"
+
+
+def test_SV_geo_gharbia_shows_tanta_and_mahalla(page: Page, live_server: str) -> None:
+    """Selecting الغربية as province shows cities including طنطا and المحلة الكبرى."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("EG")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الغربية")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "طنطا" in flat
+    assert "المحلة الكبرى" in flat
+
+
+def test_SV_geo_saudi_shows_regions(page: Page, live_server: str) -> None:
+    """Selecting Saudi Arabia populates region selector with all key regions."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("SA")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["الرياض", "المنطقة الشرقية", "مكة المكرمة", "المدينة المنورة"]:
+        assert region in flat, f"Region '{region}' missing from SA province list"
+
+
+def test_SV_geo_eastern_region_shows_dammam_and_khobar(page: Page, live_server: str) -> None:
+    """Selecting المنطقة الشرقية shows cities including الدمام and الخبر."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("SA")
+    page.locator("[data-testid='simple-valuation-region']").select_option("المنطقة الشرقية")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "الدمام" in flat
+    assert "الخبر" in flat
+
+
+def test_SV_geo_non_detailed_country_shows_freetext_or_note(page: Page, live_server: str) -> None:
+    """All Arab countries now have province and city selects with مدينة أخرى option."""
+    _go_to_simple_valuation_tab(page, live_server)
+    # Jordan has provinces — verify province select is populated
+    page.locator("[data-testid='simple-valuation-country']").select_option("JO")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "عمان" in flat and "إربد" in flat, \
+        "Expected Jordan province options to include عمان and إربد"
+    # Selecting a province shows city select with مدينة أخرى
+    page.locator("[data-testid='simple-valuation-region']").select_option("عمان")
+    city_select = page.locator("[data-testid='simple-valuation-city']")
+    expect(city_select).to_be_visible(timeout=3_000)
+    city_options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    city_flat = " | ".join(city_options)
+    assert "مدينة أخرى" in city_flat, "City select should include مدينة أخرى option"
+
+
+def test_SV_geo_output_includes_country_region_city(page: Page, live_server: str) -> None:
+    """Draft output includes الدولة, المحافظة/المنطقة, and المدينة rows."""
+    _generate_draft(page, live_server)
+    output_text = page.locator("[data-testid='simple-valuation-output']").inner_text(timeout=8_000)
+    # _generate_draft fills EG / القاهرة / المعادي
+    assert "مصر" in output_text or "الدولة" in output_text
+    assert "القاهرة" in output_text
+    assert "المعادي" in output_text
+
+
+# ---------------------------------------------------------------------------
+# Task-E tests — Parts A, B, C, D
+# ---------------------------------------------------------------------------
+
+# ── Part A: Documents belong to draft workflow ───────────────────────────────
+
+def test_SV_docs_draft_row_always_present(page: Page, live_server: str) -> None:
+    """Draft output always contains the documents row (even when no files selected)."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    row = page.locator("[data-testid='simple-draft-documents-row']")
+    expect(row).to_be_visible(timeout=5_000)
+
+
+def test_SV_docs_draft_no_files_shows_none_msg(page: Page, live_server: str) -> None:
+    """Draft output shows 'لم يتم اختيار مستندات' when no files are attached."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    assert "لم يتم اختيار مستندات" in output.inner_text()
+
+
+def test_SV_docs_draft_files_appear_in_row(page: Page, live_server: str) -> None:
+    """After attaching a file and generating, it appears in the draft documents row."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "صك_الملكية.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    row = page.locator("[data-testid='simple-draft-documents-row']")
+    expect(row).to_be_visible(timeout=5_000)
+    assert "صك_الملكية.pdf" in row.inner_text()
+
+
+def test_SV_docs_draft_note_files_not_uploaded(page: Page, live_server: str) -> None:
+    """Draft output row for docs clarifies files are not uploaded to server."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "ملف.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    text = output.inner_text()
+    assert "لم يتم رفعها فعليًا" in text or "لم يتم رفع" in text
+
+
+def test_SV_docs_no_cert_required_for_draft_docs(page: Page, live_server: str) -> None:
+    """Attached documents appear in draft output without needing to submit the cert request."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "رخصة_البناء.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    # Doc name must appear in output without cert request being submitted
+    assert "رخصة_البناء.pdf" in output.inner_text()
+    # Cert confirmation must still be hidden (not submitted)
+    expect(page.locator("[data-testid='simple-cert-confirmation']")).to_be_hidden()
+
+
+# ── Part B: Expert request clarity ───────────────────────────────────────────
+
+def test_SV_expert_intro_card_visible_before_generate(page: Page, live_server: str) -> None:
+    """The always-visible expert request intro card is visible before generating."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-expert-request-intro']")).to_be_visible()
+
+
+def test_SV_expert_request_button_exists(page: Page, live_server: str) -> None:
+    """The expert request button inside the intro card is visible."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-expert-request-button']")).to_be_visible()
+
+
+def test_SV_expert_request_button_reveals_cert_card(page: Page, live_server: str) -> None:
+    """Clicking the expert request button shows the certified request card."""
+    _go_to_simple_valuation_tab(page, live_server)
+    cert_card = page.locator("[data-testid='simple-valuation-cert-request-card']")
+    expect(cert_card).to_be_hidden()
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    expect(cert_card).to_be_visible(timeout=3_000)
+
+
+def test_SV_cert_card_mentions_approved_pdf(page: Page, live_server: str) -> None:
+    """Certified request card states that an approved PDF will be sent after expert review."""
+    _generate_draft(page, live_server)
+    cert_note = page.locator("[data-testid='simple-cert-delivery-note']")
+    expect(cert_note).to_be_visible(timeout=5_000)
+    text = cert_note.inner_text()
+    assert "PDF" in text, "Cert card should mention PDF"
+
+
+def test_SV_cert_card_excel_internal_only(page: Page, live_server: str) -> None:
+    """Certified request card states that Excel files are internal for expert/admin only."""
+    _generate_draft(page, live_server)
+    cert_note = page.locator("[data-testid='simple-cert-delivery-note']")
+    expect(cert_note).to_be_visible(timeout=5_000)
+    text = cert_note.inner_text()
+    assert "Excel" in text and ("داخلية" in text or "داخلي" in text), \
+        "Cert card should state Excel is internal"
+
+
+# ── Part C: Geography — all Arab countries have regions ──────────────────────
+
+def test_SV_geo_UAE_has_regions(page: Page, live_server: str) -> None:
+    """UAE shows region options including أبوظبي، دبي، الشارقة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("AE")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["أبوظبي", "دبي", "الشارقة"]:
+        assert region in flat, f"UAE region '{region}' missing"
+
+
+def test_SV_geo_Kuwait_has_regions(page: Page, live_server: str) -> None:
+    """Kuwait shows region options including العاصمة، حولي، الفروانية."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("KW")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["العاصمة", "حولي", "الفروانية"]:
+        assert region in flat, f"Kuwait region '{region}' missing"
+
+
+def test_SV_geo_Jordan_has_regions(page: Page, live_server: str) -> None:
+    """Jordan shows region options including عمان، إربد، الزرقاء."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("JO")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["عمان", "إربد", "الزرقاء"]:
+        assert region in flat, f"Jordan region '{region}' missing"
+
+
+def test_SV_geo_Palestine_has_regions(page: Page, live_server: str) -> None:
+    """Palestine shows region options including القدس، رام الله والبيرة، غزة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("PS")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["القدس", "رام الله والبيرة", "غزة"]:
+        assert region in flat, f"Palestine region '{region}' missing"
+
+
+def test_SV_geo_Morocco_has_regions(page: Page, live_server: str) -> None:
+    """Morocco shows region options including الدار البيضاء سطات and الرباط سلا القنيطرة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("MA")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["الدار البيضاء سطات", "الرباط سلا القنيطرة"]:
+        assert region in flat, f"Morocco region '{region}' missing"
+
+
+def test_SV_geo_Tunisia_has_regions(page: Page, live_server: str) -> None:
+    """Tunisia shows region options including تونس، صفاقس، سوسة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("TN")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["تونس", "صفاقس", "سوسة"]:
+        assert region in flat, f"Tunisia region '{region}' missing"
+
+
+def test_SV_geo_Sudan_has_regions(page: Page, live_server: str) -> None:
+    """Sudan shows region options including الخرطوم and الجزيرة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("SD")
+    options = page.locator("[data-testid='simple-valuation-region'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for region in ["الخرطوم", "الجزيرة"]:
+        assert region in flat, f"Sudan region '{region}' missing"
+
+
+def test_SV_geo_province_only_city_freetext(page: Page, live_server: str) -> None:
+    """Selecting 'مدينة أخرى' from the city dropdown shows the free-text city input."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("AE")
+    page.locator("[data-testid='simple-valuation-region']").select_option("دبي")
+    # City select should now be visible with options
+    city_select = page.locator("[data-testid='simple-valuation-city']")
+    expect(city_select).to_be_visible(timeout=3_000)
+    # دبي cities should include دبي and مدينة أخرى
+    city_opts = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    city_flat = " | ".join(city_opts)
+    assert "دبي" in city_flat and "مدينة أخرى" in city_flat
+    # Selecting مدينة أخرى reveals free-text input
+    page.locator("[data-testid='simple-valuation-city']").select_option("مدينة أخرى")
+    city_text = page.locator("#geo-city-text")
+    expect(city_text).to_be_visible(timeout=3_000)
+
+
+def test_SV_geo_province_only_draft_output(page: Page, live_server: str) -> None:
+    """Selecting 'مدينة أخرى' and typing a city name shows it in the draft output."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("JO")
+    page.locator("[data-testid='simple-valuation-region']").select_option("عمان")
+    page.locator("[data-testid='simple-valuation-city']").select_option("مدينة أخرى")
+    page.locator("#geo-city-text").fill("وسط البلد")
+    page.locator("[data-testid='simple-valuation-description']").fill("شقة سكنية في عمان للاستثمار")
+    page.locator("[data-testid='simple-valuation-area']").fill("100")
+    page.locator("[data-testid='simple-valuation-property-type']").select_option("شقة سكنية")
+    page.locator("[data-testid='simple-valuation-condition']").select_option("جيدة")
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    text = output.inner_text()
+    assert "الأردن" in text or "الدولة" in text
+    assert "عمان" in text
+    assert "وسط البلد" in text
+
+
+# ---------------------------------------------------------------------------
+# Refinement tests — Part A: docs inside basic property; Part B: expanded cities
+# ---------------------------------------------------------------------------
+
+# ── Documents inside basic property section ────────────────────────────────
+
+def test_SV_docs_section_inside_basic_property(page: Page, live_server: str) -> None:
+    """Documents section is nested inside the basic property information section."""
+    _go_to_simple_valuation_tab(page, live_server)
+    is_inside = page.evaluate("""() => {
+        const docsEl = document.querySelector('[data-testid="simple-documents-section"]');
+        const parentSection = docsEl && docsEl.closest('[data-testid="simple-basic-property-section"]');
+        return !!parentSection;
+    }""")
+    assert is_inside, "Documents section should be inside the basic property section"
+
+
+def test_SV_docs_in_property_section_visible(page: Page, live_server: str) -> None:
+    """Documents upload button and note are visible inside the basic property section."""
+    _go_to_simple_valuation_tab(page, live_server)
+    prop_section = page.locator("[data-testid='simple-basic-property-section']")
+    expect(prop_section.locator("[data-testid='simple-documents-upload-btn']")).to_be_visible()
+    expect(prop_section.locator("[data-testid='simple-documents-note']")).to_be_visible()
+
+
+def test_SV_docs_in_property_note_says_draft_report(page: Page, live_server: str) -> None:
+    """Documents note mentions the draft report, not only certified approval."""
+    _go_to_simple_valuation_tab(page, live_server)
+    note = page.locator("[data-testid='simple-documents-note']").inner_text()
+    assert "التقرير المبدئي" in note, "Note should mention the draft report"
+
+
+def test_SV_docs_before_generate_visible_in_property_section(page: Page, live_server: str) -> None:
+    """Document list appears inside the property section after selecting files."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-documents-input']").set_input_files([
+        {"name": "رخصة.pdf", "mimeType": "application/pdf", "buffer": b"x"},
+    ])
+    prop_section = page.locator("[data-testid='simple-basic-property-section']")
+    doc_list = prop_section.locator("[data-testid='simple-documents-list']")
+    expect(doc_list).to_be_visible()
+    assert "رخصة.pdf" in doc_list.inner_text()
+
+
+# ── Expanded city dropdown tests ────────────────────────────────────────────
+
+def test_SV_geo_UAE_Dubai_shows_cities(page: Page, live_server: str) -> None:
+    """UAE / Dubai shows city options including دبي، ديرة، جبل علي and مدينة أخرى."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("AE")
+    page.locator("[data-testid='simple-valuation-region']").select_option("دبي")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    for city in ["دبي", "ديرة", "جبل علي", "مدينة أخرى"]:
+        assert city in flat, f"Dubai city missing: {city}"
+
+
+def test_SV_geo_Kuwait_Hawalli_shows_cities(page: Page, live_server: str) -> None:
+    """Kuwait / حولي shows السالمية and الجابرية."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("KW")
+    page.locator("[data-testid='simple-valuation-region']").select_option("حولي")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "السالمية" in flat and "الجابرية" in flat
+
+
+def test_SV_geo_Qatar_Doha_shows_cities(page: Page, live_server: str) -> None:
+    """Qatar / الدوحة shows الدوحة and السد."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("QA")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الدوحة")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "الدوحة" in flat and "السد" in flat
+
+
+def test_SV_geo_Jordan_Amman_shows_cities(page: Page, live_server: str) -> None:
+    """Jordan / عمان shows عمان and عبدون."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("JO")
+    page.locator("[data-testid='simple-valuation-region']").select_option("عمان")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "عمان" in flat and "عبدون" in flat
+
+
+def test_SV_geo_Palestine_Gaza_shows_cities(page: Page, live_server: str) -> None:
+    """Palestine / غزة shows غزة and الرمال."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("PS")
+    page.locator("[data-testid='simple-valuation-region']").select_option("غزة")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "غزة" in flat and "الرمال" in flat
+
+
+def test_SV_geo_Morocco_Casablanca_shows_cities(page: Page, live_server: str) -> None:
+    """Morocco / الدار البيضاء سطات shows الدار البيضاء and سطات."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("MA")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الدار البيضاء سطات")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "الدار البيضاء" in flat and "سطات" in flat
+
+
+def test_SV_geo_Algeria_Algiers_shows_cities(page: Page, live_server: str) -> None:
+    """Algeria / الجزائر العاصمة shows الجزائر العاصمة."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("DZ")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الجزائر العاصمة")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "الجزائر العاصمة" in flat
+
+
+def test_SV_geo_Tunisia_Tunis_shows_cities(page: Page, live_server: str) -> None:
+    """Tunisia / تونس shows تونس and المرسى."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("TN")
+    page.locator("[data-testid='simple-valuation-region']").select_option("تونس")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "تونس" in flat and "المرسى" in flat
+
+
+def test_SV_geo_Libya_Tripoli_shows_cities(page: Page, live_server: str) -> None:
+    """Libya / طرابلس shows طرابلس and تاجوراء."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("LY")
+    page.locator("[data-testid='simple-valuation-region']").select_option("طرابلس")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "طرابلس" in flat and "تاجوراء" in flat
+
+
+def test_SV_geo_Sudan_Khartoum_shows_cities(page: Page, live_server: str) -> None:
+    """Sudan / الخرطوم shows الخرطوم and أم درمان."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("SD")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الخرطوم")
+    options = page.locator("[data-testid='simple-valuation-city'] option").all_inner_texts()
+    flat = " | ".join(options)
+    assert "الخرطوم" in flat and "أم درمان" in flat
+
+
+def test_SV_geo_madina_ukhra_shows_freetext(page: Page, live_server: str) -> None:
+    """Selecting 'مدينة أخرى' from city dropdown shows the free-text city input field."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("EG")
+    page.locator("[data-testid='simple-valuation-region']").select_option("القاهرة")
+    page.locator("[data-testid='simple-valuation-city']").select_option("مدينة أخرى")
+    city_text = page.locator("#geo-city-text")
+    expect(city_text).to_be_visible(timeout=3_000)
+
+
+def test_SV_geo_draft_output_shows_madina_ukhra_text(page: Page, live_server: str) -> None:
+    """Draft output shows the manually entered city (not the label 'مدينة أخرى')."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("EG")
+    page.locator("[data-testid='simple-valuation-region']").select_option("القاهرة")
+    page.locator("[data-testid='simple-valuation-city']").select_option("مدينة أخرى")
+    page.locator("#geo-city-text").fill("قرية الشيخ زايد")
+    page.locator("[data-testid='simple-valuation-description']").fill("منزل في ضاحية هادئة")
+    page.locator("[data-testid='simple-valuation-area']").fill("150")
+    page.locator("[data-testid='simple-valuation-property-type']").select_option("فيلا")
+    page.locator("[data-testid='simple-valuation-condition']").select_option("ممتازة")
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    text = output.inner_text()
+    assert "قرية الشيخ زايد" in text, "Custom city text should appear in draft output"
+
+
+def test_SV_geo_district_freetext_available(page: Page, live_server: str) -> None:
+    """District / neighborhood field becomes editable after city is selected."""
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-valuation-country']").select_option("SA")
+    page.locator("[data-testid='simple-valuation-region']").select_option("الرياض")
+    page.locator("[data-testid='simple-valuation-city']").select_option("الرياض")
+    district = page.locator("[data-testid='simple-valuation-district']")
+    expect(district).to_be_enabled(timeout=3_000)
+    district.fill("حي النخيل")
+    assert district.input_value() == "حي النخيل"

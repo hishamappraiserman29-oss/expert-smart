@@ -1264,7 +1264,7 @@
         <button class="es-tab-btn"               id="es-tab-tax"          onclick="esShowTab('tax')"          type="button" role="tab" data-testid="tax-tab">🧾 فاحص الضرائب والطعون</button>
         <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
-        <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab">📊 التقييم المجمع</button>
+        <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab" data-testid="composite-valuation-tab">📊 التقييم المجمع</button>
     </nav>
     <script>
     function esShowTab(tab) {
@@ -3472,6 +3472,97 @@
             locEl.value = parts.join(' — ');
         }
 
+        function profGeoSync() {
+            var countryEl    = document.getElementById('prof-geo-country');
+            var provEl       = document.getElementById('prof-geo-province');
+            var cityEl       = document.getElementById('prof-geo-city');
+            var distEl       = document.getElementById('prof-geo-district');
+            var locEl        = document.getElementById('prof-location');
+            var noteEl       = document.getElementById('prof-geo-province-note');
+            var regionTextEl = document.getElementById('prof-geo-region-text');
+            var cityTextEl   = document.getElementById('prof-geo-city-text');
+            var cityNoteEl   = document.getElementById('prof-geo-city-note');
+
+            var code = countryEl.value;
+            var reg  = GEO_REGISTRY[code] || null;
+
+            var prevProv = provEl.value;
+            if (reg) {
+                provEl.style.display = '';
+                if (regionTextEl) { regionTextEl.style.display = 'none'; regionTextEl.value = ''; }
+                if (noteEl) noteEl.style.display = 'none';
+                var ph = '<option value="">— اختر المحافظة —</option>';
+                Object.keys(reg.provinces).forEach(function(p) {
+                    ph += '<option value="' + p + '">' + p + '</option>';
+                });
+                provEl.innerHTML = ph;
+                if (prevProv && reg.provinces[prevProv]) provEl.value = prevProv;
+                provEl.disabled = false;
+            } else {
+                provEl.innerHTML = '<option value="">—</option>';
+                provEl.value     = '';
+                provEl.style.display = 'none';
+                cityEl.style.display = 'none';
+                if (regionTextEl) { regionTextEl.style.display = ''; regionTextEl.disabled = false; }
+                if (cityTextEl)   { cityTextEl.style.display   = ''; cityTextEl.disabled   = false; }
+                if (cityNoteEl)   { cityNoteEl.style.display = 'none'; }
+                if (noteEl) noteEl.style.display = 'block';
+            }
+
+            var provVal   = reg ? provEl.value : (regionTextEl ? regionTextEl.value.trim() : '');
+            var prevCity  = cityEl.value;
+            var hasCities = false;
+
+            if (reg && provVal && reg.provinces[provVal]) {
+                var provCities = reg.provinces[provVal].cities || [];
+                hasCities = true;
+                cityEl.style.display = '';
+                var ch = '<option value="">— اختر المدينة —</option>';
+                provCities.forEach(function(c) { ch += '<option value="' + c + '">' + c + '</option>'; });
+                ch += '<option value="مدينة أخرى">مدينة أخرى</option>';
+                cityEl.innerHTML = ch;
+                if (prevCity && (provCities.indexOf(prevCity) >= 0 || prevCity === 'مدينة أخرى')) cityEl.value = prevCity;
+                cityEl.disabled = false;
+                if (cityEl.value === 'مدينة أخرى') {
+                    if (cityTextEl) { cityTextEl.style.display = ''; cityTextEl.disabled = false; }
+                    if (cityNoteEl) { cityNoteEl.style.display = 'none'; }
+                } else {
+                    if (cityTextEl) { cityTextEl.style.display = 'none'; cityTextEl.value = ''; }
+                    if (cityNoteEl) { cityNoteEl.style.display = 'none'; }
+                }
+            } else if (reg) {
+                cityEl.style.display = '';
+                cityEl.innerHTML = '<option value="">— اختر المحافظة أولاً —</option>';
+                cityEl.value     = '';
+                cityEl.disabled  = true;
+                if (cityTextEl) { cityTextEl.style.display = 'none'; cityTextEl.value = ''; }
+                if (cityNoteEl) { cityNoteEl.style.display = 'none'; }
+            }
+
+            var cityVal = reg
+                ? (hasCities
+                    ? (cityEl.value === 'مدينة أخرى'
+                        ? (cityTextEl ? cityTextEl.value.trim() : '')
+                        : cityEl.value)
+                    : (cityTextEl ? cityTextEl.value.trim() : ''))
+                : (cityTextEl ? cityTextEl.value.trim() : '');
+
+            var enableDist = !!(cityVal || (reg && provVal && !hasCities) || (code && !reg) || (reg && cityEl && cityEl.value === 'مدينة أخرى'));
+            if (enableDist) {
+                distEl.disabled    = false;
+                distEl.placeholder = 'الحي / النطاق التفصيلي (اختياري)';
+            } else {
+                distEl.disabled    = true;
+                distEl.placeholder = 'سيتم تفعيله لاحقاً';
+                distEl.value       = '';
+            }
+
+            var opt         = countryEl.options[countryEl.selectedIndex];
+            var countryName = (opt && opt.value) ? (opt.getAttribute('data-name') || opt.text.trim()) : '';
+            var parts = [distEl.value.trim(), cityVal, provVal, countryName].filter(Boolean);
+            if (locEl) locEl.value = parts.join(' — ');
+        }
+
         async function svGenerate() {
             var btn      = document.getElementById('sv-submit-btn');
             var resultEl = document.getElementById('sv-result');
@@ -3795,127 +3886,76 @@
         </div>
     </div>
 
-    <div class="info-grid">
-        <div class="field-group">
-            <div style="display:flex; align-items:center; margin-bottom:10px;">
-                <img src="https://flagcdn.com/w40/eg.png" style="width:25px; margin-left:10px;">
-                <label>نطاق الدراسة — مصر</label>
+    <!-- نطاق الدراسة الجغرافي — التقييم المحترف -->
+    <input type="hidden" id="prof-location">
+    <div class="ai-section" style="margin-bottom:1rem;" data-testid="professional-valuation-location">
+        <h3 style="color:var(--gold);font-size:0.95rem;font-weight:700;margin:0 0 12px;">
+            نطاق الدراسة الجغرافي <span style="color:#ef4444;font-size:0.8rem;"> *</span>
+        </h3>
+        <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+            <div class="field-group">
+                <label>الدولة / القطر</label>
+                <select class="input-box" id="prof-geo-country" onchange="profGeoSync()"
+                    data-testid="professional-valuation-country">
+                    <option value="" data-name="">— اختر الدولة —</option>
+                    <option value="EG" data-name="مصر">مصر</option>
+                    <option value="SA" data-name="المملكة العربية السعودية">المملكة العربية السعودية</option>
+                    <option value="AE" data-name="الإمارات العربية المتحدة">الإمارات العربية المتحدة</option>
+                    <option value="KW" data-name="الكويت">الكويت</option>
+                    <option value="QA" data-name="قطر">قطر</option>
+                    <option value="BH" data-name="البحرين">البحرين</option>
+                    <option value="OM" data-name="عُمان">عُمان</option>
+                    <option value="JO" data-name="الأردن">الأردن</option>
+                    <option value="PS" data-name="فلسطين">فلسطين</option>
+                    <option value="LB" data-name="لبنان">لبنان</option>
+                    <option value="SY" data-name="سوريا">سوريا</option>
+                    <option value="IQ" data-name="العراق">العراق</option>
+                    <option value="YE" data-name="اليمن">اليمن</option>
+                    <option value="LY" data-name="ليبيا">ليبيا</option>
+                    <option value="TN" data-name="تونس">تونس</option>
+                    <option value="DZ" data-name="الجزائر">الجزائر</option>
+                    <option value="MA" data-name="المغرب">المغرب</option>
+                    <option value="MR" data-name="موريتانيا">موريتانيا</option>
+                    <option value="SD" data-name="السودان">السودان</option>
+                    <option value="SO" data-name="الصومال">الصومال</option>
+                    <option value="DJ" data-name="جيبوتي">جيبوتي</option>
+                    <option value="KM" data-name="جزر القمر">جزر القمر</option>
+                </select>
             </div>
-            <select class="input-box" id="loc-eg">
-                <option value="">— اختر المنطقة —</option>
-                <optgroup label="القاهرة الكبرى">
-                    <option value="وسط البلد">القاهرة — وسط البلد</option>
-                    <option value="المعادي">القاهرة — المعادي</option>
-                    <option value="مدينة نصر">القاهرة — مدينة نصر</option>
-                    <option value="مصر الجديدة">القاهرة — مصر الجديدة</option>
-                    <option value="الزمالك">القاهرة — الزمالك</option>
-                </optgroup>
-                <optgroup label="القاهرة الجديدة">
-                    <option value="التجمع الخامس">التجمع الخامس</option>
-                    <option value="الرحاب">الرحاب</option>
-                    <option value="مدينتي">مدينتي</option>
-                    <option value="الشروق">مدينة الشروق</option>
-                </optgroup>
-                <optgroup label="العاصمة الإدارية والمدن الجديدة">
-                    <option value="العاصمة الإدارية">العاصمة الإدارية الجديدة</option>
-                    <option value="مستقبل سيتي">مستقبل سيتي</option>
-                    <option value="بدر">مدينة بدر</option>
-                </optgroup>
-                <optgroup label="محافظة الجيزة">
-                    <option value="الدقي">الدقي</option>
-                    <option value="المهندسين">المهندسين</option>
-                    <option value="الهرم">الهرم</option>
-                    <option value="فيصل">فيصل</option>
-                </optgroup>
-                <optgroup label="6 أكتوبر والشيخ زايد">
-                    <option value="6 أكتوبر">مدينة 6 أكتوبر</option>
-                    <option value="الشيخ زايد">الشيخ زايد</option>
-                    <option value="زايد الجديدة">زايد الجديدة (سفنكس)</option>
-                </optgroup>
-                <optgroup label="الإسكندرية والساحل">
-                    <option value="الإسكندرية">الإسكندرية</option>
-                    <option value="سموحة">سموحة</option>
-                    <option value="برج العرب">برج ال��رب الجديدة</option>
-                    <option value="الساحل الشمالي">الساحل الشمالي</option>
-                    <option value="ال��لمين الجديدة">العلمين الجديدة</option>
-                    <option value="رأس الحكمة">رأس الحكمة</option>
-                </optgroup>
-                <optgroup label="محافظات الدلتا">
-                    <option value="المنصورة">المنصورة</option>
-                    <option value="طنطا">طنطا</option>
-                    <option value="الزقازيق">الزقازيق</option>
-                    <option value="دمياط">دمياط</option>
-                </optgroup>
-                <optgroup label="محافظات الصعيد">
-                    <option value="أسيوط">أسيوط</option>
-                    <option value="سوهاج">سوهاج</option>
-                    <option value="المنيا">المنيا</option>
-                    <option value="الأقصر">الأقصر</option>
-                    <option value="أسوان">أسوان</option>
-                </optgroup>
-                <optgroup label="مدن القناة">
-                    <option value="بورسعيد">بورسعيد</option>
-                    <option value="الإسماعيلية">الإسماعيلية</option>
-                    <option value="السويس">السويس</option>
-                </optgroup>
-                <optgroup label="البحر الأحمر وسيناء">
-                    <option value="الغردقة">الغردقة</option>
-                    <option value="شرم الشيخ">شرم الشيخ</option>
-                    <option value="العين السخنة">العين السخنة</option>
-                    <option value="مرسى علم">مرسى علم</option>
-                </optgroup>
-            </select>
-        </div>
-        <div class="field-group">
-            <div style="display:flex; align-items:center; margin-bottom:10px;">
-                <img src="https://flagcdn.com/w40/sa.png" style="width:25px; margin-left:10px;">
-                <label>نطاق الدراسة — السعودية</label>
+            <div class="field-group">
+                <label>المحافظة / الإمارة / الولاية</label>
+                <select class="input-box" id="prof-geo-province" disabled onchange="profGeoSync()"
+                    data-testid="professional-valuation-region">
+                    <option value="">— اختر الدولة أولاً —</option>
+                </select>
+                <input type="text" id="prof-geo-region-text" class="input-box"
+                    style="display:none;margin-top:4px;" oninput="profGeoSync()"
+                    data-testid="professional-valuation-geo-note"
+                    placeholder="اكتب اسم المنطقة / المحافظة…">
+                <div class="geo-placeholder-note" id="prof-geo-province-note"
+                    style="display:none;">سيتم إضافة التقسيمات التفصيلية تدريجيًا</div>
             </div>
-            <select class="input-box" id="loc-sa">
-                <option value="">— اختر المنطقة —</option>
-                <optgroup label="منطقة الرياض">
-                    <option value="الرياض">الرياض — وسط وشمال</option>
-                    <option value="حطين">الرياض — حطين</option>
-                    <option value="الملقا">الرياض — الملقا</option>
-                    <option value="النرجس">الرياض — النرجس</option>
-                    <option value="الدرعية">الدرعية</option>
-                </optgroup>
-                <optgroup label="مكة المكرمة والمدينة">
-                    <option value="مكة">مكة المكرمة</option>
-                    <option value="المدينة المنورة">المدينة المنورة</option>
-                    <option value="الطائف">الطائف</option>
-                </optgroup>
-                <optgroup label="جدة">
-                    <option value="جدة">جدة — الشاطئ والكورنيش</option>
-                    <option value="جدة الحمراء">جدة — الحمراء</option>
-                    <option value="أبحر">جدة — أبحر</option>
-                    <option value="جدة البلد">جدة — البلد التاريخي</option>
-                </optgroup>
-                <optgroup label="المنطقة الشرقية">
-                    <option value="الدمام">الدمام</option>
-                    <option value="الخبر">الخبر</option>
-                    <option value="الظهران">الظهران</option>
-                    <option value="الجبيل">الجبيل الصناعية</option>
-                    <option value="الأحساء">الأحساء</option>
-                </optgroup>
-                <optgroup label="منطقة عسير">
-                    <option value="أبها">أبها</option>
-                    <option value="خميس مشيط">خميس مشيط</option>
-                </optgroup>
-                <optgroup label="تبوك ونيوم">
-                    <option value="تبوك">تبوك</option>
-                    <option value="نيوم">مشروع نيوم (NEOM)</option>
-                </optgroup>
-                <optgroup label="القصيم">
-                    <option value="بريدة">بريدة</option>
-                    <option value="عنيزة">عنيزة</option>
-                </optgroup>
-                <optgroup label="مناطق أخرى">
-                    <option value="جازان">جازان</option>
-                    <option value="نجران">نجران</option>
-                    <option value="ينبع">ينبع</option>
-                </optgroup>
-            </select>
+            <div class="field-group">
+                <label>المدينة</label>
+                <select class="input-box" id="prof-geo-city" disabled onchange="profGeoSync()"
+                    data-testid="professional-valuation-city">
+                    <option value="">— اختر المحافظة أولاً —</option>
+                </select>
+                <input type="text" id="prof-geo-city-text" class="input-box"
+                    style="display:none;margin-top:4px;" oninput="profGeoSync()"
+                    data-testid="professional-valuation-city-other"
+                    placeholder="اكتب اسم المدينة…">
+                <div id="prof-geo-city-note"
+                    style="display:none;margin-top:4px;font-size:0.78rem;color:#9ca3af;line-height:1.5;">
+                    تمت إضافة المناطق/المحافظات الرئيسية، ويمكن إدخال المدينة أو الحي يدويًا عند عدم وجودها في القائمة.
+                </div>
+            </div>
+            <div class="field-group">
+                <label>الحي / النطاق التفصيلي</label>
+                <input type="text" class="input-box" id="prof-geo-district" disabled oninput="profGeoSync()"
+                    placeholder="سيتم تفعيله لاحقاً"
+                    data-testid="professional-valuation-district">
+            </div>
         </div>
     </div>
 
@@ -5523,6 +5563,12 @@
     <!-- ── Phase 11: Composite Valuation Tab ───────────────────────────── -->
     <div class="es-workspace" id="ws-composite" role="tabpanel">
 
+        <!-- Composite header -->
+        <div data-testid="composite-valuation-header" style="margin-bottom:12px; padding:12px 16px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+            <h2 style="color:var(--gold);font-size:1.05rem;font-weight:700;margin:0 0 4px;">التقييم المجمّع</h2>
+            <p style="color:#9ca3af;font-size:0.8rem;margin:0;">تقييم محافظ عقارية متعددة المكونات واحتساب القيمة الإجمالية بتعديل التآزر</p>
+        </div>
+
         <!-- Auth error (shown if no session) -->
         <div id="cmp-auth-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:8px; font-size:0.82rem; color:#ef4444; margin:8px 0;">
             ⚠ يلزم تسجيل الدخول لاستخدام التقييم المجمّع. سجّل دخولك من الصفحة الرئيسية.
@@ -5535,7 +5581,7 @@
         </div>
 
         <!-- Main form (shown after schema loads) -->
-        <div id="cmp-form" style="display:none;">
+        <div id="cmp-form" style="display:none;" data-testid="composite-component-form">
 
             <!-- Section 1: Composite Type + Global Purpose -->
             <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
@@ -5559,8 +5605,8 @@
             <!-- Section 2: Component List -->
             <div style="margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
                 <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">مكوّنات العقار</div>
-                <div id="cmp-components-list"></div>
-                <button onclick="cmpAddComponent()" style="margin-top:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:5px 14px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
+                <div id="cmp-components-list" data-testid="composite-component-table"></div>
+                <button onclick="cmpAddComponent()" data-testid="composite-add-component" style="margin-top:6px; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:5px 14px; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
                     + إضافة مكوّن
                 </button>
             </div>
@@ -5572,7 +5618,7 @@
                     <input type="number" id="cmp-synergy" step="0.1" min="-100" max="100" placeholder="0.0"
                         style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
                 </div>
-                <button id="cmp-submit-btn" onclick="cmpSubmit()"
+                <button id="cmp-submit-btn" data-testid="composite-generate" onclick="cmpSubmit()"
                     style="background:#d4af37; color:#000; font-weight:900; border:none; padding:8px 20px; border-radius:6px; cursor:pointer; font-size:0.85rem; white-space:nowrap; font-family:inherit;">
                     ⬡ احسب القيمة المجمّعة
                 </button>
@@ -5580,12 +5626,24 @@
             <div id="cmp-submit-error" style="display:none; padding:8px 12px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:6px; color:#ef4444; font-size:0.82rem; margin:4px 0;"></div>
 
             <!-- Section 4: Results + Composite Report Area -->
-            <div id="cmp-results" style="display:none; margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+            <div id="cmp-results" data-testid="composite-output" style="display:none; margin:8px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
                 <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">
                     نتائج التقييم المجمّع
                     <span id="cmp-result-type-badge" style="font-size:0.7rem; color:#9ca3af; font-weight:normal; margin-right:8px;"></span>
                 </div>
                 <div id="cmp-results-body"></div>
+            </div>
+
+            <!-- Draft warning -->
+            <div id="cmp-draft-warning" data-testid="composite-draft-warning"
+                style="margin:8px 0; padding:10px 14px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:8px; font-size:0.8rem; color:#ef4444; display:none;">
+                ⚠ هذا تقرير آلي استرشادي غير معتمد رسميًا — للاستخدام الداخلي فقط
+            </div>
+            <!-- Expert CTA -->
+            <div data-testid="composite-expert-cta" style="margin:8px 0; text-align:center;">
+                <a href="#" onclick="esShowTab('chat'); return false;" style="color:var(--gold);font-size:0.82rem;text-decoration:underline;">
+                    هل تحتاج تقرير معتمد؟ تواصل مع خبير التقييم
+                </a>
             </div>
 
         </div><!-- /#cmp-form -->
@@ -5662,7 +5720,7 @@
     const input = document.getElementById('main-input');
     const fill = document.getElementById('quality-fill');
     const valText = document.getElementById('q-val');
-    const fieldsToSave = ['val-date','period-type','loc-eg','loc-sa','main-input','asset-type','val-purpose','ai-task','api-url','area','price-per-meter'];
+    const fieldsToSave = ['val-date','period-type','prof-geo-country','prof-geo-province','prof-geo-city','prof-geo-district','main-input','asset-type','val-purpose','ai-task','api-url','area','price-per-meter'];
 
     function updateQualityMeter(length) {
         let progress = Math.min((length / 400) * 100, 100);
@@ -5727,7 +5785,7 @@
             // Build the base payload used for all valuation purposes
             const basePayload = {
                 expert: "م. هشام المهدي",
-                location: document.getElementById('loc-eg').value || document.getElementById('loc-sa').value,
+                location: document.getElementById('prof-location').value || '',
                 description: description,
                 date: document.getElementById('val-date').value,
                 property_type: document.getElementById('asset-type').value,
@@ -5784,7 +5842,7 @@
 
     function generateVisualReport(description, apiResult) {
         const date = document.getElementById('val-date').value || new Date().toLocaleDateString('en-GB');
-        const location = document.getElementById('loc-eg').value || document.getElementById('loc-sa').value || 'نطاق دراسة عام';
+        const location = document.getElementById('prof-location').value || 'نطاق دراسة عام';
         const marketValueRaw = (apiResult && typeof apiResult.market_value === 'number') ? apiResult.market_value : null;
         const marketValue = marketValueRaw !== null
             ? marketValueRaw.toLocaleString('en-US', {maximumFractionDigits:0}) + ' ج.م'
@@ -29793,7 +29851,7 @@ var _PROFILE_FORM_SCHEMA = {
         return (
             '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">' +
                 '<span style="color:#d4af37; font-weight:700; font-size:0.82rem;">مكوّن #' + (idx + 1) + '</span>' +
-                '<button onclick="cmpRemoveComponent(' + idx + ')" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); color:#ef4444; padding:3px 10px; border-radius:5px; cursor:pointer; font-family:inherit; font-size:0.75rem;">✕ حذف</button>' +
+                '<button onclick="cmpRemoveComponent(' + idx + ')" data-testid="composite-remove-component" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); color:#ef4444; padding:3px 10px; border-radius:5px; cursor:pointer; font-family:inherit; font-size:0.75rem;">✕ حذف</button>' +
             '</div>' +
             '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px;">' +
                 '<div>' +

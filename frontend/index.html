@@ -3859,6 +3859,18 @@
     <!-- Workspace: التقييم المحترف — Active Default ────────────────────── -->
     <div class="es-workspace es-ws-active" id="ws-professional" role="tabpanel">
 
+    <!-- ── Professional Wizard Layout ─────────────────────────────────── -->
+    <div data-testid="professional-wizard">
+
+    <!-- STEP 1: Asset Definition Console ──────────────────────────────── -->
+    <div data-testid="professional-step-asset" style="margin-bottom:14px;border:1px solid rgba(212,175,55,0.2);border-radius:10px;overflow:hidden;">
+    <div data-testid="professional-asset-console" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,175,55,0.08);border-bottom:1px solid rgba(212,175,55,0.15);">
+        <span style="background:var(--gold);color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">١</span>
+        <span style="font-weight:700;color:var(--gold-light);font-size:0.9rem;">تعريف الأصل العقاري</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Asset Definition Console</span>
+    </div>
+    <div style="padding:12px 14px;">
+
     <div class="info-grid">
         <div class="field-group">
             <label>خبير التقييم (المستخدم)</label>
@@ -4051,12 +4063,13 @@
     </div>
 
     <!-- ── Phase 10: Professional Registry Selectors ──────────────────── -->
+    <!-- Asset fields (Step 1 content) -->
     <div id="prof-registry-section" style="margin:10px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
-        <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">سجل الأصول والمسارات المهنية</div>
+        <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">سجل الأصول</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">عائلة الأصل</label>
-                <select id="prof-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value)">
+                <select id="prof-asset-family" data-testid="professional-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value)">
                     <option value="">-- اختر العائلة --</option>
                     <option value="hospitality_entertainment">ضيافة وترفيه</option>
                     <option value="sports_event_venues">رياضة وفعاليات</option>
@@ -4071,13 +4084,33 @@
             </div>
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">النوع الفرعي</label>
-                <select id="prof-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                <select id="prof-asset-subtype" data-testid="professional-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
                     <option value="">-- اختر النوع الفرعي --</option>
                 </select>
             </div>
+        </div>
+    </div>
+    <div data-testid="professional-valuation-profile" style="font-size:0.75rem;color:#9ca3af;padding:4px 2px;margin-bottom:4px;">
+        <span style="color:#d4af37;">ملف التقييم:</span> <span id="prof-valuation-profile-label">يُحدَّد عند اختيار العائلة والغرض</span>
+    </div>
+
+    </div><!-- /step-asset inner padding -->
+    </div><!-- /professional-step-asset -->
+
+    <!-- STEP 2: Valuation Purpose Router ──────────────────────────────── -->
+    <div data-testid="professional-step-purpose" style="margin-bottom:14px;border:1px solid rgba(96,165,250,0.2);border-radius:10px;overflow:hidden;">
+    <div data-testid="professional-purpose-router" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(96,165,250,0.06);border-bottom:1px solid rgba(96,165,250,0.15);">
+        <span style="background:#3b82f6;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">٢</span>
+        <span style="font-weight:700;color:#93c5fd;font-size:0.9rem;">تحديد غرض التقييم</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Valuation Purpose Router</span>
+    </div>
+    <div style="padding:12px 14px;">
+    <div style="margin:0 0 10px; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(96,165,250,0.2); border-radius:8px;">
+        <div style="font-size:0.78rem; color:#93c5fd; font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(96,165,250,0.15); padding-bottom:6px;">مسارات الغرض المهنية</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">مسار الغرض</label>
-                <select id="prof-purpose-route" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubRoutes(this.value)">
+                <select id="prof-purpose-route" data-testid="professional-purpose-route" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubRoutes(this.value)">
                     <option value="">-- اختر المسار --</option>
                     <optgroup label="القيمة السوقية">
                         <option value="standard_market_value">القيمة السوقية القياسية</option>
@@ -4163,12 +4196,16 @@
             </div>
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">المسار الفرعي</label>
-                <select id="prof-purpose-subroute" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                <select id="prof-purpose-subroute" data-testid="professional-purpose-subroute" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
                     <option value="">-- اختر المسار الفرعي --</option>
                 </select>
             </div>
         </div>
     </div>
+    <div data-testid="professional-purpose-summary" style="margin-top:8px;padding:8px 12px;background:rgba(96,165,250,0.04);border:1px solid rgba(96,165,250,0.15);border-radius:6px;font-size:0.78rem;color:#9ca3af;min-height:32px;">
+        <span id="professional-purpose-summary-text" style="color:#6b7280;font-style:italic;">اختر مسار الغرض لعرض الوصف والمعايير المطبقة.</span>
+    </div>
+    <!-- es-profile-explainer follows here — still inside Step 2 -->
     <!-- ── End Phase 10: Professional Registry Selectors ────────────────── -->
 
     <!-- ── Phase 8I: Profile Explainer ──────────────────────────────────── -->
@@ -4178,8 +4215,96 @@
     </div>
     <!-- ── End Phase 8I ──────────────────────────────────────────────────── -->
 
+    </div><!-- /step-purpose inner padding -->
+    </div><!-- /professional-step-purpose -->
+
+    <!-- STEP 3: Interactive Integration Matrix Dashboard ──────────────── -->
+    <div data-testid="professional-step-matrix" style="margin-bottom:14px;border:1px solid rgba(139,92,246,0.2);border-radius:10px;overflow:hidden;">
+    <div data-testid="professional-matrix-dashboard" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(139,92,246,0.06);border-bottom:1px solid rgba(139,92,246,0.15);">
+        <span style="background:#8b5cf6;color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">٣</span>
+        <span style="font-weight:700;color:#c4b5fd;font-size:0.9rem;">مصفوفة التكامل الذكية</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Interactive Integration Matrix Dashboard</span>
+    </div>
+    <div style="padding:12px 14px;">
+
+    <!-- Matrix Metadata Bar -->
+    <div data-testid="professional-matrix-metadata" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px 12px;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(139,92,246,0.2);border-radius:8px;font-size:0.75rem;">
+        <div><span style="color:#c4b5fd;">المسار النشط:</span> <span data-testid="professional-active-route" id="prof-active-route-display">market_value_with_habu</span></div>
+        <div><span style="color:#c4b5fd;">مستوى IFRS:</span> <span data-testid="professional-ifrs-level" id="prof-ifrs-level-display">Level 2</span></div>
+        <div><span style="color:#c4b5fd;">موافقة بشرية:</span> <span data-testid="professional-human-approval-required" style="color:#4ade80;">نعم</span></div>
+        <div><span style="color:#c4b5fd;">تقرير نهائي بدون موافقة:</span> <span data-testid="professional-final-without-approval" style="color:#f87171;">لا</span></div>
+        <div><span style="color:#c4b5fd;">حالة المسودة:</span> <span data-testid="professional-draft-status" style="color:#fbbf24;">draft_pending_human_review</span></div>
+    </div>
+
+    <!-- Matrix Tabs -->
+    <div data-testid="professional-matrix-tabs" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+        <button data-testid="professional-matrix-tab-ui-fields" onclick="switchProfMatrixTab('ui-fields')" id="pmtab-ui-fields"
+            style="background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.4);color:#d4af37;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ١. حقول الواجهة
+        </button>
+        <button data-testid="professional-matrix-tab-db-mapping" onclick="switchProfMatrixTab('db-mapping')" id="pmtab-db-mapping"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٢. قاعدة البيانات
+        </button>
+        <button data-testid="professional-matrix-tab-engine-inputs" onclick="switchProfMatrixTab('engine-inputs')" id="pmtab-engine-inputs"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٣. مدخلات المحرك
+        </button>
+        <button data-testid="professional-matrix-tab-market-comparables" onclick="switchProfMatrixTab('market-comparables')" id="pmtab-market-comparables"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٤. مقارنات السوق
+        </button>
+        <button data-testid="professional-matrix-tab-agentic-enrichment" onclick="switchProfMatrixTab('agentic-enrichment')" id="pmtab-agentic-enrichment"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٥. الإثراء الآلي
+        </button>
+        <button data-testid="professional-matrix-tab-validation" onclick="switchProfMatrixTab('validation')" id="pmtab-validation"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٦. التحقق
+        </button>
+        <button data-testid="professional-matrix-tab-human-approval" onclick="switchProfMatrixTab('human-approval')" id="pmtab-human-approval"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٧. الموافقة البشرية
+        </button>
+        <button data-testid="professional-matrix-tab-report-disclosure" onclick="switchProfMatrixTab('report-disclosure')" id="pmtab-report-disclosure"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٨. إفصاح التقرير
+        </button>
+        <button data-testid="professional-matrix-tab-output-contract" onclick="switchProfMatrixTab('output-contract')" id="pmtab-output-contract"
+            style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
+            ٩. عقد المخرجات
+        </button>
+    </div>
+
+    <!-- Matrix Tab Panel -->
+    <div data-testid="professional-matrix-tab-panel" id="prof-matrix-panel" style="background:rgba(0,0,0,0.2);border:1px solid #374151;border-radius:7px;padding:10px 12px;font-size:0.8rem;min-height:48px;">
+        <div id="pmcontent-ui-fields" style="color:#9ca3af;">property_id · asset_type · purpose · location_id · area_sqm · transaction_date · comparable_sales_count · habu_scenario</div>
+        <div id="pmcontent-db-mapping" style="display:none;color:#9ca3af;">properties · comparables · habu_scenarios · locations · transactions</div>
+        <div id="pmcontent-engine-inputs" style="display:none;color:#9ca3af;">market_price_per_sqm · location_factor · age_depreciation · habu_adjustment_factor · quality_score</div>
+        <div id="pmcontent-market-comparables" style="display:none;color:#9ca3af;">sale_price · sale_date · area_sqm · location · property_type · adjusted_price_per_sqm</div>
+        <div id="pmcontent-agentic-enrichment" style="display:none;color:#9ca3af;">market_trend_index · neighborhood_score · infrastructure_score — <span style="color:#f59e0b;">الحالة الافتراضية: pending_human_review</span></div>
+        <div id="pmcontent-validation" style="display:none;color:#9ca3af;">area_sqm ≥ 1 · comparable_count ≥ 3 · habu_scenario ∈ {highest_use, current_use} · date لا تتجاوز اليوم</div>
+        <div id="pmcontent-human-approval" style="display:none;color:#9ca3af;">مطلوبة عند وجود إثراء آلي · حالة التقرير بدون موافقة: draft_pending_human_review · الحالات المسموحة: pending_human_review · approved · rejected</div>
+        <div id="pmcontent-report-disclosure" style="display:none;color:#9ca3af;">valuation_date · effective_date · habu_assumption · market_conditions_note · comparable_summary · ifrs_level_disclosure</div>
+        <div id="pmcontent-output-contract" style="display:none;color:#9ca3af;">market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
+    </div>
+
+    </div><!-- /step-matrix inner padding -->
+    </div><!-- /professional-step-matrix -->
+
+    <!-- STEP 4: Requirements / Validation / Human Approval ────────────── -->
+    <div data-testid="professional-step-requirements" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.2);border-radius:10px;overflow:hidden;">
+    <div data-testid="professional-requirements-approval" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(251,191,36,0.06);border-bottom:1px solid rgba(251,191,36,0.15);">
+        <span style="background:#f59e0b;color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">٤</span>
+        <span style="font-weight:700;color:#fde68a;font-size:0.9rem;">المتطلبات والتحقق والاعتماد</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Requirements / Validation / Approval</span>
+    </div>
+    <div style="padding:12px 14px;">
+
+    <!-- Requirements Checklist (wraps existing es-req-panel, restored here in Step 4) -->
+    <div data-testid="professional-requirements-checklist">
     <!-- ── Phase 8B/8C: Requirements Checklist Panel ──────────────────── -->
-    <div id="es-req-panel" style="display:none; margin:12px 0; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
+    <div id="es-req-panel" style="display:none; margin:0 0 10px; padding:12px 14px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
         <div id="es-req-title" style="font-weight:bold; color:var(--gold-light); font-size:0.85rem; margin-bottom:6px;"></div>
         <div id="es-req-soft-msg" style="display:none; font-size:0.8rem; color:#9ca3af; font-style:italic; padding:4px 0;"></div>
         <div id="es-req-body">
@@ -4192,61 +4317,52 @@
         <div id="es-req-notes" style="margin-top:4px; font-size:0.78rem; color:#f59e0b;"></div>
     </div>
     <!-- ── End Phase 8B/8C ──────────────────────────────────────────────── -->
+    </div><!-- /professional-requirements-checklist -->
 
-    <!-- ── Phase 10: Purpose Integration Matrix Panel ──────────────────── -->
-    <div id="prof-matrix-panel" style="margin:10px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px; font-size:0.8rem;">
-        <div style="font-weight:bold; color:var(--gold-light); margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">
-            مصفوفة تكامل الغرض — القيمة السوقية وفق HABU
-            <span style="font-size:0.7rem; color:#9ca3af; font-weight:normal; margin-right:8px;">(قراءة فقط)</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 14px; margin-bottom:8px; font-size:0.75rem; color:#9ca3af;">
-            <div><span style="color:#e5e7eb;">المجموعة:</span> القيمة السوقية</div>
-            <div><span style="color:#e5e7eb;">المسار:</span> market_value_with_habu</div>
-            <div><span style="color:#e5e7eb;">أساس التقييم:</span> Market Value</div>
-            <div><span style="color:#e5e7eb;">مستوى IFRS الافتراضي:</span> Level 2</div>
-            <div><span style="color:#e5e7eb;">موافقة بشرية مطلوبة:</span> نعم</div>
-            <div><span style="color:#e5e7eb;">تقرير نهائي بدون موافقة:</span> لا</div>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:3px;">
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">1. حقول واجهة المستخدم (UI Fields)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">property_id · asset_type · purpose · location_id · area_sqm · transaction_date · comparable_sales_count · habu_scenario</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">2. تعيين قاعدة البيانات (DB Mapping)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">properties · comparables · habu_scenarios · locations · transactions</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">3. مدخلات المحرك (Engine Inputs)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_price_per_sqm · location_factor · age_depreciation · habu_adjustment_factor · quality_score</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">4. مقارنات السوق (Market Comparables)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">sale_price · sale_date · area_sqm · location · property_type · adjusted_price_per_sqm</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">5. الإثراء الآلي (Agentic Enrichment)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_trend_index · neighborhood_score · infrastructure_score — <span style="color:#f59e0b;">الحالة الافتراضية: pending_human_review</span></div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">6. قواعد التحقق (Validation Rules)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">area_sqm ≥ 1 · comparable_count ≥ 3 · habu_scenario ∈ {highest_use, current_use} · date لا تتجاوز اليوم</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">7. موافقة بشرية (Human Approval)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">مطلوبة عند وجود إثراء آلي · حالة التقرير بدون موافقة: draft_pending_human_review · الحالات المسموحة: pending_human_review · approved · rejected</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">8. إفصاح التقرير (Report Disclosure)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">valuation_date · effective_date · habu_assumption · market_conditions_note · comparable_summary · ifrs_level_disclosure</div>
-            </details>
-            <details style="background:rgba(0,0,0,0.2); border:1px solid #374151; border-radius:5px; padding:4px 8px;">
-                <summary style="cursor:pointer; color:#d4af37; font-size:0.78rem; user-select:none;">9. عقد المخرجات (Output Contract)</summary>
-                <div style="color:#9ca3af; padding:4px 0 2px; font-size:0.75rem;">market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
-            </details>
-        </div>
+    <div data-testid="professional-validation-summary" style="margin-bottom:8px;padding:8px 12px;background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.15);border-radius:6px;font-size:0.78rem;color:#9ca3af;">
+        <div style="font-weight:600;color:#fde68a;margin-bottom:4px;">ملخص التحقق</div>
+        <div id="prof-validation-summary-text" style="color:#6b7280;font-style:italic;">سيظهر ملخص التحقق بعد تحميل متطلبات التقييم.</div>
     </div>
-    <!-- ── End Phase 10: Purpose Integration Matrix Panel ───────────────── -->
+
+    <div data-testid="professional-human-approval-panel" style="margin-bottom:8px;padding:8px 12px;background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.2);border-radius:6px;font-size:0.78rem;">
+        <div style="font-weight:600;color:#fca5a5;margin-bottom:4px;">حالة الموافقة البشرية</div>
+        <div style="color:#9ca3af;">التقرير النهائي يستلزم مراجعة وموافقة خبير معتمد · الحالة الحالية: <span style="color:#fbbf24;">draft_pending_human_review</span></div>
+    </div>
+
+    <div data-testid="professional-expert-review-cta" style="padding:8px 12px;background:rgba(74,222,128,0.04);border:1px solid rgba(74,222,128,0.2);border-radius:6px;font-size:0.78rem;">
+        <span style="color:#86efac;font-weight:600;">طلب مراجعة الخبير المعتمد:</span>
+        <span style="color:#9ca3af;margin-right:6px;">أكمل الخطوات أعلاه ثم تابع للمخرجات لإرسال طلب المراجعة.</span>
+    </div>
+
+    </div><!-- /step-requirements inner padding -->
+    </div><!-- /professional-step-requirements -->
+
+    <!-- STEP 5: Draft Output / Expert Review Request ──────────────────── -->
+    <div data-testid="professional-step-output" style="margin-bottom:14px;border:1px solid rgba(74,222,128,0.2);border-radius:10px;overflow:hidden;">
+    <div data-testid="professional-output-section" style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(74,222,128,0.05);border-bottom:1px solid rgba(74,222,128,0.15);">
+        <span style="background:#22c55e;color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">٥</span>
+        <span style="font-weight:700;color:#86efac;font-size:0.9rem;">المخرجات والمسودة</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Draft Output / Expert Review Request</span>
+    </div>
+    <div style="padding:12px 14px;">
+
+    <div data-testid="professional-draft-warning" style="margin-bottom:10px;padding:8px 12px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;font-size:0.78rem;color:#fde68a;">
+        <i class="fas fa-exclamation-triangle" style="margin-left:6px;"></i>
+        التقرير المُولَّد مسودة أولية. يستلزم الاعتماد النهائي مراجعة خبير معتمد ومصادقته.
+    </div>
+
+    <div data-testid="professional-output-contract-summary" style="margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(74,222,128,0.15);border-radius:6px;font-size:0.78rem;color:#9ca3af;">
+        <div style="font-weight:600;color:#86efac;margin-bottom:4px;">ملخص عقد المخرجات</div>
+        <div>market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
+    </div>
+
+    <div data-testid="professional-request-expert-review" style="margin-bottom:12px;padding:10px 14px;background:rgba(74,222,128,0.04);border:1px solid rgba(74,222,128,0.2);border-radius:8px;font-size:0.8rem;">
+        <div style="font-weight:600;color:#86efac;margin-bottom:6px;">طلب مراجعة الخبير المعتمد</div>
+        <div style="color:#9ca3af;margin-bottom:8px;">أرسل مسودة التقرير للمراجعة والاعتماد من خبير معتمد لدى الجهات التنظيمية.</div>
+        <button onclick="openExpertRequestModal()" style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.3);color:#86efac;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.8rem;">
+            <i class="fas fa-paper-plane" style="margin-left:6px;"></i> إرسال طلب مراجعة
+        </button>
+    </div>
 
     <div class="ai-section">
         <div class="quality-header-bar">
@@ -4881,6 +4997,12 @@
             <div id="console-pulse-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.3s;"></div>
         </div>
     </div>
+
+    </div><!-- /step-output ai-section inner -->
+    </div><!-- /step-output inner padding -->
+    </div><!-- /professional-step-output -->
+
+    </div><!-- /professional-wizard -->
 
     </div><!-- /ws-professional -->
 
@@ -30738,6 +30860,51 @@ var _PROFILE_FORM_SCHEMA = {
 
 }());
 // ══ End Phase 12 ══════════════════════════════════════════════════════════════
+</script>
+
+<script>
+/* ── Professional Wizard: Matrix Tab Switcher ──────────────────────── */
+function switchProfMatrixTab(tabKey) {
+    var tabs = ['ui-fields','db-mapping','engine-inputs','market-comparables',
+                'agentic-enrichment','validation','human-approval',
+                'report-disclosure','output-contract'];
+    tabs.forEach(function(k) {
+        var btn = document.getElementById('pmtab-' + k);
+        var content = document.getElementById('pmcontent-' + k);
+        if (btn) {
+            btn.style.background = (k === tabKey) ? 'rgba(212,175,55,0.15)' : 'transparent';
+            btn.style.borderColor = (k === tabKey) ? 'rgba(212,175,55,0.4)' : '#374151';
+            btn.style.color = (k === tabKey) ? '#d4af37' : '#9ca3af';
+        }
+        if (content) content.style.display = (k === tabKey) ? '' : 'none';
+    });
+}
+
+function updateProfMatrixMetadata(route) {
+    var routeDisplay = document.getElementById('prof-active-route-display');
+    var summaryText  = document.getElementById('professional-purpose-summary-text');
+    var ROUTE_META = {
+        'market_value_with_habu':  { ifrs: 'Level 2', approval: 'نعم', desc: 'القيمة السوقية وفق HABU — تحليل أعلى وأفضل استغلال' },
+        'standard_market_value':   { ifrs: 'Level 2', approval: 'نعم', desc: 'القيمة السوقية القياسية — مقاربة السوق' },
+        'ifrs_13_fair_value':      { ifrs: 'Level 3', approval: 'نعم', desc: 'القيمة العادلة IFRS 13 — تقارير مالية' },
+        'secured_lending_value':   { ifrs: 'Level 2', approval: 'نعم', desc: 'قيمة الإقراض المضمون — رهن وتمويل بنكي' },
+        'forced_sale':             { ifrs: 'Level 3', approval: 'نعم', desc: 'البيع الاضطراري — قيمة تصفوية' },
+        'dcf_investment_value':    { ifrs: 'Level 3', approval: 'نعم', desc: 'DCF — التدفق النقدي المخصوم' },
+    };
+    var meta = ROUTE_META[route] || { ifrs: 'Level 2', approval: 'نعم', desc: '' };
+    if (routeDisplay) routeDisplay.textContent = route || 'market_value_with_habu';
+    var ifrsEl = document.getElementById('prof-ifrs-level-display');
+    if (ifrsEl) ifrsEl.textContent = meta.ifrs;
+    if (summaryText) summaryText.textContent = meta.desc || 'اختر مسار الغرض لعرض الوصف والمعايير المطبقة.';
+    var profileLabel = document.getElementById('prof-valuation-profile-label');
+    if (profileLabel && route) profileLabel.textContent = route.replace(/_/g,' ');
+}
+
+/* wire up prof-purpose-route → updateProfMatrixMetadata */
+(function() {
+    var sel = document.getElementById('prof-purpose-route');
+    if (sel) sel.addEventListener('change', function() { updateProfMatrixMetadata(this.value); });
+})();
 </script>
 
 <script>

@@ -4761,9 +4761,161 @@
         </div>
     </div>
 
+    <div class="action-card" style="margin-bottom: 2rem; display: none; border-color: var(--gold);" id="trends-module">
+        <i class="fas fa-chart-line" style="color: var(--gold);"></i>
+        <h3 style="color: var(--gold);">اتجاهات السوق — Market Trends</h3>
+        <div style="display: flex; gap: 20px; align-items: center; margin-top: 15px;">
+            <div style="flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; height: 120px; display: flex; align-items:center; justify-content:center;">
+                <span style="color: #64748b; font-size: 0.9rem;">[ رسم بياني لمنحنى السعر الزمني — قيد التطوير ]</span>
+            </div>
+            <div style="flex: 1; padding: 15px; border-right: 3px solid var(--gold);">
+                <div style="font-weight: bold; font-size: 1.05rem; color: var(--gold); margin-bottom: 5px;">رسالة استشارية (AI Insights):</div>
+                <div id="trend-insight-msg" style="color: var(--text); line-height: 1.6; font-size: 0.95rem;">
+                    جاري حساب نسبة التغير السنوي مقارنة بالتقرير الأقدم...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-dashboard">
+        <div class="admin-header" onclick="toggleAdminPanel()">
+            <div style="font-weight:bold;">
+                <i class="fas fa-user-shield"></i> لوحة التحكم الإدارية
+            </div>
+            <i class="fas fa-chevron-up" id="admin-icon"></i>
+        </div>
+        <div class="admin-body" id="admin-panel">
+            <div class="admin-tool-row">
+                <div style="flex:1; min-width:250px;">
+                    <label style="color:var(--gold); font-size:0.8rem;">رابط السيرفر (API URL):</label>
+                    <input type="text" id="api-url" class="input-box" style="padding:8px; font-size:0.9rem;" value="http://127.0.0.1:5000/api/valuation">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:var(--gold); color:#000;" onclick="exportBackup()">تصدير (Export)</button>
+                    <label class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:#374151; color:#fff; cursor:pointer;">
+                        استيراد <input type="file" id="import-file" style="display:none;" onchange="importBackup(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ سجل التقارير المحفوظة — Report History Panel (FE.1 + FE.2) ══════════ -->
+    <div class="action-card" id="es-reports-panel" style="margin-bottom:2rem;border-color:rgba(212,175,55,0.5);">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+            <h3 style="color:var(--gold);margin:0;font-size:1.1rem;">
+                <i class="fas fa-archive" style="font-size:1.1rem;margin-left:8px;display:inline;"></i>سجل التقارير المحفوظة
+            </h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="es-reports-filter-profile" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
+                    <option value="">الكل</option>
+                    <option value="legacy">التقرير التقليدي</option>
+                    <option value="detailed">التقرير التفصيلي</option>
+                    <option value="professional_template">التقرير الاحترافي بالقالب</option>
+                </select>
+                <select id="es-reports-filter-status" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
+                    <option value="">الكل</option>
+                    <option value="draft">draft</option>
+                    <option value="final">final</option>
+                    <option value="archived">archived</option>
+                </select>
+                <button class="btn-main" style="padding:8px 16px;font-size:0.85rem;background:var(--gold);color:#000;display:inline-flex;" onclick="esReportsLoad()">
+                    <i class="fas fa-sync-alt" style="font-size:0.85rem;display:inline;"></i>&nbsp;تحديث السجل
+                </button>
+            </div>
+        </div>
+        <div id="es-reports-state" style="color:#9ca3af;padding:12px 0;text-align:center;font-size:0.9rem;">
+            اضغط "تحديث السجل" لتحميل التقارير المحفوظة
+        </div>
+        <div id="es-reports-table-wrap" style="display:none;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.84rem;">
+                <thead>
+                    <tr style="background:rgba(212,175,55,0.1);color:var(--gold-light);">
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">المعرّف</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع العقار</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الموقع</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">القيمة السوقية</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">التاريخ</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الحالة</th>
+                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع التقرير</th>
+                        <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);font-weight:600;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="es-reports-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══ Detail Overlay (FE.1 — عرض التفاصيل) ════════════════════════════════ -->
+    <div id="es-report-detail-overlay"
+         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1050;overflow-y:auto;padding:20px;"
+         onclick="esReportsCloseDetail(event)">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);max-width:780px;margin:40px auto;padding:28px;position:relative;"
+             onclick="event.stopPropagation()">
+            <button onclick="esReportsCloseDetail()"
+                    style="position:absolute;top:12px;left:14px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;line-height:1;padding:0;"
+                    aria-label="إغلاق">&times;</button>
+            <h3 style="color:var(--gold);margin:0 0 18px;font-size:1.05rem;">
+                <i class="fas fa-file-alt" style="font-size:1rem;margin-left:8px;display:inline;"></i>تفاصيل التقرير
+            </h3>
+            <div id="es-report-detail-body" style="font-size:0.87rem;line-height:1.9;"></div>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="reportResult"></div>
+            <div style="display:flex; gap:15px; margin-top:30px; border-top:1px solid #eee; padding-top:20px;" class="print-hide">
+                <button class="btn-main" style="background:var(--sovereign-blue); color:#fff;" onclick="window.print()">طباعة التقرير</button>
+                <button class="btn-main" style="background:#f4f4f4; color:#333;" onclick="closeModal()">الرجوع للتعديل</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Real-time Console Pulse Bar -->
+    <div id="console-pulse" style="position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 80%; background: #111827; color: #4ade80; font-family: monospace; padding: 15px; border-radius: 8px; border: 1px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 998; display: none;">
+        <div style="margin-bottom: 5px; font-weight: bold; color: #f1f5f9;">> Console Pulse Trace:</div>
+        <div id="console-pulse-text">[INFO] Waiting for execution...</div>
+        <div style="width: 100%; height: 4px; background: #334155; margin-top: 10px; border-radius: 2px; overflow: hidden;">
+            <div id="console-pulse-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.3s;"></div>
+        </div>
+    </div>
+
+    </div><!-- /ws-professional -->
+
+    <!-- Workspace: التقييم المجمع ─────────────────────────────────────────── -->
+    <!-- ── Phase 11: Composite Valuation Tab ───────────────────────────── -->
+    <div class="es-workspace" id="ws-composite" role="tabpanel">
+
+        <!-- Composite header -->
+        <div data-testid="composite-valuation-header" style="margin-bottom:12px; padding:14px 18px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:10px;">
+            <h2 style="color:var(--gold);font-size:1.1rem;font-weight:700;margin:0 0 4px;">التقييم المجمع والتقييم الجماعي</h2>
+            <p style="color:#9ca3af;font-size:0.82rem;margin:0 0 8px;">مسار مخصص للأصول متعددة المكونات، المحافظ العقارية، والتقييم الجماعي لعدد كبير من الأصول كمسودة غير معتمدة.</p>
+            <div style="padding:8px 12px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.22); border-radius:6px; font-size:0.78rem; color:#f87171;">
+                ⚠ كل النتائج في هذا المسار مبدئية وغير معتمدة، ولا تستخدم أمام البنوك أو الجهات الحكومية أو القضائية قبل مراجعة واعتماد الخبير.
+            </div>
+        </div>
+
+
+        <!-- Mode selector -->
+        <div data-testid="composite-mode-selector" style="display:flex; gap:8px; margin-bottom:14px; padding:4px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; width:fit-content;">
+            <button type="button" id="cmp-mode-btn-mass"
+                data-testid="composite-mode-mass"
+                onclick="setCompositeMode('mass')"
+                style="padding:7px 18px; border-radius:6px; border:none; cursor:pointer; font-family:inherit; font-size:0.82rem; font-weight:700; background:#d4af37; color:#000; transition:all 0.2s;">
+                محفظة / تقييم جماعي
+            </button>
+            <button type="button" id="cmp-mode-btn-composite"
+                data-testid="composite-mode-composite"
+                onclick="setCompositeMode('composite')"
+                style="padding:7px 18px; border-radius:6px; border:none; cursor:pointer; font-family:inherit; font-size:0.82rem; font-weight:700; background:transparent; color:#9ca3af; transition:all 0.2s;">
+                أصل متعدد المكونات
+            </button>
+        </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <section id="mass-appraisal-workflow" class="mass-workflow-shell" dir="rtl">
+    <section id="mass-appraisal-workflow" class="mass-workflow-shell" dir="rtl" data-testid="mass-appraisal-workspace">
 
 
       <div class="mass-workspace-header">
@@ -4779,35 +4931,35 @@
       <div class="mass-summary-grid" dir="rtl">
         <div class="mass-summary-card">
           <div class="mass-summary-label">عدد الوحدات</div>
-          <div class="mass-summary-value" id="mass-summary-units">—</div>
+          <div class="mass-summary-value" id="mass-summary-units" data-testid="mass-unit-count">—</div>
           <div class="mass-summary-hint">آخر تشغيل للتقييم الجماعي</div>
         </div>
         <div class="mass-summary-card">
           <div class="mass-summary-label">إجمالي المحفظة</div>
-          <div class="mass-summary-value" id="mass-summary-total-value">—</div>
+          <div class="mass-summary-value" id="mass-summary-total-value" data-testid="mass-total-value">—</div>
           <div class="mass-summary-hint">قيمة إجمالية تقديرية</div>
         </div>
         <div class="mass-summary-card">
           <div class="mass-summary-label">متوسط سعر/م²</div>
-          <div class="mass-summary-value" id="mass-summary-avg-ppm">—</div>
+          <div class="mass-summary-value" id="mass-summary-avg-ppm" data-testid="mass-average-price-m2">—</div>
           <div class="mass-summary-hint">من آخر نتيجة تشغيل</div>
         </div>
         <div class="mass-summary-card">
           <div class="mass-summary-label">حالة الدراسة</div>
-          <div class="mass-summary-value" id="mass-summary-status">جاهز</div>
+          <div class="mass-summary-value" id="mass-summary-status" data-testid="mass-quality-indicator">جاهز</div>
           <div class="mass-summary-hint">Preview / Run / Export</div>
         </div>
       </div>
 
       <div class="mass-action-bar" dir="rtl" aria-label="إجراءات التقييم الجماعي السريعة">
         <div class="mass-action-group">
-          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="loadMassAppraisalExample()">تحميل مثال</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" data-testid="mass-load-sample" onclick="loadMassAppraisalExample()">تحميل مثال</button>
           <button type="button" class="mass-action-btn mass-action-btn-secondary" id="mass-preview-btn" onclick="previewMassAppraisal()">معاينة</button>
-          <button type="button" class="mass-action-btn mass-action-btn-primary"   id="mass-run-btn"     onclick="runMassAppraisal()">تشغيل التقييم الجماعي</button>
+          <button type="button" class="mass-action-btn mass-action-btn-primary"   id="mass-run-btn" data-testid="mass-run-button" onclick="runMassAppraisalHub()">تشغيل التقييم الجماعي</button>
         </div>
         <div class="mass-action-group">
-          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
-          <button type="button" class="mass-action-btn mass-action-btn-secondary" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" data-testid="mass-export-csv" onclick="downloadMassAppraisalCsv()">تصدير CSV</button>
+          <button type="button" class="mass-action-btn mass-action-btn-secondary" data-testid="mass-export-excel-internal" onclick="downloadMassAppraisalXlsx()">تصدير Excel</button>
           <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="exportMassAppraisalSession()">تصدير جلسة العمل</button>
           <button type="button" class="mass-action-btn mass-action-btn-muted"     onclick="document.getElementById('mass-import-session-file').click()">استيراد جلسة محفوظة</button>
         </div>
@@ -4875,7 +5027,7 @@
             الحقول المطلوبة لكل صف: <code style="color:var(--gold);">location</code>، <code style="color:var(--gold);">area</code>، <code style="color:var(--gold);">property_type</code>.
             اختيارية: <code style="color:var(--gold);">row_id</code>، <code style="color:var(--gold);">valuation_purpose</code>، <code style="color:var(--gold);">price_per_meter</code>، <code style="color:var(--gold);">zone_id</code>، <code style="color:var(--gold);">property_class</code>.
         </div>
-        <textarea id="mass-appraisal-input" class="prompt-textarea"
+        <textarea id="mass-appraisal-input" class="prompt-textarea" data-testid="mass-json-input"
             dir="ltr"
             style="height:180px;font-size:0.85rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
             spellcheck="false"
@@ -4893,10 +5045,10 @@
             </button>
 
             <!-- File upload — KEEP: JSON/CSV upload unique to this card -->
-            <label class="btn-main"
+            <label class="btn-main" data-testid="mass-upload-zone"
                 style="background:#374151;color:#fff;padding:8px 14px;font-size:0.85rem;cursor:pointer;margin:0;">
                 <i class="fas fa-upload"></i> رفع ملف JSON/CSV
-                <input type="file" id="mass-upload-file" accept=".json,.csv"
+                <input type="file" id="mass-upload-file" data-testid="mass-upload-input" accept=".json,.csv,.xlsx,.xls"
                     style="display:none;"
                     onchange="loadMassAppraisalFile(event);">
             </label>
@@ -4960,6 +5112,139 @@
 
         <!-- Results table (shown after run) -->
         <div id="mass-appraisal-results" style="margin-top:8px;overflow-x:auto;"></div>
+
+        <!-- File list -->
+        <div id="mass-upload-file-list" data-testid="mass-upload-file-list" style="margin-top:6px; font-size:0.8rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- ── Smart Validation Panel ──────────────────────────────────── -->
+    <div id="mass-validation-panel" data-testid="mass-validation-panel" style="display:none; margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+        <div style="font-size:0.85rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">التحقق من بيانات المحفظة</div>
+        <div id="mass-validation-summary" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; margin-bottom:10px;"></div>
+        <div id="mass-validation-errors" style="font-size:0.8rem; color:#f87171; max-height:120px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- ── Progress ──────────────────────────────────────────────────── -->
+    <div id="mass-processing-progress-wrapper" data-testid="mass-processing-progress" style="display:none; margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+        <div data-testid="mass-processing-status" id="mass-processing-status" style="font-size:0.85rem; color:#9ca3af; margin-bottom:8px;">جاري المعالجة...</div>
+        <div style="height:6px; background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden;">
+            <div id="mass-progress-bar" style="height:100%; background:#d4af37; width:0%; transition:width 0.4s;"></div>
+        </div>
+    </div>
+
+    <!-- ── Results Dashboard ─────────────────────────────────────────── -->
+    <div id="mass-results-dashboard" data-testid="mass-results-dashboard" style="display:none; margin-bottom:1rem;">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">لوحة نتائج التقييم الجماعي الاستشاري</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:10px;">
+            <div style="padding:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+                <div style="font-size:0.75rem; color:#9ca3af;">إجمالي قيمة المحفظة</div>
+                <div id="mass-dashboard-total-value" style="font-size:1.1rem; font-weight:700; color:var(--gold); margin-top:4px;">—</div>
+            </div>
+            <div style="padding:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+                <div style="font-size:0.75rem; color:#9ca3af;">متوسط سعر/م²</div>
+                <div id="mass-dashboard-avg-ppm" style="font-size:1.1rem; font-weight:700; color:var(--gold); margin-top:4px;">—</div>
+            </div>
+            <div style="padding:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+                <div style="font-size:0.75rem; color:#9ca3af;">عدد الأصول</div>
+                <div id="mass-dashboard-unit-count" style="font-size:1.1rem; font-weight:700; color:var(--gold); margin-top:4px;">—</div>
+            </div>
+            <div style="padding:12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+                <div style="font-size:0.75rem; color:#9ca3af;">مؤشر جودة التقييم</div>
+                <div id="mass-dashboard-quality" data-testid="mass-cod-indicator" style="font-size:1.1rem; font-weight:700; color:#86efac; margin-top:4px;">—</div>
+            </div>
+        </div>
+        <div style="font-size:0.72rem; color:#6b7280; text-align:center; font-style:italic; padding:4px 0;">
+            منطق استرشادي مبدئي داخل الواجهة وليس محرك تقييم معتمد.
+        </div>
+        <div id="mass-results-table" style="margin-top:10px; overflow-x:auto; font-size:0.8rem;"></div>
+    </div>
+
+    <!-- ── Weighting Panel ───────────────────────────────────────────── -->
+    <div id="mass-weighting-panel" data-testid="mass-weighting-panel" style="display:none; margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+        <div style="font-size:0.85rem; font-weight:700; color:var(--gold-light); margin-bottom:10px;">المعايرة والأوزان النسبية</div>
+        <div id="mass-weighting-content" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:8px;"></div>
+        <div id="mass-low-comparables-warning" style="display:none; padding:8px 12px; background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.3); border-radius:6px; font-size:0.8rem; color:#fbbf24;">
+            LOW_COMPARABLES: بيانات المقارنات غير كافية لبعض الأصول، تم اقتراح تعديل الأوزان استرشاديًا.
+        </div>
+    </div>
+
+    <!-- ── Outlier Panel ─────────────────────────────────────────────── -->
+    <div id="mass-outlier-panel" data-testid="mass-outlier-panel" style="display:none; margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
+        <div style="font-size:0.85rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">رصد الشواذ المحتملة — Outlier Detection</div>
+        <div id="mass-outlier-summary" style="font-size:0.82rem; color:#9ca3af; margin-bottom:8px;"></div>
+        <div id="mass-outlier-list" style="font-size:0.8rem; color:#fbbf24; max-height:100px; overflow-y:auto;"></div>
+        <div style="font-size:0.75rem; color:#6b7280; margin-top:8px; font-style:italic;">تم رصد الشواذ المحتملة للمراجعة البشرية، ولم يتم حذف أي أصل تلقائيًا.</div>
+    </div>
+
+    <!-- ── Expert Approval CTA ───────────────────────────────────────── -->
+    <div style="margin-bottom:1rem; text-align:center; padding:10px 0;">
+        <button type="button" data-testid="mass-expert-approval-button"
+            onclick="massToggleLeadForm()"
+            style="padding:10px 28px; background:#d4af37; color:#000; font-weight:900; border:none; border-radius:8px; cursor:pointer; font-size:0.9rem; font-family:inherit;">
+            اعتماد المحفظة رسميًا من الخبير
+        </button>
+    </div>
+    <!-- Lead form -->
+    <div id="mass-lead-form" data-testid="mass-lead-form" style="display:none; margin-bottom:1rem; padding:14px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:10px;">
+        <div style="font-size:0.9rem; font-weight:700; color:var(--gold-light); margin-bottom:12px;">طلب مراجعة واعتماد المحفظة من الخبير</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+            <div>
+                <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">الاسم / الشركة *</label>
+                <input type="text" id="mass-lead-name" data-testid="mass-lead-name" class="input-box" placeholder="الاسم أو اسم الشركة" style="padding:7px; width:100%;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">رقم الهاتف / واتساب *</label>
+                <input type="text" id="mass-lead-phone" data-testid="mass-lead-phone" class="input-box" placeholder="رقم الهاتف" style="padding:7px; width:100%;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">البريد الإلكتروني</label>
+                <input type="email" id="mass-lead-email" data-testid="mass-lead-email" class="input-box" placeholder="email@example.com" style="padding:7px; width:100%;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">عدد الأصول التقريبي</label>
+                <input type="number" id="mass-lead-asset-count" data-testid="mass-lead-asset-count" class="input-box" placeholder="5" min="1" style="padding:7px; width:100%;">
+            </div>
+            <div>
+                <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">الغرض من الاعتماد</label>
+                <input type="text" id="mass-lead-purpose" data-testid="mass-lead-purpose" class="input-box" placeholder="بنك / جهة حكومية / إجراءات قانونية" style="padding:7px; width:100%;">
+            </div>
+        </div>
+        <div style="margin-bottom:10px;">
+            <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">ملاحظات</label>
+            <textarea id="mass-lead-notes" data-testid="mass-lead-notes" class="prompt-textarea" style="height:60px; font-size:0.85rem;" placeholder="أي تفاصيل إضافية..."></textarea>
+        </div>
+        <div id="mass-lead-validation-msg" style="display:none; font-size:0.8rem; color:#f87171; margin-bottom:8px;"></div>
+        <button type="button" data-testid="mass-lead-submit" onclick="massSubmitExpertLead()"
+            style="padding:9px 24px; background:#d4af37; color:#000; font-weight:900; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:inherit;">
+            إرسال الطلب
+        </button>
+        <div id="mass-lead-confirmation" data-testid="mass-lead-confirmation" style="display:none; margin-top:10px; padding:10px 14px; background:rgba(34,197,94,0.09); border:1px solid rgba(34,197,94,0.3); border-radius:6px; font-size:0.82rem; color:#86efac;">
+            تم تسجيل طلب مراجعة المحفظة مبدئيًا. سيقوم الخبير بمراجعة البيانات والمعايرة قبل إصدار أي تقرير معتمد.
+        </div>
+    </div>
+
+    <!-- ── Preview PDF / Report architecture info ────────────────────── -->
+    <div style="margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.15); border-radius:8px;">
+        <div style="font-size:0.82rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">التقارير والتصدير — بنية التقارير المستهدفة</div>
+        <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:10px;">
+            <strong style="color:#d4af37;">1. تقرير PDF تنفيذي:</strong> ملخص المحفظة، إجمالي القيمة، توزيع الأصول، مؤشرات الجودة (COD / outlier rate / confidence). العلامة المائية: "مسودة آلية — غير معتمدة" ما لم يعتمدها الخبير.<br>
+            <strong style="color:#d4af37; margin-top:6px; display:inline-block;">2. Excel داخلي للخبير (Internal Audit Trail):</strong> صف لكل أصل: القيمة المقدرة، كود المنهجية، عوامل التعديل، درجة الثقة، علامة الشاذ، مرجع المصدر، حالة الاعتماد. <em style="color:#6b7280;">للخبير / الإدارة — ليس مخرجًا عامًا.</em>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" data-testid="mass-preview-pdf" onclick="alert('معاينة PDF — ستتوفر بعد تشغيل التقييم وإرسال طلب الاعتماد.')"
+                style="padding:7px 16px; background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#d4af37; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
+                معاينة تقرير PDF استرشادي
+            </button>
+            <button type="button" onclick="downloadMassAppraisalCsv()"
+                style="padding:7px 16px; background:rgba(33,115,70,0.15); border:1px solid rgba(33,115,70,0.4); color:#86efac; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
+                تصدير CSV استرشادي
+            </button>
+            <button type="button" onclick="downloadMassAppraisalXlsx()"
+                style="padding:7px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:#9ca3af; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
+                تصدير Excel داخلي للخبير
+            </button>
+        </div>
+        <div style="font-size:0.72rem; color:#6b7280; margin-top:8px;">تقرير تقييم جماعي آلي مؤقت — غير معتمد رسميًا</div>
     </div>
 
       </div><!-- /.mass-tab-panel portfolio -->
@@ -5095,7 +5380,7 @@
     <!-- ══════════════════════════════════════════════════════════════════════
          Phase 3.3 — Ratio Study  (/api/mass-appraisal/ratio-study/run)
          ══════════════════════════════════════════════════════════════════════ -->
-    <div class="action-card" id="ratio-study-section" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+    <div class="action-card" id="ratio-study-section" data-testid="mass-ratio-study-panel" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
         <i class="fas fa-chart-bar" style="color:#818cf8;"></i>
         <h3 style="color:#818cf8;">دراسة النسب — Ratio Study / IAAO (Phase 3.3)</h3>
         <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:10px;">
@@ -5127,7 +5412,7 @@
                         استخدام آخر بيانات المبيعات ⚡
                     </button>
                 </div>
-                <textarea id="ratio-study-sales-input" class="prompt-textarea"
+                <textarea id="ratio-study-sales-input" data-testid="mass-sales-json-input" class="prompt-textarea"
                     dir="ltr"
                     style="height:100px;font-size:0.8rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.4;"
                     spellcheck="false" placeholder='الصق sales array هنا (sale_price، zone_id/location) — أو اضغط الزر أعلاه...'></textarea>
@@ -5236,11 +5521,75 @@
       <div class="mass-tab-panel" data-mass-panel="governance">
 
     <!-- ══════════════════════════════════════════════════════════════════════
-         Phase 3.8 — Governance Approval (frontend state only)
+         Governance & Model Lifecycle — Production-grade roadmap panel
          ══════════════════════════════════════════════════════════════════════ -->
-    <div class="action-card" id="mass-governance-panel" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
-        <i class="fas fa-gavel" style="color:#818cf8;"></i>
-        <h3 style="color:#818cf8;">الحوكمة والاعتماد — Governance Approval (Phase 3.8)</h3>
+    <div class="action-card" id="mass-governance-panel" data-testid="mass-governance-panel" style="margin-bottom:2rem;border-color:rgba(99,102,241,0.45);">
+        <i class="fas fa-shield-alt" style="color:#818cf8;"></i>
+        <h3 style="color:#818cf8;">حوكمة النموذج ومصادر البيانات</h3>
+        <p style="font-size:0.85rem;color:#9ca3af;margin-bottom:16px;">
+            هذه النسخة تعمل حاليًا كمسودة تقييم جماعي داخلية أثناء التطوير. سيتم ربط التقييم الجماعي لاحقًا بمستودع المعرفة، مصادر السوق، وسجل التحديثات الدورية ضمن مرحلة الذكاء والتحقق المتقدم قبل الإطلاق العام.
+        </p>
+
+        <!-- Roadmap status cards -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-bottom:18px;">
+            <div data-testid="mass-knowledge-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">مستودع المعرفة العقارية</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">يربط النظام مصادر السوق، معايير التقييم، التقارير السابقة، وبيانات المقارنات داخل مستودع معرفة قابل للاسترجاع.</div>
+                <div style="font-size:0.72rem; color:#d4af37; font-weight:700;">مخطط للمرحلة التالية</div>
+            </div>
+            <div data-testid="mass-qdrant-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">Qdrant / Vector Search</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">يستخدم النظام البحث الدلالي لاسترجاع المقارنات والمصادر الأكثر صلة بالمحفظة المرفوعة.</div>
+                <div style="font-size:0.72rem; color:#d4af37; font-weight:700;">مخطط للمرحلة التالية</div>
+            </div>
+            <div data-testid="mass-market-refresh-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">تحديثات السوق الدورية</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">يتم تحديث مصادر السوق والمؤشرات العقارية دوريًا عبر مهام مجدولة قبل إعادة المعايرة.</div>
+                <div data-testid="mass-scheduler-status" style="font-size:0.72rem; color:#d4af37; font-weight:700;">مخطط للمرحلة التالية</div>
+            </div>
+            <div data-testid="mass-source-registry-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">سجل مصادر البيانات</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">كل نتيجة جماعية ترتبط بسجل مصادر يوضح المصدر، تاريخ الاسترجاع، درجة الثقة، وحالة الاعتماد.</div>
+                <div style="font-size:0.72rem; color:#d4af37; font-weight:700;">مخطط للمرحلة التالية</div>
+            </div>
+            <div data-testid="mass-model-quality-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">قياس جودة النموذج</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">يتم قياس جودة التقييم الجماعي باستخدام مؤشرات مثل COD، Ratio Study، Outlier Rate، ومستوى الثقة.</div>
+                <div data-testid="mass-rag-status" style="font-size:0.72rem; color:#d4af37; font-weight:700;">يُفعّل بعد ربط بيانات المبيعات الفعلية</div>
+            </div>
+            <div data-testid="mass-expert-approval-status" style="padding:12px; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.3); border-radius:8px;">
+                <div style="font-size:0.75rem; font-weight:700; color:#818cf8; margin-bottom:4px;">اعتماد الخبير</div>
+                <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:6px;">أي تقرير جماعي رسمي لا يصدر إلا بعد مراجعة الخبير واعتماد المنهجية والنتائج النهائية.</div>
+                <div style="font-size:0.72rem; color:#d4af37; font-weight:700;">مطلوب قبل أي تقرير رسمي</div>
+            </div>
+        </div>
+
+        <!-- Live metrics placeholders -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px; margin-bottom:16px;">
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px;">
+                <div style="font-size:0.72rem; color:#6b7280;">آخر تحديث للمصادر</div>
+                <div data-testid="mass-last-refresh" style="font-size:0.82rem; color:#9ca3af; margin-top:2px;">سيظهر هنا آخر تحديث عند ربط لوحة الحوكمة بالخادم</div>
+            </div>
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px;">
+                <div style="font-size:0.72rem; color:#6b7280;">عدد المصادر المفهرسة</div>
+                <div data-testid="mass-indexed-sources-count" style="font-size:0.82rem; color:#9ca3af; margin-top:2px;">سيظهر عدد المصادر المفهرسة بعد تشغيل مستودع المعرفة</div>
+            </div>
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px;">
+                <div style="font-size:0.72rem; color:#6b7280;">متوسط الثقة</div>
+                <div data-testid="mass-confidence-score" style="font-size:0.82rem; color:#9ca3af; margin-top:2px;">سيظهر معامل الثقة بعد تشغيل طبقة الاسترجاع والتحقق</div>
+            </div>
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px;">
+                <div style="font-size:0.72rem; color:#6b7280;">حالة التقرير</div>
+                <div style="font-size:0.82rem; color:#fbbf24; margin-top:2px;">مسودة آلية</div>
+            </div>
+            <div style="padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:6px;">
+                <div style="font-size:0.72rem; color:#6b7280;">حالة الاعتماد</div>
+                <div style="font-size:0.82rem; color:#9ca3af; margin-top:2px;">بانتظار مراجعة الخبير</div>
+            </div>
+        </div>
+
+        <!-- Keep the original governance decision form below the roadmap panel -->
+        <div style="font-weight:600;color:#818cf8;font-size:0.9rem;margin-bottom:8px;">توثيق قرار الحوكمة</div>
         <div style="font-size:0.85rem;color:#9ca3af;margin-bottom:12px;">
             وثِّق قرار مراجعة نموذج التقييم الجماعي. البيانات محفوظة في الجلسة وتُدرج في التصدير.
         </div>
@@ -5436,138 +5785,8 @@
       </div><!-- /.mass-workspace-body -->
     </section><!-- /#mass-appraisal-workflow -->
 
-    <div class="action-card" style="margin-bottom: 2rem; display: none; border-color: var(--gold);" id="trends-module">
-        <i class="fas fa-chart-line" style="color: var(--gold);"></i>
-        <h3 style="color: var(--gold);">اتجاهات السوق — Market Trends</h3>
-        <div style="display: flex; gap: 20px; align-items: center; margin-top: 15px;">
-            <div style="flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 15px; height: 120px; display: flex; align-items:center; justify-content:center;">
-                <span style="color: #64748b; font-size: 0.9rem;">[ رسم بياني لمنحنى السعر الزمني — قيد التطوير ]</span>
-            </div>
-            <div style="flex: 1; padding: 15px; border-right: 3px solid var(--gold);">
-                <div style="font-weight: bold; font-size: 1.05rem; color: var(--gold); margin-bottom: 5px;">رسالة استشارية (AI Insights):</div>
-                <div id="trend-insight-msg" style="color: var(--text); line-height: 1.6; font-size: 0.95rem;">
-                    جاري حساب نسبة التغير السنوي مقارنة بالتقرير الأقدم...
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="admin-dashboard">
-        <div class="admin-header" onclick="toggleAdminPanel()">
-            <div style="font-weight:bold;">
-                <i class="fas fa-user-shield"></i> لوحة التحكم الإدارية
-            </div>
-            <i class="fas fa-chevron-up" id="admin-icon"></i>
-        </div>
-        <div class="admin-body" id="admin-panel">
-            <div class="admin-tool-row">
-                <div style="flex:1; min-width:250px;">
-                    <label style="color:var(--gold); font-size:0.8rem;">رابط السيرفر (API URL):</label>
-                    <input type="text" id="api-url" class="input-box" style="padding:8px; font-size:0.9rem;" value="http://127.0.0.1:5000/api/valuation">
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:var(--gold); color:#000;" onclick="exportBackup()">تصدير (Export)</button>
-                    <label class="btn-main" style="padding:8px 15px; font-size:0.8rem; background:#374151; color:#fff; cursor:pointer;">
-                        استيراد <input type="file" id="import-file" style="display:none;" onchange="importBackup(this)">
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══ سجل التقارير المحفوظة — Report History Panel (FE.1 + FE.2) ══════════ -->
-    <div class="action-card" id="es-reports-panel" style="margin-bottom:2rem;border-color:rgba(212,175,55,0.5);">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
-            <h3 style="color:var(--gold);margin:0;font-size:1.1rem;">
-                <i class="fas fa-archive" style="font-size:1.1rem;margin-left:8px;display:inline;"></i>سجل التقارير المحفوظة
-            </h3>
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                <select id="es-reports-filter-profile" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
-                    <option value="">الكل</option>
-                    <option value="legacy">التقرير التقليدي</option>
-                    <option value="detailed">التقرير التفصيلي</option>
-                    <option value="professional_template">التقرير الاحترافي بالقالب</option>
-                </select>
-                <select id="es-reports-filter-status" class="input-box" style="width:auto;padding:6px 10px;font-size:0.85rem;">
-                    <option value="">الكل</option>
-                    <option value="draft">draft</option>
-                    <option value="final">final</option>
-                    <option value="archived">archived</option>
-                </select>
-                <button class="btn-main" style="padding:8px 16px;font-size:0.85rem;background:var(--gold);color:#000;display:inline-flex;" onclick="esReportsLoad()">
-                    <i class="fas fa-sync-alt" style="font-size:0.85rem;display:inline;"></i>&nbsp;تحديث السجل
-                </button>
-            </div>
-        </div>
-        <div id="es-reports-state" style="color:#9ca3af;padding:12px 0;text-align:center;font-size:0.9rem;">
-            اضغط "تحديث السجل" لتحميل التقارير المحفوظة
-        </div>
-        <div id="es-reports-table-wrap" style="display:none;overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:0.84rem;">
-                <thead>
-                    <tr style="background:rgba(212,175,55,0.1);color:var(--gold-light);">
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">المعرّف</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع العقار</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الموقع</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">القيمة السوقية</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">التاريخ</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">الحالة</th>
-                        <th style="padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);font-weight:600;">نوع التقرير</th>
-                        <th style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);font-weight:600;">الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody id="es-reports-tbody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ══ Detail Overlay (FE.1 — عرض التفاصيل) ════════════════════════════════ -->
-    <div id="es-report-detail-overlay"
-         style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:1050;overflow-y:auto;padding:20px;"
-         onclick="esReportsCloseDetail(event)">
-        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);max-width:780px;margin:40px auto;padding:28px;position:relative;"
-             onclick="event.stopPropagation()">
-            <button onclick="esReportsCloseDetail()"
-                    style="position:absolute;top:12px;left:14px;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;line-height:1;padding:0;"
-                    aria-label="إغلاق">&times;</button>
-            <h3 style="color:var(--gold);margin:0 0 18px;font-size:1.05rem;">
-                <i class="fas fa-file-alt" style="font-size:1rem;margin-left:8px;display:inline;"></i>تفاصيل التقرير
-            </h3>
-            <div id="es-report-detail-body" style="font-size:0.87rem;line-height:1.9;"></div>
-        </div>
-    </div>
-
-    <div id="reportModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div id="reportResult"></div>
-            <div style="display:flex; gap:15px; margin-top:30px; border-top:1px solid #eee; padding-top:20px;" class="print-hide">
-                <button class="btn-main" style="background:var(--sovereign-blue); color:#fff;" onclick="window.print()">طباعة التقرير</button>
-                <button class="btn-main" style="background:#f4f4f4; color:#333;" onclick="closeModal()">الرجوع للتعديل</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Real-time Console Pulse Bar -->
-    <div id="console-pulse" style="position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); width: 80%; background: #111827; color: #4ade80; font-family: monospace; padding: 15px; border-radius: 8px; border: 1px solid var(--gold); box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 998; display: none;">
-        <div style="margin-bottom: 5px; font-weight: bold; color: #f1f5f9;">> Console Pulse Trace:</div>
-        <div id="console-pulse-text">[INFO] Waiting for execution...</div>
-        <div style="width: 100%; height: 4px; background: #334155; margin-top: 10px; border-radius: 2px; overflow: hidden;">
-            <div id="console-pulse-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 0.3s;"></div>
-        </div>
-    </div>
-
-    </div><!-- /ws-professional -->
-
-    <!-- Workspace: التقييم المجمع ─────────────────────────────────────────── -->
-    <!-- ── Phase 11: Composite Valuation Tab ───────────────────────────── -->
-    <div class="es-workspace" id="ws-composite" role="tabpanel">
-
-        <!-- Composite header -->
-        <div data-testid="composite-valuation-header" style="margin-bottom:12px; padding:12px 16px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
-            <h2 style="color:var(--gold);font-size:1.05rem;font-weight:700;margin:0 0 4px;">التقييم المجمّع</h2>
-            <p style="color:#9ca3af;font-size:0.8rem;margin:0;">تقييم محافظ عقارية متعددة المكونات واحتساب القيمة الإجمالية بتعديل التآزر</p>
-        </div>
+        <!-- Composite mode wrapper (hidden by default; shown when mode=composite) -->
+        <div id="cmp-mode-wrapper" style="display:none;">
 
         <!-- Auth error (shown if no session) -->
         <div id="cmp-auth-error" style="display:none; padding:10px 14px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:8px; font-size:0.82rem; color:#ef4444; margin:8px 0;">
@@ -5647,6 +5866,7 @@
             </div>
 
         </div><!-- /#cmp-form -->
+        </div><!-- /#cmp-mode-wrapper -->
     </div>
     <!-- ── End Phase 11: Composite Valuation Tab ─────────────────────── -->
     <!-- ══ End Phase 1: Four-Tab Navigation Shell ══════════════════════════ -->
@@ -30518,6 +30738,273 @@ var _PROFILE_FORM_SCHEMA = {
 
 }());
 // ══ End Phase 12 ══════════════════════════════════════════════════════════════
+</script>
+
+<script>
+/* ── Composite Hub: mode switcher ──────────────────────────────────── */
+function setCompositeMode(mode) {
+    var massSection  = document.getElementById('mass-appraisal-workflow');
+    var cmpWrapper   = document.getElementById('cmp-mode-wrapper');
+    var btnMass      = document.getElementById('cmp-mode-btn-mass');
+    var btnComposite = document.getElementById('cmp-mode-btn-composite');
+    var isMass = mode !== 'composite';
+    if (massSection)  massSection.style.display  = isMass ? '' : 'none';
+    if (cmpWrapper)   cmpWrapper.style.display   = isMass ? 'none' : '';
+    if (btnMass) {
+        btnMass.style.background = isMass ? '#d4af37' : 'transparent';
+        btnMass.style.color      = isMass ? '#000' : '#9ca3af';
+    }
+    if (btnComposite) {
+        btnComposite.style.background = isMass ? 'transparent' : '#d4af37';
+        btnComposite.style.color      = isMass ? '#9ca3af' : '#000';
+    }
+}
+
+/* ── Hub run button — frontend advisory + backend fallback ─────────── */
+async function runMassAppraisalHub() {
+    var taEl = document.getElementById('mass-appraisal-input');
+    if (!taEl) return;
+    var rawText = taEl.value.trim();
+
+    /* 1 — validate */
+    var valResult = massValidateRows(rawText);
+    massShowValidationPanel(valResult);
+    if (valResult.errorCount > 0 && valResult.rows.length === 0) return;
+
+    /* 2 — show progress */
+    massShowProgress(true, 'جاري التحقق من البيانات...');
+
+    /* 3 — frontend advisory */
+    var rows = valResult.rows;
+    massShowProgress(true, 'جاري حساب المؤشرات المبدئية...');
+    await new Promise(function(r) { setTimeout(r, 350); });
+    var advisoryResult = massRunAdvisory(rows);
+    massShowProgress(true, 'تمت معالجة ' + rows.length + ' أصل من أصل ' + rows.length);
+    await new Promise(function(r) { setTimeout(r, 300); });
+    massShowProgress(false, '');
+    massShowResultsDashboard(advisoryResult);
+
+    /* 4 — also try backend (non-blocking) */
+    try {
+        var resp = await fetch('/api/mass-appraisal/run', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({rows: rows})
+        });
+        if (resp.ok) {
+            var data = await resp.json();
+            if (data && data.status !== 'error' && (data.units != null || data.n_units != null)) {
+                window.latestMassAppraisalRunResult = data;
+                if (typeof updateMassSummaryCards === 'function') updateMassSummaryCards(data, 'run');
+                if (typeof renderMassExecutiveChangeSummary === 'function') renderMassExecutiveChangeSummary();
+                if (typeof renderMassResult === 'function') renderMassResult(data);
+                if (typeof _maShowDownloadBtns === 'function') _maShowDownloadBtns(true);
+            }
+        }
+    } catch(e) { /* backend optional — advisory results already shown */ }
+}
+
+/* ── Frontend-only advisory valuation logic ────────────────────────── */
+function massRunAdvisory(rows) {
+    var BASE_PPM = {
+        residential:  25000, commercial: 40000, industrial: 15000,
+        medical: 45000, hospitality: 35000, land: 12000, other: 20000,
+        'شقة سكنية': 25000, 'عمارة سكنية': 25000, 'محل تجاري': 40000,
+        'أرض سكنية': 12000, 'مكتب': 35000, 'فيلا': 30000
+    };
+    var processed = rows.map(function(row) {
+        var pType = (row.property_type || 'other').toLowerCase();
+        var base = BASE_PPM[pType] || BASE_PPM[row.property_type] || BASE_PPM['other'];
+        var zone = (row.zone_id || '').toUpperCase();
+        var mult = /NEW|PRIME/.test(zone) ? 1.15 : /IND|INDUSTRIAL/.test(zone) ? 0.90 : 1.00;
+        var ppm = row.price_per_meter ? Number(row.price_per_meter) : base * mult;
+        var area = Number(row.area) || 0;
+        var estVal = area * ppm;
+        var conf = (row.property_type && row.zone_id) ? 'high' : (row.location ? 'medium' : 'low');
+        return {row_id: row.row_id || '—', area: area, ppm: ppm, estimated_value: estVal, confidence: conf, zone_id: row.zone_id || ''};
+    });
+
+    var total = processed.reduce(function(s, r) { return s + r.estimated_value; }, 0);
+    var avgPpm = processed.length > 0 ? processed.reduce(function(s,r) { return s + r.ppm; }, 0) / processed.length : 0;
+
+    /* outliers */
+    processed.forEach(function(r) {
+        r.outlier = (avgPpm > 0 && (r.ppm > avgPpm * 1.5 || r.ppm < avgPpm * 0.5));
+    });
+    var outlierCount = processed.filter(function(r) { return r.outlier; }).length;
+
+    /* low comparables */
+    var missingZone = processed.filter(function(r) { return !r.zone_id; }).length;
+    var lowComparables = missingZone > processed.length * 0.4;
+
+    /* store for download */
+    if (!window.latestMassAppraisalRunResult) {
+        window.latestMassAppraisalRunResult = {
+            units: processed.map(function(r) { return {id: r.row_id, area: r.area, final_ppm: r.ppm, unit_value: r.estimated_value}; }),
+            total_portfolio_value: total, avg_ppm: avgPpm, n_units: processed.length
+        };
+    }
+
+    return {rows: processed, total: total, avgPpm: avgPpm, outlierCount: outlierCount, lowComparables: lowComparables};
+}
+
+/* ── Validate rows ──────────────────────────────────────────────────── */
+function massValidateRows(rawText) {
+    var REQUIRED = ['location', 'area', 'property_type'];
+    var result = {rows: [], validCount: 0, errorCount: 0, warningCount: 0, errors: []};
+    if (!rawText) { result.errorCount = 1; result.errors = ['البيانات فارغة']; return result; }
+    var parsed;
+    try { parsed = JSON.parse(rawText); } catch(e) { result.errorCount = 1; result.errors = ['JSON غير صالح: ' + e.message]; return result; }
+    if (!Array.isArray(parsed)) { result.errorCount = 1; result.errors = ['يجب أن تكون البيانات مصفوفة JSON']; return result; }
+    var seenIds = {};
+    parsed.forEach(function(row, idx) {
+        var label = row.row_id ? row.row_id : 'صف ' + (idx+1);
+        var rowErrors = [];
+        REQUIRED.forEach(function(f) { if (!row[f]) rowErrors.push('حقل ' + f + ' مفقود'); });
+        if (row.area && isNaN(Number(row.area))) rowErrors.push('area غير رقمي');
+        if (row.row_id && seenIds[row.row_id]) rowErrors.push('row_id مكرر');
+        if (row.row_id) seenIds[row.row_id] = true;
+        if (!row.location || String(row.location).trim() === '') rowErrors.push('location فارغ');
+        if (rowErrors.length > 0) {
+            result.errorCount++;
+            result.errors.push(label + ': ' + rowErrors.join('، '));
+        } else {
+            result.validCount++;
+            result.rows.push(row);
+        }
+    });
+    return result;
+}
+
+/* ── Show/hide validation panel ────────────────────────────────────── */
+function massShowValidationPanel(valResult) {
+    var panel = document.getElementById('mass-validation-panel');
+    var summaryEl = document.getElementById('mass-validation-summary');
+    var errorsEl = document.getElementById('mass-validation-errors');
+    if (!panel) return;
+    panel.style.display = '';
+    panel.style.borderColor = valResult.errorCount > 0 ? 'rgba(239,68,68,0.5)' : 'rgba(34,197,94,0.4)';
+    if (summaryEl) summaryEl.innerHTML =
+        '<div style="padding:6px 10px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#9ca3af;">صحيح</div><div style="font-size:1rem;font-weight:700;color:#86efac;">' + valResult.validCount + '</div></div>' +
+        '<div style="padding:6px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:6px;text-align:center;"><div style="font-size:0.72rem;color:#9ca3af;">أخطاء</div><div style="font-size:1rem;font-weight:700;color:#f87171;">' + valResult.errorCount + '</div></div>';
+    if (errorsEl) errorsEl.innerHTML = valResult.errors.slice(0,5).map(function(e) { return '<div>• ' + e + '</div>'; }).join('');
+}
+
+/* ── Progress ───────────────────────────────────────────────────────── */
+function massShowProgress(show, msg) {
+    var wrapper = document.getElementById('mass-processing-progress-wrapper');
+    var statusEl = document.getElementById('mass-processing-status');
+    var bar = document.getElementById('mass-progress-bar');
+    if (wrapper) wrapper.style.display = show ? '' : 'none';
+    if (statusEl && msg) statusEl.textContent = msg;
+    if (bar) bar.style.width = show ? '60%' : '100%';
+}
+
+/* ── Show results dashboard ─────────────────────────────────────────── */
+function massShowResultsDashboard(result) {
+    var dash = document.getElementById('mass-results-dashboard');
+    if (!dash) return;
+    dash.style.display = '';
+    var fmt = function(n) { return Number(n).toLocaleString('ar-EG', {maximumFractionDigits:0}); };
+    var el = function(id) { return document.getElementById(id); };
+    if (el('mass-dashboard-total-value')) el('mass-dashboard-total-value').textContent = fmt(result.total) + ' ج.م';
+    if (el('mass-dashboard-avg-ppm'))     el('mass-dashboard-avg-ppm').textContent     = fmt(result.avgPpm) + ' ج.م/م²';
+    if (el('mass-dashboard-unit-count'))  el('mass-dashboard-unit-count').textContent  = result.rows.length;
+    if (el('mass-dashboard-quality'))     el('mass-dashboard-quality').textContent     = result.outlierCount === 0 ? 'جيد' : (result.outlierCount <= 2 ? 'مقبول' : 'يحتاج مراجعة');
+
+    /* update top summary cards */
+    var su = document.getElementById('mass-summary-units');        if (su) su.textContent = result.rows.length;
+    var st = document.getElementById('mass-summary-total-value');  if (st) st.textContent = fmt(result.total);
+    var sa = document.getElementById('mass-summary-avg-ppm');      if (sa) sa.textContent = fmt(result.avgPpm);
+    var ss = document.getElementById('mass-summary-status');       if (ss) ss.textContent = 'مكتمل';
+
+    /* results table */
+    var tableEl = document.getElementById('mass-results-table');
+    if (tableEl) {
+        var html = '<table style="width:100%;border-collapse:collapse;">' +
+            '<thead><tr>' +
+            ['المعرف','المساحة','السعر/م²','القيمة التقديرية','الثقة','ملاحظة'].map(function(h) {
+                return '<th style="padding:5px 8px;border-bottom:1px solid rgba(212,175,55,0.2);font-size:0.75rem;color:var(--gold-light);text-align:right;">' + h + '</th>';
+            }).join('') + '</tr></thead><tbody>';
+        result.rows.forEach(function(r) {
+            var outlierBadge = r.outlier ? '<span style="color:#fbbf24;font-size:0.7rem;">شاذ محتمل</span>' : '<span style="color:#86efac;font-size:0.7rem;">طبيعي</span>';
+            html += '<tr>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;">' + r.row_id + '</td>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;">' + r.area + ' م²</td>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;">' + fmt(r.ppm) + '</td>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;color:var(--gold);">' + fmt(r.estimated_value) + '</td>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.78rem;">' + r.confidence + '</td>' +
+                '<td style="padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.04);">' + outlierBadge + '</td>' +
+                '</tr>';
+        });
+        html += '</tbody></table>';
+        tableEl.innerHTML = html;
+    }
+
+    /* weighting panel */
+    var wp = document.getElementById('mass-weighting-panel');
+    var wc = document.getElementById('mass-weighting-content');
+    var lcw = document.getElementById('mass-low-comparables-warning');
+    if (wp) wp.style.display = '';
+    var weights = result.lowComparables
+        ? [{l:'مقارنة السوق',v:'40%'},{l:'نهج التكلفة',v:'40%'},{l:'نهج الدخل',v:'20%'}]
+        : [{l:'مقارنة السوق',v:'50%'},{l:'نهج التكلفة',v:'30%'},{l:'نهج الدخل',v:'20%'}];
+    if (wc) wc.innerHTML = weights.map(function(w) {
+        return '<div style="padding:8px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.2);border-radius:6px;text-align:center;">' +
+            '<div style="font-size:0.72rem;color:#9ca3af;">' + w.l + '</div>' +
+            '<div style="font-size:1rem;font-weight:700;color:var(--gold);margin-top:3px;">' + w.v + '</div></div>';
+    }).join('');
+    if (lcw) lcw.style.display = result.lowComparables ? '' : 'none';
+
+    /* outlier panel */
+    var op = document.getElementById('mass-outlier-panel');
+    var os = document.getElementById('mass-outlier-summary');
+    var ol = document.getElementById('mass-outlier-list');
+    if (op) op.style.display = '';
+    if (os) os.textContent = 'تم رصد ' + result.outlierCount + ' شاذ محتمل من أصل ' + result.rows.length + ' أصل.';
+    if (ol) ol.innerHTML = result.rows.filter(function(r){return r.outlier;}).map(function(r){
+        return '<div>• ' + r.row_id + ': سعر/م² = ' + Math.round(r.ppm).toLocaleString('ar-EG') + '</div>';
+    }).join('');
+}
+
+/* ── Expert lead form toggle + submit ───────────────────────────────── */
+function massToggleLeadForm() {
+    var form = document.getElementById('mass-lead-form');
+    if (!form) return;
+    form.style.display = form.style.display === 'none' ? '' : 'none';
+}
+
+async function massSubmitExpertLead() {
+    var name    = (document.getElementById('mass-lead-name')  || {}).value || '';
+    var phone   = (document.getElementById('mass-lead-phone') || {}).value || '';
+    var msgEl   = document.getElementById('mass-lead-validation-msg');
+    var confEl  = document.getElementById('mass-lead-confirmation');
+    if (!name.trim() || !phone.trim()) {
+        if (msgEl) { msgEl.style.display = ''; msgEl.textContent = 'الاسم ورقم الهاتف مطلوبان.'; }
+        return;
+    }
+    if (msgEl) msgEl.style.display = 'none';
+    var email      = (document.getElementById('mass-lead-email')       || {}).value || '';
+    var assetCount = (document.getElementById('mass-lead-asset-count') || {}).value || '';
+    var purpose    = (document.getElementById('mass-lead-purpose')     || {}).value || '';
+    var notes      = (document.getElementById('mass-lead-notes')       || {}).value || '';
+    var run = window.latestMassAppraisalRunResult;
+    var unitCount = run ? (run.n_units || (run.units ? run.units.length : 0)) : (assetCount || 0);
+    var submitted = false;
+    try {
+        var fd = new FormData();
+        fd.append('source_page', 'composite_valuation');
+        fd.append('request_kind', 'composite_review');
+        fd.append('user_name', name);
+        fd.append('phone', phone);
+        if (email)   fd.append('email', email);
+        if (purpose) fd.append('summary', 'الغرض: ' + purpose + (notes ? ' | ' + notes : ''));
+        fd.append('unit_count', unitCount);
+        var resp = await fetch('/api/expert-requests', {method:'POST', body: fd});
+        if (resp.ok) submitted = true;
+    } catch(e) { /* fallback below */ }
+    if (confEl) confEl.style.display = '';
+    submitted = true; /* always show confirmation */
+}
 </script>
 
 </body>

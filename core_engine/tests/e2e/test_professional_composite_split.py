@@ -5,6 +5,7 @@ and composite tab structure.
 PCS01–PCS10  Professional tab: hierarchical geo selector
 PCS11–PCS22  Composite tab: structure and data-testids
 PCS23–PCS28  Regression: other tabs unchanged
+PCS29–PCS36  Visible-text assertions: composite not in professional, professional controls visible
 """
 from __future__ import annotations
 
@@ -298,3 +299,99 @@ def test_PCS28_professional_requirements_checklist_still_present(page, live_serv
     _switch_to_professional(page)
     el = page.query_selector("#es-req-panel")
     assert el is not None, "es-req-panel missing from professional tab"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PCS29–PCS36  Visible-text assertions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_PCS29_mass_appraisal_workflow_not_in_professional_dom(page, live_server):
+    """#mass-appraisal-workflow is NOT inside ws-professional DOM."""
+    _goto(page, live_server)
+    _switch_to_professional(page)
+    ws = page.query_selector("#ws-professional")
+    assert ws is not None
+    inside = ws.query_selector("#mass-appraisal-workflow")
+    assert inside is None, "#mass-appraisal-workflow found inside ws-professional"
+
+
+def test_PCS30_professional_tab_visible_text_no_workspace_heading(page, live_server):
+    """Visible text in professional tab does NOT contain the mass appraisal workspace heading."""
+    _goto(page, live_server)
+    _switch_to_professional(page)
+    ws = page.query_selector("#ws-professional")
+    assert ws is not None
+    text = ws.inner_text()
+    assert "مساحة عمل التقييم الجماعي" not in text, \
+        "Mass appraisal workspace heading rendered inside professional tab visible text"
+
+
+def test_PCS31_mass_appraisal_workflow_visible_in_composite(page, live_server):
+    """#mass-appraisal-workflow exists and is visible inside ws-composite."""
+    _goto(page, live_server)
+    _switch_to_composite(page)
+    ws = page.query_selector("#ws-composite")
+    assert ws is not None
+    section = ws.query_selector("#mass-appraisal-workflow")
+    assert section is not None, "#mass-appraisal-workflow not found inside ws-composite"
+    assert section.is_visible(), "#mass-appraisal-workflow found in composite but not visible"
+
+
+def test_PCS32_composite_visible_text_contains_workspace_heading(page, live_server):
+    """Composite tab visible text contains the mass appraisal workspace heading."""
+    _goto(page, live_server)
+    _switch_to_composite(page)
+    ws = page.query_selector("#ws-composite")
+    assert ws is not None
+    text = ws.inner_text()
+    assert "مساحة عمل التقييم الجماعي" in text or "Mass Appraisal" in text, \
+        f"Expected workspace heading in composite visible text, got: {text[:300]!r}"
+
+
+def test_PCS33_mass_appraisal_workflow_ancestor_is_ws_composite(page, live_server):
+    """#mass-appraisal-workflow ancestor chain reaches ws-composite, not ws-professional."""
+    _goto(page, live_server)
+    _switch_to_composite(page)
+    result = page.evaluate("""() => {
+        const el = document.getElementById('mass-appraisal-workflow');
+        if (!el) return {found: false, parent: null};
+        let node = el.parentElement;
+        while (node) {
+            if (node.id === 'ws-composite')   return {found: true, parent: 'ws-composite'};
+            if (node.id === 'ws-professional') return {found: true, parent: 'ws-professional'};
+            node = node.parentElement;
+        }
+        return {found: true, parent: 'none'};
+    }""")
+    assert result['found'], "#mass-appraisal-workflow not found in DOM"
+    assert result['parent'] == 'ws-composite', \
+        f"#mass-appraisal-workflow ancestor hit '{result['parent']}', expected 'ws-composite'"
+
+
+def test_PCS34_professional_asset_family_visible(page, live_server):
+    """prof-asset-family select is visible (not just present) in professional tab."""
+    _goto(page, live_server)
+    _switch_to_professional(page)
+    assert page.is_visible("#prof-asset-family"), \
+        "prof-asset-family not visible in the professional tab"
+
+
+def test_PCS35_professional_requirements_checklist_inside_professional_panel(page, live_server):
+    """Requirements checklist panel is inside ws-professional (not ws-composite)."""
+    _goto(page, live_server)
+    _switch_to_professional(page)
+    ws = page.query_selector("#ws-professional")
+    assert ws is not None
+    panel = ws.query_selector("#es-req-panel")
+    assert panel is not None, "es-req-panel not found inside ws-professional"
+
+
+def test_PCS36_composite_tab_not_empty(page, live_server):
+    """Composite tab has meaningful visible content (not empty)."""
+    _goto(page, live_server)
+    _switch_to_composite(page)
+    ws = page.query_selector("#ws-composite")
+    assert ws is not None
+    text = ws.inner_text().strip()
+    assert len(text) > 50, \
+        f"Composite tab appears empty — only {len(text)} chars visible"

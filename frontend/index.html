@@ -2004,6 +2004,12 @@
             <div id="tax-annual-fields" style="display:none;margin-top:8px;">
                 <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
                     <div class="field-group">
+                        <label>القيمة السوقية المقدرة من المقارنات (ج.م) <span style="color:#f59e0b;">★</span></label>
+                        <input type="number" class="input-box" id="tax-market-value"
+                            data-testid="tax-market-value"
+                            placeholder="مثال: 2000000 — لحساب مؤشر المغالاة" min="0">
+                    </div>
+                    <div class="field-group">
                         <label>القيمة الإيجارية السنوية المقدرة (ج.م) — إن وجدت</label>
                         <input type="number" class="input-box" id="tax-annual-rental-estimate"
                             data-testid="tax-annual-rental-estimate"
@@ -2064,14 +2070,19 @@
                 <h3 style="color:#10b981;font-size:0.95rem;font-weight:700;margin:0 0 12px;">
                     📊 مؤشر مخاطر المغالاة
                 </h3>
-                <div id="tax-risk-label"
+                <div id="tax-risk-label" data-testid="tax-gauge-label"
                     style="font-size:1.05rem;font-weight:800;margin-bottom:8px;color:#f9fafb;">—</div>
-                <div class="tax-risk-bar-wrap">
-                    <div id="tax-risk-bar-fill" class="tax-risk-bar-fill" style="width:0%;background:#10b981;"></div>
+                <div class="tax-risk-bar-wrap" style="position:relative;height:12px;background:#1f2937;border-radius:6px;overflow:hidden;">
+                    <div id="tax-risk-bar-fill" data-testid="tax-gauge-marker"
+                        class="tax-risk-bar-fill" style="width:0%;background:#10b981;height:100%;transition:width 0.4s,background 0.4s;"></div>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#6b7280;margin-top:4px;">
-                    <span>طبيعي</span><span>يحتاج مراجعة</span><span>مرتفع / يستدعي فحص خبير</span>
+                    <span data-testid="tax-gauge-green">طبيعي</span>
+                    <span data-testid="tax-gauge-yellow">يحتاج مراجعة</span>
+                    <span data-testid="tax-gauge-red">مرتفع / يستدعي فحص خبير</span>
                 </div>
+                <div id="tax-gauge-explanation" data-testid="tax-gauge-explanation"
+                    style="font-size:0.78rem;color:#9ca3af;margin-top:8px;line-height:1.6;min-height:1em;"></div>
             </div>
 
             <!-- Savings Card -->
@@ -2099,6 +2110,57 @@
                     </tr>
                 </table>
                 <div id="tax-calc-note" style="font-size:0.78rem;color:#6b7280;margin-top:10px;line-height:1.6;"></div>
+            </div>
+
+            <!-- Annual Property Tax Overvaluation Panel -->
+            <div id="tax-annual-overvaluation-panel" style="display:none;margin-bottom:1.5rem;">
+                <div class="ai-section" style="border-color:rgba(212,175,55,0.3);">
+                    <h3 style="color:var(--gold);font-size:0.95rem;font-weight:700;margin:0 0 12px;">
+                        📐 تفاصيل مؤشر المغالاة — الضريبة العقارية السنوية
+                    </h3>
+                    <table class="tax-savings-table" style="width:100%;border-collapse:collapse;">
+                        <tr>
+                            <td>القيمة السوقية المقدرة</td>
+                            <td id="tax-market-value-output" data-testid="tax-market-value-output">—</td>
+                        </tr>
+                        <tr>
+                            <td>قيمة الضريبة بالإخطار</td>
+                            <td id="tax-overval-gov-claim-out">—</td>
+                        </tr>
+                        <tr>
+                            <td>النسبة الفعلية للضريبة إلى القيمة السوقية</td>
+                            <td id="tax-actual-tax-ratio-output" data-testid="tax-actual-tax-ratio-output">—</td>
+                        </tr>
+                        <tr>
+                            <td>الحد الاسترشادي المقبول</td>
+                            <td id="tax-advisory-threshold-output" data-testid="tax-advisory-threshold-output">—</td>
+                        </tr>
+                        <tr>
+                            <td>سقف الضريبة الاسترشادي</td>
+                            <td id="tax-fair-tax-ceiling-output" data-testid="tax-fair-tax-ceiling-output">—</td>
+                        </tr>
+                        <tr>
+                            <td>فرق المغالاة المحتمل</td>
+                            <td id="tax-overcharge-output" data-testid="tax-overcharge-output" style="color:#f59e0b;">—</td>
+                        </tr>
+                        <tr>
+                            <td>حالة المؤشر</td>
+                            <td id="tax-overvaluation-status-output" data-testid="tax-overvaluation-status-output" style="font-weight:800;">—</td>
+                        </tr>
+                    </table>
+                    <div id="tax-ratio-disclaimer" data-testid="tax-ratio-disclaimer"
+                        style="margin-top:12px;font-size:0.79rem;color:#9ca3af;line-height:1.65;
+                               border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;"></div>
+                </div>
+                <div id="tax-overvaluation-expert-cta" data-testid="tax-overvaluation-expert-cta"
+                    style="display:none;text-align:center;margin-top:12px;">
+                    <button type="button" onclick="taxShowLeadForm()"
+                        style="background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:10px;
+                               color:#000;font-family:'Tajawal',sans-serif;font-size:0.95rem;font-weight:900;
+                               padding:12px 26px;cursor:pointer;">
+                        📋 طلب مراجعة خبير معتمد للطعن في الضريبة
+                    </button>
+                </div>
             </div>
 
             <!-- Advisory Warning -->
@@ -2311,9 +2373,10 @@
             var govClaim = parseFloat(document.getElementById('tax-government-claim').value) || 0;
             var area     = parseFloat(document.getElementById('tax-area').value) || 0;
 
-            var estimatedTax = null;
-            var calcNote     = '';
-            var missing      = false;
+            var estimatedTax  = null;
+            var calcNote      = '';
+            var missing       = false;
+            var riskComputed  = false;
 
             if (taxType === 'transfer') {
                 var saleVal = parseFloat(document.getElementById('tax-sale-value').value) || 0;
@@ -2326,15 +2389,92 @@
                     calcNote = 'لا يمكن احتساب الضريبة الاسترشادية دون إدخال قيمة التصرف / سعر البيع.';
                 }
             } else if (taxType === 'annual') {
+                var marketVal = parseFloat((document.getElementById('tax-market-value') || {}).value) || 0;
+                var assetType = document.getElementById('tax-asset-type').value;
                 var rentalEst = parseFloat(document.getElementById('tax-annual-rental-estimate').value) || 0;
-                if (rentalEst > 0) {
+                var threshold = _getAnnualTaxThreshold(assetType);
+
+                if (marketVal > 0) {
+                    var taxBurdenRate  = govClaim > 0 ? govClaim / marketVal : 0;
+                    var fairTaxCeiling = marketVal * threshold;
+                    var overcharge     = Math.max(0, govClaim - fairTaxCeiling);
+                    var gapPctAnnual   = fairTaxCeiling > 0 ? ((govClaim - fairTaxCeiling) / fairTaxCeiling) * 100 : null;
+                    var thresholdPct   = (threshold * 100).toFixed(2);
+                    var taxBurdenPct   = (taxBurdenRate * 100).toFixed(4);
+
+                    estimatedTax = fairTaxCeiling;
+
+                    var statusLabel, riskLabel2, riskPct2, riskColor2, isOvervalued = false;
+                    if (taxBurdenRate <= threshold) {
+                        statusLabel = 'طبيعي';
+                        riskLabel2  = '✅ طبيعي — المطالبة ضمن الحد الاسترشادي';
+                        riskPct2    = 15;
+                        riskColor2  = '#10b981';
+                    } else if (taxBurdenRate <= threshold * 1.25) {
+                        statusLabel  = 'متوسط';
+                        riskLabel2   = '⚠️ متوسط — المطالبة تجاوزت الحد الاسترشادي';
+                        riskPct2     = 60;
+                        riskColor2   = '#f59e0b';
+                        isOvervalued = true;
+                    } else {
+                        statusLabel  = 'مغالى فيه جداً';
+                        riskLabel2   = '🔴 مغالى فيه جداً — فجوة كبيرة تستدعي مراجعة خبير';
+                        riskPct2     = 95;
+                        riskColor2   = '#ef4444';
+                        isOvervalued = true;
+                    }
+
+                    /* Write risk gauge directly (bypasses generic risk block) */
+                    riskComputed = true;
+                    document.getElementById('tax-risk-label').textContent            = riskLabel2;
+                    document.getElementById('tax-risk-bar-fill').style.width         = riskPct2 + '%';
+                    document.getElementById('tax-risk-bar-fill').style.background    = riskColor2;
+                    var expEl = document.getElementById('tax-gauge-explanation');
+                    if (expEl) expEl.textContent = 'الحد الاسترشادي: ' + thresholdPct + '% — النسبة الفعلية: ' + taxBurdenPct + '%';
+
+                    var fmt = function(n) { return n !== null && !isNaN(n) ? Math.round(n).toLocaleString('ar-EG') + ' ج.م' : '—'; };
+                    document.getElementById('tax-gov-claim-out').textContent        = govClaim > 0 ? fmt(govClaim) : '—';
+                    document.getElementById('tax-est-tax-out').textContent          = fmt(fairTaxCeiling);
+                    document.getElementById('tax-saving-out').textContent           = fmt(govClaim - fairTaxCeiling);
+                    if (gapPctAnnual !== null) {
+                        document.getElementById('tax-gap-pct-row').style.display   = '';
+                        document.getElementById('tax-gap-pct-out').textContent     = gapPctAnnual.toFixed(1) + '%';
+                    } else {
+                        document.getElementById('tax-gap-pct-row').style.display   = 'none';
+                    }
+
+                    /* Populate overvaluation detail panel */
+                    _updateAnnualOvervaluationPanel({
+                        marketVal: marketVal, govClaim: govClaim,
+                        taxBurdenRate: taxBurdenRate, threshold: threshold,
+                        thresholdPct: thresholdPct, taxBurdenPct: taxBurdenPct,
+                        fairTaxCeiling: fairTaxCeiling, overcharge: overcharge,
+                        statusLabel: statusLabel, isOvervalued: isOvervalued
+                    });
+
+                    calcNote = 'تم الحساب بمقارنة قيمة الضريبة بالإخطار بالقيمة السوقية المقدرة. النسبة الفعلية: ' +
+                               taxBurdenPct + '% — الحد الاسترشادي: ' + thresholdPct + '%.';
+
+                    /* Skip remaining UI updates for risk — already done */
+                    document.getElementById('tax-calc-note').textContent = calcNote;
+                    document.getElementById('tax-output-area').style.display = 'block';
+                    document.getElementById('tax-output-area').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    _taxCalcState.estimatedTax = fairTaxCeiling;
+                    _taxCalcState.diff         = govClaim - fairTaxCeiling;
+                    _taxCalcState.gapPct       = gapPctAnnual;
+                    _taxCalcState.riskLabel    = riskLabel2;
+                    return; /* early return — UI fully updated */
+
+                } else if (rentalEst > 0) {
                     estimatedTax = rentalEst * TAX_ADVISORY_CONFIG.annualAdvisoryRate;
                     calcNote = 'تم الحساب بمعدل استرشادي 10% من القيمة الإيجارية السنوية المقدرة. ' +
                                'المعدل قابل للتعديل وليس حكمًا قانونيًا نهائيًا.';
+                    _updateAnnualOvervaluationPanel({ marketVal: 0 });
                 } else {
                     missing  = true;
                     calcNote = 'لا يمكن تقدير الضريبة العادلة بدقة دون قيمة إيجارية أو بيانات سوقية. ' +
                                'يمكن استخدام الفحص المبدئي فقط لتحديد الحاجة لمراجعة خبير.';
+                    _updateAnnualOvervaluationPanel({ marketVal: 0 });
                 }
             } else {
                 calcNote = 'يرجى اختيار نوع الضريبة أولاً.';
@@ -2348,7 +2488,7 @@
             var diff      = null;
             var gapPct    = null;
 
-            if (!missing && estimatedTax !== null && govClaim > 0) {
+            if (!riskComputed && !missing && estimatedTax !== null && govClaim > 0) {
                 diff    = govClaim - estimatedTax;
                 gapPct  = estimatedTax > 0 ? ((diff / estimatedTax) * 100) : null;
                 var ratio = estimatedTax > 0 ? (govClaim / estimatedTax) : 0;
@@ -2366,11 +2506,11 @@
                     riskPct   = 95;
                     riskColor = '#ef4444';
                 }
-            } else if (missing) {
+            } else if (!riskComputed && missing) {
                 riskLabel = 'يحتاج بيانات إضافية';
                 riskPct   = 10;
                 riskColor = '#6b7280';
-            } else if (govClaim <= 0) {
+            } else if (!riskComputed && govClaim <= 0) {
                 riskLabel = 'أدخل قيمة المطالبة الحكومية للحساب';
                 riskPct   = 5;
                 riskColor = '#6b7280';
@@ -2404,6 +2544,49 @@
             _taxCalcState.diff         = diff;
             _taxCalcState.gapPct       = gapPct;
             _taxCalcState.riskLabel    = riskLabel;
+        }
+
+        /* ── Annual tax threshold lookup ─────────────────────────────────── */
+        function _getAnnualTaxThreshold(assetType) {
+            if (assetType === 'residential') return 0.0013;
+            if (assetType === 'industrial' || assetType === 'special') return 0.0034;
+            return 0.0012; /* commercial, land, other */
+        }
+
+        /* ── Annual overvaluation panel updater ──────────────────────────── */
+        function _updateAnnualOvervaluationPanel(d) {
+            var panel = document.getElementById('tax-annual-overvaluation-panel');
+            if (!panel) return;
+            panel.style.display = 'block';
+
+            var fmtM = function(n) { return (n !== null && !isNaN(n)) ? Math.round(n).toLocaleString('ar-EG') + ' ج.م' : '—'; };
+
+            if (!d.marketVal) {
+                document.getElementById('tax-market-value-output').textContent         = '—';
+                document.getElementById('tax-actual-tax-ratio-output').textContent     = '—';
+                document.getElementById('tax-advisory-threshold-output').textContent   = '—';
+                document.getElementById('tax-fair-tax-ceiling-output').textContent     = '—';
+                document.getElementById('tax-overcharge-output').textContent           = '—';
+                document.getElementById('tax-overvaluation-status-output').textContent = '—';
+                document.getElementById('tax-ratio-disclaimer').textContent =
+                    'لا يمكن حساب مؤشر المغالاة دون إدخال القيمة السوقية المقدرة.';
+                var ctaEl = document.getElementById('tax-overvaluation-expert-cta');
+                if (ctaEl) ctaEl.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('tax-market-value-output').textContent         = fmtM(d.marketVal);
+            document.getElementById('tax-actual-tax-ratio-output').textContent     = d.taxBurdenPct + '%';
+            document.getElementById('tax-advisory-threshold-output').textContent   = d.thresholdPct + '%';
+            document.getElementById('tax-fair-tax-ceiling-output').textContent     = fmtM(d.fairTaxCeiling);
+            document.getElementById('tax-overcharge-output').textContent           = d.overcharge > 0 ? fmtM(d.overcharge) : '—';
+            document.getElementById('tax-overvaluation-status-output').textContent = d.statusLabel;
+            document.getElementById('tax-ratio-disclaimer').textContent =
+                'هذا الفحص استرشادي مبدئي، ويعتمد على مقارنة قيمة الضريبة بالإخطار بالقيمة السوقية المقدرة. ' +
+                'لا يُعد هذا الناتج طعنًا رسميًا أو تقريرًا معتمدًا، ويلزم مراجعة الخبير قبل استخدامه أمام الجهات الرسمية.';
+
+            var ctaEl2 = document.getElementById('tax-overvaluation-expert-cta');
+            if (ctaEl2) ctaEl2.style.display = d.isOvervalued ? 'block' : 'none';
         }
 
         /* ── Lead form show/hide ──────────────────────────────────────────── */

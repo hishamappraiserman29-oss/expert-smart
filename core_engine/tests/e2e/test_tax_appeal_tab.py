@@ -785,3 +785,139 @@ def test_TAX_mini_chat_still_works_after_backend_wiring(page: Page, live_server:
     page.locator('[data-testid="tax-mini-chat-send"]').click()
     ans = page.locator('[data-testid="tax-mini-chat-answer"]')
     ans.wait_for(state="visible", timeout=5_000)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 14. Annual Property Tax Overvaluation Ratio (Task 6)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _go_annual_with_asset(
+    page: Page, live_server: str, asset_type: str, market_value: int, gov_claim: int
+) -> None:
+    """Navigate to tax tab and fill annual overvaluation form, then click check."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option("annual")
+    page.locator('[data-testid="tax-asset-type"]').select_option(asset_type)
+    page.locator('[data-testid="tax-market-value"]').fill(str(market_value))
+    page.locator('[data-testid="tax-government-claim"]').fill(str(gov_claim))
+    page.locator('[data-testid="tax-check-button"]').click()
+
+
+def test_TAX_annual_mode_shows_market_value_field(page: Page, live_server: str) -> None:
+    """Selecting annual tax mode reveals the market value field."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option("annual")
+    expect(page.locator('[data-testid="tax-market-value"]')).to_be_visible()
+
+
+def test_TAX_OVR_residential_natural(page: Page, live_server: str) -> None:
+    """Residential MV=2,000,000, claim=2,600 (= 0.13% ceiling) → طبيعي."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 2_600)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "طبيعي" in gauge_text
+
+
+def test_TAX_OVR_residential_medium_overvaluation(page: Page, live_server: str) -> None:
+    """Residential MV=2M, claim=3,000 → متوسط, overcharge=400."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 3_000)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "متوسط" in gauge_text
+    overcharge_raw = _normalize_num(
+        page.locator('[data-testid="tax-overcharge-output"]').inner_text()
+    )
+    assert "400" in overcharge_raw
+
+
+def test_TAX_OVR_residential_high_overvaluation(page: Page, live_server: str) -> None:
+    """Residential MV=2M, claim=4,000 (ratio=0.20%) → مغالى فيه جداً."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 4_000)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "مغالى" in gauge_text
+
+
+def test_TAX_OVR_commercial_natural(page: Page, live_server: str) -> None:
+    """Commercial MV=5,000,000, claim=6,000 (= 0.12% ceiling) → طبيعي."""
+    _go_annual_with_asset(page, live_server, "commercial", 5_000_000, 6_000)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "طبيعي" in gauge_text
+
+
+def test_TAX_OVR_commercial_overcharge(page: Page, live_server: str) -> None:
+    """Commercial MV=5M, claim=7,000 → fair_ceiling=6,000, overcharge=1,000."""
+    _go_annual_with_asset(page, live_server, "commercial", 5_000_000, 7_000)
+    overcharge_raw = _normalize_num(
+        page.locator('[data-testid="tax-overcharge-output"]').inner_text()
+    )
+    assert "1000" in overcharge_raw
+
+
+def test_TAX_OVR_special_natural(page: Page, live_server: str) -> None:
+    """Special/factory MV=10M, claim=34,000 (= 0.34% ceiling) → طبيعي."""
+    _go_annual_with_asset(page, live_server, "special", 10_000_000, 34_000)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "طبيعي" in gauge_text
+
+
+def test_TAX_OVR_special_high_overvaluation(page: Page, live_server: str) -> None:
+    """Special/factory MV=10M, claim=50,000 → مغالى فيه جداً."""
+    _go_annual_with_asset(page, live_server, "special", 10_000_000, 50_000)
+    gauge_text = page.locator('[data-testid="tax-overvaluation-gauge"]').inner_text()
+    assert "مغالى" in gauge_text
+
+
+def test_TAX_OVR_missing_market_value_shows_disclaimer(page: Page, live_server: str) -> None:
+    """Missing market value must show data-gap message and not invent a result."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option("annual")
+    page.locator('[data-testid="tax-asset-type"]').select_option("residential")
+    page.locator('[data-testid="tax-government-claim"]').fill("5000")
+    page.locator('[data-testid="tax-check-button"]').click()
+    disclaimer = page.locator('[data-testid="tax-ratio-disclaimer"]').inner_text()
+    assert "لا يمكن" in disclaimer or "القيمة السوقية" in disclaimer
+
+
+def test_TAX_OVR_transfer_unaffected_by_annual_thresholds(page: Page, live_server: str) -> None:
+    """Transfer tax 2.5%: est=25,000 not 1,300 (0.13% of 1M)."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option("transfer")
+    page.locator('[data-testid="tax-sale-value"]').fill("1000000")
+    page.locator('[data-testid="tax-government-claim"]').fill("25000")
+    page.locator('[data-testid="tax-check-button"]').click()
+    out_text = _normalize_num(
+        page.locator('[data-testid="tax-estimated-fair-tax-output"]').inner_text()
+    )
+    assert "25000" in out_text or "25" in out_text
+    assert "1300" not in out_text.replace(" ", "")
+
+
+def test_TAX_OVR_full_output_fields_present(page: Page, live_server: str) -> None:
+    """All required output fields populated for residential annual calculation."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 3_000)
+    # market value
+    mv = _normalize_num(page.locator('[data-testid="tax-market-value-output"]').inner_text())
+    assert "2000000" in mv or "2000" in mv
+    # ratio contains %
+    ratio = page.locator('[data-testid="tax-actual-tax-ratio-output"]').inner_text()
+    assert "%" in ratio
+    # threshold = 0.13%
+    thresh = page.locator('[data-testid="tax-advisory-threshold-output"]').inner_text()
+    assert "0.13" in thresh
+    # fair ceiling = 2,600
+    ceiling = _normalize_num(page.locator('[data-testid="tax-fair-tax-ceiling-output"]').inner_text())
+    assert "2600" in ceiling
+    # overcharge = 400
+    overcharge = _normalize_num(page.locator('[data-testid="tax-overcharge-output"]').inner_text())
+    assert "400" in overcharge
+    # disclaimer present
+    disclaimer = page.locator('[data-testid="tax-ratio-disclaimer"]').inner_text()
+    assert len(disclaimer.strip()) > 10
+
+
+def test_TAX_OVR_yellow_red_shows_expert_cta(page: Page, live_server: str) -> None:
+    """Red result must reveal the overvaluation expert CTA button."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 4_000)
+    expect(page.locator('[data-testid="tax-overvaluation-expert-cta"]')).to_be_visible()

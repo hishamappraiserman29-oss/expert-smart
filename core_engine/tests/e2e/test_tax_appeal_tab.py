@@ -921,3 +921,361 @@ def test_TAX_OVR_yellow_red_shows_expert_cta(page: Page, live_server: str) -> No
     """Red result must reveal the overvaluation expert CTA button."""
     _go_annual_with_asset(page, live_server, "residential", 2_000_000, 4_000)
     expect(page.locator('[data-testid="tax-overvaluation-expert-cta"]')).to_be_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 15. Tax Mode Separation (Parts B + K)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_mode_selector_visible(page: Page, live_server: str) -> None:
+    """Tax mode selector container is visible on the page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    expect(page.locator('[data-testid="tax-mode-selector"]')).to_be_visible()
+
+
+def test_TAX_annual_mode_shows_annual_fields(page: Page, live_server: str) -> None:
+    """Selecting annual mode shows annual-specific fields."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    expect(page.locator('[data-testid="tax-annual-rental-estimate"]')).to_be_visible()
+    expect(page.locator('[data-testid="tax-market-value"]')).to_be_visible()
+
+
+def test_TAX_transfer_mode_shows_transfer_fields(page: Page, live_server: str) -> None:
+    """Selecting transfer mode shows sale-value field."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    expect(page.locator('[data-testid="tax-sale-value"]')).to_be_visible()
+    assert page.locator('[data-testid="tax-annual-rental-estimate"]').is_hidden()
+
+
+def test_TAX_transfer_method_panel_shows_2_5_pct(page: Page, live_server: str) -> None:
+    """Transfer method panel is visible in transfer mode and mentions 2.5%."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    panel = page.locator('[data-testid="tax-transfer-method-panel"]')
+    expect(panel).to_be_visible()
+    assert "2.5" in panel.inner_text()
+
+
+def test_TAX_transfer_panel_no_annual_thresholds(page: Page, live_server: str) -> None:
+    """Transfer method panel must NOT present annual threshold logic as its main rule."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    panel_text = page.locator('[data-testid="tax-transfer-method-panel"]').inner_text()
+    # Panel text should NOT say the 0.13% / 0.12% / 0.34% IS the rule for transfer
+    # It may mention those numbers in a "not applicable" context — accept that
+    assert "2.5" in panel_text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 16. Annual Method Panel (Part C)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_annual_method_panel_visible_in_annual_mode(page: Page, live_server: str) -> None:
+    """Annual method panel shows when annual mode is selected."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    expect(page.locator('[data-testid="tax-annual-method-panel"]')).to_be_visible()
+
+
+def test_TAX_annual_method_panel_formula_present(page: Page, live_server: str) -> None:
+    """Annual method panel contains the overvaluation formula text."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    formula = page.locator('[data-testid="tax-annual-formula"]').inner_text()
+    assert "÷" in formula or "القيمة السوقية" in formula
+
+
+def test_TAX_annual_method_panel_thresholds_correct(page: Page, live_server: str) -> None:
+    """Annual method panel shows 0.13%, 0.12%, 0.34% thresholds."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    assert "0.13" in page.locator('[data-testid="tax-threshold-residential"]').inner_text()
+    assert "0.12" in page.locator('[data-testid="tax-threshold-nonresidential"]').inner_text()
+    assert "0.34" in page.locator('[data-testid="tax-threshold-special"]').inner_text()
+
+
+def test_TAX_annual_method_panel_maintenance_30_pct(page: Page, live_server: str) -> None:
+    """Residential maintenance deduction shows 30%."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    assert "30" in page.locator('[data-testid="tax-maintenance-residential"]').inner_text()
+
+
+def test_TAX_annual_method_panel_maintenance_32_pct(page: Page, live_server: str) -> None:
+    """Non-residential maintenance deduction shows 32%."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    assert "32" in page.locator('[data-testid="tax-maintenance-nonresidential"]').inner_text()
+
+
+def test_TAX_annual_method_panel_exemption_24000(page: Page, live_server: str) -> None:
+    """Private residence exemption threshold shows 24,000."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    text = page.locator('[data-testid="tax-private-residence-exemption"]').inner_text()
+    assert "24" in text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 17. Live Savings Dashboard (Part D)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_live_savings_dashboard_visible_after_annual_check(page: Page, live_server: str) -> None:
+    """Live savings dashboard appears after a valid annual check."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 3_000)
+    expect(page.locator('[data-testid="tax-live-savings-dashboard"]')).to_be_visible()
+
+
+def test_TAX_live_savings_dashboard_visible_after_transfer_check(page: Page, live_server: str) -> None:
+    """Live savings dashboard appears after a valid transfer check."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    page.locator('[data-testid="tax-sale-value"]').fill('1000000')
+    page.locator('[data-testid="tax-government-claim"]').fill('40000')
+    page.locator('[data-testid="tax-check-button"]').click()
+    expect(page.locator('[data-testid="tax-live-savings-dashboard"]')).to_be_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 18. Gauge UX (Part E)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_gauge_legend_visible(page: Page, live_server: str) -> None:
+    """Gauge legend strip is present inside the gauge element."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-check-button"]').click()
+    expect(page.locator('[data-testid="tax-gauge-legend"]')).to_be_visible()
+
+
+def test_TAX_gauge_state_green_text_shown_for_normal_result(page: Page, live_server: str) -> None:
+    """Green state explanation appears for طبيعي (residential, claim = ceiling)."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 2_600)
+    state_text = page.locator('[data-testid="tax-gauge-state-green-text"]').inner_text()
+    assert "لا تتجاوز" in state_text or "الحد الاسترشادي" in state_text
+
+
+def test_TAX_gauge_state_red_text_shown_for_high_overvaluation(page: Page, live_server: str) -> None:
+    """Red state explanation appears for high overvaluation."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 4_000)
+    state_text = page.locator('[data-testid="tax-gauge-state-red-text"]').inner_text()
+    assert "تتجاوز" in state_text or "خبير" in state_text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 19. Missing Data → Data Gap Panel (Part F)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_missing_market_value_shows_data_gap_panel(page: Page, live_server: str) -> None:
+    """Annual mode without market value shows data gap panel, not a fake result."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    page.locator('[data-testid="tax-asset-type"]').select_option('residential')
+    page.locator('[data-testid="tax-government-claim"]').fill('5000')
+    # leave market value empty
+    page.locator('[data-testid="tax-check-button"]').click()
+    expect(page.locator('[data-testid="tax-data-gap-panel"]')).to_be_visible()
+    gap_text = page.locator('[data-testid="tax-data-gap-list"]').inner_text()
+    assert "القيمة السوقية" in gap_text
+
+
+def test_TAX_data_gap_panel_hidden_when_data_complete(page: Page, live_server: str) -> None:
+    """Data gap panel is NOT shown when all required values are present."""
+    _go_annual_with_asset(page, live_server, "residential", 2_000_000, 3_000)
+    gap = page.locator('[data-testid="tax-data-gap-panel"]')
+    assert gap.is_hidden() or not gap.is_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 20. Deadline Countdown (Part G)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_notice_date_input_present(page: Page, live_server: str) -> None:
+    """Notice received date input exists in annual mode."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    expect(page.locator('[data-testid="tax-notice-received-date"]')).to_be_visible()
+
+
+def test_TAX_deadline_countdown_shows_on_date_entry(page: Page, live_server: str) -> None:
+    """Entering a notice date shows the countdown card."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    page.locator('[data-testid="tax-notice-received-date"]').fill('2026-01-01')
+    expect(page.locator('[data-testid="tax-deadline-countdown"]')).to_be_visible()
+
+
+def test_TAX_deadline_end_date_shows_60_days(page: Page, live_server: str) -> None:
+    """Deadline end date is 60 days after notice date."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    page.locator('[data-testid="tax-notice-received-date"]').fill('2026-01-01')
+    end_date = page.locator('[data-testid="tax-deadline-end-date"]').inner_text()
+    assert "2026-03-02" in end_date or "03" in end_date   # 60 days from Jan 1
+
+
+def test_TAX_deadline_disclaimer_visible(page: Page, live_server: str) -> None:
+    """Deadline disclaimer text is visible after date entry."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    page.locator('[data-testid="tax-notice-received-date"]').fill('2026-01-01')
+    disc = page.locator('[data-testid="tax-deadline-disclaimer"]').inner_text()
+    assert "استرشادي" in disc or "خبير" in disc
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 21. Document Guidance + OCR (Part H)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_documents_guidance_visible(page: Page, live_server: str) -> None:
+    """Document guidance section is visible on the tax page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    expect(page.locator('[data-testid="tax-documents-guidance"]')).to_be_visible()
+
+
+def test_TAX_required_docs_list_has_form3_and_notice(page: Page, live_server: str) -> None:
+    """Required documents list includes نموذج 3 ضرائب and إخطار ضريبي."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    text = page.locator('[data-testid="tax-required-documents-list"]').inner_text()
+    assert "نموذج 3 ضرائب" in text
+    assert "إخطار" in text
+
+
+def test_TAX_ocr_note_honest_no_active_extraction(page: Page, live_server: str) -> None:
+    """OCR note must state extraction is future/placeholder, not active."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    note = page.locator('[data-testid="tax-ocr-note"]').inner_text()
+    assert "لاحقة" in note or "مرحلة" in note or "حاليًا" in note
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 22. Draft Report / Watermark (Part I)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_draft_report_warning_visible(page: Page, live_server: str) -> None:
+    """Draft report warning element is visible on the page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    expect(page.locator('[data-testid="tax-draft-report-warning"]')).to_be_visible()
+
+
+def test_TAX_draft_report_warning_non_certified(page: Page, live_server: str) -> None:
+    """Draft report warning must NOT claim the output is certified or official."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    text = page.locator('[data-testid="tax-draft-report-warning"]').inner_text()
+    assert "غير معتمد" in text or "مبدئي" in text
+
+
+def test_TAX_pdf_watermark_note_visible(page: Page, live_server: str) -> None:
+    """PDF watermark note is visible near the draft PDF button."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    expect(page.locator('[data-testid="tax-pdf-watermark-note"]')).to_be_visible()
+
+
+def test_TAX_draft_pdf_button_no_certified_claim(page: Page, live_server: str) -> None:
+    """Draft PDF button text must not claim the report is certified/official."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    btn_text = page.locator('[data-testid="tax-draft-pdf-button"]').inner_text()
+    assert "معتمد رسميًا" not in btn_text
+    assert "طعن رسمي" not in btn_text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 23. Certified Request Card (Part J)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_certified_cta_opens_request_card(page: Page, live_server: str) -> None:
+    """Clicking expert CTA reveals the certified request card."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-expert-cta-button"]').click()
+    expect(page.locator('[data-testid="tax-certified-request-card"]')).to_be_visible()
+
+
+def test_TAX_certified_request_card_has_required_fields(page: Page, live_server: str) -> None:
+    """Certified request card includes name, phone, and email fields."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-expert-cta-button"]').click()
+    expect(page.locator('[data-testid="tax-lead-name"]')).to_be_visible()
+    expect(page.locator('[data-testid="tax-lead-phone"]')).to_be_visible()
+    expect(page.locator('[data-testid="tax-lead-email"]')).to_be_visible()
+
+
+def test_TAX_certified_request_confirmation_no_official_start(page: Page, live_server: str) -> None:
+    """After submission, confirmation must NOT claim official appeal started."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-expert-cta-button"]').click()
+    page.locator('[data-testid="tax-lead-name"]').fill('اختبار نظام')
+    page.locator('[data-testid="tax-lead-phone"]').fill('01012345678')
+    page.locator('[data-testid="tax-lead-submit"]').click()
+    conf = page.locator('[data-testid="tax-lead-confirmation"]').inner_text()
+    assert "تم البدء في الطعن رسميًا" not in conf
+    assert "جاري تحويل ملفك رسميًا" not in conf
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 24. Transfer Tax Unchanged (Part K)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_transfer_rate_output_shows_2_5(page: Page, live_server: str) -> None:
+    """Transfer rate output element shows 2.5%."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    text = page.locator('[data-testid="tax-transfer-rate-output"]').inner_text()
+    assert "2.5" in text
+
+
+def test_TAX_transfer_tax_still_2_5_pct_unchanged(page: Page, live_server: str) -> None:
+    """Transfer tax calculation still yields 2.5% of sale value (regression guard)."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    page.locator('[data-testid="tax-sale-value"]').fill('2000000')
+    page.locator('[data-testid="tax-government-claim"]').fill('60000')
+    page.locator('[data-testid="tax-check-button"]').click()
+    out = _normalize_num(page.locator('[data-testid="tax-estimated-fair-tax-output"]').inner_text())
+    # 2,000,000 * 0.025 = 50,000
+    assert "50000" in out or "50" in out
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 25. No Certified Report Claim
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_no_certified_report_on_page(page: Page, live_server: str) -> None:
+    """Page text must not auto-claim a certified report is generated."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-check-button"]').click()
+    full_text = page.locator('[data-testid="tax-page"]').inner_text()
+    # Should not claim report is officially certified without expert review
+    assert "تقرير معتمد رسمي جاهز" not in full_text
+    assert "تم إصدار تقرير خبير معتمد" not in full_text

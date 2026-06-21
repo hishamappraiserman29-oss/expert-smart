@@ -1942,12 +1942,12 @@
             <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
 
                 <!-- نوع الضريبة -->
-                <div class="field-group">
+                <div class="field-group" data-testid="tax-mode-selector">
                     <label>نوع الضريبة <span style="color:#ef4444;">*</span></label>
                     <select class="input-box" id="tax-type" data-testid="tax-type-select" onchange="taxTypeChanged()">
                         <option value="">— اختر نوع الضريبة —</option>
-                        <option value="annual">الضرائب العقارية السنوية</option>
-                        <option value="transfer">ضريبة التصرفات العقارية 2.5%</option>
+                        <option value="annual" data-testid="tax-mode-annual">الضرائب العقارية السنوية</option>
+                        <option value="transfer" data-testid="tax-mode-transfer">ضريبة التصرفات العقارية 2.5%</option>
                     </select>
                 </div>
 
@@ -2057,10 +2057,101 @@
                             <option value="unsure">غير متأكد</option>
                         </select>
                     </div>
+                    <div class="field-group">
+                        <label>تاريخ استلام الإخطار الضريبي</label>
+                        <input type="date" class="input-box" id="tax-notice-date"
+                            data-testid="tax-notice-received-date"
+                            onchange="taxDeadlineUpdate(this.value)"
+                            style="direction:ltr;">
+                    </div>
                 </div>
             </div>
 
         </div><!-- end input section -->
+
+        <!-- ── Annual Tax Method Panel ──────────────────────────────────── -->
+        <div id="tax-annual-method-panel" data-testid="tax-annual-method-panel"
+            style="display:none;margin-bottom:1rem;background:rgba(212,175,55,0.06);
+                   border:1px solid rgba(212,175,55,0.2);border-radius:10px;
+                   padding:14px 16px;direction:rtl;font-size:0.82rem;color:#d4b44a;line-height:1.6;">
+            <strong style="font-size:0.9rem;color:var(--gold);">📐 منطق فحص المغالاة</strong>
+            <p style="margin:6px 0 8px;color:#9ca3af;line-height:1.7;">
+                يتم فحص المغالاة بمقارنة قيمة الضريبة الواردة بالإخطار مع القيمة السوقية المقدرة للعقار.
+                كلما زادت نسبة الضريبة إلى القيمة السوقية عن الحد الاسترشادي لنوع الأصل، ارتفع احتمال وجود مغالاة.
+            </p>
+            <div data-testid="tax-annual-formula"
+                style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px 12px;margin:0 0 10px;
+                       font-size:0.83rem;color:#fde68a;text-align:center;line-height:1.7;">
+                نسبة العبء الضريبي = قيمة الضريبة بالإخطار ÷ القيمة السوقية المقدرة
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+                <div style="background:rgba(0,0,0,0.15);border-radius:7px;padding:7px 10px;text-align:center;">
+                    <div style="color:#6b7280;font-size:0.75rem;margin-bottom:2px;">سكني</div>
+                    <div data-testid="tax-threshold-residential" style="color:#10b981;font-weight:700;font-size:0.9rem;">0.13%</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.15);border-radius:7px;padding:7px 10px;text-align:center;">
+                    <div style="color:#6b7280;font-size:0.75rem;margin-bottom:2px;">تجاري / غير سكني</div>
+                    <div data-testid="tax-threshold-nonresidential" style="color:#f59e0b;font-weight:700;font-size:0.9rem;">0.12%</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.15);border-radius:7px;padding:7px 10px;text-align:center;">
+                    <div style="color:#6b7280;font-size:0.75rem;margin-bottom:2px;">منشآت خاصة / مصنع</div>
+                    <div data-testid="tax-threshold-special" style="color:#ef4444;font-weight:700;font-size:0.9rem;">0.34%</div>
+                </div>
+            </div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;font-size:0.8rem;">
+                <span style="color:#6b7280;">خصم صيانة سكني: </span>
+                <span data-testid="tax-maintenance-residential" style="color:#6ee7b7;font-weight:600;">30%</span>
+                &nbsp;&nbsp;
+                <span style="color:#6b7280;">غير سكني/منشآت خاصة: </span>
+                <span data-testid="tax-maintenance-nonresidential" style="color:#6ee7b7;font-weight:600;">32%</span>
+                <br>
+                <span style="color:#6b7280;">حد إعفاء السكن الخاص (قيمة إيجارية سنوية): </span>
+                <span data-testid="tax-private-residence-exemption" style="color:#6ee7b7;font-weight:600;">24,000 ج.م</span>
+                <div style="margin-top:6px;font-size:0.76rem;color:#6b7280;">* هذه المعاملات استرشادية ولا تُعد رأيًا قانونيًا نهائيًا.</div>
+            </div>
+        </div>
+
+        <!-- ── Transfer Tax Method Panel ─────────────────────────────────── -->
+        <div id="tax-transfer-method-panel" data-testid="tax-transfer-method-panel"
+            style="display:none;margin-bottom:1rem;background:rgba(99,102,241,0.06);
+                   border:1px solid rgba(99,102,241,0.2);border-radius:10px;
+                   padding:12px 16px;direction:rtl;font-size:0.82rem;color:#a5b4fc;line-height:1.7;">
+            <strong style="color:#c4b5fd;">ℹ️ منطق ضريبة التصرفات العقارية</strong><br>
+            ضريبة التصرفات العقارية <strong data-testid="tax-transfer-rate-output">2.5%</strong>
+            تحسب عادة كنسبة 2.5% من قيمة التصرف/البيع المدخلة. لا تخضع لمنطق مؤشر المغالاة السنوي
+            (0.13% / 0.12% / 0.34%). هذا حساب استرشادي وليس حكمًا قانونيًا نهائيًا.
+        </div>
+
+        <!-- ── 60-Day Deadline Countdown ─────────────────────────────────── -->
+        <div id="tax-deadline-card" data-testid="tax-deadline-countdown"
+            style="display:none;margin-bottom:1rem;background:rgba(245,158,11,0.07);
+                   border:1px solid rgba(245,158,11,0.25);border-radius:10px;
+                   padding:14px 16px;direction:rtl;font-size:0.83rem;">
+            <div style="font-weight:700;color:#f59e0b;margin-bottom:8px;">⏱️ مؤشر مهلة الطعن الاسترشادي</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                <tr>
+                    <td style="padding:3px 0;color:#9ca3af;width:60%;">تاريخ استلام الإخطار:</td>
+                    <td id="tax-dl-received" style="color:#f9fafb;font-weight:600;">—</td>
+                </tr>
+                <tr>
+                    <td style="padding:3px 0;color:#9ca3af;">التاريخ الاسترشادي لانتهاء المهلة (60 يومًا):</td>
+                    <td id="tax-deadline-end-date" data-testid="tax-deadline-end-date" style="color:#f59e0b;font-weight:700;">—</td>
+                </tr>
+                <tr>
+                    <td style="padding:3px 0;color:#9ca3af;">الأيام المتبقية:</td>
+                    <td id="tax-deadline-days-remaining" data-testid="tax-deadline-days-remaining" style="font-weight:800;font-size:1.05rem;">—</td>
+                </tr>
+                <tr>
+                    <td style="padding:3px 0;color:#9ca3af;">حالة الاستعجال:</td>
+                    <td id="tax-deadline-status" data-testid="tax-deadline-status" style="font-weight:700;">—</td>
+                </tr>
+            </table>
+            <div data-testid="tax-deadline-disclaimer"
+                style="margin-top:10px;font-size:0.76rem;color:#9ca3af;
+                       border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;line-height:1.6;">
+                ⚠️ هذا المؤشر استرشادي ولا يُعد رأيًا قانونيًا نهائيًا. يجب مراجعة الخبير قبل اتخاذ إجراء رسمي.
+            </div>
+        </div>
 
         <!-- ══ B. Documents ════════════════════════════════════════════════ -->
         <div class="ai-section" style="margin-bottom:1.5rem;border-color:rgba(99,102,241,0.3);"
@@ -2068,6 +2159,27 @@
             <h3 style="color:#a5b4fc;font-size:0.95rem;font-weight:700;margin:0 0 10px;">
                 📎 مستندات الفحص الضريبي
             </h3>
+            <!-- Document guidance -->
+            <div data-testid="tax-documents-guidance" style="margin-bottom:12px;">
+                <div style="font-size:0.8rem;color:#9ca3af;margin-bottom:5px;">المستندات المطلوبة لاستكمال الفحص:</div>
+                <ul data-testid="tax-required-documents-list"
+                    style="margin:0 0 8px;padding-right:16px;color:#a5b4fc;font-size:0.79rem;line-height:1.9;list-style:disc;">
+                    <li>نموذج 3 ضرائب</li>
+                    <li>صورة الإخطار الضريبي</li>
+                    <li>رخصة العقار أو المصنع</li>
+                    <li>مستندات الملكية</li>
+                    <li>ما يثبت توقف النشاط إن وجد</li>
+                    <li>صور العقار أو المنشأة</li>
+                    <li>عقود الإيجار إن وجدت</li>
+                    <li>المستندات المالية أو التشغيلية للمنشآت الخاصة</li>
+                </ul>
+                <div data-testid="tax-ocr-note"
+                    style="font-size:0.77rem;color:#6b7280;background:rgba(0,0,0,0.1);
+                           border-radius:7px;padding:6px 10px;line-height:1.6;">
+                    <span data-testid="tax-ocr-status">سيتم تفعيل قراءة نموذج 3 ضرائب تلقائيًا في مرحلة OCR/Vision لاحقة.</span>
+                    حاليًا يتم استخدام المستندات كمرفقات للمراجعة ولا يتم استخراج البيانات منها آليًا.
+                </div>
+            </div>
             <input type="file" id="tax-docs-input" data-testid="tax-documents-input"
                 multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
                 style="display:none;" onchange="taxHandleDocs(this.files)">
@@ -2109,33 +2221,52 @@
                     <div id="tax-risk-bar-fill" data-testid="tax-gauge-marker"
                         class="tax-risk-bar-fill" style="width:0%;background:#10b981;height:100%;transition:width 0.4s,background 0.4s;"></div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:#6b7280;margin-top:4px;">
-                    <span data-testid="tax-gauge-green">طبيعي</span>
-                    <span data-testid="tax-gauge-yellow">يحتاج مراجعة</span>
-                    <span data-testid="tax-gauge-red">مرتفع / يستدعي فحص خبير</span>
+                <div data-testid="tax-gauge-legend"
+                    style="display:flex;justify-content:space-between;font-size:0.78rem;color:#6b7280;margin-top:4px;">
+                    <span data-testid="tax-gauge-green">🟢 طبيعي</span>
+                    <span data-testid="tax-gauge-yellow">🟡 متوسط</span>
+                    <span data-testid="tax-gauge-red">🔴 مغالى فيه جدًا</span>
                 </div>
                 <div id="tax-gauge-explanation" data-testid="tax-gauge-explanation"
                     style="font-size:0.78rem;color:#9ca3af;margin-top:8px;line-height:1.6;min-height:1em;"></div>
+                <div id="tax-gauge-state-summary" data-testid="tax-gauge-state-summary"
+                    style="display:none;margin-top:8px;font-size:0.8rem;border-radius:7px;padding:7px 10px;line-height:1.6;">
+                    <span data-testid="tax-gauge-state-green-text" id="tax-gauge-green-text" style="display:none;color:#10b981;">
+                        ✅ نسبة الضريبة إلى القيمة السوقية لا تتجاوز الحد الاسترشادي.
+                    </span>
+                    <span data-testid="tax-gauge-state-yellow-text" id="tax-gauge-yellow-text" style="display:none;color:#f59e0b;">
+                        ⚠️ توجد مغالاة بسيطة أو تحتاج فحصًا إضافيًا قبل قرار الطعن.
+                    </span>
+                    <span data-testid="tax-gauge-state-red-text" id="tax-gauge-red-text" style="display:none;color:#ef4444;">
+                        🔴 النسبة تتجاوز الحد الاسترشادي بدرجة واضحة وقد تستدعي فحص خبير وإعداد طعن.
+                    </span>
+                </div>
             </div>
 
-            <!-- Savings Card -->
-            <div class="ai-section" style="margin-bottom:1.5rem;border-color:rgba(212,175,55,0.3);">
+            <!-- Live Savings Dashboard -->
+            <div class="ai-section" data-testid="tax-live-savings-dashboard"
+                style="margin-bottom:1.5rem;border-color:rgba(212,175,55,0.3);">
                 <h3 style="color:var(--gold);font-size:0.95rem;font-weight:700;margin:0 0 12px;">
-                    💰 مؤشر الوفر المحتمل
+                    💰 لوحة الوفر المالي المتوقع
                 </h3>
                 <table class="tax-savings-table" style="width:100%;border-collapse:collapse;">
                     <tr>
-                        <td>المطالبة الحكومية</td>
+                        <td>قيمة الضريبة بالإخطار</td>
                         <td id="tax-gov-claim-out" data-testid="tax-government-claim-output">—</td>
                     </tr>
                     <tr>
-                        <td>الضريبة / التكلفة الاسترشادية المحسوبة</td>
+                        <td>الضريبة الاسترشادية المحسوبة (السقف)</td>
                         <td id="tax-est-tax-out" data-testid="tax-estimated-fair-tax-output">—</td>
                     </tr>
                     <tr>
-                        <td>الفرق المحتمل</td>
+                        <td>فرق المغالاة المحتمل</td>
                         <td id="tax-saving-out" data-testid="tax-potential-saving-output"
                             style="color:#10b981;">—</td>
+                    </tr>
+                    <tr id="tax-expected-savings-row" style="display:none;">
+                        <td>الوفر المالي المتوقع سنويًا</td>
+                        <td id="tax-expected-savings-out" data-testid="tax-expected-savings-output"
+                            style="color:#10b981;font-weight:700;">—</td>
                     </tr>
                     <tr id="tax-gap-pct-row" style="display:none;">
                         <td>نسبة الفجوة</td>
@@ -2143,6 +2274,17 @@
                     </tr>
                 </table>
                 <div id="tax-calc-note" style="font-size:0.78rem;color:#6b7280;margin-top:10px;line-height:1.6;"></div>
+                <!-- Data gap panel -->
+                <div id="tax-data-gap-panel" data-testid="tax-data-gap-panel"
+                    style="display:none;margin-top:12px;background:rgba(239,68,68,0.07);
+                           border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px 14px;">
+                    <div style="font-size:0.85rem;font-weight:700;color:#fca5a5;margin-bottom:6px;">
+                        ⚠️ بيانات مطلوبة لاستكمال الفحص
+                    </div>
+                    <ul id="tax-data-gap-list" data-testid="tax-data-gap-list"
+                        style="margin:0;padding-right:16px;color:#fca5a5;font-size:0.8rem;
+                               line-height:1.8;list-style:disc;"></ul>
+                </div>
             </div>
 
             <!-- Annual Property Tax Overvaluation Panel -->
@@ -2207,7 +2349,7 @@
 
         </div><!-- end tax-output-area -->
 
-        <!-- ══ F. Draft PDF (always visible; enabled after successful lead save) ══ -->
+        <!-- ══ F. Draft PDF ══════════════════════════════════════════════════ -->
         <div style="margin-bottom:0.5rem;text-align:center;">
             <button type="button" id="tax-draft-pdf-btn" data-testid="tax-draft-pdf-button" disabled
                 style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);
@@ -2217,6 +2359,17 @@
                 تحميل تقرير فحص الضريبة المبدئي PDF —
                 سيتم تفعيله بعد إرسال طلب الفحص
             </button>
+        </div>
+        <div data-testid="tax-draft-report-warning"
+            style="text-align:center;margin:4px auto 6px;max-width:620px;
+                   font-size:0.78rem;color:#fca5a5;background:rgba(239,68,68,0.07);
+                   border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:6px 12px;">
+            فحص ضريبي آلي مبدئي — غير معتمد رسميًا
+        </div>
+        <div data-testid="tax-pdf-watermark-note"
+            style="text-align:center;font-size:0.75rem;color:#6b7280;margin-bottom:1rem;line-height:1.5;">
+            سيتم تفعيل تحميل التقرير بعد حفظ الفحص وإرسال البيانات للخادم.
+            التقرير المبدئي يحمل عبارة <em>"غير معتمد رسميًا"</em> ولا يُستخدم كطعن رسمي.
         </div>
         <div id="tax-pdf-download-container" style="display:none;text-align:center;margin-bottom:1rem;">
             <a id="tax-pdf-link" href="#" target="_blank"
@@ -2237,13 +2390,18 @@
             </button>
         </div>
 
-        <!-- ══ G+H. Lead Form ════════════════════════════════════════════════ -->
+        <!-- ══ G+H. Lead Form / Certified Request Card ════════════════════════ -->
         <div id="tax-lead-form" data-testid="tax-lead-form"
             style="display:none;margin-bottom:1.5rem;">
-            <div class="ai-section" style="border-color:rgba(212,175,55,0.35);">
-                <h3 style="color:var(--gold);font-size:1.05rem;font-weight:900;margin:0 0 14px;">
-                    📝 طلب فحص خبير وإعداد طعن رسمي
+            <div class="ai-section" data-testid="tax-certified-request-card"
+                style="border-color:rgba(212,175,55,0.35);">
+                <h3 style="color:var(--gold);font-size:1.05rem;font-weight:900;margin:0 0 6px;">
+                    📝 طلب إعداد تقرير فني معتمد / مراجعة طعن
                 </h3>
+                <p style="font-size:0.82rem;color:#9ca3af;margin:0 0 14px;line-height:1.6;">
+                    سيقوم الخبير بمراجعة البيانات والمستندات قبل إعداد أي تقرير رسمي أو اتخاذ إجراء طعن.
+                    يتم تضمين بيانات الفحص الحالية في الطلب تلقائيًا.
+                </p>
 
                 <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
                     <div class="field-group">
@@ -2307,7 +2465,7 @@
                     style="display:none;margin-top:14px;background:rgba(16,185,129,0.08);
                            border:1px solid rgba(16,185,129,0.3);border-radius:8px;
                            padding:12px 16px;font-size:0.88rem;color:#6ee7b7;line-height:1.7;">
-                    ✅ تم تسجيل طلب الفحص مبدئيًا. سيتم ربط الإرسال الفعلي للخبير عند تفعيل نظام التواصل.
+                    ✅ تم تسجيل طلب مراجعة الفحص مبدئيًا. سيقوم الخبير بمراجعة البيانات والمستندات قبل إعداد أي تقرير رسمي أو اتخاذ إجراء طعن.
                 </div>
             </div>
         </div>
@@ -2379,8 +2537,63 @@
         /* ── Tax type conditional fields ─────────────────────────────────── */
         function taxTypeChanged() {
             var t = document.getElementById('tax-type').value;
-            document.getElementById('tax-transfer-fields').style.display = (t === 'transfer') ? '' : 'none';
-            document.getElementById('tax-annual-fields').style.display   = (t === 'annual')   ? '' : 'none';
+            document.getElementById('tax-transfer-fields').style.display    = (t === 'transfer') ? '' : 'none';
+            document.getElementById('tax-annual-fields').style.display      = (t === 'annual')   ? '' : 'none';
+            document.getElementById('tax-annual-method-panel').style.display   = (t === 'annual')   ? '' : 'none';
+            document.getElementById('tax-transfer-method-panel').style.display = (t === 'transfer') ? '' : 'none';
+            /* Re-run deadline if a date was already entered */
+            var dl = document.getElementById('tax-notice-date');
+            if (dl && dl.value && t === 'annual') taxDeadlineUpdate(dl.value);
+            else if (t !== 'annual') {
+                var card = document.getElementById('tax-deadline-card');
+                if (card) card.style.display = 'none';
+            }
+        }
+
+        /* ── 60-day deadline countdown ───────────────────────────────────── */
+        function taxDeadlineUpdate(dateStr) {
+            var card = document.getElementById('tax-deadline-card');
+            if (!dateStr || !card) return;
+            var received = new Date(dateStr);
+            if (isNaN(received.getTime())) return;
+            var deadline = new Date(received.getTime() + 60 * 24 * 60 * 60 * 1000);
+            var today    = new Date(); today.setHours(0,0,0,0);
+            var daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / (24*60*60*1000));
+            var fmt = function(d) {
+                return d.getFullYear() + '-' +
+                    String(d.getMonth()+1).padStart(2,'0') + '-' +
+                    String(d.getDate()).padStart(2,'0');
+            };
+            document.getElementById('tax-dl-received').textContent               = fmt(received);
+            document.getElementById('tax-deadline-end-date').textContent          = fmt(deadline);
+            document.getElementById('tax-deadline-days-remaining').textContent    = daysLeft > 0 ? daysLeft + ' يوم' : 'انتهت المهلة';
+            var statusEl = document.getElementById('tax-deadline-status');
+            if (daysLeft > 30) {
+                statusEl.textContent = '🟢 آمن نسبيًا'; statusEl.style.color = '#10b981';
+            } else if (daysLeft > 14) {
+                statusEl.textContent = '🟡 اقتربت المهلة'; statusEl.style.color = '#f59e0b';
+            } else if (daysLeft > 0) {
+                statusEl.textContent = '🔴 عاجل'; statusEl.style.color = '#ef4444';
+            } else {
+                statusEl.textContent = '⛔ قد تكون المهلة انتهت'; statusEl.style.color = '#9ca3af';
+            }
+            card.style.display = 'block';
+        }
+
+        /* ── Gauge state summary ─────────────────────────────────────────── */
+        function _updateGaugeStateSummary(stateKey) {
+            var wrap = document.getElementById('tax-gauge-state-summary');
+            var gEl  = document.getElementById('tax-gauge-green-text');
+            var yEl  = document.getElementById('tax-gauge-yellow-text');
+            var rEl  = document.getElementById('tax-gauge-red-text');
+            if (!wrap) return;
+            wrap.style.display  = 'block';
+            gEl.style.display   = (stateKey === 'green')  ? 'inline' : 'none';
+            yEl.style.display   = (stateKey === 'yellow') ? 'inline' : 'none';
+            rEl.style.display   = (stateKey === 'red')    ? 'inline' : 'none';
+            wrap.style.background = stateKey === 'green'  ? 'rgba(16,185,129,0.06)' :
+                                    stateKey === 'yellow' ? 'rgba(245,158,11,0.06)'  :
+                                                            'rgba(239,68,68,0.06)';
         }
 
         /* ── Document display (no upload) ─────────────────────────────────── */
@@ -2438,23 +2651,27 @@
                     estimatedTax = fairTaxCeiling;
 
                     var statusLabel, riskLabel2, riskPct2, riskColor2, isOvervalued = false;
+                    var gaugeStateKey2 = 'green';
                     if (taxBurdenRate <= threshold) {
-                        statusLabel = 'طبيعي';
-                        riskLabel2  = '✅ طبيعي — المطالبة ضمن الحد الاسترشادي';
-                        riskPct2    = 15;
-                        riskColor2  = '#10b981';
+                        statusLabel   = 'طبيعي';
+                        riskLabel2    = '✅ طبيعي — المطالبة ضمن الحد الاسترشادي';
+                        riskPct2      = 15;
+                        riskColor2    = '#10b981';
+                        gaugeStateKey2 = 'green';
                     } else if (taxBurdenRate <= threshold * 1.25) {
-                        statusLabel  = 'متوسط';
-                        riskLabel2   = '⚠️ متوسط — المطالبة تجاوزت الحد الاسترشادي';
-                        riskPct2     = 60;
-                        riskColor2   = '#f59e0b';
-                        isOvervalued = true;
+                        statusLabel   = 'متوسط';
+                        riskLabel2    = '⚠️ متوسط — المطالبة تجاوزت الحد الاسترشادي';
+                        riskPct2      = 60;
+                        riskColor2    = '#f59e0b';
+                        isOvervalued  = true;
+                        gaugeStateKey2 = 'yellow';
                     } else {
-                        statusLabel  = 'مغالى فيه جداً';
-                        riskLabel2   = '🔴 مغالى فيه جداً — فجوة كبيرة تستدعي مراجعة خبير';
-                        riskPct2     = 95;
-                        riskColor2   = '#ef4444';
-                        isOvervalued = true;
+                        statusLabel   = 'مغالى فيه جداً';
+                        riskLabel2    = '🔴 مغالى فيه جداً — فجوة كبيرة تستدعي مراجعة خبير';
+                        riskPct2      = 95;
+                        riskColor2    = '#ef4444';
+                        isOvervalued  = true;
+                        gaugeStateKey2 = 'red';
                     }
 
                     /* Write risk gauge directly (bypasses generic risk block) */
@@ -2464,17 +2681,32 @@
                     document.getElementById('tax-risk-bar-fill').style.background    = riskColor2;
                     var expEl = document.getElementById('tax-gauge-explanation');
                     if (expEl) expEl.textContent = 'الحد الاسترشادي: ' + thresholdPct + '% — النسبة الفعلية: ' + taxBurdenPct + '%';
+                    _updateGaugeStateSummary(gaugeStateKey2);
 
                     var fmt = function(n) { return n !== null && !isNaN(n) ? Math.round(n).toLocaleString('ar-EG') + ' ج.م' : '—'; };
                     document.getElementById('tax-gov-claim-out').textContent        = govClaim > 0 ? fmt(govClaim) : '—';
                     document.getElementById('tax-est-tax-out').textContent          = fmt(fairTaxCeiling);
                     document.getElementById('tax-saving-out').textContent           = fmt(govClaim - fairTaxCeiling);
+                    /* Expected savings row */
+                    var expSavEl = document.getElementById('tax-expected-savings-out');
+                    var expSavRow = document.getElementById('tax-expected-savings-row');
+                    if (expSavEl && expSavRow) {
+                        if (overcharge > 0) {
+                            expSavEl.textContent   = fmt(overcharge);
+                            expSavRow.style.display = '';
+                        } else {
+                            expSavRow.style.display = 'none';
+                        }
+                    }
                     if (gapPctAnnual !== null) {
                         document.getElementById('tax-gap-pct-row').style.display   = '';
                         document.getElementById('tax-gap-pct-out').textContent     = gapPctAnnual.toFixed(1) + '%';
                     } else {
                         document.getElementById('tax-gap-pct-row').style.display   = 'none';
                     }
+                    /* Hide data gap panel — we have all needed values */
+                    var gapPanel = document.getElementById('tax-data-gap-panel');
+                    if (gapPanel) gapPanel.style.display = 'none';
 
                     /* Populate overvaluation detail panel */
                     _updateAnnualOvervaluationPanel({
@@ -2485,8 +2717,9 @@
                         statusLabel: statusLabel, isOvervalued: isOvervalued
                     });
 
-                    calcNote = 'تم الحساب بمقارنة قيمة الضريبة بالإخطار بالقيمة السوقية المقدرة. النسبة الفعلية: ' +
-                               taxBurdenPct + '% — الحد الاسترشادي: ' + thresholdPct + '%.';
+                    calcNote = 'الضريبة الاسترشادية المحسوبة لعقارك هي ' + fmt(fairTaxCeiling) +
+                               ' بدلًا من ' + fmt(govClaim) + '. فرق المغالاة المحتمل هو ' + fmt(overcharge) + ' سنويًا. ' +
+                               '(نسبة فعلية: ' + taxBurdenPct + '% — حد استرشادي: ' + thresholdPct + '%)';
 
                     /* Skip remaining UI updates for risk — already done */
                     document.getElementById('tax-calc-note').textContent = calcNote;
@@ -2508,6 +2741,21 @@
                     calcNote = 'لا يمكن تقدير الضريبة العادلة بدقة دون قيمة إيجارية أو بيانات سوقية. ' +
                                'يمكن استخدام الفحص المبدئي فقط لتحديد الحاجة لمراجعة خبير.';
                     _updateAnnualOvervaluationPanel({ marketVal: 0 });
+                    /* Show data gap panel */
+                    var dgPanel = document.getElementById('tax-data-gap-panel');
+                    var dgList  = document.getElementById('tax-data-gap-list');
+                    if (dgPanel && dgList) {
+                        dgList.innerHTML = '';
+                        var gaps = [];
+                        if (!marketVal) gaps.push('القيمة السوقية المقدرة');
+                        if (!govClaim)  gaps.push('قيمة الضريبة بالإخطار');
+                        var assetTyp = document.getElementById('tax-asset-type').value;
+                        if (!assetTyp) gaps.push('نوع الأصل');
+                        gaps.forEach(function(g) {
+                            var li = document.createElement('li'); li.textContent = g; dgList.appendChild(li);
+                        });
+                        dgPanel.style.display = gaps.length > 0 ? 'block' : 'none';
+                    }
                 }
             } else {
                 calcNote = 'يرجى اختيار نوع الضريبة أولاً.';
@@ -2521,23 +2769,27 @@
             var diff      = null;
             var gapPct    = null;
 
+            var gaugeStateKey = null;
             if (!riskComputed && !missing && estimatedTax !== null && govClaim > 0) {
                 diff    = govClaim - estimatedTax;
                 gapPct  = estimatedTax > 0 ? ((diff / estimatedTax) * 100) : null;
                 var ratio = estimatedTax > 0 ? (govClaim / estimatedTax) : 0;
 
                 if (ratio <= 1.10) {
-                    riskLabel = '✅ طبيعي — المطالبة ضمن النطاق الاسترشادي';
-                    riskPct   = 20;
-                    riskColor = '#10b981';
+                    riskLabel    = '✅ طبيعي — المطالبة ضمن النطاق الاسترشادي';
+                    riskPct      = 20;
+                    riskColor    = '#10b981';
+                    gaugeStateKey = 'green';
                 } else if (ratio <= 1.35) {
-                    riskLabel = '⚠️ يحتاج مراجعة — فجوة ملحوظة بين المطالبة والتقدير';
-                    riskPct   = 60;
-                    riskColor = '#f59e0b';
+                    riskLabel    = '⚠️ يحتاج مراجعة — فجوة ملحوظة بين المطالبة والتقدير';
+                    riskPct      = 60;
+                    riskColor    = '#f59e0b';
+                    gaugeStateKey = 'yellow';
                 } else {
-                    riskLabel = '🔴 مرتفع / يستدعي فحص خبير — فجوة كبيرة';
-                    riskPct   = 95;
-                    riskColor = '#ef4444';
+                    riskLabel    = '🔴 مرتفع / يستدعي فحص خبير — فجوة كبيرة';
+                    riskPct      = 95;
+                    riskColor    = '#ef4444';
+                    gaugeStateKey = 'red';
                 }
             } else if (!riskComputed && missing) {
                 riskLabel = 'يحتاج بيانات إضافية';
@@ -2550,15 +2802,26 @@
             }
 
             /* Update UI */
-            document.getElementById('tax-risk-label').textContent      = riskLabel;
-            document.getElementById('tax-risk-bar-fill').style.width   = riskPct + '%';
+            document.getElementById('tax-risk-label').textContent         = riskLabel;
+            document.getElementById('tax-risk-bar-fill').style.width      = riskPct + '%';
             document.getElementById('tax-risk-bar-fill').style.background = riskColor;
+            if (gaugeStateKey) _updateGaugeStateSummary(gaugeStateKey);
 
             var fmt = function(n) { return n !== null && !isNaN(n) ? Math.round(n).toLocaleString('ar-EG') + ' ج.م' : '—'; };
 
             document.getElementById('tax-gov-claim-out').textContent  = govClaim > 0 ? fmt(govClaim)     : '—';
             document.getElementById('tax-est-tax-out').textContent    = estimatedTax !== null ? fmt(estimatedTax) : 'غير قابل للحساب بدقة من البيانات الحالية.';
             document.getElementById('tax-saving-out').textContent     = diff !== null ? fmt(diff) : '—';
+
+            /* Expected savings row */
+            var expSavEl2 = document.getElementById('tax-expected-savings-out');
+            var expSavRow2 = document.getElementById('tax-expected-savings-row');
+            if (expSavEl2 && expSavRow2 && diff !== null && diff > 0) {
+                expSavEl2.textContent    = fmt(diff);
+                expSavRow2.style.display = '';
+            } else if (expSavRow2) {
+                expSavRow2.style.display = 'none';
+            }
 
             if (gapPct !== null) {
                 document.getElementById('tax-gap-pct-row').style.display = '';

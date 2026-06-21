@@ -4154,6 +4154,11 @@
         </div>
     </div>
 
+    <!-- ── Group 1: Common / Quick Selectors ──────────────────────────── -->
+    <div data-testid="quick-selectors-section" style="margin-bottom:8px; padding:8px 12px; background:rgba(212,175,55,0.05); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
+        <div style="font-size:0.82rem; color:var(--gold); font-weight:700; margin-bottom:3px;">الأصول والأغراض الشائعة / الاختيار السريع</div>
+        <p style="font-size:0.73rem; color:#9ca3af; margin:0; line-height:1.55;">استخدم هذا القسم للحالات المعتادة والسريعة مثل السكني، التجاري، الإداري، البيع والشراء، التمويل، الضرائب، والتقييم السوقي المباشر.</p>
+    </div>
     <div class="actions-grid">
         <div class="action-card">
             <i class="fas fa-file-invoice-dollar" style="color: var(--gold);"></i>
@@ -4247,12 +4252,14 @@
 
     <!-- ── Phase 10: Professional Registry Selectors ──────────────────── -->
     <!-- Asset fields (Step 1 content) -->
-    <div id="prof-registry-section" style="margin:10px 0; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.2); border-radius:8px;">
-        <div style="font-size:0.78rem; color:var(--gold-light); font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:6px;">سجل الأصول</div>
+    <!-- ── Group 2: Professional / Specialized Selectors ──────────────── -->
+    <div id="prof-registry-section" data-testid="professional-selectors-section" style="margin:10px 0; padding:10px 14px; background:rgba(96,165,250,0.04); border:1px solid rgba(96,165,250,0.2); border-radius:8px;">
+        <div style="font-size:0.82rem; color:#93c5fd; font-weight:700; margin-bottom:3px;">الأصول والأغراض المتخصصة / الاختيار الاحترافي</div>
+        <p style="font-size:0.73rem; color:#9ca3af; margin:0 0 10px; line-height:1.55;">استخدم هذا القسم للحالات المتخصصة أو المعقدة التي تحتاج تصنيفًا مهنيًا مثل Asset Family، Asset Subtype، Purpose Route، Purpose Sub-route، Requirements Checklist، ومصفوفة التكامل.</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">عائلة الأصل</label>
-                <select id="prof-asset-family" data-testid="professional-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value)">
+                <select id="prof-asset-family" data-testid="professional-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value); syncAssetTypeFromProf();">
                     <option value="">-- اختر العائلة --</option>
                     <option value="hospitality_entertainment">ضيافة وترفيه</option>
                     <option value="sports_event_venues">رياضة وفعاليات</option>
@@ -4267,11 +4274,12 @@
             </div>
             <div>
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">النوع الفرعي</label>
-                <select id="prof-asset-subtype" data-testid="professional-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
+                <select id="prof-asset-subtype" data-testid="professional-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="syncAssetTypeFromProf();">
                     <option value="">-- اختر النوع الفرعي --</option>
                 </select>
             </div>
         </div>
+        <p style="font-size:0.71rem; color:#6b7280; margin:8px 0 0; padding-top:6px; border-top:1px solid rgba(96,165,250,0.1); line-height:1.55;">يمتد هذا القسم ليشمل أيضاً: مسارات الغرض المهنية (الخطوة ٢) &#8592; مصفوفة التكامل (الخطوة ٣) &#8592; قائمة المتطلبات والموافقة (الخطوة ٤).</p>
     </div>
     <div data-testid="professional-valuation-profile" style="font-size:0.75rem;color:#9ca3af;padding:4px 2px;margin-bottom:4px;">
         <span style="color:#d4af37;">ملف التقييم:</span> <span id="prof-valuation-profile-label">يُحدَّد عند اختيار العائلة والغرض</span>
@@ -31088,6 +31096,18 @@ function updateProfMatrixMetadata(route) {
     var sel = document.getElementById('prof-purpose-route');
     if (sel) sel.addEventListener('change', function() { updateProfMatrixMetadata(this.value); });
 })();
+
+/* Task 7 (revised): sync #prof-asset-subtype → #asset-type (hidden legacy compatibility mirror).
+   Called after profFilterSubtypes resets the subtype dropdown (family change)
+   and when the user picks a specific subtype. */
+function syncAssetTypeFromProf() {
+    var subtypeEl   = document.getElementById('prof-asset-subtype');
+    var assetTypeEl = document.getElementById('asset-type');
+    if (!assetTypeEl) return;
+    var val = (subtypeEl && subtypeEl.value) ? subtypeEl.value : '';
+    assetTypeEl.value = val;
+    if (typeof onSelectionChange === 'function') onSelectionChange();
+}
 </script>
 
 <script>

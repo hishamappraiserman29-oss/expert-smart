@@ -59,9 +59,9 @@ def test_pwf05_asset_subtype_has_testid(page, live_server):
 
 
 def test_pwf06_asset_family_visible(page, live_server):
-    """PWF06: prof-asset-family is visible (PCS34 constraint)."""
+    """PWF06: prof-asset-family is visible as canonical asset family selector (Task 7 revised)."""
     page.goto(live_server)
-    assert page.is_visible("#prof-asset-family")
+    assert page.is_visible("#prof-asset-family"), "#prof-asset-family must be visible"
 
 
 def test_pwf07_valuation_profile_exists(page, live_server):

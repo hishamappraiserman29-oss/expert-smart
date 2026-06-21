@@ -369,11 +369,11 @@ def test_PCS33_mass_appraisal_workflow_ancestor_is_ws_composite(page, live_serve
 
 
 def test_PCS34_professional_asset_family_visible(page, live_server):
-    """prof-asset-family select is visible (not just present) in professional tab."""
+    """PCS34: prof-asset-family is visible as canonical asset selector (Task 7 revised)."""
     _goto(page, live_server)
     _switch_to_professional(page)
     assert page.is_visible("#prof-asset-family"), \
-        "prof-asset-family not visible in the professional tab"
+        "prof-asset-family must be visible in professional tab"
 
 
 def test_PCS35_professional_requirements_checklist_inside_professional_panel(page, live_server):

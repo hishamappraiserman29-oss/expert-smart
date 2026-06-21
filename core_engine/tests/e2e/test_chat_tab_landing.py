@@ -855,3 +855,209 @@ def test_chat_ux_no_certified_report_claim(page: Page, live_server: str) -> None
     answer_text = page.locator("[data-testid='chat-answer-area']").inner_text()
     assert "إرشادية" in answer_text, "Answer must still include advisory disclaimer"
     assert "تقرير تقييم رسمي" not in panel_text, "Source panel must not claim official reports"
+
+
+# ── Part A: Smart Prompt Tabs (64-66) ─────────────────────────────────────────
+
+def test_chat_prompt_tabs_visible(page: Page, live_server: str) -> None:
+    """[64] Prompt tab navigation bar and all 8 tab buttons are visible on chat landing."""
+    _open_chat_tab(page, live_server)
+    expect(page.locator("[data-testid='chat-prompt-tabs']")).to_be_visible()
+    for tid in [
+        "chat-prompt-tab-all", "chat-prompt-tab-valuation", "chat-prompt-tab-tax",
+        "chat-prompt-tab-court", "chat-prompt-tab-feasibility",
+        "chat-prompt-tab-special-assets", "chat-prompt-tab-finance",
+        "chat-prompt-tab-concepts",
+    ]:
+        expect(page.locator(f"[data-testid='{tid}']")).to_be_visible(), (
+            f"{tid} tab button must be visible"
+        )
+
+
+def test_chat_prompt_tabs_filter_suggestions(page: Page, live_server: str) -> None:
+    """[65] Clicking a tab hides chips of other categories; clicking الكل restores all."""
+    _open_chat_tab(page, live_server)
+    # Click tax tab — only tax chips should be visible
+    page.locator("[data-testid='chat-prompt-tab-tax']").click()
+    visible_chips = [
+        c for c in page.locator("#ws-chat .chat-chip").all()
+        if c.is_visible()
+    ]
+    assert len(visible_chips) >= 1, "At least one chip must be visible after filtering to tax tab"
+    all_chips = page.locator("#ws-chat .chat-chip").all()
+    assert len(all_chips) > len(visible_chips), (
+        "Filtering should hide some chips (not all chips visible when tax tab is active)"
+    )
+    # Click الكل — all chips should return
+    page.locator("[data-testid='chat-prompt-tab-all']").click()
+    visible_after_all = [c for c in page.locator("#ws-chat .chat-chip").all() if c.is_visible()]
+    assert len(visible_after_all) >= len(all_chips), (
+        "الكل tab must restore all chips"
+    )
+
+
+def test_chat_prompt_tab_filtered_chip_still_works(page: Page, live_server: str) -> None:
+    """[66] A chip visible after tab filtering still fills the chat input when clicked."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-prompt-tab-tax']").click()
+    visible_chips = [c for c in page.locator("#ws-chat .chat-chip").all() if c.is_visible()]
+    assert len(visible_chips) >= 1, "At least one tax chip must be visible"
+    visible_chips[0].click()
+    filled = page.locator("[data-testid='chat-input']").input_value()
+    assert len(filled.strip()) > 5, (
+        f"Filtered chip must still fill input, got: {filled!r}"
+    )
+
+
+# ── Part B: Smart Auto-Fill (67-69) ──────────────────────────────────────────
+
+def test_chat_autofill_property_type_and_location(page: Page, live_server: str) -> None:
+    """[67] Question 'مصنع في العاشر من رمضان' fills property-type and location if empty."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-property-type']").fill("")
+    page.locator("[data-testid='chat-location']").fill("")
+    _send_chat_question(page, "عندي مصنع في العاشر من رمضان وجاتلي ضريبة عالية")
+    prop = page.locator("[data-testid='chat-property-type']").input_value()
+    loc  = page.locator("[data-testid='chat-location']").input_value()
+    assert "مصنع" in prop, f"Property type should contain مصنع, got: {prop!r}"
+    assert loc.strip() != "", f"Location should be filled from question, got: {loc!r}"
+
+
+def test_chat_autofill_does_not_overwrite_existing(page: Page, live_server: str) -> None:
+    """[68] Auto-fill must NOT overwrite user-entered property type or location."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-property-type']").fill("فيلا")
+    page.locator("[data-testid='chat-location']").fill("القاهرة")
+    _send_chat_question(page, "عندي مصنع في العاشر من رمضان وجاتلي ضريبة عالية")
+    prop = page.locator("[data-testid='chat-property-type']").input_value()
+    loc  = page.locator("[data-testid='chat-location']").input_value()
+    assert prop == "فيلا",    f"Existing property type must not be overwritten, got: {prop!r}"
+    assert loc  == "القاهرة", f"Existing location must not be overwritten, got: {loc!r}"
+
+
+def test_chat_autofill_ambiguous_no_random_fill(page: Page, live_server: str) -> None:
+    """[69] Ambiguous question without property type or location cue does not fill garbage."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-property-type']").fill("")
+    page.locator("[data-testid='chat-location']").fill("")
+    _send_chat_question(page, "ما الفرق بين معدل الخصم ومعدل الرسملة؟")
+    prop = page.locator("[data-testid='chat-property-type']").input_value()
+    loc  = page.locator("[data-testid='chat-location']").input_value()
+    # Must not have filled nonsense from a pure-concept question
+    assert prop == "", f"No property type should be extracted from concept question, got: {prop!r}"
+    assert loc  == "", f"No location should be extracted from concept question, got: {loc!r}"
+
+
+# ── Part C: Suggested Next Page Button (70-72) ────────────────────────────────
+
+def test_chat_next_page_button_tax(page: Page, live_server: str) -> None:
+    """[70] Tax question shows a chat-next-page-button with الضرائب/الطعون label."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-next-page-button']", state="visible", timeout=5_000)
+    btn_text = page.locator("[data-testid='chat-next-page-button']").inner_text()
+    assert "الضرائب" in btn_text or "الطعون" in btn_text, (
+        f"Tax next-page button must mention الضرائب or الطعون, got: {btn_text!r}"
+    )
+
+
+def test_chat_next_page_button_special_asset(page: Page, live_server: str) -> None:
+    """[71] Specialized-asset question shows a chat-next-page-button for التقييم المحترف."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما المنهجية المناسبة لتقييم مستشفى أو فندق أو مصنع كأصل متخصص؟")
+    page.wait_for_selector("[data-testid='chat-next-page-button']", state="visible", timeout=5_000)
+    btn_text = page.locator("[data-testid='chat-next-page-button']").inner_text()
+    assert "المحترف" in btn_text or "التقييم" in btn_text, (
+        f"Special-asset next-page button must mention المحترف or التقييم, got: {btn_text!r}"
+    )
+
+
+def test_chat_next_page_button_no_crash(page: Page, live_server: str) -> None:
+    """[72] Clicking the next-page button does not crash; page stays functional."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-next-page-button']", state="visible", timeout=5_000)
+    # Clicking may switch to another tab — just verify no JS exception is thrown
+    dialogs: list = []
+    page.on("dialog", lambda d: (dialogs.append(d.message), d.dismiss()))
+    page.locator("[data-testid='chat-next-page-button']").click()
+    assert len(dialogs) == 0, f"Unexpected JS dialog after button click: {dialogs}"
+    # Page should still be loaded and navigable
+    assert page.title() is not None
+
+
+# ── Part D: Dynamic Expert Card (73-74) ──────────────────────────────────────
+
+def test_chat_dynamic_expert_card_tax(page: Page, live_server: str) -> None:
+    """[73] Tax question shows the dynamic expert card with 'خبير' text and CTA button."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-dynamic-expert-card']", state="visible", timeout=5_000)
+    card_text = page.locator("[data-testid='chat-dynamic-expert-card']").inner_text()
+    assert "خبير" in card_text, (
+        f"Dynamic expert card must contain 'خبير', got: {card_text!r}"
+    )
+    expect(page.locator("[data-testid='chat-convert-to-expert-request']")).to_be_visible()
+
+
+def test_chat_dynamic_expert_card_not_for_concept(page: Page, live_server: str) -> None:
+    """[74] Simple concept question must NOT show the dynamic expert card."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين معدل الخصم ومعدل الرسملة؟")
+    page.wait_for_selector("[data-testid='chat-complexity-indicator']", state="visible", timeout=5_000)
+    card = page.locator("[data-testid='chat-dynamic-expert-card']")
+    assert not card.is_visible(), (
+        "Dynamic expert card must NOT appear for simple concept questions"
+    )
+
+
+# ── Part E: Web/RAG Toggle Wording (75-76) ───────────────────────────────────
+
+def test_chat_web_rag_toggle_honest_message(page: Page, live_server: str) -> None:
+    """[75] Web toggle shows honest future-ready message mentioning RAG/Qdrant/Backend Advisor."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-web-toggle-label']").click()
+    err = page.locator("#chat-error")
+    expect(err).to_be_visible(timeout=3_000)
+    msg = err.inner_text()
+    assert "RAG" in msg or "Qdrant" in msg or "Backend Advisor" in msg, (
+        f"Toggle message must mention RAG/Qdrant/Backend Advisor, got: {msg!r}"
+    )
+    assert not page.locator("#chat-web-toggle").is_checked()
+
+
+def test_chat_web_rag_toggle_no_fake_loading(page: Page, live_server: str) -> None:
+    """[76] Web toggle must not show fake loading message like 'جاري فحص'."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-web-toggle-label']").click()
+    err = page.locator("#chat-error")
+    msg = err.inner_text() if err.is_visible() else ""
+    assert "جاري فحص" not in msg, (
+        f"Toggle must not show fake loading state; got: {msg!r}"
+    )
+    assert not page.locator("#chat-web-toggle").is_checked()
+
+
+# ── Part F: No Direct PDF / Certified Report (77-78) ─────────────────────────
+
+def test_chat_no_direct_pdf_generation(page: Page, live_server: str) -> None:
+    """[77] Asking for a report never triggers a PDF download or certified-report claim."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "أريد تقرير تقييم رسمي للعقار")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "إرشادية" in text or "لا يُعد" in text, (
+        "Answer must contain advisory disclaimer"
+    )
+    assert "تنزيل PDF" not in text, "Chat must not offer a PDF download link"
+    assert "تحميل التقرير" not in text, "Chat must not offer a report download"
+
+
+def test_chat_report_question_no_certified_claim(page: Page, live_server: str) -> None:
+    """[78] Report-related question does not falsely claim to generate a certified report."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أحصل على تقرير تقييم معتمد؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "هذا تقرير تقييم رسمي معتمد" not in text, (
+        "Chat must not claim to generate a certified report"
+    )
+    assert len(text.strip()) > 20, "Answer must be non-trivially long"

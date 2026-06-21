@@ -1677,16 +1677,32 @@
         </div>
 
         <!-- ── Suggestion Chips (#chat-category-chips) ───────────────────────────────── -->
+        <style>
+        .chat-ptab{background:rgba(30,41,59,0.6);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;padding:4px 12px;border-radius:14px;cursor:pointer;font-size:0.77rem;font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;transition:background 0.15s,color 0.15s;}
+        .chat-ptab-active{background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);color:#10b981;}
+        .chat-ptab:hover{background:rgba(30,41,59,0.9);color:#cbd5e1;}
+        </style>
         <div class="chat-section-hdr">&#128172; أسئلة شائعة</div>
+        <!-- ── Prompt Tabs ──────────────────────────────────────────────────────────── -->
+        <div id="chat-prompt-tab-nav" data-testid="chat-prompt-tabs" style="display:flex;flex-wrap:wrap;gap:5px;margin:0 0 10px;direction:rtl;">
+            <button data-testid="chat-prompt-tab-all" data-tab-val="all" class="chat-ptab chat-ptab-active" onclick="chatPromptTab('all')">الكل</button>
+            <button data-testid="chat-prompt-tab-valuation" data-tab-val="valuation" class="chat-ptab" onclick="chatPromptTab('valuation')">تقييم عقاري</button>
+            <button data-testid="chat-prompt-tab-tax" data-tab-val="tax" class="chat-ptab" onclick="chatPromptTab('tax')">ضرائب وطعون</button>
+            <button data-testid="chat-prompt-tab-court" data-tab-val="court" class="chat-ptab" onclick="chatPromptTab('court')">محاكم وتركات</button>
+            <button data-testid="chat-prompt-tab-feasibility" data-tab-val="feasibility" class="chat-ptab" onclick="chatPromptTab('feasibility')">استثمار وجدوى</button>
+            <button data-testid="chat-prompt-tab-special-assets" data-tab-val="special-assets" class="chat-ptab" onclick="chatPromptTab('special-assets')">أصول متخصصة</button>
+            <button data-testid="chat-prompt-tab-finance" data-tab-val="finance" class="chat-ptab" onclick="chatPromptTab('finance')">تمويل ورهن</button>
+            <button data-testid="chat-prompt-tab-concepts" data-tab-val="concepts" class="chat-ptab" onclick="chatPromptTab('concepts')">مفاهيم مهنية</button>
+        </div>
         <div id="chat-category-chips" class="chat-chips-wrap" data-testid="chat-suggestions">
-            <button class="chat-chip" data-testid="chat-suggestion-card" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
-            <button class="chat-chip" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟</button>
-            <button class="chat-chip" onclick="chatFill('كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟')">كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟</button>
-            <button class="chat-chip" onclick="chatFill('كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟')">كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟</button>
-            <button class="chat-chip" onclick="chatFill('ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟')">ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟</button>
-            <button class="chat-chip" onclick="chatFill('متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟')">متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟</button>
-            <button class="chat-chip" onclick="chatFill('ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟')">ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟</button>
-            <button class="chat-chip" onclick="chatFill('ما المستندات المطلوبة لتقييم أصل متخصص؟')">ما المستندات المطلوبة لتقييم أصل متخصص؟</button>
+            <button class="chat-chip" data-tab="tax" data-testid="chat-suggestion-card" onclick="chatFill('كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟')">كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟</button>
+            <button class="chat-chip" data-tab="court" onclick="chatFill('ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟')">ما هي الإجراءات المهنية لتقييم عقار متنازع عليه بين ورثة؟</button>
+            <button class="chat-chip" data-tab="court" onclick="chatFill('كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟')">كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟</button>
+            <button class="chat-chip" data-tab="finance" onclick="chatFill('كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟')">كيف تختلف معايير التقييم لأغراض التأمين عن التمويل البنكي؟</button>
+            <button class="chat-chip" data-tab="valuation" onclick="chatFill('ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟')">ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟</button>
+            <button class="chat-chip" data-tab="special-assets" onclick="chatFill('متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟')">متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟</button>
+            <button class="chat-chip" data-tab="concepts" onclick="chatFill('ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟')">ما الفرق بين تقرير مبسط وتقرير تقييم احترافي؟</button>
+            <button class="chat-chip" data-tab="special-assets" onclick="chatFill('ما المستندات المطلوبة لتقييم أصل متخصص؟')">ما المستندات المطلوبة لتقييم أصل متخصص؟</button>
         </div>
 
         <!-- ── Feasibility Section ───────────────────────────────────────────────────────────── -->
@@ -1696,14 +1712,14 @@
                 اسأل عن جدوى المشروعات العقارية، أعلى وأفضل استغلال، العائد المتوقع، التدفقات النقدية، ومخاطر الاستثمار.
             </p>
             <div class="chat-chips-wrap" style="margin-bottom:14px;">
-                <button class="chat-chip" onclick="chatFill('كيف أعمل دراسة جدوى لمشروع عقاري؟')">كيف أعمل دراسة جدوى لمشروع عقاري؟</button>
-                <button class="chat-chip" onclick="chatFill('ما الفرق بين دراسة الجدوى والتقييم العقاري؟')">ما الفرق بين دراسة الجدوى والتقييم العقاري؟</button>
-                <button class="chat-chip" onclick="chatFill('كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟')">كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟</button>
-                <button class="chat-chip" onclick="chatFill('متى أستخدم DCF في الاستثمار العقاري؟')">متى أستخدم DCF في الاستثمار العقاري؟</button>
-                <button class="chat-chip" onclick="chatFill('كيف أحسب العائد المتوقع من مشروع عقاري؟')">كيف أحسب العائد المتوقع من مشروع عقاري؟</button>
-                <button class="chat-chip" onclick="chatFill('ما الفرق بين معدل الخصم ومعدل الرسملة؟')">ما الفرق بين معدل الخصم ومعدل الرسملة؟</button>
-                <button class="chat-chip" onclick="chatFill('كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟')">كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟</button>
-                <button class="chat-chip" onclick="chatFill('ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟')">ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('كيف أعمل دراسة جدوى لمشروع عقاري؟')">كيف أعمل دراسة جدوى لمشروع عقاري؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('ما الفرق بين دراسة الجدوى والتقييم العقاري؟')">ما الفرق بين دراسة الجدوى والتقييم العقاري؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟')">كيف أحدد أعلى وأفضل استغلال لأرض فضاء؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('متى أستخدم DCF في الاستثمار العقاري؟')">متى أستخدم DCF في الاستثمار العقاري؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('كيف أحسب العائد المتوقع من مشروع عقاري؟')">كيف أحسب العائد المتوقع من مشروع عقاري؟</button>
+                <button class="chat-chip" data-tab="concepts" onclick="chatFill('ما الفرق بين معدل الخصم ومعدل الرسملة؟')">ما الفرق بين معدل الخصم ومعدل الرسملة؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟')">كيف أقرر هل أشتري العقار أم أستثمر في تطويره؟</button>
+                <button class="chat-chip" data-tab="feasibility" onclick="chatFill('ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟')">ما أهم مخاطر الاستثمار العقاري التي تؤثر على القيمة؟</button>
             </div>
         </div>
 
@@ -1724,6 +1740,7 @@
                         placeholder="مثال: شقة، مصنع، فندق، مستشفى…" dir="rtl">
                 </div>
             </div>
+            <div id="chat-context-autofill-note" data-testid="chat-context-autofill-note" style="display:none; font-size:0.72rem; color:#6ee7b7; margin-top:4px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">&#10024; تم اقتراح نوع العقار أو الموقع من السؤال ويمكنك تعديله.</div>
             <div class="chat-actions-row">
                 <label class="chat-toggle-lbl" data-testid="chat-web-toggle-label" onclick="return chatWebToggleClick(event)">
                     <input type="checkbox" id="chat-web-toggle">
@@ -1758,8 +1775,10 @@
             <div id="chat-answer-category-badge" data-testid="chat-answer-category" style="display:none; margin-top:12px; direction:rtl;"></div>
             <!-- ── Complexity Indicator ───────────────────────────────────────── -->
             <div id="chat-complexity-indicator" data-testid="chat-complexity-indicator" style="display:none; margin-top:6px; direction:rtl;"></div>
-            <!-- ── Convert to Expert Request ─────────────────────────────────── -->
-            <div id="chat-convert-to-expert-wrap" style="display:none; margin-top:10px; direction:rtl;">
+            <!-- ── Dynamic Expert Card ────────────────────────────────────────── -->
+            <div id="chat-dynamic-expert-card" data-testid="chat-dynamic-expert-card" style="display:none; margin-top:12px; padding:12px 14px; background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.25); border-radius:10px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+                <div style="font-size:0.85rem; font-weight:700; color:#d4af37; margin-bottom:4px;">&#9888;&#65039; حالتك تحتاج مراجعة خبير</div>
+                <div style="font-size:0.77rem; color:#94a3b8; margin-bottom:10px; line-height:1.6;">يمكن تحويل السؤال وبيانات الحالة إلى طلب مراجعة ليقوم الخبير بفحص المستندات والمنهجية قبل أي استخدام رسمي.</div>
                 <button id="chat-convert-to-expert-btn" data-testid="chat-convert-to-expert-request" onclick="chatConvertToExpert()" style="background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:6px 16px; border-radius:16px; cursor:pointer; font-size:0.82rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">حوّل السؤال إلى طلب خبير</button>
             </div>
             <!-- ── Follow-up Suggestions ──────────────────────────────────────── -->
@@ -30733,6 +30752,73 @@ var _PROFILE_FORM_SCHEMA = {
             });
     }
 
+    // ── Prompt-tab filter ─────────────────────────────────────────────────
+    window.chatPromptTab = function (tab) {
+        var tabs = document.querySelectorAll('#chat-prompt-tab-nav .chat-ptab');
+        for (var i = 0; i < tabs.length; i++) {
+            tabs[i].classList.toggle('chat-ptab-active', tabs[i].getAttribute('data-tab-val') === tab);
+        }
+        var chips = document.querySelectorAll('#ws-chat .chat-chip');
+        for (var j = 0; j < chips.length; j++) {
+            var chipTab = chips[j].getAttribute('data-tab') || 'all';
+            chips[j].style.display = (tab === 'all' || chipTab === tab) ? '' : 'none';
+        }
+        var feasEl = document.querySelector('[data-testid="chat-feasibility-section"]');
+        if (feasEl) {
+            var showFeas = (tab === 'all' || tab === 'feasibility');
+            feasEl.style.display = showFeas ? '' : 'none';
+            var hdr = feasEl.previousElementSibling;
+            if (hdr && hdr.classList && hdr.classList.contains('chat-section-hdr')) {
+                hdr.style.display = showFeas ? '' : 'none';
+            }
+        }
+    };
+
+    // ── Lightweight context auto-fill from question ───────────────────────
+    function _chatAutoFillContext(question) {
+        var q = question || '';
+        var propEl = document.getElementById('chat-property-type');
+        var locEl  = document.getElementById('chat-location');
+        var noteEl = document.getElementById('chat-context-autofill-note');
+        var filled = false;
+
+        var propTypes = ['مصنع','مستشفى','فندق','فيلا','شقة','أرض','محل','مكتب','مستودع','عمارة','مول','مدرسة'];
+        if (propEl && !propEl.value.trim()) {
+            for (var i = 0; i < propTypes.length; i++) {
+                if (q.indexOf(propTypes[i]) !== -1) {
+                    propEl.value = propTypes[i];
+                    filled = true;
+                    break;
+                }
+            }
+        }
+
+        if (locEl && !locEl.value.trim()) {
+            var locPreps = ['في ', 'داخل ', 'بمدينة ', 'بـ', 'منطقة '];
+            for (var k = 0; k < locPreps.length; k++) {
+                var idx = q.indexOf(locPreps[k]);
+                if (idx !== -1) {
+                    var rest  = q.substring(idx + locPreps[k].length).trim();
+                    var words = rest.split(/\s+/);
+                    var locWords = [];
+                    for (var w = 0; w < Math.min(words.length, 5); w++) {
+                        var word = words[w].replace(/[،,\.؟?!]+$/, '');
+                        if (!word) break;
+                        if (/^(و[^ا]|أو|ف$|ثم|لكن|هل|ما$|كيف|عندي|لدي)/.test(word)) break;
+                        locWords.push(word);
+                    }
+                    if (locWords.length > 0) {
+                        locEl.value = locWords.join(' ');
+                        filled = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (noteEl) noteEl.style.display = filled ? 'block' : 'none';
+    }
+
     // ── Fill question from suggestion chip ───────────────────────────────
     window.chatFill = function (text) {
         var el = document.getElementById('chat-question');
@@ -30749,6 +30835,7 @@ var _PROFILE_FORM_SCHEMA = {
         var question = (document.getElementById('chat-question') || {}).value || '';
         question = question.trim();
         window._chatLastQuestion = question;
+        _chatAutoFillContext(question);
         if (!question) {
             if (errEl) { errEl.textContent = 'من فضلك اكتب سؤالك أولًا.'; errEl.style.display = 'block'; }
             return;
@@ -30923,6 +31010,7 @@ var _PROFILE_FORM_SCHEMA = {
         if (/ورث|فرز|تجنيب|محكمة|قضا|نزاع|وراثة|قسمة|إرث/.test(q)) return 'نزاعات ومحاكم';
         if (/drc|تكلفة استبدال|مصنع|مستشفى|فندق|أصل متخصص/.test(q)) return 'أصول متخصصة';
         if (/رهن|تمويل|بنك|ltv|قرض|نسبة التمويل|ائتمان|مصرف/.test(q)) return 'تمويل ورهن';
+        if (/مجمع|محفظة عقارية|mass appraisal|تقييم متعدد|متعدد الوحدات/.test(q)) return 'تقييم مجمع';
         if (/جدوى|roi|irr|npv|تدفق نقدي|استثمار.*مشروع|مشروع.*استثمار|عائد.*مشروع|مشروع.*عائد/.test(q)) return 'دراسة جدوى / استثمار';
         if (/قيمة.*سوق|قيمة.*استثمار|market value|investment value|سوق عقاري|خصم|رسمل|noi|مقارن|comparable|hbu|أعلى وأفضل/.test(q)) return 'تقييم عقاري';
         if (/ما الفرق|ما معنى|ما هو|ما هي|تعريف|ifrs|fair value|قيمة عادلة|مفهوم/.test(q)) return 'مفاهيم مهنية';
@@ -30954,12 +31042,15 @@ var _PROFILE_FORM_SCHEMA = {
     }
 
     function _chatGetNextPage(category, complexity) {
-        if (category === 'ضرائب وطعون') return 'افتح فاحص الضرائب والطعون';
-        if (category === 'تقييم عقاري' && complexity === 'بسيطة') return 'افتح صفحة التقييم';
+        if (category === 'ضرائب وطعون')      return {label: 'افتح فاحص الضرائب والطعون',  tab: 'tax'};
+        if (category === 'تقييم مجمع')       return {label: 'افتح التقييم المجمع',         tab: 'composite'};
+        if (category === 'تقييم عقاري' && complexity === 'بسيطة')
+                                              return {label: 'افتح صفحة التقييم',          tab: 'valuation'};
         if (category === 'تقييم عقاري' || category === 'مفاهيم مهنية' ||
             category === 'دراسة جدوى / استثمار' || category === 'أصول متخصصة' ||
-            category === 'تمويل ورهن' || category === 'نزاعات ومحاكم') return 'افتح التقييم المحترف';
-        return '';
+            category === 'تمويل ورهن' || category === 'نزاعات ومحاكم')
+                                              return {label: 'افتح التقييم المحترف',        tab: 'professional'};
+        return null;
     }
 
     function _chatUpdateIndicators(question) {
@@ -30989,8 +31080,8 @@ var _PROFILE_FORM_SCHEMA = {
             cxEl.style.display = 'block';
         }
 
-        var convWrap = document.getElementById('chat-convert-to-expert-wrap');
-        if (convWrap) convWrap.style.display = complexity === 'تحتاج خبير' ? 'block' : 'none';
+        var expertCard = document.getElementById('chat-dynamic-expert-card');
+        if (expertCard) expertCard.style.display = complexity === 'تحتاج خبير' ? 'block' : 'none';
 
         var fuEl = document.getElementById('chat-follow-up-suggestions');
         if (fuEl && followups.length > 0) {
@@ -31008,10 +31099,13 @@ var _PROFILE_FORM_SCHEMA = {
         var npEl = document.getElementById('chat-suggested-next-page');
         if (npEl) {
             if (nextPage) {
+                var npTab = nextPage.tab;
                 npEl.innerHTML = '<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px; font-family:Tajawal,sans-serif;">&#128204; الخطوة التالية المقترحة:</div>' +
-                    '<span style="font-size:0.78rem; color:#60a5fa; background:rgba(96,165,250,0.08); ' +
-                    'border:1px solid rgba(96,165,250,0.2); padding:4px 12px; border-radius:14px; font-family:Tajawal,sans-serif;">' +
-                    _chatEsc(nextPage) + '</span>';
+                    '<div data-testid="chat-next-page-action">' +
+                    '<button data-testid="chat-next-page-button" onclick="if(typeof esShowTab===\'function\'){esShowTab(\'' + npTab + '\')}" ' +
+                    'style="background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.2); color:#60a5fa; ' +
+                    'padding:5px 14px; border-radius:14px; cursor:pointer; font-size:0.78rem; font-family:Tajawal,sans-serif;">' +
+                    '&#128279; ' + _chatEsc(nextPage.label) + '</button></div>';
                 npEl.style.display = 'block';
             } else {
                 npEl.style.display = 'none';
@@ -31161,9 +31255,9 @@ var _PROFILE_FORM_SCHEMA = {
         if (cb) cb.checked = false;
         var errEl = document.getElementById('chat-error');
         if (errEl) {
-            errEl.textContent = 'سيتم تفعيل البحث القانوني والويب في مرحلة لاحقة.';
+            errEl.textContent = 'سيتم تفعيل البحث القانوني والتقصي الذكي ضمن مرحلة Backend Advisor وRAG/Qdrant. لا يتم الآن إجراء بحث مباشر من المتصفح.';
             errEl.style.display = 'block';
-            setTimeout(function () { if (errEl) errEl.style.display = 'none'; }, 3500);
+            setTimeout(function () { if (errEl) errEl.style.display = 'none'; }, 4500);
         }
         if (e) { e.preventDefault(); e.stopPropagation(); }
         return false;

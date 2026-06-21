@@ -389,3 +389,228 @@ def test_CS_chat_expert_lead_confirmation_has_request_id(page: Page, live_server
     confirm = page.locator("[data-testid='expert-lead-confirmation']")
     expect(confirm).to_be_visible(timeout=8_000)
     assert "REQ-CHATID01" in confirm.inner_text()
+
+
+# ---------------------------------------------------------------------------
+# Part A+  Visual structure (comprehensive)  ──────────────────────────── 31
+# ---------------------------------------------------------------------------
+
+def test_chat_page_visual_structure(page: Page, live_server: str) -> None:
+    """All required chat page sections and controls are visible on landing."""
+    _open_chat_tab(page, live_server)
+    for testid in [
+        "chat-title",
+        "chat-disclaimer",
+        "chat-suggestions",
+        "chat-feasibility-section",
+        "chat-input",
+        "chat-send-button",
+        "chat-web-toggle-label",
+        "expert-contact-card",
+    ]:
+        expect(page.locator(f"[data-testid='{testid}']")).to_be_visible(), (
+            f"{testid} should be visible on chat landing"
+        )
+    # Error div and answer area are in DOM but hidden initially
+    assert page.query_selector("[data-testid='chat-error']") is not None
+    assert page.query_selector("[data-testid='chat-answer-area']") is not None
+
+
+# ---------------------------------------------------------------------------
+# Part B  All main suggestion chips fill the input  ──────────────────── 32
+# ---------------------------------------------------------------------------
+
+def test_chat_all_main_chips_fill_input(page: Page, live_server: str) -> None:
+    """Every chip in the common-questions section fills the textarea with non-empty text."""
+    _open_chat_tab(page, live_server)
+    chips = page.locator("[data-testid='chat-suggestions'] .chat-chip").all()
+    assert len(chips) >= 8, f"Expected at least 8 suggestion chips, got {len(chips)}"
+    for i, chip in enumerate(chips):
+        chip.click()
+        filled = page.locator("[data-testid='chat-input']").input_value()
+        assert len(filled.strip()) > 5, (
+            f"Chip #{i+1} did not fill the input (got: {filled!r})"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Part C  Advisory answer quality  ───────────────────────────────────── 33-35
+# ---------------------------------------------------------------------------
+
+def test_chat_hbu_answer_detailed(page: Page, live_server: str) -> None:
+    """HBU answer contains all four HBU criteria."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "ممكن قانونًا" in text,         "HBU answer must state 'ممكن قانونًا'"
+    assert "ممكن فنيًا" in text,            "HBU answer must state 'ممكن فنيًا'"
+    assert "مجدٍ ماليًا" in text,           "HBU answer must state 'مجدٍ ماليًا'"
+    assert "الأعلى إنتاجية" in text,        "HBU answer must state 'الأعلى إنتاجية'"
+    assert "إرشادية" in text,               "HBU answer must include advisory disclaimer"
+
+
+def test_chat_drc_answer_conditions(page: Page, live_server: str) -> None:
+    """DRC answer names specialized assets, depreciation, numeric example, and not-always-applicable note."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "متى يكون تقرير التكلفة الاستبدالية DRC مناسبًا؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "DRC" in text or "التكلفة الاستبدالية" in text, "Must mention DRC"
+    assert "إهلاك" in text,                  "Must mention depreciation"
+    assert "مصانع" in text or "مستشفيات" in text, "Must mention specialized assets"
+    assert "20,000,000" in text or "20000000" in text, "Must show 20M numeric example"
+    assert "لا يُستخدم" in text,            "Must state DRC is not always appropriate"
+    assert "إرشادية" in text,               "Must include advisory disclaimer"
+
+
+def test_chat_court_inheritance_answer(page: Page, live_server: str) -> None:
+    """Court/inheritance answer names qualified expert, legal context, and document review."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "خبير" in text,                  "Must mention expert valuation"
+    assert "المستندات" in text,             "Must mention supporting documents"
+    assert "الفرز" in text or "التجنيب" in text or "المحكمة" in text, (
+        "Must mention court/partition context"
+    )
+    assert "إرشادية" in text,               "Must include advisory disclaimer"
+
+
+# ---------------------------------------------------------------------------
+# Part E  Context fields do not crash or block  ──────────────────────── 36
+# ---------------------------------------------------------------------------
+
+def test_chat_context_fields_do_not_break_send(page: Page, live_server: str) -> None:
+    """Filling location and property-type context fields then sending works without crash."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='chat-location']").fill("طنطا")
+    page.locator("[data-testid='chat-property-type']").fill("مصنع")
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية؟")
+    expect(page.locator("[data-testid='chat-answer-area']")).to_be_visible()
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "ضريبة" in text or "الضريبي" in text or "إخطار" in text, (
+        "Answer must be relevant to tax question"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Part G  Lead form validation  ──────────────────────────────────────── 37
+# ---------------------------------------------------------------------------
+
+def test_chat_expert_contact_form_validation(page: Page, live_server: str) -> None:
+    """Submitting the lead form without required name/phone shows error in chat-error."""
+    _open_chat_tab(page, live_server)
+    page.locator("[data-testid='expert-contact-card'] button").click()
+    page.locator("[data-testid='expert-lead-form']").wait_for(state="visible", timeout=3_000)
+    # Leave name and phone empty — click submit
+    page.locator("[data-testid='expert-lead-submit']").click()
+    err = page.locator("[data-testid='chat-error']")
+    expect(err).to_be_visible(timeout=3_000)
+    assert "الاسم" in err.inner_text() or "الهاتف" in err.inner_text(), (
+        f"Validation error must mention name or phone; got: {err.inner_text()!r}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Part C  No certified report claim  ─────────────────────────────────── 38
+# ---------------------------------------------------------------------------
+
+def test_chat_no_certified_report_claim(page: Page, live_server: str) -> None:
+    """For any question, the answer area never asserts it IS a certified valuation report."""
+    _open_chat_tab(page, live_server)
+    for question in [
+        "ما الفرق بين معدل الخصم ومعدل الرسملة؟",
+        "كيف أعمل دراسة جدوى لمشروع عقاري؟",
+        "ما معنى أعلى وأفضل استغلال في الأراضي والعقارات؟",
+    ]:
+        _send_chat_question(page, question)
+        text = page.locator("[data-testid='chat-answer-area']").inner_text()
+        # Positive claim: "هذا تقرير تقييم رسمي معتمد" must NOT appear
+        assert "هذا تقرير تقييم رسمي معتمد" not in text, (
+            f"Answer must not claim to be a certified report. Got: {text[:200]}"
+        )
+        # Advisory disclaimer must appear
+        assert "إرشادية" in text or "لا يُعد" in text, (
+            f"Answer must contain advisory disclaimer. Got: {text[:200]}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Part H  Security / safety  ─────────────────────────────────────────── 39-41
+# ---------------------------------------------------------------------------
+
+def test_chat_xss_input_safe(page: Page, live_server: str) -> None:
+    """XSS payload in chat input does not execute: no JS alert is triggered."""
+    dialogs: list[str] = []
+    page.on("dialog", lambda d: (dialogs.append(d.message), d.dismiss()))
+
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "<img src=x onerror=alert(1)> ما قيمة العقار؟")
+
+    assert len(dialogs) == 0, f"XSS alert was triggered: {dialogs}"
+    expect(page.locator("[data-testid='chat-answer-area']")).to_be_visible()
+
+
+def test_chat_long_input_safe(page: Page, live_server: str) -> None:
+    """A 1,500-character question does not crash the UI; answer area appears."""
+    _open_chat_tab(page, live_server)
+    long_q = "ما قيمة العقار؟ " * 94  # ~1,500 chars
+    _send_chat_question(page, long_q, timeout=30_000)
+    expect(page.locator("[data-testid='chat-answer-area']")).to_be_visible()
+
+
+def test_chat_empty_input_handled(page: Page, live_server: str) -> None:
+    """Clicking Send without typing shows the 'اكتب سؤالك' error; no crash."""
+    _open_chat_tab(page, live_server)
+    # Ensure input is clear
+    page.locator("[data-testid='chat-input']").fill("")
+    page.locator("[data-testid='chat-send-button']").click()
+    err = page.locator("[data-testid='chat-error']")
+    expect(err).to_be_visible(timeout=3_000)
+    assert "سؤالك" in err.inner_text(), (
+        f"Expected 'سؤالك' in empty-input error, got: {err.inner_text()!r}"
+    )
+    # Answer area must NOT appear
+    assert not page.locator("[data-testid='chat-answer-area']").is_visible(), (
+        "Answer area must stay hidden when input is empty"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Part J  Responsive smoke  ──────────────────────────────────────────── 42-43
+# ---------------------------------------------------------------------------
+
+def test_chat_responsive_smoke_desktop(page: Page, live_server: str) -> None:
+    """Desktop viewport (1280×800): key chat elements are visible and not overflowing."""
+    page.set_viewport_size({"width": 1280, "height": 800})
+    _open_chat_tab(page, live_server)
+    for testid in ["chat-title", "chat-disclaimer", "chat-input",
+                   "chat-send-button", "expert-contact-card"]:
+        expect(page.locator(f"[data-testid='{testid}']")).to_be_visible()
+    # No horizontal scrollbar: scrollWidth <= clientWidth
+    overflow = page.evaluate(
+        "document.documentElement.scrollWidth > document.documentElement.clientWidth"
+    )
+    assert not overflow, "Horizontal overflow detected at desktop 1280px width"
+
+
+def test_chat_responsive_smoke_mobile(page: Page, live_server: str) -> None:
+    """Mobile viewport (390×844): key chat elements are still visible."""
+    page.set_viewport_size({"width": 390, "height": 844})
+    _open_chat_tab(page, live_server)
+    for testid in ["chat-title", "chat-input", "chat-send-button"]:
+        expect(page.locator(f"[data-testid='{testid}']")).to_be_visible()
+
+
+# ---------------------------------------------------------------------------
+# Part D  Unknown question / land scenario fallback  ─────────────────── 44
+# ---------------------------------------------------------------------------
+
+def test_chat_land_sell_develop_fallback(page: Page, live_server: str) -> None:
+    """'هل أبيعها أم أطورها' question returns a non-empty advisory answer (generic context fallback)."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "عندي أرض على طريق رئيسي هل أبيعها أم أطورها؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert len(text.strip()) > 50, "Fallback answer must be non-trivially long"
+    assert "إرشادية" in text or "لا يُعد" in text, (
+        "Fallback answer must contain advisory disclaimer"
+    )

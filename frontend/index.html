@@ -1715,12 +1715,12 @@
             <div class="chat-ctx-row">
                 <div>
                     <label class="chat-ctx-lbl">&#128205; الموقع (اختياري)</label>
-                    <input type="text" id="chat-location" class="chat-ctx-input"
+                    <input type="text" id="chat-location" data-testid="chat-location" class="chat-ctx-input"
                         placeholder="مثال: القاهرة، الرياض، دبي…" dir="rtl">
                 </div>
                 <div>
                     <label class="chat-ctx-lbl">&#127970; نوع العقار (اختياري)</label>
-                    <input type="text" id="chat-property-type" class="chat-ctx-input"
+                    <input type="text" id="chat-property-type" data-testid="chat-property-type" class="chat-ctx-input"
                         placeholder="مثال: شقة، مصنع، فندق، مستشفى…" dir="rtl">
                 </div>
             </div>
@@ -1735,7 +1735,7 @@
             </div>
         </div>
 
-        <div id="chat-error" style="display:none; padding:9px 13px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:8px; color:#ef4444; font-size:0.8rem; margin:6px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;"></div>
+        <div id="chat-error" data-testid="chat-error" style="display:none; padding:9px 13px; background:rgba(239,68,68,0.09); border:1px solid rgba(239,68,68,0.28); border-radius:8px; color:#ef4444; font-size:0.8rem; margin:6px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;"></div>
 
         <!-- ── Empty State ───────────────────────────────────────────────────────────────────── -->
         <div id="chat-empty-state" style="text-align:center; padding:22px 16px; color:#64748b; font-size:0.82rem; line-height:1.75; border:1px dashed rgba(16,185,129,0.15); border-radius:10px; margin:8px 0; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
@@ -1750,7 +1750,7 @@
             <div id="chat-answer-text" style="font-size:0.87rem; color:#e2e8f0; line-height:1.85; white-space:pre-wrap; direction:rtl;"></div>
             <div id="chat-sources-list" style="display:none; margin-top:10px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.07); direction:rtl;"></div>
             <div id="chat-meta-bar" style="display:none; margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.05); font-size:0.72rem; color:#64748b; flex-wrap:wrap; gap:14px; direction:rtl;"></div>
-            <div id="chat-expert-cta" style="display:none; margin-top:14px; padding:10px 14px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.18); border-radius:8px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; display:none;">
+            <div id="chat-expert-cta" style="display:none; margin-top:14px; padding:10px 14px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.18); border-radius:8px; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
                 <span style="font-size:0.82rem; color:#94a3b8;">هل تريد مراجعة هذه الحالة مع الخبير؟</span>
                 <button onclick="chatShowLeadForm()" style="margin-right:12px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; padding:4px 14px; border-radius:16px; cursor:pointer; font-size:0.8rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">نعم، اتواصل مع الخبير</button>
             </div>
@@ -30994,7 +30994,7 @@ var _PROFILE_FORM_SCHEMA = {
                 var data = r.data || {};
                 if (confirmEl) {
                     if (r.ok && data.request_id) {
-                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك. رقم الطلب: <strong>' + data.request_id + '</strong>. سيتم التواصل معك قريبًا.';
+                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك. رقم الطلب: <strong>' + _chatEsc(data.request_id) + '</strong>. سيتم التواصل معك قريبًا.';
                     } else {
                         confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
                     }

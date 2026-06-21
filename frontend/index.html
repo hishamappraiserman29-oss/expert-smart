@@ -1754,6 +1754,20 @@
                 <span style="font-size:0.82rem; color:#94a3b8;">هل تريد مراجعة هذه الحالة مع الخبير؟</span>
                 <button onclick="chatShowLeadForm()" style="margin-right:12px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#10b981; padding:4px 14px; border-radius:16px; cursor:pointer; font-size:0.8rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">نعم، اتواصل مع الخبير</button>
             </div>
+            <!-- ── Answer Category Badge ──────────────────────────────────────── -->
+            <div id="chat-answer-category-badge" data-testid="chat-answer-category" style="display:none; margin-top:12px; direction:rtl;"></div>
+            <!-- ── Complexity Indicator ───────────────────────────────────────── -->
+            <div id="chat-complexity-indicator" data-testid="chat-complexity-indicator" style="display:none; margin-top:6px; direction:rtl;"></div>
+            <!-- ── Convert to Expert Request ─────────────────────────────────── -->
+            <div id="chat-convert-to-expert-wrap" style="display:none; margin-top:10px; direction:rtl;">
+                <button id="chat-convert-to-expert-btn" data-testid="chat-convert-to-expert-request" onclick="chatConvertToExpert()" style="background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#d4af37; padding:6px 16px; border-radius:16px; cursor:pointer; font-size:0.82rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">حوّل السؤال إلى طلب خبير</button>
+            </div>
+            <!-- ── Follow-up Suggestions ──────────────────────────────────────── -->
+            <div id="chat-follow-up-suggestions" data-testid="chat-follow-up-suggestions" style="display:none; margin-top:14px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.05); direction:rtl;"></div>
+            <!-- ── Suggested Next Page ────────────────────────────────────────── -->
+            <div id="chat-suggested-next-page" data-testid="chat-suggested-next-page" style="display:none; margin-top:10px; direction:rtl;"></div>
+            <!-- ── RAG/Source Panel Placeholder ──────────────────────────────── -->
+            <div id="chat-source-panel" data-testid="chat-source-panel" style="display:none; margin-top:12px; padding:8px 12px; background:rgba(30,41,59,0.4); border:1px dashed rgba(100,116,139,0.3); border-radius:8px; font-size:0.72rem; color:#64748b; direction:rtl; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">&#128274; سيتم عرض المصادر وسجل الاسترجاع هنا عند تفعيل Backend Advisor وRAG/Qdrant.</div>
         </div>
 
         <!-- ── Expert Contact Card ───────────────────────────────────────────────────────────── -->
@@ -30734,6 +30748,7 @@ var _PROFILE_FORM_SCHEMA = {
 
         var question = (document.getElementById('chat-question') || {}).value || '';
         question = question.trim();
+        window._chatLastQuestion = question;
         if (!question) {
             if (errEl) { errEl.textContent = 'من فضلك اكتب سؤالك أولًا.'; errEl.style.display = 'block'; }
             return;
@@ -30825,6 +30840,7 @@ var _PROFILE_FORM_SCHEMA = {
         respEl.style.display = 'block';
         var ctaEl = document.getElementById('chat-expert-cta');
         if (ctaEl) ctaEl.style.display = 'block';
+        _chatUpdateIndicators(window._chatLastQuestion || '');
     }
 
     // ── Advisory fallback (frontend-only, no backend required) ───────────
@@ -30900,6 +30916,122 @@ var _PROFILE_FORM_SCHEMA = {
         'هذه إجابة إرشادية عامة وليست تقرير تقييم رسمي أو استشارة قانونية نهائية.\n' +
         'إذا كانت الحالة مرتبطة بتقرير رسمي أو نزاع أو ضرائب أو تمويل، يمكن للخبير مراجعة المستندات وإصدار تقرير معتمد.';
 
+    // ── Chat intelligence indicators ──────────────────────────────────────
+    function _chatGetCategory(question) {
+        var q = (question || '').toLowerCase();
+        if (/ضري|ضرائب|طعن|اعتراض|إخطار|وعاء|نموذج 3/.test(q)) return 'ضرائب وطعون';
+        if (/ورث|فرز|تجنيب|محكمة|قضا|نزاع|وراثة|قسمة|إرث/.test(q)) return 'نزاعات ومحاكم';
+        if (/drc|تكلفة استبدال|مصنع|مستشفى|فندق|أصل متخصص/.test(q)) return 'أصول متخصصة';
+        if (/رهن|تمويل|بنك|ltv|قرض|نسبة التمويل|ائتمان|مصرف/.test(q)) return 'تمويل ورهن';
+        if (/جدوى|roi|irr|npv|تدفق نقدي|استثمار.*مشروع|مشروع.*استثمار|عائد.*مشروع|مشروع.*عائد/.test(q)) return 'دراسة جدوى / استثمار';
+        if (/قيمة.*سوق|قيمة.*استثمار|market value|investment value|سوق عقاري|خصم|رسمل|noi|مقارن|comparable|hbu|أعلى وأفضل/.test(q)) return 'تقييم عقاري';
+        if (/ما الفرق|ما معنى|ما هو|ما هي|تعريف|ifrs|fair value|قيمة عادلة|مفهوم/.test(q)) return 'مفاهيم مهنية';
+        return 'عام / يحتاج بيانات إضافية';
+    }
+
+    function _chatGetComplexity(question, category) {
+        if (category === 'ضرائب وطعون' || category === 'نزاعات ومحاكم' ||
+            category === 'أصول متخصصة' || category === 'تمويل ورهن') return 'تحتاج خبير';
+        var q = (question || '').toLowerCase();
+        if (/تقرير رسمي|تقرير معتمد|نزاع|محكمة|رهن|تمويل/.test(q)) return 'تحتاج خبير';
+        if (category === 'دراسة جدوى / استثمار' || /roi|irr|npv|dcf|عائد|كيف أحسب/.test(q)) return 'متوسطة';
+        if (/ما الفرق|ما معنى|ما هو|ما هي|تعريف|شرح|مفهوم/.test(q)) return 'بسيطة';
+        return 'متوسطة';
+    }
+
+    function _chatGetFollowups(category) {
+        var map = {
+            'تقييم عقاري':          ['هل تريد مثالًا رقميًا؟', 'هل تريد معرفة المستندات المطلوبة؟', 'هل تريد تحويلها لتقرير مبدئي؟'],
+            'ضرائب وطعون':          ['هل تريد فحص الضريبة بالإخطار؟', 'هل لديك نموذج 3 ضرائب؟', 'هل تريد طلب مراجعة خبير؟'],
+            'دراسة جدوى / استثمار': ['هل تريد نموذج تدفقات نقدية مبسط؟', 'هل تريد حساب ROI مبدئي؟', 'هل تريد مقارنة بين البيع والتطوير؟'],
+            'نزاعات ومحاكم':        ['هل توجد مستندات ملكية؟', 'هل العقار قابل للقسمة؟', 'هل تريد قائمة مستندات للخبير؟'],
+            'أصول متخصصة':          ['هل تريد معرفة منهجية DRC؟', 'هل تريد معرفة المستندات المطلوبة؟', 'هل تريد تحويلها لتقرير خبير؟'],
+            'تمويل ورهن':           ['هل تريد حساب نسبة LTV مبدئية؟', 'هل تريد معرفة متطلبات البنك؟', 'هل تريد طلب مراجعة خبير؟'],
+            'مفاهيم مهنية':         ['هل تريد مثالًا تطبيقيًا؟', 'هل تريد معرفة الفرق بين المناهج؟', 'هل تريد تحويلها لطلب تقييم؟'],
+            'عام / يحتاج بيانات إضافية': ['هل تريد تحديد نوع العقار؟', 'هل تريد معرفة الغرض من التقييم؟', 'هل تريد التحدث مع خبير؟']
+        };
+        return map[category] || map['عام / يحتاج بيانات إضافية'];
+    }
+
+    function _chatGetNextPage(category, complexity) {
+        if (category === 'ضرائب وطعون') return 'افتح فاحص الضرائب والطعون';
+        if (category === 'تقييم عقاري' && complexity === 'بسيطة') return 'افتح صفحة التقييم';
+        if (category === 'تقييم عقاري' || category === 'مفاهيم مهنية' ||
+            category === 'دراسة جدوى / استثمار' || category === 'أصول متخصصة' ||
+            category === 'تمويل ورهن' || category === 'نزاعات ومحاكم') return 'افتح التقييم المحترف';
+        return '';
+    }
+
+    function _chatUpdateIndicators(question) {
+        var category   = _chatGetCategory(question);
+        var complexity = _chatGetComplexity(question, category);
+        var followups  = _chatGetFollowups(category);
+        var nextPage   = _chatGetNextPage(category, complexity);
+
+        var catEl = document.getElementById('chat-answer-category-badge');
+        if (catEl) {
+            var catColor = complexity === 'تحتاج خبير' ? '#d4af37' :
+                           complexity === 'متوسطة'     ? '#60a5fa' : '#10b981';
+            catEl.innerHTML = '<span style="font-size:0.72rem; color:' + catColor +
+                '; background:rgba(30,41,59,0.8); border:1px solid ' + catColor +
+                '33; padding:2px 10px; border-radius:12px; font-family:Tajawal,sans-serif;">' +
+                _chatEsc(category) + '</span>';
+            catEl.style.display = 'block';
+        }
+
+        var cxEl = document.getElementById('chat-complexity-indicator');
+        if (cxEl) {
+            var cxIcon  = complexity === 'تحتاج خبير' ? '🔴' : complexity === 'متوسطة' ? '🟡' : '🟢';
+            var cxColor = complexity === 'تحتاج خبير' ? '#ef4444' : complexity === 'متوسطة' ? '#f59e0b' : '#10b981';
+            cxEl.innerHTML = '<span style="font-size:0.72rem; color:' + cxColor +
+                '; font-family:Tajawal,sans-serif;">' + cxIcon +
+                ' تعقيد الحالة: <strong>' + _chatEsc(complexity) + '</strong></span>';
+            cxEl.style.display = 'block';
+        }
+
+        var convWrap = document.getElementById('chat-convert-to-expert-wrap');
+        if (convWrap) convWrap.style.display = complexity === 'تحتاج خبير' ? 'block' : 'none';
+
+        var fuEl = document.getElementById('chat-follow-up-suggestions');
+        if (fuEl && followups.length > 0) {
+            var fuHtml = '<div style="font-size:0.73rem; color:#9ca3af; margin-bottom:5px; font-family:Tajawal,sans-serif;">&#128073; تابع السؤال:</div>';
+            for (var fi = 0; fi < followups.length; fi++) {
+                fuHtml += '<button onclick="window.chatFill(' + JSON.stringify(followups[fi]) + ')" ' +
+                    'style="display:inline-block; margin:3px 0 3px 6px; padding:4px 12px; background:rgba(16,185,129,0.08); ' +
+                    'border:1px solid rgba(16,185,129,0.2); border-radius:14px; color:#6ee7b7; font-size:0.78rem; ' +
+                    'cursor:pointer; font-family:Tajawal,sans-serif;">' + _chatEsc(followups[fi]) + '</button>';
+            }
+            fuEl.innerHTML = fuHtml;
+            fuEl.style.display = 'block';
+        }
+
+        var npEl = document.getElementById('chat-suggested-next-page');
+        if (npEl) {
+            if (nextPage) {
+                npEl.innerHTML = '<div style="font-size:0.75rem; color:#94a3b8; margin-bottom:4px; font-family:Tajawal,sans-serif;">&#128204; الخطوة التالية المقترحة:</div>' +
+                    '<span style="font-size:0.78rem; color:#60a5fa; background:rgba(96,165,250,0.08); ' +
+                    'border:1px solid rgba(96,165,250,0.2); padding:4px 12px; border-radius:14px; font-family:Tajawal,sans-serif;">' +
+                    _chatEsc(nextPage) + '</span>';
+                npEl.style.display = 'block';
+            } else {
+                npEl.style.display = 'none';
+            }
+        }
+
+        var spEl = document.getElementById('chat-source-panel');
+        if (spEl) spEl.style.display = 'block';
+
+        window._chatLastQuestion = question;
+    }
+
+    window.chatConvertToExpert = function () {
+        var summaryEl = document.getElementById('lead-summary');
+        if (summaryEl && window._chatLastQuestion) {
+            summaryEl.value = window._chatLastQuestion;
+        }
+        chatShowLeadForm();
+    };
+
     function chatShowAdvisoryFallback(question) {
         var respEl    = document.getElementById('chat-response-area');
         var answerEl  = document.getElementById('chat-answer-text');
@@ -30945,6 +31077,7 @@ var _PROFILE_FORM_SCHEMA = {
         if (metaEl)    metaEl.style.display = 'none';
         if (ctaEl)     ctaEl.style.display = 'block';
         respEl.style.display = 'block';
+        _chatUpdateIndicators(question);
     }
 
     // ── Show lead form ────────────────────────────────────────────────────

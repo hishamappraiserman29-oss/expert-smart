@@ -679,3 +679,179 @@ def test_chat_investment_return_regression(page: Page, live_server: str) -> None
         "Investment-return question must get a return-calculation answer"
     )
     assert "إرشادية" in text, "Answer must include advisory disclaimer"
+
+
+# ── UX Indicator Tests (49-62) ──────────────────────────────────────────────
+
+def test_chat_answer_category_badge_appears(page: Page, live_server: str) -> None:
+    """[49] chat-answer-category badge element is visible after receiving an answer."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-answer-category']", state="visible", timeout=5_000)
+    assert page.is_visible("[data-testid='chat-answer-category']"), (
+        "chat-answer-category badge must be visible after answer"
+    )
+
+
+def test_chat_category_market_value_is_valuation(page: Page, live_server: str) -> None:
+    """[50] 'ما الفرق بين القيمة السوقية والقيمة الاستثمارية' → category badge = تقييم عقاري."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-answer-category']", state="visible", timeout=5_000)
+    badge_text = page.locator("[data-testid='chat-answer-category']").inner_text()
+    assert "تقييم عقاري" in badge_text, (
+        f"Expected category 'تقييم عقاري', got: {badge_text!r}"
+    )
+
+
+def test_chat_category_tax_question(page: Page, live_server: str) -> None:
+    """[51] Tax question → category badge = ضرائب وطعون."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-answer-category']", state="visible", timeout=5_000)
+    badge_text = page.locator("[data-testid='chat-answer-category']").inner_text()
+    assert "ضرائب" in badge_text, (
+        f"Expected category 'ضرائب وطعون', got: {badge_text!r}"
+    )
+
+
+def test_chat_category_feasibility_question(page: Page, live_server: str) -> None:
+    """[52] Feasibility question → category badge = دراسة جدوى / استثمار."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أعمل دراسة جدوى لمشروع عقاري؟")
+    page.wait_for_selector("[data-testid='chat-answer-category']", state="visible", timeout=5_000)
+    badge_text = page.locator("[data-testid='chat-answer-category']").inner_text()
+    assert "جدوى" in badge_text or "استثمار" in badge_text, (
+        f"Expected category 'دراسة جدوى / استثمار', got: {badge_text!r}"
+    )
+
+
+def test_chat_category_court_question(page: Page, live_server: str) -> None:
+    """[53] Court/inheritance question → category badge = نزاعات ومحاكم."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟")
+    page.wait_for_selector("[data-testid='chat-answer-category']", state="visible", timeout=5_000)
+    badge_text = page.locator("[data-testid='chat-answer-category']").inner_text()
+    assert "نزاع" in badge_text or "محاكم" in badge_text, (
+        f"Expected category 'نزاعات ومحاكم', got: {badge_text!r}"
+    )
+
+
+def test_chat_complexity_indicator_appears(page: Page, live_server: str) -> None:
+    """[54] chat-complexity-indicator element is visible after receiving an answer."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-complexity-indicator']", state="visible", timeout=5_000)
+    assert page.is_visible("[data-testid='chat-complexity-indicator']"), (
+        "chat-complexity-indicator must be visible after answer"
+    )
+
+
+def test_chat_complexity_expert_required_for_tax(page: Page, live_server: str) -> None:
+    """[55] Tax question → complexity indicator shows 'تحتاج خبير'."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-complexity-indicator']", state="visible", timeout=5_000)
+    cx_text = page.locator("[data-testid='chat-complexity-indicator']").inner_text()
+    assert "تحتاج خبير" in cx_text, (
+        f"Tax question must show complexity 'تحتاج خبير', got: {cx_text!r}"
+    )
+
+
+def test_chat_complexity_expert_required_for_court(page: Page, live_server: str) -> None:
+    """[56] Court question → complexity indicator shows 'تحتاج خبير'."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف تحسب المحكمة قيمة العقار في قضايا الفرز والتجنيب؟")
+    page.wait_for_selector("[data-testid='chat-complexity-indicator']", state="visible", timeout=5_000)
+    cx_text = page.locator("[data-testid='chat-complexity-indicator']").inner_text()
+    assert "تحتاج خبير" in cx_text, (
+        f"Court question must show complexity 'تحتاج خبير', got: {cx_text!r}"
+    )
+
+
+def test_chat_complexity_simple_or_medium_for_concept(page: Page, live_server: str) -> None:
+    """[57] Concept question → complexity is 'بسيطة' or 'متوسطة', NOT 'تحتاج خبير'."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين معدل الخصم ومعدل الرسملة؟")
+    page.wait_for_selector("[data-testid='chat-complexity-indicator']", state="visible", timeout=5_000)
+    cx_text = page.locator("[data-testid='chat-complexity-indicator']").inner_text()
+    assert "بسيطة" in cx_text or "متوسطة" in cx_text, (
+        f"Concept question should be 'بسيطة' or 'متوسطة', got: {cx_text!r}"
+    )
+    assert "تحتاج خبير" not in cx_text, (
+        "Simple concept question must NOT be marked 'تحتاج خبير'"
+    )
+
+
+def test_chat_convert_to_expert_opens_lead_form(page: Page, live_server: str) -> None:
+    """[58] Expert CTA button (shown for تحتاج خبير) opens the lead form when clicked."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-convert-to-expert-request']", state="visible", timeout=5_000)
+    page.locator("[data-testid='chat-convert-to-expert-request']").click()
+    page.wait_for_selector("[data-testid='expert-lead-form']", state="visible", timeout=5_000)
+    assert page.is_visible("[data-testid='expert-lead-form']"), (
+        "Lead form must become visible after clicking convert-to-expert"
+    )
+
+
+def test_chat_lead_form_summary_prefilled(page: Page, live_server: str) -> None:
+    """[59] Clicking convert-to-expert pre-fills the lead form summary with the question."""
+    question = "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟"
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, question)
+    page.wait_for_selector("[data-testid='chat-convert-to-expert-request']", state="visible", timeout=5_000)
+    page.locator("[data-testid='chat-convert-to-expert-request']").click()
+    page.wait_for_selector("[data-testid='expert-lead-form']", state="visible", timeout=5_000)
+    summary_val = page.locator("[data-testid='expert-lead-summary']").input_value()
+    assert question in summary_val or len(summary_val) > 0, (
+        "Lead form summary should be pre-filled with the question text"
+    )
+
+
+def test_chat_follow_up_suggestions_appear(page: Page, live_server: str) -> None:
+    """[60] chat-follow-up-suggestions panel is visible after receiving an answer."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-follow-up-suggestions']", state="visible", timeout=5_000)
+    fu_text = page.locator("[data-testid='chat-follow-up-suggestions']").inner_text()
+    assert len(fu_text.strip()) > 0, "Follow-up suggestions panel must contain text"
+
+
+def test_chat_suggested_next_page_tax(page: Page, live_server: str) -> None:
+    """[61] Tax question → chat-suggested-next-page shows 'فاحص الضرائب والطعون'."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أطعن على تقدير الضرائب العقارية لعقار أو مصنع غير مستغل؟")
+    page.wait_for_selector("[data-testid='chat-suggested-next-page']", state="visible", timeout=5_000)
+    np_text = page.locator("[data-testid='chat-suggested-next-page']").inner_text()
+    assert "الضرائب" in np_text or "الطعون" in np_text, (
+        f"Tax question should suggest tax checker page, got: {np_text!r}"
+    )
+
+
+def test_chat_source_panel_no_fake_sources(page: Page, live_server: str) -> None:
+    """[62] Source panel is visible but shows only RAG-placeholder text, not real sources."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-source-panel']", state="visible", timeout=5_000)
+    panel_text = page.locator("[data-testid='chat-source-panel']").inner_text()
+    assert "RAG" in panel_text or "Qdrant" in panel_text or "سيتم" in panel_text, (
+        "Source panel must show placeholder text about future RAG activation"
+    )
+    assert "http://" not in panel_text and "https://" not in panel_text, (
+        "Source panel must not contain real URLs"
+    )
+
+
+def test_chat_ux_no_certified_report_claim(page: Page, live_server: str) -> None:
+    """[63] UX panels do not falsely claim certified reports or real data sources exist."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    page.wait_for_selector("[data-testid='chat-source-panel']", state="visible", timeout=5_000)
+    panel_text = page.locator("[data-testid='chat-source-panel']").inner_text()
+    assert "مصادر حقيقية" not in panel_text, "Source panel must not claim real sources"
+    assert "مصادر موثقة" not in panel_text, "Source panel must not claim verified sources"
+    # Answer area should still carry the existing advisory disclaimer
+    answer_text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "إرشادية" in answer_text, "Answer must still include advisory disclaimer"
+    assert "تقرير تقييم رسمي" not in panel_text, "Source panel must not claim official reports"

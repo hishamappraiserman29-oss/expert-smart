@@ -2030,11 +2030,54 @@
                         <input type="number" class="input-box" id="tax-sale-value" data-testid="tax-sale-value"
                             placeholder="مثال: 1000000" min="0">
                     </div>
+                    <div class="field-group">
+                        <label>تاريخ التصرف / البيع</label>
+                        <input type="text" class="input-box" id="tax-transfer-sale-date"
+                            data-testid="tax-transfer-sale-date"
+                            placeholder="DD/MM/YYYY"
+                            style="direction:ltr;">
+                        <div data-testid="tax-transfer-sale-date-note"
+                            style="font-size:0.76rem;color:#6b7280;margin-top:4px;line-height:1.6;">
+                            يُستخدم تاريخ التصرف أو البيع كأساس لمراجعة قيمة التصرف التي تُحسب عليها ضريبة 2.5%.
+                            <span data-testid="tax-date-format-note">صيغة التاريخ: يوم / شهر / سنة (DD/MM/YYYY)</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- ── Conditional: Annual Tax ─────────────────────────────── -->
             <div id="tax-annual-fields" style="display:none;margin-top:8px;">
+
+                <!-- ── Assessment Basis Year Card ──────────────────────── -->
+                <div data-testid="tax-assessment-basis-card"
+                    style="margin-bottom:12px;background:rgba(212,175,55,0.06);
+                           border:1px solid rgba(212,175,55,0.2);border-radius:9px;
+                           padding:10px 14px;direction:rtl;">
+                    <div style="color:var(--gold);font-weight:700;font-size:0.85rem;margin-bottom:6px;">
+                        📅 تاريخ أساس الفحص / التقييم الضريبي
+                    </div>
+                    <select class="input-box" id="tax-assessment-basis-year"
+                        data-testid="tax-assessment-basis-year"
+                        style="width:auto;min-width:220px;margin-bottom:6px;">
+                        <option value="2022" selected>2022 — دورة الفحص الحالية</option>
+                        <option value="2027">2027 — إعادة التقييم / الجرد التالي</option>
+                    </select>
+                    <div style="font-size:0.78rem;color:#9ca3af;line-height:1.8;">
+                        <span id="tax-current-assessment-cycle"
+                            data-testid="tax-current-assessment-cycle">آخر سنة فحص: 2022</span>
+                        &nbsp;·&nbsp;
+                        <span id="tax-next-assessment-cycle"
+                            data-testid="tax-next-assessment-cycle">إعادة التقييم التالية: 2027</span>
+                        &nbsp;·&nbsp;
+                        <span id="tax-assessment-cycle-note"
+                            data-testid="tax-assessment-cycle-note">الدورة: 5 سنوات</span>
+                    </div>
+                    <div style="margin-top:4px;font-size:0.75rem;color:#6b7280;line-height:1.6;">
+                        يُستخدم هذا التاريخ كأساس للفحص الضريبي الدوري.
+                        تاريخ استلام الإخطار يُستخدم فقط لحساب مهلة الطعن.
+                    </div>
+                </div>
+
                 <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-bottom:14px;">
                     <div class="field-group">
                         <label>القيمة السوقية المقدرة من المقارنات (ج.م) <span style="color:#f59e0b;">★</span></label>
@@ -2059,10 +2102,17 @@
                     </div>
                     <div class="field-group">
                         <label>تاريخ استلام الإخطار الضريبي</label>
-                        <input type="date" class="input-box" id="tax-notice-date"
+                        <input type="text" class="input-box" id="tax-notice-date"
                             data-testid="tax-notice-received-date"
                             onchange="taxDeadlineUpdate(this.value)"
+                            placeholder="DD/MM/YYYY"
                             style="direction:ltr;">
+                        <div id="tax-notice-date-error" data-testid="tax-date-format-error"
+                            style="display:none;font-size:0.75rem;color:#ef4444;margin-top:3px;"></div>
+                        <div style="font-size:0.76rem;color:#6b7280;margin-top:4px;line-height:1.6;">
+                            يُستخدم هذا التاريخ لحساب مهلة الطعن الاسترشادية،
+                            وليس كأساس لتحديد قيمة العقار.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2550,23 +2600,52 @@
             }
         }
 
+        /* ── Egyptian date helpers (DD/MM/YYYY) ─────────────────────────── */
+        function parseEgyptDate(val) {
+            if (!val) return null;
+            val = val.trim();
+            var m = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+            if (!m) return null;
+            var d = parseInt(m[1], 10), mo = parseInt(m[2], 10), y = parseInt(m[3], 10);
+            if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+            var dt = new Date(y, mo - 1, d);
+            /* reject overflowed dates (e.g. 32/01 → Feb 1) */
+            if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+            return dt;
+        }
+        function formatEgyptDate(date) {
+            return String(date.getDate()).padStart(2, '0') + '/' +
+                   String(date.getMonth() + 1).padStart(2, '0') + '/' +
+                   date.getFullYear();
+        }
+        function toIsoDate(date) {
+            return date.getFullYear() + '-' +
+                   String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                   String(date.getDate()).padStart(2, '0');
+        }
+
         /* ── 60-day deadline countdown ───────────────────────────────────── */
-        function taxDeadlineUpdate(dateStr) {
-            var card = document.getElementById('tax-deadline-card');
-            if (!dateStr || !card) return;
-            var received = new Date(dateStr);
-            if (isNaN(received.getTime())) return;
+        function taxDeadlineUpdate(val) {
+            var card  = document.getElementById('tax-deadline-card');
+            var errEl = document.getElementById('tax-notice-date-error');
+            if (!val || !card) return;
+            var received = parseEgyptDate(val);
+            if (!received) {
+                if (errEl) {
+                    errEl.textContent  = 'صيغة التاريخ غير صحيحة. المطلوب: يوم/شهر/سنة (مثال: 21/06/2026)';
+                    errEl.style.display = 'block';
+                }
+                card.style.display = 'none';
+                return;
+            }
+            if (errEl) errEl.style.display = 'none';
             var deadline = new Date(received.getTime() + 60 * 24 * 60 * 60 * 1000);
-            var today    = new Date(); today.setHours(0,0,0,0);
-            var daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / (24*60*60*1000));
-            var fmt = function(d) {
-                return d.getFullYear() + '-' +
-                    String(d.getMonth()+1).padStart(2,'0') + '-' +
-                    String(d.getDate()).padStart(2,'0');
-            };
-            document.getElementById('tax-dl-received').textContent               = fmt(received);
-            document.getElementById('tax-deadline-end-date').textContent          = fmt(deadline);
-            document.getElementById('tax-deadline-days-remaining').textContent    = daysLeft > 0 ? daysLeft + ' يوم' : 'انتهت المهلة';
+            var today    = new Date(); today.setHours(0, 0, 0, 0);
+            var daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+            document.getElementById('tax-dl-received').textContent            = formatEgyptDate(received);
+            document.getElementById('tax-deadline-end-date').textContent       = formatEgyptDate(deadline);
+            document.getElementById('tax-deadline-days-remaining').textContent =
+                daysLeft > 0 ? daysLeft + ' يوم' : 'انتهت المهلة';
             var statusEl = document.getElementById('tax-deadline-status');
             if (daysLeft > 30) {
                 statusEl.textContent = '🟢 آمن نسبيًا'; statusEl.style.color = '#10b981';
@@ -2625,11 +2704,15 @@
             var riskComputed  = false;
 
             if (taxType === 'transfer') {
-                var saleVal = parseFloat(document.getElementById('tax-sale-value').value) || 0;
+                var saleVal     = parseFloat(document.getElementById('tax-sale-value').value) || 0;
+                var saleDateEl  = document.getElementById('tax-transfer-sale-date');
+                var saleDateVal = saleDateEl ? (saleDateEl.value || '') : '';
                 if (saleVal > 0) {
                     estimatedTax = saleVal * TAX_ADVISORY_CONFIG.transferRate;
                     calcNote = 'تم الحساب بمعدل 2.5% استرشادي من قيمة التصرف (' +
-                               saleVal.toLocaleString('ar-EG') + ' ج.م). هذا تقدير مبدئي وليس حكمًا قانونيًا.';
+                               saleVal.toLocaleString('ar-EG') + ' ج.م).';
+                    if (saleDateVal) calcNote += ' تاريخ التصرف: ' + saleDateVal + '.';
+                    calcNote += ' هذا تقدير مبدئي وليس حكمًا قانونيًا.';
                 } else {
                     missing  = true;
                     calcNote = 'لا يمكن احتساب الضريبة الاسترشادية دون إدخال قيمة التصرف / سعر البيع.';
@@ -2937,6 +3020,19 @@
             fd.append('annual_rental_estimate', _v('tax-annual-rental-estimate'));
             fd.append('form3_status',           _v('tax-form3-status'));
 
+            /* Date fields */
+            fd.append('assessment_basis_year',          _v('tax-assessment-basis-year'));
+            fd.append('current_assessment_cycle_year',  '2022');
+            fd.append('next_assessment_cycle_year',     '2027');
+            var _noticeVal   = _v('tax-notice-date');
+            var _noticeParsed = parseEgyptDate(_noticeVal);
+            fd.append('notice_received_date_display', _noticeVal);
+            fd.append('notice_received_date_iso',     _noticeParsed ? toIsoDate(_noticeParsed) : '');
+            var _saleDateVal    = _v('tax-transfer-sale-date');
+            var _saleDateParsed = parseEgyptDate(_saleDateVal);
+            fd.append('sale_date_display', _saleDateVal);
+            fd.append('sale_date_iso',     _saleDateParsed ? toIsoDate(_saleDateParsed) : '');
+
             /* Calculated advisory values */
             fd.append('calculated_estimated_tax',    _taxCalcState.estimatedTax  !== null ? String(Math.round(_taxCalcState.estimatedTax))  : '');
             fd.append('calculated_potential_saving', _taxCalcState.diff          !== null ? String(Math.round(_taxCalcState.diff))           : '');
@@ -3227,7 +3323,7 @@
                     </div>
                     <div class="field-group">
                         <label>مستوى التشطيب (اختياري)</label>
-                        <select id="sv-finishing" class="input-box">
+                        <select id="sv-finishing" class="input-box" data-testid="simple-valuation-finishing">
                             <option value="">— اختر إن وجد —</option>
                             <option value="سوبر لوكس">سوبر لوكس</option>
                             <option value="لوكس">لوكس</option>
@@ -3291,6 +3387,26 @@
                         في هذه المرحلة تظهر أسماء الملفات داخل التقرير فقط
                         ولا يتم رفع الملفات فعليًا للخادم.
                     </div>
+                    <!-- Document guidance list (Part C) -->
+                    <div data-testid="simple-documents-guidance" style="margin-top:14px;">
+                        <div style="color:#a5b4fc;font-size:0.82rem;font-weight:700;margin-bottom:6px;">📋 المستندات المقترحة للتقييم:</div>
+                        <ul data-testid="simple-required-documents-list"
+                            style="margin:0;padding-right:18px;color:#9ca3af;font-size:0.8rem;line-height:1.85;">
+                            <li>سند الملكية أو عقد البيع</li>
+                            <li>كشف مساحة أو رسم كروكي</li>
+                            <li>رخصة البناء إن وجدت</li>
+                            <li>صور العقار</li>
+                            <li>عقود الإيجار إن وجدت</li>
+                            <li>إيصالات مرافق أو ما يثبت الاستخدام</li>
+                            <li>أي مستندات نزاع أو تمويل إن وجدت</li>
+                        </ul>
+                        <div data-testid="simple-ocr-note"
+                            style="margin-top:8px;font-size:0.77rem;color:#6b7280;line-height:1.6;background:rgba(99,102,241,0.04);border-radius:6px;padding:6px 10px;">
+                            <span data-testid="simple-ocr-status">🔜 مرحلة OCR/Vision: غير مفعّلة حاليًا.</span>
+                            سيتم تفعيل قراءة عقود الملكية وكشوف المساحة تلقائيًا في مرحلة OCR/Vision لاحقة.
+                            حاليًا تُستخدم المستندات كمرفقات للمراجعة.
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -3310,6 +3426,19 @@
                         <input type="checkbox" id="sv-approx-only" style="accent-color:var(--gold);width:16px;height:16px;">
                         الغرض معرفة القيمة التقريبية فقط
                     </label>
+                </div>
+                <!-- Quick context question (Part F) -->
+                <div class="field-group" style="margin-top:14px;">
+                    <label>سؤال أو سياق إضافي (اختياري)</label>
+                    <textarea id="sv-quick-context" class="input-box" rows="2"
+                        data-testid="simple-quick-context-question"
+                        placeholder="مثال: هل السعر في المنطقة متوقع يزيد بعد فتح المحور الجديد؟"
+                        style="resize:vertical;"></textarea>
+                    <div data-testid="simple-quick-context-note"
+                        style="font-size:0.77rem;color:#6b7280;margin-top:4px;line-height:1.6;">
+                        سيتم ربط سؤال السياق السريع بمستودع السوق وBackend Advisor وRAG/Qdrant لاحقًا.
+                        حاليًا يمكن تحويل السؤال إلى طلب خبير أو استخدامه كملاحظة داخل المسودة.
+                    </div>
                 </div>
             </div>
 
@@ -3352,6 +3481,21 @@
                 </div>
             </div>
 
+            <!-- ── Mini-engine info panel (Part A) ── -->
+            <div data-testid="simple-valuation-mini-engine"
+                style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.18);border-radius:9px;padding:12px 16px;margin-bottom:1rem;direction:rtl;">
+                <div style="color:var(--gold);font-weight:700;font-size:0.87rem;margin-bottom:6px;">🔢 محرك التقييم المبدئي</div>
+                <div data-testid="simple-valuation-price-source-note"
+                    style="font-size:0.8rem;color:#9ca3af;line-height:1.7;">
+                    يعتمد هذا الفحص على البيانات المُدخلة (المساحة، النوع، الحالة، التشطيب) مع معاملات استرشادية.
+                    سيتم ربط متوسطات سعر المتر بالمقارنات السوقية وقاعدة Qdrant في المرحلة التالية.
+                    حاليًا يعتمد الفحص على البيانات المدخلة فقط ولا يُعد قيمة سوقية معتمدة.
+                </div>
+                <div data-testid="simple-valuation-method-note"
+                    style="font-size:0.78rem;color:#6b7280;margin-top:5px;line-height:1.6;">
+                    المنهجية: قيمة أساس × معامل الحالة × معامل التشطيب → نطاق سعري مبدئي (±10%).
+                </div>
+            </div>
             <!-- 5. زر الإصدار -->
             <button id="sv-submit-btn" type="button"
                 onclick="svGenerate()"
@@ -3370,7 +3514,7 @@
         <div id="sv-cert-request" style="display:none;margin-top:1.5rem;"
             data-testid="simple-valuation-cert-request-card">
 
-            <div class="ai-section" style="border-color:rgba(212,175,55,0.3);">
+            <div class="ai-section" style="border-color:rgba(212,175,55,0.3);" data-testid="simple-certified-request-card">
                 <!-- Header -->
                 <div style="margin-bottom:16px;">
                     <h3 style="color:var(--gold);font-size:1.05rem;font-weight:900;margin:0 0 6px;">
@@ -4050,6 +4194,8 @@
             var area     = parseFloat(document.getElementById('sv-area').value) || 0;
             var propType = document.getElementById('sv-property-type').value;
             var cond     = document.getElementById('sv-condition').value;
+            var finishing = ((document.getElementById('sv-finishing') || {}).value || '');
+            var quickCtx  = (((document.getElementById('sv-quick-context') || {}).value) || '').trim();
             var valDate  = (document.getElementById('sv-date')  ? document.getElementById('sv-date').value  : '') || '';
             var notes    = (document.getElementById('sv-notes') ? document.getElementById('sv-notes').value : '').trim();
             /* geo breakdown */
@@ -4087,6 +4233,7 @@
             var mvHtml   = '<div style="color:#9ca3af;font-size:0.88rem;text-align:center;padding:10px 0;">سجّل الدخول للحصول على القيمة التقديرية المحسوبة.</div>';
             var dlBtn    = '';
             var reportId = '';
+            var svApiData = null;
 
             try {
                 var payload = {
@@ -4106,6 +4253,7 @@
                     suppressAuthModal: true
                 });
                 var data = await resp.json();
+                svApiData = data;
                 if (data.status === 'success') {
                     var mv = typeof data.market_value === 'number'
                         ? data.market_value.toLocaleString('en-US', { maximumFractionDigits: 0 })
@@ -4124,11 +4272,85 @@
                 /* auth / network errors — result shown from entered data */
             }
 
+            /* ── advisory multipliers & range calc (Part B) ── */
+            var COND_MUL   = {'ممتازة':1.05,'جيدة':1.00,'متوسطة':0.95,'تحتاج صيانة':0.90};
+            var FINISH_MUL = {'سوبر لوكس':1.04,'لوكس':1.00,'عادي':1.00,'نصف تشطيب':0.90,'بدون تشطيب':0.82};
+            var condMul  = COND_MUL[cond]      !== undefined ? COND_MUL[cond]      : 1.00;
+            var finMul   = FINISH_MUL[finishing] !== undefined ? FINISH_MUL[finishing] : 1.00;
+
+            var rangeHtml   = '';
+            var dataGapHtml = '';
+            var nextActText = '';
+
+            if (svApiData && svApiData.status === 'success' && typeof svApiData.market_value === 'number' && svApiData.market_value > 0) {
+                var mvNum  = svApiData.market_value;
+                var lowVal = Math.round(mvNum * 0.90);
+                var hiVal  = Math.round(mvNum * 1.10);
+                var ppmVal = area > 0 ? Math.round(mvNum / area) : 0;
+                window._svLastCalc = { market_value: mvNum, low: lowVal, high: hiVal, ppm: ppmVal, cond_mul: condMul, fin_mul: finMul };
+                mvHtml = '';
+                rangeHtml =
+                    '<div data-testid="simple-value-range-card" style="background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.25);border-radius:10px;padding:14px 16px;margin:14px 0;">'
+                  + '<div style="color:var(--gold);font-weight:800;font-size:0.92rem;margin-bottom:10px;">📊 القيمة المبدئية والنطاق السعري</div>'
+                  + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">'
+                  + '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">'
+                  + '<div style="color:#9ca3af;font-size:0.76rem;margin-bottom:4px;">القيمة السوقية المبدئية</div>'
+                  + '<div data-testid="simple-estimated-market-value" style="color:var(--gold);font-size:1.4rem;font-weight:900;">' + mvNum.toLocaleString('en-US',{maximumFractionDigits:0}) + '</div>'
+                  + '<div style="color:#6b7280;font-size:0.72rem;">ج.م</div></div>'
+                  + '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">'
+                  + '<div style="color:#9ca3af;font-size:0.76rem;margin-bottom:4px;">الحد الأدنى</div>'
+                  + '<div data-testid="simple-price-range-low" style="color:#a5b4fc;font-size:1.2rem;font-weight:700;">' + lowVal.toLocaleString('en-US',{maximumFractionDigits:0}) + '</div>'
+                  + '<div style="color:#6b7280;font-size:0.72rem;">ج.م</div></div>'
+                  + '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">'
+                  + '<div style="color:#9ca3af;font-size:0.76rem;margin-bottom:4px;">الحد الأعلى</div>'
+                  + '<div data-testid="simple-price-range-high" style="color:#10b981;font-size:1.2rem;font-weight:700;">' + hiVal.toLocaleString('en-US',{maximumFractionDigits:0}) + '</div>'
+                  + '<div style="color:#6b7280;font-size:0.72rem;">ج.م</div></div>'
+                  + (ppmVal > 0
+                      ? '<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;text-align:center;">'
+                        + '<div style="color:#9ca3af;font-size:0.76rem;margin-bottom:4px;">سعر المتر التقريبي</div>'
+                        + '<div data-testid="simple-price-per-meter-output" style="color:#d1d5db;font-size:1.1rem;font-weight:700;">' + ppmVal.toLocaleString('en-US',{maximumFractionDigits:0}) + '</div>'
+                        + '<div style="color:#6b7280;font-size:0.72rem;">ج.م/م²</div></div>'
+                      : '')
+                  + '</div>'
+                  + '<div style="margin-top:10px;font-size:0.79rem;color:#6b7280;display:flex;flex-wrap:wrap;gap:14px;">'
+                  + '<span>معامل الحالة: <span data-testid="simple-condition-multiplier-output" style="color:#d1d5db;">×' + condMul.toFixed(2) + ' (' + (cond||'—') + ')</span></span>'
+                  + '<span>معامل التشطيب: <span data-testid="simple-finishing-multiplier-output" style="color:#d1d5db;">×' + finMul.toFixed(2) + (finishing ? ' (' + finishing + ')' : '') + '</span></span>'
+                  + '</div>'
+                  + '<div data-testid="simple-value-confidence-note" style="margin-top:8px;font-size:0.77rem;color:#6b7280;line-height:1.6;">'
+                  + '⚠️ هذه القيمة استرشادية مبدئية فقط وليست قيمة سوقية معتمدة. النطاق السعري محسوب بهامش ±10% حول القيمة المبدئية.'
+                  + '</div></div>';
+                nextActText = 'راجع النطاق السعري والمستندات، ثم اطلب مراجعة خبير إذا كنت تحتاج تقريرًا رسميًا.';
+            } else if (area > 0 && propType && cond) {
+                window._svLastCalc = { market_value: null, cond_mul: condMul, fin_mul: finMul };
+                dataGapHtml =
+                    '<div data-testid="simple-valuation-data-gap" style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.25);border-radius:10px;padding:14px 16px;margin:14px 0;">'
+                  + '<div style="color:#a5b4fc;font-weight:700;font-size:0.88rem;margin-bottom:6px;">📊 القيمة المبدئية والنطاق السعري</div>'
+                  + '<div style="color:#9ca3af;font-size:0.85rem;line-height:1.7;">لا يمكن إصدار قيمة رقمية موثوقة دون مصدر سعر متر أو مقارنة سوقية.<br>'
+                  + '<span style="color:#6b7280;font-size:0.8rem;">سيتم ربط متوسطات سعر المتر بقاعدة Qdrant والمقارنات السوقية في المرحلة التالية.</span></div>'
+                  + '<div data-testid="simple-condition-multiplier-output" style="display:none;"></div>'
+                  + '<div data-testid="simple-finishing-multiplier-output" style="display:none;"></div>'
+                  + '</div>';
+                nextActText = 'أدخل مصدر سعر متر أو اطلب مراجعة خبير للحصول على تقدير أكثر دقة.';
+            } else {
+                window._svLastCalc = {};
+            }
+
+            /* quick context output (Part F) */
+            var quickCtxHtml = quickCtx
+                ? '<div data-testid="simple-quick-context-output" style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.15);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:0.83rem;">'
+                  + '<div style="color:var(--gold);font-size:0.79rem;font-weight:700;margin-bottom:4px;">💬 سؤال السياق:</div>'
+                  + '<div style="color:#d1d5db;">' + quickCtx + '</div>'
+                  + '<div style="color:#6b7280;font-size:0.76rem;margin-top:4px;line-height:1.5;">سيتم ربط هذا السؤال بمستودع السوق وRAG/Qdrant لاحقًا. تم تضمينه في المسودة كملاحظة.</div>'
+                  + '</div>'
+                : '';
+
             resultEl.innerHTML =
                 '<div class="sv-result-card">'
                 + '<div style="font-size:1rem;font-weight:900;color:var(--gold);text-align:center;margin-bottom:14px;border-bottom:1px solid rgba(212,175,55,0.2);padding-bottom:10px;">'
                 + 'تقرير تقييم مبدئي غير معتمد</div>'
                 + mvHtml
+                + rangeHtml
+                + dataGapHtml
                 + '<table class="sv-result-table" style="margin-top:10px;">'
                 + (reportId ? '<tr><td>رقم التقرير:</td><td dir="ltr">' + reportId + '</td></tr>' : '')
                 + (valDate  ? '<tr><td>تاريخ التقييم:</td><td dir="ltr">' + valDate + '</td></tr>' : '')
@@ -4153,6 +4375,7 @@
                 + '<tr><td>الحالة:</td><td>' + cond + '</td></tr>'
                 + (notes ? '<tr><td>ملاحظات:</td><td>' + notes + '</td></tr>' : '')
                 + '</table>'
+                + quickCtxHtml
                 + '<div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:#a5b4fc;margin-top:14px;line-height:1.7;"'
                 + ' data-testid="simple-valuation-file-policy">'
                 + '📄 نسخة المستخدم: تقرير مبدئي PDF فقط عند تفعيل التصدير. '
@@ -4162,12 +4385,26 @@
                 + '⚠️ تقرير مبدئي (Draft) غير معتمد. '
                 + 'للحصول على تقرير تقييم معتمد، تواصل مع الخبير لمراجعة البيانات والمنهجية وإصدار النسخة المعتمدة.'
                 + '</div>'
+                + '<div style="margin-top:12px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.18);border-radius:8px;padding:10px 14px;">'
+                + '<div data-testid="simple-pdf-watermark-note" style="font-size:0.82rem;color:#fca5a5;font-weight:700;margin-bottom:6px;">'
+                + '🔏 تقرير تقييم آلي مبسط - غير معتمد رسميًا'
+                + '</div>'
+                + '<button data-testid="simple-draft-pdf-button" onclick="svDraftPdf()" '
+                + 'style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:7px;color:var(--gold);font-family:\'Tajawal\',sans-serif;font-size:0.82rem;padding:7px 16px;cursor:pointer;">'
+                + (svApiData && typeof svApiData.market_value === 'number' && svApiData.market_value > 0 ? '⬇️ تحميل مسودة PDF' : '⬇️ تحميل مسودة البيانات (بدون قيمة رقمية)') + '</button>'
+                + '<div data-testid="simple-draft-pdf-status" style="display:none;font-size:0.8rem;margin-top:6px;line-height:1.5;color:#9ca3af;"></div>'
+                + '<div data-testid="simple-internal-excel-note" style="font-size:0.76rem;color:#6b7280;margin-top:4px;line-height:1.5;">'
+                + 'ملف Excel التفصيلي متاح للخبير والإدارة فقط ولا يُعرض للمستخدم الخارجي.'
+                + '</div></div>'
                 + '<div data-testid="simple-valuation-expert-cta" style="background:rgba(212,175,55,0.07);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:14px 16px;margin-top:14px;text-align:center;">'
                 + '<div style="color:#d1d5db;font-size:0.9rem;margin-bottom:10px;">للحصول على تقرير تقييم معتمد، تواصل مع الخبير لمراجعة البيانات والمنهجية وإصدار النسخة المعتمدة.</div>'
                 + '<button onclick="esShowTab(\'chat\')" style="background:linear-gradient(135deg,var(--gold),#b8960d);border:none;border-radius:8px;color:#000;font-family:\'Tajawal\',sans-serif;font-size:0.95rem;font-weight:900;padding:10px 22px;cursor:pointer;">'
                 + 'تواصل مع الخبير لمراجعة واعتماد التقرير'
-                + '</button>'
-                + '</div>'
+                + '</button></div>'
+                + (nextActText
+                    ? '<div data-testid="simple-suggested-next-action" style="background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:8px;padding:10px 14px;margin-top:12px;font-size:0.83rem;color:#10b981;line-height:1.7;">'
+                      + '💡 ' + nextActText + '</div>'
+                    : '')
                 + '</div>';
 
             resultEl.style.display = 'block';
@@ -4176,6 +4413,99 @@
             if (certCard) certCard.style.display = 'block';
             btn.disabled = false;
             btn.innerHTML = 'إصدار تقرير تقييم مبدئي <i class="fas fa-file-alt"></i>';
+        }
+
+        /* ── simple draft PDF download handler ── */
+        async function svDraftPdf() {
+            var btn      = document.querySelector('[data-testid="simple-draft-pdf-button"]');
+            var statusEl = document.querySelector('[data-testid="simple-draft-pdf-status"]');
+            var origHtml = btn ? btn.innerHTML : '⬇️ تحميل مسودة PDF';
+            if (btn)      { btn.disabled = true; btn.innerHTML = '⏳ جارٍ إنشاء المسودة…'; }
+            if (statusEl) { statusEl.style.display = 'block'; statusEl.style.color = '#9ca3af'; statusEl.textContent = 'جارٍ إنشاء التقرير المبدئي…'; }
+            try {
+                var _calc      = window._svLastCalc || {};
+                var area       = parseFloat((document.getElementById('sv-area')          || {}).value) || 0;
+                var desc       = ((document.getElementById('sv-description')             || {}).value || '').trim();
+                var propType   = ((document.getElementById('sv-property-type')           || {}).value || '');
+                var cond       = ((document.getElementById('sv-condition')               || {}).value || '');
+                var finishing  = ((document.getElementById('sv-finishing')               || {}).value || '');
+                var valDate    = ((document.getElementById('sv-date')                    || {}).value || '');
+                var notes      = ((document.getElementById('sv-notes')                   || {}).value || '').trim();
+                var quickCtx   = ((document.getElementById('sv-quick-context')           || {}).value || '').trim();
+                var _cEl       = document.getElementById('geo-country');
+                var _cOpt      = _cEl ? _cEl.options[_cEl.selectedIndex] : null;
+                var geoCountry = (_cOpt && _cOpt.value) ? (_cOpt.getAttribute('data-name') || _cOpt.text.trim()) : '';
+                var geoProvince = ((document.getElementById('geo-province') || {}).value || (document.getElementById('geo-region-text') || {}).value || '');
+                var _gcEl  = document.getElementById('geo-city');
+                var _gcTxt = document.getElementById('geo-city-text');
+                var _gcRaw = (_gcEl || {}).value || '';
+                var geoCity = (_gcRaw === 'مدينة أخرى') ? ((_gcTxt || {}).value || '').trim() : (_gcRaw || ((_gcTxt || {}).value || '').trim());
+                var geoDist = ((document.getElementById('geo-district') || {}).value || '').trim();
+                var docNames = [];
+                var _docsEl  = document.getElementById('sv-docs-input');
+                if (_docsEl && _docsEl.files) {
+                    for (var _i = 0; _i < _docsEl.files.length; _i++) docNames.push(_docsEl.files[_i].name);
+                }
+                var pdfPayload = {
+                    valuation_date:   valDate,
+                    purpose:          'القيمة السوقية',
+                    country:          geoCountry,
+                    region:           geoProvince,
+                    city:             geoCity,
+                    district:         geoDist,
+                    property_type:    propType,
+                    description:      desc,
+                    area:             area,
+                    condition:        cond,
+                    finishing_level:  finishing,
+                    estimated_value:  _calc.market_value  || null,
+                    price_range_low:  _calc.low           || null,
+                    price_range_high: _calc.high          || null,
+                    cond_multiplier:  _calc.cond_mul      || null,
+                    fin_multiplier:   _calc.fin_mul       || null,
+                    notes:            notes,
+                    quick_context:    quickCtx,
+                    doc_names:        docNames
+                };
+                var resp = await window.esFetch('/api/simple-valuation/draft-pdf', {
+                    method:            'POST',
+                    headers:           { 'Content-Type': 'application/json' },
+                    body:              JSON.stringify(pdfPayload),
+                    suppressAuthModal: true
+                });
+                if (!resp.ok) {
+                    var errBody = {};
+                    try { errBody = await resp.json(); } catch (_) {}
+                    throw new Error(errBody.message || 'فشل إنشاء التقرير (' + resp.status + ')');
+                }
+                var blob    = await resp.blob();
+                var blobUrl = URL.createObjectURL(blob);
+                /* auto-trigger download */
+                var dlA      = document.createElement('a');
+                dlA.href     = blobUrl;
+                dlA.download = 'draft_valuation_report.pdf';
+                document.body.appendChild(dlA);
+                dlA.click();
+                document.body.removeChild(dlA);
+                /* persistent link in status for testability */
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.style.color   = '#9ca3af';
+                    statusEl.innerHTML =
+                        '✅ تم إنشاء المسودة. '
+                        + '<a data-testid="simple-draft-pdf-download" href="' + blobUrl + '" target="_blank" '
+                        + 'style="color:#10b981;text-decoration:underline;">فتح / تحميل PDF</a>'
+                        + ' <small style="color:#6b7280;">(غير معتمد رسميًا)</small>';
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = '⬇️ تحميل مسودة PDF مرة أخرى'; }
+            } catch (e) {
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.style.color   = '#fca5a5';
+                    statusEl.textContent   = '❌ ' + (e.message || 'فشل إنشاء المسودة');
+                }
+                if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+            }
         }
 
         /* ── certified report request handler ── */
@@ -4217,6 +4547,7 @@
             fd.append('email', emailVal.trim());
             fd.append('summary', notesVal.trim());
             fd.append('preferred_contact_method', deliveryVal);
+            var _calc = window._svLastCalc || {};
             fd.append('payload_json', JSON.stringify({
                 valuation_date:       (document.getElementById('sv-date') || {}).value || '',
                 valuation_purpose:    'القيمة السوقية',
@@ -4224,6 +4555,12 @@
                 property_description: (document.querySelector('[data-testid="simple-valuation-description"]') || {}).value || '',
                 property_type:        (document.querySelector('[data-testid="simple-valuation-property-type"]') || {}).value || '',
                 property_condition:   (document.querySelector('[data-testid="simple-valuation-condition"]') || {}).value || '',
+                finishing_level:      (document.getElementById('sv-finishing') || {}).value || '',
+                estimated_value:      _calc.market_value || null,
+                price_range_low:      _calc.low || null,
+                price_range_high:     _calc.high || null,
+                quick_context:        ((document.getElementById('sv-quick-context') || {}).value || '').trim(),
+                request_kind:         'certified_valuation_review',
                 requested_certification_delivery_method: deliveryVal
             }));
 

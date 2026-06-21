@@ -292,3 +292,89 @@ def test_SRB23_composite_valuation_accepted(client):
                          extra={"request_kind": "composite_review"})
     assert resp.status_code == 201
     assert resp.get_json()["source_page"] == "composite_valuation"
+
+
+# ── Tests: Simple valuation quick draft PDF endpoint ─────────────────────────
+
+def _sv_pdf_payload(**overrides) -> dict:
+    """Return a minimal valid simple-valuation payload."""
+    base = {
+        "property_type":   "شقة سكنية",
+        "area":            120,
+        "condition":       "جيدة",
+        "valuation_date":  "2026-06-21",
+        "purpose":         "القيمة السوقية",
+        "estimated_value": 2_500_000,
+        "price_range_low": 2_250_000,
+        "price_range_high": 2_750_000,
+    }
+    base.update(overrides)
+    return base
+
+
+def test_SRB24_simple_draft_pdf_valid_payload_returns_pdf(client):
+    """POST /api/simple-valuation/draft-pdf with valid payload returns 200 + application/pdf."""
+    resp = client.post(
+        "/api/simple-valuation/draft-pdf",
+        data=json.dumps(_sv_pdf_payload()),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200, f"body: {resp.data[:200]}"
+    assert "application/pdf" in resp.content_type
+
+
+def test_SRB25_simple_draft_pdf_empty_payload_rejected(client):
+    """POST /api/simple-valuation/draft-pdf with empty payload returns 400."""
+    resp = client.post(
+        "/api/simple-valuation/draft-pdf",
+        data=json.dumps({}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert body["status"] == "error"
+
+
+def test_SRB26_simple_draft_pdf_has_pdf_header(client):
+    """Response bytes start with %%PDF magic and are non-trivially large."""
+    resp = client.post(
+        "/api/simple-valuation/draft-pdf",
+        data=json.dumps(_sv_pdf_payload()),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    raw = resp.data
+    assert raw[:4] == b"%PDF", f"Expected %PDF, got {raw[:4]!r}"
+    assert len(raw) > 500
+
+
+def test_SRB27_simple_draft_pdf_data_gap_no_value_still_succeeds(client):
+    """PDF endpoint succeeds when estimated_value is absent (data-gap scenario)."""
+    payload = {
+        "property_type": "فيلا",
+        "area":          200,
+        "condition":     "ممتازة",
+        # no estimated_value
+    }
+    resp = client.post(
+        "/api/simple-valuation/draft-pdf",
+        data=json.dumps(payload),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    assert "application/pdf" in resp.content_type
+    assert len(resp.data) > 200
+
+
+def test_SRB28_simple_draft_pdf_no_certified_claim_in_headers(client):
+    """Response headers carry no claim of certification; non_certified flag not needed for PDF."""
+    resp = client.post(
+        "/api/simple-valuation/draft-pdf",
+        data=json.dumps(_sv_pdf_payload()),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    # Headers must not carry any certified=true or X-Certified style claim
+    headers_str = str(dict(resp.headers)).lower()
+    assert "certified=true" not in headers_str
+    assert "x-certified" not in headers_str

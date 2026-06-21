@@ -1402,3 +1402,326 @@ def test_SV_cert_excel_hidden_in_confirmation(page: Page, live_server: str) -> N
     html = confirm.inner_html()
     assert ".xlsx" not in html
     assert ".xlsm" not in html
+
+
+# ---------------------------------------------------------------------------
+# Section I — Parts A–H (new features: mini-engine, range card, docs, PDF, expert, RAG)
+# ---------------------------------------------------------------------------
+
+# ── Part A: Mini-engine panel ────────────────────────────────────────────────
+
+def test_SV_mini_engine_panel_exists(page: Page, live_server: str) -> None:
+    """Mini-engine info panel is always visible before generating."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-mini-engine']")).to_be_visible()
+
+
+def test_SV_price_source_note_no_qdrant_active_claim(page: Page, live_server: str) -> None:
+    """Price-source note honestly says Qdrant link is future, not currently active."""
+    _go_to_simple_valuation_tab(page, live_server)
+    note = page.locator("[data-testid='simple-valuation-price-source-note']").inner_text()
+    # Must mention future phase, must NOT say Qdrant is currently connected
+    assert "المرحلة التالية" in note or "سيتم" in note
+    assert "مفعّل حاليًا" not in note
+
+
+def test_SV_method_note_visible(page: Page, live_server: str) -> None:
+    """Method note is visible inside the mini-engine panel."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-valuation-method-note']")).to_be_visible()
+
+
+# ── Part B: Value / range card ───────────────────────────────────────────────
+
+def _generate_draft_helper(page: Page, live_server: str) -> None:
+    """Navigate, mock, fill and generate — duplicate of _generate_draft for tests that need it."""
+    _mock_valuation_api(page)
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    page.locator("[data-testid='simple-valuation-output']").wait_for(state="visible", timeout=8_000)
+
+
+def test_SV_value_range_card_appears_after_generate(page: Page, live_server: str) -> None:
+    """Range card is visible in output after successful generate."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-value-range-card']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_range_card_has_estimated_value_and_bounds(page: Page, live_server: str) -> None:
+    """Range card shows estimated value, low range, high range elements."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-estimated-market-value']")).to_be_visible(timeout=5_000)
+    expect(page.locator("[data-testid='simple-price-range-low']")).to_be_visible(timeout=5_000)
+    expect(page.locator("[data-testid='simple-price-range-high']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_data_gap_shown_when_no_market_value(page: Page, live_server: str) -> None:
+    """Data-gap panel appears when API returns success but no market_value."""
+    page.route("**/api/valuation", lambda r: r.fulfill(
+        status=200,
+        content_type="application/json",
+        body=json.dumps({"status": "success", "report_id": "DRAFT-GAP-001"}),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    page.locator("[data-testid='simple-valuation-output']").wait_for(state="visible", timeout=8_000)
+    expect(page.locator("[data-testid='simple-valuation-data-gap']")).to_be_visible(timeout=5_000)
+    # Range card must NOT be visible when there is no value
+    expect(page.locator("[data-testid='simple-value-range-card']")).not_to_be_visible()
+
+
+def test_SV_condition_multiplier_output_visible(page: Page, live_server: str) -> None:
+    """Condition multiplier output is visible inside range card after generate."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-condition-multiplier-output']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_finishing_multiplier_output_visible(page: Page, live_server: str) -> None:
+    """Finishing multiplier output is visible inside range card after generate."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-finishing-multiplier-output']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_value_confidence_note_warns_non_certified(page: Page, live_server: str) -> None:
+    """Confidence note in range card clarifies the value is advisory."""
+    _generate_draft_helper(page, live_server)
+    note = page.locator("[data-testid='simple-value-confidence-note']").inner_text()
+    assert "استرشادية" in note or "غير معتمدة" in note or "مبدئية" in note
+
+
+# ── Part C: Document guidance and OCR ───────────────────────────────────────
+
+def test_SV_required_documents_list_visible(page: Page, live_server: str) -> None:
+    """Required documents guidance list is visible before generating."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-required-documents-list']")).to_be_visible()
+
+
+def test_SV_required_documents_includes_title_deed(page: Page, live_server: str) -> None:
+    """Documents list includes title deed or sale contract."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-required-documents-list']").inner_text()
+    assert "سند الملكية" in text or "عقد البيع" in text
+
+
+def test_SV_required_documents_includes_area_sketch(page: Page, live_server: str) -> None:
+    """Documents list includes area plan or sketch."""
+    _go_to_simple_valuation_tab(page, live_server)
+    text = page.locator("[data-testid='simple-required-documents-list']").inner_text()
+    assert "كشف مساحة" in text or "رسم كروكي" in text
+
+
+def test_SV_ocr_note_says_future_not_active(page: Page, live_server: str) -> None:
+    """OCR note honestly states the feature is not currently active."""
+    _go_to_simple_valuation_tab(page, live_server)
+    note = page.locator("[data-testid='simple-ocr-note']").inner_text()
+    assert "غير مفعّلة" in note or "لاحقة" in note or "لاحقًا" in note
+
+
+# ── Part D: Draft PDF ────────────────────────────────────────────────────────
+
+def test_SV_draft_report_warning_says_non_certified(page: Page, live_server: str) -> None:
+    """Draft warning in output explicitly says non-certified."""
+    _generate_draft_helper(page, live_server)
+    warning = page.locator("[data-testid='simple-valuation-draft-warning']").inner_text()
+    assert "غير معتمد" in warning
+
+
+def test_SV_pdf_watermark_note_text(page: Page, live_server: str) -> None:
+    """PDF watermark note contains the required non-certified label."""
+    _generate_draft_helper(page, live_server)
+    note = page.locator("[data-testid='simple-pdf-watermark-note']").inner_text()
+    assert "غير معتمد" in note
+
+
+def test_SV_internal_excel_note_says_expert_only(page: Page, live_server: str) -> None:
+    """Internal Excel note states it is for expert/admin only."""
+    _generate_draft_helper(page, live_server)
+    note = page.locator("[data-testid='simple-internal-excel-note']").inner_text()
+    assert "خبير" in note or "إدارة" in note or "داخلي" in note
+
+
+def test_SV_draft_pdf_button_exists_in_output(page: Page, live_server: str) -> None:
+    """Draft PDF button is present in output (may be disabled)."""
+    _generate_draft_helper(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+
+
+# ── Part E: Expert / certified request card ──────────────────────────────────
+
+def test_SV_certified_request_card_visible_after_generate(page: Page, live_server: str) -> None:
+    """Inner certified-request card is visible after generate."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-certified-request-card']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_certified_request_validation_requires_name(page: Page, live_server: str) -> None:
+    """Submitting expert request without name does not show confirmation."""
+    _generate_draft_helper(page, live_server)
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    expect(page.locator("[data-testid='simple-cert-confirmation']")).not_to_be_visible()
+
+
+def test_SV_certified_request_confirmation_not_claiming_certification(page: Page, live_server: str) -> None:
+    """Expert request confirmation does not falsely claim the report is certified."""
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=json.dumps({"status": "ok", "request_id": "REQ-CERT-UI-TEST"}),
+    ))
+    _generate_draft_helper(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("محمد أحمد")
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    conf = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(conf).to_be_visible(timeout=8_000)
+    text = conf.inner_text()
+    assert "أصبح معتمدًا" not in text
+    assert "مختوم" not in text
+
+
+# ── Part F: Quick context question ───────────────────────────────────────────
+
+def test_SV_quick_context_question_visible(page: Page, live_server: str) -> None:
+    """Quick context question textarea is visible before generating."""
+    _go_to_simple_valuation_tab(page, live_server)
+    expect(page.locator("[data-testid='simple-quick-context-question']")).to_be_visible()
+
+
+def test_SV_quick_context_note_no_rag_active_claim(page: Page, live_server: str) -> None:
+    """Quick context note says RAG/Qdrant is a future feature, not currently active."""
+    _go_to_simple_valuation_tab(page, live_server)
+    note = page.locator("[data-testid='simple-quick-context-note']").inner_text()
+    assert "لاحقًا" in note or "سيتم" in note
+
+
+def test_SV_quick_context_appears_in_output(page: Page, live_server: str) -> None:
+    """Quick context question text is echoed in the draft output."""
+    page.route("**/api/valuation", lambda r: r.fulfill(
+        status=200,
+        content_type="application/json",
+        body=json.dumps({"status": "success", "market_value": 2_500_000, "report_id": "DRAFT-QC-001"}),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-quick-context-question']").fill("هل السعر سيزيد بعد فتح المحور الجديد؟")
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    ctx_out = page.locator("[data-testid='simple-quick-context-output']")
+    ctx_out.wait_for(state="visible", timeout=8_000)
+    assert "المحور" in ctx_out.inner_text()
+
+
+# ── Part G: Suggested next action ────────────────────────────────────────────
+
+def test_SV_suggested_next_action_appears_after_generate(page: Page, live_server: str) -> None:
+    """Suggested-next-action card appears in output after generate."""
+    _generate_draft_helper(page, live_server)
+    expect(page.locator("[data-testid='simple-suggested-next-action']")).to_be_visible(timeout=5_000)
+
+
+def test_SV_suggested_next_action_mentions_expert_when_value_available(page: Page, live_server: str) -> None:
+    """When a value is calculated, next action mentions expert review."""
+    _generate_draft_helper(page, live_server)
+    text = page.locator("[data-testid='simple-suggested-next-action']").inner_text()
+    assert "خبير" in text or "تقريرًا" in text or "راجع" in text
+
+
+# ---------------------------------------------------------------------------
+# Section J — Draft PDF functional tests (real /api/simple-valuation/draft-pdf)
+# ---------------------------------------------------------------------------
+
+def _mock_draft_pdf_endpoint(page: Page) -> None:
+    """Mock /api/simple-valuation/draft-pdf to return minimal valid PDF bytes."""
+    page.route("**/api/simple-valuation/draft-pdf", lambda r: r.fulfill(
+        status=200,
+        headers={"Content-Type": "application/pdf",
+                 "Content-Disposition": 'attachment; filename="draft_valuation_report.pdf"'},
+        body=b"%PDF-1.4 1 0 obj<</Type/Catalog>>endobj xref 0 0 trailer<</Size 1>>startxref 9 %%EOF",
+    ))
+
+
+def test_SV_draft_pdf_button_enabled_after_generate(page: Page, live_server: str) -> None:
+    """Draft PDF button is enabled (not disabled) after a successful generate."""
+    _generate_draft_helper(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+    expect(btn).to_be_enabled()
+
+
+def test_SV_draft_pdf_button_calls_backend_and_shows_status(page: Page, live_server: str) -> None:
+    """Clicking the draft PDF button POSTs to the safe backend route and shows a status message."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_enabled(timeout=5_000)
+    btn.click()
+
+    status = page.locator("[data-testid='simple-draft-pdf-status']")
+    expect(status).to_be_visible(timeout=8_000)
+    # Status must show something (success or error) — not blank
+    assert status.inner_text(timeout=8_000).strip() != ""
+
+
+def test_SV_draft_pdf_download_link_appears_after_success(page: Page, live_server: str) -> None:
+    """After a successful mock response the status area contains a download link."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+
+    page.locator("[data-testid='simple-draft-pdf-button']").click()
+
+    dl_link = page.locator("[data-testid='simple-draft-pdf-download']")
+    expect(dl_link).to_be_visible(timeout=8_000)
+    href = dl_link.get_attribute("href") or ""
+    # blob: URL produced by createObjectURL
+    assert href.startswith("blob:") or href != ""
+
+
+def test_SV_draft_pdf_no_excel_link_in_output(page: Page, live_server: str) -> None:
+    """No Excel download link is exposed to ordinary users in the output area."""
+    _generate_draft_helper(page, live_server)
+    output_html = page.locator("[data-testid='simple-valuation-output']").inner_html(timeout=5_000)
+    assert ".xlsx" not in output_html.lower()
+    assert ".xlsm" not in output_html.lower()
+    # The internal Excel note must say it's for expert/admin only, not a download link
+    excel_note = page.locator("[data-testid='simple-internal-excel-note']")
+    expect(excel_note).to_be_visible(timeout=5_000)
+    assert "خبير" in excel_note.inner_text() or "إدارة" in excel_note.inner_text()
+
+
+def test_SV_draft_pdf_data_gap_button_also_enabled(page: Page, live_server: str) -> None:
+    """Even when API returns no market_value (data gap), the PDF button is still enabled."""
+    page.route("**/api/valuation", lambda r: r.fulfill(
+        status=200,
+        content_type="application/json",
+        body=json.dumps({"status": "success", "report_id": "DRAFT-GAP-J01"}),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    page.locator("[data-testid='simple-valuation-output']").wait_for(state="visible", timeout=8_000)
+
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+    expect(btn).to_be_enabled()
+
+
+def test_SV_draft_pdf_expert_cta_still_visible_after_pdf_click(page: Page, live_server: str) -> None:
+    """Expert approval CTA remains visible after clicking the draft PDF button."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+
+    page.locator("[data-testid='simple-draft-pdf-button']").click()
+    # Wait for status to appear (ensures the click completed)
+    page.locator("[data-testid='simple-draft-pdf-status']").wait_for(state="visible", timeout=8_000)
+
+    # Expert CTA must still be visible
+    cta = page.locator("[data-testid='simple-valuation-expert-cta']")
+    expect(cta).to_be_visible(timeout=5_000)
+    assert "مراجعة" in cta.inner_text()

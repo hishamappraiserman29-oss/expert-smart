@@ -21,9 +21,11 @@ Storage (non-public, under core_engine/instance/requests/):
 """
 from __future__ import annotations
 
+import io
 import json
 import os
 import re
+import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -348,6 +350,229 @@ def _build_draft_pdf(req: dict, docs_meta: list) -> Path:
     return out_path
 
 
+# ── Simple valuation quick PDF (no stored request) ───────────────────────────
+
+def _build_simple_valuation_pdf_bytes(payload: dict) -> bytes:
+    """Build a non-certified advisory draft PDF from a simple valuation payload.
+
+    Returns raw PDF bytes.  No file is written to disk and no request record is
+    created — this is a stateless, self-service draft for the end user.
+    """
+    from fpdf import FPDF
+
+    _font_r = _font_b = None
+    try:
+        from reports.pdf.pdf_arabic import find_font
+        _font_r = str(find_font("cairo-regular"))
+        _font_b = str(find_font("cairo-bold"))
+    except Exception:
+        pass
+
+    _fn = ["Arial"]
+
+    class _ValPDF(FPDF):
+        def header(self):
+            self.set_font(_fn[0], "B", 9)
+            self.set_text_color(31, 78, 120)
+            self.cell(0, 7, _ar("ALHADY FOR REAL PROPERTY"),
+                      align="C", new_x="LMARGIN", new_y="NEXT")
+            self.set_text_color(0, 0, 0)
+
+        def footer(self):
+            self.set_y(-14)
+            self.set_text_color(150, 150, 150)
+            if _fn[0] != "Arial":
+                self.set_font(_fn[0], "", 7)
+                label = _ar("تقرير آلي استرشادي - غير معتمد رسميًا") + f"  |  {self.page_no()}"
+            else:
+                self.set_font("Helvetica", "", 7)
+                label = f"Advisory Draft - Non-Certified  |  {self.page_no()}"
+            self.cell(0, 8, label, align="C")
+            self.set_text_color(0, 0, 0)
+
+    pdf = _ValPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    if _font_r:
+        try:
+            pdf.add_font("Cairo", style="",  fname=_font_r)
+            pdf.add_font("Cairo", style="B", fname=_font_b or _font_r)
+            _fn[0] = "Cairo"
+        except Exception:
+            pass
+
+    pdf.add_page()
+    fn = _fn[0]
+
+    def _heading(text: str, size: int = 11) -> None:
+        pdf.set_font(fn, "B", size)
+        pdf.set_text_color(31, 78, 120)
+        pdf.cell(0, 9, _ar(text), align="R", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0, 0, 0)
+
+    def _row(label: str, value: str) -> None:
+        pdf.set_font(fn, "B", 10)
+        pdf.cell(60, 7, _ar(label), align="R")
+        pdf.set_font(fn, "", 10)
+        pdf.cell(0, 7, str(value or "—"), align="L",
+                 new_x="LMARGIN", new_y="NEXT")
+
+    def _hr() -> None:
+        pdf.set_draw_color(212, 175, 55)
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        pdf.ln(3)
+
+    # Title
+    pdf.set_font(fn, "B", 15)
+    pdf.set_text_color(212, 175, 55)
+    pdf.cell(0, 11, _ar("تقرير تقييم عقاري مبدئي"),
+             align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0, 0, 0)
+
+    # Watermark banner
+    pdf.set_fill_color(255, 243, 220)
+    pdf.set_font(fn, "B", 10)
+    pdf.set_text_color(180, 50, 0)
+    pdf.cell(0, 8, _ar("تقرير تقييم آلي مبسط - غير معتمد رسميًا"),
+             align="C", fill=True, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_text_color(0, 0, 0)
+    pdf.ln(5)
+    _hr()
+
+    # Valuation date and purpose
+    _heading("بيانات التقييم")
+    _row("تاريخ التقييم:", str(payload.get("valuation_date") or "—"))
+    _row("الغرض:",         str(payload.get("purpose") or "القيمة السوقية"))
+    _hr()
+
+    # Geographic location
+    geo_parts = [
+        str(payload.get("country") or ""),
+        str(payload.get("region") or ""),
+        str(payload.get("city") or ""),
+        str(payload.get("district") or ""),
+    ]
+    geo_str = " | ".join(p for p in geo_parts if p)
+    if geo_str:
+        _heading("الموقع الجغرافي")
+        _row("الموقع:", geo_str)
+        _hr()
+
+    # Property data
+    _heading("بيانات العقار")
+    _row("نوع العقار:",    str(payload.get("property_type") or "—"))
+    area_v = payload.get("area")
+    _row("المساحة:",       f"{area_v} م²" if area_v else "—")
+    _row("حالة العقار:",   str(payload.get("condition") or "—"))
+    finishing = payload.get("finishing_level")
+    if finishing:
+        _row("مستوى التشطيب:", str(finishing))
+    desc = payload.get("description")
+    if desc:
+        _row("وصف العقار:", str(desc)[:120])
+    _hr()
+
+    # Valuation result
+    _heading("نتيجة التقييم المبدئي")
+    mv = payload.get("estimated_value")
+    if mv and isinstance(mv, (int, float)) and mv > 0:
+        _row("القيمة السوقية المبدئية:", f"{int(mv):,} ج.م")
+        low = payload.get("price_range_low")
+        high = payload.get("price_range_high")
+        if low:
+            _row("الحد الأدنى (−10%):", f"{int(low):,} ج.م")
+        if high:
+            _row("الحد الأعلى (+10%):", f"{int(high):,} ج.م")
+        cond_mul = payload.get("cond_multiplier")
+        fin_mul  = payload.get("fin_multiplier")
+        if cond_mul:
+            _row("معامل الحالة:", f"×{float(cond_mul):.2f}")
+        if fin_mul:
+            _row("معامل التشطيب:", f"×{float(fin_mul):.2f}")
+        pdf.set_font(fn, "", 9)
+        pdf.set_text_color(120, 120, 120)
+        pdf.multi_cell(0, 6,
+            _ar("⚠️ القيمة المبدئية استرشادية وليست قيمة سوقية معتمدة. النطاق ±10% تقريبي."),
+            align="R")
+        pdf.set_text_color(0, 0, 0)
+    else:
+        pdf.set_font(fn, "", 10)
+        pdf.set_text_color(120, 50, 50)
+        pdf.multi_cell(0, 7,
+            _ar("لا يمكن إصدار قيمة رقمية موثوقة دون مصدر سعر متر أو مقارنات سوقية."),
+            align="R")
+        pdf.set_text_color(0, 0, 0)
+    _hr()
+
+    # Notes / quick context
+    notes_parts = []
+    if payload.get("notes"):
+        notes_parts.append(str(payload["notes"]))
+    if payload.get("quick_context"):
+        notes_parts.append("سؤال السياق: " + str(payload["quick_context"]))
+    if notes_parts:
+        _heading("ملاحظات")
+        pdf.set_font(fn, "", 10)
+        pdf.multi_cell(0, 7, _ar(" | ".join(notes_parts)[:300]), align="R")
+        _hr()
+
+    # Document names list
+    doc_names = payload.get("doc_names") or []
+    if doc_names and isinstance(doc_names, list):
+        _heading("أسماء المستندات المرفقة")
+        for dn in doc_names[:10]:
+            pdf.set_font(fn, "", 10)
+            pdf.cell(0, 6, f"  • {str(dn)[:80]}",
+                     align="R", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font(fn, "", 9)
+        pdf.set_text_color(100, 100, 100)
+        pdf.cell(0, 5,
+            _ar("(المستندات لم تُرفع بعد — ستُرسل مع طلب مراجعة الخبير)"),
+            align="R", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_text_color(0, 0, 0)
+        _hr()
+
+    # Professional alerts
+    _heading("التنبيهات المهنية")
+    pdf.set_font(fn, "", 9)
+    pdf.set_text_color(100, 100, 100)
+    pdf.multi_cell(0, 6, _ar(
+        "• هذا التقرير آلي استرشادي ولا يُعد تقرير تقييم رسمي أو معتمد.\n"
+        "• لا يُستخدم أمام البنوك أو المحاكم أو الجهات الرسمية قبل مراجعة واعتماد خبير التقييم.\n"
+        "• معاملات الحالة والتشطيب استرشادية وقد تختلف عن الواقع السوقي الفعلي."
+    ), align="R")
+    pdf.set_text_color(0, 0, 0)
+    _hr()
+
+    # Expert CTA
+    _heading("الخطوة التالية — مراجعة الخبير")
+    pdf.set_font(fn, "", 10)
+    pdf.multi_cell(0, 7, _ar(
+        "للحصول على تقرير تقييم معتمد، تواصل مع خبير التقييم لمراجعة البيانات "
+        "والمنهجية وإصدار النسخة المعتمدة الرسمية عبر نظام Expert Smart."
+    ), align="R")
+
+    # Disclaimer page
+    pdf.add_page()
+    _heading("إخلاء المسؤولية", 12)
+    pdf.set_font(fn, "", 10)
+    pdf.set_text_color(120, 50, 50)
+    pdf.multi_cell(0, 7, _ar(_DISCLAIMER), align="R")
+    pdf.set_text_color(0, 0, 0)
+
+    # Write to temp file and read bytes (compatible with fpdf 1.x and fpdf2)
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as _tmp:
+        _tmp_path = _tmp.name
+    try:
+        pdf.output(_tmp_path)
+        return Path(_tmp_path).read_bytes()
+    finally:
+        try:
+            Path(_tmp_path).unlink()
+        except OSError:
+            pass
+
+
 # ── Route registration ────────────────────────────────────────────────────────
 
 def register(app, require_auth, limiter=None) -> None:
@@ -564,6 +789,46 @@ def register(app, require_auth, limiter=None) -> None:
             as_attachment=False,
             download_name=f"draft_report_{request_id}.pdf",
         )
+
+    # ── POST /api/simple-valuation/draft-pdf — Quick advisory PDF ─────────
+    @app.route("/api/simple-valuation/draft-pdf", methods=["POST", "OPTIONS"])
+    def simple_valuation_draft_pdf():
+        """Generate a non-certified advisory draft PDF directly from valuation data.
+
+        No expert request is stored.  No contact info required.
+        Returns application/pdf bytes with watermark and disclaimer.
+        """
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
+
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+        except Exception:
+            payload = {}
+
+        prop_type = (payload.get("property_type") or "").strip()
+        area_val  = payload.get("area")
+        if not prop_type and not area_val:
+            return jsonify({
+                "status":  "error",
+                "message": "يجب توفير نوع العقار أو المساحة على الأقل لإنشاء التقرير المبدئي",
+            }), 400
+
+        try:
+            pdf_bytes = _build_simple_valuation_pdf_bytes(payload)
+            buf = io.BytesIO(pdf_bytes)
+            buf.seek(0)
+            return send_file(
+                buf,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name="draft_valuation_report.pdf",
+            )
+        except Exception as exc:
+            return jsonify({
+                "status":  "error",
+                "message": f"فشل إنشاء التقرير المبدئي: {exc}",
+            }), 500
 
     # ── GET /api/expert-requests — List requests (admin only) ─────────────
     @app.route("/api/expert-requests", methods=["GET"])

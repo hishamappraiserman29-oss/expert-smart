@@ -614,3 +614,68 @@ def test_chat_land_sell_develop_fallback(page: Page, live_server: str) -> None:
     assert "إرشادية" in text or "لا يُعد" in text, (
         "Fallback answer must contain advisory disclaimer"
     )
+
+
+# ---------------------------------------------------------------------------
+# Valuation-basis routing fix  ───────────────────────────────────────── 45-48
+# ---------------------------------------------------------------------------
+
+def test_chat_market_value_vs_investment_value_arabic(page: Page, live_server: str) -> None:
+    """'ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟' → valuation-basis answer, NOT feasibility."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين القيمة السوقية والقيمة الاستثمارية؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+
+    # Must contain the correct valuation-basis content
+    assert "القيمة السوقية" in text,           "Answer must define القيمة السوقية"
+    assert "القيمة الاستثمارية" in text,        "Answer must define القيمة الاستثمارية"
+    assert "السوق العام" in text,              "Answer must mention السوق العام (market perspective)"
+    assert "مستثمر" in text,                   "Answer must mention investor perspective"
+    assert "10,000,000" in text,               "Answer must include the 10M numeric example"
+    assert "إرشادية" in text,                  "Answer must include advisory disclaimer"
+
+    # Must NOT be the feasibility-study answer
+    assert "دراسات الجدوى العقارية تتضمن" not in text, (
+        "Answer must NOT be the generic feasibility-study response"
+    )
+
+
+def test_chat_market_value_vs_investment_value_english(page: Page, live_server: str) -> None:
+    """'ما الفرق بين Market Value و Investment Value؟' → same valuation-basis answer."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "ما الفرق بين Market Value و Investment Value؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+
+    assert "القيمة السوقية" in text or "Market Value" in text, (
+        "Answer must reference القيمة السوقية/Market Value"
+    )
+    assert "الاستثمارية" in text or "Investment Value" in text, (
+        "Answer must reference القيمة الاستثمارية/Investment Value"
+    )
+    assert "إرشادية" in text, "Answer must include advisory disclaimer"
+    assert "دراسات الجدوى العقارية تتضمن" not in text, (
+        "Answer must NOT be the generic feasibility-study response"
+    )
+
+
+def test_chat_feasibility_regression(page: Page, live_server: str) -> None:
+    """Regression: feasibility question still routes to feasibility answer after routing fix."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أعمل دراسة جدوى لمشروع عقاري؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    # Direct Q&A hit for feasibility
+    assert "التكلفة الإجمالية" in text or "الإيرادات المتوقعة" in text or "ROI" in text, (
+        "Feasibility question must still get feasibility answer"
+    )
+    assert "إرشادية" in text, "Answer must include advisory disclaimer"
+
+
+def test_chat_investment_return_regression(page: Page, live_server: str) -> None:
+    """Regression: investment-return question still routes to return-calculation answer after routing fix."""
+    _open_chat_tab(page, live_server)
+    _send_chat_question(page, "كيف أحسب العائد المتوقع من مشروع عقاري؟")
+    text = page.locator("[data-testid='chat-answer-area']").inner_text()
+    assert "ROI" in text or "IRR" in text or "NPV" in text or "العائد" in text, (
+        "Investment-return question must get a return-calculation answer"
+    )
+    assert "إرشادية" in text, "Answer must include advisory disclaimer"

@@ -6,6 +6,7 @@ All tests are frontend-only: no real backend calls, no real uploads.
 from __future__ import annotations
 
 import pytest
+from datetime import date, timedelta
 from playwright.sync_api import Page, Route, expect
 
 
@@ -1118,7 +1119,12 @@ def test_TAX_deadline_countdown_shows_on_date_entry(page: Page, live_server: str
     _block_api(page)
     _go_to_tax_tab(page, live_server)
     page.locator('[data-testid="tax-type-select"]').select_option('annual')
-    page.locator('[data-testid="tax-notice-received-date"]').fill('2026-01-01')
+    today = date.today()
+    # Input expects DD/MM/YYYY — using today so deadline (today+60) is always future
+    notice_str = f"{today.day:02d}/{today.month:02d}/{today.year}"
+    inp = page.locator('[data-testid="tax-notice-received-date"]')
+    inp.fill(notice_str)
+    inp.dispatch_event('change')  # onchange="taxDeadlineUpdate(..." requires explicit change event
     expect(page.locator('[data-testid="tax-deadline-countdown"]')).to_be_visible()
 
 
@@ -1127,9 +1133,19 @@ def test_TAX_deadline_end_date_shows_60_days(page: Page, live_server: str) -> No
     _block_api(page)
     _go_to_tax_tab(page, live_server)
     page.locator('[data-testid="tax-type-select"]').select_option('annual')
-    page.locator('[data-testid="tax-notice-received-date"]').fill('2026-01-01')
+    today = date.today()
+    notice_str = f"{today.day:02d}/{today.month:02d}/{today.year}"
+    inp = page.locator('[data-testid="tax-notice-received-date"]')
+    inp.fill(notice_str)
+    inp.dispatch_event('change')  # onchange="taxDeadlineUpdate(..." requires explicit change event
+    deadline = today + timedelta(days=60)
+    # JS renders end date in DD/MM/YYYY; assert by month (least locale-sensitive check)
+    expected_month = f"{deadline.month:02d}"
+    expected_str   = f"{deadline.day:02d}/{deadline.month:02d}/{deadline.year}"
     end_date = page.locator('[data-testid="tax-deadline-end-date"]').inner_text()
-    assert "2026-03-02" in end_date or "03" in end_date   # 60 days from Jan 1
+    assert expected_str in end_date or expected_month in end_date, (
+        f"Expected deadline {expected_str!r} (or month {expected_month!r}) in: {end_date!r}"
+    )
 
 
 def test_TAX_deadline_disclaimer_visible(page: Page, live_server: str) -> None:

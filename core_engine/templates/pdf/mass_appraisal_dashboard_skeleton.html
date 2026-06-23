@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>لوحة التقييم الجماعي للمحفظة</title>
+  <style>
+    /* ── Shared base — mirrors report_components._BASE_CSS ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 9.5pt;
+      color: #1a1a2e;
+      line-height: 1.65;
+      background: #ffffff;
+    }
+
+    /* ── Watermark ── */
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      font-size: 28px;
+      font-weight: 700;
+      color: rgba(80, 80, 80, 0.07);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Footer ── */
+    .page-footer {
+      position: fixed;
+      bottom: 5mm;
+      left: 10mm;
+      right: 10mm;
+      text-align: center;
+      font-size: 7pt;
+      color: #bbb;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 2px;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* ── Hero ── */
+    .hero {
+      background: #1f4e78;
+      color: #fff;
+      padding: 12px 18px 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .hero-left { flex: 1; }
+    .hero-right {
+      text-align: left;
+      font-size: 7.5pt;
+      color: #b8d4f0;
+      min-width: 150px;
+    }
+    .hero-right span { display: block; margin-bottom: 2px; }
+    .hero-company {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #d4af37;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+    .hero-title {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .hero-sub { font-size: 7.5pt; color: #c0d8f0; margin-bottom: 6px; }
+    .hero-badge {
+      display: inline-block;
+      background: #d4af37;
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 7.5pt;
+      padding: 2px 12px;
+      border-radius: 12px;
+    }
+
+    /* ── KPI cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .kpi-card {
+      border: 1px solid #d0dff0;
+      border-top: 3px solid #1f4e78;
+      border-radius: 4px;
+      padding: 7px 10px;
+      background: #f8faff;
+      text-align: center;
+    }
+    .kpi-card.warn  { border-top-color: #b43200; background: #fff8f5; border-color: #f0c8b0; }
+    .kpi-card.green { border-top-color: #1a7a4a; background: #f0fff6; border-color: #90d8b0; }
+    .kpi-card.gold  { border-top-color: #c8960a; background: #fffdf0; border-color: #e8d070; }
+    .kpi-card.span2 { grid-column: span 2; }
+    .kpi-lbl { font-size: 7pt; color: #667; font-weight: 700; margin-bottom: 3px; }
+    .kpi-val { font-size: 10.5pt; font-weight: 700; color: #1f4e78; }
+    .kpi-val.warn  { color: #b43200; font-size: 8.5pt; }
+    .kpi-val.green { color: #1a7a4a; }
+    .kpi-val.gold  { color: #7a5800; font-size: 9pt; }
+    .kpi-val.sm    { font-size: 9pt; }
+
+    /* ── Section headers ── */
+    .sec-hdr {
+      background: #1f4e78;
+      color: #fff;
+      font-weight: 700;
+      font-size: 9.5pt;
+      padding: 4px 12px;
+      border-radius: 3px;
+      margin-bottom: 7px;
+    }
+    .sec-block { margin-bottom: 9px; }
+
+    /* ── Snapshot table ── */
+    .snap { width: 100%; border-collapse: collapse; }
+    .snap td {
+      padding: 2.5px 7px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 9pt;
+      vertical-align: top;
+    }
+    .snap tr:last-child td { border-bottom: none; }
+    .snap .lbl { font-weight: 700; color: #557; width: 42%; background: #fafbfd; }
+    .snap .val { color: #222; }
+
+    /* ── Method/weighting table ── */
+    .method-tbl { width: 100%; border-collapse: collapse; font-size: 8pt; }
+    .method-tbl th {
+      background: #dce8f5; color: #1f4e78; font-weight: 700;
+      padding: 4px 7px; border: 1px solid #c0d4e8; text-align: center;
+    }
+    .method-tbl td {
+      padding: 3px 7px; border: 1px solid #e8eaf0;
+      vertical-align: top; color: #333;
+    }
+    .method-tbl tr:nth-child(even) td { background: #fafcff; }
+    .m-name { font-weight: 700; color: #1f4e78; }
+    .s-ok  { color: #1a7a4a; font-weight: 700; }
+    .s-no  { color: #b43200; font-weight: 700; }
+    .s-pnd { color: #7a5500; font-weight: 700; }
+
+    /* ── Status / confidence ── */
+    .conf-strip {
+      background: #fffbf0;
+      border: 1px solid #ead8a0;
+      border-radius: 3px;
+      padding: 4px 12px;
+      font-size: 8pt;
+      color: #7a5500;
+      margin-bottom: 8px;
+    }
+    .status-badge {
+      display: inline-block;
+      background: #fff8e6;
+      border: 1px solid #e0c060;
+      border-radius: 8px;
+      padding: 2px 10px;
+      font-size: 7.5pt;
+      color: #7a5800;
+      font-weight: 700;
+    }
+
+    /* ── CTA block ── */
+    .cta {
+      background: #1f4e78;
+      color: #fff;
+      padding: 9px 14px;
+      border-radius: 4px;
+      font-size: 9.5pt;
+      line-height: 1.7;
+      margin-bottom: 9px;
+    }
+    .cta-ttl { font-weight: 700; color: #d4af37; font-size: 10pt; margin-bottom: 3px; }
+
+    /* ── Skeleton placeholder ── */
+    .skel-ph {
+      background: #f5f5f5;
+      border: 1px dashed #ccc;
+      border-radius: 3px;
+      padding: 6px 12px;
+      font-size: 8.5pt;
+      color: #888;
+      margin: 4px 0;
+    }
+
+    /* ── Warning strip ── */
+    .warn-strip {
+      background: #fff5f5;
+      border: 1px solid #eec8b8;
+      border-right: 4px solid #b43200;
+      border-radius: 3px;
+      padding: 6px 12px;
+      font-size: 8.5pt;
+      color: #782828;
+      margin-bottom: 8px;
+    }
+
+    /* ── Disclaimer page 2 ── */
+    .disc-pg { page-break-before: always; padding-top: 12mm; }
+    .disc-ttl {
+      font-size: 12pt; font-weight: 700; color: #782828;
+      border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 10px;
+    }
+    .disc-body { font-size: 9.5pt; color: #782828; line-height: 1.9; }
+    .notice { font-size: 7.5pt; color: #999; margin-top: 3px; }
+  </style>
+</head>
+<body>
+
+  <!-- Watermark -->
+  <div class="watermark">مسودة تقرير - غير معتمد رسميًا</div>
+  <div class="page-footer">هيكل لوحة تقييم جماعي - غير معتمد رسميًا &nbsp;|&nbsp; تم إنشاء هذا المستند بواسطة محرك HTML/PDF</div>
+
+  <div class="content">
+
+    <!-- ── 1. Hero Header ── -->
+    <div class="hero">
+      <div class="hero-left">
+        <div class="hero-company">ALHADY FOR REAL PROPERTY</div>
+        <div class="hero-title">لوحة التقييم الجماعي للمحفظة</div>
+        <div class="hero-sub">مسودة هيكل لوحة تقييم جماعي - غير معتمد رسميًا</div>
+        <div class="hero-badge">مسودة — هيكل فقط</div>
+      </div>
+      <div class="hero-right">
+        <span>تاريخ اللوحة: — (مكان البيانات) —</span>
+        <span>رقم المحفظة: — (مكان البيانات) —</span>
+        <span>الجهة: — (مكان البيانات) —</span>
+      </div>
+    </div>
+
+    <!-- ── 2. Portfolio Summary Dashboard ── -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-lbl">عدد الأصول في المحفظة</div>
+        <div class="kpi-val sm">— (مكان البيانات) —</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-lbl">إجمالي القيمة المبدئية</div>
+        <div class="kpi-val sm green">— (مكان البيانات) —</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-lbl">متوسط سعر المتر</div>
+        <div class="kpi-val gold sm">— (مكان البيانات) —</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-lbl">مؤشر COD (جودة النموذج)</div>
+        <div class="kpi-val warn">— (مكان البيانات) —</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-lbl">حالة استيعاب البيانات</div>
+        <div class="kpi-val sm">— (مكان البيانات) —</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-lbl">حالة حوكمة النموذج</div>
+        <div class="kpi-val warn">قيد المراجعة — لم يُعتمد</div>
+      </div>
+    </div>
+
+    <!-- ── 3. Data Ingestion Status ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">حالة استيعاب البيانات</div>
+      <table class="snap">
+        <tr><td class="lbl">إجمالي الأصول المستوردة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">الأصول الصالحة للتقييم:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">الأصول ذات بيانات ناقصة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">تاريخ آخر استيراد:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">مصدر البيانات:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">تنبيه:</td>
+            <td class="val" style="color:#b43200;">
+              البيانات المستوردة لم تُتحقق ميدانيًا — مطلوب تحقق خبير
+            </td></tr>
+      </table>
+    </div>
+
+    <!-- ── 4. Model Governance Status ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">حالة حوكمة النموذج</div>
+      <div class="conf-strip" style="margin-bottom:5px;">
+        <strong>مرحلة النموذج:</strong>
+        <span class="status-badge">قيد المعايرة — لم يُعتمد</span>
+      </div>
+      <table class="snap">
+        <tr><td class="lbl">خوارزمية التقدير:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">تاريخ آخر معايرة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">عدد الشواهد البيعية المستخدمة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">فترة التدريب:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">مسؤول الحوكمة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+      </table>
+    </div>
+
+    <!-- ── 5. Ratio Study Placeholder ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">دراسة النسبة (Ratio Study)</div>
+      <table class="snap">
+        <tr><td class="lbl">متوسط نسبة التقييم (Median Ratio):</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">معامل التباين (COD):</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">نسبة السعر للتقييم (PRD):</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">عدد مقارنات الاختبار:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">تقييم الجودة الإجمالي:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+      </table>
+      <p class="notice">ملاحظة: دراسة النسبة تستلزم بيانات مبيعات حقيقية قابلة للتحقق.</p>
+    </div>
+
+    <!-- ── 6. Sales Evidence Placeholder ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">الشواهد البيعية</div>
+      <div class="skel-ph">
+        — جدول الشواهد البيعية المستخدمة في معايرة النموذج — (مكان البيانات) —
+      </div>
+      <table class="snap" style="margin-top:5px;">
+        <tr><td class="lbl">إجمالي الصفقات المُحللة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">نطاق الفترة الزمنية:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">المناطق الجغرافية المشمولة:</td>
+            <td class="val">— (مكان البيانات) —</td></tr>
+        <tr><td class="lbl">تنبيه:</td>
+            <td class="val" style="color:#b43200;">
+              لا يتم استخدام شواهد بيعية مصطنعة — المطلوب بيانات سوق حقيقية
+            </td></tr>
+      </table>
+    </div>
+
+    <!-- ── 7. Method Weighting Placeholder ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">أوزان طرق التقييم الجماعي</div>
+      <table class="method-tbl">
+        <thead>
+          <tr>
+            <th>الطريقة</th>
+            <th>الوزن المقترح</th>
+            <th>الحالة</th>
+            <th>ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m-name">نموذج التقييم الجماعي</td>
+            <td class="s-pnd">— (مكان البيانات) —</td>
+            <td class="s-pnd">قيد المراجعة</td>
+            <td>الطريقة الأساسية للتقييم الجماعي</td>
+          </tr>
+          <tr>
+            <td class="m-name">طريقة مقارنة البيوع</td>
+            <td class="s-pnd">— (مكان البيانات) —</td>
+            <td class="s-pnd">قيد المراجعة</td>
+            <td>للتحقق وضبط النموذج</td>
+          </tr>
+          <tr>
+            <td class="m-name">التوفيق النهائي</td>
+            <td class="s-pnd">— (مكان البيانات) —</td>
+            <td class="s-pnd">بانتظار اعتماد الخبير</td>
+            <td>الأوزان إرشادية وقابلة للتعديل</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── 8. Draft / Non-Certified Warning ── -->
+    <div class="warn-strip">
+      <strong>تحذير — مسودة غير معتمدة:</strong>
+      هذه لوحة مسودة تقييم جماعي غير معتمدة. القيم والنتائج الواردة هي تقديرات
+      أولية تحتاج إلى مراجعة وتحقق ميداني قبل أي استخدام ضريبي أو رسمي أو تمويلي.
+    </div>
+
+    <!-- ── 9. Expert Approval CTA ── -->
+    <div class="cta">
+      <div class="cta-ttl">الخطوة التالية — اعتماد الخبير</div>
+      لتحويل هذه المسودة إلى تقرير تقييم جماعي معتمد، يجب مراجعة البيانات
+      والمنهجية ودراسة النسبة بواسطة خبير التقييم الجماعي المختص، ثم إصدار
+      النسخة المعتمدة بعد القبول والتوقيع.
+    </div>
+
+    <!-- ── 10. Disclaimer (inline) ── -->
+    <div class="sec-block">
+      <div class="sec-hdr" style="background:#782828;">إخلاء المسؤولية</div>
+      <div style="font-size:9pt;color:#782828;line-height:1.75;padding:4px 0;">
+        هذه مسودة هيكل تقرير غير معتمد. لا يتم إصدار تقرير نهائي أو معتمد
+        إلا بعد اكتمال البيانات ومراجعة الخبير. لا يُستخدم هذا الهيكل لأي
+        غرض ضريبي أو رسمي أو تمويلي.
+      </div>
+    </div>
+
+    <!-- ── Disclaimer Page 2 ── -->
+    <div class="disc-pg">
+      <div class="disc-ttl">إخلاء المسؤولية التفصيلي</div>
+      <div class="disc-body">
+        هذه لوحة هيكل تقييم جماعي مسودة غير معتمدة. لا تُستخدم لأي غرض
+        ضريبي أو رسمي أو تمويلي قبل اكتمال البيانات ودراسة النسبة ومراجعة
+        واعتماد خبير التقييم الجماعي المختص.<br><br>
+        لا تعتمد هذه اللوحة على بيانات سوق حية أو خوارزميات مدرَّبة على
+        بيانات حقيقية. النموذج يحتاج إلى معايرة ميدانية شاملة قبل أي
+        استخدام رسمي.<br><br>
+        لا يتم تنفيذ أي بحث ويب أو تدريب خوارزمي تلقائي — جميع البيانات
+        يجب أن تُقدَّم من مصادر موثوقة ومعتمدة.
+      </div>
+    </div>
+
+  </div><!-- /.content -->
+</body>
+</html>

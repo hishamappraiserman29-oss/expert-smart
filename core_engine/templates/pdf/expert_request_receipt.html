@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <style>
+    /* ── Embedded Cairo font (base64 data URI, no network request) ─────── */
+    {{ font_css_block }}
+
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ──────────────────────────────────────────────────────────── */
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 11pt;
+      color: #222;
+      line-height: 1.75;
+    }
+
+    /* ── Watermark ─────────────────────────────────────────────────────── */
+    .watermark {
+      position: fixed;
+      top: 45%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-25deg);
+      font-size: 34px;
+      font-weight: 700;
+      color: rgba(80, 80, 80, 0.10);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Page footer ───────────────────────────────────────────────────── */
+    .page-footer {
+      position: fixed;
+      bottom: 8mm;
+      left: 14mm;
+      right: 14mm;
+      text-align: center;
+      font-size: 8pt;
+      color: #aaa;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 3px;
+      z-index: 0;
+    }
+
+    /* ── Content wrapper (sits above watermark/footer) ─────────────────── */
+    .content { position: relative; z-index: 1; }
+
+    /* ── Report header ──────────────────────────────────────────────────── */
+    .report-header {
+      text-align: center;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #d4af37;
+    }
+    .company-name {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1f4e78;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .report-title {
+      font-size: 17pt;
+      font-weight: 700;
+      color: #d4af37;
+      margin-bottom: 6px;
+    }
+    .non-certified-badge {
+      display: inline-block;
+      background: #fff3dc;
+      color: #b43200;
+      font-weight: 700;
+      font-size: 10pt;
+      padding: 4px 16px;
+      border-radius: 4px;
+    }
+
+    /* ── Sections ───────────────────────────────────────────────────────── */
+    section {
+      margin-top: 14px;
+    }
+    h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #1f4e78;
+      border-bottom: 1px solid #d4af37;
+      padding-bottom: 3px;
+      margin-bottom: 7px;
+    }
+
+    /* ── Data table ─────────────────────────────────────────────────────── */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table td {
+      padding: 3px 0;
+      vertical-align: top;
+    }
+    .cell-label {
+      font-weight: 700;
+      color: #555;
+      width: 36%;
+      padding-left: 10px;
+    }
+    .cell-value {
+      color: #222;
+      width: 64%;
+    }
+
+    /* ── Status notice box ──────────────────────────────────────────────── */
+    .status-notice {
+      background: #fff3dc;
+      border-right: 4px solid #b43200;
+      padding: 10px 14px;
+      font-size: 11pt;
+      font-weight: 700;
+      color: #b43200;
+      margin-top: 14px;
+      border-radius: 3px;
+    }
+
+    /* ── Notes & helpers ────────────────────────────────────────────────── */
+    .notes-text {
+      font-size: 11pt;
+      color: #333;
+    }
+
+    /* ── Doc list ───────────────────────────────────────────────────────── */
+    .doc-list {
+      list-style: none;
+      padding: 0;
+    }
+    .doc-list li::before { content: "- "; }
+    .doc-list li { font-size: 11pt; margin-bottom: 2px; }
+
+    /* ── Disclaimer (second page) ───────────────────────────────────────── */
+    .disclaimer-page {
+      page-break-before: always;
+      padding-top: 10mm;
+    }
+    .disclaimer-title {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #782828;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+      margin-bottom: 12px;
+    }
+    .disclaimer-body {
+      font-size: 11pt;
+      color: #782828;
+      line-height: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed watermark (all pages) -->
+  <div class="watermark">تقرير آلي استرشادي - غير معتمد رسميًا</div>
+
+  <!-- Fixed footer (all pages) -->
+  <div class="page-footer">تقرير آلي استرشادي - غير معتمد رسميًا &nbsp;|&nbsp; تم إنشاء هذا المستند بواسطة محرك HTML/PDF</div>
+
+  <div class="content">
+
+    <!-- ── Page 1 header ───────────────────────────────────────────── -->
+    <div class="report-header">
+      <div class="company-name">ALHADY FOR REAL PROPERTY</div>
+      <div class="report-title">{{ pdf_title }}</div>
+      <div class="non-certified-badge">تقرير آلي استرشادي - غير معتمد رسميًا</div>
+    </div>
+
+    <!-- ── Status notice ──────────────────────────────────────────── -->
+    <div class="status-notice">
+      تقرير الخبير المعتمد غير متاح بعد. حالة الطلب: قيد المراجعة.
+    </div>
+
+    <!-- ── Request metadata ───────────────────────────────────────── -->
+    <section>
+      <h2>بيانات الطلب</h2>
+      <table class="data-table">
+        <tr>
+          <td class="cell-label">رقم الطلب:</td>
+          <td class="cell-value">{{ request_id }}</td>
+        </tr>
+        <tr>
+          <td class="cell-label">تاريخ الإنشاء:</td>
+          <td class="cell-value">{{ created_at }}</td>
+        </tr>
+        {% if source_page %}
+        <tr>
+          <td class="cell-label">المصدر:</td>
+          <td class="cell-value">{{ source_page }}</td>
+        </tr>
+        {% endif %}
+        {% if request_kind %}
+        <tr>
+          <td class="cell-label">نوع الطلب:</td>
+          <td class="cell-value">{{ request_kind }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </section>
+
+    <!-- ── Contact ────────────────────────────────────────────────── -->
+    <section>
+      <h2>بيانات التواصل</h2>
+      <table class="data-table">
+        <tr>
+          <td class="cell-label">الاسم:</td>
+          <td class="cell-value">{{ user_name }}</td>
+        </tr>
+        <tr>
+          <td class="cell-label">الهاتف:</td>
+          <td class="cell-value">{{ phone }}</td>
+        </tr>
+        {% if email %}
+        <tr>
+          <td class="cell-label">البريد:</td>
+          <td class="cell-value">{{ email }}</td>
+        </tr>
+        {% endif %}
+        {% if preferred_contact_method %}
+        <tr>
+          <td class="cell-label">طريقة التواصل:</td>
+          <td class="cell-value">{{ preferred_contact_method }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </section>
+
+    <!-- ── Payload summary (optional) ────────────────────────────── -->
+    {% if payload_items %}
+    <section>
+      <h2>ملخص البيانات</h2>
+      <table class="data-table">
+        {% for item in payload_items %}
+        <tr>
+          <td class="cell-label">{{ item.key }}:</td>
+          <td class="cell-value">{{ item.value }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </section>
+    {% endif %}
+
+    <!-- ── User notes (optional) ─────────────────────────────────── -->
+    {% if summary %}
+    <section>
+      <h2>ملاحظات المستخدم</h2>
+      <p class="notes-text">{{ summary }}</p>
+    </section>
+    {% endif %}
+
+    <!-- ── Attached documents (optional) ─────────────────────────── -->
+    {% if doc_names %}
+    <section>
+      <h2>المستندات المرفقة</h2>
+      <ul class="doc-list">
+        {% for dn in doc_names %}
+        <li>{{ dn }}</li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <!-- ── Disclaimer (page 2) ────────────────────────────────────── -->
+    <div class="disclaimer-page">
+      <div class="disclaimer-title">إخلاء المسؤولية</div>
+      <div class="disclaimer-body">{{ disclaimer }}</div>
+    </div>
+
+  </div><!-- /.content -->
+</body>
+</html>

@@ -618,11 +618,15 @@ def test_SV_cert_confirmation_no_false_send_claim(page: Page, live_server: str) 
     text = confirm.inner_text()
     # Must NOT contain definite past-tense delivery claims:
     # "تم الإرسال" = the sending is done; "أُرسل" = was sent (instant past)
-    # Note: "يتم إرسال … عند تفعيل نظام التواصل" (will be sent upon activation) is acceptable.
     assert "تم الإرسال" not in text
     assert "أُرسل" not in text
-    # Must contain the "عند تفعيل" conditional clause or similar to show it's pending
-    assert any(phrase in text for phrase in ["عند تفعيل", "مبدئيًا", "سيتم", "لاحقًا"])
+    # Must contain a future/conditional phrase — either:
+    #   • fallback path: "عند تفعيل"/"مبدئيًا"/"سيتم"/"لاحقًا"
+    #   • success path:  "يتم إرسال" / "سيقوم" (expert will review + send)
+    assert any(phrase in text for phrase in [
+        "عند تفعيل", "مبدئيًا", "سيتم", "لاحقًا",  # fallback/pending phrases
+        "يتم إرسال", "سيقوم",                        # success-path future phrases
+    ])
 
 
 def test_SV_cert_card_hidden_before_generate(page: Page, live_server: str) -> None:
@@ -1725,3 +1729,613 @@ def test_SV_draft_pdf_expert_cta_still_visible_after_pdf_click(page: Page, live_
     cta = page.locator("[data-testid='simple-valuation-expert-cta']")
     expect(cta).to_be_visible(timeout=5_000)
     assert "مراجعة" in cta.inner_text()
+
+
+# ---------------------------------------------------------------------------
+# Section K — Draft PDF method/safety invariants (405-fix regression guard)
+# ---------------------------------------------------------------------------
+
+def test_SV_draft_pdf_button_has_type_button(page: Page, live_server: str) -> None:
+    """Draft PDF button must carry type='button' to prevent accidental form submission."""
+    _generate_draft_helper(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+    expect(btn).to_have_attribute("type", "button")
+
+
+def test_SV_draft_pdf_button_uses_post_method(page: Page, live_server: str) -> None:
+    """Clicking the draft PDF button sends an HTTP POST request, not GET."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+    with page.expect_request("**/api/simple-valuation/draft-pdf") as req_info:
+        page.locator("[data-testid='simple-draft-pdf-button']").click()
+    assert req_info.value.method == "POST", (
+        f"Expected POST method, got {req_info.value.method}"
+    )
+
+
+def test_SV_draft_pdf_no_direct_href_to_endpoint_in_output(page: Page, live_server: str) -> None:
+    """Before PDF blob is generated, output HTML must not contain a bare href to the draft-pdf endpoint."""
+    _generate_draft_helper(page, live_server)
+    output_html = page.locator("[data-testid='simple-valuation-output']").inner_html(timeout=5_000)
+    assert "/api/simple-valuation/draft-pdf" not in output_html, (
+        "Found direct href to draft-pdf endpoint in output before PDF blob generation"
+    )
+
+
+def test_SV_draft_pdf_success_no_405_in_status(page: Page, live_server: str) -> None:
+    """After a successful mock response the status element must not mention 405."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+    page.locator("[data-testid='simple-draft-pdf-button']").click()
+    status = page.locator("[data-testid='simple-draft-pdf-status']")
+    expect(status).to_be_visible(timeout=8_000)
+    assert "405" not in status.inner_text(timeout=8_000)
+
+
+def test_SV_draft_pdf_no_get_request_on_click(page: Page, live_server: str) -> None:
+    """Clicking the draft PDF button must never send a GET to the draft-pdf endpoint."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+
+    get_requests: list = []
+    page.on("request", lambda req: get_requests.append(req.url) if (
+        "/api/simple-valuation/draft-pdf" in req.url and req.method == "GET"
+    ) else None)
+
+    page.locator("[data-testid='simple-draft-pdf-button']").click()
+    page.locator("[data-testid='simple-draft-pdf-status']").wait_for(state="visible", timeout=8_000)
+
+    assert get_requests == [], (
+        f"Unexpected GET request(s) to draft-pdf endpoint: {get_requests}"
+    )
+
+
+def test_SV_draft_pdf_download_link_href_is_blob(page: Page, live_server: str) -> None:
+    """Download link href must be a blob: URL (not a bare API path) after success."""
+    _mock_draft_pdf_endpoint(page)
+    _generate_draft_helper(page, live_server)
+
+    page.locator("[data-testid='simple-draft-pdf-button']").click()
+
+    dl_link = page.locator("[data-testid='simple-draft-pdf-download']")
+    expect(dl_link).to_be_visible(timeout=8_000)
+    href = dl_link.get_attribute("href") or ""
+    assert href.startswith("blob:"), (
+        f"Expected blob: URL for download link, got: {href!r}"
+    )
+
+
+def test_SV_draft_pdf_data_gap_click_sends_post_and_shows_link(page: Page, live_server: str) -> None:
+    """Data-gap scenario: clicking the PDF button sends POST and the download link appears."""
+    _mock_draft_pdf_endpoint(page)
+    page.route("**/api/valuation", lambda r: r.fulfill(
+        status=200,
+        content_type="application/json",
+        body=json.dumps({"status": "success", "report_id": "DRAFT-GAP-K07"}),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    _fill_form_minimum(page)
+    page.locator("[data-testid='simple-valuation-generate']").click()
+    page.locator("[data-testid='simple-valuation-output']").wait_for(state="visible", timeout=8_000)
+
+    with page.expect_request("**/api/simple-valuation/draft-pdf") as req_info:
+        page.locator("[data-testid='simple-draft-pdf-button']").click()
+
+    assert req_info.value.method == "POST", (
+        f"Data-gap scenario sent {req_info.value.method} instead of POST"
+    )
+    dl_link = page.locator("[data-testid='simple-draft-pdf-download']")
+    expect(dl_link).to_be_visible(timeout=8_000)
+
+
+# ---------------------------------------------------------------------------
+# Section J — Workbook, PDF improvements, expert-request wording (Part 4)
+# ---------------------------------------------------------------------------
+
+# ── Part 4-1: Preliminary PDF button still works ─────────────────────────────
+
+def test_SV_prelim_pdf_button_still_works(page: Page, live_server: str) -> None:
+    """The 'إصدار تقرير PDF مبدئي' button is still present after generate."""
+    _generate_draft(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+
+
+def test_SV_prelim_pdf_ui_says_non_certified(page: Page, live_server: str) -> None:
+    """The draft output area says the report is non-certified (غير معتمد)."""
+    _generate_draft(page, live_server)
+    output_text = page.locator("[data-testid='simple-valuation-output']").inner_text(timeout=8_000)
+    assert "غير معتمد" in output_text or "مبدئي" in output_text, (
+        "Draft output must say the report is non-certified/preliminary"
+    )
+
+
+# ── Part 4-2: Expert request confirmation wording ────────────────────────────
+
+def test_SV_cert_confirmation_shows_request_id_new(page: Page, live_server: str) -> None:
+    """Confirmation message includes the returned request_id."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status": "success",
+            "request_id": "REQ-WKBK0001",
+            "non_certified": True,
+            "expert_workbook_available": True,
+            "message": "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-WKBK0001. هذا ليس تقريرًا معتمدًا. تم إنشاء ملف مراجعة داخلي للخبير.",
+        }),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار رقم الطلب")
+    page.locator("[data-testid='simple-cert-phone']").fill("01012345678")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "REQ-WKBK0001" in confirm.inner_text()
+
+
+def test_SV_cert_confirmation_mentions_internal_expert_file(page: Page, live_server: str) -> None:
+    """When expert_workbook_available=True, confirmation mentions internal expert file."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status": "success",
+            "request_id": "REQ-WKBK0002",
+            "non_certified": True,
+            "expert_workbook_available": True,
+            "message": "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-WKBK0002. هذا ليس تقريرًا معتمدًا. تم إنشاء ملف مراجعة داخلي للخبير.",
+        }),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار ملف الخبير")
+    page.locator("[data-testid='simple-cert-phone']").fill("01099999999")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    assert "داخلي" in text or "للخبير" in text, (
+        "Confirmation should mention 'داخلي' or 'للخبير' for the internal expert file. "
+        f"Got: {text!r}"
+    )
+
+
+# ── Part 4-3: No Excel link in user-facing UI ─────────────────────────────────
+
+def test_SV_no_xlsx_link_in_cert_confirmation(page: Page, live_server: str) -> None:
+    """No .xlsx download link appears in the cert confirmation even when workbook was created."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status": "success",
+            "request_id": "REQ-NOXLS01",
+            "non_certified": True,
+            "expert_workbook_available": True,
+            "message": "تم تسجيل الطلب.",
+        }),
+    ))
+    _go_to_simple_valuation_tab(page, live_server)
+    page.locator("[data-testid='simple-expert-request-button']").click()
+    page.locator("[data-testid='simple-valuation-cert-request-card']").wait_for(
+        state="visible", timeout=5_000
+    )
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار إخفاء Excel")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    html = confirm.inner_html()
+    assert ".xlsx" not in html, "No .xlsx link should be visible to the ordinary user"
+    assert "expert-workbook" not in html, "Workbook download URL must not appear in user confirmation"
+
+
+def test_SV_no_xlsx_link_before_generate(page: Page, live_server: str) -> None:
+    """No Excel download <a href> link is visible in the simple valuation tab before generating."""
+    _go_to_simple_valuation_tab(page, live_server)
+    # Check there are no anchor tags pointing to xlsx files (the accept attr on file inputs is OK)
+    xlsx_links = page.locator("[data-testid='simple-valuation-tab'] a[href*='.xlsx']")
+    expect(xlsx_links).to_have_count(0)
+    xlsx_links2 = page.locator("[data-testid='simple-valuation-tab'] a[href*='excel']")
+    expect(xlsx_links2).to_have_count(0)
+
+
+# ── Part 4-4: Not-certified wording confirmed ─────────────────────────────────
+
+def test_SV_cert_confirmation_says_not_certified_new(page: Page, live_server: str) -> None:
+    """Confirmation (dynamic success path) still says 'ليس تقريرًا معتمدًا'."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status": "success",
+            "request_id": "REQ-NC0002",
+            "non_certified": True,
+            "expert_workbook_available": False,
+            "message": "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-NC0002. هذا ليس تقريرًا معتمدًا.",
+        }),
+    ))
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار عدم اعتماد جديد")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    assert "ليس تقريرًا معتمدًا" in confirm.inner_text(), (
+        "Confirmation must say 'ليس تقريرًا معتمدًا'"
+    )
+
+
+def test_SV_cert_confirmation_says_not_certified(page: Page, live_server: str) -> None:
+    """Expert request confirmation must explicitly state the report is not certified.
+
+    After submitting the certified review form the confirmation div must contain
+    the phrase 'ليس تقريرًا معتمدًا' so the user is never misled about
+    certification status.
+    """
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=json.dumps({
+            "status": "success",
+            "request_id": "REQ-NOTCERT1",
+            "non_certified": True,
+            "message": "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-NOTCERT1. هذا ليس تقريرًا معتمدًا.",
+        }),
+    ))
+    _generate_draft_helper(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار عدم الاعتماد")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    assert "ليس تقريرًا معتمدًا" in text, (
+        f"Cert confirmation does not say 'ليس تقريرًا معتمدًا'. Got: {text!r}. "
+        "User may be misled into thinking the report is certified."
+    )
+
+
+def test_SV_certified_report_not_auto_available(page: Page, live_server: str) -> None:
+    """Certified report must NOT be shown as available after expert request submission.
+
+    The approval_status returned by the API must not claim a certified report
+    is ready.  This test mocks the API and checks the UI shows the correct
+    'pending review' wording instead of 'certified available'.
+    """
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=json.dumps({
+            "status": "success",
+            "request_id": "REQ-PENDING1",
+            "approval_status": "draft_only",
+            "non_certified": True,
+            "message": "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-PENDING1. هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير.",
+        }),
+    ))
+    _generate_draft_helper(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار حالة الطلب")
+    page.locator("[data-testid='simple-cert-phone']").fill("01022222222")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    # Must NOT claim the certified report is ready right now
+    assert "أصبح معتمدًا" not in text
+    assert "صدر التقرير المعتمد" not in text
+    assert "تقرير معتمد جاهز" not in text
+
+
+# ---------------------------------------------------------------------------
+# Section K — Dashboard PDF template regression tests (Part D)
+# ---------------------------------------------------------------------------
+
+def test_SV_dashboard_pdf_button_visible_after_generate(page: Page, live_server: str) -> None:
+    """Dashboard template update: 'إصدار PDF' button still present after generating."""
+    _generate_draft(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=5_000)
+    assert btn.is_enabled(), "Draft PDF button should be enabled after generating"
+
+
+def test_SV_dashboard_output_non_certified_text(page: Page, live_server: str) -> None:
+    """After generate, output still contains non-certified Arabic text."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    text = output.inner_text()
+    assert "غير معتمد" in text or "مبدئي" in text, (
+        "Output must indicate the report is non-certified / preliminary after dashboard template update"
+    )
+
+
+def test_SV_dashboard_pdf_no_excel_link_in_output(page: Page, live_server: str) -> None:
+    """After dashboard update, no Excel download link appears anywhere in the output area."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    xlsx_anchors = output.locator("a[href*='.xlsx'], a[href*='excel'], a[href*='expert-workbook']")
+    expect(xlsx_anchors).to_have_count(0)
+
+
+def test_SV_dashboard_kpi_section_not_exposed_in_ui(page: Page, live_server: str) -> None:
+    """The UI output text does not expose internal Excel / workbook paths after generate."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    html = output.inner_html()
+    assert "expert_workbooks" not in html, "Internal workbook path must not appear in UI"
+    assert "expert_review_" not in html,   "Internal workbook filename must not appear in UI"
+
+
+def test_SV_dashboard_cert_confirmation_no_certified_auto_claim(page: Page, live_server: str) -> None:
+    """After submitting cert request with dashboard template, confirmation does not auto-claim certified."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status":                   "success",
+            "request_id":               "REQ-DASH0001",
+            "non_certified":            True,
+            "expert_workbook_available": True,
+            "message": (
+                "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-DASH0001. "
+                "هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط "
+                "بعد مراجعة الخبير للبيانات والمستندات والمنهجية. "
+                "تم إنشاء ملف مراجعة داخلي للخبير."
+            ),
+        }),
+    ))
+    _generate_draft(page, live_server)
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار داشبورد")
+    page.locator("[data-testid='simple-cert-phone']").fill("01099999999")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    # request_id must appear
+    assert "REQ-DASH0001" in text, "Request ID missing from confirmation"
+    # not-certified clause must appear
+    assert "ليس تقريرًا معتمدًا" in text, "Not-certified clause missing from confirmation"
+    # internal workbook note must appear
+    assert "داخلي" in text or "للخبير" in text, "Internal expert file note missing"
+    # no Excel download link or path
+    html = confirm.inner_html()
+    assert ".xlsx" not in html, "Excel link must not appear in confirmation"
+    assert "expert-workbook" not in html, "Workbook URL must not appear in confirmation"
+
+
+# ── Part A: CTA box placement tests ──────────────────────────────────────────
+
+def test_SV_certified_cta_box_appears_after_generate(page: Page, live_server: str) -> None:
+    """Certified CTA box (simple-certified-report-cta-box) is visible after generating a draft."""
+    _generate_draft(page, live_server)
+    cta = page.locator("[data-testid='simple-certified-report-cta-box']")
+    expect(cta).to_be_visible(timeout=8_000)
+
+
+def test_SV_certified_cta_box_text_is_correct(page: Page, live_server: str) -> None:
+    """CTA box contains the required Arabic heading about certified report."""
+    _generate_draft(page, live_server)
+    cta = page.locator("[data-testid='simple-certified-report-cta-box']")
+    expect(cta).to_be_visible(timeout=8_000)
+    text = cta.inner_text()
+    assert "هل تحتاج تقرير تقييم معتمد؟" in text, (
+        "CTA box must contain 'هل تحتاج تقرير تقييم معتمد؟'"
+    )
+
+
+def test_SV_certified_cta_box_says_not_certified_until_expert(page: Page, live_server: str) -> None:
+    """CTA box states report is not certified until expert review."""
+    _generate_draft(page, live_server)
+    cta = page.locator("[data-testid='simple-certified-report-cta-box']")
+    expect(cta).to_be_visible(timeout=8_000)
+    text = cta.inner_text()
+    assert "بعد مراجعة الخبير" in text, (
+        "CTA box must state that certification happens only after expert review"
+    )
+
+
+def test_SV_certified_cta_box_is_after_engine_panel_in_dom(page: Page, live_server: str) -> None:
+    """CTA box appears after the preliminary engine panel in DOM order."""
+    _generate_draft(page, live_server)
+    # Both elements must be present; verify DOM ordering via bounding box Y positions
+    engine = page.locator("#simple-preliminary-engine-panel")
+    cta    = page.locator("[data-testid='simple-certified-report-cta-box']")
+    expect(engine).to_be_attached()
+    expect(cta).to_be_visible(timeout=8_000)
+    engine_y = engine.bounding_box()["y"]
+    cta_y    = cta.bounding_box()["y"]
+    assert cta_y > engine_y, (
+        "CTA box must appear below (after) the preliminary engine panel in the page layout"
+    )
+
+
+def test_SV_certified_cta_box_is_after_pdf_button_in_dom(page: Page, live_server: str) -> None:
+    """CTA box appears below the draft PDF button in DOM order."""
+    _generate_draft(page, live_server)
+    pdf_btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    cta     = page.locator("[data-testid='simple-certified-report-cta-box']")
+    expect(pdf_btn).to_be_visible(timeout=8_000)
+    expect(cta).to_be_visible(timeout=8_000)
+    pdf_y = pdf_btn.bounding_box()["y"]
+    cta_y = cta.bounding_box()["y"]
+    assert cta_y > pdf_y, (
+        "CTA box must appear below (after) the draft PDF button"
+    )
+
+
+def test_SV_certified_cta_box_visible_and_after_engine_before_generate(page: Page, live_server: str) -> None:
+    """CTA box is visible even before generate and is positioned after the engine panel in DOM."""
+    _go_to_simple_valuation_tab(page, live_server)
+    cta    = page.locator("[data-testid='simple-certified-report-cta-box']")
+    engine = page.locator("#simple-preliminary-engine-panel")
+    expect(cta).to_be_visible()
+    expect(engine).to_be_attached()
+    engine_y = engine.bounding_box()["y"]
+    cta_y    = cta.bounding_box()["y"]
+    assert cta_y > engine_y, (
+        "CTA box must appear below the preliminary engine panel even before generate"
+    )
+
+
+# ── Part C: Report template selector tests ───────────────────────────────────
+
+def test_SV_report_template_selector_visible_in_cert_form(page: Page, live_server: str) -> None:
+    """Report template selector appears inside the certified request card after generate."""
+    _generate_draft(page, live_server)
+    sel = page.locator("[data-testid='simple-request-report-template']")
+    expect(sel).to_be_visible(timeout=8_000)
+
+
+def test_SV_report_template_selector_has_required_options(page: Page, live_server: str) -> None:
+    """Report template selector contains all required Arabic option labels."""
+    _generate_draft(page, live_server)
+    sel = page.locator("[data-testid='simple-request-report-template']")
+    expect(sel).to_be_visible(timeout=8_000)
+    html = sel.inner_html()
+    expected = [
+        "تقرير تقييم ملخص سكني بالثلاث طرق",
+        "تقرير تقييم كامل بالثلاث طرق",
+        "تقرير تمويل بنكي",
+        "تقرير نزاع أو محكمة",
+        "تقرير أرض وأعلى وأفضل استخدام",
+        "تقرير منشأة خاصة",
+        "تقرير IFRS",
+    ]
+    for label in expected:
+        assert label in html, f"Template option missing from selector: {label!r}"
+
+
+def test_SV_selecting_template_does_not_auto_generate_certified_report(page: Page, live_server: str) -> None:
+    """Selecting a report template does not automatically generate a certified report."""
+    import json as _json
+    requests_made: list[str] = []
+
+    def _intercept(route):
+        if "expert-requests" in route.request.url:
+            requests_made.append(route.request.url)
+        route.continue_()
+
+    page.route("**/*", _intercept)
+    _generate_draft(page, live_server)
+
+    sel = page.locator("[data-testid='simple-request-report-template']")
+    expect(sel).to_be_visible(timeout=8_000)
+    sel.select_option("bank_financing_report")
+    # Give a brief moment for any unintended side effects
+    page.wait_for_timeout(600)
+    # No call to /api/expert-requests should have been made yet
+    assert not any("expert-requests" in u for u in requests_made), (
+        "Selecting a report template must NOT automatically submit an expert request"
+    )
+
+
+def test_SV_no_excel_link_in_simple_valuation_ui(page: Page, live_server: str) -> None:
+    """No .xlsx download link appears anywhere in the simple valuation output."""
+    _generate_draft(page, live_server)
+    output = page.locator("[data-testid='simple-valuation-output']")
+    expect(output).to_be_visible(timeout=8_000)
+    xlsx_links = output.locator("a[href*='.xlsx'], a[href*='expert-workbook']")
+    expect(xlsx_links).to_have_count(0)
+
+
+def test_SV_preliminary_pdf_still_works_after_template_changes(page: Page, live_server: str) -> None:
+    """The draft PDF button is still present and enabled after all Part A/C changes."""
+    _generate_draft(page, live_server)
+    btn = page.locator("[data-testid='simple-draft-pdf-button']")
+    expect(btn).to_be_visible(timeout=8_000)
+    assert btn.is_enabled(), "Draft PDF button must still be enabled"
+
+
+def test_SV_cert_request_id_appears_in_confirmation_after_template_selection(page: Page, live_server: str) -> None:
+    """Submitting expert request with a template selection still shows request ID in confirmation."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status":                    "success",
+            "request_id":                "REQ-TMPL0001",
+            "non_certified":             True,
+            "expert_workbook_available": True,
+            "message": (
+                "تم تسجيل طلب مراجعة التقرير. رقم الطلب: REQ-TMPL0001. "
+                "هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط "
+                "بعد مراجعة الخبير للبيانات والمستندات والمنهجية."
+            ),
+        }),
+    ))
+    _generate_draft(page, live_server)
+    # Select a template
+    sel = page.locator("[data-testid='simple-request-report-template']")
+    expect(sel).to_be_visible(timeout=8_000)
+    sel.select_option("residential_summary_three_methods")
+    # Fill required cert fields
+    page.locator("[data-testid='simple-cert-name']").fill("مختبر قالب التقرير")
+    page.locator("[data-testid='simple-cert-phone']").fill("01011111111")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("واتساب")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    assert "REQ-TMPL0001" in text, "Request ID must appear in confirmation after template selection"
+    assert "ليس تقريرًا معتمدًا" in text, "Confirmation must say report is not certified"
+
+
+def test_SV_cert_confirmation_says_not_certified_with_template(page: Page, live_server: str) -> None:
+    """Confirmation message is non-certified even when a template is selected."""
+    import json as _json
+    page.route("**/api/expert-requests", lambda r: r.fulfill(
+        status=201,
+        content_type="application/json",
+        body=_json.dumps({
+            "status":       "success",
+            "request_id":   "REQ-SAFE0001",
+            "non_certified": True,
+            "message":      "تم تسجيل طلب مراجعة التقرير. هذا ليس تقريرًا معتمدًا.",
+        }),
+    ))
+    _generate_draft(page, live_server)
+    sel = page.locator("[data-testid='simple-request-report-template']")
+    expect(sel).to_be_visible(timeout=8_000)
+    sel.select_option("bank_financing_report")
+    page.locator("[data-testid='simple-cert-name']").fill("اختبار سلامة")
+    page.locator("[data-testid='simple-cert-phone']").fill("01022222222")
+    page.locator("[data-testid='simple-cert-delivery-method']").select_option("البريد الإلكتروني")
+    page.locator("[data-testid='simple-cert-submit']").click()
+    confirm = page.locator("[data-testid='simple-cert-confirmation']")
+    expect(confirm).to_be_visible(timeout=8_000)
+    text = confirm.inner_text()
+    assert "ليس تقريرًا معتمدًا" in text or "غير معتمد" in text, (
+        "Confirmation must explicitly state the report is non-certified"
+    )

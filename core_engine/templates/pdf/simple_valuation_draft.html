@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <style>
+    {{ font_css_block }}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 9.5pt;
+      color: #1a1a2e;
+      line-height: 1.65;
+      background: #ffffff;
+    }
+
+    /* ── Watermark ── */
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      font-size: 28px;
+      font-weight: 700;
+      color: rgba(80, 80, 80, 0.07);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Footer ── */
+    .page-footer {
+      position: fixed;
+      bottom: 5mm;
+      left: 10mm;
+      right: 10mm;
+      text-align: center;
+      font-size: 7pt;
+      color: #bbb;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 2px;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* ── 1. Hero Header ── */
+    .hero {
+      background: #1f4e78;
+      color: #fff;
+      padding: 12px 18px 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .hero-left { flex: 1; }
+    .hero-right {
+      text-align: left;
+      font-size: 7.5pt;
+      color: #b8d4f0;
+      min-width: 150px;
+    }
+    .hero-right span { display: block; margin-bottom: 2px; }
+    .hero-company {
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: #d4af37;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+    .hero-title {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .hero-sub {
+      font-size: 7.5pt;
+      color: #c0d8f0;
+      margin-bottom: 6px;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: #d4af37;
+      color: #1a1a2e;
+      font-weight: 700;
+      font-size: 7.5pt;
+      padding: 2px 12px;
+      border-radius: 12px;
+    }
+
+    /* ── 2. KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+    .kpi-card {
+      border: 1px solid #d0dff0;
+      border-top: 3px solid #1f4e78;
+      border-radius: 4px;
+      padding: 7px 10px;
+      background: #f8faff;
+      text-align: center;
+    }
+    .kpi-card.warn {
+      border-top-color: #b43200;
+      background: #fff8f5;
+      border-color: #f0c8b0;
+    }
+    .kpi-card.green {
+      border-top-color: #1a7a4a;
+      background: #f0fff6;
+      border-color: #90d8b0;
+    }
+    .kpi-card.gold {
+      border-top-color: #c8960a;
+      background: #fffdf0;
+      border-color: #e8d070;
+    }
+    .kpi-card.span2 { grid-column: span 2; }
+
+    .kpi-lbl { font-size: 7pt; color: #667; font-weight: 700; margin-bottom: 3px; }
+    .kpi-val { font-size: 10.5pt; font-weight: 700; color: #1f4e78; }
+    .kpi-val.warn { color: #b43200; font-size: 8.5pt; }
+    .kpi-val.green { color: #1a7a4a; }
+    .kpi-val.gold { color: #7a5800; font-size: 9pt; }
+    .kpi-val.sm { font-size: 9pt; }
+
+    /* ── Section Header ── */
+    .sec-hdr {
+      background: #1f4e78;
+      color: #fff;
+      font-weight: 700;
+      font-size: 9.5pt;
+      padding: 4px 12px;
+      border-radius: 3px;
+      margin-bottom: 7px;
+    }
+    .sec-block { margin-bottom: 9px; }
+
+    /* ── 3. Snapshot Table ── */
+    .snap { width: 100%; border-collapse: collapse; }
+    .snap td {
+      padding: 2.5px 7px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 9pt;
+      vertical-align: top;
+    }
+    .snap tr:last-child td { border-bottom: none; }
+    .snap .lbl { font-weight: 700; color: #557; width: 35%; background: #fafbfd; }
+    .snap .val { color: #222; }
+
+    /* ── 4. Method Snapshot Table ── */
+    .method-tbl { width: 100%; border-collapse: collapse; font-size: 8pt; }
+    .method-tbl th {
+      background: #dce8f5;
+      color: #1f4e78;
+      font-weight: 700;
+      padding: 4px 7px;
+      border: 1px solid #c0d4e8;
+      text-align: center;
+    }
+    .method-tbl td {
+      padding: 3px 7px;
+      border: 1px solid #e8eaf0;
+      vertical-align: top;
+      color: #333;
+    }
+    .method-tbl tr:nth-child(even) td { background: #fafcff; }
+    .m-name { font-weight: 700; color: #1f4e78; }
+    .s-ok  { color: #1a7a4a; font-weight: 700; }
+    .s-no  { color: #b43200; font-weight: 700; }
+    .s-pnd { color: #7a5500; font-weight: 700; }
+
+    /* ── 5. Preliminary Conclusion ── */
+    .concl-box {
+      background: #f0f7ff;
+      border: 1px solid #b8d0ea;
+      border-right: 4px solid #1f4e78;
+      border-radius: 4px;
+      padding: 9px 13px;
+    }
+    .concl-main {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #1f4e78;
+      margin-bottom: 4px;
+    }
+    .concl-range { font-size: 8.5pt; color: #555; margin-top: 2px; }
+
+    .gap-box {
+      background: #fff5f5;
+      border: 1px solid #eec8b8;
+      border-right: 4px solid #b43200;
+      border-radius: 4px;
+      padding: 9px 13px;
+      color: #782828;
+      font-size: 9.5pt;
+    }
+
+    /* ── 6. Confidence Strip ── */
+    .conf-strip {
+      background: #fffbf0;
+      border: 1px solid #ead8a0;
+      border-radius: 3px;
+      padding: 4px 12px;
+      font-size: 8pt;
+      color: #7a5500;
+      margin-bottom: 8px;
+    }
+
+    /* ── 7. CTA Block ── */
+    .cta {
+      background: #1f4e78;
+      color: #fff;
+      padding: 9px 14px;
+      border-radius: 4px;
+      font-size: 9.5pt;
+      line-height: 1.7;
+      margin-bottom: 9px;
+    }
+    .cta-ttl {
+      font-weight: 700;
+      color: #d4af37;
+      font-size: 10pt;
+      margin-bottom: 3px;
+    }
+
+    /* ── 9. Bullet Lists ── */
+    .bul { list-style: none; padding: 0; }
+    .bul li { font-size: 9pt; color: #444; padding: 1.5px 0; }
+    .bul li::before { content: "- "; color: #888; }
+    .bul.doc li::before { color: #1f4e78; }
+
+    .notice { font-size: 7.5pt; color: #999; margin-top: 3px; }
+
+    /* ── Disclaimer Page 2 ── */
+    .disc-pg {
+      page-break-before: always;
+      padding-top: 12mm;
+    }
+    .disc-ttl {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #782828;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+      margin-bottom: 10px;
+    }
+    .disc-body { font-size: 9.5pt; color: #782828; line-height: 1.9; }
+  </style>
+</head>
+<body>
+
+  <div class="watermark">تقرير تقييم آلي مبسط - غير معتمد رسميًا</div>
+  <div class="page-footer">تقرير آلي استرشادي - غير معتمد رسميًا &nbsp;|&nbsp; تم إنشاء هذا المستند بواسطة محرك HTML/PDF</div>
+
+  <div class="content">
+
+    <!-- ── 1. Hero Header ── -->
+    <div class="hero">
+      <div class="hero-left">
+        <div class="hero-company">ALHADY FOR REAL PROPERTY</div>
+        <div class="hero-title">تقرير تقييم عقاري مبدئي</div>
+        <div class="hero-sub">تقرير تقييم آلي مبسط - غير معتمد رسميًا</div>
+        <div class="hero-badge">مسودة غير معتمدة</div>
+      </div>
+      <div class="hero-right">
+        <span>تاريخ التقرير: {{ val_date }}</span>
+        <span>تاريخ التقييم: {{ val_date }}</span>
+        {% if tmp_ref %}<span>رقم مرجعي: {{ tmp_ref }}</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- ── 2. Dashboard KPI Cards ── -->
+    <div class="kpi-grid">
+      <!-- Card 1: Property type -->
+      <div class="kpi-card">
+        <div class="kpi-lbl">نوع العقار</div>
+        <div class="kpi-val">{{ prop_type }}</div>
+      </div>
+      <!-- Card 2: Area -->
+      <div class="kpi-card">
+        <div class="kpi-lbl">المساحة</div>
+        <div class="kpi-val">{{ area_str }}</div>
+      </div>
+      <!-- Card 3: Purpose -->
+      <div class="kpi-card gold">
+        <div class="kpi-lbl">الغرض</div>
+        <div class="kpi-val gold">{{ purpose }}</div>
+      </div>
+      <!-- Cards 4-6: depend on whether estimated value exists -->
+      {% if has_mv %}
+      <div class="kpi-card green">
+        <div class="kpi-lbl">حالة الفحص</div>
+        <div class="kpi-val sm green">بيانات مكتملة مبدئيًا</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-lbl">القيمة المبدئية</div>
+        <div class="kpi-val green">{{ mv_str }}</div>
+      </div>
+      {% if low_str and high_str %}
+      <div class="kpi-card gold">
+        <div class="kpi-lbl">النطاق السعري</div>
+        <div class="kpi-val gold">{{ low_str }} — {{ high_str }}</div>
+      </div>
+      {% else %}
+      <div class="kpi-card">
+        <div class="kpi-lbl">سعر المتر</div>
+        <div class="kpi-val sm">{{ price_per_sqm_str if price_per_sqm_str else "—" }}</div>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="kpi-card warn">
+        <div class="kpi-lbl">حالة الفحص</div>
+        <div class="kpi-val warn">تحتاج بيانات سوقية</div>
+      </div>
+      <div class="kpi-card warn span2">
+        <div class="kpi-lbl">القيمة الرقمية</div>
+        <div class="kpi-val warn">غير متاحة بدون مصدر سعر متر أو مقارنات سوقية</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── 3. Property Snapshot ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">ملخص العقار</div>
+      <table class="snap">
+        <tr><td class="lbl">نوع العقار:</td><td class="val">{{ prop_type }}</td></tr>
+        {% if geo_str %}<tr><td class="lbl">الموقع الجغرافي:</td><td class="val">{{ geo_str }}</td></tr>{% endif %}
+        <tr><td class="lbl">المساحة:</td><td class="val">{{ area_str }}</td></tr>
+        <tr><td class="lbl">حالة العقار:</td><td class="val">{{ condition }}</td></tr>
+        {% if finishing %}<tr><td class="lbl">مستوى التشطيب:</td><td class="val">{{ finishing }}</td></tr>{% endif %}
+        {% if description %}<tr><td class="lbl">وصف مختصر:</td><td class="val">{{ description }}</td></tr>{% endif %}
+        {% if notes_str %}<tr><td class="lbl">ملاحظات:</td><td class="val">{{ notes_str }}</td></tr>{% endif %}
+      </table>
+    </div>
+
+    <!-- ── 4. Method Snapshot Dashboard ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">لوحة طرق التقييم المبدئية</div>
+      <table class="method-tbl">
+        <thead>
+          <tr>
+            <th style="width:18%">الطريقة</th>
+            <th style="width:12%">الحالة</th>
+            <th style="width:26%">المدخلات المطلوبة</th>
+            <th style="width:22%">القيمة</th>
+            <th style="width:22%">ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="m-name">مقارنة البيوع</td>
+            <td>
+              {% if has_mv %}<span class="s-ok">متاحة</span>
+              {% else %}<span class="s-no">تحتاج مقارنات</span>{% endif %}
+            </td>
+            <td>مقارنات سوقية، سعر متر، تاريخ بيع</td>
+            <td>
+              {% if has_mv %}{{ mv_str }}
+              {% else %}<span class="s-no">تحتاج مقارنات سوقية معتمدة</span>{% endif %}
+            </td>
+            <td>لا يتم الاعتماد دون مراجعة الخبير</td>
+          </tr>
+          <tr>
+            <td class="m-name">رسملة الدخل</td>
+            <td><span class="s-no">تحتاج بيانات دخل</span></td>
+            <td>إيجار شهري، شواغر، معدل رسملة</td>
+            <td><span class="s-no">تحتاج دخل وإيجار</span></td>
+            <td>تستخدم عند توافر دخل قابل للتحقق</td>
+          </tr>
+          <tr>
+            <td class="m-name">طريقة التكلفة</td>
+            <td><span class="s-no">تحتاج بيانات تكلفة</span></td>
+            <td>تكلفة إنشاء، إهلاك، نصيب أرض</td>
+            <td><span class="s-no">تحتاج بيانات تكلفة</span></td>
+            <td>تستخدم كاختبار داعم عند توافر بيانات فنية</td>
+          </tr>
+          <tr>
+            <td class="m-name">توفيق النتائج</td>
+            <td><span class="s-pnd">قيد المراجعة</span></td>
+            <td>نتائج الطرق الثلاث + أوزان الخبير</td>
+            <td>
+              {% if has_mv %}{{ mv_str }} (مبدئي)
+              {% else %}<span class="s-no">تحتاج مراجعة خبير</span>{% endif %}
+            </td>
+            <td>أوزان إرشادية: 40% / 40% / 20% — قابلة للتعديل</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── 5. Preliminary Conclusion Dashboard ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">الخلاصة المبدئية</div>
+      {% if has_mv %}
+      <div class="concl-box">
+        <div class="concl-main">القيمة السوقية المبدئية: {{ mv_str }}</div>
+        {% if low_str %}<div class="concl-range">الحد الأدنى للنطاق السعري: {{ low_str }}</div>{% endif %}
+        {% if high_str %}<div class="concl-range">الحد الأعلى للنطاق السعري: {{ high_str }}</div>{% endif %}
+        {% if price_per_sqm_str %}<div class="concl-range">سعر المتر المستخدم: {{ price_per_sqm_str }}</div>{% endif %}
+        {% if cond_mul %}<div class="concl-range">معامل الحالة: {{ cond_mul }}</div>{% endif %}
+        {% if fin_mul %}<div class="concl-range">معامل التشطيب: {{ fin_mul }}</div>{% endif %}
+        <div class="concl-range" style="font-style:italic;margin-top:3px;">حساسية مبدئية ±10% (تقريبية)</div>
+        <p class="notice">تنبيه: القيمة المبدئية استرشادية وليست قيمة سوقية معتمدة.</p>
+      </div>
+      {% else %}
+      <div class="gap-box">
+        لا يمكن إصدار قيمة رقمية موثوقة دون مصدر سعر متر أو مقارنات سوقية.
+        <p class="notice" style="color:#8a3030;margin-top:3px;">يلزم توفير سعر المتر لإكمال الحساب.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── 6. Risk / Confidence Strip ── -->
+    <div class="conf-strip">
+      <strong>درجة الاعتماد على البيانات:</strong>
+      {% if has_mv %}
+      متوسطة — بيانات أساسية متاحة، تحتاج تحقق ميداني ومراجعة خبير
+      {% else %}
+      منخفضة — تحتاج بيانات سوقية ومراجعة خبير
+      {% endif %}
+    </div>
+
+    <!-- ── 7. Next Step / CTA ── -->
+    <div class="cta">
+      <div class="cta-ttl">الخطوة التالية</div>
+      لتحويل هذه المسودة إلى تقرير تقييم معتمد، يجب مراجعة البيانات والمستندات والمنهجية بواسطة خبير التقييم، ثم إصدار النسخة المعتمدة عند القبول.
+    </div>
+
+    <!-- ── 8. Disclaimer (inline) ── -->
+    <div class="sec-block">
+      <div class="sec-hdr" style="background:#782828;">إخلاء المسؤولية</div>
+      <div style="font-size:9pt;color:#782828;line-height:1.75;padding:4px 0;">
+        هذا التقرير آلي استرشادي ولا يُعد تقرير تقييم رسمي أو معتمد.
+        لا يُستخدم أمام البنوك أو المحاكم أو الجهات الرسمية قبل مراجعة واعتماد خبير التقييم.
+      </div>
+    </div>
+
+    <!-- ── 9. Required Documents ── -->
+    <div class="sec-block">
+      <div class="sec-hdr">المستندات المطلوبة للمراجعة المهنية</div>
+      <ul class="bul doc">
+        <li>سند الملكية أو عقد البيع</li>
+        <li>كشف مساحة أو رسم كروكي</li>
+        <li>صور العقار</li>
+        <li>رخصة البناء إن وجدت</li>
+        <li>عقود الإيجار إن وجدت</li>
+        <li>أي مستندات تمويل أو نزاع إن وجدت</li>
+      </ul>
+    </div>
+
+    {% if doc_names %}
+    <div class="sec-block">
+      <div class="sec-hdr" style="background:#2d6a9f;">أسماء المستندات المرفقة</div>
+      <ul class="bul">
+        {% for dn in doc_names %}
+        <li>{{ dn }}</li>
+        {% endfor %}
+      </ul>
+      <p class="notice">المستندات لم تُرفع فعليًا بعد - ستُرسل مع طلب مراجعة الخبير</p>
+    </div>
+    {% endif %}
+
+    <!-- ── 10. Proof Footer marker (fixed above) ── -->
+
+    <!-- ── Disclaimer Page 2 ── -->
+    <div class="disc-pg">
+      <div class="disc-ttl">إخلاء المسؤولية التفصيلي</div>
+      <div class="disc-body">
+        هذا التقرير مبدئي وغير معتمد، ولا يُعد تقرير خبير معتمدًا أو مستندًا صالحًا
+        للاستخدام أمام الجهات الرسمية أو القضائية أو التمويلية قبل مراجعة واعتماد
+        خبير التقييم المختص.<br><br>
+        القيم والأرقام الواردة في هذا التقرير استرشادية فقط ولا تمثل رأيًا مهنيًا نهائيًا.
+        الطرق المستخدمة هي أدوات تصفية أولية غير مكتملة دون مراجعة ميدانية وتحليل سوقي
+        معتمد من خبير مرخص.
+      </div>
+    </div>
+
+  </div><!-- /.content -->
+</body>
+</html>

@@ -32,12 +32,13 @@ from pathlib import Path
 
 # ── Storage directories ───────────────────────────────────────────────────────
 
-_BASE     = Path(__file__).parent / "instance" / "requests"
-_REQ_FILE = _BASE / "requests.jsonl"
-_UPLOADS  = _BASE / "uploads"
-_REPORTS  = _BASE / "reports"
+_BASE      = Path(__file__).parent / "instance" / "requests"
+_REQ_FILE  = _BASE / "requests.jsonl"
+_UPLOADS   = _BASE / "uploads"
+_REPORTS   = _BASE / "reports"
+_WORKBOOKS = Path(__file__).parent / "instance" / "expert_workbooks"
 
-for _d in (_BASE, _UPLOADS, _REPORTS):
+for _d in (_BASE, _UPLOADS, _REPORTS, _WORKBOOKS):
     _d.mkdir(parents=True, exist_ok=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -54,6 +55,28 @@ _VALID_REQUEST_KINDS = {
     "expert_contact", "certified_report_request", "tax_appeal_review",
     "draft_report_request", "professional_review", "composite_review",
     "general_advisory",
+}
+
+# ── Approval status model ─────────────────────────────────────────────────────
+
+_APPROVAL_STATUSES = {
+    "draft_only",
+    "under_review",
+    "needs_documents",
+    "approved_pending_report",
+    "rejected",
+    "certified_report_generated",
+}
+
+# Valid status transitions: current_status → allowed_next_statuses
+# certified_report_generated is a terminal state reserved for a future task.
+_ALLOWED_TRANSITIONS: dict[str, set] = {
+    "draft_only":               {"under_review"},
+    "under_review":             {"needs_documents", "approved_pending_report", "rejected"},
+    "needs_documents":          {"under_review"},
+    "approved_pending_report":  set(),
+    "rejected":                 set(),
+    "certified_report_generated": set(),
 }
 
 _PDF_TITLES: dict[str, str] = {
@@ -144,6 +167,110 @@ def _read_all_requests(limit: int = 50, offset: int = 0) -> list:
     return rows[offset: offset + limit]
 
 
+# ── Template / approval helpers ──────────────────────────────────────────────
+
+def _get_template_name_safe(template_id: str) -> str:
+    """Return Arabic template name from registry; fall back gracefully."""
+    try:
+        from report_template_registry import get_template_name_ar
+        return get_template_name_ar(template_id, default=template_id or "غير محدد")
+    except Exception:
+        return template_id or "غير محدد"
+
+
+def _request_summary(req: dict) -> dict:
+    """Build a safe summary dict for the admin list endpoint.
+
+    Strips internal filesystem paths; adds computed fields.
+    Never exposes expert_workbook_path or draft_pdf_path.
+    """
+    payload = req.get("payload_json") or {}
+    if isinstance(payload, str):
+        try:
+            payload = __import__("json").loads(payload)
+        except Exception:
+            payload = {}
+
+    loc_parts = filter(None, [
+        payload.get("country", ""),
+        payload.get("region", ""),
+        payload.get("city", ""),
+        payload.get("district", ""),
+    ])
+    location_summary = " | ".join(loc_parts) or ""
+
+    tmpl_id      = req.get("report_template_id") or ""
+    tmpl_name_ar = _get_template_name_safe(tmpl_id)
+
+    return {
+        "request_id":              req.get("request_id", ""),
+        "created_at":              req.get("created_at", ""),
+        "client_name":             req.get("user_name", ""),
+        "phone":                   req.get("phone", ""),
+        "email":                   req.get("email", ""),
+        "source_page":             req.get("source_page", ""),
+        "request_kind":            req.get("request_kind", ""),
+        "property_type":           payload.get("property_type", ""),
+        "location_summary":        location_summary,
+        "report_template_id":      tmpl_id,
+        "report_template_name_ar": tmpl_name_ar,
+        "approval_status":         req.get("approval_status", "draft_only"),
+        "expert_workbook_available": bool(req.get("expert_workbook_available")),
+        "draft_pdf_available":     req.get("draft_pdf_status") == "generated",
+        "certified_report_available": False,
+    }
+
+
+def _request_detail(req: dict) -> dict:
+    """Build safe detail dict for GET /api/expert-requests/<id>.
+
+    Returns all useful fields; strips internal filesystem paths.
+    """
+    payload = req.get("payload_json") or {}
+    if isinstance(payload, str):
+        try:
+            payload = __import__("json").loads(payload)
+        except Exception:
+            payload = {}
+
+    tmpl_id      = req.get("report_template_id") or ""
+    tmpl_name_ar = _get_template_name_safe(tmpl_id)
+
+    return {
+        "request_id":              req.get("request_id", ""),
+        "created_at":              req.get("created_at", ""),
+        "updated_at":              req.get("updated_at", ""),
+        "approval_status":         req.get("approval_status", "draft_only"),
+        "status":                  req.get("status", "new"),
+        "source_page":             req.get("source_page", ""),
+        "request_kind":            req.get("request_kind", ""),
+        "user_name":               req.get("user_name", ""),
+        "phone":                   req.get("phone", ""),
+        "email":                   req.get("email", ""),
+        "preferred_contact_method": req.get("preferred_contact_method", ""),
+        "summary":                 req.get("summary", ""),
+        "report_template_id":      tmpl_id,
+        "report_template_name_ar": tmpl_name_ar,
+        "payload_json":            payload,
+        "document_count":          req.get("document_count", 0),
+        "documents":               req.get("documents", []),
+        "draft_pdf_available":     req.get("draft_pdf_status") == "generated",
+        "draft_pdf_url":           (
+            f"/api/expert-requests/{req.get('request_id', '')}/draft-pdf"
+            if req.get("draft_pdf_status") == "generated" else None
+        ),
+        "expert_workbook_available": bool(req.get("expert_workbook_available")),
+        "certified_report_available": False,
+        "expert_notes":            req.get("expert_notes", ""),
+        "expert_recommended_value": req.get("expert_recommended_value", ""),
+        "valuation_method_summary": req.get("valuation_method_summary", ""),
+        "reconciliation_notes":    req.get("reconciliation_notes", ""),
+        "decision_reason":         req.get("decision_reason", ""),
+        "requested_documents":     req.get("requested_documents", ""),
+        "review_updated_at":       req.get("review_updated_at", ""),
+    }
+
+
 # ── Document upload helpers ───────────────────────────────────────────────────
 
 def _sanitize_filename(name: str) -> str:
@@ -201,113 +328,22 @@ def _ar(text: str) -> str:
 # ── PDF generation ────────────────────────────────────────────────────────────
 
 def _build_draft_pdf(req: dict, docs_meta: list) -> Path:
-    """Generate a non-certified draft PDF for any source page."""
-    from fpdf import FPDF
+    """Generate a non-certified draft PDF for any source page.
+
+    Uses Playwright/Chromium HTML-to-PDF via pdf_renderer.
+    Chromium handles Arabic shaping, RTL, and bidi natively.
+    Never uses FPDF for Arabic user-facing content.
+    """
+    import html as _html
+    from jinja2 import Environment, FileSystemLoader
+    from pdf_renderer import cairo_font_css, render_pdf_from_html
+
+    def _e(v) -> str:
+        return _html.escape(str(v)) if v is not None else ""
 
     source_page = req.get("source_page", "")
-    pdf_title   = _PDF_TITLES.get(source_page, "تقرير مبدئي استرشادي")
 
-    pdf_dir  = _REPORTS / req["request_id"]
-    pdf_dir.mkdir(parents=True, exist_ok=True)
-    out_path = pdf_dir / "draft_report.pdf"
-
-    # Resolve Cairo fonts (bundled with the project)
-    _font_r = _font_b = None
-    try:
-        from reports.pdf.pdf_arabic import find_font
-        _font_r = str(find_font("cairo-regular"))
-        _font_b = str(find_font("cairo-bold"))
-    except Exception:
-        pass
-
-    # Mutable container so inner class can read the final font name
-    _fn = ["Arial"]
-
-    class _DraftPDF(FPDF):
-        def header(self):
-            self.set_font(_fn[0], "B", 9)
-            self.set_text_color(31, 78, 120)
-            self.cell(0, 7, _ar("ALHADY FOR REAL PROPERTY"),
-                      align="C", new_x="LMARGIN", new_y="NEXT")
-            self.set_text_color(0, 0, 0)
-
-        def footer(self):
-            self.set_y(-14)
-            self.set_text_color(150, 150, 150)
-            if _fn[0] != "Arial":
-                self.set_font(_fn[0], "", 7)
-                label = _ar("تقرير آلي استرشادي - غير معتمد رسميًا") + f"  |  {self.page_no()}"
-            else:
-                self.set_font("Helvetica", "", 7)
-                label = f"Advisory Draft - Non-Certified  |  {self.page_no()}"
-            self.cell(0, 8, label, align="C")
-            self.set_text_color(0, 0, 0)
-
-    pdf = _DraftPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_auto_page_break(auto=True, margin=20)
-
-    if _font_r:
-        try:
-            pdf.add_font("Cairo", style="",  fname=_font_r)
-            pdf.add_font("Cairo", style="B", fname=_font_b or _font_r)
-            _fn[0] = "Cairo"
-        except Exception:
-            pass
-
-    pdf.add_page()
-    fn = _fn[0]
-
-    def _heading(text: str, size: int = 11):
-        pdf.set_font(fn, "B", size)
-        pdf.set_text_color(31, 78, 120)
-        pdf.cell(0, 9, _ar(text), align="R", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0, 0, 0)
-
-    def _row(label: str, value: str):
-        pdf.set_font(fn, "B", 10)
-        pdf.cell(60, 7, _ar(label), align="R")
-        pdf.set_font(fn, "",  10)
-        pdf.cell(0,  7, str(value or "—"), align="L",
-                 new_x="LMARGIN", new_y="NEXT")
-
-    def _hr():
-        pdf.set_draw_color(212, 175, 55)
-        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
-        pdf.ln(3)
-
-    # Title
-    pdf.set_font(fn, "B", 15)
-    pdf.set_text_color(212, 175, 55)
-    pdf.cell(0, 11, _ar(pdf_title), align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0, 0, 0)
-
-    # Watermark banner
-    pdf.set_fill_color(255, 243, 220)
-    pdf.set_font(fn, "B", 10)
-    pdf.set_text_color(180, 50, 0)
-    pdf.cell(0, 8, _ar("تقرير آلي استرشادي - غير معتمد رسميًا"),
-             align="C", fill=True, new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0, 0, 0)
-    pdf.ln(5)
-    _hr()
-
-    # Request metadata
-    _heading("بيانات الطلب")
-    _row("رقم الطلب:",    req.get("request_id", ""))
-    _row("تاريخ الإنشاء:", req.get("created_at", "")[:10] if req.get("created_at") else "")
-    _row("المصدر:",        source_page)
-    _row("نوع الطلب:",     req.get("request_kind", ""))
-    _hr()
-
-    # Contact
-    _heading("بيانات التواصل")
-    _row("الاسم:",         req.get("user_name", ""))
-    _row("الهاتف:",        req.get("phone", ""))
-    if req.get("email"):
-        _row("البريد:",    req.get("email", ""))
-    _hr()
-
-    # Payload summary
+    # Parse payload_json
     payload = req.get("payload_json") or {}
     if isinstance(payload, str):
         try:
@@ -315,262 +351,521 @@ def _build_draft_pdf(req: dict, docs_meta: list) -> Path:
         except Exception:
             payload = {}
 
-    if payload:
-        _heading("ملخص البيانات")
-        for k, v in list(payload.items())[:15]:
-            if v:
-                _row(str(k) + ":", str(v))
-        _hr()
+    payload_items = [
+        {"key": _e(str(k)), "value": _e(str(v))}
+        for k, v in list(payload.items())[:15]
+        if v
+    ]
+    doc_names = [_e(dm.get("original_filename", "")) for dm in (docs_meta or [])]
 
-    # Summary / notes
-    if req.get("summary"):
-        _heading("ملاحظات المستخدم")
-        pdf.set_font(fn, "", 10)
-        pdf.multi_cell(0, 7, _ar(str(req["summary"])), align="R")
-        _hr()
+    env      = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+    template = env.get_template("expert_request_receipt.html")
+    html_str = template.render(
+        font_css_block=cairo_font_css(),
+        pdf_title=_e(_PDF_TITLES.get(source_page, "تقرير مبدئي استرشادي")),
+        request_id=_e(req.get("request_id", "")),
+        created_at=_e((req.get("created_at") or "")[:10]),
+        source_page=_e(source_page),
+        request_kind=_e(req.get("request_kind", "")),
+        user_name=_e(req.get("user_name", "")),
+        phone=_e(req.get("phone", "")),
+        email=_e(req.get("email", "")),
+        preferred_contact_method=_e(req.get("preferred_contact_method", "")),
+        summary=_e(req.get("summary", "")),
+        payload_items=payload_items,
+        doc_names=doc_names,
+        disclaimer=_e(_DISCLAIMER),
+    )
 
-    # Attached documents
-    if docs_meta:
-        _heading("المستندات المرفقة")
-        for dm in docs_meta:
-            pdf.set_font(fn, "", 10)
-            pdf.cell(0, 6, f"  • {dm.get('original_filename', '')}",
-                     align="R", new_x="LMARGIN", new_y="NEXT")
-        _hr()
+    pdf_dir  = _REPORTS / req["request_id"]
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    out_path = pdf_dir / "draft_report.pdf"
 
-    # Disclaimer (new page)
-    pdf.add_page()
-    _heading("إخلاء المسؤولية", 12)
-    pdf.set_font(fn, "", 10)
-    pdf.set_text_color(120, 50, 50)
-    pdf.multi_cell(0, 7, _ar(_DISCLAIMER), align="R")
-    pdf.set_text_color(0, 0, 0)
-
-    pdf.output(str(out_path))
+    pdf_bytes = render_pdf_from_html(html_str)
+    out_path.write_bytes(pdf_bytes)
     return out_path
 
 
 # ── Simple valuation quick PDF (no stored request) ───────────────────────────
 
-def _build_simple_valuation_pdf_bytes(payload: dict) -> bytes:
-    """Build a non-certified advisory draft PDF from a simple valuation payload.
+_TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
 
-    Returns raw PDF bytes.  No file is written to disk and no request record is
-    created — this is a stateless, self-service draft for the end user.
+
+def _build_simple_valuation_html(payload: dict) -> str:
+    """Build the RTL Arabic HTML for the simple valuation draft PDF.
+
+    Renders the Jinja2 template at templates/pdf/simple_valuation_draft.html.
+    All user-provided values are html.escape()'d before injection.
+    The font CSS block is trusted internal data generated by pdf_renderer.
     """
-    from fpdf import FPDF
+    import html as _html
+    from jinja2 import Environment, FileSystemLoader
 
-    _font_r = _font_b = None
+    def _e(v) -> str:
+        return _html.escape(str(v)) if v is not None else ""
+
+    # Collect and escape payload values
+    prop_type   = _e(payload.get("property_type") or "—")
+    area_raw    = payload.get("area")
+    area_str    = _e(f"{area_raw} م²") if area_raw else "—"
+    purpose     = _e(payload.get("purpose") or "القيمة السوقية")
+    val_date    = _e(payload.get("valuation_date") or "—")
+    condition   = _e(payload.get("condition") or "—")
+    finishing   = _e(payload.get("finishing_level") or "")
+    description = _e((payload.get("description") or "")[:200])
+
+    notes_parts: list = []
+    if payload.get("notes"):
+        notes_parts.append(_e(str(payload["notes"])))
+    if payload.get("quick_context"):
+        notes_parts.append("سؤال السياق: " + _e(str(payload["quick_context"])))
+    notes_str = " | ".join(notes_parts)
+
+    geo_parts = [
+        _e(payload.get("country")  or ""),
+        _e(payload.get("region")   or ""),
+        _e(payload.get("city")     or ""),
+        _e(payload.get("district") or ""),
+    ]
+    geo_str = " | ".join(p for p in geo_parts if p)
+
+    mv      = payload.get("estimated_value")
+    has_mv  = bool(mv and isinstance(mv, (int, float)) and mv > 0)
+    mv_str  = f"{int(mv):,} ج.م" if has_mv else ""
+    low_str = (
+        f"{int(payload['price_range_low']):,} ج.م"
+        if has_mv and payload.get("price_range_low") else ""
+    )
+    high_str = (
+        f"{int(payload['price_range_high']):,} ج.م"
+        if has_mv and payload.get("price_range_high") else ""
+    )
+    cond_mul = (
+        f"×{float(payload['cond_multiplier']):.2f}"
+        if has_mv and payload.get("cond_multiplier") else ""
+    )
+    fin_mul = (
+        f"×{float(payload['fin_multiplier']):.2f}"
+        if has_mv and payload.get("fin_multiplier") else ""
+    )
+
+    doc_names_raw = payload.get("doc_names") or []
+    doc_names = (
+        [_e(str(d)[:120]) for d in doc_names_raw[:10]]
+        if isinstance(doc_names_raw, list) else []
+    )
+
+    ppsm = payload.get("price_per_sqm")
+    price_per_sqm_str = (
+        f"{int(ppsm):,} ج.م/م²"
+        if ppsm and isinstance(ppsm, (int, float)) and ppsm > 0 else ""
+    )
+
+    tmp_ref = _e("TMP-" + uuid.uuid4().hex[:6].upper())
+
+    # Render Jinja2 template
+    from pdf_renderer import cairo_font_css
+    env      = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+    template = env.get_template("simple_valuation_draft.html")
+    return template.render(
+        font_css_block=cairo_font_css(),
+        val_date=val_date,
+        purpose=purpose,
+        geo_str=geo_str,
+        prop_type=prop_type,
+        area_str=area_str,
+        condition=condition,
+        finishing=finishing,
+        description=description,
+        has_mv=has_mv,
+        mv_str=mv_str,
+        low_str=low_str,
+        high_str=high_str,
+        cond_mul=cond_mul,
+        fin_mul=fin_mul,
+        notes_str=notes_str,
+        doc_names=doc_names,
+        price_per_sqm_str=price_per_sqm_str,
+        tmp_ref=tmp_ref,
+    )
+
+
+def _build_simple_valuation_pdf_bytes(payload: dict) -> bytes:
+    """Build a non-certified advisory draft PDF using Playwright/Chromium.
+
+    Delegates rendering to pdf_renderer.render_pdf_from_html().
+    Chromium handles Arabic shaping and RTL natively.
+    Never falls back to FPDF for Arabic text.
+    """
+    from pdf_renderer import render_pdf_from_html
+    return render_pdf_from_html(_build_simple_valuation_html(payload))
+
+
+# ── Internal expert workbook ──────────────────────────────────────────────────
+
+def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) -> Path:
+    """Create internal expert review Excel workbook (9 sheets: Dashboard + traditional).
+
+    Never exposed to ordinary users.
+    Saves to: core_engine/instance/expert_workbooks/<REQ-ID>/expert_review_<REQ-ID>.xlsx
+    Returns the Path to the saved file.
+    """
+    # Resolve report template name (Arabic) from the registry — internal use only
     try:
-        from reports.pdf.pdf_arabic import find_font
-        _font_r = str(find_font("cairo-regular"))
-        _font_b = str(find_font("cairo-bold"))
+        from report_template_registry import get_template_name_ar
+        _tmpl_id      = req.get("report_template_id") or ""
+        _tmpl_name_ar = get_template_name_ar(_tmpl_id, default=_tmpl_id or "غير محدد")
     except Exception:
-        pass
+        _tmpl_id      = req.get("report_template_id") or ""
+        _tmpl_name_ar = _tmpl_id or "غير محدد"
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
 
-    _fn = ["Arial"]
+    # ── Colour palette ──────────────────────────────────────────────────────
+    C_BLUE_D  = "1F4E78"
+    C_BLUE_M  = "2D6A9F"
+    C_BLUE_L  = "EBF3FB"
+    C_GOLD    = "D4AF37"
+    C_GOLD_BG = "FFF9E6"
+    C_GRAY    = "F5F5F5"
+    C_GREEN   = "F0FFF6"
+    C_RED     = "FFF5F5"
+    C_WHITE   = "FFFFFF"
 
-    class _ValPDF(FPDF):
-        def header(self):
-            self.set_font(_fn[0], "B", 9)
-            self.set_text_color(31, 78, 120)
-            self.cell(0, 7, _ar("ALHADY FOR REAL PROPERTY"),
-                      align="C", new_x="LMARGIN", new_y="NEXT")
-            self.set_text_color(0, 0, 0)
+    F_TITLE = Font(bold=True, color=C_WHITE, name="Arial", size=12)
+    F_SEC   = Font(bold=True, color=C_WHITE, name="Arial", size=10)
+    F_HDR   = Font(bold=True, color=C_WHITE, name="Arial", size=10)
+    F_LBL   = Font(bold=True, color=C_BLUE_D, name="Arial", size=9)
+    F_VAL   = Font(color="1A1A2E",           name="Arial", size=9)
+    F_GOLD  = Font(bold=True, color="7A5800", name="Arial", size=10)
 
-        def footer(self):
-            self.set_y(-14)
-            self.set_text_color(150, 150, 150)
-            if _fn[0] != "Arial":
-                self.set_font(_fn[0], "", 7)
-                label = _ar("تقرير آلي استرشادي - غير معتمد رسميًا") + f"  |  {self.page_no()}"
-            else:
-                self.set_font("Helvetica", "", 7)
-                label = f"Advisory Draft - Non-Certified  |  {self.page_no()}"
-            self.cell(0, 8, label, align="C")
-            self.set_text_color(0, 0, 0)
+    AL_RT   = Alignment(horizontal="right",  vertical="center", wrap_text=True)
+    AL_CTR  = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    AL_TOP  = Alignment(horizontal="right",  vertical="top",    wrap_text=True)
 
-    pdf = _ValPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_auto_page_break(auto=True, margin=20)
+    def _fill(c):
+        return PatternFill("solid", fgColor=c)
 
-    if _font_r:
+    def _rtl(ws):
         try:
-            pdf.add_font("Cairo", style="",  fname=_font_r)
-            pdf.add_font("Cairo", style="B", fname=_font_b or _font_r)
-            _fn[0] = "Cairo"
+            ws.sheet_view.rightToLeft = True
         except Exception:
             pass
 
-    pdf.add_page()
-    fn = _fn[0]
+    def _hdr(ws, headers):
+        """Standard column-header row (row 1, freeze row 2)."""
+        for col, title in enumerate(headers, 1):
+            c = ws.cell(row=1, column=col, value=title)
+            c.font  = F_HDR
+            c.fill  = _fill(C_BLUE_D)
+            c.alignment = AL_CTR
+        ws.freeze_panes = ws.cell(row=2, column=1)
+        _rtl(ws)
 
-    def _heading(text: str, size: int = 11) -> None:
-        pdf.set_font(fn, "B", size)
-        pdf.set_text_color(31, 78, 120)
-        pdf.cell(0, 9, _ar(text), align="R", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0, 0, 0)
+    def _row(ws, rownum, *vals):
+        for col, v in enumerate(vals, 1):
+            c = ws.cell(row=rownum, column=col)
+            c.value     = str(v) if v is not None else ""
+            c.alignment = AL_RT
 
-    def _row(label: str, value: str) -> None:
-        pdf.set_font(fn, "B", 10)
-        pdf.cell(60, 7, _ar(label), align="R")
-        pdf.set_font(fn, "", 10)
-        pdf.cell(0, 7, str(value or "—"), align="L",
-                 new_x="LMARGIN", new_y="NEXT")
+    def _widths(ws, widths):
+        for col, w in enumerate(widths, 1):
+            ws.column_dimensions[get_column_letter(col)].width = w
 
-    def _hr() -> None:
-        pdf.set_draw_color(212, 175, 55)
-        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
-        pdf.ln(3)
+    def _sec_hdr(ws, row, col1, col2, title, bg=C_BLUE_M, fg=C_WHITE):
+        """Merged section-header row."""
+        cr = f"{get_column_letter(col1)}{row}:{get_column_letter(col2)}{row}"
+        ws.merge_cells(cr)
+        c = ws.cell(row=row, column=col1, value=title)
+        c.font      = Font(bold=True, color=fg, name="Arial", size=10)
+        c.fill      = _fill(bg)
+        c.alignment = AL_CTR
+        ws.row_dimensions[row].height = 18
+
+    def _kv(ws, row, label, value,
+            lc=1, vs=2, ve=3, lbg=C_BLUE_L, vbg=C_WHITE):
+        """Label / value pair with optional merged value cells."""
+        cl = ws.cell(row=row, column=lc, value=label)
+        cl.font      = F_LBL
+        cl.fill      = _fill(lbg)
+        cl.alignment = AL_RT
+        if ve > vs:
+            ws.merge_cells(
+                f"{get_column_letter(vs)}{row}:{get_column_letter(ve)}{row}"
+            )
+        cv = ws.cell(row=row, column=vs, value=str(value) if value else "")
+        cv.font      = F_VAL
+        cv.fill      = _fill(vbg)
+        cv.alignment = AL_RT
+
+    # ── Parse payload ────────────────────────────────────────────────────────
+    payload = req.get("payload_json") or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            payload = {}
+
+    mv      = payload.get("estimated_value")
+    has_mv  = bool(mv and isinstance(mv, (int, float)) and mv > 0)
+    mv_str  = f"{int(mv):,}" if has_mv else ""
+    low_v   = payload.get("price_range_low")
+    high_v  = payload.get("price_range_high")
+    low_s   = f"{int(low_v):,}"  if has_mv and low_v  else ""
+    high_s  = f"{int(high_v):,}" if has_mv and high_v else ""
+    rng_s   = f"{low_s} — {high_s}" if low_s and high_s else ""
+    location = " | ".join(filter(None, [
+        payload.get("country", ""), payload.get("region", ""),
+        payload.get("city", ""),    payload.get("district", ""),
+    ]))
+    data_status  = "مكتملة مبدئيًا" if has_mv else "ناقصة — تحتاج سعر متر"
+    docs_status  = "مستندات مرفقة للمراجعة" if docs_meta else "لم تُرفع بعد"
+    doc_names_s  = ", ".join(
+        dm.get("original_filename", "") for dm in (docs_meta or [])
+    )
+    area_s  = (f"{payload.get('area')} م²" if payload.get("area") else "")
+
+    wb = openpyxl.Workbook()
+
+    # ── Sheet 1: Dashboard ────────────────────────────────────────────────────
+    ws_d = wb.active
+    ws_d.title = "Dashboard"
+    _rtl(ws_d)
+    _widths(ws_d, [30, 28, 28, 30, 28, 28])
 
     # Title
-    pdf.set_font(fn, "B", 15)
-    pdf.set_text_color(212, 175, 55)
-    pdf.cell(0, 11, _ar("تقرير تقييم عقاري مبدئي"),
-             align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0, 0, 0)
+    ws_d.merge_cells("A1:F1")
+    ws_d["A1"].value     = "لوحة معلومات المراجعة الداخلية — Expert Smart"
+    ws_d["A1"].font      = F_TITLE
+    ws_d["A1"].fill      = _fill(C_BLUE_D)
+    ws_d["A1"].alignment = AL_CTR
+    ws_d.row_dimensions[1].height = 28
 
-    # Watermark banner
-    pdf.set_fill_color(255, 243, 220)
-    pdf.set_font(fn, "B", 10)
-    pdf.set_text_color(180, 50, 0)
-    pdf.cell(0, 8, _ar("تقرير تقييم آلي مبسط - غير معتمد رسميًا"),
-             align="C", fill=True, new_x="LMARGIN", new_y="NEXT")
-    pdf.set_text_color(0, 0, 0)
-    pdf.ln(5)
-    _hr()
+    # Section: بيانات الطلب
+    _sec_hdr(ws_d, 2, 1, 6, "بيانات الطلب")
+    _kv(ws_d, 3, "رقم الطلب",     request_id,                                  1, 2, 3)
+    _kv(ws_d, 3, "حالة الطلب",    req.get("approval_status", "قيد المراجعة"),  4, 5, 6)
+    _kv(ws_d, 4, "تاريخ الإنشاء", (req.get("created_at") or "")[:10],          1, 2, 3)
+    _kv(ws_d, 4, "نوع الطلب",     req.get("request_kind", ""),                 4, 5, 6)
+    _kv(ws_d, 5, "اسم العميل",    req.get("user_name", ""),                    1, 2, 3)
+    _kv(ws_d, 5, "الهاتف",        req.get("phone", ""),                        4, 5, 6)
+    _kv(ws_d, 6, "نموذج التقرير المطلوب", _tmpl_name_ar,                       1, 2, 3,
+        vbg=C_GOLD_BG if _tmpl_name_ar and _tmpl_name_ar != "غير محدد" else C_GRAY)
+    _kv(ws_d, 6, "معرّف النموذج (ID)",   _tmpl_id or "—",                     4, 5, 6)
+    ws_d.row_dimensions[7].height = 8
 
-    # Valuation date and purpose
-    _heading("بيانات التقييم")
-    _row("تاريخ التقييم:", str(payload.get("valuation_date") or "—"))
-    _row("الغرض:",         str(payload.get("purpose") or "القيمة السوقية"))
-    _hr()
+    # Section: بيانات العقار
+    _sec_hdr(ws_d, 8, 1, 6, "بيانات العقار")
+    _kv(ws_d, 9,  "نوع العقار",      payload.get("property_type", ""),          1, 2, 3)
+    _kv(ws_d, 9,  "الغرض",           payload.get("purpose", "القيمة السوقية"),  4, 5, 6)
+    _kv(ws_d, 10, "الموقع",          location,                                  1, 2, 3)
+    _kv(ws_d, 10, "المساحة",         area_s,                                    4, 5, 6)
+    _kv(ws_d, 11, "تاريخ التقييم",   payload.get("valuation_date", ""),         1, 2, 3)
+    _kv(ws_d, 11, "حالة البيانات",   data_status,                               4, 5, 6,
+        vbg=C_GREEN if has_mv else C_RED)
+    ws_d.row_dimensions[12].height = 8
 
-    # Geographic location
-    geo_parts = [
-        str(payload.get("country") or ""),
-        str(payload.get("region") or ""),
-        str(payload.get("city") or ""),
-        str(payload.get("district") or ""),
+    # Section: حالة طرق التقييم
+    _sec_hdr(ws_d, 13, 1, 6, "حالة طرق التقييم")
+    _kv(ws_d, 14, "مقارنة البيوع",  "متاحة" if has_mv else "تحتاج مقارنات",  1, 2, 3,
+        vbg=C_GREEN if has_mv else C_RED)
+    _kv(ws_d, 14, "طريقة الدخل",   "تحتاج بيانات دخل",                        4, 5, 6, vbg=C_RED)
+    _kv(ws_d, 15, "طريقة التكلفة", "تحتاج بيانات تكلفة",                       1, 2, 3, vbg=C_RED)
+    _kv(ws_d, 15, "التوفيق",        "قيد المراجعة",                            4, 5, 6, vbg=C_GOLD_BG)
+    _kv(ws_d, 16, "حالة المستندات", docs_status,                               1, 2, 3,
+        vbg=C_GREEN if docs_meta else C_RED)
+    _kv(ws_d, 16, "حالة التوثيق",  "لم تراجع بعد",                             4, 5, 6, vbg=C_RED)
+    ws_d.row_dimensions[17].height = 8
+
+    # Section: القيمة المبدئية
+    _sec_hdr(ws_d, 18, 1, 6, "القيمة المبدئية")
+    _kv(ws_d, 19, "القيمة المبدئية", mv_str if mv_str else "غير متاحة",        1, 2, 3,
+        vbg=C_GREEN if has_mv else C_RED)
+    _kv(ws_d, 19, "النطاق السعري",   rng_s if rng_s else "—",                  4, 5, 6,
+        vbg=C_GOLD_BG if rng_s else C_GRAY)
+    ws_d.row_dimensions[20].height = 8
+
+    # Section: قرار الخبير (gold)
+    _sec_hdr(ws_d, 21, 1, 6, "قرار الخبير", C_GOLD, "7A5800")
+    ws_d.merge_cells("A22:F22")
+    cq = ws_d["A22"]
+    cq.value     = "قيد المراجعة — يُعبأ بواسطة الخبير"
+    cq.font      = F_GOLD
+    cq.fill      = _fill(C_GOLD_BG)
+    cq.alignment = AL_CTR
+    ws_d.row_dimensions[22].height = 22
+    ws_d.row_dimensions[23].height = 8
+
+    # Section: ملاحظات الخبير
+    _sec_hdr(ws_d, 24, 1, 6, "ملاحظات الخبير الرئيسية")
+    ws_d.merge_cells("A25:F28")
+    cn = ws_d["A25"]
+    cn.value     = ""
+    cn.fill      = _fill(C_WHITE)
+    cn.alignment = AL_TOP
+    for r in range(25, 29):
+        ws_d.row_dimensions[r].height = 20
+
+    ws_d.freeze_panes = ws_d["A3"]
+
+    # ── Sheet 2: غلاف وملخص ──────────────────────────────────────────────────
+    ws2 = wb.create_sheet("غلاف وملخص")
+    _hdr(ws2, ["الحقل", "القيمة"])
+    rows2 = [
+        ("رقم الطلب",                  request_id),
+        ("تاريخ الإنشاء",              (req.get("created_at") or "")[:10]),
+        ("اسم العميل",                  req.get("user_name", "")),
+        ("الهاتف",                      req.get("phone", "")),
+        ("البريد الإلكتروني",           req.get("email", "")),
+        ("نوع الطلب",                   req.get("request_kind", "")),
+        ("نموذج التقرير المطلوب",       _tmpl_name_ar),
+        ("معرّف نموذج التقرير",         _tmpl_id or "—"),
+        ("حالة الاعتماد",               req.get("approval_status", "draft_only")),
+        ("طريقة الاستلام المطلوبة",     req.get("preferred_contact_method", "")),
+        ("الغرض من التقييم",            payload.get("purpose", "القيمة السوقية")),
+        ("تاريخ التقييم",               payload.get("valuation_date", "")),
+        ("نوع العقار",                  payload.get("property_type", "")),
+        ("الموقع",                      location),
+        ("المساحة",                     area_s),
+        ("وصف مختصر",                   (payload.get("description") or "")[:200]),
+        ("حالة التقرير",                "قيد المراجعة"),
+        ("تنبيه",                       "هذا ملف داخلي للخبير والإدارة فقط — لا يُشارك مع العميل"),
     ]
-    geo_str = " | ".join(p for p in geo_parts if p)
-    if geo_str:
-        _heading("الموقع الجغرافي")
-        _row("الموقع:", geo_str)
-        _hr()
+    for i, (k, v) in enumerate(rows2, 2):
+        _row(ws2, i, k, v)
+    _widths(ws2, [36, 54])
 
-    # Property data
-    _heading("بيانات العقار")
-    _row("نوع العقار:",    str(payload.get("property_type") or "—"))
-    area_v = payload.get("area")
-    _row("المساحة:",       f"{area_v} م²" if area_v else "—")
-    _row("حالة العقار:",   str(payload.get("condition") or "—"))
-    finishing = payload.get("finishing_level")
-    if finishing:
-        _row("مستوى التشطيب:", str(finishing))
-    desc = payload.get("description")
-    if desc:
-        _row("وصف العقار:", str(desc)[:120])
-    _hr()
+    # ── Sheet 3: بيانات العقار ────────────────────────────────────────────────
+    ws3 = wb.create_sheet("بيانات العقار")
+    _hdr(ws3, ["الحقل", "القيمة"])
+    rows3 = [
+        ("نوع العقار",           payload.get("property_type", "")),
+        ("وصف العقار",           (payload.get("description") or "")[:200]),
+        ("العنوان الكامل",        location),
+        ("الدولة",               payload.get("country", "")),
+        ("المحافظة / المنطقة",   payload.get("region", "")),
+        ("المدينة",              payload.get("city", "")),
+        ("الحي / المنطقة",       payload.get("district", "")),
+        ("المساحة (م²)",         payload.get("area", "")),
+        ("حالة العقار",          payload.get("condition", "")),
+        ("مستوى التشطيب",        payload.get("finishing_level", "")),
+        ("المرافق والخدمات",      ""),
+        ("حقوق الملكية",         ""),
+        ("سهولة الوصول",         ""),
+        ("الملاحظات",            (payload.get("notes") or "")),
+        ("المستندات المرفقة",    doc_names_s),
+    ]
+    for i, (k, v) in enumerate(rows3, 2):
+        _row(ws3, i, k, v)
+    _widths(ws3, [32, 54])
 
-    # Valuation result
-    _heading("نتيجة التقييم المبدئي")
-    mv = payload.get("estimated_value")
-    if mv and isinstance(mv, (int, float)) and mv > 0:
-        _row("القيمة السوقية المبدئية:", f"{int(mv):,} ج.م")
-        low = payload.get("price_range_low")
-        high = payload.get("price_range_high")
-        if low:
-            _row("الحد الأدنى (−10%):", f"{int(low):,} ج.م")
-        if high:
-            _row("الحد الأعلى (+10%):", f"{int(high):,} ج.م")
-        cond_mul = payload.get("cond_multiplier")
-        fin_mul  = payload.get("fin_multiplier")
-        if cond_mul:
-            _row("معامل الحالة:", f"×{float(cond_mul):.2f}")
-        if fin_mul:
-            _row("معامل التشطيب:", f"×{float(fin_mul):.2f}")
-        pdf.set_font(fn, "", 9)
-        pdf.set_text_color(120, 120, 120)
-        pdf.multi_cell(0, 6,
-            _ar("⚠️ القيمة المبدئية استرشادية وليست قيمة سوقية معتمدة. النطاق ±10% تقريبي."),
-            align="R")
-        pdf.set_text_color(0, 0, 0)
-    else:
-        pdf.set_font(fn, "", 10)
-        pdf.set_text_color(120, 50, 50)
-        pdf.multi_cell(0, 7,
-            _ar("لا يمكن إصدار قيمة رقمية موثوقة دون مصدر سعر متر أو مقارنات سوقية."),
-            align="R")
-        pdf.set_text_color(0, 0, 0)
-    _hr()
+    # ── Sheet 4: مقارنة البيوع ────────────────────────────────────────────────
+    ws4 = wb.create_sheet("مقارنة البيوع")
+    _hdr(ws4, [
+        "رقم المقارن", "نوع العقار", "الموقع", "المساحة",
+        "تاريخ البيع / العرض", "قيمة البيع", "سعر المتر",
+        "التشطيب", "الإطلالة / المزايا",
+        "معامل الموقع", "معامل المساحة", "معامل الحالة", "معامل التاريخ",
+        "السعر المعدل", "ملاحظات الخبير",
+    ])
+    for n in range(1, 4):
+        _row(ws4, n + 1, f"مقارن {n}", "", "", "", "", "", "", "", "",
+             "", "", "", "", "")
+    _widths(ws4, [14, 16, 22, 12, 18, 16, 14, 12, 18, 14, 14, 14, 14, 16, 30])
 
-    # Notes / quick context
-    notes_parts = []
-    if payload.get("notes"):
-        notes_parts.append(str(payload["notes"]))
-    if payload.get("quick_context"):
-        notes_parts.append("سؤال السياق: " + str(payload["quick_context"]))
-    if notes_parts:
-        _heading("ملاحظات")
-        pdf.set_font(fn, "", 10)
-        pdf.multi_cell(0, 7, _ar(" | ".join(notes_parts)[:300]), align="R")
-        _hr()
+    # ── Sheet 5: طريقة الدخل ──────────────────────────────────────────────────
+    ws5 = wb.create_sheet("طريقة الدخل")
+    _hdr(ws5, ["الحقل", "القيمة", "ملاحظات الخبير"])
+    income_rows = [
+        "نوع الاستخدام",
+        "المساحة المؤجرة (م²)",
+        "الإيجار الشهري",
+        "الدخل السنوي الإجمالي",
+        "نسبة الشواغر (%)",
+        "المصاريف الدورية",
+        "صافي الدخل التشغيلي NOI",
+        "معدل الرسملة (%)",
+        "القيمة بطريقة الدخل",
+        "ملاحظات الخبير",
+    ]
+    for i, field in enumerate(income_rows, 2):
+        _row(ws5, i, field, "", "")
+    _widths(ws5, [38, 26, 50])
 
-    # Document names list
-    doc_names = payload.get("doc_names") or []
-    if doc_names and isinstance(doc_names, list):
-        _heading("أسماء المستندات المرفقة")
-        for dn in doc_names[:10]:
-            pdf.set_font(fn, "", 10)
-            pdf.cell(0, 6, f"  • {str(dn)[:80]}",
-                     align="R", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font(fn, "", 9)
-        pdf.set_text_color(100, 100, 100)
-        pdf.cell(0, 5,
-            _ar("(المستندات لم تُرفع بعد — ستُرسل مع طلب مراجعة الخبير)"),
-            align="R", new_x="LMARGIN", new_y="NEXT")
-        pdf.set_text_color(0, 0, 0)
-        _hr()
+    # ── Sheet 6: طريقة التكلفة ────────────────────────────────────────────────
+    ws6 = wb.create_sheet("طريقة التكلفة")
+    _hdr(ws6, ["الحقل", "القيمة", "ملاحظات الخبير"])
+    cost_rows = [
+        "إجمالي مسطح الأرض (م²)",
+        "إجمالي مسطح المباني (م²)",
+        "مسطح الجزء محل التقييم (م²)",
+        "نصيب الجزء من الأرض (م²)",
+        "سعر متر الأرض",
+        "قيمة نصيب الأرض",
+        "تكلفة إنشاء المتر كجديد",
+        "تكلفة إنشاء الجزء محل التقييم",
+        "العمر الفعال (سنة)",
+        "العمر الاقتصادي (سنة)",
+        "الإهلاك القابل للإصلاح",
+        "الإهلاك غير القابل للإصلاح",
+        "إجمالي الإهلاك",
+        "القيمة بطريقة التكلفة",
+        "ملاحظات الخبير",
+    ]
+    for i, field in enumerate(cost_rows, 2):
+        _row(ws6, i, field, "", "")
+    _widths(ws6, [40, 26, 50])
 
-    # Professional alerts
-    _heading("التنبيهات المهنية")
-    pdf.set_font(fn, "", 9)
-    pdf.set_text_color(100, 100, 100)
-    pdf.multi_cell(0, 6, _ar(
-        "• هذا التقرير آلي استرشادي ولا يُعد تقرير تقييم رسمي أو معتمد.\n"
-        "• لا يُستخدم أمام البنوك أو المحاكم أو الجهات الرسمية قبل مراجعة واعتماد خبير التقييم.\n"
-        "• معاملات الحالة والتشطيب استرشادية وقد تختلف عن الواقع السوقي الفعلي."
-    ), align="R")
-    pdf.set_text_color(0, 0, 0)
-    _hr()
+    # ── Sheet 7: توفيق النتائج ────────────────────────────────────────────────
+    ws7 = wb.create_sheet("توفيق النتائج")
+    _hdr(ws7, ["الحقل", "القيمة", "ملاحظات الخبير"])
+    recon_rows = [
+        ("قيمة طريقة مقارنة البيوع",              "",   ""),
+        ("وزن طريقة مقارنة البيوع %",             "40", "وزن افتراضي إرشادي — قابل للتعديل بواسطة الخبير"),
+        ("قيمة طريقة الدخل",                      "",   ""),
+        ("وزن طريقة الدخل %",                     "40", "وزن افتراضي إرشادي — قابل للتعديل بواسطة الخبير"),
+        ("قيمة طريقة التكلفة",                    "",   ""),
+        ("وزن طريقة التكلفة %",                   "20", "وزن افتراضي إرشادي — قابل للتعديل بواسطة الخبير"),
+        ("القيمة المرجحة النهائية",                "",   ""),
+        ("حساسية التقييم ±10%",                   "",   ""),
+        ("القيمة الدنيا",                          "",   ""),
+        ("القيمة العليا",                          "",   ""),
+        ("القيمة التي يوصي بها الخبير",           "",   ""),
+        ("قرار الخبير",                            "قيد المراجعة", ""),
+        ("ملاحظات التوفيق",                       "",   ""),
+    ]
+    for i, (k, v, note) in enumerate(recon_rows, 2):
+        _row(ws7, i, k, v, note)
+    _widths(ws7, [40, 26, 54])
 
-    # Expert CTA
-    _heading("الخطوة التالية — مراجعة الخبير")
-    pdf.set_font(fn, "", 10)
-    pdf.multi_cell(0, 7, _ar(
-        "للحصول على تقرير تقييم معتمد، تواصل مع خبير التقييم لمراجعة البيانات "
-        "والمنهجية وإصدار النسخة المعتمدة الرسمية عبر نظام Expert Smart."
-    ), align="R")
+    # ── Sheet 8: المستندات ────────────────────────────────────────────────────
+    ws8 = wb.create_sheet("المستندات")
+    _hdr(ws8, ["اسم المستند", "نوع المستند", "حالة المراجعة", "ملاحظات الخبير"])
+    for i, dm in enumerate(docs_meta or [], 2):
+        _row(ws8, i,
+             dm.get("original_filename", ""),
+             dm.get("document_role", "supporting_documents"),
+             "قيد المراجعة",
+             "")
+    _widths(ws8, [44, 24, 24, 44])
 
-    # Disclaimer page
-    pdf.add_page()
-    _heading("إخلاء المسؤولية", 12)
-    pdf.set_font(fn, "", 10)
-    pdf.set_text_color(120, 50, 50)
-    pdf.multi_cell(0, 7, _ar(_DISCLAIMER), align="R")
-    pdf.set_text_color(0, 0, 0)
+    # ── Sheet 9: سجل المراجعة ────────────────────────────────────────────────
+    ws9 = wb.create_sheet("سجل المراجعة")
+    _hdr(ws9, ["التاريخ والوقت", "الإجراء", "المستخدم / الدور", "الملاحظة"])
+    now_str = (req.get("created_at") or "")[:19].replace("T", " ")
+    _row(ws9, 2, now_str, "إنشاء الطلب", "النظام", f"إنشاء الطلب {request_id} تلقائيًا")
+    if _tmpl_id:
+        _row(ws9, 3, now_str, "نموذج التقرير المطلوب", "العميل",
+             f"نموذج: {_tmpl_name_ar} ({_tmpl_id})")
+    _widths(ws9, [25, 32, 28, 54])
 
-    # Write to temp file and read bytes (compatible with fpdf 1.x and fpdf2)
-    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as _tmp:
-        _tmp_path = _tmp.name
-    try:
-        pdf.output(_tmp_path)
-        return Path(_tmp_path).read_bytes()
-    finally:
-        try:
-            Path(_tmp_path).unlink()
-        except OSError:
-            pass
+    # Save
+    wb_dir  = _WORKBOOKS / request_id
+    wb_dir.mkdir(parents=True, exist_ok=True)
+    wb_path = wb_dir / f"expert_review_{request_id}.xlsx"
+    wb.save(str(wb_path))
+    return wb_path
 
 
 # ── Route registration ────────────────────────────────────────────────────────
@@ -609,6 +904,8 @@ def register(app, require_auth, limiter=None) -> None:
         if not request_kind or request_kind not in _VALID_REQUEST_KINDS:
             request_kind = "general_advisory"
 
+        report_template_id = (form.get("report_template_id") or "").strip()
+
         # Parse optional payload_json
         raw_payload = form.get("payload_json") or ""
         try:
@@ -632,6 +929,7 @@ def register(app, require_auth, limiter=None) -> None:
             "email":                email,
             "preferred_contact_method": (form.get("preferred_contact_method") or "").strip(),
             "summary":              (form.get("summary") or "").strip(),
+            "report_template_id":   report_template_id,
             "payload_json":         payload_obj,
             "calculation_json":     {},
             "document_count":       0,
@@ -675,6 +973,16 @@ def register(app, require_auth, limiter=None) -> None:
         except Exception as exc:
             req["draft_pdf_status"] = f"error: {exc}"
 
+        # Generate internal expert workbook (never exposed to ordinary user)
+        workbook_available = False
+        try:
+            wb_path = _create_expert_review_workbook(request_id, req, docs_saved)
+            req["expert_workbook_path"]      = str(wb_path)
+            req["expert_workbook_available"] = True
+            workbook_available = True
+        except Exception as _wb_exc:
+            req["expert_workbook_available"] = False
+
         _persist_request(req)
 
         return jsonify({
@@ -683,14 +991,17 @@ def register(app, require_auth, limiter=None) -> None:
             "source_page":      source_page,
             "request_kind":     request_kind,
             "message": (
-                f"تم تسجيل الطلب بنجاح. رقم الطلب: {request_id}. سيتم التواصل معك قريبًا."
-            ),
-            "pdf_available":     pdf_available,
-            "pdf_download_url":  pdf_download_url,
-            "pdf_message":       pdf_message,
-            "non_certified":     True,
-            "documents_saved":   len(docs_saved),
-            "document_errors":   doc_errors,
+                f"تم تسجيل طلب مراجعة التقرير. رقم الطلب: {request_id}. "
+                "هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير. "
+                + ("تم إنشاء ملف مراجعة داخلي للخبير." if workbook_available else "")
+            ).strip(),
+            "pdf_available":            pdf_available,
+            "pdf_download_url":         pdf_download_url,
+            "pdf_message":              pdf_message,
+            "non_certified":            True,
+            "expert_workbook_available": workbook_available,
+            "documents_saved":          len(docs_saved),
+            "document_errors":          doc_errors,
         }), 201
 
     # ── GET /api/expert-requests/<id> — Request details ───────────────────
@@ -701,9 +1012,7 @@ def register(app, require_auth, limiter=None) -> None:
         req = _read_request(request_id)
         if req is None:
             return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
-        # Return safe subset (no internal paths)
-        public = {k: v for k, v in req.items() if k != "draft_pdf_path"}
-        return jsonify({"status": "ok", "request": public}), 200
+        return jsonify({"status": "ok", "request": _request_detail(req)}), 200
 
     # ── POST /api/expert-requests/<id>/documents — Upload documents ────────
     @app.route("/api/expert-requests/<request_id>/documents", methods=["POST"])
@@ -783,11 +1092,29 @@ def register(app, require_auth, limiter=None) -> None:
         if not pdf_path.exists():
             return jsonify({"status": "error", "message": "التقرير المبدئي غير موجود"}), 404
 
-        return send_file(
+        resp = send_file(
             str(pdf_path),
             mimetype="application/pdf",
             as_attachment=False,
             download_name=f"draft_report_{request_id}.pdf",
+        )
+        resp.headers["X-PDF-Renderer"] = "html-playwright"
+        return resp
+
+    # ── GET /api/expert-requests/<id>/expert-workbook — Admin Excel download ─
+    @app.route("/api/expert-requests/<request_id>/expert-workbook", methods=["GET"])
+    @require_auth
+    def expert_request_download_workbook(request_id: str):
+        if not _REQUEST_ID_RE.match(request_id):
+            return jsonify({"status": "error", "message": "رقم الطلب غير صالح"}), 400
+        wb_path = _WORKBOOKS / request_id / f"expert_review_{request_id}.xlsx"
+        if not wb_path.exists():
+            return jsonify({"status": "error", "message": "ملف المراجعة غير موجود"}), 404
+        return send_file(
+            str(wb_path),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name=f"expert_review_{request_id}.xlsx",
         )
 
     # ── POST /api/simple-valuation/draft-pdf — Quick advisory PDF ─────────
@@ -818,12 +1145,14 @@ def register(app, require_auth, limiter=None) -> None:
             pdf_bytes = _build_simple_valuation_pdf_bytes(payload)
             buf = io.BytesIO(pdf_bytes)
             buf.seek(0)
-            return send_file(
+            resp = send_file(
                 buf,
                 mimetype="application/pdf",
                 as_attachment=True,
                 download_name="draft_valuation_report.pdf",
             )
+            resp.headers["X-PDF-Renderer"] = "html-playwright"
+            return resp
         except Exception as exc:
             return jsonify({
                 "status":  "error",
@@ -837,12 +1166,114 @@ def register(app, require_auth, limiter=None) -> None:
         limit  = min(int(request.args.get("limit", 50)), 200)
         offset = int(request.args.get("offset", 0))
         rows   = _read_all_requests(limit=limit, offset=offset)
-        # Strip internal paths from listing
-        for r in rows:
-            r.pop("draft_pdf_path", None)
+        summaries = [_request_summary(r) for r in rows]
         return jsonify({
-            "status": "ok",
-            "total":  len(rows),
-            "requests": rows,
+            "status":   "ok",
+            "total":    len(summaries),
+            "requests": summaries,
             "pagination": {"limit": limit, "offset": offset},
+        }), 200
+
+    # ── POST /api/expert-requests/<id>/review — Update review status ───────
+    @app.route("/api/expert-requests/<request_id>/review", methods=["POST"])
+    @require_auth
+    def expert_request_review(request_id: str):
+        """Update expert review status and notes for a request.
+
+        Enforces allowed status transitions.
+        Does not generate certified reports — certified_report_generated
+        is reserved for a future task and cannot be set here.
+        """
+        if not _REQUEST_ID_RE.match(request_id):
+            return jsonify({"status": "error", "message": "رقم الطلب غير صالح"}), 400
+
+        req = _read_request(request_id)
+        if req is None:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+
+        body = request.get_json(force=True, silent=True) or {}
+
+        new_status = (body.get("approval_status") or "").strip()
+        if new_status:
+            if new_status not in _APPROVAL_STATUSES:
+                return jsonify({
+                    "status":  "error",
+                    "message": f"حالة غير صالحة: {new_status!r}. "
+                               f"القيم المقبولة: {', '.join(sorted(_APPROVAL_STATUSES))}",
+                }), 400
+
+            # Block certified_report_generated — reserved for future certified PDF task
+            if new_status == "certified_report_generated":
+                return jsonify({
+                    "status":  "error",
+                    "message": "لا يمكن تعيين حالة 'certified_report_generated' حتى يتم إنشاء التقرير المعتمد. "
+                               "هذه الحالة محجوزة لمهمة مستقبلية.",
+                }), 400
+
+            current_status = req.get("approval_status", "draft_only")
+            allowed = _ALLOWED_TRANSITIONS.get(current_status, set())
+            if new_status not in allowed:
+                return jsonify({
+                    "status":  "error",
+                    "message": (
+                        f"الانتقال من '{current_status}' إلى '{new_status}' غير مسموح. "
+                        f"الانتقالات المسموحة من '{current_status}': "
+                        + (", ".join(sorted(allowed)) if allowed else "لا يوجد انتقال مسموح")
+                    ),
+                }), 400
+
+            req["approval_status"] = new_status
+
+        now = datetime.utcnow().isoformat()
+        # Update optional review fields
+        for field in (
+            "expert_notes", "requested_documents", "expert_recommended_value",
+            "valuation_method_summary", "reconciliation_notes", "decision_reason",
+        ):
+            val = body.get(field)
+            if val is not None:
+                req[field] = str(val).strip()
+
+        req["review_updated_at"] = now
+        req["updated_at"] = now
+
+        # Append review log entry to Excel workbook سجل المراجعة sheet (best-effort)
+        try:
+            wb_path = _WORKBOOKS / request_id / f"expert_review_{request_id}.xlsx"
+            if wb_path.exists():
+                import openpyxl
+                wb = openpyxl.load_workbook(str(wb_path))
+                ws_log = wb["سجل المراجعة"]
+                next_row = ws_log.max_row + 1
+                note = (req.get("expert_notes") or "")[:80]
+                ws_log.cell(row=next_row, column=1, value=now[:19].replace("T", " "))
+                ws_log.cell(row=next_row, column=2, value=f"تحديث الحالة → {req.get('approval_status', '')}")
+                ws_log.cell(row=next_row, column=3, value="الخبير")
+                ws_log.cell(row=next_row, column=4, value=note)
+                # Update Dashboard حالة الطلب cell (row 3, col 5)
+                ws_dash = wb["Dashboard"]
+                for row in ws_dash.iter_rows():
+                    for cell in row:
+                        if cell.value and "حالة الطلب" in str(cell.value):
+                            # The value cell is in the same row, 2 columns right
+                            ws_dash.cell(
+                                row=cell.row,
+                                column=cell.column + 1,
+                                value=req.get("approval_status", ""),
+                            )
+                            break
+                wb.save(str(wb_path))
+        except Exception:
+            pass  # workbook update is best-effort; do not fail the review
+
+        _update_request(req)
+
+        return jsonify({
+            "status":          "success",
+            "request_id":      request_id,
+            "approval_status": req.get("approval_status", ""),
+            "review_updated_at": now,
+            "message":         "تم تحديث مراجعة الخبير بنجاح. لم يتم إنشاء تقرير معتمد.",
+            "non_certified":   True,
+            "certified_report_available": False,
         }), 200

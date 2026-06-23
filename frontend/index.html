@@ -1265,6 +1265,7 @@
         <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab" data-testid="composite-valuation-tab">📊 التقييم المجمع</button>
+        <button class="es-tab-btn" id="es-tab-expert-backoffice" onclick="esShowTab('expert-backoffice')" type="button" role="tab" data-testid="expert-backoffice-tab" style="display:none; border-color:rgba(212,175,55,0.5);">🔐 مكتب الخبير</button>
     </nav>
     <script>
     function esShowTab(tab) {
@@ -3456,33 +3457,8 @@
                 </ul>
             </div>
 
-            <!-- 5b. هل تحتاج تقرير معتمد؟ — always-visible intro card -->
-            <div class="ai-section" data-testid="simple-expert-request-intro"
-                style="margin-bottom:1rem;border-color:rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);">
-                <div style="display:flex;align-items:flex-start;gap:12px;">
-                    <span style="font-size:1.3rem;flex-shrink:0;">📋</span>
-                    <div>
-                        <div style="color:var(--gold);font-size:0.92rem;font-weight:800;margin-bottom:6px;">
-                            هل تحتاج تقرير تقييم معتمد؟
-                        </div>
-                        <div style="color:#9ca3af;font-size:0.83rem;line-height:1.7;margin-bottom:10px;">
-                            التقرير المبدئي يصدر فورًا كمسودة غير معتمدة.
-                            إذا كنت تحتاج تقريرًا رسميًا للبنك أو المحكمة أو الضرائب أو البيع والشراء،
-                            اطلب مراجعة الخبير ليتم فحص البيانات والمستندات والمنهجية
-                            ثم إرسال النسخة المعتمدة لك.
-                        </div>
-                        <button type="button"
-                            data-testid="simple-expert-request-button"
-                            onclick="svScrollToCertRequest()"
-                            style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);border-radius:8px;color:var(--gold);font-family:'Tajawal',sans-serif;font-size:0.88rem;font-weight:700;padding:8px 18px;cursor:pointer;">
-                            📜 طلب اعتماد من خبير التقييم
-                        </button>
-                    </div>
-                </div>
-            </div>
-
             <!-- ── Mini-engine info panel (Part A) ── -->
-            <div data-testid="simple-valuation-mini-engine"
+            <div data-testid="simple-valuation-mini-engine" id="simple-preliminary-engine-panel"
                 style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.18);border-radius:9px;padding:12px 16px;margin-bottom:1rem;direction:rtl;">
                 <div style="color:var(--gold);font-weight:700;font-size:0.87rem;margin-bottom:6px;">🔢 محرك التقييم المبدئي</div>
                 <div data-testid="simple-valuation-price-source-note"
@@ -3510,6 +3486,33 @@
 
         <!-- ── نتيجة التقييم ────────────────────────────────────────── -->
         <div id="sv-result" style="display:none;" data-testid="simple-valuation-output"></div>
+        <!-- ── هل تحتاج تقرير معتمد؟ — placed after preliminary PDF in DOM ─ -->
+        <div id="simple-certified-report-cta-box" data-testid="simple-certified-report-cta-box"
+            class="ai-section"
+            style="margin-top:1rem;margin-bottom:1rem;border-color:rgba(212,175,55,0.25);background:rgba(212,175,55,0.04);">
+            <!-- inner wrapper keeps legacy data-testid for backward compatibility -->
+            <div data-testid="simple-expert-request-intro">
+                <div style="display:flex;align-items:flex-start;gap:12px;">
+                    <span style="font-size:1.3rem;flex-shrink:0;">📋</span>
+                    <div>
+                        <div style="color:var(--gold);font-size:0.92rem;font-weight:800;margin-bottom:6px;">
+                            هل تحتاج تقرير تقييم معتمد؟
+                        </div>
+                        <div style="color:#9ca3af;font-size:0.83rem;line-height:1.7;margin-bottom:10px;">
+                            يمكنك تحويل المسودة المبدئية إلى طلب مراجعة خبير.
+                            هذا لا يعني إصدار تقرير معتمد فورًا؛ يتم إصدار التقرير المعتمد فقط
+                            بعد مراجعة الخبير للبيانات والمستندات والمنهجية.
+                        </div>
+                        <button type="button"
+                            data-testid="simple-expert-request-button"
+                            onclick="svScrollToCertRequest()"
+                            style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.35);border-radius:8px;color:var(--gold);font-family:'Tajawal',sans-serif;font-size:0.88rem;font-weight:700;padding:8px 18px;cursor:pointer;">
+                            📜 طلب مراجعة واعتماد من خبير التقييم
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- ── طلب اعتماد التقرير ───────────────────────────────────── -->
         <div id="sv-cert-request" style="display:none;margin-top:1.5rem;"
             data-testid="simple-valuation-cert-request-card">
@@ -3577,6 +3580,25 @@
                             <option value="البريد الإلكتروني">البريد الإلكتروني</option>
                             <option value="واتساب والبريد الإلكتروني">واتساب والبريد الإلكتروني</option>
                         </select>
+                    </div>
+
+                    <div class="field-group">
+                        <label>نوع التقرير المطلوب</label>
+                        <select id="sv-cert-report-template" class="input-box"
+                            data-testid="simple-request-report-template">
+                            <option value="">— اختر نوع التقرير (اختياري) —</option>
+                            <option value="residential_summary_three_methods">تقرير تقييم ملخص سكني بالثلاث طرق</option>
+                            <option value="full_three_approach_report">تقرير تقييم كامل بالثلاث طرق</option>
+                            <option value="bank_financing_report">تقرير تمويل بنكي / رهن</option>
+                            <option value="court_litigation_report">تقرير نزاع أو محكمة</option>
+                            <option value="hbu_land_report">تقرير أرض وأعلى وأفضل استخدام</option>
+                            <option value="special_asset_factory_report">تقرير منشأة خاصة / مصنع</option>
+                            <option value="ifrs_fair_value_report">تقرير IFRS / Fair Value</option>
+                        </select>
+                        <div style="font-size:0.75rem;color:#6b7280;margin-top:4px;line-height:1.5;">
+                            يساعد الخبير على تحديد نموذج التقرير المناسب للمراجعة.
+                            اختيار نوع التقرير لا يعني إصداره تلقائيًا.
+                        </div>
                     </div>
 
                 </div>
@@ -4389,7 +4411,7 @@
                 + '<div data-testid="simple-pdf-watermark-note" style="font-size:0.82rem;color:#fca5a5;font-weight:700;margin-bottom:6px;">'
                 + '🔏 تقرير تقييم آلي مبسط - غير معتمد رسميًا'
                 + '</div>'
-                + '<button data-testid="simple-draft-pdf-button" onclick="svDraftPdf()" '
+                + '<button data-testid="simple-draft-pdf-button" type="button" onclick="svDraftPdf()" '
                 + 'style="background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:7px;color:var(--gold);font-family:\'Tajawal\',sans-serif;font-size:0.82rem;padding:7px 16px;cursor:pointer;">'
                 + (svApiData && typeof svApiData.market_value === 'number' && svApiData.market_value > 0 ? '⬇️ تحميل مسودة PDF' : '⬇️ تحميل مسودة البيانات (بدون قيمة رقمية)') + '</button>'
                 + '<div data-testid="simple-draft-pdf-status" style="display:none;font-size:0.8rem;margin-top:6px;line-height:1.5;color:#9ca3af;"></div>'
@@ -4510,11 +4532,12 @@
 
         /* ── certified report request handler ── */
         function svSubmitCertRequest() {
-            var nameVal     = (document.getElementById('sv-cert-name')     || {}).value || '';
-            var phoneVal    = (document.getElementById('sv-cert-phone')    || {}).value || '';
-            var emailVal    = (document.getElementById('sv-cert-email')    || {}).value || '';
-            var deliveryVal = (document.getElementById('sv-cert-delivery') || {}).value || '';
-            var notesVal    = (document.getElementById('sv-cert-notes')    || {}).value || '';
+            var nameVal       = (document.getElementById('sv-cert-name')            || {}).value || '';
+            var phoneVal      = (document.getElementById('sv-cert-phone')           || {}).value || '';
+            var emailVal      = (document.getElementById('sv-cert-email')           || {}).value || '';
+            var deliveryVal   = (document.getElementById('sv-cert-delivery')        || {}).value || '';
+            var notesVal      = (document.getElementById('sv-cert-notes')           || {}).value || '';
+            var templateVal   = (document.getElementById('sv-cert-report-template') || {}).value || '';
             var errEl       = document.getElementById('sv-cert-error');
             var confirmEl   = document.getElementById('sv-cert-confirm');
 
@@ -4547,6 +4570,7 @@
             fd.append('email', emailVal.trim());
             fd.append('summary', notesVal.trim());
             fd.append('preferred_contact_method', deliveryVal);
+            if (templateVal) { fd.append('report_template_id', templateVal); }
             var _calc = window._svLastCalc || {};
             fd.append('payload_json', JSON.stringify({
                 valuation_date:       (document.getElementById('sv-date') || {}).value || '',
@@ -4561,6 +4585,7 @@
                 price_range_high:     _calc.high || null,
                 quick_context:        ((document.getElementById('sv-quick-context') || {}).value || '').trim(),
                 request_kind:         'certified_valuation_review',
+                report_template_id:   templateVal || 'residential_summary_three_methods',
                 requested_certification_delivery_method: deliveryVal
             }));
 
@@ -4581,14 +4606,17 @@
                     if (confirmEl) {
                         var msg;
                         if (r.ok && data.request_id) {
-                            msg = '✓ تم تسجيل طلب اعتماد التقرير. رقم الطلب: <strong>' + data.request_id + '</strong>.<br>' +
-                                'سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة.';
+                            msg = '✓ تم تسجيل طلب مراجعة التقرير. رقم الطلب: <strong>' + data.request_id + '</strong>.<br>' +
+                                'هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.';
+                            if (data.expert_workbook_available) {
+                                msg += '<br><span style="color:#93c5fd;font-size:0.85em;">تم إنشاء ملف مراجعة داخلي للخبير.</span>';
+                            }
                             if (data.pdf_available && data.pdf_download_url) {
                                 msg += '&nbsp; <a href="' + data.pdf_download_url + '" target="_blank" ' +
-                                    'style="color:#a5b4fc;text-decoration:underline;">⬇️ تحميل التقرير المبدئي PDF</a>';
+                                    'style="color:#a5b4fc;text-decoration:underline;">تحميل التقرير المبدئي PDF</a>';
                             }
                         } else {
-                            msg = '✓ تم تسجيل طلب اعتماد التقرير مبدئيًا.<br>سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة عند تفعيل نظام التواصل.';
+                            msg = '✓ تم تسجيل طلب مراجعة التقرير مبدئيًا.<br>هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.';
                         }
                         confirmEl.innerHTML = msg;
                         confirmEl.style.display = 'block';
@@ -4597,7 +4625,7 @@
                 })
                 .catch(function() {
                     if (confirmEl) {
-                        confirmEl.innerHTML = '✓ تم تسجيل طلب اعتماد التقرير مبدئيًا.<br>سيقوم الخبير بمراجعة البيانات والمنهجية، ثم يتم إرسال النسخة المعتمدة حسب طريقة الاستلام المختارة عند تفعيل نظام التواصل.';
+                        confirmEl.innerHTML = '✓ تم تسجيل طلب مراجعة التقرير مبدئيًا.<br>هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.';
                         confirmEl.style.display = 'block';
                         confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
@@ -4787,6 +4815,31 @@
         </div>
     </div>
 
+    <!-- ── GIS Card (current-safe placeholder) ──────────────────────────── -->
+    <div data-testid="professional-gis-card" style="margin:10px 0;padding:10px 14px;background:rgba(34,197,94,0.03);border:1px solid rgba(34,197,94,0.15);border-radius:8px;">
+        <div style="font-size:0.82rem;color:#86efac;font-weight:700;margin-bottom:8px;">🗺 بيانات الموقع التفصيلية وGIS</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:8px;">
+            <div class="field-group">
+                <label>الإحداثيات (خط العرض, خط الطول)</label>
+                <input type="text" class="input-box" data-testid="professional-coordinates-input" id="prof-coordinates" placeholder="مثال: 30.0444, 31.2357">
+            </div>
+            <div class="field-group">
+                <label>عرض الشارع الرئيسي (م)</label>
+                <input type="number" class="input-box" data-testid="professional-street-width-input" id="prof-street-width" placeholder="مثال: 20" min="0">
+            </div>
+            <div class="field-group">
+                <label>الواجهة الرئيسية (م)</label>
+                <input type="number" class="input-box" data-testid="professional-frontage-input" id="prof-frontage" placeholder="مثال: 15" min="0">
+            </div>
+        </div>
+        <div data-testid="professional-gis-map-placeholder" style="height:72px;background:rgba(0,0,0,0.18);border:1px dashed rgba(34,197,94,0.2);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+            <span style="font-size:0.78rem;color:#4b5563;text-align:center;">🗺 مكان الخريطة التفاعلية — سيتم التفعيل لاحقاً</span>
+        </div>
+        <div data-testid="professional-gis-note" style="font-size:0.73rem;color:#6b7280;padding:5px 10px;background:rgba(0,0,0,0.1);border-radius:4px;line-height:1.6;">
+            سيتم ربط الخريطة التفاعلية وبيانات GIS لاحقًا عبر Backend/GIS service. لا يتم الآن استدعاء خرائط خارجية من المتصفح.
+        </div>
+    </div>
+
     <!-- ── Group 1: Common / Quick Selectors ──────────────────────────── -->
     <div data-testid="quick-selectors-section" style="margin-bottom:8px; padding:8px 12px; background:rgba(212,175,55,0.05); border:1px solid rgba(212,175,55,0.25); border-radius:8px;">
         <div style="font-size:0.82rem; color:var(--gold); font-weight:700; margin-bottom:3px;">الأصول والأغراض الشائعة / الاختيار السريع</div>
@@ -4886,13 +4939,13 @@
     <!-- ── Phase 10: Professional Registry Selectors ──────────────────── -->
     <!-- Asset fields (Step 1 content) -->
     <!-- ── Group 2: Professional / Specialized Selectors ──────────────── -->
-    <div id="prof-registry-section" data-testid="professional-selectors-section" style="margin:10px 0; padding:10px 14px; background:rgba(96,165,250,0.04); border:1px solid rgba(96,165,250,0.2); border-radius:8px;">
+    <div id="prof-registry-section" data-testid="professional-routing-console" style="margin:10px 0; padding:10px 14px; background:rgba(96,165,250,0.04); border:1px solid rgba(96,165,250,0.2); border-radius:8px;">
         <div style="font-size:0.82rem; color:#93c5fd; font-weight:700; margin-bottom:3px;">الأصول والأغراض المتخصصة / الاختيار الاحترافي</div>
         <p style="font-size:0.73rem; color:#9ca3af; margin:0 0 10px; line-height:1.55;">استخدم هذا القسم للحالات المتخصصة أو المعقدة التي تحتاج تصنيفًا مهنيًا مثل Asset Family، Asset Subtype، Purpose Route، Purpose Sub-route، Requirements Checklist، ومصفوفة التكامل.</p>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
-            <div>
+            <div data-testid="professional-asset-family-selector">
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">عائلة الأصل</label>
-                <select id="prof-asset-family" data-testid="professional-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value); syncAssetTypeFromProf();">
+                <select id="prof-asset-family" data-testid="professional-asset-family" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubtypes(this.value); syncAssetTypeFromProf(); toggleProfTechnicalPanel(this.value);">
                     <option value="">-- اختر العائلة --</option>
                     <option value="hospitality_entertainment">ضيافة وترفيه</option>
                     <option value="sports_event_venues">رياضة وفعاليات</option>
@@ -4905,7 +4958,7 @@
                     <option value="heritage_cultural_assets">تراث وثقافة</option>
                 </select>
             </div>
-            <div>
+            <div data-testid="professional-asset-subtype-selector">
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">النوع الفرعي</label>
                 <select id="prof-asset-subtype" data-testid="professional-asset-subtype" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="syncAssetTypeFromProf();">
                     <option value="">-- اختر النوع الفرعي --</option>
@@ -4917,6 +4970,95 @@
     <div data-testid="professional-valuation-profile" style="font-size:0.75rem;color:#9ca3af;padding:4px 2px;margin-bottom:4px;">
         <span style="color:#d4af37;">ملف التقييم:</span> <span id="prof-valuation-profile-label">يُحدَّد عند اختيار العائلة والغرض</span>
     </div>
+
+    <!-- ── Dynamic Technical Input Panel (Part B) ──────────────────────── -->
+    <div data-testid="professional-technical-input-panel" id="prof-technical-panel" style="margin:10px 0;padding:10px 14px;background:rgba(139,92,246,0.04);border:1px solid rgba(139,92,246,0.2);border-radius:8px;display:none;">
+        <div style="font-size:0.82rem;color:#c4b5fd;font-weight:700;margin-bottom:8px;">البيانات التقنية للأصل</div>
+
+        <!-- Industrial / Logistics fields -->
+        <div data-testid="professional-industrial-fields" id="prof-industrial-fields" style="display:none;">
+            <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:6px;font-weight:600;">بيانات الأصول الصناعية / اللوجستية</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:6px;">
+                <div class="field-group">
+                    <label>معامل الإهلاك (%)</label>
+                    <input type="number" class="input-box" data-testid="professional-depreciation-factor" id="prof-depreciation-factor" placeholder="مثال: 15" min="0" max="100">
+                </div>
+                <div class="field-group">
+                    <label>العمر الفعال (سنة)</label>
+                    <input type="number" class="input-box" data-testid="professional-effective-age" id="prof-effective-age" placeholder="مثال: 12" min="0">
+                </div>
+                <div class="field-group">
+                    <label>العمر الاقتصادي (سنة)</label>
+                    <input type="number" class="input-box" data-testid="professional-economic-life" id="prof-economic-life" placeholder="مثال: 40" min="1">
+                </div>
+                <div class="field-group">
+                    <label>تكلفة الإنشاء (ج.م/م²)</label>
+                    <input type="number" class="input-box" data-testid="professional-construction-cost" id="prof-construction-cost" placeholder="مثال: 8000" min="0">
+                </div>
+                <div class="field-group">
+                    <label>حالة التشغيل</label>
+                    <select class="input-box" data-testid="professional-operating-status" id="prof-operating-status">
+                        <option value="">— اختر —</option>
+                        <option value="fully_operational">تشغيل كامل</option>
+                        <option value="partially_operational">تشغيل جزئي</option>
+                        <option value="idle">متوقف</option>
+                        <option value="under_maintenance">تحت الصيانة</option>
+                        <option value="decommissioned">خارج الخدمة</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Residential fields -->
+        <div data-testid="professional-residential-fields" id="prof-residential-fields" style="display:none;">
+            <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:6px;font-weight:600;">بيانات الأصول السكنية</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:6px;">
+                <div class="field-group">
+                    <label>جودة التشطيب</label>
+                    <select class="input-box" id="prof-residential-finish">
+                        <option value="">— اختر —</option>
+                        <option value="luxury">فاخر</option>
+                        <option value="high">عالي</option>
+                        <option value="standard">متوسط</option>
+                        <option value="basic">بسيط</option>
+                        <option value="unfinished">بدون تشطيب</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>حالة العقار</label>
+                    <select class="input-box" id="prof-residential-condition">
+                        <option value="">— اختر —</option>
+                        <option value="excellent">ممتاز</option>
+                        <option value="good">جيد</option>
+                        <option value="fair">متوسط</option>
+                        <option value="needs_renovation">يحتاج تجديد</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>الدور / الطابق</label>
+                    <input type="number" class="input-box" id="prof-residential-floor" placeholder="مثال: 3" min="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- Specialized / Hospital / Hotel fields -->
+        <div data-testid="professional-specialized-fields" id="prof-specialized-fields" style="display:none;">
+            <div style="font-size:0.75rem;color:#9ca3af;margin-bottom:6px;font-weight:600;">بيانات الأصول المتخصصة (فندق / مستشفى / تعليمي)</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin-bottom:6px;">
+                <div class="field-group">
+                    <label>نسبة الإشغال (%) — للمعلومات</label>
+                    <input type="number" class="input-box" id="prof-occupancy-rate" placeholder="مثال: 75" min="0" max="100">
+                </div>
+                <div class="field-group">
+                    <label>عدد الوحدات / الغرف / الأسرة</label>
+                    <input type="number" class="input-box" id="prof-specialized-units" placeholder="مثال: 120" min="1">
+                </div>
+            </div>
+            <div style="margin-top:6px;padding:6px 10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:6px;font-size:0.73rem;color:#fde68a;">
+                ⚠ الأصول المتخصصة تتطلب موافقة خبير معتمد. تحليل DCF / الدخل سيتم تفعيله بعد ربط البيانات بالخادم.
+            </div>
+        </div>
+    </div><!-- /professional-technical-input-panel -->
 
     </div><!-- /step-asset inner padding -->
     </div><!-- /professional-step-asset -->
@@ -4932,7 +5074,7 @@
     <div style="margin:0 0 10px; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(96,165,250,0.2); border-radius:8px;">
         <div style="font-size:0.78rem; color:#93c5fd; font-weight:bold; margin-bottom:8px; border-bottom:1px solid rgba(96,165,250,0.15); padding-bottom:6px;">مسارات الغرض المهنية</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;">
-            <div>
+            <div data-testid="professional-purpose-route-selector">
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">مسار الغرض</label>
                 <select id="prof-purpose-route" data-testid="professional-purpose-route" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;" onchange="profFilterSubRoutes(this.value)">
                     <option value="">-- اختر المسار --</option>
@@ -5018,7 +5160,7 @@
                     </optgroup>
                 </select>
             </div>
-            <div>
+            <div data-testid="professional-purpose-subroute-selector">
                 <label style="font-size:0.75rem; color:#9ca3af; display:block; margin-bottom:3px;">المسار الفرعي</label>
                 <select id="prof-purpose-subroute" data-testid="professional-purpose-subroute" style="width:100%; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; padding:5px 8px; font-size:0.8rem;">
                     <option value="">-- اختر المسار الفرعي --</option>
@@ -5051,16 +5193,21 @@
     </div>
     <div style="padding:12px 14px;">
 
-    <!-- Matrix Metadata Bar -->
-    <div data-testid="professional-matrix-metadata" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px 12px;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(139,92,246,0.2);border-radius:8px;font-size:0.75rem;">
-        <div><span style="color:#c4b5fd;">المسار النشط:</span> <span data-testid="professional-active-route" id="prof-active-route-display">market_value_with_habu</span></div>
-        <div><span style="color:#c4b5fd;">مستوى IFRS:</span> <span data-testid="professional-ifrs-level" id="prof-ifrs-level-display">Level 2</span></div>
-        <div><span style="color:#c4b5fd;">موافقة بشرية:</span> <span data-testid="professional-human-approval-required" style="color:#4ade80;">نعم</span></div>
+    <!-- Matrix Metadata Bar / Live Status Strip -->
+    <div data-testid="professional-live-status-strip" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px 12px;margin-bottom:10px;padding:8px 12px;background:rgba(0,0,0,0.2);border:1px solid rgba(139,92,246,0.2);border-radius:8px;font-size:0.75rem;">
+        <div><span style="color:#c4b5fd;">المسار النشط:</span> <span data-testid="professional-active-route-status" id="prof-active-route-display">market_value_with_habu</span></div>
+        <div><span style="color:#c4b5fd;">نوع الأصل:</span> <span data-testid="professional-asset-status" id="prof-asset-status-display" style="color:#93c5fd;">—</span></div>
+        <div><span style="color:#c4b5fd;">الغرض:</span> <span data-testid="professional-purpose-status" id="prof-purpose-status-display" style="color:#93c5fd;">—</span></div>
+        <div><span style="color:#c4b5fd;">مستوى IFRS افتراضي مبدئي:</span> <span data-testid="professional-ifrs-level-status" id="prof-ifrs-level-display">Level 2</span></div>
+        <div><span style="color:#c4b5fd;">موافقة بشرية:</span> <span data-testid="professional-human-approval-status" id="prof-human-approval-display" style="color:#4ade80;">نعم</span></div>
         <div><span style="color:#c4b5fd;">تقرير نهائي بدون موافقة:</span> <span data-testid="professional-final-without-approval" style="color:#f87171;">لا</span></div>
+        <div><span style="color:#c4b5fd;">حالة التقرير:</span> <span data-testid="professional-report-status" id="prof-report-status-display" style="color:#fbbf24;">مسودة غير معتمدة</span></div>
+        <div><span style="color:#c4b5fd;">جاهزية البيانات:</span> <span data-testid="professional-data-readiness-status" id="prof-data-readiness-display" style="color:#6b7280;">—</span></div>
         <div><span style="color:#c4b5fd;">حالة المسودة:</span> <span data-testid="professional-draft-status" style="color:#fbbf24;">draft_pending_human_review</span></div>
     </div>
 
     <!-- Matrix Tabs -->
+    <div data-testid="professional-integration-tabs">
     <div data-testid="professional-matrix-tabs" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
         <button data-testid="professional-matrix-tab-ui-fields" onclick="switchProfMatrixTab('ui-fields')" id="pmtab-ui-fields"
             style="background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.4);color:#d4af37;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
@@ -5082,9 +5229,9 @@
             style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
             ٥. الإثراء الآلي
         </button>
-        <button data-testid="professional-matrix-tab-validation" onclick="switchProfMatrixTab('validation')" id="pmtab-validation"
+        <button data-testid="professional-matrix-tab-validation-rules" onclick="switchProfMatrixTab('validation-rules')" id="pmtab-validation-rules"
             style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
-            ٦. التحقق
+            ٦. قواعد التحقق
         </button>
         <button data-testid="professional-matrix-tab-human-approval" onclick="switchProfMatrixTab('human-approval')" id="pmtab-human-approval"
             style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
@@ -5098,16 +5245,17 @@
             style="background:transparent;border:1px solid #374151;color:#9ca3af;padding:4px 10px;border-radius:5px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.72rem;">
             ٩. عقد المخرجات
         </button>
-    </div>
+    </div><!-- /professional-matrix-tabs -->
+    </div><!-- /professional-integration-tabs -->
 
     <!-- Matrix Tab Panel -->
     <div data-testid="professional-matrix-tab-panel" id="prof-matrix-panel" style="background:rgba(0,0,0,0.2);border:1px solid #374151;border-radius:7px;padding:10px 12px;font-size:0.8rem;min-height:48px;">
         <div id="pmcontent-ui-fields" style="color:#9ca3af;">property_id · asset_type · purpose · location_id · area_sqm · transaction_date · comparable_sales_count · habu_scenario</div>
         <div id="pmcontent-db-mapping" style="display:none;color:#9ca3af;">properties · comparables · habu_scenarios · locations · transactions</div>
         <div id="pmcontent-engine-inputs" style="display:none;color:#9ca3af;">market_price_per_sqm · location_factor · age_depreciation · habu_adjustment_factor · quality_score</div>
-        <div id="pmcontent-market-comparables" style="display:none;color:#9ca3af;">sale_price · sale_date · area_sqm · location · property_type · adjusted_price_per_sqm</div>
-        <div id="pmcontent-agentic-enrichment" style="display:none;color:#9ca3af;">market_trend_index · neighborhood_score · infrastructure_score — <span style="color:#f59e0b;">الحالة الافتراضية: pending_human_review</span></div>
-        <div id="pmcontent-validation" style="display:none;color:#9ca3af;">area_sqm ≥ 1 · comparable_count ≥ 3 · habu_scenario ∈ {highest_use, current_use} · date لا تتجاوز اليوم</div>
+        <div id="pmcontent-market-comparables" style="display:none;color:#9ca3af;"><span style="color:#fbbf24;">سيتم عرض المقارنات السوقية المسترجعة من Qdrant/Source Registry هنا بعد تفعيل Backend Advisor وRAG.</span><br><span style="font-size:0.73rem;color:#6b7280;">لا تتوفر مقارنات سوقية حقيقية في هذه المرحلة. أي بيانات ظاهرة هي نماذج اختبارية فقط.</span></div>
+        <div id="pmcontent-agentic-enrichment" style="display:none;color:#9ca3af;"><span style="color:#fbbf24;">الإثراء الآلي وRAG والبحث القانوني/السوقي غير مفعّلة في هذه المرحلة.</span><br><span style="font-size:0.73rem;color:#6b7280;">سيتم ربطها لاحقًا عبر Backend Advisor فقط. الحالة الافتراضية: pending_human_review</span></div>
+        <div id="pmcontent-validation-rules" style="display:none;color:#9ca3af;">area_sqm ≥ 1 · comparable_count ≥ 3 · habu_scenario ∈ {highest_use, current_use} · date لا تتجاوز اليوم · purpose_route مطلوب · asset_family مطلوب</div>
         <div id="pmcontent-human-approval" style="display:none;color:#9ca3af;">مطلوبة عند وجود إثراء آلي · حالة التقرير بدون موافقة: draft_pending_human_review · الحالات المسموحة: pending_human_review · approved · rejected</div>
         <div id="pmcontent-report-disclosure" style="display:none;color:#9ca3af;">valuation_date · effective_date · habu_assumption · market_conditions_note · comparable_summary · ifrs_level_disclosure</div>
         <div id="pmcontent-output-contract" style="display:none;color:#9ca3af;">market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
@@ -5115,6 +5263,61 @@
 
     </div><!-- /step-matrix inner padding -->
     </div><!-- /professional-step-matrix -->
+
+    <!-- STEP 3B: Weighted Valuation Engine (preliminary, non-certified) ── -->
+    <div data-testid="professional-weighted-engine-panel" style="margin-bottom:14px;border:1px solid rgba(212,175,55,0.2);border-radius:10px;overflow:hidden;">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,175,55,0.06);border-bottom:1px solid rgba(212,175,55,0.15);">
+        <span style="background:#d4af37;color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">⚖</span>
+        <span style="font-weight:700;color:var(--gold-light);font-size:0.9rem;">محرك الترجيح المبدئي</span>
+        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Preliminary Weighted Valuation — غير معتمدة</span>
+    </div>
+    <div style="padding:12px 14px;">
+        <div style="font-size:0.75rem;color:#fde68a;margin-bottom:10px;padding:6px 10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:6px;">
+            ⚠ القيمة الناتجة مبدئية غير معتمدة ولا تستند إلى شواهد بيعية حقيقية. يتطلب الاعتماد مراجعة خبير.
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;margin-bottom:10px;">
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة مقارنة البيوع (ج.م)</label>
+                <input type="number" class="input-box" data-testid="professional-sales-value" id="prof-sales-value" placeholder="مثال: 1200000" min="0" oninput="calcProfWeightedValue()">
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن مقارنة البيوع (%)</label>
+                <input type="number" class="input-box" data-testid="professional-sales-weight" id="prof-sales-weight" value="40" min="0" max="100" oninput="calcProfWeightedValue()">
+            </div>
+            <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
+                <span data-testid="professional-weights-total-warning" id="prof-weights-warning" style="display:none;font-size:0.72rem;color:#ef4444;padding:4px 8px;background:rgba(239,68,68,0.1);border-radius:4px;">⚠ مجموع الأوزان ≠ 100%</span>
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة طريقة الدخل (ج.م)</label>
+                <input type="number" class="input-box" data-testid="professional-income-value" id="prof-income-value" placeholder="مثال: 1100000" min="0" oninput="calcProfWeightedValue()">
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن طريقة الدخل (%)</label>
+                <input type="number" class="input-box" data-testid="professional-income-weight" id="prof-income-weight" value="40" min="0" max="100" oninput="calcProfWeightedValue()">
+            </div>
+            <div></div>
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة طريقة التكلفة (ج.م)</label>
+                <input type="number" class="input-box" data-testid="professional-cost-value" id="prof-cost-value" placeholder="مثال: 1050000" min="0" oninput="calcProfWeightedValue()">
+            </div>
+            <div>
+                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن طريقة التكلفة (%)</label>
+                <input type="number" class="input-box" data-testid="professional-cost-weight" id="prof-cost-weight" value="20" min="0" max="100" oninput="calcProfWeightedValue()">
+            </div>
+            <div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="padding:10px 14px;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);border-radius:8px;">
+                <div style="font-size:0.73rem;color:#9ca3af;margin-bottom:4px;">القيمة المرجحة المبدئية غير معتمدة</div>
+                <div data-testid="professional-weighted-value-output" id="prof-weighted-value" style="font-size:1.1rem;font-weight:700;color:#d4af37;">—</div>
+            </div>
+            <div style="padding:10px 14px;background:rgba(96,165,250,0.04);border:1px solid rgba(96,165,250,0.15);border-radius:8px;">
+                <div style="font-size:0.73rem;color:#9ca3af;margin-bottom:4px;">حساسية ±10%</div>
+                <div data-testid="professional-sensitivity-output" id="prof-sensitivity-output" style="font-size:0.85rem;color:#93c5fd;">—</div>
+            </div>
+        </div>
+    </div>
+    </div><!-- /professional-weighted-engine-panel -->
 
     <!-- STEP 4: Requirements / Validation / Human Approval ────────────── -->
     <div data-testid="professional-step-requirements" style="margin-bottom:14px;border:1px solid rgba(251,191,36,0.2);border-radius:10px;overflow:hidden;">
@@ -5179,6 +5382,34 @@
         <div style="font-weight:600;color:#86efac;margin-bottom:4px;">ملخص عقد المخرجات</div>
         <div>market_value · habu_value · confidence_score · comparable_count_used · adjustment_summary · ifrs_level</div>
     </div>
+
+    <!-- Professional Governance Panel ─────────────────────────────────── -->
+    <div data-testid="professional-governance-panel" style="margin-bottom:12px;padding:12px 14px;background:rgba(139,92,246,0.04);border:1px solid rgba(139,92,246,0.2);border-radius:8px;">
+        <div style="font-size:0.85rem;font-weight:700;color:#c4b5fd;margin-bottom:10px;">حوكمة التقرير والإجراءات</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <button data-testid="professional-draft-pdf-button" id="prof-draft-pdf-btn" disabled
+                title="سيتم تفعيل تحميل مسودة PDF المهنية بعد ربط قالب التقرير بالخادم"
+                style="background:rgba(139,92,246,0.06);border:1px solid rgba(139,92,246,0.2);color:#6b7280;padding:7px 14px;border-radius:6px;cursor:not-allowed;font-family:Tajawal,sans-serif;font-size:0.8rem;">
+                <i class="fas fa-file-pdf" style="margin-left:5px;"></i> تحميل مسودة PDF مهنية
+            </button>
+            <button data-testid="professional-save-draft-button" id="prof-save-draft-btn"
+                onclick="professionalSaveDraft()"
+                style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);color:#93c5fd;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.8rem;transition:all 0.2s;"
+                onmouseenter="this.style.background='rgba(96,165,250,0.16)'" onmouseleave="this.style.background='rgba(96,165,250,0.08)'">
+                <i class="fas fa-save" style="margin-left:5px;"></i> حفظ مسودة التقييم
+            </button>
+            <button data-testid="professional-submit-approval-button" id="prof-submit-approval-btn"
+                onclick="professionalSubmitApproval()"
+                style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#86efac;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.8rem;transition:all 0.2s;"
+                onmouseenter="this.style.background='rgba(74,222,128,0.16)'" onmouseleave="this.style.background='rgba(74,222,128,0.08)'">
+                <i class="fas fa-paper-plane" style="margin-left:5px;"></i> إرسال للمراجعة والاعتماد
+            </button>
+        </div>
+        <div data-testid="professional-draft-pdf-status" id="prof-draft-pdf-status" style="font-size:0.72rem;color:#6b7280;line-height:1.5;">
+            سيتم تفعيل تحميل مسودة PDF المهنية بعد ربط قالب التقرير بالخادم.
+        </div>
+        <div data-testid="professional-draft-pdf-download" id="prof-draft-pdf-download" style="display:none;font-size:0.8rem;margin-top:6px;"></div>
+    </div><!-- /professional-governance-panel -->
 
     <div data-testid="professional-request-expert-review" style="margin-bottom:12px;padding:10px 14px;background:rgba(74,222,128,0.04);border:1px solid rgba(74,222,128,0.2);border-radius:8px;font-size:0.8rem;">
         <div style="font-weight:600;color:#86efac;margin-bottom:6px;">طلب مراجعة الخبير المعتمد</div>
@@ -5864,7 +6095,7 @@
     <section id="mass-appraisal-workflow" class="mass-workflow-shell" dir="rtl" data-testid="mass-appraisal-workspace">
 
 
-      <div class="mass-workspace-header">
+      <div class="mass-workspace-header" data-testid="mass-section-header">
         <div>
           <h2 class="mass-workspace-title">مساحة عمل التقييم الجماعي</h2>
           <p class="mass-workspace-subtitle">Mass Appraisal Workspace</p>
@@ -5872,6 +6103,10 @@
         <div class="mass-workspace-note">
           إدارة محفظة العقارات، بيانات المبيعات، دراسة النسب، المعايرة، الحوكمة، ودورة النموذج.
         </div>
+      </div>
+      <div data-testid="mass-non-certified-strip" style="margin-bottom:10px; padding:7px 12px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.22); border-radius:6px; font-size:0.78rem; color:#f87171; display:flex; align-items:center; gap:8px;">
+        <span>⚠</span>
+        <span data-testid="mass-watermark-note" id="mass-watermark-note">تقرير تقييم جماعي آلي مؤقت — غير معتمد رسميًا. كل النتائج مبدئية ولا تستخدم أمام البنوك أو الجهات الحكومية أو القضائية قبل مراجعة الخبير.</span>
       </div>
 
       <div class="mass-summary-grid" dir="rtl">
@@ -5894,6 +6129,38 @@
           <div class="mass-summary-label">حالة الدراسة</div>
           <div class="mass-summary-value" id="mass-summary-status" data-testid="mass-quality-indicator">جاهز</div>
           <div class="mass-summary-hint">Preview / Run / Export</div>
+        </div>
+      </div>
+
+      <!-- ── Enhanced Dashboard Cards (Part B) ──────────────────────── -->
+      <div data-testid="mass-dashboard-cards" id="mass-dashboard-cards" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:14px; margin-top:6px;">
+        <div data-testid="mass-total-assets-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">عدد الأصول</div>
+          <div id="mass-dc-total-assets-val" style="font-size:1rem; font-weight:700; color:var(--gold); margin-top:3px;">—</div>
+        </div>
+        <div data-testid="mass-total-value-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">إجمالي القيمة التقديرية</div>
+          <div id="mass-dc-total-value-val" style="font-size:1rem; font-weight:700; color:var(--gold); margin-top:3px;">—</div>
+        </div>
+        <div data-testid="mass-average-price-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">متوسط سعر/م²</div>
+          <div id="mass-dc-avg-price-val" style="font-size:1rem; font-weight:700; color:var(--gold); margin-top:3px;">—</div>
+        </div>
+        <div data-testid="mass-success-count-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">الصفوف الناجحة</div>
+          <div id="mass-dc-success-count-val" style="font-size:1rem; font-weight:700; color:#86efac; margin-top:3px;">—</div>
+        </div>
+        <div data-testid="mass-review-count-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">تحتاج مراجعة</div>
+          <div id="mass-dc-review-count-val" style="font-size:1rem; font-weight:700; color:#fbbf24; margin-top:3px;">—</div>
+        </div>
+        <div data-testid="mass-data-quality-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">جودة البيانات</div>
+          <div id="mass-dc-quality-val" style="font-size:1rem; font-weight:700; color:#818cf8; margin-top:3px;"><span data-testid="mass-quality-badge">—</span></div>
+        </div>
+        <div data-testid="mass-confidence-range-card" style="padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:8px; text-align:center;">
+          <div style="font-size:0.72rem; color:#9ca3af;">نطاق الثقة</div>
+          <div id="mass-dc-confidence-val" style="font-size:0.78rem; color:#6b7280; margin-top:3px;">غير متاح دون بيانات كافية / مقارنات سوقية.</div>
         </div>
       </div>
 
@@ -5953,7 +6220,7 @@
         <button type="button" class="mass-tab-btn" data-mass-tab="export"                            onclick="switchMassTab('export')">التصدير والجلسة</button>
       </div>
 
-      <div class="mass-workspace-body">
+      <div class="mass-workspace-body" data-testid="mass-dashboard-shell">
 
       <div class="mass-tab-panels" dir="rtl">
 
@@ -5974,7 +6241,7 @@
             اختيارية: <code style="color:var(--gold);">row_id</code>، <code style="color:var(--gold);">valuation_purpose</code>، <code style="color:var(--gold);">price_per_meter</code>، <code style="color:var(--gold);">zone_id</code>، <code style="color:var(--gold);">property_class</code>.
         </div>
         <textarea id="mass-appraisal-input" class="prompt-textarea" data-testid="mass-json-input"
-            dir="ltr"
+            dir="ltr" oninput="massValidateJsonLive()"
             style="height:180px;font-size:0.85rem;direction:ltr;text-align:left;unicode-bidi:isolate;font-family:Consolas,'Courier New',monospace;white-space:pre;line-height:1.5;"
             spellcheck="false"
             placeholder='[
@@ -6047,6 +6314,20 @@
         <p style="font-size:0.8rem;color:#6b7280;margin:8px 0 0;text-align:right;" dir="rtl">
             الأوامر الرئيسية مثل المعاينة والتشغيل والتصدير موجودة في شريط الإجراءات أعلى مساحة العمل.
         </p>
+
+        <!-- ── JSON Validator Panel (Part A) ──────────────────────────── -->
+        <div data-testid="mass-json-validator-panel" id="mass-json-validator-panel" style="margin-top:10px; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.15); border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px;">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--gold-light);">محقق JSON</span>
+                <span data-testid="mass-json-status" id="mass-json-status" style="font-size:0.8rem; color:#9ca3af;">أدخل JSON للتحقق</span>
+                <span data-testid="mass-json-row-count" id="mass-json-row-count" style="font-size:0.78rem; color:#818cf8; background:rgba(99,102,241,0.1); padding:2px 7px; border-radius:4px;"></span>
+                <button type="button" data-testid="mass-json-format-button" onclick="massFormatJson()" style="font-size:0.75rem; padding:3px 10px; background:#1f2937; border:1px solid rgba(212,175,55,0.3); border-radius:4px; color:#d4af37; cursor:pointer; font-family:inherit;">تنسيق JSON</button>
+            </div>
+            <div data-testid="mass-json-error-list" id="mass-json-error-list" style="font-size:0.78rem; color:#f87171; max-height:80px; overflow-y:auto;"></div>
+            <div data-testid="mass-json-schema-help" style="margin-top:6px; font-size:0.75rem; color:#6b7280;">
+                <span data-testid="mass-json-required-fields-list">الحقول المطلوبة: <code>row_id</code>، <code>location</code>، <code>area</code>، <code>property_type</code>، <code>valuation_purpose</code></span>
+            </div>
+        </div>
 
         <!-- Summary (shown after preview or run) -->
         <div id="mass-appraisal-summary" style="margin-top:14px;">
@@ -6130,19 +6411,26 @@
             اعتماد المحفظة رسميًا من الخبير
         </button>
     </div>
-    <!-- Lead form -->
-    <div id="mass-lead-form" data-testid="mass-lead-form" style="display:none; margin-bottom:1rem; padding:14px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:10px;">
+    <!-- Approval Modal wrapper (mass-approval-modal) -->
+    <div id="mass-approval-modal-wrapper" data-testid="mass-approval-modal" style="display:none; margin-bottom:1rem;">
+    <!-- Lead form (inside approval modal wrapper) -->
+    <div id="mass-lead-form" data-testid="mass-lead-form" style="padding:14px 18px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.25); border-radius:10px;">
         <div style="font-size:0.9rem; font-weight:700; color:var(--gold-light); margin-bottom:12px;">طلب مراجعة واعتماد المحفظة من الخبير</div>
+        <!-- Organization name — new field for institutional workflow -->
+        <div style="margin-bottom:10px;">
+            <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">اسم المؤسسة / الجهة</label>
+            <input data-testid="mass-approval-organization-name" id="mass-approval-org-name" type="text" class="input-box" placeholder="اسم الجهة أو المؤسسة" style="padding:7px; width:100%;">
+        </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-            <div>
+            <div data-testid="mass-approval-contact-name">
                 <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">الاسم / الشركة *</label>
                 <input type="text" id="mass-lead-name" data-testid="mass-lead-name" class="input-box" placeholder="الاسم أو اسم الشركة" style="padding:7px; width:100%;">
             </div>
-            <div>
+            <div data-testid="mass-approval-phone">
                 <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">رقم الهاتف / واتساب *</label>
                 <input type="text" id="mass-lead-phone" data-testid="mass-lead-phone" class="input-box" placeholder="رقم الهاتف" style="padding:7px; width:100%;">
             </div>
-            <div>
+            <div data-testid="mass-approval-email">
                 <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">البريد الإلكتروني</label>
                 <input type="email" id="mass-lead-email" data-testid="mass-lead-email" class="input-box" placeholder="email@example.com" style="padding:7px; width:100%;">
             </div>
@@ -6155,7 +6443,7 @@
                 <input type="text" id="mass-lead-purpose" data-testid="mass-lead-purpose" class="input-box" placeholder="بنك / جهة حكومية / إجراءات قانونية" style="padding:7px; width:100%;">
             </div>
         </div>
-        <div style="margin-bottom:10px;">
+        <div data-testid="mass-approval-notes" style="margin-bottom:10px;">
             <label style="font-size:0.78rem; color:#9ca3af; display:block; margin-bottom:3px;">ملاحظات</label>
             <textarea id="mass-lead-notes" data-testid="mass-lead-notes" class="prompt-textarea" style="height:60px; font-size:0.85rem;" placeholder="أي تفاصيل إضافية..."></textarea>
         </div>
@@ -6164,33 +6452,48 @@
             style="padding:9px 24px; background:#d4af37; color:#000; font-weight:900; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-family:inherit;">
             إرسال الطلب
         </button>
+        <span data-testid="mass-approval-submit" style="display:none;"></span>
         <div id="mass-lead-confirmation" data-testid="mass-lead-confirmation" style="display:none; margin-top:10px; padding:10px 14px; background:rgba(34,197,94,0.09); border:1px solid rgba(34,197,94,0.3); border-radius:6px; font-size:0.82rem; color:#86efac;">
             تم تسجيل طلب مراجعة المحفظة مبدئيًا. سيقوم الخبير بمراجعة البيانات والمعايرة قبل إصدار أي تقرير معتمد.
         </div>
+        <div id="mass-approval-confirmation-el" data-testid="mass-approval-confirmation" style="display:none; margin-top:6px; padding:10px 14px; background:rgba(34,197,94,0.07); border:1px solid rgba(34,197,94,0.25); border-radius:6px; font-size:0.82rem; color:#86efac;">
+            تم تسجيل طلب مراجعة المحفظة. هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.
+        </div>
+    </div>
     </div>
 
     <!-- ── Preview PDF / Report architecture info ────────────────────── -->
     <div style="margin-bottom:1rem; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.15); border-radius:8px;">
         <div style="font-size:0.82rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">التقارير والتصدير — بنية التقارير المستهدفة</div>
+        <div data-testid="mass-export-warning" style="margin-bottom:10px; padding:6px 10px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.22); border-radius:5px; font-size:0.78rem; color:#f87171;">
+            ⚠ تقرير تقييم جماعي آلي مؤقت — غير معتمد رسميًا. لا تستخدم هذه النتائج أمام جهات رسمية قبل مراجعة الخبير.
+        </div>
         <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:10px;">
             <strong style="color:#d4af37;">1. تقرير PDF تنفيذي:</strong> ملخص المحفظة، إجمالي القيمة، توزيع الأصول، مؤشرات الجودة (COD / outlier rate / confidence). العلامة المائية: "مسودة آلية — غير معتمدة" ما لم يعتمدها الخبير.<br>
             <strong style="color:#d4af37; margin-top:6px; display:inline-block;">2. Excel داخلي للخبير (Internal Audit Trail):</strong> صف لكل أصل: القيمة المقدرة، كود المنهجية، عوامل التعديل، درجة الثقة، علامة الشاذ، مرجع المصدر، حالة الاعتماد. <em style="color:#6b7280;">للخبير / الإدارة — ليس مخرجًا عامًا.</em>
         </div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
             <button type="button" data-testid="mass-preview-pdf" onclick="alert('معاينة PDF — ستتوفر بعد تشغيل التقييم وإرسال طلب الاعتماد.')"
                 style="padding:7px 16px; background:rgba(212,175,55,0.12); border:1px solid rgba(212,175,55,0.3); color:#d4af37; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
                 معاينة تقرير PDF استرشادي
+            </button>
+            <button type="button" data-testid="mass-draft-pdf-button" id="mass-draft-pdf-btn" disabled
+                style="padding:7px 16px; background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.15); color:#6b7280; border-radius:6px; cursor:not-allowed; font-size:0.8rem; font-family:inherit; opacity:0.6;">
+                تحميل مسودة PDF (قريبًا)
             </button>
             <button type="button" onclick="downloadMassAppraisalCsv()"
                 style="padding:7px 16px; background:rgba(33,115,70,0.15); border:1px solid rgba(33,115,70,0.4); color:#86efac; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
                 تصدير CSV استرشادي
             </button>
-            <button type="button" onclick="downloadMassAppraisalXlsx()"
+            <button type="button" data-testid="mass-export-excel-button" onclick="downloadMassAppraisalXlsx()"
                 style="padding:7px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:#9ca3af; border-radius:6px; cursor:pointer; font-size:0.8rem; font-family:inherit;">
-                تصدير Excel داخلي للخبير
+                تصدير Excel (مسودة غير معتمدة)
             </button>
         </div>
-        <div style="font-size:0.72rem; color:#6b7280; margin-top:8px;">تقرير تقييم جماعي آلي مؤقت — غير معتمد رسميًا</div>
+        <div data-testid="mass-draft-pdf-status" id="mass-draft-pdf-status" style="font-size:0.75rem; color:#9ca3af; margin-bottom:4px;">سيتم تفعيل تحميل مسودة PDF بعد ربط مولد التقارير بالخادم.</div>
+        <div data-testid="mass-draft-pdf-download" id="mass-draft-pdf-download" style="display:none;"></div>
+        <div data-testid="mass-export-excel-note" style="font-size:0.72rem; color:#6b7280; margin-top:4px;">تصدير Excel: بيانات استرشادية مبدئية — غير معتمد رسميًا. لا يُعد مخرجًا رسميًا للخبير.</div>
+        <div data-testid="mass-export-excel-status" id="mass-export-excel-status" style="font-size:0.72rem; color:#9ca3af; margin-top:2px;"></div>
     </div>
 
       </div><!-- /.mass-tab-panel portfolio -->
@@ -6371,6 +6674,31 @@
             <i class="fas fa-percentage"></i> إجراء دراسة النسب
         </button>
         <div id="ratio-study-results" style="margin-top:12px;"></div>
+
+        <!-- ── Ratio Study Outputs (Part C) ──────────────────────────── -->
+        <div style="margin-top:14px; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(212,175,55,0.15); border-radius:8px;">
+            <div style="font-size:0.82rem; font-weight:700; color:var(--gold-light); margin-bottom:8px;">ملخص دراسة النسب الآني</div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:10px;">
+                <div data-testid="mass-assessment-ratio-output" id="mass-assessment-ratio-output" style="padding:8px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:6px; text-align:center;">
+                    <div style="font-size:0.72rem; color:#9ca3af;">نسبة التقييم</div>
+                    <div id="mass-ratio-val" style="font-size:0.95rem; font-weight:700; color:var(--gold); margin-top:3px;">—</div>
+                </div>
+                <div data-testid="mass-cod-output" id="mass-cod-output" style="padding:8px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:6px; text-align:center;">
+                    <div style="font-size:0.72rem; color:#9ca3af;">معامل الاختلاف (COD)</div>
+                    <div id="mass-cod-val" style="font-size:0.78rem; color:#6b7280; margin-top:3px;">لا يمكن حساب COD دون عدد كافٍ من بيانات المبيعات.</div>
+                </div>
+                <div data-testid="mass-sales-count-output" id="mass-sales-count-output" style="padding:8px 12px; background:rgba(255,255,255,0.04); border:1px solid rgba(212,175,55,0.2); border-radius:6px; text-align:center;">
+                    <div style="font-size:0.72rem; color:#9ca3af;">عدد المبيعات الصالحة</div>
+                    <div id="mass-sales-count-val" style="font-size:0.95rem; font-weight:700; color:#86efac; margin-top:3px;">—</div>
+                </div>
+            </div>
+            <div data-testid="mass-calibration-status" style="margin-bottom:6px; padding:5px 8px; background:rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.2); border-radius:5px; font-size:0.75rem; color:#818cf8;">
+                حالة المعايرة: فحص إحصائي مبدئي فقط
+            </div>
+            <div data-testid="mass-calibration-note" style="font-size:0.75rem; color:#9ca3af; font-style:italic;">
+                المعايرة الذاتية عبر Qdrant/Auto-training غير مفعّلة في هذه المرحلة. يتم حاليًا عرض فحص إحصائي مبدئي فقط بناءً على البيانات المدخلة.
+            </div>
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════════
@@ -6532,6 +6860,18 @@
                 <div style="font-size:0.72rem; color:#6b7280;">حالة الاعتماد</div>
                 <div style="font-size:0.82rem; color:#9ca3af; margin-top:2px;">بانتظار مراجعة الخبير</div>
             </div>
+        </div>
+
+        <!-- ── Qdrant / Auto-training Placeholder (Part D) ─────────────── -->
+        <div data-testid="mass-qdrant-placeholder" style="margin-bottom:14px; padding:12px 16px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.25); border-radius:8px;">
+            <div style="font-size:0.82rem; font-weight:700; color:#818cf8; margin-bottom:6px;">بوابة Qdrant / Source Registry / Auto-training</div>
+            <div style="font-size:0.78rem; color:#9ca3af; margin-bottom:8px;">
+                سيتم ربط التقييم الجماعي لاحقًا بمستودع المقارنات وQdrant وSource Registry وBackend Advisor. لا يتم الآن تدريب النموذج من الإنترنت أو تحديث أسعار المناطق تلقائيًا.
+            </div>
+            <div data-testid="mass-auto-training-status" style="font-size:0.75rem; color:#d4af37; font-weight:700;">الحالة الحالية: لم يتم ربط التدريب التلقائي بعد — مخطط للمرحلة القادمة</div>
+        </div>
+        <div data-testid="mass-governance-note" style="margin-bottom:14px; padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:6px; font-size:0.75rem; color:#9ca3af;">
+            يعمل النظام حاليًا كمسودة داخلية. سيتم ربط التدريب التلقائي والمقارنات السوقية لاحقًا. كل النتائج مبدئية وغير معتمدة ولا يتم تحديثها تلقائيًا من الإنترنت.
         </div>
 
         <!-- Keep the original governance decision form below the roadmap panel -->
@@ -31826,9 +32166,9 @@ var _PROFILE_FORM_SCHEMA = {
                 var data = r.data || {};
                 if (confirmEl) {
                     if (r.ok && data.request_id) {
-                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك. رقم الطلب: <strong>' + _chatEsc(data.request_id) + '</strong>. سيتم التواصل معك قريبًا.';
+                        confirmEl.innerHTML = '&#10003; تم تسجيل طلب المراجعة. رقم الطلب: <strong>' + _chatEsc(data.request_id) + '</strong>. هذا ليس تقريرًا معتمدًا. سيتم التواصل معك قريبًا.';
                     } else {
-                        confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
+                        confirmEl.innerHTML = '&#10003; تم تسجيل طلب المراجعة مبدئيًا. هذا ليس تقريرًا معتمدًا. سيتم التواصل معك قريبًا.';
                     }
                     confirmEl.style.display = 'block';
                     confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -31889,7 +32229,7 @@ var _PROFILE_FORM_SCHEMA = {
 /* ── Professional Wizard: Matrix Tab Switcher ──────────────────────── */
 function switchProfMatrixTab(tabKey) {
     var tabs = ['ui-fields','db-mapping','engine-inputs','market-comparables',
-                'agentic-enrichment','validation','human-approval',
+                'agentic-enrichment','validation-rules','human-approval',
                 'report-disclosure','output-contract'];
     tabs.forEach(function(k) {
         var btn = document.getElementById('pmtab-' + k);
@@ -31909,10 +32249,19 @@ function updateProfMatrixMetadata(route) {
     var ROUTE_META = {
         'market_value_with_habu':  { ifrs: 'Level 2', approval: 'نعم', desc: 'القيمة السوقية وفق HABU — تحليل أعلى وأفضل استغلال' },
         'standard_market_value':   { ifrs: 'Level 2', approval: 'نعم', desc: 'القيمة السوقية القياسية — مقاربة السوق' },
+        'sales_comparison_market_value': { ifrs: 'Level 2', approval: 'نعم', desc: 'مقارنة المبيعات — القيمة السوقية' },
         'ifrs_13_fair_value':      { ifrs: 'Level 3', approval: 'نعم', desc: 'القيمة العادلة IFRS 13 — تقارير مالية' },
+        'ias_16_revaluation':      { ifrs: 'Level 3', approval: 'نعم', desc: 'إعادة التقييم IAS 16 — تقارير مالية' },
+        'impairment_review':       { ifrs: 'Level 3', approval: 'نعم', desc: 'مراجعة الانخفاض في القيمة — IFRS' },
         'secured_lending_value':   { ifrs: 'Level 2', approval: 'نعم', desc: 'قيمة الإقراض المضمون — رهن وتمويل بنكي' },
+        'bank_risk_haircut':       { ifrs: 'Level 2', approval: 'نعم', desc: 'خصم مخاطر البنك — تمويل' },
+        'ltv_assessment':          { ifrs: 'Level 2', approval: 'نعم', desc: 'تقييم نسبة القرض للقيمة LTV' },
         'forced_sale':             { ifrs: 'Level 3', approval: 'نعم', desc: 'البيع الاضطراري — قيمة تصفوية' },
+        'court_liquidation':       { ifrs: 'Level 3', approval: 'نعم', desc: 'التصفية القضائية' },
+        'bankruptcy_restructuring':{ ifrs: 'Level 3', approval: 'نعم', desc: 'إعادة هيكلة الإفلاس' },
         'dcf_investment_value':    { ifrs: 'Level 3', approval: 'نعم', desc: 'DCF — التدفق النقدي المخصوم' },
+        'court_damages':           { ifrs: 'Level 3', approval: 'نعم', desc: 'أضرار قضائية — تقاضي' },
+        'eminent_domain':          { ifrs: 'Level 3', approval: 'نعم', desc: 'نزع الملكية للمنفعة العامة' },
     };
     var meta = ROUTE_META[route] || { ifrs: 'Level 2', approval: 'نعم', desc: '' };
     if (routeDisplay) routeDisplay.textContent = route || 'market_value_with_habu';
@@ -31921,6 +32270,12 @@ function updateProfMatrixMetadata(route) {
     if (summaryText) summaryText.textContent = meta.desc || 'اختر مسار الغرض لعرض الوصف والمعايير المطبقة.';
     var profileLabel = document.getElementById('prof-valuation-profile-label');
     if (profileLabel && route) profileLabel.textContent = route.replace(/_/g,' ');
+    /* update purpose status in live strip */
+    var purposeStatusEl = document.getElementById('prof-purpose-status-display');
+    if (purposeStatusEl) purposeStatusEl.textContent = meta.desc ? meta.desc.split('—')[0].trim() : (route || '—');
+    /* update human approval display */
+    var haEl = document.getElementById('prof-human-approval-display');
+    if (haEl) { haEl.textContent = meta.approval || 'نعم'; haEl.style.color = '#4ade80'; }
 }
 
 /* wire up prof-purpose-route → updateProfMatrixMetadata */
@@ -31939,6 +32294,120 @@ function syncAssetTypeFromProf() {
     var val = (subtypeEl && subtypeEl.value) ? subtypeEl.value : '';
     assetTypeEl.value = val;
     if (typeof onSelectionChange === 'function') onSelectionChange();
+}
+
+/* ── Professional Technical Panel Toggle (Part B) ─────────────────── */
+function toggleProfTechnicalPanel(family) {
+    var panel       = document.getElementById('prof-technical-panel');
+    var industrial  = document.getElementById('prof-industrial-fields');
+    var residential = document.getElementById('prof-residential-fields');
+    var specialized = document.getElementById('prof-specialized-fields');
+    var INDUSTRIAL  = ['advanced_industrial_logistics','tech_energy_infrastructure','underground_special_assets'];
+    var SPECIALIZED = ['specialized_medical_science','hospitality_entertainment','sports_event_venues'];
+    if (!panel) return;
+    if (!family) { panel.style.display = 'none'; return; }
+    panel.style.display = '';
+    if (industrial)  industrial.style.display  = INDUSTRIAL.indexOf(family)  >= 0 ? '' : 'none';
+    if (residential) residential.style.display = 'none'; /* residential uses simple val tab */
+    if (specialized) specialized.style.display = SPECIALIZED.indexOf(family) >= 0 ? '' : 'none';
+    /* update asset status in live strip */
+    var assetStatusEl = document.getElementById('prof-asset-status-display');
+    if (assetStatusEl) {
+        var FAMILY_LABELS = {
+            'hospitality_entertainment':   'ضيافة وترفيه',
+            'sports_event_venues':         'رياضة وفعاليات',
+            'advanced_industrial_logistics':'صناعة ولوجستيات',
+            'tech_energy_infrastructure':  'تقنية وطاقة',
+            'specialized_medical_science': 'طبي ومتخصص',
+            'agri_environmental_assets':   'زراعي وبيئي',
+            'underground_special_assets':  'تحت الأرض',
+            'cemetery_memorial_assets':    'مقابر وتذكارية',
+            'heritage_cultural_assets':    'تراث وثقافة'
+        };
+        assetStatusEl.textContent = FAMILY_LABELS[family] || family;
+    }
+    /* update data readiness */
+    var drEl = document.getElementById('prof-data-readiness-display');
+    if (drEl) { drEl.textContent = 'بيانات جزئية'; drEl.style.color = '#fbbf24'; }
+}
+
+/* ── Weighted Valuation Calculator (Part E) ───────────────────────── */
+function calcProfWeightedValue() {
+    var sv = parseFloat((document.getElementById('prof-sales-value')  || {}).value) || 0;
+    var sw = parseFloat((document.getElementById('prof-sales-weight') || {}).value) || 0;
+    var iv = parseFloat((document.getElementById('prof-income-value') || {}).value) || 0;
+    var iw = parseFloat((document.getElementById('prof-income-weight')|| {}).value) || 0;
+    var cv = parseFloat((document.getElementById('prof-cost-value')   || {}).value) || 0;
+    var cw = parseFloat((document.getElementById('prof-cost-weight')  || {}).value) || 0;
+    var warnEl = document.getElementById('prof-weights-warning');
+    var outEl  = document.getElementById('prof-weighted-value');
+    var sensEl = document.getElementById('prof-sensitivity-output');
+    var totalW = sw + iw + cw;
+    if (warnEl) warnEl.style.display = (totalW > 0 && Math.abs(totalW - 100) > 0.5) ? '' : 'none';
+    if (totalW <= 0 || (sv === 0 && iv === 0 && cv === 0)) {
+        if (outEl) outEl.textContent = '—';
+        if (sensEl) sensEl.textContent = '—';
+        return;
+    }
+    var wv = (sv * sw + iv * iw + cv * cw) / 100;
+    if (outEl) outEl.textContent = Math.round(wv).toLocaleString('ar-EG') + ' ج.م';
+    if (sensEl) sensEl.textContent =
+        Math.round(wv * 0.9).toLocaleString('ar-EG') + ' — ' +
+        Math.round(wv * 1.1).toLocaleString('ar-EG') + ' ج.م';
+    var drEl = document.getElementById('prof-data-readiness-display');
+    if (drEl) { drEl.textContent = 'بيانات كافية للترجيح'; drEl.style.color = '#4ade80'; }
+}
+
+/* ── Professional Draft Save ─────────────────────────────────────── */
+function professionalSaveDraft() {
+    var btn = document.getElementById('prof-save-draft-btn');
+    if (btn) { btn.innerHTML = '<i class="fas fa-check"></i> تم حفظ المسودة محلياً'; btn.disabled = true; }
+    setTimeout(function() {
+        if (btn) { btn.innerHTML = '<i class="fas fa-save" style="margin-left:5px;"></i> حفظ مسودة التقييم'; btn.disabled = false; }
+    }, 2500);
+}
+
+/* ── Professional Submit Approval (Part H) ─────────────────────────── */
+function professionalSubmitApproval() {
+    var family   = ((document.getElementById('prof-asset-family')   || {}).value)  || '';
+    var subtype  = ((document.getElementById('prof-asset-subtype')  || {}).value)  || '';
+    var route    = ((document.getElementById('prof-purpose-route')  || {}).value)  || '';
+    var subroute = ((document.getElementById('prof-purpose-subroute')|| {}).value) || '';
+    var location = ((document.getElementById('prof-location')       || {}).value)  || '';
+    var weightedVal = ((document.getElementById('prof-weighted-value')|| {}).textContent) || '';
+    window._professionalReviewPayload = {
+        source_page: 'professional_valuation',
+        request_kind: 'professional_valuation_review',
+        asset_family: family,
+        asset_subtype: subtype,
+        purpose_route: route,
+        purpose_subroute: subroute,
+        location: location,
+        technical_inputs: {
+            depreciation_factor: ((document.getElementById('prof-depreciation-factor')|| {}).value) || '',
+            effective_age:       ((document.getElementById('prof-effective-age')      || {}).value) || '',
+            economic_life:       ((document.getElementById('prof-economic-life')      || {}).value) || '',
+            construction_cost:   ((document.getElementById('prof-construction-cost')  || {}).value) || '',
+            operating_status:    ((document.getElementById('prof-operating-status')   || {}).value) || ''
+        },
+        matrix_metadata: {
+            ifrs_level:   ((document.getElementById('prof-ifrs-level-display')    || {}).textContent) || '',
+            active_route: ((document.getElementById('prof-active-route-display')  || {}).textContent) || ''
+        },
+        valuation_weights: {
+            sales:  ((document.getElementById('prof-sales-weight')  || {}).value) || '40',
+            income: ((document.getElementById('prof-income-weight') || {}).value) || '40',
+            cost:   ((document.getElementById('prof-cost-weight')   || {}).value) || '20'
+        },
+        weighted_value: weightedVal,
+        requires_expert_review: true
+    };
+    var confirmMsg = 'تم تسجيل طلب مراجعة التقييم المهني. هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.';
+    var statusEl = document.getElementById('prof-draft-pdf-status');
+    if (statusEl) { statusEl.style.color = '#86efac'; statusEl.textContent = confirmMsg; }
+    if (typeof openExpertRequestModal === 'function') {
+        openExpertRequestModal();
+    }
 }
 </script>
 
@@ -32166,13 +32635,91 @@ function massShowResultsDashboard(result) {
     if (ol) ol.innerHTML = result.rows.filter(function(r){return r.outlier;}).map(function(r){
         return '<div>• ' + r.row_id + ': سعر/م² = ' + Math.round(r.ppm).toLocaleString('ar-EG') + '</div>';
     }).join('');
+
+    /* update enhanced dashboard cards */
+    massUpdateDashboardCards(result);
+}
+
+/* ── Enhanced dashboard cards update (Part B) ───────────────────────── */
+function massUpdateDashboardCards(result) {
+    var fmt = function(n) { return Number(n).toLocaleString('ar-EG', {maximumFractionDigits:0}); };
+    var el = function(id) { return document.getElementById(id); };
+    var totalAssets = result.rows ? result.rows.length : 0;
+    var successCount = result.rows ? result.rows.filter(function(r){return !r.outlier;}).length : 0;
+    var reviewCount = result.outlierCount || 0;
+    var qualityPct = totalAssets > 0 ? Math.round((successCount / totalAssets) * 100) : 0;
+    if (el('mass-dc-total-assets-val')) el('mass-dc-total-assets-val').textContent = totalAssets;
+    if (el('mass-dc-total-value-val'))  el('mass-dc-total-value-val').textContent  = fmt(result.total) + ' ج.م';
+    if (el('mass-dc-avg-price-val'))    el('mass-dc-avg-price-val').textContent    = fmt(result.avgPpm) + ' ج.م/م²';
+    if (el('mass-dc-success-count-val')) el('mass-dc-success-count-val').textContent = successCount;
+    if (el('mass-dc-review-count-val'))  el('mass-dc-review-count-val').textContent  = reviewCount;
+    var qBadge = document.querySelector('[data-testid="mass-quality-badge"]');
+    if (qBadge) qBadge.textContent = qualityPct + '%';
+    if (el('mass-dc-quality-val')) el('mass-dc-quality-val').innerHTML = '<span data-testid="mass-quality-badge">' + qualityPct + '%</span>';
+}
+
+/* ── Live JSON validator (Part A) ───────────────────────────────────── */
+function massValidateJsonLive() {
+    var ta = document.getElementById('mass-appraisal-input');
+    var statusEl = document.getElementById('mass-json-status');
+    var rowCountEl = document.getElementById('mass-json-row-count');
+    var errorListEl = document.getElementById('mass-json-error-list');
+    if (!ta) return;
+    var raw = ta.value.trim();
+    if (!raw) {
+        if (statusEl) { statusEl.textContent = 'أدخل JSON للتحقق'; statusEl.style.color = '#9ca3af'; }
+        if (rowCountEl) rowCountEl.textContent = '';
+        if (errorListEl) errorListEl.innerHTML = '';
+        return;
+    }
+    var parsed;
+    try { parsed = JSON.parse(raw); } catch(e) {
+        if (statusEl) { statusEl.textContent = '❌ JSON غير صالح'; statusEl.style.color = '#f87171'; }
+        if (rowCountEl) rowCountEl.textContent = '';
+        if (errorListEl) errorListEl.innerHTML = '<div style="color:#f87171;font-size:0.78rem;">• ' + e.message + '</div>';
+        return;
+    }
+    if (!Array.isArray(parsed)) {
+        if (statusEl) { statusEl.textContent = '⚠ يجب أن تكون مصفوفة JSON'; statusEl.style.color = '#fbbf24'; }
+        if (rowCountEl) rowCountEl.textContent = '';
+        return;
+    }
+    var REQUIRED = ['row_id', 'location', 'area', 'property_type', 'valuation_purpose'];
+    var errors = [];
+    parsed.forEach(function(row, i) {
+        var label = row.row_id ? row.row_id : 'صف ' + (i + 1);
+        var missing = REQUIRED.filter(function(f) { return !row[f]; });
+        if (missing.length) errors.push(label + ': ' + missing.map(function(f) { return f + ' مفقود'; }).join('، '));
+    });
+    if (statusEl) {
+        statusEl.textContent = errors.length === 0 ? '✅ JSON صالح' : '⚠ حقول ناقصة';
+        statusEl.style.color = errors.length === 0 ? '#86efac' : '#fbbf24';
+    }
+    if (rowCountEl) rowCountEl.textContent = parsed.length + ' صف';
+    if (errorListEl) errorListEl.innerHTML = errors.slice(0, 5).map(function(e) { return '<div>• ' + e + '</div>'; }).join('');
+}
+
+function massFormatJson() {
+    var ta = document.getElementById('mass-appraisal-input');
+    var statusEl = document.getElementById('mass-json-status');
+    if (!ta) return;
+    var raw = ta.value.trim();
+    if (!raw) return;
+    var parsed;
+    try { parsed = JSON.parse(raw); } catch(e) {
+        if (statusEl) { statusEl.textContent = 'لا يمكن تنسيق JSON قبل إصلاح الأخطاء.'; statusEl.style.color = '#f87171'; }
+        return;
+    }
+    ta.value = JSON.stringify(parsed, null, 2);
+    massValidateJsonLive();
 }
 
 /* ── Expert lead form toggle + submit ───────────────────────────────── */
 function massToggleLeadForm() {
-    var form = document.getElementById('mass-lead-form');
-    if (!form) return;
-    form.style.display = form.style.display === 'none' ? '' : 'none';
+    var wrapper = document.getElementById('mass-approval-modal-wrapper');
+    var el = wrapper || document.getElementById('mass-lead-form');
+    if (!el) return;
+    el.style.display = el.style.display === 'none' ? '' : 'none';
 }
 
 async function massSubmitExpertLead() {
@@ -32185,6 +32732,10 @@ async function massSubmitExpertLead() {
         return;
     }
     if (msgEl) msgEl.style.display = 'none';
+    /* Show confirmation immediately — PDF generation happens server-side asynchronously */
+    if (confEl) confEl.style.display = '';
+    var approvalConf = document.getElementById('mass-approval-confirmation-el');
+    if (approvalConf) approvalConf.style.display = '';
     var email      = (document.getElementById('mass-lead-email')       || {}).value || '';
     var assetCount = (document.getElementById('mass-lead-asset-count') || {}).value || '';
     var purpose    = (document.getElementById('mass-lead-purpose')     || {}).value || '';
@@ -32204,9 +32755,424 @@ async function massSubmitExpertLead() {
         var resp = await fetch('/api/expert-requests', {method:'POST', body: fd});
         if (resp.ok) submitted = true;
     } catch(e) { /* fallback below */ }
-    if (confEl) confEl.style.display = '';
-    submitted = true; /* always show confirmation */
+    submitted = true;
 }
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     EXPERT BACKOFFICE — Internal admin/expert review panel.
+     Hidden from ordinary users. Accessible only via URL hash #expert-backoffice.
+     The tab becomes visible once the hash is detected on page load.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="es-workspace" id="ws-expert-backoffice" role="tabpanel"
+     data-testid="expert-backoffice-section"
+     style="padding:1.5rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(212,175,55,0.3);">
+    <div>
+      <h2 style="color:#d4af37; margin:0; font-size:1.25rem;">🔐 مكتب مراجعة الخبير — داخلي فقط</h2>
+      <p style="color:#94a3b8; margin:4px 0 0; font-size:0.8rem;">هذه اللوحة للاستخدام الداخلي فقط. غير مرئية للمستخدمين العاديين.</p>
+    </div>
+    <button onclick="expertBackofficeLoad()" data-testid="expert-backoffice-refresh"
+            style="padding:7px 16px; background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4); color:#d4af37; border-radius:8px; cursor:pointer; font-size:0.82rem;">
+      ↻ تحديث القائمة
+    </button>
+  </div>
+
+  <!-- Auth token input -->
+  <div style="margin-bottom:1rem; padding:10px 14px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+    <label style="color:#94a3b8; font-size:0.78rem; display:block; margin-bottom:4px;">رمز الدخول (Bearer Token):</label>
+    <input id="expert-backoffice-token" type="password" dir="ltr"
+           placeholder="أدخل JWT token هنا ثم اضغط تحديث"
+           style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; font-family:monospace;"
+           oninput="localStorage.setItem('expert_bo_token', this.value)" />
+    <p style="color:#64748b; font-size:0.72rem; margin:4px 0 0;">يُستخدم لحماية الوصول. لا يُرسَل إلى أي طرف خارجي.</p>
+  </div>
+
+  <!-- Status message -->
+  <div id="expert-backoffice-status" data-testid="expert-backoffice-status"
+       style="display:none; margin-bottom:1rem; padding:8px 12px; border-radius:6px; font-size:0.82rem;"></div>
+
+  <!-- Requests table -->
+  <div style="overflow-x:auto; margin-bottom:1.5rem;">
+    <table data-testid="expert-requests-table"
+           style="width:100%; border-collapse:collapse; font-size:0.82rem; color:#e2e8f0;">
+      <thead>
+        <tr style="background:rgba(31,78,120,0.7); color:#fff;">
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">رقم الطلب</th>
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">العميل</th>
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">نوع العقار</th>
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">الحالة</th>
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">النموذج</th>
+          <th style="padding:8px 10px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">التاريخ</th>
+          <th style="padding:8px 10px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.1);">إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="expert-requests-tbody" data-testid="expert-requests-tbody">
+        <tr><td colspan="7" style="text-align:center; padding:20px; color:#64748b;">اضغط "تحديث القائمة" لتحميل الطلبات.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Request detail panel (hidden until row clicked) -->
+  <div id="expert-request-detail-panel" data-testid="expert-request-detail-panel"
+       style="display:none; padding:1.2rem; background:rgba(15,23,42,0.7); border:1px solid rgba(212,175,55,0.2); border-radius:10px; margin-bottom:1.5rem;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="color:#d4af37; margin:0; font-size:1rem;">تفاصيل الطلب</h3>
+      <button onclick="expertCloseDetail()"
+              style="padding:4px 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; border-radius:5px; cursor:pointer; font-size:0.78rem;">✕ إغلاق</button>
+    </div>
+
+    <!-- Key fields -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px; margin-bottom:1rem;">
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">رقم الطلب</div>
+        <div id="expert-request-id" data-testid="expert-request-id" style="color:#e2e8f0; font-weight:700; font-family:monospace; font-size:0.85rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">الحالة</div>
+        <div id="expert-request-status" data-testid="expert-request-status" style="color:#fbbf24; font-weight:700; font-size:0.85rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">اسم العميل</div>
+        <div id="expert-detail-client-name" style="color:#e2e8f0; font-size:0.85rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">الهاتف</div>
+        <div id="expert-detail-phone" style="color:#e2e8f0; font-size:0.85rem; direction:ltr; text-align:right;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">نوع العقار</div>
+        <div id="expert-detail-property-type" style="color:#e2e8f0; font-size:0.85rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">نموذج التقرير</div>
+        <div id="expert-detail-template" style="color:#e2e8f0; font-size:0.85rem;"></div>
+      </div>
+    </div>
+
+    <!-- Availability flags -->
+    <div style="display:flex; gap:10px; margin-bottom:1rem; flex-wrap:wrap;">
+      <span id="expert-detail-pdf-badge" style="padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; background:rgba(30,41,59,0.6); color:#94a3b8;">PDF مبدئي: —</span>
+      <span id="expert-detail-receipt-badge" style="padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; background:rgba(30,41,59,0.6); color:#94a3b8;">إيصال PDF: —</span>
+      <span id="expert-detail-workbook-badge" data-testid="expert-workbook-available-badge" style="padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; background:rgba(30,41,59,0.6); color:#94a3b8;">ملف الخبير: —</span>
+      <span id="expert-detail-certified-badge" data-testid="expert-certified-badge" style="padding:4px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; background:rgba(239,68,68,0.12); color:#f87171;">معتمد: غير متاح</span>
+    </div>
+
+    <!-- PDF links (internal — only shown in this panel) -->
+    <div id="expert-detail-links" style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;"></div>
+
+    <!-- Expert workbook download button (only in expert UI) -->
+    <div id="expert-workbook-download-wrap" style="margin-bottom:1rem;">
+      <button id="expert-workbook-download" data-testid="expert-workbook-download"
+              onclick="expertDownloadWorkbook()"
+              style="display:none; padding:8px 18px; background:rgba(30,78,120,0.4); border:1px solid rgba(45,106,159,0.5); color:#93c5fd; border-radius:7px; cursor:pointer; font-size:0.82rem; font-weight:700;">
+        ⬇ تحميل ملف مراجعة الخبير (.xlsx)
+      </button>
+    </div>
+
+    <!-- Review form -->
+    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:0.5rem;">
+      <h4 style="color:#94a3b8; font-size:0.88rem; margin:0 0 0.8rem;">تحديث مراجعة الخبير</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">حالة المراجعة:</label>
+          <select id="expert-review-status-select" data-testid="expert-review-status-select"
+                  style="width:100%; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر الحالة —</option>
+            <option value="under_review">قيد المراجعة (under_review)</option>
+            <option value="needs_documents">يحتاج مستندات (needs_documents)</option>
+            <option value="approved_pending_report">موافق — بانتظار التقرير (approved_pending_report)</option>
+            <option value="rejected">مرفوض (rejected)</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">القيمة الموصى بها (ج.م):</label>
+          <input id="expert-recommended-value" data-testid="expert-recommended-value" type="number" dir="ltr"
+                 placeholder="مثال: 2500000"
+                 style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem;" />
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">ملاحظات الخبير:</label>
+        <textarea id="expert-review-notes" data-testid="expert-review-notes" rows="2" dir="rtl"
+                  placeholder="ملاحظات عامة عن الطلب..."
+                  style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem; resize:vertical; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;"></textarea>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">المستندات المطلوبة:</label>
+        <input id="expert-requested-documents" data-testid="expert-requested-documents" type="text" dir="rtl"
+               placeholder="مثال: عقد الملكية، رخصة البناء..."
+               style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem;" />
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">ملخص طريقة التقييم:</label>
+        <input id="expert-method-summary" data-testid="expert-method-summary" type="text" dir="rtl"
+               placeholder="مثال: مقارنة البيوع + طريقة الدخل..."
+               style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">ملاحظات التوفيق:</label>
+        <textarea id="expert-reconciliation-notes" data-testid="expert-reconciliation-notes" rows="2" dir="rtl"
+                  placeholder="ملاحظات توفيق النتائج..."
+                  style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem; resize:vertical; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;"></textarea>
+      </div>
+      <button id="expert-review-save" data-testid="expert-review-save"
+              onclick="expertSaveReview()"
+              style="padding:9px 22px; background:rgba(212,175,55,0.2); border:1px solid rgba(212,175,55,0.5); color:#d4af37; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        حفظ تحديث المراجعة
+      </button>
+      <div id="expert-review-confirmation" data-testid="expert-review-confirmation"
+           style="display:none; margin-top:10px; padding:8px 14px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:7px; color:#10b981; font-size:0.82rem; direction:rtl;">
+        تم حفظ التحديث. هذا ليس تقريرًا معتمدًا — التقرير المعتمد يُصدر في مرحلة لاحقة فقط.
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- end expert backoffice -->
+
+<script>
+// ── Expert Backoffice JS ──────────────────────────────────────────────────────
+
+var _expertBoCurrentId = null;
+
+function expertBackofficeInit() {
+    if (window.location.hash === '#expert-backoffice') {
+        var tabBtn = document.getElementById('es-tab-expert-backoffice');
+        if (tabBtn) tabBtn.style.display = '';
+        // Restore saved token
+        var saved = localStorage.getItem('expert_bo_token');
+        if (saved) {
+            var inp = document.getElementById('expert-backoffice-token');
+            if (inp) inp.value = saved;
+        }
+    }
+}
+
+function expertGetToken() {
+    return (document.getElementById('expert-backoffice-token') || {}).value
+        || localStorage.getItem('expert_bo_token') || '';
+}
+
+function expertBoStatus(msg, ok) {
+    var el = document.getElementById('expert-backoffice-status');
+    if (!el) return;
+    el.style.display = '';
+    el.textContent = msg;
+    el.style.background = ok ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+    el.style.border = ok ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)';
+    el.style.color = ok ? '#10b981' : '#f87171';
+}
+
+async function expertBackofficeLoad() {
+    var token = expertGetToken();
+    if (!token) { expertBoStatus('يرجى إدخال رمز الدخول (JWT token) أولاً.', false); return; }
+    var tbody = document.getElementById('expert-requests-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">جارٍ التحميل...</td></tr>';
+    try {
+        var resp = await fetch('/api/expert-requests', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (resp.status === 401) { expertBoStatus('رمز الدخول غير صالح أو منتهي الصلاحية (401).', false); return; }
+        if (!resp.ok) { expertBoStatus('خطأ في تحميل البيانات: ' + resp.status, false); return; }
+        var data = await resp.json();
+        var rows = data.requests || [];
+        expertBoStatus('تم تحميل ' + rows.length + ' طلب.', true);
+        if (!rows.length) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#64748b;">لا توجد طلبات مسجلة بعد.</td></tr>';
+            return;
+        }
+        var html = '';
+        rows.forEach(function(r) {
+            var statusColor = r.approval_status === 'draft_only' ? '#94a3b8'
+                : r.approval_status === 'under_review' ? '#fbbf24'
+                : r.approval_status === 'approved_pending_report' ? '#34d399'
+                : r.approval_status === 'rejected' ? '#f87171' : '#e2e8f0';
+            html += '<tr data-testid="expert-request-row" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" '
+                + 'onclick="expertOpenRequest(\'' + r.request_id + '\')">'
+                + '<td style="padding:8px 10px; font-family:monospace; color:#93c5fd;">' + (r.request_id || '') + '</td>'
+                + '<td style="padding:8px 10px;">' + (r.client_name || r.user_name || '—') + '</td>'
+                + '<td style="padding:8px 10px;">' + (r.property_type || '—') + '</td>'
+                + '<td style="padding:8px 10px; font-weight:700; color:' + statusColor + ';">' + (r.approval_status || '—') + '</td>'
+                + '<td style="padding:8px 10px; font-size:0.75rem; color:#94a3b8;">' + (r.report_template_name_ar || '—') + '</td>'
+                + '<td style="padding:8px 10px; font-size:0.75rem; direction:ltr; text-align:right;">' + ((r.created_at || '').substring(0,10)) + '</td>'
+                + '<td style="padding:8px 10px; text-align:center;">'
+                + '<button onclick="event.stopPropagation();expertOpenRequest(\'' + r.request_id + '\')" '
+                + 'style="padding:3px 10px; background:rgba(45,106,159,0.3); border:1px solid rgba(45,106,159,0.5); color:#93c5fd; border-radius:5px; cursor:pointer; font-size:0.75rem;">فتح</button>'
+                + '</td></tr>';
+        });
+        if (tbody) tbody.innerHTML = html;
+    } catch(e) {
+        expertBoStatus('خطأ في الاتصال: ' + e.message, false);
+    }
+}
+
+async function expertOpenRequest(rid) {
+    _expertBoCurrentId = rid;
+    var token = expertGetToken();
+    var panel = document.getElementById('expert-request-detail-panel');
+    if (panel) panel.style.display = 'block';
+    // Scroll to panel
+    if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+    // Clear confirmation
+    var conf = document.getElementById('expert-review-confirmation');
+    if (conf) conf.style.display = 'none';
+
+    try {
+        var resp = await fetch('/api/expert-requests/' + rid, {
+            headers: token ? {'Authorization':'Bearer ' + token} : {}
+        });
+        if (!resp.ok) { expertBoStatus('خطأ في تحميل تفاصيل الطلب: ' + resp.status, false); return; }
+        var data = await resp.json();
+        var r = data.request || {};
+
+        // Populate fields
+        _setText('expert-request-id',       r.request_id || '');
+        _setText('expert-request-status',   r.approval_status || '');
+        _setText('expert-detail-client-name', r.user_name || '');
+        _setText('expert-detail-phone',      r.phone || '');
+        _setText('expert-detail-property-type',
+            (r.payload_json && r.payload_json.property_type) || '');
+        _setText('expert-detail-template',
+            (r.report_template_name_ar || r.report_template_id || '—'));
+
+        // Availability badges
+        _expertSetBadge('expert-detail-pdf-badge', 'PDF مبدئي', r.draft_pdf_available);
+        _expertSetBadge('expert-detail-workbook-badge', 'ملف الخبير', r.expert_workbook_available);
+        var certBadge = document.getElementById('expert-detail-certified-badge');
+        if (certBadge) { certBadge.textContent = 'معتمد: غير متاح'; }
+
+        // PDF links (internal)
+        var linksDiv = document.getElementById('expert-detail-links');
+        if (linksDiv) {
+            var linksHtml = '';
+            if (r.draft_pdf_url) {
+                linksHtml += '<a href="' + r.draft_pdf_url + '" target="_blank" '
+                    + 'style="padding:5px 12px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.12); color:#93c5fd; border-radius:6px; font-size:0.78rem; text-decoration:none;">📄 تحميل PDF مبدئي</a>';
+            }
+            linksDiv.innerHTML = linksHtml;
+        }
+
+        // Workbook download button (admin only, shown inside this panel)
+        var wbBtn = document.getElementById('expert-workbook-download');
+        if (wbBtn) wbBtn.style.display = r.expert_workbook_available ? 'inline-block' : 'none';
+
+        // Pre-fill review fields with existing data
+        _setVal('expert-review-notes',        r.expert_notes || '');
+        _setVal('expert-requested-documents', r.requested_documents || '');
+        _setVal('expert-recommended-value',   r.expert_recommended_value || '');
+        _setVal('expert-method-summary',      r.valuation_method_summary || '');
+        _setVal('expert-reconciliation-notes', r.reconciliation_notes || '');
+        // Set current status in dropdown (leave at — if no update yet)
+        var sel = document.getElementById('expert-review-status-select');
+        if (sel) sel.value = '';
+
+    } catch(e) {
+        expertBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
+    }
+}
+
+function expertCloseDetail() {
+    var panel = document.getElementById('expert-request-detail-panel');
+    if (panel) panel.style.display = 'none';
+    _expertBoCurrentId = null;
+}
+
+async function expertDownloadWorkbook() {
+    if (!_expertBoCurrentId) return;
+    var token = expertGetToken();
+    if (!token) { expertBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var url = '/api/expert-requests/' + _expertBoCurrentId + '/expert-workbook';
+    try {
+        var resp = await fetch(url, { headers: {'Authorization':'Bearer ' + token} });
+        if (resp.status === 401) { expertBoStatus('غير مصرح. يرجى إدخال رمز صالح.', false); return; }
+        if (!resp.ok) { expertBoStatus('ملف المراجعة غير موجود أو خطأ: ' + resp.status, false); return; }
+        var blob = await resp.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'expert_review_' + _expertBoCurrentId + '.xlsx';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        expertBoStatus('تم تحميل ملف المراجعة بنجاح.', true);
+    } catch(e) {
+        expertBoStatus('خطأ في تحميل الملف: ' + e.message, false);
+    }
+}
+
+async function expertSaveReview() {
+    if (!_expertBoCurrentId) return;
+    var token = expertGetToken();
+    if (!token) { expertBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+
+    var body = {
+        approval_status:           (_getVal('expert-review-status-select') || undefined),
+        expert_notes:              _getVal('expert-review-notes'),
+        requested_documents:       _getVal('expert-requested-documents'),
+        expert_recommended_value:  _getVal('expert-recommended-value'),
+        valuation_method_summary:  _getVal('expert-method-summary'),
+        reconciliation_notes:      _getVal('expert-reconciliation-notes'),
+    };
+    // Remove undefined keys
+    Object.keys(body).forEach(function(k) { if (body[k] === undefined || body[k] === '') delete body[k]; });
+
+    var btn = document.getElementById('expert-review-save');
+    if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الحفظ...'; }
+
+    try {
+        var resp = await fetch('/api/expert-requests/' + _expertBoCurrentId + '/review', {
+            method: 'POST',
+            headers: {'Authorization':'Bearer ' + token, 'Content-Type':'application/json'},
+            body: JSON.stringify(body),
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+            expertBoStatus('تم حفظ التحديث بنجاح. الحالة الجديدة: ' + (data.approval_status || ''), true);
+            _setText('expert-request-status', data.approval_status || '');
+            var conf = document.getElementById('expert-review-confirmation');
+            if (conf) conf.style.display = '';
+        } else {
+            expertBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) {
+        expertBoStatus('خطأ في الاتصال: ' + e.message, false);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'حفظ تحديث المراجعة'; }
+    }
+}
+
+function _setText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+function _setVal(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.value = val;
+}
+function _getVal(id) {
+    var el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+}
+function _expertSetBadge(id, label, available) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (available) {
+        el.textContent = label + ': متاح ✓';
+        el.style.background = 'rgba(16,185,129,0.12)';
+        el.style.color = '#34d399';
+    } else {
+        el.textContent = label + ': غير متاح';
+        el.style.background = 'rgba(30,41,59,0.6)';
+        el.style.color = '#94a3b8';
+    }
+}
+
+// Init on load: show hidden tab if hash matches
+(function() {
+    expertBackofficeInit();
+    window.addEventListener('hashchange', function() { expertBackofficeInit(); });
+})();
 </script>
 
 </body>

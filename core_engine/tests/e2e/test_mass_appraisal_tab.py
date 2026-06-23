@@ -529,3 +529,310 @@ def test_MAT40_chat_tab_unaffected(page, live_server):
     page.click("#es-tab-chat")
     page.wait_for_selector("#ws-chat.es-ws-active", timeout=5_000)
     assert page.is_visible("#ws-chat")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT41–MAT45  Smart JSON Validator (Part A)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT41_json_validator_panel_visible(page, live_server):
+    """MAT41: mass-json-validator-panel is visible in mass mode."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-json-validator-panel"]')
+    assert el is not None, "mass-json-validator-panel not found"
+    assert el.is_visible()
+
+
+def test_MAT42_valid_json_shows_status_and_row_count(page, live_server):
+    """MAT42: After entering valid JSON, status shows valid and row count is populated."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    _fill_json(page, VALID_SAMPLE)
+    page.dispatch_event('[data-testid="mass-json-input"]', 'input')
+    page.wait_for_timeout(300)
+    status = page.query_selector('[data-testid="mass-json-status"]')
+    assert status is not None
+    assert "صالح" in status.inner_text() or "✅" in status.inner_text()
+    row_count = page.query_selector('[data-testid="mass-json-row-count"]')
+    assert row_count is not None
+    assert "5" in row_count.inner_text()
+
+
+def test_MAT43_invalid_json_shows_error_without_clearing(page, live_server):
+    """MAT43: Invalid JSON shows error in mass-json-error-list; textarea keeps original value."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    bad = "{ not valid json }"
+    _fill_json(page, bad)
+    page.dispatch_event('[data-testid="mass-json-input"]', 'input')
+    page.wait_for_timeout(300)
+    error_list = page.query_selector('[data-testid="mass-json-error-list"]')
+    assert error_list is not None
+    assert len(error_list.inner_text().strip()) > 0, "Error list should show errors for invalid JSON"
+    ta = page.query_selector('[data-testid="mass-json-input"]')
+    assert ta.input_value() == bad, "Textarea must not be modified on invalid JSON"
+
+
+def test_MAT44_required_fields_list_visible(page, live_server):
+    """MAT44: mass-json-required-fields-list shows required fields text."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-json-required-fields-list"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "row_id" in text or "location" in text or "area" in text
+
+
+def test_MAT45_format_button_formats_valid_json(page, live_server):
+    """MAT45: Format button pretty-prints valid JSON in textarea."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    compact = '[{"row_id":"R1","location":"Cairo","area":150,"property_type":"residential","valuation_purpose":"market_value"}]'
+    _fill_json(page, compact)
+    page.click('[data-testid="mass-json-format-button"]')
+    page.wait_for_timeout(300)
+    ta = page.query_selector('[data-testid="mass-json-input"]')
+    val = ta.input_value()
+    assert "\n" in val, "Format button should produce multi-line pretty-printed JSON"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT46–MAT49  Dashboard Cards (Part B)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT46_dashboard_cards_visible_in_mass_mode(page, live_server):
+    """MAT46: mass-dashboard-cards section is visible when mass mode is active."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-dashboard-cards"]')
+    assert el is not None, "mass-dashboard-cards not found"
+    assert el.is_visible()
+
+
+def test_MAT47_dashboard_cards_update_after_run(page, live_server):
+    """MAT47: After running sample data, total-assets-card and success-count-card show counts."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    _fill_json(page, VALID_SAMPLE)
+    _click_run(page)
+    total = page.query_selector('[data-testid="mass-total-assets-card"]')
+    assert total is not None
+    success = page.query_selector('[data-testid="mass-success-count-card"]')
+    assert success is not None
+    # values should not be just dashes after a successful run
+    assert total.inner_text().strip() != "" and success.inner_text().strip() != ""
+
+
+def test_MAT48_data_quality_card_visible(page, live_server):
+    """MAT48: mass-data-quality-card exists and is visible in mass mode."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-data-quality-card"]')
+    assert el is not None and el.is_visible()
+
+
+def test_MAT49_confidence_range_card_shows_data_gap(page, live_server):
+    """MAT49: mass-confidence-range-card shows data-gap text when no data."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-confidence-range-card"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "غير متاح" in text or "دون بيانات" in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT50–MAT53  Ratio Study / COD / Calibration (Part C)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT50_ratio_study_outputs_exist(page, live_server):
+    """MAT50: mass-assessment-ratio-output and mass-cod-output exist in ratio study panel."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="ratio-calibration"]')
+    page.wait_for_timeout(300)
+    assert page.query_selector('[data-testid="mass-assessment-ratio-output"]') is not None
+    assert page.query_selector('[data-testid="mass-cod-output"]') is not None
+    assert page.query_selector('[data-testid="mass-sales-count-output"]') is not None
+
+
+def test_MAT51_cod_output_shows_data_gap(page, live_server):
+    """MAT51: mass-cod-output shows data-gap message when no sales data."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="ratio-calibration"]')
+    page.wait_for_timeout(300)
+    el = page.query_selector('[data-testid="mass-cod-output"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "COD" in text or "مبيعات" in text or "كافٍ" in text
+
+
+def test_MAT52_calibration_note_says_qdrant_not_active(page, live_server):
+    """MAT52: mass-calibration-note says Qdrant/Auto-training is not active."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="ratio-calibration"]')
+    page.wait_for_timeout(300)
+    el = page.query_selector('[data-testid="mass-calibration-note"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "Qdrant" in text or "Auto-training" in text
+
+
+def test_MAT53_calibration_status_exists(page, live_server):
+    """MAT53: mass-calibration-status element exists in ratio study panel."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="ratio-calibration"]')
+    page.wait_for_timeout(300)
+    el = page.query_selector('[data-testid="mass-calibration-status"]')
+    assert el is not None
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT54–MAT55  Qdrant / Auto-training Placeholder (Part D)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT54_qdrant_placeholder_says_future_backend(page, live_server):
+    """MAT54: mass-qdrant-placeholder contains future/backend-only text."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="governance"]')
+    page.wait_for_timeout(300)
+    el = page.query_selector('[data-testid="mass-qdrant-placeholder"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "Qdrant" in text or "Source Registry" in text or "لاحقًا" in text
+
+
+def test_MAT55_auto_training_status_no_false_activation(page, live_server):
+    """MAT55: mass-auto-training-status does not claim auto-training is active."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="governance"]')
+    page.wait_for_timeout(300)
+    el = page.query_selector('[data-testid="mass-auto-training-status"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "مفعّل" not in text or "لم يتم" in text or "مخطط" in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT56–MAT58  Export Governance (Part E)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT56_export_warning_says_non_certified(page, live_server):
+    """MAT56: mass-export-warning contains non-certified language."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-export-warning"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "غير معتمد" in text or "مؤقت" in text
+
+
+def test_MAT57_draft_pdf_button_is_future_ready(page, live_server):
+    """MAT57: mass-draft-pdf-button exists and is disabled (future-ready, not live)."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-draft-pdf-button"]')
+    assert el is not None
+    # must be disabled OR have future-ready text
+    disabled = el.get_attribute("disabled")
+    text = el.inner_text()
+    assert disabled is not None or "قريبًا" in text or "سيتم" in text
+
+
+def test_MAT58_excel_export_note_says_non_certified(page, live_server):
+    """MAT58: mass-export-excel-note says non-certified."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    el = page.query_selector('[data-testid="mass-export-excel-note"]')
+    assert el is not None
+    text = el.inner_text()
+    assert "غير معتمد" in text or "مبدئية" in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT59–MAT61  Approval Modal (Part G)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT59_approval_modal_opens_on_button_click(page, live_server):
+    """MAT59: Clicking mass-expert-approval-button shows mass-approval-modal."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-testid="mass-expert-approval-button"]')
+    page.wait_for_selector('[data-testid="mass-approval-modal"]', timeout=3_000)
+    modal = page.query_selector('[data-testid="mass-approval-modal"]')
+    assert modal is not None and modal.is_visible()
+
+
+def test_MAT60_approval_modal_has_required_fields(page, live_server):
+    """MAT60: Approval modal contains organization, contact-name, and phone fields."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-testid="mass-expert-approval-button"]')
+    page.wait_for_selector('[data-testid="mass-approval-modal"]', timeout=3_000)
+    for tid in ['mass-approval-organization-name', 'mass-approval-contact-name',
+                'mass-approval-phone']:
+        el = page.query_selector(f'[data-testid="{tid}"]')
+        assert el is not None, f"{tid} not found in approval modal"
+
+
+def test_MAT61_approval_confirmation_says_not_certified(page, live_server):
+    """MAT61: After submitting approval form, confirmation says this is not certified."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-testid="mass-expert-approval-button"]')
+    page.wait_for_selector('[data-testid="mass-approval-modal"]', timeout=3_000)
+    page.fill('[data-testid="mass-lead-name"]', "أحمد المهندس")
+    page.fill('[data-testid="mass-lead-phone"]', "01012345678")
+    page.click('[data-testid="mass-lead-submit"]')
+    page.wait_for_timeout(1_500)
+    conf = page.query_selector('[data-testid="mass-approval-confirmation"]')
+    assert conf is not None and conf.is_visible()
+    text = conf.inner_text()
+    assert "غير معتمد" in text or "ليس تقريرًا معتمدًا" in text or "مراجعة الخبير" in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAT62–MAT64  Governance Safety
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_MAT62_no_excel_internal_path_in_user_ui(page, live_server):
+    """MAT62: Mass workspace does not expose any internal file system path."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    ws = page.query_selector('[data-testid="mass-appraisal-workspace"]')
+    assert ws is not None
+    text = ws.inner_text()
+    import re
+    assert not re.search(r'[A-Za-z]:\\|/home/|/var/|\.xlsx\s*$', text), \
+        "Internal file path must not appear in mass workspace UI"
+
+
+def test_MAT63_no_claim_of_internet_training_active(page, live_server):
+    """MAT63: Mass workspace does not claim internet auto-training is currently active."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    ws = page.query_selector('[data-testid="mass-appraisal-workspace"]')
+    assert ws is not None
+    text = ws.inner_text()
+    forbidden = ["تدريب النموذج من الإنترنت مفعّل", "تحديث تلقائي نشط", "Qdrant متصل"]
+    for phrase in forbidden:
+        assert phrase not in text, f"False claim found: '{phrase}'"
+
+
+def test_MAT64_no_claim_of_qdrant_active(page, live_server):
+    """MAT64: Mass workspace does not claim Qdrant is currently active."""
+    _goto(page, live_server)
+    _switch_mass_mode(page)
+    page.click('[data-mass-tab="governance"]')
+    page.wait_for_timeout(300)
+    panel = page.query_selector('[data-testid="mass-governance-panel"]')
+    assert panel is not None
+    text = panel.inner_text()
+    # Should NOT claim active Qdrant; should only mention it as planned/future
+    assert "Qdrant مفعّل" not in text and "Qdrant نشط" not in text

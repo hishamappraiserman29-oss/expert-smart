@@ -131,30 +131,30 @@ def test_pwf14_matrix_dashboard_header(page, live_server):
 
 
 def test_pwf15_matrix_metadata_bar(page, live_server):
-    """PWF15: professional-matrix-metadata bar exists."""
+    """PWF15: professional-live-status-strip bar exists (renamed from professional-matrix-metadata)."""
     page.goto(live_server)
-    assert page.query_selector('[data-testid="professional-matrix-metadata"]') is not None
+    assert page.query_selector('[data-testid="professional-live-status-strip"]') is not None
 
 
 def test_pwf16_matrix_active_route(page, live_server):
-    """PWF16: professional-active-route element exists."""
+    """PWF16: professional-active-route-status element exists (renamed)."""
     page.goto(live_server)
-    el = page.query_selector('[data-testid="professional-active-route"]')
+    el = page.query_selector('[data-testid="professional-active-route-status"]')
     assert el is not None
     assert len(el.inner_text().strip()) > 0
 
 
 def test_pwf17_matrix_ifrs_level(page, live_server):
-    """PWF17: professional-ifrs-level element exists and shows level info."""
+    """PWF17: professional-ifrs-level-status element exists and shows level info (renamed)."""
     page.goto(live_server)
-    el = page.query_selector('[data-testid="professional-ifrs-level"]')
+    el = page.query_selector('[data-testid="professional-ifrs-level-status"]')
     assert el is not None
 
 
 def test_pwf18_human_approval_required_shows_yes(page, live_server):
-    """PWF18: professional-human-approval-required shows 'نعم'."""
+    """PWF18: professional-human-approval-status shows 'نعم' (renamed)."""
     page.goto(live_server)
-    el = page.query_selector('[data-testid="professional-human-approval-required"]')
+    el = page.query_selector('[data-testid="professional-human-approval-status"]')
     assert el is not None
     assert "نعم" in el.inner_text()
 
@@ -184,7 +184,7 @@ def test_pwf21_all_nine_matrix_tabs_exist(page, live_server):
         "professional-matrix-tab-engine-inputs",
         "professional-matrix-tab-market-comparables",
         "professional-matrix-tab-agentic-enrichment",
-        "professional-matrix-tab-validation",
+        "professional-matrix-tab-validation-rules",
         "professional-matrix-tab-human-approval",
         "professional-matrix-tab-report-disclosure",
         "professional-matrix-tab-output-contract",

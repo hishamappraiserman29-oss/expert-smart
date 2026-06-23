@@ -210,3 +210,80 @@ def test_EBO15_backoffice_token_input_exists(page: Page):
     _goto_backoffice(page)
     inp = page.locator('#expert-backoffice-token')
     expect(inp).to_have_count(1)
+
+
+# ── Certified report UI tests (EBO16-EBO22) ───────────────────────────────────
+
+def test_EBO16_certified_report_generate_button_not_visible_by_default(page: Page):
+    """Generate certified report button is not visible when no request is open (or for non-approved status).
+
+    The certified-report wrap is hidden by default and only revealed when a request
+    with approved_pending_report is opened.
+    """
+    _goto_backoffice(page)
+    wrap = page.locator('#expert-certified-report-wrap')
+    # wrap must either not exist or be hidden before any request is opened
+    if wrap.count() >= 1:
+        assert wrap.is_hidden(), (
+            "Certified report wrap must be hidden when no request is open in the detail panel"
+        )
+
+
+def test_EBO17_certified_report_generate_button_has_testid(page: Page):
+    """Generate certified report button has the required data-testid selector in DOM."""
+    _goto_backoffice(page)
+    btn = page.locator('[data-testid="expert-generate-certified-report"]')
+    expect(btn).to_have_count(1)
+
+
+def test_EBO18_certified_report_status_element_has_testid(page: Page):
+    """Certified report status div has data-testid selector in DOM."""
+    _goto_backoffice(page)
+    el = page.locator('[data-testid="expert-certified-report-status"]')
+    expect(el).to_have_count(1)
+
+
+def test_EBO19_certified_report_confirmation_element_has_testid(page: Page):
+    """Certified report confirmation div has data-testid selector and is initially hidden."""
+    _goto_backoffice(page)
+    conf = page.locator('[data-testid="expert-certified-report-confirmation"]')
+    expect(conf).to_have_count(1)
+    assert conf.is_hidden(), "Certified report confirmation must be hidden before generation"
+
+
+def test_EBO20_certified_report_download_button_has_testid(page: Page):
+    """Certified report download button has the required data-testid selector in DOM."""
+    _goto_backoffice(page)
+    btn = page.locator('[data-testid="expert-certified-report-download"]')
+    expect(btn).to_have_count(1)
+
+
+def test_EBO21_certified_report_button_not_in_simple_valuation_tab(page: Page):
+    """Ordinary simple valuation tab does not expose certified report generation button."""
+    page.goto(_SIMPLE_URL, timeout=20_000)
+    page.evaluate("esShowTab('valuation')")
+    page.wait_for_timeout(200)
+    sv_tab = page.locator('[data-testid="simple-valuation-tab"]')
+    gen_btn = sv_tab.locator('[data-testid="expert-generate-certified-report"]')
+    assert gen_btn.count() == 0, (
+        "Generate certified report button must not appear in the simple valuation tab"
+    )
+    dl_btn = sv_tab.locator('[data-testid="expert-certified-report-download"]')
+    assert dl_btn.count() == 0, (
+        "Download certified report button must not appear in the simple valuation tab"
+    )
+
+
+def test_EBO22_excel_workbook_still_requires_auth(page: Page):
+    """Expert workbook endpoint still requires JWT auth (regression guard after certified-report changes)."""
+    _goto_backoffice(page)
+    # Attempt to evaluate a fetch from the browser without a token
+    result = page.evaluate("""
+        async () => {
+            const resp = await fetch('/api/expert-requests/REQ-00000000/expert-workbook');
+            return resp.status;
+        }
+    """)
+    assert result == 401, (
+        f"Expert workbook endpoint must return 401 without auth. Got: {result}"
+    )

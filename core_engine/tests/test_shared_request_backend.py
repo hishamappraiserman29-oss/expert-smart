@@ -1365,3 +1365,282 @@ def test_SRB78_review_endpoint_requires_auth(client):
     assert resp.status_code == 401, (
         f"Review endpoint must require auth. Got {resp.status_code} without token."
     )
+
+
+# ── Tests: Certified Report Generation (Parts A, D, E, G) ────────────────────
+
+def _move_to_approved(client, rid: str) -> None:
+    """Helper: move request through draft_only → under_review → approved_pending_report."""
+    client.post(
+        f"/api/expert-requests/{rid}/review",
+        json={"approval_status": "under_review"},
+        headers=_auth(),
+    )
+    client.post(
+        f"/api/expert-requests/{rid}/review",
+        json={
+            "approval_status": "approved_pending_report",
+            "expert_recommended_value": "3000000",
+            "valuation_method_summary": "مقارنة البيوع — اختبار",
+        },
+        headers=_auth(),
+    )
+
+
+def test_SRB79_certified_report_blocked_for_draft_only(client):
+    """POST /certified-report rejected for draft_only (400)."""
+    rid = _post_request(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Certified report generation must be rejected for draft_only (400). Got {resp.status_code}"
+    )
+    assert resp.get_json()["status"] == "error"
+
+
+def test_SRB80_certified_report_blocked_for_under_review(client):
+    """POST /certified-report rejected for under_review (400)."""
+    rid = _post_request(client).get_json()["request_id"]
+    client.post(
+        f"/api/expert-requests/{rid}/review",
+        json={"approval_status": "under_review"},
+        headers=_auth(),
+    )
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Certified report generation must be rejected for under_review (400). Got {resp.status_code}"
+    )
+
+
+def test_SRB81_certified_report_blocked_for_needs_documents(client):
+    """POST /certified-report rejected for needs_documents (400)."""
+    rid = _post_request(client).get_json()["request_id"]
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth())
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "needs_documents"}, headers=_auth())
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Certified report generation must be rejected for needs_documents. Got {resp.status_code}"
+    )
+
+
+def test_SRB82_certified_report_blocked_for_rejected(client):
+    """POST /certified-report rejected for rejected status (400)."""
+    rid = _post_request(client).get_json()["request_id"]
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth())
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "rejected"}, headers=_auth())
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Certified report generation must be rejected for rejected status. Got {resp.status_code}"
+    )
+
+
+def test_SRB83_certified_report_requires_expert_recommended_value(client):
+    """POST /certified-report fails (400) when expert_recommended_value is missing."""
+    rid = _post_request(client).get_json()["request_id"]
+    # Move to approved_pending_report WITHOUT setting expert_recommended_value
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth())
+    client.post(f"/api/expert-requests/{rid}/review",
+                json={"approval_status": "approved_pending_report"}, headers=_auth())
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Certified report must require expert_recommended_value. Got {resp.status_code}"
+    )
+    msg = resp.get_json().get("message", "")
+    assert "القيمة" in msg or "expert_recommended_value" in msg, (
+        f"Error message must reference required value field. Got: {msg!r}"
+    )
+
+
+def test_SRB84_certified_report_generated_for_approved_pending_with_value(client):
+    """POST /certified-report succeeds (200) for approved_pending_report with expert_recommended_value."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    # If Playwright is unavailable in this test environment the generation may error;
+    # in that case skip rather than fail the suite.
+    if resp.status_code == 500:
+        data = resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available — skipping certified PDF generation test")
+    assert resp.status_code == 200, (
+        f"Expected 200 for certified report generation. Got {resp.status_code}: {resp.data[:200]}"
+    )
+    data = resp.get_json()
+    assert data.get("status") == "success"
+    assert data.get("certified_report_available") is True
+    assert data.get("approval_status") == "certified_report_generated"
+
+
+def test_SRB85_generation_updates_status_to_certified_report_generated(client):
+    """After successful generation, GET detail returns approval_status=certified_report_generated."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    gen_resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    if gen_resp.status_code == 500:
+        data = gen_resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available — skipping status transition test")
+    assert gen_resp.status_code == 200
+    detail = client.get(f"/api/expert-requests/{rid}").get_json()["request"]
+    assert detail.get("approval_status") == "certified_report_generated", (
+        f"approval_status must be 'certified_report_generated' after generation. "
+        f"Got: {detail.get('approval_status')!r}"
+    )
+
+
+def test_SRB86_certified_report_response_hides_internal_path(client):
+    """POST /certified-report response JSON must not expose internal filesystem path."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    if resp.status_code == 500:
+        data = resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available")
+    assert resp.status_code == 200
+    body_str = resp.data.decode("utf-8")
+    for forbidden in ("certified_report_path", "instance/certified_reports", "C:\\", ".pdf"):
+        assert forbidden not in body_str, (
+            f"Certified report response must not expose internal path fragment {forbidden!r}"
+        )
+
+
+def test_SRB87_certified_report_download_requires_jwt(client):
+    """GET /certified-report returns 401 without token."""
+    rid = _post_request(client).get_json()["request_id"]
+    resp = client.get(f"/api/expert-requests/{rid}/certified-report")
+    assert resp.status_code == 401, (
+        f"Certified report download must require JWT auth. Got {resp.status_code}"
+    )
+
+
+def test_SRB88_certified_report_download_returns_pdf(client):
+    """GET /certified-report returns application/pdf after successful generation."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    gen_resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    if gen_resp.status_code == 500:
+        data = gen_resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available")
+    assert gen_resp.status_code == 200
+    dl_resp = client.get(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert dl_resp.status_code == 200, (
+        f"Expected 200 for certified report download. Got {dl_resp.status_code}"
+    )
+    assert "pdf" in (dl_resp.content_type or "").lower(), (
+        f"Expected application/pdf content type. Got: {dl_resp.content_type!r}"
+    )
+    assert dl_resp.data[:4] == b"%PDF", "Response body must start with %PDF magic bytes"
+
+
+def test_SRB89_certified_report_download_returns_renderer_header(client):
+    """GET /certified-report returns X-PDF-Renderer: html-playwright header."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    gen_resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    if gen_resp.status_code == 500:
+        data = gen_resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available")
+    assert gen_resp.status_code == 200
+    dl_resp = client.get(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    assert dl_resp.status_code == 200
+    renderer = dl_resp.headers.get("X-PDF-Renderer", "")
+    assert renderer == "html-playwright", (
+        f"X-PDF-Renderer must be 'html-playwright'. Got: {renderer!r}"
+    )
+
+
+def test_SRB90_certified_report_available_false_before_generation(client):
+    """certified_report_available is False before generation."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    detail = client.get(f"/api/expert-requests/{rid}").get_json()["request"]
+    assert detail.get("certified_report_available") is False, (
+        "certified_report_available must be False before generation. "
+        f"Got: {detail.get('certified_report_available')!r}"
+    )
+    assert detail.get("certified_report_url") is None, (
+        "certified_report_url must be None before generation"
+    )
+
+
+def test_SRB91_certified_report_available_true_after_generation(client):
+    """certified_report_available is True and certified_report_url is set after generation."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    gen_resp = client.post(
+        f"/api/expert-requests/{rid}/certified-report",
+        headers=_auth(),
+    )
+    if gen_resp.status_code == 500:
+        data = gen_resp.get_json()
+        if "Playwright" in (data.get("message") or "") or "playwright" in (data.get("message") or ""):
+            pytest.skip("Playwright not available")
+    assert gen_resp.status_code == 200
+    detail = client.get(f"/api/expert-requests/{rid}").get_json()["request"]
+    assert detail.get("certified_report_available") is True, (
+        f"certified_report_available must be True after generation. Got: {detail.get('certified_report_available')!r}"
+    )
+    assert detail.get("certified_report_url") is not None, (
+        "certified_report_url must be set after generation"
+    )
+
+
+def test_SRB92_certified_report_generated_cannot_be_set_via_review(client):
+    """POST /review rejects certified_report_generated with explicit message about /certified-report endpoint."""
+    rid = _post_request(client).get_json()["request_id"]
+    _move_to_approved(client, rid)
+    resp = client.post(
+        f"/api/expert-requests/{rid}/review",
+        json={"approval_status": "certified_report_generated"},
+        headers=_auth(),
+    )
+    assert resp.status_code == 400, (
+        f"Setting certified_report_generated via /review must be rejected (400). Got {resp.status_code}"
+    )
+    msg = resp.get_json().get("message", "")
+    assert "certified-report" in msg or "certified_report" in msg, (
+        f"Error message must reference the /certified-report endpoint. Got: {msg!r}"
+    )

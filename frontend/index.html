@@ -32873,6 +32873,31 @@ async function massSubmitExpertLead() {
       </button>
     </div>
 
+    <!-- Certified report generation (shown only when status is approved_pending_report or certified_report_generated) -->
+    <div id="expert-certified-report-wrap" style="display:none; margin-bottom:1rem; padding:12px 14px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:8px;">
+      <div style="font-size:0.82rem; font-weight:700; color:#10b981; margin-bottom:8px;">إصدار التقرير المعتمد</div>
+      <button id="expert-generate-certified-report" data-testid="expert-generate-certified-report"
+              onclick="expertGenerateCertifiedReport()"
+              style="padding:9px 22px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.5); color:#10b981; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        إصدار التقرير المعتمد
+      </button>
+      <div id="expert-certified-report-status" data-testid="expert-certified-report-status"
+           style="display:none; margin-top:8px; font-size:0.8rem; color:#94a3b8;"></div>
+      <div id="expert-certified-report-confirmation" data-testid="expert-certified-report-confirmation"
+           style="display:none; margin-top:10px; padding:8px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:7px; color:#10b981; font-size:0.82rem; direction:rtl;">
+        تم إصدار التقرير المعتمد بنجاح.
+      </div>
+      <button id="expert-certified-report-download" data-testid="expert-certified-report-download"
+              onclick="expertDownloadCertifiedReport()"
+              style="display:none; margin-top:10px; padding:8px 18px; background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.4); color:#10b981; border-radius:7px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        ⬇ تحميل التقرير المعتمد (.pdf)
+      </button>
+    </div>
+    <!-- Note shown when generation is not allowed -->
+    <div id="expert-certified-report-note" style="display:none; margin-bottom:1rem;">
+      <span style="color:#94a3b8; font-size:0.78rem;">لا يمكن إصدار التقرير المعتمد قبل اعتماد المراجعة (الحالة المطلوبة: approved_pending_report).</span>
+    </div>
+
     <!-- Review form -->
     <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:0.5rem;">
       <h4 style="color:#94a3b8; font-size:0.88rem; margin:0 0 0.8rem;">تحديث مراجعة الخبير</h4>
@@ -33042,8 +33067,35 @@ async function expertOpenRequest(rid) {
         // Availability badges
         _expertSetBadge('expert-detail-pdf-badge', 'PDF مبدئي', r.draft_pdf_available);
         _expertSetBadge('expert-detail-workbook-badge', 'ملف الخبير', r.expert_workbook_available);
-        var certBadge = document.getElementById('expert-detail-certified-badge');
-        if (certBadge) { certBadge.textContent = 'معتمد: غير متاح'; }
+        _expertSetBadge('expert-detail-certified-badge', 'معتمد', r.certified_report_available);
+
+        // Certified report UI: show generate wrap when approved, show download if already generated
+        var certWrap = document.getElementById('expert-certified-report-wrap');
+        var certNote = document.getElementById('expert-certified-report-note');
+        var certDownBtn = document.getElementById('expert-certified-report-download');
+        var certConf = document.getElementById('expert-certified-report-confirmation');
+        var certStatus = document.getElementById('expert-certified-report-status');
+        var certGenBtn = document.getElementById('expert-generate-certified-report');
+        if (certWrap) {
+            if (r.approval_status === 'certified_report_generated') {
+                certWrap.style.display = '';
+                if (certNote) certNote.style.display = 'none';
+                if (certGenBtn) certGenBtn.style.display = 'none';
+                if (certConf) certConf.style.display = '';
+                if (certDownBtn) certDownBtn.style.display = 'inline-block';
+            } else if (r.approval_status === 'approved_pending_report') {
+                certWrap.style.display = '';
+                if (certNote) certNote.style.display = 'none';
+                if (certGenBtn) certGenBtn.style.display = '';
+                if (certConf) certConf.style.display = 'none';
+                if (certDownBtn) certDownBtn.style.display = 'none';
+                if (certStatus) certStatus.style.display = 'none';
+            } else {
+                certWrap.style.display = 'none';
+                var showNote = (r.approval_status !== 'rejected' && r.approval_status !== 'draft_only');
+                if (certNote) certNote.style.display = showNote ? '' : 'none';
+            }
+        }
 
         // PDF links (internal)
         var linksDiv = document.getElementById('expert-detail-links');
@@ -33132,6 +33184,21 @@ async function expertSaveReview() {
             _setText('expert-request-status', data.approval_status || '');
             var conf = document.getElementById('expert-review-confirmation');
             if (conf) conf.style.display = '';
+            // Show certified report wrap if new status is approved_pending_report
+            var certWrap = document.getElementById('expert-certified-report-wrap');
+            var certNote = document.getElementById('expert-certified-report-note');
+            var certGenBtn = document.getElementById('expert-generate-certified-report');
+            var certConf2 = document.getElementById('expert-certified-report-confirmation');
+            var certDownBtn2 = document.getElementById('expert-certified-report-download');
+            if (data.approval_status === 'approved_pending_report' && certWrap) {
+                certWrap.style.display = '';
+                if (certNote) certNote.style.display = 'none';
+                if (certGenBtn) certGenBtn.style.display = '';
+                if (certConf2) certConf2.style.display = 'none';
+                if (certDownBtn2) certDownBtn2.style.display = 'none';
+            } else if (certWrap && data.approval_status !== 'certified_report_generated') {
+                certWrap.style.display = 'none';
+            }
         } else {
             expertBoStatus('خطأ: ' + (data.message || resp.status), false);
         }
@@ -33139,6 +33206,62 @@ async function expertSaveReview() {
         expertBoStatus('خطأ في الاتصال: ' + e.message, false);
     } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'حفظ تحديث المراجعة'; }
+    }
+}
+
+async function expertGenerateCertifiedReport() {
+    if (!_expertBoCurrentId) return;
+    var token = expertGetToken();
+    if (!token) { expertBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var genBtn = document.getElementById('expert-generate-certified-report');
+    var certStatus = document.getElementById('expert-certified-report-status');
+    if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'جارٍ الإصدار...'; }
+    if (certStatus) { certStatus.style.display = ''; certStatus.textContent = 'جارٍ إنشاء التقرير المعتمد...'; }
+    try {
+        var resp = await fetch('/api/expert-requests/' + _expertBoCurrentId + '/certified-report', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+            expertBoStatus('تم إصدار التقرير المعتمد بنجاح.', true);
+            _setText('expert-request-status', data.approval_status || '');
+            if (certStatus) certStatus.style.display = 'none';
+            if (genBtn) genBtn.style.display = 'none';
+            var certConf = document.getElementById('expert-certified-report-confirmation');
+            if (certConf) certConf.style.display = '';
+            var certDownBtn = document.getElementById('expert-certified-report-download');
+            if (certDownBtn) certDownBtn.style.display = 'inline-block';
+            _expertSetBadge('expert-detail-certified-badge', 'معتمد', true);
+        } else {
+            expertBoStatus('خطأ في الإصدار: ' + (data.message || resp.status), false);
+            if (certStatus) { certStatus.textContent = data.message || 'فشل الإصدار'; }
+            if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'إصدار التقرير المعتمد'; }
+        }
+    } catch(e) {
+        expertBoStatus('خطأ في الاتصال: ' + e.message, false);
+        if (certStatus) { certStatus.textContent = 'خطأ في الاتصال'; }
+        if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'إصدار التقرير المعتمد'; }
+    }
+}
+
+async function expertDownloadCertifiedReport() {
+    if (!_expertBoCurrentId) return;
+    var token = expertGetToken();
+    if (!token) { expertBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var url = '/api/expert-requests/' + _expertBoCurrentId + '/certified-report';
+    try {
+        var resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+        if (resp.status === 401) { expertBoStatus('غير مصرح. يرجى إدخال رمز صالح.', false); return; }
+        if (!resp.ok) { expertBoStatus('التقرير المعتمد غير موجود أو خطأ: ' + resp.status, false); return; }
+        var blob = await resp.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'certified_report_' + _expertBoCurrentId + '.pdf';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        expertBoStatus('تم تحميل التقرير المعتمد بنجاح.', true);
+    } catch(e) {
+        expertBoStatus('خطأ في تحميل التقرير: ' + e.message, false);
     }
 }
 

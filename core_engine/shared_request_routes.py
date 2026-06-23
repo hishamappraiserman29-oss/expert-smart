@@ -36,9 +36,10 @@ _BASE      = Path(__file__).parent / "instance" / "requests"
 _REQ_FILE  = _BASE / "requests.jsonl"
 _UPLOADS   = _BASE / "uploads"
 _REPORTS   = _BASE / "reports"
-_WORKBOOKS = Path(__file__).parent / "instance" / "expert_workbooks"
+_WORKBOOKS         = Path(__file__).parent / "instance" / "expert_workbooks"
+_CERTIFIED_REPORTS = Path(__file__).parent / "instance" / "certified_reports"
 
-for _d in (_BASE, _UPLOADS, _REPORTS, _WORKBOOKS):
+for _d in (_BASE, _UPLOADS, _REPORTS, _WORKBOOKS, _CERTIFIED_REPORTS):
     _d.mkdir(parents=True, exist_ok=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ _ALLOWED_TRANSITIONS: dict[str, set] = {
     "draft_only":               {"under_review"},
     "under_review":             {"needs_documents", "approved_pending_report", "rejected"},
     "needs_documents":          {"under_review"},
-    "approved_pending_report":  set(),
+    "approved_pending_report":  {"certified_report_generated"},
     "rejected":                 set(),
     "certified_report_generated": set(),
 }
@@ -217,7 +218,7 @@ def _request_summary(req: dict) -> dict:
         "approval_status":         req.get("approval_status", "draft_only"),
         "expert_workbook_available": bool(req.get("expert_workbook_available")),
         "draft_pdf_available":     req.get("draft_pdf_status") == "generated",
-        "certified_report_available": False,
+        "certified_report_available": bool(req.get("certified_report_available")),
     }
 
 
@@ -260,7 +261,11 @@ def _request_detail(req: dict) -> dict:
             if req.get("draft_pdf_status") == "generated" else None
         ),
         "expert_workbook_available": bool(req.get("expert_workbook_available")),
-        "certified_report_available": False,
+        "certified_report_available": bool(req.get("certified_report_available")),
+        "certified_report_url": (
+            f"/api/expert-requests/{req.get('request_id', '')}/certified-report"
+            if req.get("certified_report_available") else None
+        ),
         "expert_notes":            req.get("expert_notes", ""),
         "expert_recommended_value": req.get("expert_recommended_value", ""),
         "valuation_method_summary": req.get("valuation_method_summary", ""),
@@ -868,6 +873,80 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     return wb_path
 
 
+# ── Certified report PDF generation ──────────────────────────────────────────
+
+def _build_certified_report_pdf(req: dict) -> Path:
+    """Generate a certified valuation report PDF using Playwright/Chromium HTML renderer.
+
+    Only callable when approval_status == 'approved_pending_report'.
+    Uses Jinja2 template at templates/pdf/certified_valuation_report.html.
+    Saves to: core_engine/instance/certified_reports/<REQ-ID>/certified_report_<REQ-ID>.pdf
+    Never falls back to FPDF — Chromium handles Arabic shaping and RTL natively.
+    """
+    import html as _html
+    from jinja2 import Environment, FileSystemLoader
+    from pdf_renderer import cairo_font_css, render_pdf_from_html
+
+    def _e(v) -> str:
+        return _html.escape(str(v)) if v is not None else ""
+
+    payload = req.get("payload_json") or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception:
+            payload = {}
+
+    location = " | ".join(filter(None, [
+        payload.get("country", ""),
+        payload.get("region", ""),
+        payload.get("city", ""),
+        payload.get("district", ""),
+    ]))
+
+    area_raw = payload.get("area")
+    area_str = f"{area_raw} م²" if area_raw else ""
+
+    env      = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+    template = env.get_template("certified_valuation_report.html")
+    html_str = template.render(
+        font_css_block=cairo_font_css(),
+        request_id=_e(req.get("request_id", "")),
+        created_at=_e((req.get("created_at") or "")[:10]),
+        report_date=_e(datetime.utcnow().strftime("%Y-%m-%d")),
+        valuation_date=_e(payload.get("valuation_date", "")),
+        client_name=_e(req.get("user_name", "")),
+        phone=_e(req.get("phone", "")),
+        email=_e(req.get("email", "")),
+        preferred_contact=_e(req.get("preferred_contact_method", "")),
+        report_template_name_ar=_e(_get_template_name_safe(req.get("report_template_id") or "")),
+        property_type=_e(payload.get("property_type", "")),
+        location=_e(location),
+        area=_e(area_str),
+        description=_e((payload.get("description") or "")[:300]),
+        condition=_e(payload.get("condition", "")),
+        finishing=_e(payload.get("finishing_level", "")),
+        notes=_e(payload.get("notes", "")),
+        purpose=_e(payload.get("purpose") or "القيمة السوقية"),
+        summary=_e(req.get("summary", "")),
+        expert_recommended_value=_e(req.get("expert_recommended_value", "")),
+        valuation_method_summary=_e(req.get("valuation_method_summary", "")),
+        reconciliation_notes=_e(req.get("reconciliation_notes", "")),
+        expert_notes=_e(req.get("expert_notes", "")),
+        decision_reason=_e(req.get("decision_reason", "")),
+        requested_documents=_e(req.get("requested_documents", "")),
+        review_updated_at=_e((req.get("review_updated_at") or "")[:10]),
+    )
+
+    pdf_dir  = _CERTIFIED_REPORTS / req["request_id"]
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    out_path = pdf_dir / f"certified_report_{req['request_id']}.pdf"
+
+    pdf_bytes = render_pdf_from_html(html_str)
+    out_path.write_bytes(pdf_bytes)
+    return out_path
+
+
 # ── Route registration ────────────────────────────────────────────────────────
 
 def register(app, require_auth, limiter=None) -> None:
@@ -1117,6 +1196,109 @@ def register(app, require_auth, limiter=None) -> None:
             download_name=f"expert_review_{request_id}.xlsx",
         )
 
+    # ── POST /api/expert-requests/<id>/certified-report — Generate certified PDF ─
+    @app.route("/api/expert-requests/<request_id>/certified-report", methods=["POST"])
+    @require_auth
+    def expert_request_generate_certified_report(request_id: str):
+        """Generate a certified valuation report PDF for an approved request.
+
+        Preconditions:
+          - JWT/admin auth required.
+          - approval_status must be 'approved_pending_report'.
+          - expert_recommended_value must be set.
+
+        On success:
+          - Generates PDF using HTML/Playwright renderer.
+          - Saves to internal path (never exposed).
+          - Sets approval_status = 'certified_report_generated'.
+          - Sets certified_report_available = True.
+        """
+        if not _REQUEST_ID_RE.match(request_id):
+            return jsonify({"status": "error", "message": "رقم الطلب غير صالح"}), 400
+
+        req = _read_request(request_id)
+        if req is None:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+
+        current_status = req.get("approval_status", "draft_only")
+        if current_status != "approved_pending_report":
+            return jsonify({
+                "status":  "error",
+                "message": (
+                    f"لا يمكن إصدار التقرير المعتمد للطلب بحالة '{current_status}'. "
+                    "يجب أن تكون الحالة 'approved_pending_report' لإصدار التقرير المعتمد."
+                ),
+            }), 400
+
+        if not (req.get("expert_recommended_value") or "").strip():
+            return jsonify({
+                "status":  "error",
+                "message": "يجب إدخال القيمة النهائية الموصى بها من الخبير قبل إصدار التقرير المعتمد.",
+            }), 400
+
+        try:
+            _build_certified_report_pdf(req)
+        except Exception as exc:
+            return jsonify({
+                "status":  "error",
+                "message": f"فشل إنشاء التقرير المعتمد: {exc}",
+            }), 500
+
+        now = datetime.utcnow().isoformat()
+        req["approval_status"]              = "certified_report_generated"
+        req["certified_report_available"]   = True
+        req["certified_report_generated_at"] = now
+        req["updated_at"]                   = now
+        _update_request(req)
+
+        return jsonify({
+            "status":                     "success",
+            "request_id":                 request_id,
+            "approval_status":            "certified_report_generated",
+            "certified_report_available": True,
+            "message":                    "تم إصدار التقرير المعتمد بعد مراجعة الخبير.",
+        }), 200
+
+    # ── GET /api/expert-requests/<id>/certified-report — Download certified PDF ─
+    @app.route("/api/expert-requests/<request_id>/certified-report", methods=["GET"])
+    @require_auth
+    def expert_request_download_certified_report(request_id: str):
+        """Download the generated certified report PDF.
+
+        Requires JWT/admin auth.
+        Only available when approval_status == 'certified_report_generated'.
+        Returns application/pdf with X-PDF-Renderer header.
+        Does not expose internal filesystem path.
+        """
+        if not _REQUEST_ID_RE.match(request_id):
+            return jsonify({"status": "error", "message": "رقم الطلب غير صالح"}), 400
+
+        req = _read_request(request_id)
+        if req is None:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+
+        if req.get("approval_status") != "certified_report_generated":
+            return jsonify({
+                "status":  "error",
+                "message": "التقرير المعتمد غير متاح. يجب إصداره أولاً بعد اعتماد مراجعة الخبير.",
+            }), 409
+
+        pdf_path = _CERTIFIED_REPORTS / request_id / f"certified_report_{request_id}.pdf"
+        if not pdf_path.exists():
+            return jsonify({
+                "status":  "error",
+                "message": "ملف التقرير المعتمد غير موجود على الخادم.",
+            }), 404
+
+        resp = send_file(
+            str(pdf_path),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"certified_report_{request_id}.pdf",
+        )
+        resp.headers["X-PDF-Renderer"] = "html-playwright"
+        return resp
+
     # ── POST /api/simple-valuation/draft-pdf — Quick advisory PDF ─────────
     @app.route("/api/simple-valuation/draft-pdf", methods=["POST", "OPTIONS"])
     def simple_valuation_draft_pdf():
@@ -1202,12 +1384,12 @@ def register(app, require_auth, limiter=None) -> None:
                                f"القيم المقبولة: {', '.join(sorted(_APPROVAL_STATUSES))}",
                 }), 400
 
-            # Block certified_report_generated — reserved for future certified PDF task
+            # Block certified_report_generated via review — must use POST /certified-report
             if new_status == "certified_report_generated":
                 return jsonify({
                     "status":  "error",
-                    "message": "لا يمكن تعيين حالة 'certified_report_generated' حتى يتم إنشاء التقرير المعتمد. "
-                               "هذه الحالة محجوزة لمهمة مستقبلية.",
+                    "message": "لا يمكن تعيين حالة 'certified_report_generated' مباشرةً عبر نقطة المراجعة. "
+                               "استخدم POST /api/expert-requests/<id>/certified-report لإصدار التقرير المعتمد.",
                 }), 400
 
             current_status = req.get("approval_status", "draft_only")

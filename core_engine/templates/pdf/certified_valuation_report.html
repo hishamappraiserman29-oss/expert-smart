@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <style>
+    {{ font_css_block }}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 10pt;
+      color: #1a1a2e;
+      line-height: 1.7;
+      background: #ffffff;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      font-size: 30px;
+      font-weight: 700;
+      color: rgba(31, 78, 120, 0.06);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .page-footer {
+      position: fixed;
+      bottom: 5mm;
+      left: 10mm;
+      right: 10mm;
+      text-align: center;
+      font-size: 7pt;
+      color: #bbb;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 2px;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    .report-header {
+      background: linear-gradient(135deg, #1f4e78 0%, #2d6a9f 100%);
+      color: #fff;
+      padding: 18px 22px 14px;
+      margin-bottom: 14px;
+    }
+    .company-name {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #d4af37;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .report-title {
+      font-size: 16pt;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .report-meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 8.5pt;
+      color: rgba(255,255,255,0.85);
+      margin-top: 6px;
+    }
+    .report-meta span { display: inline-block; }
+
+    .certified-seal {
+      display: inline-block;
+      background: rgba(212,175,55,0.18);
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 10pt;
+      padding: 5px 18px;
+      border-radius: 20px;
+      margin-top: 8px;
+    }
+
+    .section {
+      margin-bottom: 14px;
+      page-break-inside: avoid;
+    }
+    .section-title {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1f4e78;
+      background: #ebf3fb;
+      padding: 6px 12px;
+      border-right: 4px solid #d4af37;
+      margin-bottom: 8px;
+    }
+    .section-body {
+      padding: 0 8px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 20px;
+      margin-bottom: 6px;
+    }
+    .data-row {
+      display: flex;
+      gap: 6px;
+      align-items: baseline;
+      font-size: 9pt;
+    }
+    .data-label {
+      color: #555;
+      font-weight: 700;
+      white-space: nowrap;
+      min-width: 140px;
+    }
+    .data-value {
+      color: #1a1a2e;
+      flex: 1;
+    }
+
+    .method-placeholder {
+      color: #94a3b8;
+      font-style: italic;
+      font-size: 8.5pt;
+    }
+
+    .final-value-box {
+      background: #ebf3fb;
+      border: 2px solid #1f4e78;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    .final-value-label {
+      font-size: 9pt;
+      color: #2d6a9f;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .final-value-number {
+      font-size: 18pt;
+      font-weight: 700;
+      color: #1f4e78;
+      direction: ltr;
+    }
+
+    .cert-block {
+      border: 1px solid #d4af37;
+      border-radius: 6px;
+      padding: 12px 16px;
+      background: #fffdf0;
+      margin-top: 10px;
+    }
+    .cert-text {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #1f4e78;
+      margin-bottom: 10px;
+    }
+    .cert-sig-line {
+      border-bottom: 1px dashed #bbb;
+      margin: 18px 0 4px;
+    }
+    .cert-sig-label {
+      font-size: 7.5pt;
+      color: #999;
+      text-align: center;
+    }
+
+    .disclaimer {
+      font-size: 7.5pt;
+      color: #999;
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="watermark">ALHADY REAL PROPERTY — تقرير معتمد</div>
+
+<div class="page-footer">
+  تم إنشاء هذا المستند بواسطة محرك HTML/PDF — رقم الطلب: {{ request_id }} — {{ report_date }}
+</div>
+
+<div class="content">
+
+  <!-- 1. Header -->
+  <div class="report-header">
+    <div class="company-name">ALHADY FOR REAL PROPERTY</div>
+    <div class="report-title">تقرير تقييم عقاري معتمد</div>
+    <div class="report-meta">
+      <span>رقم الطلب: <strong>{{ request_id }}</strong></span>
+      <span>تاريخ التقرير: <strong>{{ report_date }}</strong></span>
+      <span>تاريخ التقييم: <strong>{{ valuation_date if valuation_date else '—' }}</strong></span>
+    </div>
+    <div style="margin-top:8px;">
+      <span class="certified-seal">✓ تقرير معتمد بعد مراجعة الخبير</span>
+    </div>
+  </div>
+
+  <!-- 2. Client and assignment section -->
+  <div class="section">
+    <div class="section-title">بيانات العميل والمهمة التقييمية</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-row"><span class="data-label">اسم العميل:</span><span class="data-value">{{ client_name if client_name else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">الهاتف:</span><span class="data-value" style="direction:ltr;">{{ phone if phone else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">البريد الإلكتروني:</span><span class="data-value" style="direction:ltr;">{{ email if email else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">طريقة التواصل المفضلة:</span><span class="data-value">{{ preferred_contact if preferred_contact else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">نوع التقرير المطلوب:</span><span class="data-value">{{ report_template_name_ar if report_template_name_ar else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">الغرض من التقييم:</span><span class="data-value">{{ purpose if purpose else 'القيمة السوقية' }}</span></div>
+      </div>
+      {% if summary %}
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">ملخص الطلب:</span>
+        <span class="data-value">{{ summary }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 3. Property data section -->
+  <div class="section">
+    <div class="section-title">بيانات العقار</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-row"><span class="data-label">نوع العقار:</span><span class="data-value">{{ property_type if property_type else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">الموقع:</span><span class="data-value">{{ location if location else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">المساحة:</span><span class="data-value">{{ area if area else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">حالة العقار:</span><span class="data-value">{{ condition if condition else '—' }}</span></div>
+        <div class="data-row"><span class="data-label">مستوى التشطيب:</span><span class="data-value">{{ finishing if finishing else '—' }}</span></div>
+      </div>
+      {% if description %}
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">وصف العقار:</span>
+        <span class="data-value">{{ description }}</span>
+      </div>
+      {% endif %}
+      {% if notes %}
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">الملاحظات:</span>
+        <span class="data-value">{{ notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 4. Scope of work -->
+  <div class="section">
+    <div class="section-title">نطاق العمل والبيانات المراجَعة</div>
+    <div class="section-body">
+      <div class="data-row" style="margin-bottom:6px;">
+        <span class="data-label">البيانات التي تمت مراجعتها:</span>
+        <span class="data-value">بيانات الطلب المقدمة من العميل، البيانات الموثقة في نظام المراجعة الداخلية</span>
+      </div>
+      <div class="data-row" style="margin-bottom:6px;">
+        <span class="data-label">ما تم الاعتماد عليه في هذا الإصدار:</span>
+        <span class="data-value">{{ valuation_method_summary if valuation_method_summary else 'يُرجى الرجوع إلى ملاحظات الخبير أدناه' }}</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">حدود نطاق العمل:</span>
+        <span class="data-value">هذا التقرير يعتمد على البيانات المقدمة من العميل والمراجعة الداخلية للخبير. دقة القيمة النهائية مرتبطة باكتمال المعلومات المقدمة.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. Valuation approaches -->
+  <div class="section">
+    <div class="section-title">طرق التقييم المستخدمة</div>
+    <div class="section-body">
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:700; font-size:9.5pt; color:#1f4e78; margin-bottom:3px;">أ. طريقة مقارنة البيوع</div>
+        {% if valuation_method_summary %}
+        <div class="data-value">{{ valuation_method_summary }}</div>
+        {% else %}
+        <div class="method-placeholder">لم يتم إدخال قيمة لهذه الطريقة في هذه النسخة.</div>
+        {% endif %}
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:700; font-size:9.5pt; color:#1f4e78; margin-bottom:3px;">ب. طريقة الدخل</div>
+        <div class="method-placeholder">لم يتم إدخال قيمة لهذه الطريقة في هذه النسخة.</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-weight:700; font-size:9.5pt; color:#1f4e78; margin-bottom:3px;">ج. طريقة التكلفة</div>
+        <div class="method-placeholder">لم يتم إدخال قيمة لهذه الطريقة في هذه النسخة.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Reconciliation -->
+  <div class="section">
+    <div class="section-title">توفيق النتائج والأوزان</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-row"><span class="data-label">قيمة طريقة مقارنة البيوع:</span><span class="data-value method-placeholder">غير مدخلة في هذه النسخة</span></div>
+        <div class="data-row"><span class="data-label">وزن طريقة مقارنة البيوع:</span><span class="data-value method-placeholder">—</span></div>
+        <div class="data-row"><span class="data-label">قيمة طريقة الدخل:</span><span class="data-value method-placeholder">غير مدخلة في هذه النسخة</span></div>
+        <div class="data-row"><span class="data-label">وزن طريقة الدخل:</span><span class="data-value method-placeholder">—</span></div>
+        <div class="data-row"><span class="data-label">قيمة طريقة التكلفة:</span><span class="data-value method-placeholder">غير مدخلة في هذه النسخة</span></div>
+        <div class="data-row"><span class="data-label">وزن طريقة التكلفة:</span><span class="data-value method-placeholder">—</span></div>
+      </div>
+      {% if reconciliation_notes %}
+      <div class="data-row" style="margin-top:8px;">
+        <span class="data-label">ملاحظات التوفيق:</span>
+        <span class="data-value">{{ reconciliation_notes }}</span>
+      </div>
+      {% endif %}
+      <div class="data-row" style="margin-top:8px;">
+        <span class="data-label">القيمة النهائية التي يوصي بها الخبير:</span>
+        <span class="data-value" style="font-weight:700; color:#1f4e78;">
+          {% if expert_recommended_value %}{{ expert_recommended_value }} ج.م{% else %}—{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. Final value section -->
+  <div class="section">
+    <div class="section-title">القيمة النهائية المعتمدة</div>
+    <div class="section-body">
+      {% if expert_recommended_value %}
+      <div class="final-value-box">
+        <div class="final-value-label">القيمة النهائية المعتمدة التي يوصي بها الخبير</div>
+        <div class="final-value-number">{{ expert_recommended_value }}</div>
+        <div style="font-size:8pt; color:#94a3b8; margin-top:4px;">جنيه مصري (ج.م)</div>
+      </div>
+      {% else %}
+      <div style="color:#f87171; font-weight:700; font-size:9pt; padding:8px 0;">
+        لم يتم تحديد القيمة النهائية في هذه النسخة.
+      </div>
+      {% endif %}
+      <div class="data-row" style="margin-top:8px;">
+        <span class="data-label">تاريخ اعتماد التقرير:</span>
+        <span class="data-value">{{ report_date }}</span>
+      </div>
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">تاريخ آخر مراجعة:</span>
+        <span class="data-value">{{ review_updated_at if review_updated_at else report_date }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. Expert notes -->
+  {% if expert_notes or decision_reason or requested_documents %}
+  <div class="section">
+    <div class="section-title">ملاحظات الخبير والقرار</div>
+    <div class="section-body">
+      {% if expert_notes %}
+      <div class="data-row" style="margin-bottom:6px;">
+        <span class="data-label">ملاحظات الخبير:</span>
+        <span class="data-value">{{ expert_notes }}</span>
+      </div>
+      {% endif %}
+      {% if decision_reason %}
+      <div class="data-row" style="margin-bottom:6px;">
+        <span class="data-label">سبب القرار:</span>
+        <span class="data-value">{{ decision_reason }}</span>
+      </div>
+      {% endif %}
+      {% if requested_documents %}
+      <div class="data-row">
+        <span class="data-label">المستندات المطلوبة / المستلمة:</span>
+        <span class="data-value">{{ requested_documents }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 9. Certification block -->
+  <div class="section">
+    <div class="section-title">كتلة الاعتماد والتوقيع</div>
+    <div class="section-body">
+      <div class="cert-block">
+        <div class="cert-text">
+          تم إصدار هذا التقرير بعد مراجعة الخبير للبيانات والمستندات والمنهجية.
+        </div>
+        <div class="data-row" style="margin-bottom:4px; font-size:9pt;">
+          <span class="data-label">تاريخ الإصدار:</span>
+          <span class="data-value">{{ report_date }}</span>
+        </div>
+        <div class="data-row" style="margin-bottom:4px; font-size:9pt;">
+          <span class="data-label">رقم الطلب:</span>
+          <span class="data-value" style="font-family:monospace;">{{ request_id }}</span>
+        </div>
+        <div class="data-row" style="font-size:9pt;">
+          <span class="data-label">الحالة عند الإصدار:</span>
+          <span class="data-value">تم الاعتماد (certified_report_generated)</span>
+        </div>
+        <div class="cert-sig-line"></div>
+        <div class="cert-sig-label">توقيع الخبير / خاتم الشركة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer disclaimer -->
+  <div class="disclaimer">
+    تم إنشاء هذا المستند بواسطة محرك HTML/PDF الآلي بعد اعتماد مراجعة الخبير الداخلية.
+    القيمة النهائية الموصى بها تعتمد على البيانات المقدمة والمراجعة الداخلية فقط.
+    يُرجى الرجوع إلى الخبير المختص للتحقق من الاستخدامات الرسمية والقانونية.
+    لا تعكس هذه الوثيقة توقيعاً رسمياً إلا إذا صدرت مختومة من الجهة المختصة.
+  </div>
+
+</div><!-- /content -->
+
+</body>
+</html>

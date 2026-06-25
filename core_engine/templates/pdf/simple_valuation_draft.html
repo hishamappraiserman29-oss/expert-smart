@@ -437,27 +437,96 @@
       </table>
     </div>
 
-    <!-- ── NEW: Map/Aerial Placeholders ── -->
+    <!-- ── Map/Aerial Placeholders — coordinate-aware SVG (Part J) — no external APIs ── -->
     <div class="sec-block">
       <div class="sec-hdr">خرائط وصور الموقع</div>
       <div class="map-grid">
-        <div class="map-placeholder">
-          <div style="font-size:18pt;margin-bottom:4px;">📍</div>
-          <div><strong>خريطة الموقع</strong></div>
-          <div style="margin-top:4px;font-size:7.5pt;color:#888;">{{ map_placeholder_text }}</div>
+
+        <!-- Property location SVG pin -->
+        <div class="map-placeholder" style="padding:6px;">
+          <div style="font-weight:bold;font-size:8.5pt;margin-bottom:4px;">خريطة الموقع</div>
+          {% if latitude and longitude %}
+          <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg"
+               style="border:1px solid #ccc;border-radius:4px;background:#e8f4f8;">
+            <!-- Grid lines -->
+            <line x1="0" y1="30" x2="160" y2="30" stroke="#b0cfe0" stroke-width="0.5"/>
+            <line x1="0" y1="60" x2="160" y2="60" stroke="#b0cfe0" stroke-width="0.5"/>
+            <line x1="0" y1="90" x2="160" y2="90" stroke="#b0cfe0" stroke-width="0.5"/>
+            <line x1="40"  y1="0" x2="40"  y2="120" stroke="#b0cfe0" stroke-width="0.5"/>
+            <line x1="80"  y1="0" x2="80"  y2="120" stroke="#b0cfe0" stroke-width="0.5"/>
+            <line x1="120" y1="0" x2="120" y2="120" stroke="#b0cfe0" stroke-width="0.5"/>
+            <!-- Subject pin at centre -->
+            <circle cx="80" cy="60" r="8" fill="#c0392b" opacity="0.85"/>
+            <line x1="80" y1="68" x2="80" y2="82" stroke="#c0392b" stroke-width="2"/>
+            <text x="80" y="98" text-anchor="middle" font-size="7" fill="#333">
+              {{ latitude|round(4) }}, {{ longitude|round(4) }}
+            </text>
+            <text x="80" y="108" text-anchor="middle" font-size="6" fill="#666">{{ location }}</text>
+          </svg>
+          {% else %}
+          <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg"
+               style="border:1px solid #ccc;border-radius:4px;background:#f5f5f5;">
+            <text x="80" y="55" text-anchor="middle" font-size="8" fill="#999">إحداثيات غير متاحة</text>
+            <text x="80" y="68" text-anchor="middle" font-size="7" fill="#bbb">{{ map_placeholder_text }}</text>
+          </svg>
+          {% endif %}
         </div>
-        <div class="map-placeholder">
-          <div style="font-size:18pt;margin-bottom:4px;">🛰️</div>
-          <div><strong>صورة جوية</strong></div>
-          <div style="margin-top:4px;font-size:7.5pt;color:#888;">{{ aerial_placeholder_text }}</div>
+
+        <!-- Aerial view placeholder -->
+        <div class="map-placeholder" style="padding:6px;">
+          <div style="font-weight:bold;font-size:8.5pt;margin-bottom:4px;">صورة جوية</div>
+          <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg"
+               style="border:1px solid #ccc;border-radius:4px;background:#d8e8c8;">
+            <!-- Simulate aerial blocks -->
+            <rect x="10"  y="10"  width="50" height="30" fill="#a8c080" rx="2" opacity="0.7"/>
+            <rect x="70"  y="10"  width="80" height="40" fill="#b8d090" rx="2" opacity="0.7"/>
+            <rect x="10"  y="50"  width="30" height="60" fill="#a0b878" rx="2" opacity="0.7"/>
+            <rect x="50"  y="60"  width="100" height="50" fill="#90a868" rx="2" opacity="0.7"/>
+            <!-- Road -->
+            <rect x="42"  y="0"   width="10" height="120" fill="#d0c090" opacity="0.8"/>
+            <rect x="0"   y="48"  width="160" height="10" fill="#d0c090" opacity="0.8"/>
+            <!-- Subject marker -->
+            <circle cx="80" cy="60" r="7" fill="#c0392b" opacity="0.9"/>
+            <text x="80" y="108" text-anchor="middle" font-size="6.5" fill="#333">{{ aerial_placeholder_text }}</text>
+          </svg>
         </div>
-        <div class="map-placeholder">
-          <div style="font-size:18pt;margin-bottom:4px;">🗺️</div>
-          <div><strong>خريطة المقارنات</strong></div>
-          <div style="margin-top:4px;font-size:7.5pt;color:#888;">{{ comps_map_placeholder_text }}</div>
+
+        <!-- Comparables map with pins -->
+        <div class="map-placeholder" style="padding:6px;">
+          <div style="font-weight:bold;font-size:8.5pt;margin-bottom:4px;">خريطة المقارنات</div>
+          <svg width="160" height="120" viewBox="0 0 160 120" xmlns="http://www.w3.org/2000/svg"
+               style="border:1px solid #ccc;border-radius:4px;background:#f0f4e8;">
+            <line x1="0" y1="40" x2="160" y2="40" stroke="#c8d8b8" stroke-width="0.5"/>
+            <line x1="0" y1="80" x2="160" y2="80" stroke="#c8d8b8" stroke-width="0.5"/>
+            <line x1="53"  y1="0" x2="53"  y2="120" stroke="#c8d8b8" stroke-width="0.5"/>
+            <line x1="106" y1="0" x2="106" y2="120" stroke="#c8d8b8" stroke-width="0.5"/>
+            <!-- Subject (red) -->
+            <circle cx="80" cy="60" r="7" fill="#c0392b"/>
+            <text x="80" y="59" text-anchor="middle" font-size="7" fill="white" font-weight="bold">م</text>
+            <!-- Comparables (blue pins at distributed positions) -->
+            <circle cx="30"  cy="35"  r="5" fill="#2471a3" opacity="0.85"/>
+            <text x="30"  y="34"  text-anchor="middle" font-size="6" fill="white">١</text>
+            <circle cx="130" cy="45"  r="5" fill="#2471a3" opacity="0.85"/>
+            <text x="130" y="44"  text-anchor="middle" font-size="6" fill="white">٢</text>
+            <circle cx="55"  cy="90"  r="5" fill="#2471a3" opacity="0.85"/>
+            <text x="55"  y="89"  text-anchor="middle" font-size="6" fill="white">٣</text>
+            <circle cx="120" cy="85"  r="5" fill="#7f8c8d" opacity="0.7"/>
+            <text x="120" y="84"  text-anchor="middle" font-size="6" fill="white">خ</text>
+            <!-- Legend -->
+            <circle cx="12" cy="108" r="4" fill="#c0392b"/>
+            <text x="20" y="111" font-size="6" fill="#333">موضوع</text>
+            <circle cx="55" cy="108" r="4" fill="#2471a3"/>
+            <text x="63" y="111" font-size="6" fill="#333">مقارن</text>
+            <circle cx="95" cy="108" r="4" fill="#7f8c8d"/>
+            <text x="103" y="111" font-size="6" fill="#333">خارج نطاق</text>
+          </svg>
         </div>
+
       </div>
-      <p style="font-size:7pt;color:#999;margin-top:2px;">لم يتم إرفاق صورة جوية أو خريطة موقع في نسخة الاختبار. لا يتم جلبها تلقائيًا من الإنترنت.</p>
+      <p style="font-size:7pt;color:#999;margin-top:2px;">
+        الخرائط أعلاه تمثيل مرئي استرشادي بالإحداثيات المُدخلة فقط — لا يتم جلبها من الإنترنت أو أي API خارجي.
+        {% if latitude and longitude %}إحداثيات العقار: {{ latitude }}, {{ longitude }}.{% endif %}
+      </p>
     </div>
 
     <!-- ── 4. Valuation Methods Section — Full Tables ── -->
@@ -1149,14 +1218,7 @@
       لتحويل هذه المسودة إلى تقرير تقييم معتمد، يجب مراجعة البيانات والمستندات والمنهجية بواسطة خبير التقييم، ثم إصدار النسخة المعتمدة عند القبول.
     </div>
 
-    <!-- ── 9. Disclaimer (inline) ── -->
-    <div class="sec-block">
-      <div class="sec-hdr" style="background:#782828;">إخلاء المسؤولية</div>
-      <div style="font-size:9pt;color:#782828;line-height:1.75;padding:4px 0;">
-        هذا التقرير آلي استرشادي ولا يُعد تقرير تقييم رسمي أو معتمد.
-        لا يُستخدم أمام البنوك أو المحاكم أو الجهات الرسمية قبل مراجعة واعتماد خبير التقييم.
-      </div>
-    </div>
+    <!-- ── 9. Disclaimer — consolidated (Part I) ── -->
 
     <!-- ── 10. Required Documents ── -->
     <div class="sec-block">
@@ -1183,18 +1245,27 @@
     </div>
     {% endif %}
 
-    <!-- ── Disclaimer Page 2 ── -->
+    <!-- ── الشروط والافتراضات العامة وإخلاء المسؤولية (Part I — consolidated) ── -->
     <div class="disc-pg">
-      <div class="disc-ttl">إخلاء المسؤولية التفصيلي</div>
+      <div class="disc-ttl">الشروط والافتراضات العامة وإخلاء المسؤولية</div>
       <div class="disc-body">
+        <strong>طبيعة التقرير:</strong>
         هذا التقرير مبدئي وغير معتمد، ولا يُعد تقرير خبير معتمدًا أو مستندًا صالحًا
         للاستخدام أمام الجهات الرسمية أو القضائية أو التمويلية قبل مراجعة واعتماد
-        خبير التقييم المختص.<br><br>
+        خبير التقييم المختص. لا يُستخدم أمام البنوك أو المحاكم أو أي جهة رسمية قبل إتمام المراجعة المهنية.
+        <br><br>
+        <strong>محدودية البيانات:</strong>
         القيم والأرقام الواردة في هذا التقرير استرشادية فقط ولا تمثل رأيًا مهنيًا نهائيًا.
         الطرق المستخدمة هي أدوات تصفية أولية غير مكتملة دون مراجعة ميدانية وتحليل سوقي
-        معتمد من خبير مرخص.<br><br>
-        لا يتضمن هذا التقرير استرجاعًا آليًا من الإنترنت أو Qdrant في هذه المرحلة.
-        جميع البيانات مستمدة من مدخلات الطلب المقدمة من العميل.
+        معتمد من خبير مرخص. جميع البيانات مستمدة من مدخلات الطلب المقدمة من العميل.
+        <br><br>
+        <strong>بيانات السوق:</strong>
+        لا يتضمن هذا التقرير استرجاعًا آليًا من الإنترنت أو Qdrant أو أي مصدر بيانات خارجي.
+        المقارنات السوقية وأسعار المتر محاكاة داخلية لأغراض المراجعة الأولية فقط.
+        <br><br>
+        <strong>المعايير المهنية:</strong>
+        يُعدّ هذا التقرير متوافقًا مع متطلبات الإفصاح الأولي وفق إطار IVSC ومعايير التقييم المصرية،
+        غير أن اعتماده النهائي يستوجب توقيع خبير تقييم مرخص وإجراء الفحص الميداني اللازم.
       </div>
     </div>
 

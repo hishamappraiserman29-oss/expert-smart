@@ -1027,6 +1027,14 @@
           <td class="fl">الإهلاك الوظيفي</td>
           <td class="fv">{{ cost_functional_depr_pct }}</td>
         </tr>
+        {% if cost_external_depr_pct and cost_external_depr_pct != '0%' and cost_external_depr_pct != '0.00%' %}
+        <tr>
+          <td class="fl" style="color:#7d3c00;">الإهلاك الاقتصادي / الخارجي</td>
+          <td class="fv" style="color:#7d3c00;">{{ cost_external_depr_pct }}</td>
+          <td class="fl" style="color:#7d3c00;">مبلغ الإهلاك الخارجي</td>
+          <td class="fv" style="color:#7d3c00;">{{ cost_external_depr_amt if cost_external_depr_amt else '—' }}</td>
+        </tr>
+        {% endif %}
         <tr>
           <td class="fl">إجمالي الإهلاك</td>
           <td class="fv">{{ cost_total_depr_pct }}</td>

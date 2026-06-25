@@ -346,6 +346,8 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         return v if (v and str(v).strip()) else _dg
 
     wb = openpyxl.Workbook()
+    wb.calculation.calcMode    = "auto"
+    wb.calculation.fullCalcOnLoad = True
 
     # ════════════════════════════════════════════════════════════════════════
     # Sheet 1: Dashboard (12-sheet edition)
@@ -1015,12 +1017,15 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
 
     # نموذج C — نتيجة طريقة المقارنة
     _sec_hdr(ws5, r5, 1, 4, "نموذج C — ملخص نتيجة طريقة المقارنة"); r5 += 1
+    _ws5_sales_row = None  # will be set to the row of "القيمة المشتقة من المقارنات"
     for lbl, val in [
         ("متوسط سعر المتر المعدل", wb_avg_adj),
         ("مساحة العقار محل التقييم (م²)", payload.get("area", "")),
         ("القيمة المشتقة من المقارنات", mctx.get("sales_from_comps", "")),
         ("ملاحظات الخبير", "تحتاج مراجعة ميدانية — بيانات محاكاة داخلية لأغراض اختبار الشكل"),
     ]:
+        if lbl == "القيمة المشتقة من المقارنات":
+            _ws5_sales_row = r5
         _kv(ws5, r5, lbl, val, 1, 2, 4, vbg=C_GOLD_BG if val else C_WHITE); r5 += 1
 
     _widths(ws5, [14, 24, 10, 18, 16, 12, 12, 12, 12, 12, 18, 18, 14, 28])
@@ -1430,6 +1435,14 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     _cost8_fda_row = r8
     ws8.cell(r8, 1).value = "الإهلاك الوظيفي (=تكلفة×نسبة)"; ws8.cell(r8, 1).alignment = AL_RT
     ws8.cell(r8, 2).value = f"=B{_cost8_repl_row}*B{_cost8_fdr_row}"; ws8.cell(r8, 2).alignment = AL_RT; r8 += 1
+    # Part D: External / economic obsolescence
+    _cost8_edr_row = r8
+    ws8.cell(r8, 1).value = "نسبة الإهلاك الاقتصادي / الخارجي (%) — مدخل"; ws8.cell(r8, 1).alignment = AL_RT
+    _ed8 = _pn8(mctx.get("cost_external_depr_pct", "0%"), 0) / 100.0
+    ws8.cell(r8, 2).value = _ed8; ws8.cell(r8, 2).alignment = AL_RT; r8 += 1
+    _cost8_eda_row = r8
+    ws8.cell(r8, 1).value = "الإهلاك الاقتصادي / الخارجي (=تكلفة×نسبة)"; ws8.cell(r8, 1).alignment = AL_RT
+    ws8.cell(r8, 2).value = f"=B{_cost8_repl_row}*B{_cost8_edr_row}"; ws8.cell(r8, 2).alignment = AL_RT; r8 += 1
     _cost8_tda_row = r8
     ws8.cell(r8, 1).value = "إجمالي الإهلاك (=SUM)"; ws8.cell(r8, 1).alignment = AL_RT
     ws8.cell(r8, 2).value = f"=SUM(B{_cost8_pda_row}:B{r8-1})"; ws8.cell(r8, 2).alignment = AL_RT; r8 += 1
@@ -1659,7 +1672,10 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         except (TypeError, ValueError):
             return None
 
-    _rec_sales_raw  = _parse_num(payload.get("sales_comparison_value") or payload.get("sales_value"))
+    _rec_sales_raw  = _parse_num(
+        payload.get("sales_comparison_value") or payload.get("sales_value")
+        or mctx.get("sales_from_comps", "")
+    )
     _rec_income_raw = _parse_num(payload.get("income_value") or mctx.get("income_value_calc", ""))
     _rec_cost_raw   = _parse_num(payload.get("cost_value") or mctx.get("cost_value_calc", ""))
     _rec_avm_raw    = _parse_num(payload.get("avm_value") or _avm_val)
@@ -1803,8 +1819,13 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         _c9h = ws9.cell(r9, _ci9h, value=_h9h)
         _c9h.font = F_HDR; _c9h.fill = _fill(C_BLUE_M); _c9h.alignment = AL_CTR
     r9 += 1
+    # Use cross-sheet formula for sales value when the source row is known
+    _sales_h_val = (
+        f"='مقارنة البيوع'!B{_ws5_sales_row}"
+        if _ws5_sales_row else (_rec_sales_raw or 0)
+    )
     _rec9_methods9 = [
-        ("مقارنة البيوع", _rec_sales_raw or 0, 0.40),
+        ("مقارنة البيوع", _sales_h_val,         0.40),
         ("طريقة الدخل",   _rec_income_raw or 0, 0.40),
         ("طريقة التكلفة", _rec_cost_raw or 0,   0.20),
     ]
@@ -2087,10 +2108,10 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     # ════════════════════════════════════════════════════════════════════════
     ws14 = wb.create_sheet("قيمة الأرض")
     _rtl(ws14)
-    _widths(ws14, [28, 18, 18, 18, 18, 22, 22])
+    _widths(ws14, [28, 18, 18, 18, 18, 22, 22, 20, 36])
     r14 = 1
 
-    ws14.merge_cells("A1:G1")
+    ws14.merge_cells("A1:I1")
     _c = ws14.cell(1, 1, "قيمة الأرض — مقارنة البيوع والاستخلاص والتوفيق")
     _c.font      = F_TITLE
     _c.fill      = _fill(C_BLUE_D)
@@ -2099,31 +2120,38 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     r14 += 1
 
     # A: مقارنة بيوع الأراضي
-    _sec_hdr(ws14, r14, 1, 7, "أ. مقارنة بيوع الأراضي"); r14 += 1
+    _sec_hdr(ws14, r14, 1, 9, "أ. مقارنة بيوع الأراضي"); r14 += 1
     land_hdr = ["رقم المقارن", "الموقع", "المساحة م²", "تاريخ العرض",
-                "السعر الإجمالي", "سعر المتر", "سعر المتر المعدل"]
+                "السعر الإجمالي", "سعر المتر", "سعر المتر المعدل",
+                "حالة الموقع الجغرافي", "سبب الاستبعاد"]  # Part B: geo columns
     for col, h in enumerate(land_hdr, 1):
         _c = ws14.cell(r14, col, h)
         _c.font = F_HDR; _c.fill = _fill(C_BLUE_M); _c.alignment = AL_CTR
     r14 += 1
     for lc in (wb_land_comps or []):
+        geo_status = lc.get("geo_match_status", "")
+        geo_reason = lc.get("geo_exclusion_reason", "")
+        _geo_fill  = _fill("FFDDDD") if geo_status == "خارج النطاق" else _fill("DDFFDD") if geo_status == "مطابق" else None
         for col, v in enumerate([
             str(lc.get("num", "")), lc.get("location", ""),
             str(lc.get("area_m2", "")), lc.get("offer_date", ""),
             lc.get("total_price_disp", ""), lc.get("price_per_m2_disp", ""),
             lc.get("adj_price_per_m2", ""),
+            geo_status, geo_reason,
         ], 1):
             _c = ws14.cell(r14, col, v); _c.font = F_VAL; _c.alignment = AL_RT
+            if col in (8, 9) and _geo_fill:
+                _c.fill = _geo_fill
         r14 += 1
     if wb_avg_land_price:
         _sec_hdr(ws14, r14, 1, 5, f"متوسط سعر المتر المعدل: {wb_avg_land_price}", C_BLUE_L, C_BLUE_D)
         r14 += 1
     if wb_land_value_sales:
-        _kv(ws14, r14, "قيمة نصيب الأرض (مقارنة بيوع)", wb_land_value_sales, 1, 2, 7, vbg=C_GREEN); r14 += 1
+        _kv(ws14, r14, "قيمة نصيب الأرض (مقارنة بيوع)", wb_land_value_sales, 1, 2, 9, vbg=C_GREEN); r14 += 1
     r14 += 1
 
     # B: طريقة الاستخلاص
-    _sec_hdr(ws14, r14, 1, 7, "ب. طريقة الاستخلاص"); r14 += 1
+    _sec_hdr(ws14, r14, 1, 9, "ب. طريقة الاستخلاص"); r14 += 1
     for lbl, val in [
         ("القيمة الكلية للعقار المحسَّن (مؤشر)",  wb_extr.get("extr_improved_indication", "")),
         ("تكلفة الإنشاء كجديد",                     wb_extr.get("extr_replacement_cost_new", "")),
@@ -2134,27 +2162,27 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         ("سعر متر الأرض المستخلص",                  wb_extr.get("extr_land_per_m2", "")),
         ("نصيب الأرض المستخلص",                     wb_extr.get("extr_land_share_value", "")),
     ]:
-        _kv(ws14, r14, lbl, val, 1, 2, 7); r14 += 1
+        _kv(ws14, r14, lbl, val, 1, 2, 9); r14 += 1
     r14 += 1
 
     # C: توفيق قيمة الأرض
-    _sec_hdr(ws14, r14, 1, 7, "ج. توفيق قيمة الأرض", C_GOLD, "7A5800"); r14 += 1
+    _sec_hdr(ws14, r14, 1, 9, "ج. توفيق قيمة الأرض", C_GOLD, "7A5800"); r14 += 1
     for lbl, val in [
         ("قيمة الأرض — طريقة المقارنة",   wb_land_value_sales),
         ("قيمة الأرض — طريقة الاستخلاص",  wb_extr.get("extr_land_share_value", "")),
         ("متوسط/قيمة الأرض المُوفَّقة",   wb_land_value_recon),
         ("قيمة الأرض المختارة من الخبير", wb_land_value_recon),
     ]:
-        _kv(ws14, r14, lbl, val, 1, 2, 7, vbg=C_GOLD_BG if val == wb_land_value_recon else C_WHITE); r14 += 1
+        _kv(ws14, r14, lbl, val, 1, 2, 9, vbg=C_GOLD_BG if val == wb_land_value_recon else C_WHITE); r14 += 1
     r14 += 1
     _disc = ws14.cell(r14, 1,
         "ملاحظة: قيمة الأرض محاكاة داخلية للمراجعة — لا تستند إلى مصادر سوق رسمية.")
     _disc.font = Font(color="B43200", name="Arial", size=8, italic=True)
-    ws14.merge_cells(f"A{r14}:G{r14}")
+    ws14.merge_cells(f"A{r14}:I{r14}")
     r14 += 2
 
     # D: نصيب العقار من الأرض (Part C — shared land value)
-    _sec_hdr(ws14, r14, 1, 7, "د. نصيب العقار المُقيَّم من قيمة الأرض", C_BLUE_D, "FFFFFF"); r14 += 1
+    _sec_hdr(ws14, r14, 1, 9, "د. نصيب العقار المُقيَّم من قيمة الأرض", C_BLUE_D, "FFFFFF"); r14 += 1
     _EF14 = "يحتاج استكمال بواسطة الخبير"
     for lbl, val in [
         ("إجمالي المساحات القابلة للبيع في المبنى",  mctx.get("total_building_sellable_area", _EF14)),
@@ -2164,7 +2192,7 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         ("قيمة نصيب العقار — اختيار الخبير",          mctx.get("expert_selected_subject_land_value", _EF14)),
         ("أساس الاحتساب",                              mctx.get("shared_land_basis_notes", "")),
     ]:
-        _kv(ws14, r14, lbl, val, 1, 2, 7,
+        _kv(ws14, r14, lbl, val, 1, 2, 9,
             vbg=C_GOLD_BG if "نصيب" in lbl and "اختيار" in lbl else C_WHITE); r14 += 1
     r14 += 1
 
@@ -2246,9 +2274,9 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     # ════════════════════════════════════════════════════════════════════════
     ws16 = wb.create_sheet("مصادر الأسعار")
     _rtl(ws16)
-    _widths(ws16, [20, 22, 26, 20, 20, 22, 18, 16, 16, 26, 32])
+    _widths(ws16, [20, 22, 26, 20, 20, 22, 18, 16, 16, 26, 32, 20, 36])
 
-    ws16.merge_cells("A1:K1")
+    ws16.merge_cells("A1:M1")
     ws16["A1"].value     = "مصادر الأسعار — Price Source Spine (سجل داخلي)"
     ws16["A1"].font      = F_TITLE
     ws16["A1"].fill      = _fill("2D5A27")
@@ -2260,12 +2288,14 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         "نوع الأصل", "السعر / م²", "القيمة",
         "تاريخ المصدر", "مستوى الثقة", "الحالة",
         "مستخدم في", "ملاحظات الخبير",
+        "حالة الموقع الجغرافي", "سبب الاستبعاد",  # Part B: geo columns
     ]
     _src_keys = [
         "source_registry_id", "source_type", "district",
         "property_class", "price_per_m2", "source_value",
         "source_date", "source_confidence", "source_status",
         "used_in_methods", "source_notes",
+        "geo_match_status", "geo_exclusion_reason",
     ]
     r16 = 2
     for ci, h in enumerate(_src_headers, 1):
@@ -2274,23 +2304,27 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     r16 += 1
     if wb_price_sources:
         for src in wb_price_sources:
+            _src_geo  = src.get("geo_match_status", "")
+            _src_gfill = _fill("FFDDDD") if _src_geo == "خارج النطاق" else _fill("DDFFDD") if _src_geo == "مطابق" else None
             for ci, key in enumerate(_src_keys, 1):
                 ws16.cell(r16, ci).value     = src.get(key, _dg)
                 ws16.cell(r16, ci).alignment = AL_RT
                 ws16.cell(r16, ci).font      = F_VAL
+                if ci in (12, 13) and _src_gfill:
+                    ws16.cell(r16, ci).fill = _src_gfill
             ws16.cell(r16, 9).fill = _fill("FFFBE6")  # status column highlight
             r16 += 1
     else:
         ws16.cell(r16, 1).value = "لا توجد مصادر أسعار مرتبطة بهذا الطلب — يحتاج استكمال بواسطة الخبير"
         ws16.cell(r16, 1).font  = Font(color="B43200", name="Arial", size=9)
-        ws16.merge_cells(f"A{r16}:K{r16}"); r16 += 1
+        ws16.merge_cells(f"A{r16}:M{r16}"); r16 += 1
     ws16.row_dimensions[r16].height = 6; r16 += 1
     _src_disc = ws16.cell(r16, 1,
         "جميع المصادر المدرجة في هذا السجل محاكاة داخلية لأغراض QA. "
         "لا يتضمن هذا السجل استرجاعاً من Source Registry/Qdrant في المرحلة الحالية. "
         "سيتم الربط الفعلي عند تفعيل مكون Source Registry.")
     _src_disc.font = Font(color="B43200", name="Arial", size=8, italic=True)
-    ws16.merge_cells(f"A{r16}:K{r16}")
+    ws16.merge_cells(f"A{r16}:M{r16}")
 
     # ════════════════════════════════════════════════════════════════════════
     # Sheet 17: ربط التقييم الجماعي — Mass Appraisal Bridge
@@ -2441,9 +2475,9 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     # ════════════════════════════════════════════════════════════════════════
     ws20 = wb.create_sheet("مقارنات إيجارية")
     _rtl(ws20)
-    _widths(ws20, [14, 26, 14, 14, 16, 16, 16, 12, 12, 12, 12, 12, 14, 16, 16, 14, 28])
+    _widths(ws20, [14, 26, 14, 14, 16, 16, 16, 12, 12, 12, 12, 12, 14, 16, 16, 14, 28, 20, 36])
 
-    ws20.merge_cells("A1:Q1")
+    ws20.merge_cells("A1:S1")
     ws20["A1"].value     = "مصفوفة المقارنات الإيجارية — مع معادلات إكسل (بيانات محاكاة QA)"
     ws20["A1"].font      = F_TITLE
     ws20["A1"].fill      = _fill("1F4E78")
@@ -2469,6 +2503,7 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         "معامل التشطيب", "معامل التاريخ",
         "إجمالي المعاملات (=H×…×L)", "إيجار م² معدل (=G×M)",
         "إيجار العقار المعدل (=N×$C$2)", "حالة المقارن", "ملاحظات الخبير",
+        "حالة الموقع الجغرافي", "سبب الاستبعاد",  # Part B: geo columns
     ]
     for _ci, _h in enumerate(_rent_hdrs, 1):
         _hc = ws20.cell(3, _ci, value=_h)
@@ -2480,6 +2515,9 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     if wb_rental_comps:
         for _ri, _rc in enumerate(wb_rental_comps[:4], _data_row_start):
             _row_n = _ri
+            _geo_stat  = _rc.get("geo_match_status", "")
+            _geo_rsn   = _rc.get("geo_exclusion_reason", "")
+            _geo_fill20 = _fill("FFDDDD") if _geo_stat == "خارج النطاق" else _fill("DDFFDD") if _geo_stat == "مطابق" else None
             # Raw numeric values in data columns
             ws20.cell(_row_n, 1).value  = _rc.get("num", _ri - _data_row_start + 1)
             ws20.cell(_row_n, 2).value  = str(_rc.get("location", ""))
@@ -2498,12 +2536,16 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
             ws20.cell(_row_n, 15).value = f"=N{_row_n}*$C$2"                    # O adj monthly
             ws20.cell(_row_n, 16).value = str(_rc.get("status", ""))
             ws20.cell(_row_n, 17).value = str(_rc.get("notes", ""))
-            for _ci2 in range(1, 18):
+            ws20.cell(_row_n, 18).value = _geo_stat    # R geo_match_status
+            ws20.cell(_row_n, 19).value = _geo_rsn     # S geo_exclusion_reason
+            for _ci2 in range(1, 20):
                 ws20.cell(_row_n, _ci2).alignment = AL_RT
+                if _ci2 in (18, 19) and _geo_fill20:
+                    ws20.cell(_row_n, _ci2).fill = _geo_fill20
     else:
         # Non-QA: write data-gap rows
         for _ri in range(_data_row_start, _data_row_start + 4):
-            for _ci2 in range(1, 18):
+            for _ci2 in range(1, 20):
                 ws20.cell(_ri, _ci2).value     = _na if _ci2 == 2 else (_dg if _ci2 <= 12 else _ef)
                 ws20.cell(_ri, _ci2).alignment = AL_RT
 
@@ -2619,6 +2661,17 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     _r_wi += 1
 
     _wi_is_qa = bool(payload.get("_qa_simulation"))
+    # Part G: Write a reference cell pulling the final reconciliation value dynamically
+    _wi_ref_row = _r_wi
+    ws_wi.cell(_wi_ref_row, 1).value = "مرجع: القيمة المرجحة من توفيق النتائج"
+    ws_wi.cell(_wi_ref_row, 1).font  = Font(name="Arial", size=9, italic=True, color="555555")
+    ws_wi.cell(_wi_ref_row, 1).alignment = AL_RT
+    ws_wi.cell(_wi_ref_row, 2).value = f"='توفيق النتائج'!D{_rec9_total_row}"
+    ws_wi.cell(_wi_ref_row, 2).font  = F_GOLD
+    ws_wi.cell(_wi_ref_row, 2).fill  = _fill(C_GOLD_BG)
+    ws_wi.cell(_wi_ref_row, 2).alignment = AL_RT
+    _r_wi += 1
+
     _wi_base  = float(str(payload.get("estimated_value") or 0)) if payload.get("estimated_value") else 0
     # For rental payloads, derive implied capital value from monthly rent / cap rate
     if not _wi_base and _wi_is_qa:
@@ -2629,37 +2682,38 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         except (ValueError, TypeError):
             _wi_base = 1_000_000
     _wi_scenarios = []
-    if _wi_is_qa and _wi_base:
+    # Each scenario: (name, var_name, old_v, new_v, fixed_cost, impact_pct, note)
+    # impact_pct: fraction of base value; negative = value reduction
+    if _wi_is_qa:
         _wi_scenarios = [
-            ("ترقية التشطيب: عادي → فاخر",    _wi_base, "مستوى التشطيب", "عادي",    "فاخر",    80_000,   _wi_base * 0.08, 0, 0, "تقدير أثر الترقية"),
-            ("تحسين الحالة: متوسط → جيد",      _wi_base, "حالة العقار",   "متوسط",   "جيد",     50_000,   _wi_base * 0.05, 0, 0, "تحسن الحالة"),
-            ("تغيير الاستخدام: سكني → تجاري",  _wi_base, "الاستخدام",    "سكني",    "تجاري",   120_000,  _wi_base * 0.15, 0, 0, "يخضع لموافقة جهوية"),
-            ("رفع معدل نمو الإيجار: 3% → 5%",  _wi_base, "نمو الإيجار%", "3.0",     "5.0",     0,        _wi_base * 0.06, 0, 0, "سيناريو متفائل"),
-            ("تغيير معدل الرسملة: 3.8% → 4.5%", _wi_base, "معدل رسملة%", "3.8",     "4.5",     0,        -_wi_base * 0.09, 0, 0, "زيادة المخاطر"),
-            ("تغيير معدل الخصم: 14% → 16%",    _wi_base, "معدل خصم%",   "14.0",    "16.0",    0,        -_wi_base * 0.07, 0, 0, "بيئة سعر فائدة أعلى"),
-            ("رفع نسبة الشواغر: 5% → 10%",     _wi_base, "نسبة شواغر%", "5.0",     "10.0",    0,        -_wi_base * 0.04, 0, 0, "تراجع الطلب"),
+            ("ترقية التشطيب: عادي → فاخر",      "مستوى التشطيب", "عادي",  "فاخر",  80_000,    0.08,  "تقدير أثر الترقية"),
+            ("تحسين الحالة: متوسط → جيد",        "حالة العقار",   "متوسط", "جيد",   50_000,    0.05,  "تحسن الحالة"),
+            ("تغيير الاستخدام: سكني → تجاري",    "الاستخدام",    "سكني",  "تجاري", 120_000,   0.15,  "يخضع لموافقة جهوية"),
+            ("رفع معدل نمو الإيجار: 3% → 5%",    "نمو الإيجار%", "3.0",   "5.0",   0,         0.06,  "سيناريو متفائل"),
+            ("تغيير معدل الرسملة: 3.8% → 4.5%",  "معدل رسملة%",  "3.8",   "4.5",   0,         -0.09, "زيادة المخاطر"),
+            ("تغيير معدل الخصم: 14% → 16%",      "معدل خصم%",   "14.0",  "16.0",  0,         -0.07, "بيئة سعر فائدة أعلى"),
+            ("رفع نسبة الشواغر: 5% → 10%",       "نسبة شواغر%", "5.0",   "10.0",  0,         -0.04, "تراجع الطلب"),
         ]
     else:
-        for _i_wi in range(1, 8):
-            _wi_scenarios.append((f"سيناريو {_i_wi}", _ef, _ef, _ef, _ef, _ef, _ef, _ef, _ef, _ef))
+        _wi_scenarios = [(f"سيناريو {_i}", _ef, _ef, _ef, None, None, _ef) for _i in range(1, 8)]
 
-    for _idx_wi, _sc_wi in enumerate(_wi_scenarios, 0):
-        _sc_name, _base_v, _var_n, _old_v, _new_v, _cost_c, _val_imp, _net_imp, _roi_v, _note = _sc_wi
-        _r_row_start = _r_wi
+    for _sc_wi in _wi_scenarios:
+        _sc_name, _var_n, _old_v, _new_v, _cost_c, _imp_pct, _note = _sc_wi
         ws_wi.cell(_r_wi, 1).value = _sc_name; ws_wi.cell(_r_wi, 1).alignment = AL_RT
-        ws_wi.cell(_r_wi, 2).value = f"{int(_base_v):,} ج.م" if isinstance(_base_v, (int, float)) else _base_v
+        # Part G: base value references the reconciliation reference row dynamically
+        ws_wi.cell(_r_wi, 2).value = f"=B{_wi_ref_row}"
         ws_wi.cell(_r_wi, 2).alignment = AL_RT
         ws_wi.cell(_r_wi, 3).value = _var_n; ws_wi.cell(_r_wi, 3).alignment = AL_RT
         ws_wi.cell(_r_wi, 4).value = _old_v; ws_wi.cell(_r_wi, 4).alignment = AL_RT
         ws_wi.cell(_r_wi, 5).value = _new_v; ws_wi.cell(_r_wi, 5).alignment = AL_RT
         # cost of change
-        ws_wi.cell(_r_wi, 6).value = f"{int(_cost_c):,} ج.م" if isinstance(_cost_c, (int, float)) else _cost_c
+        ws_wi.cell(_r_wi, 6).value = (f"{int(_cost_c):,} ج.م" if isinstance(_cost_c, int) else _cost_c)
         ws_wi.cell(_r_wi, 6).alignment = AL_RT
-        # value impact — use formula referencing base value and impact
-        if isinstance(_val_imp, (int, float)) and isinstance(_base_v, (int, float)) and isinstance(_cost_c, (int, float)):
-            ws_wi.cell(_r_wi, 7).value = f"={round(_val_imp)}"   # formula: impact
-            ws_wi.cell(_r_wi, 8).value = f"=G{_r_wi}-F{_r_wi}"  # net = impact - cost
-            ws_wi.cell(_r_wi, 9).value = f"=IF(F{_r_wi}=0,\"N/A\",H{_r_wi}/F{_r_wi})"  # ROI
+        # Part G: value impact references base dynamically
+        if _imp_pct is not None and isinstance(_cost_c, int):
+            ws_wi.cell(_r_wi, 7).value = f"=B{_wi_ref_row}*{_imp_pct}"
+            ws_wi.cell(_r_wi, 8).value = f"=G{_r_wi}-F{_r_wi}"
+            ws_wi.cell(_r_wi, 9).value = f"=IF(F{_r_wi}=0,\"N/A\",H{_r_wi}/F{_r_wi})"
         else:
             ws_wi.cell(_r_wi, 7).value = _ef
             ws_wi.cell(_r_wi, 8).value = _ef
@@ -2703,57 +2757,53 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     _bvr_cap = 5.0    # capital appreciation %
 
     _sec_hdr(ws_bvr, _r_bvr, 1, 3, "أ. مدخلات التحليل"); _r_bvr += 1
-    _bvr_inputs = [
-        ("القيمة السوقية للعقار",                    f"={_bvr_mv}" if _bvr_mv else _ef, "ج.م"),
-        ("الإيجار الشهري السوقي",                    f"={_bvr_mr}" if _bvr_mr else _ef, "ج.م/شهر"),
-        ("الإيجار السنوي (=شهري × 12)",              f"=B{_r_bvr+1}*12" if _bvr_mr else _ef, "ج.م/سنة"),
+    # Part G: market value row references reconciliation sheet dynamically
+    _bvr_mv_row = _r_bvr
+    _kv(ws_bvr, _r_bvr, "القيمة السوقية للعقار",
+        f"='توفيق النتائج'!D{_rec9_total_row}", 1, 2, 2)
+    ws_bvr.cell(_r_bvr, 2).fill = _fill(C_GOLD_BG); ws_bvr.cell(_r_bvr, 2).font = F_GOLD
+    ws_bvr.cell(_r_bvr, 3).value = "ج.م"; _r_bvr += 1
+    _bvr_mr_row = _r_bvr
+    _kv(ws_bvr, _r_bvr, "الإيجار الشهري السوقي", f"={_bvr_mr}" if _bvr_mr else _ef, 1, 2, 2)
+    ws_bvr.cell(_r_bvr, 3).value = "ج.م/شهر"; _r_bvr += 1
+    _bvr_ar_row = _r_bvr
+    _kv(ws_bvr, _r_bvr, "الإيجار السنوي (=شهري × 12)", f"=B{_bvr_mr_row}*12", 1, 2, 2)
+    ws_bvr.cell(_r_bvr, 3).value = "ج.م/سنة"; _r_bvr += 1
+    for _lbl_bvr, _v_bvr, _u_bvr in [
         ("فترة الاحتفاظ المفترضة",                   str(_bvr_yrs), "سنة"),
         ("معدل نمو الإيجار السنوي",                  str(_bvr_rg), "%"),
         ("العائد البديل على رأس المال",               str(_bvr_alt), "%"),
         ("تكاليف الشراء والتسجيل",                   str(_bvr_tc), "% من القيمة"),
         ("تكاليف الصيانة والامتلاك السنوية",         str(_bvr_mc), "% من القيمة"),
         ("معدل التقدير الرأسمالي السنوي المتوقع",    str(_bvr_cap), "%"),
-    ]
-    for _lbl_bvr, _v_bvr, _u_bvr in _bvr_inputs:
+    ]:
         _kv(ws_bvr, _r_bvr, _lbl_bvr, _v_bvr, 1, 2, 2); ws_bvr.cell(_r_bvr, 3).value = _u_bvr; _r_bvr += 1
 
     ws_bvr.row_dimensions[_r_bvr].height = 6; _r_bvr += 1
     _sec_hdr(ws_bvr, _r_bvr, 1, 3, "ب. مؤشرات القرار"); _r_bvr += 1
 
-    # price-to-rent ratio
+    # price-to-rent ratio — Part G: use cell references instead of hardcoded values
     _ptr_row = _r_bvr
-    if _bvr_mv and _bvr_ar:
-        _ptr_val = f"={round(_bvr_mv)}/{round(_bvr_ar)}"
-    else:
-        _ptr_val = _ef
+    _ptr_val = f"=B{_bvr_mv_row}/B{_bvr_ar_row}"
     _kv(ws_bvr, _r_bvr, "نسبة السعر إلى الإيجار (Price-to-Rent Ratio)", _ptr_val, 1, 2, 2)
     ws_bvr.cell(_r_bvr, 3).value = "أقل من 15: شراء مُفضَّل / 16–20: محايد / أكثر من 21: إيجار مُفضَّل"; _r_bvr += 1
 
     # total rent paid
-    if _bvr_ar and _bvr_yrs:
-        _rent_total_formula = f"={round(_bvr_ar)}*{_bvr_yrs}"
-    else:
-        _rent_total_formula = _ef
+    _rent_total_formula = f"=B{_bvr_ar_row}*{_bvr_yrs}"
     _kv(ws_bvr, _r_bvr, "إجمالي الإيجار المدفوع خلال فترة الاحتفاظ", _rent_total_formula, 1, 2, 2)
     ws_bvr.cell(_r_bvr, 3).value = "ج.م"; _r_bvr += 1
 
-    # ownership cost
-    if _bvr_mv and _bvr_yrs and _bvr_mc:
-        _own_cost_formula = f"={round(_bvr_mv)}*{_bvr_mc/100}*{_bvr_yrs}"
-    else:
-        _own_cost_formula = _ef
+    # ownership cost — Part G: references market value cell
+    _own_cost_formula = f"=B{_bvr_mv_row}*{_bvr_mc/100}*{_bvr_yrs}"
     _kv(ws_bvr, _r_bvr, "تكلفة الامتلاك الكلية (صيانة × فترة)", _own_cost_formula, 1, 2, 2)
     ws_bvr.cell(_r_bvr, 3).value = "ج.م"; _r_bvr += 1
 
-    # projected resale value
-    if _bvr_mv and _bvr_cap and _bvr_yrs:
-        _resale_formula = f"={round(_bvr_mv)}*(1+{_bvr_cap/100})^{_bvr_yrs}"
-    else:
-        _resale_formula = _ef
+    # projected resale value — Part G: references market value cell
+    _resale_formula = f"=B{_bvr_mv_row}*(1+{_bvr_cap/100})^{_bvr_yrs}"
     _kv(ws_bvr, _r_bvr, "القيمة التقديرية عند البيع بعد فترة الاحتفاظ", _resale_formula, 1, 2, 2)
     ws_bvr.cell(_r_bvr, 3).value = "ج.م (تقدير)"; _r_bvr += 1
 
-    # decision flag
+    # decision flag — Python-level computed from _bvr_mv/_bvr_ar for label only
     _ptr_num = round(_bvr_mv / _bvr_ar, 1) if (_bvr_mv and _bvr_ar) else None
     if _ptr_num is not None:
         if _ptr_num < 15:
@@ -2868,6 +2918,39 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     ws_esg.cell(_r_esg, 3).alignment = AL_RT
     ws_esg.cell(_r_esg, 4).value = "تعديل سلبي يُحسِّن المعدل (يزيد القيمة)"
     ws_esg.cell(_r_esg, 4).alignment = AL_RT; _r_esg += 1
+
+    # Part H: ESG discount rate adjustment (same direction as cap rate adjustment)
+    _dr_adj_row = _r_esg
+    ws_esg.cell(_r_esg, 1).value = "تعديل معدل الخصم بسبب ESG"
+    ws_esg.cell(_r_esg, 1).font  = F_LBL; ws_esg.cell(_r_esg, 1).alignment = AL_RT
+    if _esg_is_qa:
+        _dr_adj_formula = f"=B{_cap_adj_row}"  # same symmetric adjustment as cap rate
+    else:
+        _dr_adj_formula = _ef
+    ws_esg.cell(_r_esg, 2).value = _dr_adj_formula
+    ws_esg.cell(_r_esg, 2).alignment = AL_CTR
+    ws_esg.cell(_r_esg, 3).value = "%-نقاط من معدل الخصم"
+    ws_esg.cell(_r_esg, 3).alignment = AL_RT
+    ws_esg.cell(_r_esg, 4).value = "مرتبط بتعديل معدل الرسملة — مُخفِّض للمخاطر البيئية"
+    ws_esg.cell(_r_esg, 4).alignment = AL_RT; _r_esg += 1
+
+    # ESG-adjusted cap rate (informational)
+    ws_esg.cell(_r_esg, 1).value = "معدل الرسملة المعدَّل بعد ESG"
+    ws_esg.cell(_r_esg, 1).font  = F_LBL; ws_esg.cell(_r_esg, 1).alignment = AL_RT
+    if _esg_is_qa:
+        _mctx_cr_expert = mctx.get("expert_selected_cap_rate", "8.00%")
+        try:
+            _cr_base_num = float(str(_mctx_cr_expert).replace("%", "").strip()) / 100
+            ws_esg.cell(_r_esg, 2).value = f"={_cr_base_num}+B{_cap_adj_row}"
+        except (ValueError, TypeError):
+            ws_esg.cell(_r_esg, 2).value = f"=B{_cap_adj_row}"
+    else:
+        ws_esg.cell(_r_esg, 2).value = _ef
+    ws_esg.cell(_r_esg, 2).fill  = _fill(C_GOLD_BG)
+    ws_esg.cell(_r_esg, 2).font  = F_GOLD
+    ws_esg.cell(_r_esg, 2).alignment = AL_CTR
+    ws_esg.cell(_r_esg, 3).value = "نتيجة استرشادية — يؤكدها الخبير"
+    ws_esg.cell(_r_esg, 3).alignment = AL_RT; _r_esg += 1
 
     ws_esg.row_dimensions[_r_esg].height = 6; _r_esg += 1
     _esg_disc_txt = (

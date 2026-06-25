@@ -454,42 +454,80 @@ def _build_method_context(payload: dict) -> dict:
         avg_adj = ""
         sales_from_comps_str = ""
 
-    # ── Land sales comparison (3 land comparables) ────────────────────────
+    # ── Land sales comparison — zone-aware (2 in-zone + 1 out-of-zone for audit) ──
     if is_qa:
-        _LAND_COMPS = [
-            {"num": 1, "location": "مدينة نصر - المنطقة الثامنة", "area_m2": 38,
-             "offer_date": "03/2026", "total_price": 380_000, "price_per_m2": 10_000,
-             "location_factor": 1.00, "area_factor": 1.01, "time_factor": 1.00,
-             "notes": "أرض بيضاء نفس المنطقة"},
-            {"num": 2, "location": "مدينة نصر - المنطقة التاسعة", "area_m2": 42,
-             "offer_date": "01/2026", "total_price": 390_600, "price_per_m2": 9_300,
-             "location_factor": 1.03, "area_factor": 0.99, "time_factor": 1.01,
-             "notes": "منطقة مجاورة — تسوية موقع +3%"},
-            {"num": 3, "location": "مدينة نصر - شارع مدبولي", "area_m2": 32,
-             "offer_date": "02/2026", "total_price": 307_200, "price_per_m2": 9_600,
-             "location_factor": 1.02, "area_factor": 1.02, "time_factor": 1.00,
-             "notes": "قطعة أرض داخل المبنى — نصيب من المشاع"},
-        ]
+        if _qa_is_maadi:
+            _LAND_COMPS_ALL = [
+                {"num": 1, "location": "المعادي - شارع 9", "zone_id": "ZONE-CAI-MAADI-01",
+                 "area_m2": 40, "offer_date": "03/2026", "total_price": 600_000,
+                 "price_per_m2": 15_000, "location_factor": 1.00, "area_factor": 1.00,
+                 "time_factor": 1.00, "notes": "أرض بيضاء في المعادي — في نطاق العقار"},
+                {"num": 2, "location": "المعادي - شارع 5", "zone_id": "ZONE-CAI-MAADI-01",
+                 "area_m2": 35, "offer_date": "01/2026", "total_price": 508_200,
+                 "price_per_m2": 14_520, "location_factor": 1.02, "area_factor": 1.01,
+                 "time_factor": 1.00,
+                 "notes": "منطقة مجاورة داخل المعادي — تسوية موقع +2%"},
+                {"num": 3, "location": "مدينة نصر - المنطقة الثامنة",
+                 "zone_id": "ZONE-CAI-NASR-08", "area_m2": 38,
+                 "offer_date": "03/2026", "total_price": 380_000, "price_per_m2": 10_000,
+                 "location_factor": 1.00, "area_factor": 1.01, "time_factor": 1.00,
+                 "notes": "خارج النطاق — يظهر للمراجعة فقط"},
+            ]
+        else:
+            _LAND_COMPS_ALL = [
+                {"num": 1, "location": "مدينة نصر - المنطقة الثامنة",
+                 "zone_id": "ZONE-CAI-NASR-08", "area_m2": 38,
+                 "offer_date": "03/2026", "total_price": 380_000, "price_per_m2": 10_000,
+                 "location_factor": 1.00, "area_factor": 1.01, "time_factor": 1.00,
+                 "notes": "أرض بيضاء نفس المنطقة"},
+                {"num": 2, "location": "مدينة نصر - المنطقة التاسعة",
+                 "zone_id": "ZONE-CAI-NASR-08", "area_m2": 42,
+                 "offer_date": "01/2026", "total_price": 390_600, "price_per_m2": 9_300,
+                 "location_factor": 1.03, "area_factor": 0.99, "time_factor": 1.01,
+                 "notes": "منطقة مجاورة — تسوية موقع +3%"},
+                {"num": 3, "location": "مدينة نصر - شارع مدبولي",
+                 "zone_id": "ZONE-CAI-NASR-08", "area_m2": 32,
+                 "offer_date": "02/2026", "total_price": 307_200, "price_per_m2": 9_600,
+                 "location_factor": 1.02, "area_factor": 1.02, "time_factor": 1.00,
+                 "notes": "قطعة أرض داخل المبنى — نصيب من المشاع"},
+            ]
+
+        # Tag each comp with geo_match_status; only in-zone comps enter the average
         adj_land_prices = []
-        for lc in _LAND_COMPS:
-            adj_l = (lc["price_per_m2"]
-                     * lc["location_factor"]
-                     * lc["area_factor"]
-                     * lc["time_factor"])
-            lc["adj_price_per_m2"]  = f"{adj_l:,.0f} ج.م/م²"
-            lc["land_share_value"]  = f"{int(adj_l * land_share_area):,} ج.م"
+        for lc in _LAND_COMPS_ALL:
+            _lc_in_zone = lc.get("zone_id", "") == subject_zone_id
+            lc["geo_match_status"]    = "مطابق" if _lc_in_zone else "خارج النطاق"
+            lc["geo_exclusion_reason"] = (
+                "" if _lc_in_zone
+                else f"نطاق {lc.get('zone_id', '')} يختلف عن نطاق العقار {subject_zone_id}"
+            )
             lc["total_price_disp"]  = f"{int(lc['total_price']):,} ج.م"
             lc["price_per_m2_disp"] = f"{int(lc['price_per_m2']):,} ج.م/م²"
-            adj_land_prices.append(adj_l)
+            if _lc_in_zone:
+                adj_l = (lc["price_per_m2"]
+                         * lc["location_factor"]
+                         * lc["area_factor"]
+                         * lc["time_factor"])
+                lc["adj_price_per_m2"] = f"{adj_l:,.0f} ج.م/م²"
+                lc["land_share_value"] = f"{int(adj_l * land_share_area):,} ج.م"
+                adj_land_prices.append(adj_l)
+            else:
+                lc["adj_price_per_m2"] = "مستبعد جغرافيًا"
+                lc["land_share_value"] = "مستبعد جغرافيًا"
+
+        land_comps = _LAND_COMPS_ALL
         avg_land_price = sum(adj_land_prices) / len(adj_land_prices) if adj_land_prices else 0
         land_value_by_sales = int(avg_land_price * land_share_area)
-        land_comps = _LAND_COMPS
         avg_land_price_str = f"{avg_land_price:,.0f} ج.م/م²"
         land_value_by_sales_str = f"{land_value_by_sales:,} ج.م"
 
-        # Land extraction method
-        improved_indication  = 3_055_500
-        replacement_cost_new = 720_000
+        # Land extraction method — calibrated to subject zone
+        if _qa_is_maadi:
+            improved_indication  = 3_600_000
+            replacement_cost_new = 810_000
+        else:
+            improved_indication  = 3_055_500
+            replacement_cost_new = 720_000
         depreciation_pct     = 25.0
         depr_amount          = replacement_cost_new * depreciation_pct / 100
         depr_imprv_value     = replacement_cost_new - depr_amount
@@ -628,11 +666,45 @@ def _build_method_context(payload: dict) -> dict:
             "income_value_calc":          _fmt_int(income_value_calc),
         }
 
+    # ── Part F: Pre-compute rental comparison NOI for DCF alignment ──────────
+    # For rental-purpose reports the DCF base NOI must come from the market
+    # rental comparables (computed later in rental_value_context), not from the
+    # capital-yield income approach.  We pre-compute it here from the same QA
+    # comp data so the DCF cash-flow rows are internally consistent.
+    _rental_comp_noi_for_dcf: float = 0.0
+    _dcf_noi_basis: str = "income_approach"
+    if _is_rental:
+        _r_mo_payload = float(payload.get("final_monthly_rental_value") or 0)
+        if _r_mo_payload:
+            _rental_comp_noi_for_dcf = _r_mo_payload * 12 * 0.93
+            _dcf_noi_basis = "rental_comparison_payload"
+        elif is_qa:
+            _r_area_pre = float(payload.get("area") or 150)
+            if _qa_is_maadi:
+                _r_rents_pre = [
+                    (9_500  / 170) * (1.00 * 1.01 * 1.00 * 1.00 * 1.00),
+                    (10_200 / 185) * (1.02 * 0.99 * 1.00 * 1.01 * 1.00),
+                    (8_800  / 160) * (1.01 * 1.02 * 0.99 * 1.00 * 1.00),
+                ]
+            else:
+                _r_rents_pre = [
+                    (9_200  / 115) * (1.00 * 1.01 * 0.98 * 1.03 * 1.00),
+                    (10_400 / 130) * (1.02 * 0.99 * 1.00 * 1.00 * 1.00),
+                    (7_560  / 108) * (1.03 * 1.02 * 1.01 * 1.03 * 1.00),
+                    (10_000 / 125) * (1.05 * 0.99 * 1.00 * 1.02 * 1.01),
+                ]
+            _r_avg_rpsm_pre             = sum(_r_rents_pre) / len(_r_rents_pre)
+            _rental_comp_noi_for_dcf    = _r_avg_rpsm_pre * _r_area_pre * 12 * 0.93
+            _dcf_noi_basis              = "rental_comparison_qa"
+
     # ── DCF (5-year expanded) ─────────────────────────────────────────────
     dcf_rows: list = []
     dcf_ctx: dict  = {}
     if is_qa or payload.get("dcf_discount_rate"):
-        base_noi      = noi if noi else (float(payload.get("income_noi") or 0))
+        if _is_rental and _rental_comp_noi_for_dcf:
+            base_noi = _rental_comp_noi_for_dcf
+        else:
+            base_noi = noi if noi else (float(payload.get("income_noi") or 0))
         growth_rate   = float(payload.get("dcf_growth_rate") or 5.0) / 100
         discount_rate = float(payload.get("dcf_discount_rate") or 13.0) / 100
         term_cap_rate = float(payload.get("dcf_terminal_cap_rate") or 4.5) / 100
@@ -675,6 +747,8 @@ def _build_method_context(payload: dict) -> dict:
         dcf_total        = pv_cf_total + pv_terminal
         dcf_ctx = {
             "dcf_rows":              dcf_rows,
+            "dcf_base_noi":          f"{base_noi:,.0f} ج.م",
+            "dcf_noi_basis":         _dcf_noi_basis,
             "dcf_pv_cashflows":      f"{pv_cf_total:,.0f} ج.م",
             "dcf_terminal_noi":      f"{term_noi:,.0f} ج.م",
             "dcf_terminal_value":    f"{terminal_value:,.0f} ج.م",
@@ -890,6 +964,17 @@ def _build_method_context(payload: dict) -> dict:
             },
         ]
 
+        # Tag each price source with geo_match_status relative to subject zone
+        for _src in price_source_data:
+            _src_zone = _src.get("zone_id", "")
+            _src_in_zone = bool(_src_zone and _src_zone == subject_zone_id)
+            _src["geo_match_status"]    = "مطابق" if _src_in_zone else "خارج النطاق"
+            _src["geo_use_status"]      = "مُدرج" if _src_in_zone else "مستبعد جغرافيًا"
+            _src["geo_exclusion_reason"] = (
+                "" if _src_in_zone
+                else f"نطاق {_src_zone} يختلف عن نطاق العقار {subject_zone_id}"
+            )
+
         mass_appraisal_bridge = {
             "mass_run_id":               "MASS-RUN-QA-2026-001",
             "mass_zone_id":              "ZONE-CAI-MAADI-01",
@@ -976,28 +1061,73 @@ def _build_method_context(payload: dict) -> dict:
     # ── Rental value context (QA or actual rental-purpose payload) ────────────
     if _is_rental or is_qa:
         _subj_area = area
-        _RENT_COMPS = [
-            {"num": 1, "location": "مدينة نصر - المنطقة الثامنة",
-             "property_type": "شقة سكنية", "area": 115, "monthly_rent": 9_200,
-             "location_factor": 1.00, "area_factor": 1.01,
-             "condition_factor": 0.98, "finishing_factor": 1.03, "time_factor": 1.00,
-             "status": "عقد إيجار منفذ", "notes": "مقارن مباشر — نفس المنطقة"},
-            {"num": 2, "location": "مدينة نصر - المنطقة السابعة",
-             "property_type": "شقة سكنية", "area": 130, "monthly_rent": 10_400,
-             "location_factor": 1.02, "area_factor": 0.99,
-             "condition_factor": 1.00, "finishing_factor": 1.00, "time_factor": 1.00,
-             "status": "عرض إيجار معلن", "notes": "منطقة مجاورة — تسوية موقع +2%"},
-            {"num": 3, "location": "مدينة نصر - المنطقة التاسعة",
-             "property_type": "شقة سكنية", "area": 108, "monthly_rent": 7_560,
-             "location_factor": 1.03, "area_factor": 1.02,
-             "condition_factor": 1.01, "finishing_factor": 1.03, "time_factor": 1.00,
-             "status": "عقد إيجار منفذ", "notes": "منطقة مجاورة — تسوية موقع +3%"},
-            {"num": 4, "location": "مدينة نصر - شارع جانبي",
-             "property_type": "شقة سكنية", "area": 125, "monthly_rent": 10_000,
-             "location_factor": 1.05, "area_factor": 0.99,
-             "condition_factor": 1.00, "finishing_factor": 1.02, "time_factor": 1.01,
-             "status": "عرض إيجار معلن", "notes": "شارع جانبي — تسوية موقع +5%"},
-        ]
+        # Zone-aware rental comparables (3 in-zone + 1 out-of-zone for audit)
+        if _qa_is_maadi:
+            _RENT_COMPS = [
+                {"num": 1, "location": "المعادي - شارع 9",
+                 "zone_id": "ZONE-CAI-MAADI-01",
+                 "property_type": "شقة سكنية", "area": 170, "monthly_rent": 9_500,
+                 "location_factor": 1.00, "area_factor": 1.01,
+                 "condition_factor": 1.00, "finishing_factor": 1.00, "time_factor": 1.00,
+                 "status": "عقد إيجار منفذ", "notes": "مقارن مباشر — المعادي"},
+                {"num": 2, "location": "المعادي - شارع 5",
+                 "zone_id": "ZONE-CAI-MAADI-01",
+                 "property_type": "شقة سكنية", "area": 185, "monthly_rent": 10_200,
+                 "location_factor": 1.02, "area_factor": 0.99,
+                 "condition_factor": 1.00, "finishing_factor": 1.01, "time_factor": 1.00,
+                 "status": "عرض إيجار معلن",
+                 "notes": "منطقة مجاورة داخل المعادي — تسوية موقع +2%"},
+                {"num": 3, "location": "المعادي - شارع رئيسي",
+                 "zone_id": "ZONE-CAI-MAADI-01",
+                 "property_type": "شقة سكنية", "area": 160, "monthly_rent": 8_800,
+                 "location_factor": 1.01, "area_factor": 1.02,
+                 "condition_factor": 0.99, "finishing_factor": 1.00, "time_factor": 1.00,
+                 "status": "عقد إيجار منفذ",
+                 "notes": "شارع رئيسي المعادي — تسوية موقع +1%"},
+                {"num": 4, "location": "مدينة نصر - المنطقة الثامنة",
+                 "zone_id": "ZONE-CAI-NASR-08",
+                 "property_type": "شقة سكنية", "area": 115, "monthly_rent": 9_200,
+                 "location_factor": 1.00, "area_factor": 1.01,
+                 "condition_factor": 0.98, "finishing_factor": 1.03, "time_factor": 1.00,
+                 "status": "عقد إيجار منفذ", "notes": "خارج النطاق — يظهر للمراجعة فقط"},
+            ]
+        else:
+            _RENT_COMPS = [
+                {"num": 1, "location": "مدينة نصر - المنطقة الثامنة",
+                 "zone_id": "ZONE-CAI-NASR-08",
+                 "property_type": "شقة سكنية", "area": 115, "monthly_rent": 9_200,
+                 "location_factor": 1.00, "area_factor": 1.01,
+                 "condition_factor": 0.98, "finishing_factor": 1.03, "time_factor": 1.00,
+                 "status": "عقد إيجار منفذ", "notes": "مقارن مباشر — نفس المنطقة"},
+                {"num": 2, "location": "مدينة نصر - المنطقة السابعة",
+                 "zone_id": "ZONE-CAI-NASR-08",
+                 "property_type": "شقة سكنية", "area": 130, "monthly_rent": 10_400,
+                 "location_factor": 1.02, "area_factor": 0.99,
+                 "condition_factor": 1.00, "finishing_factor": 1.00, "time_factor": 1.00,
+                 "status": "عرض إيجار معلن", "notes": "منطقة مجاورة — تسوية موقع +2%"},
+                {"num": 3, "location": "مدينة نصر - المنطقة التاسعة",
+                 "zone_id": "ZONE-CAI-NASR-08",
+                 "property_type": "شقة سكنية", "area": 108, "monthly_rent": 7_560,
+                 "location_factor": 1.03, "area_factor": 1.02,
+                 "condition_factor": 1.01, "finishing_factor": 1.03, "time_factor": 1.00,
+                 "status": "عقد إيجار منفذ", "notes": "منطقة مجاورة — تسوية موقع +3%"},
+                {"num": 4, "location": "مدينة نصر - شارع جانبي",
+                 "zone_id": "ZONE-CAI-NASR-08",
+                 "property_type": "شقة سكنية", "area": 125, "monthly_rent": 10_000,
+                 "location_factor": 1.05, "area_factor": 0.99,
+                 "condition_factor": 1.00, "finishing_factor": 1.02, "time_factor": 1.01,
+                 "status": "عرض إيجار معلن", "notes": "شارع جانبي — تسوية موقع +5%"},
+            ]
+
+        # Tag each rental comp with geo_match_status
+        for _rc_pre in _RENT_COMPS:
+            _rc_zone = _rc_pre.get("zone_id", "")
+            _rc_in_zone = bool(_rc_zone and _rc_zone == subject_zone_id)
+            _rc_pre["geo_match_status"]    = "مطابق" if _rc_in_zone else "خارج النطاق"
+            _rc_pre["geo_exclusion_reason"] = (
+                "" if _rc_in_zone
+                else f"نطاق {_rc_zone} يختلف عن نطاق العقار {subject_zone_id}"
+            )
         _adj_rents_list = []
         for _rc in _RENT_COMPS:
             _rc_area    = float(_rc["area"])
@@ -1019,7 +1149,9 @@ def _build_method_context(payload: dict) -> dict:
             _rc["total_adj_factor_disp"]  = f"{_tot_adj:.4f}"
             _rc["adj_rent_per_m2_disp"]   = f"{_adj_rpsm:.2f} ج.م/م²/شهر"
             _rc["subj_monthly_disp"]      = f"{int(_subj_mo):,} ج.م/شهر"
-            _adj_rents_list.append(_adj_rpsm)
+            # Only include in-zone comps in the average
+            if _rc.get("geo_match_status", "مطابق") == "مطابق":
+                _adj_rents_list.append(_adj_rpsm)
 
         _avg_adj_rent    = sum(_adj_rents_list) / len(_adj_rents_list) if _adj_rents_list else 0
         _sorted_adj      = sorted(_adj_rents_list)
@@ -1103,13 +1235,17 @@ def _build_method_context(payload: dict) -> dict:
         _cr_debt  = 0.60; _cr_mc    = 0.055; _cr_eq = 0.40; _cr_eqdiv = 0.040
         _cr_m2    = round((_cr_debt * _cr_mc + _cr_eq * _cr_eqdiv) * 100, 2)  # 4.90%
 
-        _cr_yield = 8.50; _cr_glt = 4.00
-        _cr_m3    = round(_cr_yield - _cr_glt, 2)  # 4.50%
+        # DR-minus-growth uses actual DCF inputs (discount_rate=13%, growth=5%)
+        _cr_yield = float(payload.get("dcf_discount_rate") or 13.0)
+        _cr_glt   = float(payload.get("dcf_growth_rate") or 5.0)
+        _cr_m3    = round(_cr_yield - _cr_glt, 2)  # 8.00% for QA
 
         _cr_rf = 6.0; _cr_prisk = 1.5; _cr_liq = 1.0; _cr_mgmt = 0.5; _cr_gded = 4.0
         _cr_m4 = round(_cr_rf + _cr_prisk + _cr_liq + _cr_mgmt - _cr_gded, 2)  # 5.00%
 
-        _cr_avg = round((_cr_m1 + _cr_m2 + _cr_m3 + _cr_m4) / 4, 2)  # 4.55%
+        _cr_avg = round((_cr_m1 + _cr_m2 + _cr_m3 + _cr_m4) / 4, 2)
+        # Expert selects DR-minus-growth result as the most theoretically consistent
+        _cr_expert_selected = _cr_m3  # DR - growth (using actual DCF inputs)
 
         cap_rate_derivation = {
             "methods": [
@@ -1138,14 +1274,17 @@ def _build_method_context(payload: dict) -> dict:
                 },
                 {
                     "method_key":  "dr_minus_growth",
-                    "method_name": "ج. معدل العائد ناقص معدل النمو (Y − g)",
+                    "method_name": "ج. معدل الخصم ناقص معدل النمو (DR − g / Gordon Model)",
                     "inputs": {
-                        "yield_rate":  f"{_cr_yield:.1f}%",
-                        "growth_rate": f"{_cr_glt:.1f}%",
+                        "discount_rate": f"{_cr_yield:.1f}%",
+                        "growth_rate":   f"{_cr_glt:.1f}%",
                     },
                     "formula": f"{_cr_yield:.1f}% − {_cr_glt:.1f}% = {_cr_m3:.2f}%",
                     "indicated_cap_rate": f"{_cr_m3:.2f}%",
-                    "notes": "معدل العائد الإجمالي للعقار السكني ناقص النمو المتوقع للإيجارات",
+                    "notes": (
+                        f"معدل الخصم {_cr_yield:.1f}% (من DCF) ناقص معدل النمو {_cr_glt:.1f}% "
+                        "— يعكس انسجام معدل الرسملة مع افتراضات DCF"
+                    ),
                 },
                 {
                     "method_key":  "buildup",
@@ -1165,11 +1304,13 @@ def _build_method_context(payload: dict) -> dict:
                     "notes": "محاكاة QA — جميع المعدلات الأساسية افتراضية",
                 },
             ],
-            "average_cap_rate":        f"{_cr_avg:.2f}%",
-            "expert_selected_cap_rate": f"{_cr_m1:.2f}%",
+            "average_cap_rate":         f"{_cr_avg:.2f}%",
+            "expert_selected_cap_rate": f"{_cr_expert_selected:.2f}%",
+            "dr_minus_growth_rate":     f"{_cr_m3:.2f}%",
             "final_cap_rate_notes": (
-                f"معدل الرسملة النهائي المختار = {_cr_m1:.2f}% استناداً إلى "
-                "الاستخلاص المباشر من السوق باعتباره الأعلى موثوقية من بين الطرق الأربع. "
+                f"معدل الرسملة النهائي المختار = {_cr_expert_selected:.2f}% استناداً إلى "
+                f"طريقة معدل الخصم ناقص النمو (DR − g = {_cr_yield:.1f}% − {_cr_glt:.1f}%) "
+                "لضمان الانسجام مع افتراضات DCF. "
                 "جميع الطرق محاكاة QA ولا تستند إلى مصادر سوقية حقيقية."
             ),
             "disclaimer": (
@@ -1187,36 +1328,42 @@ def _build_method_context(payload: dict) -> dict:
         }
 
     # ── Cap rate governance check (Part E) ───────────────────────────────
-    _cr_gov_warning = False
-    _cr_gov_text    = ""
+    _cr_gov_warning           = False
+    _cr_gov_text              = ""
+    _cr_diff_from_avg         = 0.0
+    _cr_diff_from_dr_growth   = 0.0
     if is_qa:
-        # _cr_m1 = expert selected, _cr_avg = 4-method average (defined in QA block above)
         try:
-            _cr_selected_num = _cr_m1     # type: ignore[name-defined]
-            _cr_average_num  = _cr_avg    # type: ignore[name-defined]
-            _cr_deviation    = abs(_cr_selected_num - _cr_average_num)
+            _cr_selected_num      = _cr_expert_selected   # type: ignore[name-defined]
+            _cr_average_num       = _cr_avg               # type: ignore[name-defined]
+            _cr_dr_growth_num     = _cr_m3                # type: ignore[name-defined]
+            _cr_diff_from_avg     = round(_cr_selected_num - _cr_average_num, 2)
+            _cr_diff_from_dr_growth = round(_cr_selected_num - _cr_dr_growth_num, 2)
+            _cr_deviation         = abs(_cr_diff_from_avg)
             if _cr_deviation > 0.5:
                 _cr_gov_warning = True
                 _cr_gov_text = (
                     f"تحذير: معدل الرسملة المختار ({_cr_selected_num:.2f}%) "
                     f"يتجاوز متوسط الطرق الأربع ({_cr_average_num:.2f}%) "
-                    f"بمقدار {_cr_deviation:.2f} نقطة أساس — يتجاوز عتبة 0.50%. "
+                    f"بفارق {_cr_diff_from_avg:+.2f}% — يتجاوز عتبة 0.50%. "
                     "يلزم الخبير تبرير الاختيار."
                 )
         except NameError:
             pass
     cap_rate_governance = {
-        "cap_rate_warning_flag":     _cr_gov_warning,
-        "cap_rate_warning_text":     _cr_gov_text,
-        "cap_rate_source_basis":     (
-            "استخلاص مباشر من السوق — الطريقة الأعلى موثوقية بين الطرق الأربع"
+        "cap_rate_warning_flag":        _cr_gov_warning,
+        "cap_rate_warning_text":        _cr_gov_text,
+        "difference_from_average":      f"{_cr_diff_from_avg:+.2f}%",
+        "difference_from_dr_growth":    f"{_cr_diff_from_dr_growth:+.2f}%",
+        "cap_rate_source_basis": (
+            "معدل الخصم ناقص النمو (DR − g) — ضمان الانسجام مع افتراضات DCF"
             if is_qa else _EXPERT_FILL
         ),
         "risk_free_rate_source_label": (
             "عائد أذون الخزانة المصرية (364 يوماً)" if is_qa else _EXPERT_FILL
         ),
-        "risk_free_rate":            f"{_cr_rf:.1f}%" if is_qa else _EXPERT_FILL,  # type: ignore
-        "risk_free_rate_date":       "2026-06-01" if is_qa else _EXPERT_FILL,
+        "risk_free_rate":             f"{_cr_rf:.1f}%" if is_qa else _EXPERT_FILL,  # type: ignore
+        "risk_free_rate_date":        "2026-06-01" if is_qa else _EXPERT_FILL,
         "risk_free_rate_notes": (
             "معدل الخالي من المخاطر مأخوذ من أذون الخزانة المصرية — محاكاة QA"
             if is_qa else _EXPERT_FILL
@@ -1257,6 +1404,37 @@ def _build_method_context(payload: dict) -> dict:
         "disclaimer": (
             "الفارق بين القيمة الأولية والقيمة المعتمدة يُوثَّق هنا لأغراض الشفافية "
             "والمراجعة وفق متطلبات IVSC ومعايير التقييم المصرية."
+        ),
+    }
+
+    # ── Part H: ESG financial linkage ─────────────────────────────────────
+    # Compute ESG adjustment values that propagate to cap rate and discount rate.
+    # QA synthetic scores from the same 8-criteria set used in the workbook ESG sheet.
+    _esg_qa_scores = [3, 2, 3, 3, 3, 3, 3, 4]  # must match workbook _esg_items QA values
+    _esg_total: int = sum(_esg_qa_scores) if is_qa else int(payload.get("esg_total_score") or 0)
+    # Formula: -0.025% per point above 20, floored at -0.50%
+    _esg_raw_adj: float = -(_esg_total - 20) * 0.025 if _esg_total > 20 else 0.0
+    _esg_cap_adj: float = max(-0.50, _esg_raw_adj)   # cap rate reduction in % points
+    # Discount rate gets the same directional adjustment scaled by risk premium weight
+    _esg_dr_adj:  float = _esg_cap_adj               # symmetric for simplicity
+    esg_context = {
+        "esg_total_score":              _esg_total,
+        "esg_total_score_max":          40,
+        "esg_raw_adjustment_pct":       f"{_esg_raw_adj:+.3f}%",
+        "esg_cap_rate_adjustment":      f"{_esg_cap_adj:+.3f}%",
+        "esg_discount_rate_adjustment": f"{_esg_dr_adj:+.3f}%",
+        "esg_risk_premium_adjustment":  f"{_esg_cap_adj:+.3f}%",
+        "esg_adjustment_basis": (
+            f"تعديل -0.025% لكل نقطة فوق 20 — درجة QA {_esg_total} من 40"
+            if is_qa else "يتطلب إدخال درجة ESG من المُقيِّم"
+        ),
+        "esg_adjusted_cap_rate": (
+            f"{round(_cr_expert_selected + _esg_cap_adj, 2):.2f}%"  # type: ignore[name-defined]
+            if is_qa else _EXPERT_FILL
+        ),
+        "esg_adjusted_discount_rate": (
+            f"{round(float(payload.get('dcf_discount_rate') or 13.0) + _esg_dr_adj, 2):.2f}%"
+            if is_qa else _EXPERT_FILL
         ),
     }
 
@@ -1321,6 +1499,8 @@ def _build_method_context(payload: dict) -> dict:
         "prelim_vs_certified":      prelim_vs_certified,
         # ── Cost basis label (Part B) ──────────────────────────────────────
         "cost_area_basis":          f"{area:.0f} م² (مساحة العقار من المدخلات)",
+        # ── ESG financial linkage (Part H) ────────────────────────────────
+        **esg_context,
     }
     return result
 

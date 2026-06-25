@@ -3678,3 +3678,212 @@ def test_SRB228_esg_sheet_has_disclaimer_for_missing_data():
     found = any(t in all_text for t in disclaimer_terms)
     assert found, \
         f"ESG sheet missing appropriate disclaimer. Sample: {all_text[:200]!r}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SRB229–SRB246  Manual Review Corrections Tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_SRB229_land_comps_have_geo_match_status():
+    """SRB229 _build_method_context land_comps each have geo_match_status field (Part B+C)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    lc = mctx.get("land_comps", [])
+    assert lc, "land_comps is empty for Maadi QA"
+    missing = [i for i, c in enumerate(lc) if "geo_match_status" not in c]
+    assert not missing, f"land_comps entries at indices {missing} missing geo_match_status"
+
+
+def test_SRB230_price_source_data_have_geo_match_status():
+    """SRB230 _build_method_context price_source_data entries have geo_match_status (Part B+C)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    sources = mctx.get("price_source_data", [])
+    assert sources, "price_source_data is empty for Maadi QA"
+    missing = [i for i, s in enumerate(sources) if "geo_match_status" not in s]
+    assert not missing, \
+        f"price_source_data entries at indices {missing} missing geo_match_status"
+
+
+def test_SRB231_rental_comps_have_geo_match_status():
+    """SRB231 _build_method_context rental_value_context comparables have geo_match_status (Part B+C)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    rvc  = mctx.get("rental_value_context", {})
+    rcs  = rvc.get("rental_comparables", [])
+    assert rcs, "rental_comparables empty for Maadi QA"
+    missing = [i for i, r in enumerate(rcs) if "geo_match_status" not in r]
+    assert not missing, \
+        f"rental_comparables entries at indices {missing} missing geo_match_status"
+
+
+def test_SRB232_land_sheet_has_geo_match_status_header():
+    """SRB232 قيمة الأرض workbook sheet has حالة الموقع الجغرافي column header (Part B workbook)."""
+    wb = _get_wb_maadi_strategic()
+    assert "قيمة الأرض" in wb.sheetnames, "قيمة الأرض sheet missing"
+    ws = wb["قيمة الأرض"]
+    all_text = " ".join(str(c or "") for row in ws.iter_rows(values_only=True) for c in row)
+    assert "حالة الموقع الجغرافي" in all_text or "الموقع الجغرافي" in all_text, \
+        "قيمة الأرض sheet missing geo_match_status column"
+
+
+def test_SRB233_price_sources_sheet_has_geo_match_status_header():
+    """SRB233 مصادر الأسعار workbook sheet has حالة الموقع الجغرافي column (Part B workbook)."""
+    wb = _get_wb_maadi_strategic()
+    assert "مصادر الأسعار" in wb.sheetnames, "مصادر الأسعار sheet missing"
+    ws = wb["مصادر الأسعار"]
+    all_text = " ".join(str(c or "") for row in ws.iter_rows(values_only=True) for c in row)
+    assert "حالة الموقع الجغرافي" in all_text or "الموقع الجغرافي" in all_text, \
+        "مصادر الأسعار sheet missing geo_match_status column"
+
+
+def test_SRB234_rental_comps_sheet_has_geo_match_status_header():
+    """SRB234 مقارنات إيجارية workbook sheet has حالة الموقع الجغرافي column (Part B workbook)."""
+    wb = _get_wb_maadi_strategic()
+    assert "مقارنات إيجارية" in wb.sheetnames, "مقارنات إيجارية sheet missing"
+    ws = wb["مقارنات إيجارية"]
+    all_text = " ".join(str(c or "") for row in ws.iter_rows(values_only=True) for c in row)
+    assert "حالة الموقع الجغرافي" in all_text or "الموقع الجغرافي" in all_text, \
+        "مقارنات إيجارية sheet missing geo_match_status column"
+
+
+def test_SRB235_reconciliation_model_h_sales_value_nonzero():
+    """SRB235 توفيق النتائج Model H first method row (مقارنة البيوع) has nonzero value (Part A)."""
+    wb = _get_wb_maadi_strategic()
+    assert "توفيق النتائج" in wb.sheetnames
+    ws9 = wb["توفيق النتائج"]
+    # Scan for مقارنة البيوع row; its B cell must be a non-zero formula or number
+    sales_value_found = False
+    for row in ws9.iter_rows(min_row=2, max_row=80):
+        if row[0].value and "مقارنة البيوع" in str(row[0].value):
+            b_val = row[1].value
+            assert b_val is not None, "مقارنة البيوع row in Model H has None value"
+            # Accept formula strings or nonzero numbers
+            if isinstance(b_val, str):
+                sales_value_found = len(b_val.strip()) > 0
+            elif isinstance(b_val, (int, float)):
+                sales_value_found = b_val != 0
+            break
+    # If the row contains a cross-sheet formula (string starting with =), that's also valid
+    assert sales_value_found, \
+        "Model H مقارنة البيوع row has zero or missing value — sales comparison not linked"
+
+
+def test_SRB236_reconciliation_model_h_sales_uses_cross_sheet_formula():
+    """SRB236 توفيق النتائج Model H مقارنة البيوع row uses =مقارنة البيوع! cross-sheet formula (Part A)."""
+    wb = _get_wb_maadi_strategic()
+    ws9 = wb["توفيق النتائج"]
+    # Scan every B-column cell up to row 120; Model H stores ='مقارنة البيوع'!B<n>
+    formula_found = any(
+        isinstance(row[1].value, str) and "مقارنة البيوع" in row[1].value
+        for row in ws9.iter_rows(min_row=2, max_row=120)
+        if len(row) > 1
+    )
+    assert formula_found, \
+        "توفيق النتائج has no B-column cross-sheet formula referencing 'مقارنة البيوع' sheet"
+
+
+def test_SRB237_cost_approach_model_f_has_external_obsolescence_row():
+    """SRB237 طريقة التكلفة Model F has الإهلاك الاقتصادي / الخارجي row (Part D)."""
+    wb = _get_wb_maadi_strategic()
+    assert "طريقة التكلفة" in wb.sheetnames
+    ws8 = wb["طريقة التكلفة"]
+    all_text = " ".join(
+        str(c or "") for row in ws8.iter_rows(values_only=True) for c in row
+        if c is not None
+    )
+    assert "الاقتصادي" in all_text or "الخارجي" in all_text, \
+        "طريقة التكلفة Model F missing external/economic obsolescence row"
+
+
+def test_SRB238_cap_rate_governance_has_difference_from_average():
+    """SRB238 _build_method_context has difference_from_average field (Part E)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    assert "difference_from_average" in mctx, \
+        "method context missing difference_from_average (cap rate governance, Part E)"
+    val = mctx["difference_from_average"]
+    assert val and isinstance(val, str) and "%" in val, \
+        f"difference_from_average has unexpected value: {val!r}"
+
+
+def test_SRB239_cap_rate_governance_has_difference_from_dr_growth():
+    """SRB239 _build_method_context has difference_from_dr_growth field (Part E)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    assert "difference_from_dr_growth" in mctx, \
+        "method context missing difference_from_dr_growth (cap rate governance, Part E)"
+
+
+def test_SRB240_rental_purpose_dcf_uses_rental_comparison_noi():
+    """SRB240 For rental purpose payload, DCF noi_basis is rental_comparison_* (Part F)."""
+    mctx = _srr._build_method_context(_QA_RENTAL_PAYLOAD)
+    noi_basis = mctx.get("dcf_noi_basis", "")
+    assert noi_basis.startswith("rental_comparison"), \
+        f"Rental purpose DCF dcf_noi_basis should be rental_comparison_*, got {noi_basis!r}"
+
+
+def test_SRB241_what_if_sheet_references_reconciliation_formula():
+    """SRB241 سيناريوهات What-If has a cell with ='توفيق النتائج'! cross-sheet formula (Part G)."""
+    wb = _get_wb_maadi_strategic()
+    ws_wi = wb["سيناريوهات What-If"]
+    rec_ref_found = any(
+        cell.value and isinstance(cell.value, str) and "توفيق النتائج" in cell.value
+        for row in ws_wi.iter_rows()
+        for cell in row
+    )
+    assert rec_ref_found, \
+        "سيناريوهات What-If has no cross-sheet formula referencing 'توفيق النتائج'"
+
+
+def test_SRB242_buy_vs_rent_market_value_references_reconciliation():
+    """SRB242 شراء أم إيجار market value cell references ='توفيق النتائج'! (Part G)."""
+    wb = _get_wb_maadi_strategic()
+    ws_bvr = wb["شراء أم إيجار"]
+    rec_ref_found = any(
+        cell.value and isinstance(cell.value, str) and "توفيق النتائج" in cell.value
+        for row in ws_bvr.iter_rows()
+        for cell in row
+    )
+    assert rec_ref_found, \
+        "شراء أم إيجار has no cross-sheet formula referencing 'توفيق النتائج'"
+
+
+def test_SRB243_esg_sheet_has_discount_rate_adjustment_row():
+    """SRB243 ESG sheet has تعديل معدل الخصم row (Part H)."""
+    wb = _get_wb_maadi_strategic()
+    ws_esg = wb["ESG والاستدامة"]
+    all_text = " ".join(
+        str(c or "") for row in ws_esg.iter_rows(values_only=True) for c in row
+        if c is not None
+    )
+    assert "تعديل معدل الخصم" in all_text, \
+        "ESG sheet missing تعديل معدل الخصم row (Part H)"
+
+
+def test_SRB244_method_context_has_esg_cap_rate_adjustment():
+    """SRB244 _build_method_context has esg_cap_rate_adjustment for QA payload (Part H)."""
+    mctx = _srr._build_method_context(_QA_MAADI_PAYLOAD)
+    assert "esg_cap_rate_adjustment" in mctx, \
+        "method context missing esg_cap_rate_adjustment (Part H)"
+    adj = mctx["esg_cap_rate_adjustment"]
+    assert adj and "%" in str(adj), \
+        f"esg_cap_rate_adjustment has unexpected value: {adj!r}"
+
+
+def test_SRB245_simple_valuation_draft_has_single_consolidated_disclaimer():
+    """SRB245 simple_valuation_draft.html has only ONE disc-pg block (Part I — consolidated)."""
+    import pathlib
+    tmpl_path = pathlib.Path(__file__).parent.parent / "templates" / "pdf" / "simple_valuation_draft.html"
+    content = tmpl_path.read_text(encoding="utf-8")
+    disc_count = content.count("disc-pg")
+    assert disc_count == 2, \
+        f"Expected exactly 1 disc-pg block (2 occurrences of class name), got {disc_count//2}"
+
+
+def test_SRB246_simple_valuation_draft_has_svg_map_placeholder():
+    """SRB246 simple_valuation_draft.html has SVG coordinate map placeholders (Part J)."""
+    import pathlib
+    tmpl_path = pathlib.Path(__file__).parent.parent / "templates" / "pdf" / "simple_valuation_draft.html"
+    content = tmpl_path.read_text(encoding="utf-8")
+    assert "<svg" in content, \
+        "simple_valuation_draft.html missing SVG map placeholder (Part J)"
+    assert "viewBox" in content, \
+        "simple_valuation_draft.html SVG missing viewBox attribute"
+    assert "latitude" in content, \
+        "simple_valuation_draft.html SVG map missing latitude template variable reference"

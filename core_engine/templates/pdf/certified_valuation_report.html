@@ -1381,40 +1381,96 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       10. DATA SOURCES — مصادر البيانات والمقارنات
+       10. DATA SOURCES — سجل مصادر البيانات والمقارنات
        ════════════════════════════════════════════════════════════ -->
   <div class="section">
-    <div class="section-title">مصادر البيانات والمقارنات</div>
+    <div class="section-title">سجل مصادر البيانات والمقارنات</div>
     <div class="section-body">
       <div class="source-box">
-        لا يتضمن هذا الإصدار سجل مصادر آلي من الإنترنت أو Qdrant. تعتمد هذه النسخة على بيانات الطلب ومدخلات الخبير المسجلة داخل النظام. بيانات المقارنات السوقية تصدر عن دراسة سوقية حقيقية يُجريها الخبير المختص، ولا تعتمد على مصادر آلية خارجية أو مقارنات مُولَّدة تلقائيًا.
+        لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+        تعتمد هذه النسخة على بيانات الطلب ومدخلات الخبير المسجلة داخل النظام.
       </div>
 
-      <!-- Price Source Spine -->
-      {% if price_source_data %}
-      <p style="font-size:8pt;font-weight:bold;color:#2d5a27;margin:8px 0 3px;">سجل مصادر الأسعار المرتبطة بهذا التقرير</p>
+      <!-- Source Registry Summary -->
+      {% if source_registry_summary %}
+      <p style="font-size:8pt;font-weight:bold;color:#2d5a27;margin:8px 0 3px;">ملخص سجل المصادر</p>
+      <table class="field-tbl">
+        <tbody>
+          <tr>
+            <td class="f-lbl">إجمالي المصادر</td>
+            <td class="f-val">{{ source_registry_summary.total_sources }}</td>
+            <td class="f-lbl">المصادر المُدرجة</td>
+            <td class="f-val" style="color:#2d5a27;font-weight:bold;">{{ source_registry_summary.included_sources }}</td>
+          </tr>
+          <tr>
+            <td class="f-lbl">المصادر المستبعدة جغرافيًا</td>
+            <td class="f-val" style="color:#b43200;">{{ source_registry_summary.excluded_sources }}</td>
+            <td class="f-lbl">حالة Qdrant</td>
+            <td class="f-val" style="color:#b43200;font-style:italic;">{{ source_registry_summary.qdrant_status }}</td>
+          </tr>
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Full Source Registry Table -->
+      {% set _src_rows = source_registry if source_registry else price_source_data %}
+      {% if _src_rows %}
+      <p style="font-size:8pt;font-weight:bold;color:#2d5a27;margin:8px 0 3px;">سجل مصادر البيانات التفصيلي</p>
       <table class="field-tbl">
         <thead>
           <tr style="background:#2d5a27;color:#fff;">
-            <th style="padding:2px 5px;text-align:right;">كود المصدر</th>
-            <th style="padding:2px 5px;text-align:right;">نوع المصدر</th>
-            <th style="padding:2px 5px;text-align:right;">المنطقة</th>
-            <th style="padding:2px 5px;text-align:center;">سعر/م²</th>
-            <th style="padding:2px 5px;text-align:center;">الثقة</th>
-            <th style="padding:2px 5px;text-align:right;">مستخدم في</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">نوع المصدر</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">تسمية المصدر</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">الحي / المنطقة</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">مستخدم في</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">درجة الثقة</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">حالة الاستخدام</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">ملاحظات</th>
           </tr>
         </thead>
         <tbody>
-          {% for src in price_source_data %}
+          {% for src in _src_rows %}
           <tr style="background:{% if loop.index is odd %}#f7fbf7{% else %}#fff{% endif %};">
-            <td style="padding:2px 5px;font-size:7.5pt;font-family:monospace;">{{ src.source_registry_id }}</td>
-            <td style="padding:2px 5px;font-size:7.5pt;">{{ src.source_type }}</td>
-            <td style="padding:2px 5px;font-size:7.5pt;">{{ src.district }}</td>
-            <td style="padding:2px 5px;font-size:7.5pt;text-align:center;">{{ src.price_per_m2 }}</td>
-            <td style="padding:2px 5px;font-size:7.5pt;text-align:center;">{{ src.source_confidence }}</td>
-            <td style="padding:2px 5px;font-size:7.5pt;">{{ src.used_in_methods }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.source_type }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.source_label if src.source_label else src.source_registry_id }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.district }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.used_in_methods }}</td>
+            <td style="padding:2px 5px;font-size:7pt;text-align:center;">
+              {{ src.confidence_score if src.confidence_score else src.source_confidence }}
+            </td>
+            <td style="padding:2px 5px;font-size:7pt;text-align:center;
+              {% if src.geo_use_status == 'مستبعد جغرافيًا' %}color:#b43200;{% else %}color:#2d5a27;{% endif %}">
+              {{ src.geo_use_status if src.geo_use_status else src.geo_match_status }}
+            </td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.audit_notes if src.audit_notes else src.source_notes }}</td>
           </tr>
           {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Qdrant Readiness Summary -->
+      {% if qdrant_readiness_summary %}
+      <p style="font-size:8pt;font-weight:bold;color:#1f4e78;margin:8px 0 3px;">حالة استعداد Source Registry / Qdrant</p>
+      <table class="field-tbl">
+        <tbody>
+          <tr>
+            <td class="f-lbl">جاهز هيكليًا</td>
+            <td class="f-val" style="color:#2d5a27;">{{ "نعم" if qdrant_readiness_summary.qdrant_ready else "لا" }}</td>
+            <td class="f-lbl">Qdrant مفعل</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.qdrant_enabled else "لا" }}</td>
+          </tr>
+          <tr>
+            <td class="f-lbl">RAG مفعل</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.rag_enabled else "لا" }}</td>
+            <td class="f-lbl">استيعاب من الإنترنت</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.internet_ingestion_enabled else "لا" }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="f-val" style="color:#b43200;font-style:italic;font-size:7.5pt;">
+              {{ qdrant_readiness_summary.status_ar }}
+            </td>
+          </tr>
         </tbody>
       </table>
       {% endif %}
@@ -1444,6 +1500,12 @@
         </tbody>
       </table>
       {% endif %}
+
+      <!-- Required Source Registry Disclaimer -->
+      <p style="font-size:7pt;color:#b43200;font-style:italic;margin:6px 0 0;border-top:1px solid #ddd;padding-top:4px;">
+        لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant.
+        تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+      </p>
     </div>
   </div>
 

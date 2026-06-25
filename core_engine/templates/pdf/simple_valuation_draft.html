@@ -1245,6 +1245,60 @@
     </div>
     {% endif %}
 
+    <!-- ── ملخص مصادر البيانات (Source Registry Summary — readiness layer) ── -->
+    <div class="sec-block">
+      <div class="sec-hdr" style="background:#2d5a27;">ملخص مصادر البيانات</div>
+      {% if source_registry_summary %}
+      <table class="snap">
+        <tr>
+          <td class="k">إجمالي المصادر</td>
+          <td class="v">{{ source_registry_summary.total_sources }}</td>
+          <td class="k">المصادر المُدرجة</td>
+          <td class="v">{{ source_registry_summary.included_sources }}</td>
+        </tr>
+        <tr>
+          <td class="k">المصادر المستبعدة جغرافيًا</td>
+          <td class="v">{{ source_registry_summary.excluded_sources }}</td>
+          <td class="k">حالة Qdrant</td>
+          <td class="v" style="color:#b43200;">{{ source_registry_summary.qdrant_status }}</td>
+        </tr>
+      </table>
+      {% endif %}
+      {% if source_registry %}
+      <p style="font-size:7.5pt;font-weight:bold;color:#2d5a27;margin:5px 0 2px;">المصادر المرتبطة بهذا التقرير</p>
+      <table class="field-tbl">
+        <thead>
+          <tr style="background:#2d5a27;color:#fff;">
+            <th style="padding:2px 4px;text-align:right;font-size:7pt;">نوع المصدر</th>
+            <th style="padding:2px 4px;text-align:right;font-size:7pt;">تسمية المصدر</th>
+            <th style="padding:2px 4px;text-align:right;font-size:7pt;">الحي</th>
+            <th style="padding:2px 4px;text-align:center;font-size:7pt;">مستخدم في</th>
+            <th style="padding:2px 4px;text-align:center;font-size:7pt;">الثقة</th>
+            <th style="padding:2px 4px;text-align:center;font-size:7pt;">الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for src in source_registry %}
+          <tr style="background:{% if loop.index is odd %}#f7fbf7{% else %}#fff{% endif %};">
+            <td style="padding:2px 4px;font-size:7pt;">{{ src.source_type }}</td>
+            <td style="padding:2px 4px;font-size:7pt;">{{ src.source_label }}</td>
+            <td style="padding:2px 4px;font-size:7pt;">{{ src.district }}</td>
+            <td style="padding:2px 4px;font-size:7pt;text-align:center;">{{ src.used_in_methods }}</td>
+            <td style="padding:2px 4px;font-size:7pt;text-align:center;">{{ src.reliability_tier }}</td>
+            <td style="padding:2px 4px;font-size:7pt;text-align:center;
+              {% if src.geo_use_status == 'مستبعد جغرافيًا' %}color:#b43200;{% else %}color:#2d5a27;{% endif %}">
+              {{ src.geo_use_status }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      <p style="font-size:7pt;color:#b43200;font-style:italic;margin:4px 0 0;">
+        لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant.
+        تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+      </p>
+    </div>
+
     <!-- ── الشروط والافتراضات العامة وإخلاء المسؤولية (Part I — consolidated) ── -->
     <div class="disc-pg">
       <div class="disc-ttl">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

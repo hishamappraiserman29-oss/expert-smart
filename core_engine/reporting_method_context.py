@@ -1673,6 +1673,95 @@ def _build_method_context(payload: dict) -> dict:
         ),
     }
 
+    # ── Source Registry enrichment (readiness layer — no live Qdrant) ─────────
+    # Adds full Source Registry schema fields to every price source record.
+    # qdrant_status is always "مرحلة مستقبلية — غير مفعل" — Qdrant not activated.
+    _QDRANT_STATUS    = "مرحلة مستقبلية — غير مفعل"
+    _CONFIDENCE_MAP   = {"عالية": 85, "متوسطة": 70, "منخفضة": 50}
+    for _sr in price_source_data:
+        _sr_type = _sr.get("source_type", "")
+        _sr_label = _sr.get("source_label", "")
+        _sr_in_zone = _sr.get("zone_id", "") == subject_zone_id
+        _is_rental_src = (
+            "rental" in _sr_type or "lease" in _sr_type or "rent" in _sr_type
+            or "إيجار" in _sr_label
+        )
+        _is_land_src   = "land" in _sr_type or "أرض" in _sr_label
+        _sr.setdefault("source_id",               _sr.get("source_registry_id", ""))
+        _sr.setdefault("source_origin",            "محاكاة QA داخلية" if is_qa else _DATA_GAP)
+        _sr.setdefault("source_currency",          "ج.م")
+        _sr.setdefault("country",                  "مصر")
+        _sr.setdefault("city",                     subject_city)
+        _sr.setdefault("sub_market",               subject_sub_market if _sr_in_zone else _DATA_GAP)
+        _sr.setdefault("asset_type",               _sr.get("property_class", "شقة سكنية"))
+        _sr.setdefault("area",                     area)
+        _sr.setdefault("value",                    _sr.get("source_value", ""))
+        _sr.setdefault("monthly_rent",             _sr.get("source_value", "") if _is_rental_src else "")
+        _sr.setdefault("rent_per_m2_monthly",      _sr.get("price_per_m2", "") if _is_rental_src else "")
+        _sr.setdefault("land_price_per_m2",        _sr.get("price_per_m2", "") if _is_land_src else "")
+        _sr.setdefault("construction_cost_per_m2", "")
+        _sr.setdefault("confidence_score",         _CONFIDENCE_MAP.get(str(_sr.get("source_confidence", "")), 65))
+        _sr.setdefault("reliability_tier",         _sr.get("source_confidence", _DATA_GAP))
+        _sr.setdefault("exclusion_reason",         _sr.get("geo_exclusion_reason", ""))
+        _sr.setdefault("audit_notes",              "")
+        _sr.setdefault("qdrant_ready",             True)
+        _sr.setdefault("qdrant_collection",        "expert_valuations")
+        _sr.setdefault("qdrant_vector_id",         "")
+        _sr.setdefault("qdrant_status",            _QDRANT_STATUS)
+    source_registry = price_source_data  # canonical alias with full schema
+
+    # source_method_links: every method → list of source IDs it uses
+    _KNOWN_METHODS = [
+        "AVM", "مقارنة البيوع", "القيمة الإيجارية", "قيمة الأرض",
+        "طريقة التكلفة", "طريقة الدخل", "DCF",
+        "مقارنة إيجارية", "توفيق النتائج", "توفيق القيمة الإيجارية",
+    ]
+    source_method_links: dict = {m: [] for m in _KNOWN_METHODS}
+    for _sr in price_source_data:
+        _sr_methods_str = _sr.get("used_in_methods", "")
+        for _m in _KNOWN_METHODS:
+            if _m in _sr_methods_str:
+                _sid = _sr.get("source_id") or _sr.get("source_registry_id", "")
+                if _sid and _sid not in source_method_links[_m]:
+                    source_method_links[_m].append(_sid)
+
+    # source_registry_summary
+    _inc_srcs = [s for s in price_source_data if s.get("geo_use_status", "مُدرج") != "مستبعد جغرافيًا"]
+    _exc_srcs = [s for s in price_source_data if s.get("geo_use_status", "مُدرج") == "مستبعد جغرافيًا"]
+    _src_by_type: dict = {}
+    for _sr in price_source_data:
+        _t = _sr.get("source_type", "unknown")
+        _src_by_type[_t] = _src_by_type.get(_t, 0) + 1
+    source_registry_summary = {
+        "total_sources":       len(price_source_data),
+        "included_sources":    len(_inc_srcs),
+        "excluded_sources":    len(_exc_srcs),
+        "by_type":             _src_by_type,
+        "subject_zone_id":     subject_zone_id,
+        "has_out_of_zone":     len(_exc_srcs) > 0,
+        "all_have_source_id":  all(
+            bool(s.get("source_id") or s.get("source_registry_id"))
+            for s in price_source_data
+        ) if price_source_data else True,
+        "qdrant_status":       _QDRANT_STATUS,
+        "disclaimer_ar": (
+            "لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. "
+            "تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة."
+        ),
+    }
+
+    # qdrant_readiness_summary — structural readiness only, operational flags all False
+    qdrant_readiness_summary = {
+        "qdrant_ready":               True,
+        "qdrant_enabled":             False,
+        "rag_enabled":                False,
+        "internet_ingestion_enabled": False,
+        "status_ar":                  "جاهز هيكليًا — غير مفعل تشغيليًا",
+        "qdrant_collection":          "expert_valuations",
+        "qdrant_status":              _QDRANT_STATUS,
+        "source_count_ready":         len(price_source_data),
+    }
+
     result = {
         "comparables":              comparables,
         "avg_adjusted_price":       avg_adj,
@@ -1740,6 +1829,11 @@ def _build_method_context(payload: dict) -> dict:
         "scenario_subject_area":    area,
         "scenario_subject_zone_id": subject_zone_id,
         "scenario_subject_district": subject_district,
+        # ── Source Registry (readiness layer — Parts A–D+G) ────────────────
+        "source_registry":           source_registry,
+        "source_method_links":       source_method_links,
+        "source_registry_summary":   source_registry_summary,
+        "qdrant_readiness_summary":  qdrant_readiness_summary,
     }
     return result
 
@@ -1867,6 +1961,112 @@ def _validate_scenario_data_integrity(method_context: dict) -> list[str]:
                     )
             except (ValueError, TypeError):
                 pass
+
+    return errors
+
+
+def _validate_source_registry_integrity(method_context: dict) -> list[str]:
+    """
+    Validate Source Registry readiness layer in a built method_context.
+
+    Returns a list of error strings. Empty list means all checks pass.
+
+    Checks:
+    1. Every included comparable has a source_id.
+    2. Every source used in formulas exists in source_registry.
+    3. No excluded/out-of-zone source is used in calculations.
+    4. Every method has source_method_links.
+    5. Qdrant flags remain disabled.
+    6. No source claims live retrieval.
+    7. No source has missing zone_id if it affects valuation.
+    8. No duplicate source_id.
+    """
+    errors: list[str] = []
+
+    source_registry   = method_context.get("source_registry", [])
+    source_links      = method_context.get("source_method_links", {})
+    qdrant_readiness  = method_context.get("qdrant_readiness_summary", {})
+    registry_summary  = method_context.get("source_registry_summary", {})
+
+    # 1. Every included source in source_registry has a source_id
+    for src in source_registry:
+        if src.get("geo_use_status", "مُدرج") != "مستبعد جغرافيًا":
+            sid = src.get("source_id") or src.get("source_registry_id")
+            if not sid:
+                errors.append(
+                    f"SRC_REG_MISSING_ID: included source record "
+                    f"'{src.get('source_label', src.get('source_type', '?'))}' has no source_id"
+                )
+
+    # 2. Every source used in formulas exists in source_registry
+    _reg_ids = {
+        s.get("source_id") or s.get("source_registry_id", "")
+        for s in source_registry
+        if s.get("source_id") or s.get("source_registry_id")
+    }
+    for method, ids in source_links.items():
+        for sid in ids:
+            if sid and sid not in _reg_ids:
+                errors.append(
+                    f"SRC_REG_ORPHAN_LINK: source_method_links['{method}'] references "
+                    f"'{sid}' which is not in source_registry"
+                )
+
+    # 3. No excluded/out-of-zone source is used in calculations
+    for src in source_registry:
+        geo_use = src.get("geo_use_status", "مُدرج")
+        if geo_use == "مستبعد جغرافيًا":
+            sid = src.get("source_id") or src.get("source_registry_id", "")
+            for method, ids in source_links.items():
+                if sid and sid in ids:
+                    errors.append(
+                        f"SRC_REG_EXCLUDED_IN_FORMULA: excluded source '{sid}' "
+                        f"appears in source_method_links['{method}']"
+                    )
+
+    # 4. Every method has source_method_links (key must exist; empty list is OK)
+    _REQUIRED_METHODS = ["AVM", "مقارنة البيوع", "قيمة الأرض", "طريقة الدخل", "DCF"]
+    for m in _REQUIRED_METHODS:
+        if m not in source_links:
+            errors.append(
+                f"SRC_REG_NO_METHOD_LINK: method '{m}' missing from source_method_links"
+            )
+
+    # 5. Qdrant flags remain disabled
+    if qdrant_readiness.get("qdrant_enabled") is True:
+        errors.append("SRC_REG_QDRANT_ENABLED: qdrant_enabled=True — must remain False")
+    if qdrant_readiness.get("rag_enabled") is True:
+        errors.append("SRC_REG_RAG_ENABLED: rag_enabled=True — must remain False")
+    if qdrant_readiness.get("internet_ingestion_enabled") is True:
+        errors.append("SRC_REG_INTERNET_ENABLED: internet_ingestion_enabled=True — must remain False")
+
+    # 6. No source claims live retrieval
+    _FORBIDDEN_CLAIMS = ("retrieved_from_qdrant", "live_qdrant", "qdrant_active: true", "internet_search_result")
+    import json as _json_mod
+    _raw_registry = _json_mod.dumps(source_registry, ensure_ascii=False, default=str).lower()
+    for _claim in _FORBIDDEN_CLAIMS:
+        if _claim.lower() in _raw_registry:
+            errors.append(f"SRC_REG_LIVE_CLAIM: source registry contains forbidden claim '{_claim}'")
+
+    # 7. No source missing zone_id if it affects valuation (included in formulas)
+    for src in source_registry:
+        geo_use = src.get("geo_use_status", "مُدرج")
+        if geo_use != "مستبعد جغرافيًا":
+            if not src.get("zone_id"):
+                sid = src.get("source_id") or src.get("source_registry_id", "?")
+                errors.append(
+                    f"SRC_REG_MISSING_ZONE: included source '{sid}' has no zone_id"
+                )
+
+    # 8. No duplicate source_id
+    _seen_ids: list = []
+    for src in source_registry:
+        sid = src.get("source_id") or src.get("source_registry_id", "")
+        if sid:
+            if sid in _seen_ids:
+                errors.append(f"SRC_REG_DUPLICATE_ID: source_id '{sid}' appears more than once")
+            else:
+                _seen_ids.append(sid)
 
     return errors
 

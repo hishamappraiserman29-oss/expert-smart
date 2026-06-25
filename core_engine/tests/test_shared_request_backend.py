@@ -1912,7 +1912,10 @@ def test_SRB98_certified_report_template_no_qdrant_claim(client):
             f"Certified report template must not make fake retrieval claim: {claim!r}"
         )
 
-    assert "لا يتضمن هذا الإصدار سجل مصادر آلي" in html, (
+    assert (
+        "لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant" in html
+        or "لا يتضمن هذا الإصدار سجل مصادر آلي" in html
+    ), (
         "Certified report template must include honest no-Qdrant/internet disclaimer"
     )
 
@@ -3013,11 +3016,11 @@ def test_SRB181_inputs_sheet_is_first_sheet():
         f"Expected first sheet 'مدخلات التقرير', got {wb.sheetnames[0]!r}"
 
 
-def test_SRB182_workbook_has_26_sheets():
-    """SRB182 Expert workbook has exactly 26 sheets (22 original + 4 strategic: What-If, Buy vs Rent, ESG, Construction Cost)."""
+def test_SRB182_workbook_has_27_sheets():
+    """SRB182 Expert workbook has exactly 27 sheets (22 original + 4 strategic + 1 Source Registry: سجل ربط المصادر)."""
     wb = _get_wb_v2()
-    assert len(wb.sheetnames) == 26, \
-        f"Expected 26 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
+    assert len(wb.sheetnames) == 27, \
+        f"Expected 27 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
 
 
 def test_SRB183_sales_comparison_has_formula_cells():
@@ -3725,13 +3728,17 @@ def test_SRB232_land_sheet_has_geo_match_status_header():
 
 
 def test_SRB233_price_sources_sheet_has_geo_match_status_header():
-    """SRB233 مصادر الأسعار workbook sheet has حالة الموقع الجغرافي column (Part B workbook)."""
+    """SRB233 مصادر الأسعار workbook sheet has geo status column (geo_use_status or geo_match_status)."""
     wb = _get_wb_maadi_strategic()
     assert "مصادر الأسعار" in wb.sheetnames, "مصادر الأسعار sheet missing"
     ws = wb["مصادر الأسعار"]
     all_text = " ".join(str(c or "") for row in ws.iter_rows(values_only=True) for c in row)
-    assert "حالة الموقع الجغرافي" in all_text or "الموقع الجغرافي" in all_text, \
-        "مصادر الأسعار sheet missing geo_match_status column"
+    assert (
+        "حالة الموقع الجغرافي" in all_text
+        or "الموقع الجغرافي" in all_text
+        or "حالة الاستخدام الجغرافي" in all_text
+        or "الاستخدام الجغرافي" in all_text
+    ), "مصادر الأسعار sheet missing geo status column (geo_use_status / geo_match_status)"
 
 
 def test_SRB234_rental_comps_sheet_has_geo_match_status_header():
@@ -4190,3 +4197,173 @@ def test_SRB262_no_external_map_api_url_in_qa_context():
         for fragment in forbidden_fragments:
             assert fragment not in raw, \
                 f"[{label}] method context references external map API URL: {fragment!r}"
+
+
+# ── SRB263-SRB276: Source Registry Readiness (Parts A-J) ─────────────────────
+
+def test_SRB263_source_registry_exists_in_method_context():
+    """SRB263 both QA scenarios: method context contains source_registry key."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        assert "source_registry" in mctx, \
+            f"[{label}] 'source_registry' key missing from method context"
+        assert isinstance(mctx["source_registry"], list), \
+            f"[{label}] source_registry must be a list"
+
+
+def test_SRB264_every_source_record_has_source_id():
+    """SRB264 both QA scenarios: every source record in source_registry has a source_id."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        for i, src in enumerate(mctx.get("source_registry", [])):
+            sid = src.get("source_id") or src.get("source_registry_id")
+            assert sid, \
+                f"[{label}] source_registry[{i}] has no source_id: {src}"
+
+
+def test_SRB265_sales_comparables_have_source_ids():
+    """SRB265 market QA: included sales comparables are referenced in source_method_links AVM/مقارنة البيوع."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    links = mctx.get("source_method_links", {})
+    sales_ids = links.get("مقارنة البيوع", [])
+    avm_ids   = links.get("AVM", [])
+    assert sales_ids or avm_ids, \
+        "source_method_links must have at least one source for مقارنة البيوع or AVM in market QA"
+
+
+def test_SRB266_rental_comparables_have_source_ids():
+    """SRB266 rental QA: included rental comparables referenced in source_method_links."""
+    mctx = _srr._build_method_context(_QA_RENTAL_NASR_PAYLOAD)
+    links = mctx.get("source_method_links", {})
+    rental_ids = (
+        links.get("القيمة الإيجارية", [])
+        + links.get("مقارنة إيجارية", [])
+        + links.get("توفيق القيمة الإيجارية", [])
+    )
+    assert rental_ids, \
+        "source_method_links must reference rental sources for rental QA scenario"
+
+
+def test_SRB267_land_comparables_have_source_ids():
+    """SRB267 both QA scenarios: land source IDs appear in source_method_links[قيمة الأرض]."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        links = mctx.get("source_method_links", {})
+        land_ids = links.get("قيمة الأرض", [])
+        assert land_ids, \
+            f"[{label}] source_method_links[قيمة الأرض] is empty — land sources must be linked"
+
+
+def test_SRB268_avm_source_rows_have_source_ids():
+    """SRB268 both QA scenarios: AVM method has linked source IDs."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        links = mctx.get("source_method_links", {})
+        avm_ids = links.get("AVM", [])
+        assert avm_ids, \
+            f"[{label}] source_method_links[AVM] is empty — AVM source must be linked"
+
+
+def test_SRB269_excluded_out_of_zone_source_not_in_formulas():
+    """SRB269 both QA scenarios: excluded (geo_use_status=مستبعد جغرافيًا) sources are absent from all method links."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        links  = mctx.get("source_method_links", {})
+        all_linked_ids = {sid for ids in links.values() for sid in ids}
+        for src in mctx.get("source_registry", []):
+            if src.get("geo_use_status") == "مستبعد جغرافيًا":
+                sid = src.get("source_id") or src.get("source_registry_id", "")
+                assert sid not in all_linked_ids, \
+                    f"[{label}] excluded source '{sid}' appears in source_method_links — must not affect calculations"
+
+
+def test_SRB270_source_registry_sheet_exists_in_workbook(client):
+    """SRB270 expert workbook contains مصادر الأسعار (canonical source registry sheet)."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb_path = _srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"
+    wb = openpyxl.load_workbook(str(wb_path))
+    assert "مصادر الأسعار" in wb.sheetnames, \
+        f"مصادر الأسعار sheet missing from workbook. Sheets: {wb.sheetnames}"
+
+
+def test_SRB271_source_method_links_sheet_exists_in_workbook(client):
+    """SRB271 expert workbook contains سجل ربط المصادر (source method links sheet)."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb_path = _srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"
+    wb = openpyxl.load_workbook(str(wb_path))
+    assert "سجل ربط المصادر" in wb.sheetnames, \
+        f"سجل ربط المصادر sheet missing from workbook. Sheets: {wb.sheetnames}"
+
+
+def test_SRB272_certified_pdf_template_contains_source_registry_section():
+    """SRB272 certified PDF template contains سجل مصادر البيانات والمقارنات section."""
+    import pathlib
+    tmpl = pathlib.Path(__file__).parent.parent / "templates" / "pdf" / "certified_valuation_report.html"
+    text = tmpl.read_text(encoding="utf-8")
+    assert "سجل مصادر البيانات والمقارنات" in text, \
+        "certified PDF template missing 'سجل مصادر البيانات والمقارنات' section title"
+    assert "source_registry" in text, \
+        "certified PDF template must reference source_registry variable"
+
+
+def test_SRB273_preliminary_pdf_template_contains_source_summary_section():
+    """SRB273 preliminary PDF template contains ملخص مصادر البيانات section."""
+    import pathlib
+    tmpl = pathlib.Path(__file__).parent.parent / "templates" / "pdf" / "simple_valuation_draft.html"
+    text = tmpl.read_text(encoding="utf-8")
+    assert "ملخص مصادر البيانات" in text, \
+        "preliminary PDF template missing 'ملخص مصادر البيانات' section"
+    assert "source_registry" in text, \
+        "preliminary PDF template must reference source_registry variable"
+
+
+def test_SRB274_qdrant_readiness_says_ready_but_disabled():
+    """SRB274 both QA scenarios: qdrant_readiness_summary is structurally ready but operationally disabled."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        qrs = mctx.get("qdrant_readiness_summary", {})
+        assert "qdrant_readiness_summary" in mctx, \
+            f"[{label}] qdrant_readiness_summary missing from method context"
+        assert qrs.get("qdrant_ready") is True, \
+            f"[{label}] qdrant_ready must be True (structurally ready)"
+        assert qrs.get("qdrant_enabled") is False, \
+            f"[{label}] qdrant_enabled must be False (not yet activated)"
+        assert qrs.get("rag_enabled") is False, \
+            f"[{label}] rag_enabled must be False"
+        assert qrs.get("internet_ingestion_enabled") is False, \
+            f"[{label}] internet_ingestion_enabled must be False"
+        assert "جاهز هيكليًا" in str(qrs.get("status_ar", "")), \
+            f"[{label}] qdrant_readiness_summary.status_ar must say 'جاهز هيكليًا': {qrs.get('status_ar')}"
+
+
+def test_SRB275_no_qdrant_active_claim_in_source_registry():
+    """SRB275 both QA scenarios: source_registry contains no live Qdrant/RAG/internet active claim."""
+    import json
+    FORBIDDEN = [
+        "retrieved_from_qdrant", "live_qdrant", "qdrant_active: true",
+        "internet_search_result", "rag_retrieval",
+    ]
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        raw = json.dumps(mctx.get("source_registry", []), ensure_ascii=False, default=str).lower()
+        for claim in FORBIDDEN:
+            assert claim.lower() not in raw, \
+                f"[{label}] source_registry contains forbidden active-use claim: {claim!r}"
+
+
+def test_SRB276_source_registry_validator_passes_for_qa():
+    """SRB276 both QA scenarios: _validate_source_registry_integrity returns no errors."""
+    from core_engine.reporting_method_context import _validate_source_registry_integrity
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        errors = _validate_source_registry_integrity(mctx)
+        assert not errors, \
+            f"[{label}] _validate_source_registry_integrity returned errors: {errors}"

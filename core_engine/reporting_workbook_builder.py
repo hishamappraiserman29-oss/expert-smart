@@ -55,6 +55,8 @@ def _validate_workbook_formulas_and_no_silent_blanks(workbook_path) -> list:
         "سجل المراجعة", "قيمة الأرض", "خرائط وصور",
         # New strategic sheets
         "سيناريوهات What-If", "شراء أم إيجار", "ESG والاستدامة", "مؤشرات تكلفة البناء",
+        # Source Registry readiness sheet
+        "سجل ربط المصادر",
     ]
     for sname in _REQUIRED:
         if sname not in wb.sheetnames:
@@ -2274,57 +2276,90 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     # ════════════════════════════════════════════════════════════════════════
     ws16 = wb.create_sheet("مصادر الأسعار")
     _rtl(ws16)
-    _widths(ws16, [20, 22, 26, 20, 20, 22, 18, 16, 16, 26, 32, 20, 36])
+    _widths(ws16, [20, 22, 20, 18, 22, 16, 14, 16, 16, 22, 18, 14, 18, 14, 16, 20, 36])
 
-    ws16.merge_cells("A1:M1")
-    ws16["A1"].value     = "مصادر الأسعار — Price Source Spine (سجل داخلي)"
+    _n16 = 17  # column count
+    ws16.merge_cells(f"A1:{chr(64+_n16)}1")
+    ws16["A1"].value     = "سجل مصادر البيانات — Source Registry (هيكل جاهز — Qdrant غير مفعل)"
     ws16["A1"].font      = F_TITLE
     ws16["A1"].fill      = _fill("2D5A27")
     ws16["A1"].alignment = AL_CTR
     ws16.row_dimensions[1].height = 22
 
+    # Canonical Source Registry columns (Part E)
     _src_headers = [
-        "كود المصدر", "نوع المصدر", "المنطقة / Zone",
-        "نوع الأصل", "السعر / م²", "القيمة",
-        "تاريخ المصدر", "مستوى الثقة", "الحالة",
-        "مستخدم في", "ملاحظات الخبير",
-        "حالة الموقع الجغرافي", "سبب الاستبعاد",  # Part B: geo columns
+        "source_id", "source_type", "source_label",
+        "source_method", "source_status", "source_origin",
+        "source_date", "city", "district",
+        "zone_id", "asset_type", "area",
+        "price_per_m2", "confidence_score", "reliability_tier",
+        "geo_use_status", "exclusion_reason",
     ]
-    _src_keys = [
-        "source_registry_id", "source_type", "district",
-        "property_class", "price_per_m2", "source_value",
-        "source_date", "source_confidence", "source_status",
-        "used_in_methods", "source_notes",
-        "geo_match_status", "geo_exclusion_reason",
+    _src_hdr_ar = [
+        "كود المصدر", "نوع المصدر", "تسمية المصدر",
+        "الطريقة المرتبطة", "الحالة", "المصدر الأصلي",
+        "تاريخ المصدر", "المدينة", "الحي / المنطقة",
+        "كود المنطقة", "نوع الأصل", "المساحة (م²)",
+        "السعر / م²", "درجة الثقة", "مستوى الموثوقية",
+        "حالة الاستخدام الجغرافي", "سبب الاستبعاد",
     ]
     r16 = 2
-    for ci, h in enumerate(_src_headers, 1):
+    for ci, h in enumerate(_src_hdr_ar, 1):
         c = ws16.cell(r16, ci, value=h)
         c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
     r16 += 1
-    if wb_price_sources:
-        for src in wb_price_sources:
-            _src_geo  = src.get("geo_match_status", "")
-            _src_gfill = _fill("FFDDDD") if _src_geo == "خارج النطاق" else _fill("DDFFDD") if _src_geo == "مطابق" else None
-            for ci, key in enumerate(_src_keys, 1):
-                ws16.cell(r16, ci).value     = src.get(key, _dg)
+
+    # Use source_registry if available (enriched), fall back to price_source_data
+    _registry_rows = mctx.get("source_registry", wb_price_sources) or wb_price_sources
+    if _registry_rows:
+        for src in _registry_rows:
+            _src_geo   = src.get("geo_use_status", "")
+            _src_gfill = (
+                _fill("FFDDDD") if _src_geo == "مستبعد جغرافيًا"
+                else _fill("DDFFDD") if _src_geo == "مُدرج"
+                else None
+            )
+            for ci, key in enumerate(_src_headers, 1):
+                _cell_val = src.get(key, _dg)
+                ws16.cell(r16, ci).value     = _cell_val
                 ws16.cell(r16, ci).alignment = AL_RT
                 ws16.cell(r16, ci).font      = F_VAL
-                if ci in (12, 13) and _src_gfill:
+                if ci in (16, 17) and _src_gfill:
                     ws16.cell(r16, ci).fill = _src_gfill
-            ws16.cell(r16, 9).fill = _fill("FFFBE6")  # status column highlight
+            ws16.cell(r16, 5).fill = _fill("FFFBE6")  # status column highlight
             r16 += 1
     else:
         ws16.cell(r16, 1).value = "لا توجد مصادر أسعار مرتبطة بهذا الطلب — يحتاج استكمال بواسطة الخبير"
         ws16.cell(r16, 1).font  = Font(color="B43200", name="Arial", size=9)
-        ws16.merge_cells(f"A{r16}:M{r16}"); r16 += 1
+        ws16.merge_cells(f"A{r16}:{chr(64+_n16)}{r16}"); r16 += 1
+
+    # Qdrant readiness row
+    r16 += 1
+    _qdrant_sum = mctx.get("qdrant_readiness_summary", {})
+    _sec_hdr(ws16, r16, 1, _n16, "حالة Qdrant / Source Registry"); r16 += 1
+    for _lbl16, _val16 in [
+        ("جاهز هيكليًا",  str(_qdrant_sum.get("qdrant_ready", True))),
+        ("Qdrant مفعل",    str(_qdrant_sum.get("qdrant_enabled", False))),
+        ("RAG مفعل",       str(_qdrant_sum.get("rag_enabled", False))),
+        ("الحالة",         _qdrant_sum.get("status_ar", "جاهز هيكليًا — غير مفعل تشغيليًا")),
+        ("qdrant_status",  _qdrant_sum.get("qdrant_status", "مرحلة مستقبلية — غير مفعل")),
+    ]:
+        ws16.cell(r16, 1).value     = _lbl16
+        ws16.cell(r16, 2).value     = _val16
+        ws16.cell(r16, 1).alignment = AL_RT
+        ws16.cell(r16, 2).alignment = AL_RT
+        ws16.cell(r16, 1).font      = F_VAL
+        ws16.cell(r16, 2).font      = F_VAL
+        ws16.merge_cells(f"B{r16}:{chr(64+_n16)}{r16}")
+        r16 += 1
+
     ws16.row_dimensions[r16].height = 6; r16 += 1
     _src_disc = ws16.cell(r16, 1,
-        "جميع المصادر المدرجة في هذا السجل محاكاة داخلية لأغراض QA. "
-        "لا يتضمن هذا السجل استرجاعاً من Source Registry/Qdrant في المرحلة الحالية. "
-        "سيتم الربط الفعلي عند تفعيل مكون Source Registry.")
+        "لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. "
+        "تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة. "
+        "جميع المصادر المدرجة محاكاة داخلية لأغراض QA.")
     _src_disc.font = Font(color="B43200", name="Arial", size=8, italic=True)
-    ws16.merge_cells(f"A{r16}:M{r16}")
+    ws16.merge_cells(f"A{r16}:{chr(64+_n16)}{r16}")
 
     # ════════════════════════════════════════════════════════════════════════
     # Sheet 17: ربط التقييم الجماعي — Mass Appraisal Bridge
@@ -2389,6 +2424,84 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
         ws17.cell(r17, 1).alignment = AL_RT
         ws17.cell(r17, 2).alignment = AL_RT
         r17 += 1
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Sheet 18: سجل ربط المصادر — Source Method Links Registry
+    # ════════════════════════════════════════════════════════════════════════
+    ws18 = wb.create_sheet("سجل ربط المصادر")
+    _rtl(ws18)
+    _widths(ws18, [30, 26, 20, 22, 18, 24, 14, 30, 36])
+
+    ws18.merge_cells("A1:I1")
+    ws18["A1"].value     = "سجل ربط المصادر — Source Method Links (هيكل جاهز — Qdrant غير مفعل)"
+    ws18["A1"].font      = F_TITLE
+    ws18["A1"].fill      = _fill("1F4E78")
+    ws18["A1"].alignment = AL_CTR
+    ws18.row_dimensions[1].height = 22
+
+    r18 = 2
+    _smlink_headers = [
+        "اسم الطريقة", "قسم الطريقة", "كود المصدر",
+        "نوع المصدر", "مستخدم في الصيغة", "مرجع الصيغة",
+        "مُدرج؟", "سبب الاستبعاد", "ملاحظات",
+    ]
+    for ci18, h18 in enumerate(_smlink_headers, 1):
+        c = ws18.cell(r18, ci18, value=h18)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    r18 += 1
+
+    # Build rows from source_method_links and source_registry
+    _sm_links = mctx.get("source_method_links", {})
+    _sm_registry = {
+        (s.get("source_id") or s.get("source_registry_id", "")): s
+        for s in (mctx.get("source_registry", wb_price_sources) or wb_price_sources)
+    }
+    _METHOD_SECTIONS = {
+        "AVM":                    "القسم السادس — AVM",
+        "مقارنة البيوع":           "القسم الثالث — مقارنة البيوع",
+        "القيمة الإيجارية":       "القسم التاسع — القيمة الإيجارية",
+        "قيمة الأرض":             "القسم الرابع عشر — قيمة الأرض",
+        "طريقة التكلفة":           "القسم الثامن — طريقة التكلفة",
+        "طريقة الدخل":            "القسم السابع — طريقة الدخل",
+        "DCF":                    "القسم السابع-ب — DCF",
+        "مقارنة إيجارية":         "القسم التاسع-أ — مقارنات إيجارية",
+        "توفيق النتائج":          "القسم العاشر — توفيق النتائج",
+        "توفيق القيمة الإيجارية": "القسم العاشر-ب — توفيق الإيجار",
+    }
+    _sm_row_added = False
+    for _mname, _src_ids in _sm_links.items():
+        for _sid in _src_ids:
+            _srec = _sm_registry.get(_sid, {})
+            _geo_use = _srec.get("geo_use_status", "مُدرج")
+            _included = "نعم" if _geo_use == "مُدرج" else "لا"
+            _excl_rsn = _srec.get("exclusion_reason") or _srec.get("geo_exclusion_reason", "")
+            ws18.cell(r18, 1).value = _mname
+            ws18.cell(r18, 2).value = _METHOD_SECTIONS.get(_mname, _mname)
+            ws18.cell(r18, 3).value = _sid
+            ws18.cell(r18, 4).value = _srec.get("source_type", _dg)
+            ws18.cell(r18, 5).value = "نعم"
+            ws18.cell(r18, 6).value = f"={_mname}!{_sid}"
+            ws18.cell(r18, 7).value = _included
+            ws18.cell(r18, 8).value = _excl_rsn or ""
+            ws18.cell(r18, 9).value = _srec.get("audit_notes", "")
+            _row_fill = _fill("DDFFDD") if _included == "نعم" else _fill("FFDDDD")
+            for ci18 in range(1, 10):
+                ws18.cell(r18, ci18).alignment = AL_RT
+                ws18.cell(r18, ci18).font      = F_VAL
+            ws18.cell(r18, 7).fill = _row_fill
+            r18 += 1
+            _sm_row_added = True
+    if not _sm_row_added:
+        ws18.cell(r18, 1).value = "لا توجد روابط مصادر — يُكمل الخبير بعد ربط Source Registry"
+        ws18.cell(r18, 1).font  = Font(color="B43200", name="Arial", size=9)
+        ws18.merge_cells(f"A{r18}:I{r18}"); r18 += 1
+
+    ws18.row_dimensions[r18].height = 6; r18 += 1
+    _sm_disc = ws18.cell(r18, 1,
+        "لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. "
+        "تم تجهيز هيكل ربط المصادر فقط لاستقبال الربط الآلي في مرحلة لاحقة.")
+    _sm_disc.font = Font(color="B43200", name="Arial", size=8, italic=True)
+    ws18.merge_cells(f"A{r18}:I{r18}")
 
     # ════════════════════════════════════════════════════════════════════════
     # Sheet 19: القيمة الإيجارية — Rental Value Summary

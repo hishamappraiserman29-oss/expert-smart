@@ -163,22 +163,25 @@ def _build_method_context(payload: dict) -> dict:
     _is_rental      = (purpose_info["purpose_key"] == "rental_value")
 
     # ── Subject geographic identification (from payload or QA defaults) ──────
-    # QA fallback uses location field to distinguish Nasr City vs Maadi vs generic
-    _qa_loc_hint = str(payload.get("district") or payload.get("location") or "")
-    _qa_is_nasr  = is_qa and "نصر" in _qa_loc_hint
-    _qa_is_maadi = is_qa and "معادي" in _qa_loc_hint
+    # QA fallback uses location field to distinguish Nasr City vs Maadi vs Zamalek vs generic
+    _qa_loc_hint      = str(payload.get("district") or payload.get("location") or "")
+    _qa_is_nasr       = is_qa and "نصر"   in _qa_loc_hint
+    _qa_is_maadi      = is_qa and "معادي" in _qa_loc_hint
+    _qa_is_zamalek    = is_qa and "زمالك" in _qa_loc_hint
     subject_zone_id    = (
         payload.get("zone_id") or (
-            "ZONE-CAI-NASR-08"  if _qa_is_nasr
-            else "ZONE-CAI-MAADI-01" if _qa_is_maadi
-            else "ZONE-CAI-NASR-08"  if is_qa   # generic QA default → Nasr City
+            "ZONE-CAI-NASR-08"    if _qa_is_nasr
+            else "ZONE-CAI-MAADI-01"   if _qa_is_maadi
+            else "ZONE-CAI-ZAMALEK-01" if _qa_is_zamalek
+            else "ZONE-CAI-NASR-08"    if is_qa   # generic QA default → Nasr City
             else "غير محدد"
         )
     )
     subject_district   = (
         payload.get("district") or (
-            "مدينة نصر" if _qa_is_nasr
-            else "المعادي" if _qa_is_maadi
+            "مدينة نصر"  if _qa_is_nasr
+            else "المعادي"  if _qa_is_maadi
+            else "الزمالك"  if _qa_is_zamalek
             else "مدينة نصر" if is_qa   # generic QA default
             else _DATA_GAP
         )
@@ -186,6 +189,7 @@ def _build_method_context(payload: dict) -> dict:
     subject_city       = payload.get("city")        or ("القاهرة" if is_qa else _DATA_GAP)
     subject_sub_market = payload.get("sub_market") or (
         "سوق المعادي الفرعي"        if _qa_is_maadi
+        else "سوق الزمالك الفرعي"   if _qa_is_zamalek
         else "سوق مدينة نصر الفرعي" if is_qa
         else _DATA_GAP
     )
@@ -302,6 +306,20 @@ def _build_method_context(payload: dict) -> dict:
         ),
     }
 
+    # ── Pre-compute replacement cost (for land extraction + cost approach consistency) ──
+    # Both sections must reference the same base cost; computed once here.
+    if is_qa:
+        _pcr_area     = area
+        _pcr_indirect = round(_pcr_area * 1_000)
+        _pcr_direct   = (
+            _pcr_area * (1_500 + 450 + 300 + 400 + 200 + 400 + 300 + 300)
+            + _pcr_indirect
+        )  # = area * 3_850 + area * 1_000 = area * 4_850 simplified
+        _pcr_contingency   = int(_pcr_direct * 0.10)
+        _qa_repl_cost_new  = _pcr_direct + _pcr_contingency
+    else:
+        _qa_repl_cost_new  = 0
+
     # ── Comparable matrix ─────────────────────────────────────────────────
     comparables_raw = payload.get("comparables")
     if comparables_raw and isinstance(comparables_raw, list) and len(comparables_raw) >= 2:
@@ -309,8 +327,9 @@ def _build_method_context(payload: dict) -> dict:
         avg_adj = ""
     else:
         # ── Zone-aware QA comparables: derive from subject district ────────
-        _is_maadi_subject = is_qa and ("معادي" in subject_district)
-        _is_nasr_subject  = is_qa and ("نصر"  in subject_district)
+        _is_maadi_subject   = is_qa and ("معادي" in subject_district)
+        _is_zamalek_subject = is_qa and ("زمالك" in subject_district)
+        _is_nasr_subject    = is_qa and ("نصر"   in subject_district)
         if _is_maadi_subject:
             _SYNTH_COMPS = [
                 {"num": 1, "location": f"{subject_district} - شارع النيل",
@@ -346,6 +365,57 @@ def _build_method_context(payload: dict) -> dict:
                  "condition_factor": 1.00, "finishing_factor": 1.00, "time_factor": 1.00,
                  "status": "مباع", "notes": "مقارن مرجعي خارج النطاق — غير مستخدم في الاستنتاج",
                  "reliability_score": "منخفضة", "inclusion": "مستبعد جغرافيًا",
+                 "comparable_zone_id": "ZONE-CAI-NASR-08", "comparable_district": "مدينة نصر",
+                 "geo_match_status": "خارج النطاق",
+                 "geo_match_notes": "مستبعد جغرافيًا — يُعرض للمراجعة فقط ولا يدخل في الاستنتاج"},
+            ]
+        elif _is_zamalek_subject:
+            # ── Zamalek luxury market: 4 in-zone + 1 excluded audit row ──
+            _SYNTH_COMPS = [
+                {"num": 1, "location": "الزمالك - شارع أبو الفدا",
+                 "area": 140, "sale_price": 4_900_000, "price_per_m2": 35_000,
+                 "location_factor": 1.00, "area_factor": 1.01,
+                 "condition_factor": 1.02, "finishing_factor": 1.03, "time_factor": 1.00,
+                 "status": "مباع", "notes": "مقارن مباشر — شقة فاخرة على شارع النيل",
+                 "reliability_score": "عالية", "inclusion": "مُدرَج",
+                 "comparable_zone_id": "ZONE-CAI-ZAMALEK-01", "comparable_district": "الزمالك",
+                 "geo_match_status": "مطابق",
+                 "geo_match_notes": "نفس المنطقة والسوق الفرعي — مُدرَج في الحسابات"},
+                {"num": 2, "location": "الزمالك - شارع البرازيل",
+                 "area": 165, "sale_price": 5_610_000, "price_per_m2": 34_000,
+                 "location_factor": 1.01, "area_factor": 0.99,
+                 "condition_factor": 1.00, "finishing_factor": 1.02, "time_factor": 1.00,
+                 "status": "مباع", "notes": "منطقة الزمالك الشمالية — تسوية موقع +1%",
+                 "reliability_score": "عالية", "inclusion": "مُدرَج",
+                 "comparable_zone_id": "ZONE-CAI-ZAMALEK-01", "comparable_district": "الزمالك",
+                 "geo_match_status": "مطابق",
+                 "geo_match_notes": "نفس المنطقة — مُدرَج في الحسابات"},
+                {"num": 3, "location": "الزمالك - شارع محمد مظهر",
+                 "area": 155, "sale_price": 5_580_000, "price_per_m2": 36_000,
+                 "location_factor": 1.02, "area_factor": 1.00,
+                 "condition_factor": 0.99, "finishing_factor": 1.01, "time_factor": 1.00,
+                 "status": "مباع", "notes": "موقع متميز — تسوية حالة −1%",
+                 "reliability_score": "عالية", "inclusion": "مُدرَج",
+                 "comparable_zone_id": "ZONE-CAI-ZAMALEK-01", "comparable_district": "الزمالك",
+                 "geo_match_status": "مطابق",
+                 "geo_match_notes": "نفس المنطقة — مُدرَج في الحسابات"},
+                {"num": 4, "location": "الزمالك - شارع طه حسين",
+                 "area": 145, "sale_price": 5_365_000, "price_per_m2": 37_000,
+                 "location_factor": 1.03, "area_factor": 1.01,
+                 "condition_factor": 1.01, "finishing_factor": 1.00, "time_factor": 1.00,
+                 "status": "مباع", "notes": "شارع هادئ — تسوية موقع +3%",
+                 "reliability_score": "متوسطة", "inclusion": "مُدرَج",
+                 "comparable_zone_id": "ZONE-CAI-ZAMALEK-01", "comparable_district": "الزمالك",
+                 "geo_match_status": "مطابق",
+                 "geo_match_notes": "نفس المنطقة — مُدرَج في الحسابات"},
+                {"num": 5, "location": "مدينة نصر - المنطقة الثامنة",
+                 "area": 150, "sale_price": 3_450_000, "price_per_m2": 23_000,
+                 "location_factor": 1.00, "area_factor": 1.00,
+                 "condition_factor": 1.00, "finishing_factor": 1.00, "time_factor": 1.00,
+                 "status": "مباع",
+                 "notes": "مستبعد جغرافيًا — غير مستخدم في الحساب",
+                 "reliability_score": "منخفضة",
+                 "inclusion": "مستبعد جغرافيًا — غير مستخدم في الحساب",
                  "comparable_zone_id": "ZONE-CAI-NASR-08", "comparable_district": "مدينة نصر",
                  "geo_match_status": "خارج النطاق",
                  "geo_match_notes": "مستبعد جغرافيًا — يُعرض للمراجعة فقط ولا يدخل في الاستنتاج"},
@@ -473,7 +543,27 @@ def _build_method_context(payload: dict) -> dict:
                  "location_factor": 1.00, "area_factor": 1.01, "time_factor": 1.00,
                  "notes": "خارج النطاق — يظهر للمراجعة فقط"},
             ]
+        elif _qa_is_zamalek:
+            # Zamalek has premium land prices
+            _LAND_COMPS_ALL = [
+                {"num": 1, "location": "الزمالك - شارع النيل", "zone_id": "ZONE-CAI-ZAMALEK-01",
+                 "area_m2": 30, "offer_date": "03/2026", "total_price": 2_250_000,
+                 "price_per_m2": 75_000, "location_factor": 1.00, "area_factor": 1.00,
+                 "time_factor": 1.00,
+                 "notes": "نصيب أرض شقة فاخرة على النيل — نفس النطاق"},
+                {"num": 2, "location": "الزمالك - شارع الجيزة", "zone_id": "ZONE-CAI-ZAMALEK-01",
+                 "area_m2": 25, "offer_date": "01/2026", "total_price": 1_800_000,
+                 "price_per_m2": 72_000, "location_factor": 1.02, "area_factor": 1.01,
+                 "time_factor": 1.00,
+                 "notes": "نطاق الزمالك الجنوبي — تسوية موقع +2%"},
+                {"num": 3, "location": "مدينة نصر - المنطقة الثامنة",
+                 "zone_id": "ZONE-CAI-NASR-08", "area_m2": 38,
+                 "offer_date": "03/2026", "total_price": 380_000, "price_per_m2": 10_000,
+                 "location_factor": 1.00, "area_factor": 1.01, "time_factor": 1.00,
+                 "notes": "خارج النطاق — مستبعد جغرافيًا"},
+            ]
         else:
+            # Generic QA (Nasr City / rental scenario)
             _LAND_COMPS_ALL = [
                 {"num": 1, "location": "مدينة نصر - المنطقة الثامنة",
                  "zone_id": "ZONE-CAI-NASR-08", "area_m2": 38,
@@ -521,13 +611,18 @@ def _build_method_context(payload: dict) -> dict:
         avg_land_price_str = f"{avg_land_price:,.0f} ج.م/م²"
         land_value_by_sales_str = f"{land_value_by_sales:,} ج.م"
 
-        # Land extraction method — calibrated to subject zone
+        # Land extraction method — calibrated to subject zone.
+        # replacement_cost_new is taken from the pre-computed cost breakdown total
+        # (_qa_repl_cost_new) to ensure طريقة التكلفة and قيمة الأرض use the same basis.
+        replacement_cost_new = _qa_repl_cost_new if _qa_repl_cost_new else (
+            810_000 if _qa_is_maadi else 720_000
+        )
         if _qa_is_maadi:
-            improved_indication  = 3_600_000
-            replacement_cost_new = 810_000
+            improved_indication = 3_600_000
+        elif _qa_is_zamalek:
+            improved_indication = 5_300_000
         else:
-            improved_indication  = 3_055_500
-            replacement_cost_new = 720_000
+            improved_indication = 3_055_500
         depreciation_pct     = 25.0
         depr_amount          = replacement_cost_new * depreciation_pct / 100
         depr_imprv_value     = replacement_cost_new - depr_amount
@@ -858,40 +953,161 @@ def _build_method_context(payload: dict) -> dict:
 
     # ── AVM regression-style analysis (QA simulation) ─────────────────────
     if is_qa:
+        # Base price per m² and district label depend on scenario
+        if _qa_is_zamalek:
+            _avm_base_ppm2   = 35_000
+            _avm_loc_label   = "الزمالك — سوق الشقق الفاخرة"
+            _avm_cond_factor = 1.02
+            _avm_cond_note   = "جيد جداً — تشطيب فاخر"
+            _avm_fin_factor  = 1.05
+            _avm_fin_note    = "تشطيب فاخر"
+        elif _qa_is_maadi:
+            _avm_base_ppm2   = 25_000
+            _avm_loc_label   = "المعادي — سوق الشقق السكنية"
+            _avm_cond_factor = 1.00
+            _avm_cond_note   = "جيد جداً"
+            _avm_fin_factor  = 1.03
+            _avm_fin_note    = "تشطيب فاخر"
+        else:
+            _avm_base_ppm2   = 25_000
+            _avm_loc_label   = "مدينة نصر — المنطقة الثامنة"
+            _avm_cond_factor = 0.97
+            _avm_cond_note   = "جيد بدلاً من ممتاز"
+            _avm_fin_factor  = 1.05
+            _avm_fin_note    = "تشطيب متوسط+"
+        _avm_base_val    = _avm_base_ppm2 * area
+        _avm_cond_effect = _avm_base_val * (_avm_cond_factor - 1)
+        _avm_fin_effect  = _avm_base_val * _avm_cond_factor * (_avm_fin_factor - 1)
+        _avm_predicted   = int(_avm_base_val * _avm_cond_factor * _avm_fin_factor * 0.98 * 1.005)
+        _avm_residual    = int(_avm_base_val * 0.013)
+        _avm_final       = _avm_predicted + _avm_residual
+        _avm_band_low    = int(_avm_final * 0.90)
+        _avm_band_high   = int(_avm_final * 1.10)
         avm_regression = [
-            {"feature": "المساحة (م²)",              "value": "120",    "coeff": "25,000 ج.م/م²", "effect": "3,000,000 ج.م",   "notes": "القيمة الأساسية × المساحة"},
-            {"feature": "معامل الموقع",               "value": "1.00",   "coeff": "+0.00%",         "effect": "+0 ج.م",           "notes": "مدينة نصر الثامنة"},
-            {"feature": "معامل الحالة",               "value": "0.97",   "coeff": "−3.00%",         "effect": "−90,000 ج.م",      "notes": "جيد بدلاً من ممتاز"},
-            {"feature": "معامل التشطيب",              "value": "1.05",   "coeff": "+5.00%",         "effect": "+150,000 ج.م",     "notes": "تشطيب متوسط+"},
-            {"feature": "معامل الدور/الإطلالة",        "value": "1.00",   "coeff": "+0.00%",         "effect": "+0 ج.م",           "notes": "دور متوسط"},
-            {"feature": "معامل العمر/الإهلاك",         "value": "0.98",   "coeff": "−2.00%",         "effect": "−60,000 ج.م",      "notes": "عمر فعلي 8 سنوات"},
-            {"feature": "معامل عرض الشارع/الواجهة",    "value": "1.005",  "coeff": "+0.50%",         "effect": "+15,000 ج.م",      "notes": "شارع 12م — واجهة 8م"},
+            {"feature": "المساحة (م²)",               "value": str(int(area)),
+             "coeff": f"{_avm_base_ppm2:,} ج.م/م²",
+             "effect": f"{_avm_base_val:,.0f} ج.م",
+             "notes": "القيمة الأساسية × المساحة"},
+            {"feature": "معامل الموقع",                "value": "1.00",   "coeff": "+0.00%",
+             "effect": "+0 ج.م",   "notes": _avm_loc_label},
+            {"feature": "معامل الحالة",                "value": str(_avm_cond_factor),
+             "coeff": f"{(_avm_cond_factor-1)*100:+.2f}%",
+             "effect": f"{_avm_cond_effect:+,.0f} ج.م", "notes": _avm_cond_note},
+            {"feature": "معامل التشطيب",               "value": str(_avm_fin_factor),
+             "coeff": f"{(_avm_fin_factor-1)*100:+.2f}%",
+             "effect": f"{_avm_fin_effect:+,.0f} ج.م", "notes": _avm_fin_note},
+            {"feature": "معامل الدور/الإطلالة",         "value": "1.00",   "coeff": "+0.00%",
+             "effect": "+0 ج.م",   "notes": "دور متوسط"},
+            {"feature": "معامل العمر/الإهلاك",          "value": "0.98",   "coeff": "−2.00%",
+             "effect": f"{int(_avm_base_val * _avm_cond_factor * _avm_fin_factor * -0.02):+,} ج.م",
+             "notes": "عمر فعلي 8 سنوات"},
+            {"feature": "معامل عرض الشارع/الواجهة",     "value": "1.005",  "coeff": "+0.50%",
+             "effect": f"{int(_avm_base_val * _avm_cond_factor * _avm_fin_factor * 0.98 * 0.005):+,} ج.م",
+             "notes": "شارع 12م — واجهة 8م"},
         ]
-        avm_reg_base_value      = "3,000,000 ج.م"
+        avm_reg_base_value      = f"{_avm_base_val:,.0f} ج.م"
         avm_reg_coeff_total     = "+0.50%"
-        avm_reg_predicted       = "3,015,000 ج.م"
-        avm_reg_residual        = "+40,500 ج.م (تعديل خبير)"
-        avm_reg_final           = "3,055,500 ج.م"
-        avm_reg_confidence_band = "2,750,000 — 3,350,000 ج.م"
+        avm_reg_predicted       = f"{_avm_predicted:,} ج.م"
+        avm_reg_residual        = f"+{_avm_residual:,} ج.م (تعديل خبير)"
+        avm_reg_final           = f"{_avm_final:,} ج.م"
+        avm_reg_confidence_band = f"{_avm_band_low:,} — {_avm_band_high:,} ج.م"
         avm_reg_limitations     = (
             "تحليل AVM في هذه النسخة يستخدم محاكاة داخلية/مدخلات النظام لأغراض المراجعة "
             "ولا يمثل نموذجًا مدربًا على بيانات سوقية حقيقية ما لم يتم تفعيل Source Registry/Qdrant لاحقًا. "
             "لا يتضمن استرجاعًا من الإنترنت أو Qdrant."
         )
 
-    # ── Price Source Spine (QA simulation) ───────────────────────────────
+    # ── Price Source Spine (QA simulation) — scenario-specific ──────────────
     if is_qa:
+        # Select price source parameters per scenario
+        if _qa_is_zamalek:
+            _psd_zone1       = "ZONE-CAI-ZAMALEK-01"
+            _psd_dist1       = "الزمالك، القاهرة"
+            _psd_ppm2_1      = "35,000 ج.م/م²"
+            _psd_val1        = "5,250,000 ج.م"
+            _psd_label1      = "تقييم جماعي — حي الزمالك Q1/2026"
+            _psd_zone2       = "ZONE-CAI-ZAMALEK-01"
+            _psd_dist2       = "الزمالك، القاهرة"
+            _psd_ppm2_2      = "36,000 ج.م/م²"
+            _psd_val2        = "5,040,000 ج.م"
+            _psd_label2      = "مقارن يدوي — الزمالك شارع أبو الفدا"
+            _psd_zone3       = "ZONE-CAI-ZAMALEK-01"
+            _psd_dist3       = "الزمالك، القاهرة"
+            _psd_ppm2_3      = "35,500 ج.م/م²"
+            _psd_val3        = "5,325,000 ج.م"
+            _psd_label3      = "سعر خبير — تقدير الزمالك الفاخر"
+            _psd_land_zone   = "ZONE-CAI-ZAMALEK-01"
+            _psd_land_dist   = "الزمالك، القاهرة"
+            _psd_land_ppm2   = "75,000 ج.م/م²"
+            _psd_land_val    = "2,250,000 ج.م"
+            _psd_land_label  = "مقارن أرض — الزمالك شارع النيل"
+            _psd_rent_zone   = "ZONE-CAI-ZAMALEK-01"
+            _psd_rent_dist   = "الزمالك، القاهرة"
+            _psd_rent_val    = "12,000 ج.م/شهر"
+            _psd_rent_label  = "مؤشر إيجاري — شقة فاخرة الزمالك"
+        elif _qa_is_maadi:
+            _psd_zone1       = "ZONE-CAI-MAADI-01"
+            _psd_dist1       = "المعادي، القاهرة"
+            _psd_ppm2_1      = "25,000 ج.م/م²"
+            _psd_val1        = "4,500,000 ج.م"
+            _psd_label1      = "تقييم جماعي — حي المعادي Q1/2026"
+            _psd_zone2       = "ZONE-CAI-NASR-08"
+            _psd_dist2       = "مدينة نصر، القاهرة"
+            _psd_ppm2_2      = "25,000 ج.م/م²"
+            _psd_val2        = "2,875,000 ج.م"
+            _psd_label2      = "مقارن يدوي — مدينة نصر المنطقة الثامنة"
+            _psd_zone3       = "ZONE-CAI-MAADI-01"
+            _psd_dist3       = "المعادي، القاهرة"
+            _psd_ppm2_3      = "25,000 ج.م/م²"
+            _psd_val3        = "4,500,000 ج.م"
+            _psd_label3      = "سعر خبير — تقدير محلل المعادي"
+            _psd_land_zone   = "ZONE-CAI-NASR-08"
+            _psd_land_dist   = "مدينة نصر، القاهرة"
+            _psd_land_ppm2   = "10,000 ج.م/م²"
+            _psd_land_val    = "380,000 ج.م"
+            _psd_land_label  = "مقارن أرض — مدينة نصر المنطقة الثامنة"
+            _psd_rent_zone   = "ZONE-CAI-MAADI-01"
+            _psd_rent_dist   = "المعادي، القاهرة"
+            _psd_rent_val    = "9,000 ج.م/شهر"
+            _psd_rent_label  = "مؤشر إيجاري — المعادي/مدينة نصر"
+        else:
+            # Nasr City / generic rental QA
+            _psd_zone1       = "ZONE-CAI-NASR-08"
+            _psd_dist1       = "مدينة نصر، القاهرة"
+            _psd_ppm2_1      = "25,000 ج.م/م²"
+            _psd_val1        = "3,000,000 ج.م"
+            _psd_label1      = "تقييم جماعي — حي مدينة نصر Q1/2026"
+            _psd_zone2       = "ZONE-CAI-NASR-08"
+            _psd_dist2       = "مدينة نصر، القاهرة"
+            _psd_ppm2_2      = "25,000 ج.م/م²"
+            _psd_val2        = "2,875,000 ج.م"
+            _psd_label2      = "مقارن يدوي — مدينة نصر المنطقة الثامنة"
+            _psd_zone3       = "ZONE-CAI-NASR-08"
+            _psd_dist3       = "مدينة نصر، القاهرة"
+            _psd_ppm2_3      = "25,000 ج.م/م²"
+            _psd_val3        = "3,000,000 ج.م"
+            _psd_label3      = "سعر خبير — مدينة نصر"
+            _psd_land_zone   = "ZONE-CAI-NASR-08"
+            _psd_land_dist   = "مدينة نصر، القاهرة"
+            _psd_land_ppm2   = "10,000 ج.م/م²"
+            _psd_land_val    = "380,000 ج.م"
+            _psd_land_label  = "مقارن أرض — مدينة نصر المنطقة الثامنة"
+            _psd_rent_zone   = "ZONE-CAI-NASR-08"
+            _psd_rent_dist   = "مدينة نصر، القاهرة"
+            _psd_rent_val    = "9,000 ج.م/شهر"
+            _psd_rent_label  = "مؤشر إيجاري — مدينة نصر"
+
         price_source_data = [
             {
                 "source_registry_id": "SRC-QA-001",
                 "source_type":        "mass_appraisal_zone",
-                "source_label":       "تقييم جماعي — حي المعادي Q1/2026",
+                "source_label":       _psd_label1,
                 "source_method":      "AVM / تقييم جماعي",
-                "zone_id":            "ZONE-CAI-MAADI-01",
-                "district":           "المعادي، القاهرة",
+                "zone_id":            _psd_zone1,
+                "district":           _psd_dist1,
                 "property_class":     "شقة سكنية",
-                "price_per_m2":       "25,000 ج.م/م²",
-                "source_value":       "4,500,000 ج.م",
+                "price_per_m2":       _psd_ppm2_1,
+                "source_value":       _psd_val1,
                 "source_date":        "01/2026",
                 "source_confidence":  "متوسطة",
                 "source_status":      "محاكاة QA",
@@ -901,13 +1117,13 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-002",
                 "source_type":        "manual_comparable",
-                "source_label":       "مقارن يدوي — مدينة نصر المنطقة الثامنة",
+                "source_label":       _psd_label2,
                 "source_method":      "مقارنة البيوع",
-                "zone_id":            "ZONE-CAI-NASR-08",
-                "district":           "مدينة نصر، القاهرة",
+                "zone_id":            _psd_zone2,
+                "district":           _psd_dist2,
                 "property_class":     "شقة سكنية",
-                "price_per_m2":       "25,000 ج.م/م²",
-                "source_value":       "2,875,000 ج.م",
+                "price_per_m2":       _psd_ppm2_2,
+                "source_value":       _psd_val2,
                 "source_date":        "03/2026",
                 "source_confidence":  "عالية",
                 "source_status":      "محاكاة QA",
@@ -917,13 +1133,13 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-003",
                 "source_type":        "expert_entered_price",
-                "source_label":       "سعر خبير — تقدير محلل داخلي",
+                "source_label":       _psd_label3,
                 "source_method":      "تقدير الخبير",
-                "zone_id":            "ZONE-CAI-MAADI-01",
-                "district":           "المعادي، القاهرة",
+                "zone_id":            _psd_zone3,
+                "district":           _psd_dist3,
                 "property_class":     "شقة سكنية",
-                "price_per_m2":       "25,000 ج.م/م²",
-                "source_value":       "4,500,000 ج.م",
+                "price_per_m2":       _psd_ppm2_3,
+                "source_value":       _psd_val3,
                 "source_date":        "06/2026",
                 "source_confidence":  "عالية",
                 "source_status":      "محاكاة QA",
@@ -933,13 +1149,13 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-004",
                 "source_type":        "land_comparable",
-                "source_label":       "مقارن أرض — مدينة نصر المنطقة الثامنة",
+                "source_label":       _psd_land_label,
                 "source_method":      "قيمة الأرض",
-                "zone_id":            "ZONE-CAI-NASR-08",
-                "district":           "مدينة نصر، القاهرة",
+                "zone_id":            _psd_land_zone,
+                "district":           _psd_land_dist,
                 "property_class":     "أرض سكنية",
-                "price_per_m2":       "10,000 ج.م/م²",
-                "source_value":       "380,000 ج.م",
+                "price_per_m2":       _psd_land_ppm2,
+                "source_value":       _psd_land_val,
                 "source_date":        "03/2026",
                 "source_confidence":  "عالية",
                 "source_status":      "محاكاة QA",
@@ -949,13 +1165,13 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-005",
                 "source_type":        "rental_income_indication",
-                "source_label":       "مؤشر إيجاري — المعادي/مدينة نصر",
+                "source_label":       _psd_rent_label,
                 "source_method":      "طريقة الدخل",
-                "zone_id":            "ZONE-CAI-MAADI-01",
-                "district":           "المعادي، القاهرة",
+                "zone_id":            _psd_rent_zone,
+                "district":           _psd_rent_dist,
                 "property_class":     "شقة سكنية",
                 "price_per_m2":       "—",
-                "source_value":       "9,000 ج.م/شهر",
+                "source_value":       _psd_rent_val,
                 "source_date":        "06/2026",
                 "source_confidence":  "متوسطة",
                 "source_status":      "محاكاة QA",
@@ -975,14 +1191,33 @@ def _build_method_context(payload: dict) -> dict:
                 else f"نطاق {_src_zone} يختلف عن نطاق العقار {subject_zone_id}"
             )
 
+        # Mass appraisal bridge — zone and price calibrated to scenario
+        if _qa_is_zamalek:
+            _mass_zone   = "ZONE-CAI-ZAMALEK-01"
+            _mass_ppm2   = "35,000 ج.م/م²"
+            _mass_val    = f"{int(35_000 * area):,} ج.م"
+            _mass_band   = f"{int(35_000*0.90):,} — {int(35_000*1.10):,} ج.م/م²"
+            _mass_cover  = "28 عقار في نطاق 1 كم — منطقة الزمالك"
+        elif _qa_is_maadi:
+            _mass_zone   = "ZONE-CAI-MAADI-01"
+            _mass_ppm2   = "25,000 ج.م/م²"
+            _mass_val    = f"{int(25_000 * area):,} ج.م"
+            _mass_band   = "22,500 — 27,500 ج.م/م²"
+            _mass_cover  = "35 عقار في نطاق 1 كم"
+        else:
+            _mass_zone   = "ZONE-CAI-NASR-08"
+            _mass_ppm2   = "25,000 ج.م/م²"
+            _mass_val    = f"{int(25_000 * area):,} ج.م"
+            _mass_band   = "22,500 — 27,500 ج.م/م²"
+            _mass_cover  = "42 عقار في نطاق 1 كم — مدينة نصر"
         mass_appraisal_bridge = {
-            "mass_run_id":               "MASS-RUN-QA-2026-001",
-            "mass_zone_id":              "ZONE-CAI-MAADI-01",
-            "mass_average_price_per_m2": "25,000 ج.م/م²",
-            "mass_model_value":          "4,500,000 ج.م",
-            "mass_confidence_range":     "22,500 — 27,500 ج.م/م²",
+            "mass_run_id":               f"MASS-RUN-QA-2026-{_mass_zone[-3:]}",
+            "mass_zone_id":              _mass_zone,
+            "mass_average_price_per_m2": _mass_ppm2,
+            "mass_model_value":          _mass_val,
+            "mass_confidence_range":     _mass_band,
             "mass_data_quality_score":   "72%",
-            "mass_source_coverage":      "35 عقار في نطاق 1 كم",
+            "mass_source_coverage":      _mass_cover,
             "mass_appraisal_status": (
                 "محاكاة QA — لم يتم ربط Source Registry/Qdrant فعلياً في هذه المرحلة."
             ),
@@ -1011,9 +1246,9 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-R02",
                 "source_type":        "lease_offer",
-                "source_label":       "عرض إيجار — مدينة نصر السابعة — معلن",
+                "source_label":       "عرض إيجار — مدينة نصر، المنطقة الثامنة — معلن",
                 "source_method":      "مقارنة إيجارية",
-                "zone_id":            "ZONE-CAI-NASR-07",
+                "zone_id":            "ZONE-CAI-NASR-08",
                 "district":           "مدينة نصر، القاهرة",
                 "property_class":     "شقة سكنية",
                 "price_per_m2":       "80 ج.م/م²/شهر",
@@ -1027,9 +1262,9 @@ def _build_method_context(payload: dict) -> dict:
             {
                 "source_registry_id": "SRC-QA-R03",
                 "source_type":        "lease_contract",
-                "source_label":       "عقد إيجار — مدينة نصر التاسعة — منفذ",
+                "source_label":       "عقد إيجار — مدينة نصر، المنطقة الثامنة — منفذ",
                 "source_method":      "مقارنة إيجارية",
-                "zone_id":            "ZONE-CAI-NASR-09",
+                "zone_id":            "ZONE-CAI-NASR-08",
                 "district":           "مدينة نصر، القاهرة",
                 "property_class":     "شقة سكنية",
                 "price_per_m2":       "70 ج.م/م²/شهر",
@@ -1501,6 +1736,137 @@ def _build_method_context(payload: dict) -> dict:
         "cost_area_basis":          f"{area:.0f} م² (مساحة العقار من المدخلات)",
         # ── ESG financial linkage (Part H) ────────────────────────────────
         **esg_context,
+        # ── Scenario integrity metadata ────────────────────────────────────
+        "scenario_subject_area":    area,
+        "scenario_subject_zone_id": subject_zone_id,
+        "scenario_subject_district": subject_district,
     }
     return result
+
+
+# ── Suspicious area values (leaked from test counts or unrelated numbers) ────
+_SUSPICIOUS_AREA_VALUES: frozenset = frozenset({
+    2120, 7241, 7342, 247, 313, 401, 700, 3766,
+})
+
+
+def _is_suspicious_area(v: float) -> bool:
+    """Return True if the area value looks like a leaked test-count or suite number."""
+    return int(v) in _SUSPICIOUS_AREA_VALUES
+
+
+def _validate_scenario_data_integrity(method_context: dict) -> list[str]:
+    """
+    Validate that a built method_context has internally consistent scenario data.
+
+    Returns a list of error strings. Empty list means all checks pass.
+
+    Checks:
+    1. Subject area is not a suspicious test-count value.
+    2. Included sales comparables share the subject zone_id.
+    3. Included land comparables share the subject zone_id.
+    4. Included AVM/price sources share the subject zone_id.
+    5. Mass appraisal bridge zone matches subject zone.
+    6. Sales comparison value is non-zero for market QA.
+    7. Rental comparables (if present) share the subject zone_id for included rows.
+    8. AVM regression area value matches scenario area.
+    """
+    errors: list[str] = []
+
+    subject_area     = float(method_context.get("scenario_subject_area") or 0)
+    subject_zone_id  = str(method_context.get("scenario_subject_zone_id") or "")
+    subject_district = str(method_context.get("scenario_subject_district") or "")
+    is_rental        = bool(method_context.get("is_rental_purpose"))
+
+    # 1. Area guard
+    if subject_area and _is_suspicious_area(subject_area):
+        errors.append(
+            f"AREA_LEAK: subject_area={int(subject_area)} matches a known test-count value "
+            f"({sorted(_SUSPICIOUS_AREA_VALUES)}). Verify the payload area field."
+        )
+
+    # 2. Included sales comparables geography
+    for comp in method_context.get("comparables", []):
+        geo = comp.get("geo_match_status", "مطابق")
+        comp_zone = comp.get("comparable_zone_id", "")
+        if geo not in ("خارج النطاق",) and comp_zone and subject_zone_id:
+            if comp_zone != subject_zone_id:
+                errors.append(
+                    f"COMP_GEO_MISMATCH: included comparable '{comp.get('location')}' "
+                    f"zone={comp_zone} != subject zone={subject_zone_id}"
+                )
+
+    # 3. Included land comparables geography
+    for lc in method_context.get("land_comps", []):
+        geo = lc.get("geo_match_status", "مطابق")
+        lc_zone = lc.get("zone_id", "")
+        if geo not in ("خارج النطاق",) and lc_zone and subject_zone_id:
+            if lc_zone != subject_zone_id:
+                errors.append(
+                    f"LAND_COMP_GEO_MISMATCH: included land comp '{lc.get('location')}' "
+                    f"zone={lc_zone} != subject zone={subject_zone_id}"
+                )
+
+    # 4. Included price sources geography
+    for src in method_context.get("price_source_data", []):
+        geo_use = src.get("geo_use_status", "مُدرج")
+        src_zone = src.get("zone_id", "")
+        if geo_use not in ("مستبعد جغرافيًا",) and src_zone and subject_zone_id:
+            if src_zone != subject_zone_id:
+                errors.append(
+                    f"PRICE_SOURCE_GEO_MISMATCH: included source '{src.get('source_registry_id')}' "
+                    f"zone={src_zone} != subject zone={subject_zone_id}"
+                )
+
+    # 5. Mass appraisal bridge zone
+    mass_zone = method_context.get("mass_appraisal_bridge", {}).get("mass_zone_id", "")
+    if mass_zone and subject_zone_id and mass_zone != subject_zone_id:
+        errors.append(
+            f"MASS_APPRAISAL_ZONE_MISMATCH: mass_zone_id={mass_zone} "
+            f"!= subject_zone_id={subject_zone_id}"
+        )
+
+    # 6. Sales comparison value non-zero for non-rental market QA
+    if not is_rental:
+        sales_str = str(method_context.get("sales_from_comps") or "")
+        sales_num = 0.0
+        try:
+            sales_num = float(
+                sales_str.replace(",", "").replace(" ج.م", "").strip()
+            ) if sales_str else 0.0
+        except (ValueError, TypeError):
+            pass
+        if sales_num == 0:
+            errors.append(
+                "SALES_COMP_ZERO: sales_from_comps is 0 or empty for a non-rental market scenario. "
+                "Check that sales comparables have valid price_per_m2 values."
+            )
+
+    # 7. Included rental comparables geography
+    rental_ctx = method_context.get("rental_value_context", {})
+    for rc in rental_ctx.get("rental_comparables", []):
+        geo = rc.get("geo_match_status", "مطابق")
+        rc_zone = rc.get("zone_id", "")
+        if geo not in ("خارج النطاق",) and rc_zone and subject_zone_id:
+            if rc_zone != subject_zone_id:
+                errors.append(
+                    f"RENTAL_COMP_GEO_MISMATCH: included rental comp '{rc.get('location')}' "
+                    f"zone={rc_zone} != subject zone={subject_zone_id}"
+                )
+
+    # 8. AVM regression area consistency
+    avm_rows = method_context.get("avm_regression", [])
+    for row in avm_rows:
+        if "مساحة" in str(row.get("feature", "")):
+            try:
+                avm_area = float(str(row.get("value", "0")).replace(",", ""))
+                if subject_area and abs(avm_area - subject_area) > 0.01:
+                    errors.append(
+                        f"AVM_AREA_MISMATCH: AVM regression area={avm_area} "
+                        f"!= scenario area={subject_area}"
+                    )
+            except (ValueError, TypeError):
+                pass
+
+    return errors
 

@@ -3887,3 +3887,306 @@ def test_SRB246_simple_valuation_draft_has_svg_map_placeholder():
         "simple_valuation_draft.html SVG missing viewBox attribute"
     assert "latitude" in content, \
         "simple_valuation_draft.html SVG map missing latitude template variable reference"
+
+
+# ── SRB247-SRB262: Scenario Data Integrity (Session 4 Phase 2) ──────────────
+
+_QA_ZAMALEK_PAYLOAD = {
+    "property_type": "شقة سكنية", "country": "مصر",
+    "region": "القاهرة", "city": "القاهرة",
+    "district": "الزمالك", "zone_id": "ZONE-CAI-ZAMALEK-01",
+    "sub_market": "سوق الزمالك الفرعي",
+    "area": 150, "land_share_area": 28,
+    "condition": "جيد جدًا", "finishing_level": "فاخر",
+    "purpose": "القيمة السوقية",
+    "valuation_date": "2026-06-25",
+    "income_monthly_rent": 12_000, "income_cap_rate": 4.2,
+    "estimated_value": 5_200_000,
+    "_qa_simulation": True,
+}
+
+_QA_RENTAL_NASR_PAYLOAD = {
+    "property_type": "شقة سكنية", "country": "مصر",
+    "region": "القاهرة", "city": "القاهرة",
+    "district": "مدينة نصر - المنطقة الثامنة",
+    "zone_id": "ZONE-CAI-NASR-08",
+    "sub_market": "سوق مدينة نصر الفرعي",
+    "area": 120, "land_share_area": 20,
+    "condition": "جيدة", "finishing_level": "متوسط",
+    "purpose": "القيمة الإيجارية",
+    "valuation_date": "2024-06-30",
+    "final_monthly_rental_value": 9_500,
+    "final_annual_rental_value": 114_000,
+    "estimated_value": 0,
+    "_qa_simulation": True,
+}
+
+_SUSPICIOUS_AREA_SET = frozenset({2120, 7241, 7342, 247, 313, 401, 700, 3766})
+
+
+def test_SRB247_rental_qa_area_is_120_in_method_context():
+    """SRB247 rental_nasr_city_qa: scenario_subject_area == 120 in method context."""
+    mctx = _srr._build_method_context(_QA_RENTAL_NASR_PAYLOAD)
+    area = mctx.get("scenario_subject_area")
+    assert area is not None, "method context missing scenario_subject_area"
+    assert float(area) == 120.0, \
+        f"rental QA area mismatch: expected 120, got {area}"
+
+
+def test_SRB248_rental_qa_area_not_2120_anywhere_in_context():
+    """SRB248 rental_nasr_city_qa: suspicious area 2120 must not appear anywhere in context."""
+    mctx = _srr._build_method_context(_QA_RENTAL_NASR_PAYLOAD)
+
+    def _search(obj, path=""):
+        bad = []
+        if isinstance(obj, (int, float)):
+            if int(obj) == 2120:
+                bad.append(f"{path}={obj}")
+        elif isinstance(obj, str):
+            if "2120" in obj:
+                bad.append(f"{path}={obj!r}")
+        elif isinstance(obj, dict):
+            for k, v in obj.items():
+                bad.extend(_search(v, f"{path}.{k}"))
+        elif isinstance(obj, (list, tuple)):
+            for i, v in enumerate(obj):
+                bad.extend(_search(v, f"{path}[{i}]"))
+        return bad
+
+    hits = _search(mctx)
+    assert not hits, \
+        f"Value 2120 (rental area leakage) found in method context at: {hits[:5]}"
+
+
+def test_SRB249_market_qa_area_is_150_in_method_context():
+    """SRB249 market_zamalek_qa: scenario_subject_area == 150 in method context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    area = mctx.get("scenario_subject_area")
+    assert area is not None, "method context missing scenario_subject_area"
+    assert float(area) == 150.0, \
+        f"market Zamalek area mismatch: expected 150, got {area}"
+
+
+def test_SRB250_market_qa_district_is_zamalek():
+    """SRB250 market_zamalek_qa: subject district == الزمالك in method context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    district = str(mctx.get("scenario_subject_district") or "")
+    assert "زمالك" in district, \
+        f"market scenario district should be الزمالك, got {district!r}"
+    assert "نصر" not in district, \
+        f"market Zamalek district should NOT contain نصر, got {district!r}"
+
+
+def test_SRB251_market_included_sales_comps_use_zamalek_zone():
+    """SRB251 market_zamalek_qa: all included sales comparables use ZONE-CAI-ZAMALEK-01."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    comps = mctx.get("comparables", [])
+    assert comps, "comparables is empty for Zamalek scenario"
+    included = [
+        c for c in comps
+        if "خارج النطاق" not in str(c.get("geo_match_status", ""))
+        and "مستبعد" not in str(c.get("inclusion", ""))
+    ]
+    assert included, "No included sales comparables found for Zamalek scenario"
+    for comp in included:
+        zone = comp.get("comparable_zone_id", "")
+        assert zone == "ZONE-CAI-ZAMALEK-01", \
+            f"Included comparable in Zamalek scenario has wrong zone: {zone!r} — {comp.get('location','')!r}"
+
+
+def test_SRB252_market_nasr_city_comps_are_excluded():
+    """SRB252 market_zamalek_qa: Nasr City comparables are excluded with geo marker."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    comps = mctx.get("comparables", [])
+    nasr_comps = [c for c in comps if "نصر" in str(c.get("location", ""))]
+    assert nasr_comps, \
+        "Expected at least one Nasr City comparable row to be present (excluded) in Zamalek scenario"
+    for comp in nasr_comps:
+        geo_status = str(comp.get("geo_match_status", ""))
+        inclusion  = str(comp.get("inclusion", ""))
+        excluded = "خارج النطاق" in geo_status or "مستبعد" in inclusion
+        assert excluded, \
+            f"Nasr City comparable must be excluded in Zamalek scenario: {comp.get('location')!r} — geo={geo_status!r}, inclusion={inclusion!r}"
+
+
+def test_SRB253_market_avm_sources_use_zamalek_zone():
+    """SRB253 market_zamalek_qa: AVM price sources use Zamalek zone or are marked excluded."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sources = mctx.get("price_source_data", [])
+    assert sources, "price_source_data empty for Zamalek scenario"
+    for src in sources:
+        zone = str(src.get("source_zone_id") or src.get("zone_id") or "")
+        use_status = str(src.get("geo_use_status") or "")
+        if "مُدرج" in use_status or ("مستبعد" not in use_status and zone):
+            assert zone == "ZONE-CAI-ZAMALEK-01" or "مستبعد" in use_status, \
+                f"Included AVM source in Zamalek scenario has unexpected zone: {zone!r}"
+
+
+def test_SRB254_market_land_comps_use_zamalek_zone():
+    """SRB254 market_zamalek_qa: land comparables use ZONE-CAI-ZAMALEK-01 or are excluded."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    land_comps = mctx.get("land_comps", [])
+    if not land_comps:
+        land_comps = mctx.get("land_extraction_comps", [])
+    assert land_comps, "No land comparables found for Zamalek scenario"
+    for comp in land_comps:
+        zone       = str(comp.get("zone_id") or comp.get("comparable_zone_id") or "")
+        geo_status = str(comp.get("geo_match_status", ""))
+        excluded   = "خارج النطاق" in geo_status or "مستبعد" in str(comp.get("inclusion", ""))
+        if not excluded:
+            assert zone == "ZONE-CAI-ZAMALEK-01", \
+                f"Included land comp in Zamalek scenario has wrong zone: {zone!r}"
+
+
+def test_SRB255_replacement_cost_consistent_between_cost_and_land():
+    """SRB255 market_zamalek_qa: replacement_cost_new in cost section == value used in land extraction."""
+    import re as _re
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+
+    def _parse_num(v):
+        if v is None:
+            return None
+        m = _re.search(r'[\d,]+(?:\.\d+)?', str(v))
+        if m:
+            try:
+                return float(m.group().replace(",", ""))
+            except ValueError:
+                return None
+        return None
+
+    # extr_replacement_cost_new (land extraction) and cost_replacement_total (cost approach)
+    land_rcn = _parse_num(mctx.get("extr_replacement_cost_new"))
+    cost_rcn = _parse_num(mctx.get("cost_replacement_total"))
+
+    assert land_rcn is not None, "extr_replacement_cost_new missing from Zamalek context"
+    assert cost_rcn is not None, "cost_replacement_total missing from Zamalek context"
+    assert abs(land_rcn - cost_rcn) < 1, \
+        f"replacement_cost_new mismatch: extr_replacement_cost_new={land_rcn}, cost_replacement_total={cost_rcn}"
+
+
+def test_SRB256_reconciliation_references_method_sheets():
+    """SRB256 market_zamalek_qa: reconciliation/dashboard references method sheet values."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    recon = mctx.get("reconciliation_summary") or mctx.get("reconciliation")
+    sales_method = mctx.get("sales_comparison_value") or mctx.get("comparable_indicated_value")
+    if recon and isinstance(recon, dict):
+        recon_sales = (recon.get("sales_comparison_value") or
+                       recon.get("sales_value") or
+                       recon.get("indicated_value_sales"))
+        if recon_sales and sales_method:
+            assert abs(float(str(recon_sales).replace(",", "")) -
+                       float(str(sales_method).replace(",", ""))) < 1, \
+                f"Reconciliation sales value {recon_sales} != method sheet {sales_method}"
+
+
+def test_SRB257_reconciliation_sales_value_nonzero_for_market_qa():
+    """SRB257 market_zamalek_qa: reconciliation/dashboard sales comparison value != 0."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    # sales_from_comps holds the indicated value from the sales comparison approach
+    indicated = (mctx.get("sales_from_comps") or
+                 mctx.get("comparable_indicated_value") or
+                 mctx.get("sales_comparison_value"))
+    assert indicated is not None, \
+        "No sales comparison indicated value in Zamalek market context (checked: sales_from_comps, comparable_indicated_value, sales_comparison_value)"
+    try:
+        val = float(str(indicated).replace(",", "").split()[0])
+    except (ValueError, TypeError):
+        val = 0
+    assert val > 0, \
+        f"Sales comparison indicated value must be > 0 for market QA; got {indicated!r}"
+
+
+def test_SRB258_no_suspicious_test_count_in_valuation_area_fields():
+    """SRB258 both QA scenarios: no suspicious test-count value in area fields of method context."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        area_keys = [
+            "scenario_subject_area", "area", "subject_area",
+            "gross_living_area", "total_area",
+        ]
+        for key in area_keys:
+            val = mctx.get(key)
+            if val is not None:
+                try:
+                    int_val = int(float(val))
+                    assert int_val not in _SUSPICIOUS_AREA_SET, \
+                        f"[{label}] Suspicious test-count {int_val} found in '{key}'"
+                except (ValueError, TypeError):
+                    pass
+
+
+def test_SRB259_integrity_validator_catches_area_mismatch():
+    """SRB259 _validate_scenario_data_integrity raises error when area is deliberately wrong."""
+    from core_engine.reporting_method_context import _validate_scenario_data_integrity
+
+    # Build a normal context then corrupt the area field to a suspicious value
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    tampered = dict(mctx)
+    tampered["scenario_subject_area"] = 2120  # deliberate leakage
+
+    errors = _validate_scenario_data_integrity(tampered)
+    has_area_leak = any("AREA" in e.upper() or "2120" in e for e in errors)
+    assert has_area_leak, \
+        f"Validator did not catch area=2120 leakage; returned errors: {errors}"
+
+
+def test_SRB260_scenario_integrity_v3_outputs_exist():
+    """SRB260 v3 output files exist in scenario_integrity_v3/ directory."""
+    import pathlib
+    out_dir = pathlib.Path(__file__).parent.parent / "instance" / "manual_review_outputs" / "scenario_integrity_v3"
+    required = [
+        "01_market_zamalek_preliminary_v3.pdf",
+        "02_market_zamalek_certified_v3.pdf",
+        "03_market_zamalek_workbook_v3.xlsx",
+        "04_rental_nasr_city_preliminary_v3.pdf",
+        "05_rental_nasr_city_certified_v3.pdf",
+        "06_rental_nasr_city_workbook_v3.xlsx",
+        "07_integrity_summary.json",
+    ]
+    missing = [f for f in required if not (out_dir / f).exists()]
+    assert not missing, \
+        f"v3 output files missing from {out_dir}: {missing}"
+
+
+def test_SRB261_no_qdrant_live_claim_in_qa_context():
+    """SRB261 both QA scenarios: method context does not claim live Qdrant was actively queried.
+
+    'Qdrant' may appear in disclaimer text saying it is NOT used;
+    what is prohibited is a positive ACTIVE-USE claim.
+    """
+    import json
+    # Positive-use claim phrases that would indicate live Qdrant/internet was hit
+    FORBIDDEN_ACTIVE_CLAIMS = [
+        "qdrant_connected: true",
+        "qdrant_active: true",
+        "live_retrieval: true",
+        "retrieved_from_qdrant",
+        "retrieved_from_internet",
+        "vector_db_live",
+    ]
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        # Check structured fields (not JSON-serialized text with disclaimer sentences)
+        for field in ["qdrant_connected", "live_retrieval_active", "vector_db_live"]:
+            val = mctx.get(field)
+            assert val is not True, \
+                f"[{label}] method context field '{field}' is True — live retrieval must not be active in QA"
+        raw = json.dumps(mctx, ensure_ascii=False, default=str).lower()
+        for claim in FORBIDDEN_ACTIVE_CLAIMS:
+            assert claim.lower() not in raw, \
+                f"[{label}] method context contains active Qdrant/live-retrieval claim: {claim!r}"
+
+
+def test_SRB262_no_external_map_api_url_in_qa_context():
+    """SRB262 both QA scenarios: method context does not reference external map API URLs."""
+    import json
+    forbidden_fragments = [
+        "maps.googleapis", "api.mapbox", "openstreetmap.org/tiles",
+        "tiles.stadiamaps", "maps.here.com", "map.baidu",
+    ]
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        raw = json.dumps(mctx, ensure_ascii=False, default=str)
+        for fragment in forbidden_fragments:
+            assert fragment not in raw, \
+                f"[{label}] method context references external map API URL: {fragment!r}"

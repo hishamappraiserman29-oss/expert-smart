@@ -495,7 +495,8 @@ def test_TAB34_get_expert_request_does_not_expose_internal_path(client):
     assert create_resp.status_code == 201
     req_id = create_resp.get_json()["request_id"]
 
-    get_resp = client.get(f"/api/tax-appeal/expert-requests/{req_id}")
+    # Detail endpoint is protected — auth required
+    get_resp = client.get(f"/api/tax-appeal/expert-requests/{req_id}", headers=_auth())
     assert get_resp.status_code == 200
     body_str = get_resp.data.decode("utf-8", errors="replace")
     # Must not expose internal file system paths
@@ -4768,3 +4769,371 @@ def test_TAB327_summary_json_has_required_fields():
         "summary must have missing_basis_date_count"
     assert summary.get("qdrant_ocr_internet_active") is False, \
         "qdrant_ocr_internet_active must be False"
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB328–TAB354 — Tax Appeal Expert Backoffice & Approval Workflow Tests
+# ════════════════════════════════════════════════════════════════════════════════
+
+_ER_PAYLOAD = {
+    **_ANNUAL_PAYLOAD_WITH_BASIS,
+    "taxpayer_name":  "محمود علي اختبار",
+    "taxpayer_phone": "01099887766",
+    "district":       "مصر الجديدة",
+    "property_type":  "فيلا سكنية",
+    "expected_saving": 9500,
+}
+
+
+def _create_er(client, extra=None) -> str:
+    """Helper: create an expert request and return request_id."""
+    payload = {**_ER_PAYLOAD, **(extra or {})}
+    resp = client.post(
+        "/api/tax-appeal/expert-request",
+        json=payload,
+        content_type="application/json",
+    )
+    assert resp.status_code == 201, f"Expected 201, got {resp.status_code}: {resp.data[:200]}"
+    return resp.get_json()["request_id"]
+
+
+# TAB328 — Creation starts draft_only
+def test_TAB328_expert_request_creation_starts_draft_only(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-request",
+        json=_ER_PAYLOAD,
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["approval_status"] == "draft_only"
+    assert body["request_id"].startswith("TAXER-")
+
+
+# TAB329 — Plural alias POST /api/tax-appeal/expert-requests also works
+def test_TAB329_plural_creation_alias_works(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests",
+        json=_ER_PAYLOAD,
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["approval_status"] == "draft_only"
+
+
+# TAB330 — Creation response does not expose internal paths
+def test_TAB330_creation_response_no_internal_paths(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-request",
+        json=_ER_PAYLOAD,
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    body_str = resp.data.decode("utf-8", errors="replace")
+    assert "instance" not in body_str or "tax_appeal_workbooks" not in body_str
+    assert ".xlsx" not in body_str
+    assert "payload_json" not in body_str
+
+
+# TAB331 — Creation response does not expose xlsx path
+def test_TAB331_creation_no_xlsx_path_in_response(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-request",
+        json=_ER_PAYLOAD,
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    body_str = resp.data.decode("utf-8", errors="replace")
+    assert ".xlsx" not in body_str
+
+
+# TAB332 — GET list without token returns 401
+def test_TAB332_list_without_token_returns_401(client):
+    resp = client.get("/api/tax-appeal/expert-requests")
+    assert resp.status_code == 401
+
+
+# TAB333 — GET detail without token returns 401
+def test_TAB333_detail_without_token_returns_401(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}")
+    assert resp.status_code == 401
+
+
+# TAB334 — GET workbook without token returns 401
+def test_TAB334_workbook_without_token_returns_401(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}/expert-workbook")
+    assert resp.status_code == 401
+
+
+# TAB335 — POST review without token returns 401
+def test_TAB335_review_without_token_returns_401(client):
+    rid = _create_er(client)
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "under_review"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# TAB336 — POST appeal-report without token returns 401
+def test_TAB336_appeal_report_generate_without_token_returns_401(client):
+    rid = _create_er(client)
+    resp = client.post(f"/api/tax-appeal/expert-requests/{rid}/appeal-report")
+    assert resp.status_code == 401
+
+
+# TAB337 — GET appeal-report without token returns 401
+def test_TAB337_appeal_report_download_without_token_returns_401(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}/appeal-report")
+    assert resp.status_code == 401
+
+
+# TAB338 — Authenticated list returns safe metadata
+def test_TAB338_authenticated_list_returns_safe_metadata(client):
+    _create_er(client)
+    resp = client.get("/api/tax-appeal/expert-requests", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "ok"
+    assert isinstance(body["requests"], list)
+    assert len(body["requests"]) >= 1
+    for r in body["requests"]:
+        assert "request_id" in r
+        assert "approval_status" in r
+        assert "payload_json" not in r
+
+
+# TAB339 — Authenticated detail includes tax_assessment_basis_date
+def test_TAB339_authenticated_detail_has_basis_date(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    req = body["request"]
+    # Either in top-level or in context
+    ctx = req.get("context", {})
+    has_it = (
+        req.get("tax_assessment_basis_date")
+        or ctx.get("tax_assessment_basis_date")
+    )
+    assert has_it, (
+        "Authenticated detail must include tax_assessment_basis_date. "
+        f"top-level: {req.get('tax_assessment_basis_date')!r}, "
+        f"context: {ctx.get('tax_assessment_basis_date')!r}"
+    )
+
+
+# TAB340 — Authenticated detail includes deadline_status
+def test_TAB340_authenticated_detail_has_deadline_status(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    req = body["request"]
+    ctx = req.get("context", {})
+    has_it = ctx.get("deadline_status") is not None
+    assert has_it, f"Detail context must include deadline_status. Got: {ctx!r}"
+
+
+# TAB341 — Authenticated detail has no internal paths
+def test_TAB341_authenticated_detail_no_internal_paths(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    body_str = resp.data.decode("utf-8", errors="replace")
+    assert "tax_appeal_workbooks" not in body_str
+    assert "payload_json" not in body_str
+
+
+# TAB342 — draft_only → under_review transition works
+def test_TAB342_draft_to_under_review_works(client):
+    rid = _create_er(client)
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "under_review"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["approval_status"] == "under_review"
+
+
+# TAB343 — under_review → needs_documents works
+def test_TAB343_under_review_to_needs_documents_works(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "needs_documents"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["approval_status"] == "needs_documents"
+
+
+# TAB344 — needs_documents → under_review works
+def test_TAB344_needs_documents_to_under_review_works(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "needs_documents"}, headers=_auth(), content_type="application/json")
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "under_review"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["approval_status"] == "under_review"
+
+
+# TAB345 — under_review → approved_pending_appeal_report works
+def test_TAB345_under_review_to_approved_pending_works(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "approved_pending_appeal_report"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["approval_status"] == "approved_pending_appeal_report"
+
+
+# TAB346 — Manual transition to appeal_report_generated is blocked before report generation
+def test_TAB346_manual_appeal_report_generated_is_blocked(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "approved_pending_appeal_report"}, headers=_auth(), content_type="application/json")
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/review",
+        json={"approval_status": "appeal_report_generated"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    # appeal_report_generated → set() in transitions — should be blocked
+    assert resp.status_code in (400, 422), (
+        f"Manual transition to appeal_report_generated must be blocked. Got {resp.status_code}"
+    )
+
+
+# TAB347 — Generate appeal report is blocked before approved_pending_appeal_report
+def test_TAB347_generate_report_blocked_before_approval(client):
+    rid = _create_er(client)
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/appeal-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422, (
+        f"Report generation must be blocked in draft_only status. Got {resp.status_code}"
+    )
+
+
+# TAB348 — Generate appeal report works after approved_pending_appeal_report
+def test_TAB348_generate_report_works_after_approval(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "approved_pending_appeal_report"}, headers=_auth(), content_type="application/json")
+    resp = client.post(
+        f"/api/tax-appeal/expert-requests/{rid}/appeal-report",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200, (
+        f"Report generation after approval must return 200. Got {resp.status_code}: {resp.data[:300]}"
+    )
+
+
+# TAB349 — After generation, approval_status = appeal_report_generated
+def test_TAB349_after_generation_status_is_appeal_report_generated(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "approved_pending_appeal_report"}, headers=_auth(), content_type="application/json")
+    gen_resp = client.post(f"/api/tax-appeal/expert-requests/{rid}/appeal-report", headers=_auth())
+    if gen_resp.status_code == 200:
+        body = gen_resp.get_json()
+        assert body.get("approval_status") == "appeal_report_generated", (
+            f"Expected appeal_report_generated. Got {body.get('approval_status')!r}"
+        )
+
+
+# TAB350 — appeal_report_available = true after generation
+def test_TAB350_appeal_report_available_after_generation(client):
+    rid = _create_er(client)
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "under_review"}, headers=_auth(), content_type="application/json")
+    client.post(f"/api/tax-appeal/expert-requests/{rid}/review",
+                json={"approval_status": "approved_pending_appeal_report"}, headers=_auth(), content_type="application/json")
+    gen_resp = client.post(f"/api/tax-appeal/expert-requests/{rid}/appeal-report", headers=_auth())
+    if gen_resp.status_code == 200:
+        detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+        req = detail.get("request", {})
+        assert req.get("appeal_report_available") is True or req.get("approval_status") == "appeal_report_generated"
+
+
+# TAB351 — Workbook download returns xlsx content type (404 if not generated)
+def test_TAB351_workbook_download_content_type_or_404(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}/expert-workbook", headers=_auth())
+    assert resp.status_code in (200, 404)
+    if resp.status_code == 200:
+        assert "spreadsheetml" in resp.content_type or "xlsx" in resp.content_type
+
+
+# TAB352 — Report download returns application/pdf (or 404 if not generated)
+def test_TAB352_report_download_content_type_or_404(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}/appeal-report", headers=_auth())
+    assert resp.status_code in (200, 404)
+    if resp.status_code == 200:
+        assert resp.content_type == "application/pdf"
+
+
+# TAB353 — No internal paths in authenticated list JSON response
+def test_TAB353_no_internal_paths_in_list_response(client):
+    _create_er(client)
+    resp = client.get("/api/tax-appeal/expert-requests", headers=_auth())
+    assert resp.status_code == 200
+    body_str = resp.data.decode("utf-8", errors="replace")
+    assert "tax_appeal_workbooks" not in body_str
+    assert "payload_json" not in body_str
+    # Must not expose absolute filesystem paths
+    assert "C:\\" not in body_str and "/home/" not in body_str
+
+
+# TAB354 — tax_assessment_basis_date remains separate from notice_received_date and deadline
+def test_TAB354_basis_date_independent_from_notice_and_deadline(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    req = resp.get_json()["request"]
+    ctx = req.get("context", {})
+    basis_date = req.get("tax_assessment_basis_date") or ctx.get("tax_assessment_basis_date") or ""
+    notice_date = ctx.get("notice_received_date") or req.get("notice_received_date") or ""
+    deadline_date = ctx.get("deadline_date") or ""
+    # All three can exist; basis_date must not equal deadline_date
+    if basis_date and deadline_date:
+        assert basis_date != deadline_date, (
+            "tax_assessment_basis_date must be independent from deadline_date. "
+            f"basis_date={basis_date!r}, deadline_date={deadline_date!r}"
+        )
+    if basis_date and notice_date:
+        assert basis_date != notice_date, (
+            "tax_assessment_basis_date must be independent from notice_received_date. "
+            f"basis_date={basis_date!r}, notice_date={notice_date!r}"
+        )

@@ -601,14 +601,24 @@ def register(app, require_auth, limiter=None) -> None:
         now        = datetime.utcnow().isoformat()
 
         rec: dict = {
-            "request_id":     request_id,
-            "created_at":     now,
-            "approval_status": "draft_only",
-            "source_page":    "tax_appeal",
-            "taxpayer_name":  taxpayer_name,
-            "taxpayer_phone": taxpayer_phone,
-            "taxpayer_email": data.get("taxpayer_email") or data.get("email") or "",
-            "payload_json":   json.dumps(data, ensure_ascii=False),
+            "request_id":               request_id,
+            "created_at":               now,
+            "updated_at":               now,
+            "approval_status":          "draft_only",
+            "appeal_report_available":  False,
+            "source_page":              "tax_appeal",
+            "taxpayer_name":            taxpayer_name,
+            "taxpayer_phone":           taxpayer_phone,
+            "taxpayer_email":           data.get("taxpayer_email") or data.get("email") or "",
+            # Indexed fields for fast list display (duplicated from payload)
+            "property_type":            data.get("property_type") or data.get("asset_type") or "",
+            "tax_mode":                 data.get("tax_type") or data.get("tax_mode") or "",
+            "district":                 data.get("district") or data.get("city") or "",
+            "tax_assessment_basis_date": data.get("tax_assessment_basis_date") or "",
+            "notice_received_date":     data.get("notice_received_date") or "",
+            "government_tax_amount":    data.get("government_claim_value") or data.get("tax_government_claim") or 0,
+            "expected_saving":          data.get("expected_saving") or 0,
+            "payload_json":             json.dumps(data, ensure_ascii=False),
         }
 
         # Generate expert workbook (internal — path not returned to user)
@@ -643,28 +653,78 @@ def register(app, require_auth, limiter=None) -> None:
         except ValueError:
             limit, offset = 50, 0
         records = _read_all_er(limit=limit, offset=offset)
-        summaries = [
-            {
-                "request_id":      r.get("request_id"),
-                "created_at":      r.get("created_at"),
-                "approval_status": r.get("approval_status"),
-                "taxpayer_name":   r.get("taxpayer_name"),
-                "taxpayer_phone":  r.get("taxpayer_phone"),
-                "source_page":     r.get("source_page"),
-            }
-            for r in records
-        ]
+        summaries = []
+        for r in records:
+            # Compute deadline_status from context if available, otherwise summarise
+            payload = r.get("payload_json") or {}
+            if isinstance(payload, str):
+                try:
+                    payload = json.loads(payload)
+                except Exception:
+                    payload = {}
+            try:
+                from tax_appeal_context import _build_tax_appeal_context
+                ctx = _build_tax_appeal_context(payload)
+                deadline_status = ctx.get("deadline_status", "")
+            except Exception:
+                deadline_status = ""
+            summaries.append({
+                "request_id":               r.get("request_id"),
+                "created_at":               r.get("created_at"),
+                "updated_at":               r.get("updated_at"),
+                "approval_status":          r.get("approval_status"),
+                "appeal_report_available":  r.get("appeal_report_available", False),
+                "taxpayer_name":            r.get("taxpayer_name"),
+                "property_type":            r.get("property_type"),
+                "tax_mode":                 r.get("tax_mode"),
+                "district":                 r.get("district"),
+                "tax_assessment_basis_date": r.get("tax_assessment_basis_date"),
+                "notice_received_date":     r.get("notice_received_date"),
+                "deadline_status":          deadline_status,
+                "government_tax_amount":    r.get("government_tax_amount"),
+                "expected_saving":          r.get("expected_saving"),
+            })
         return jsonify({"status": "ok", "count": len(summaries), "requests": summaries})
 
-    # ── GET /api/tax-appeal/expert-requests/<id> ───────────────────────────
+    # ── GET /api/tax-appeal/expert-requests/<id> (protected) ──────────────
     @app.route("/api/tax-appeal/expert-requests/<request_id>", methods=["GET"])
+    @require_auth
     def tax_appeal_get_expert_request(request_id: str):
         if not _ER_ID_RE.fullmatch(request_id):
             return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
         rec = _read_er(request_id)
         if not rec:
             return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
-        safe = {k: v for k, v in rec.items() if k != "payload_json"}
+        # Build rich context from stored payload
+        payload = rec.get("payload_json") or {}
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except Exception:
+                payload = {}
+        context_summary: dict = {}
+        try:
+            from tax_appeal_context import _build_tax_appeal_context
+            ctx = _build_tax_appeal_context(payload)
+            context_summary = {
+                "tax_assessment_basis_date":         ctx.get("tax_assessment_basis_date"),
+                "tax_assessment_basis_date_display": ctx.get("tax_assessment_basis_date_display"),
+                "notice_received_date":              ctx.get("notice_received_date"),
+                "deadline_date":                     ctx.get("deadline_date"),
+                "deadline_status":                   ctx.get("deadline_status"),
+                "deadline_days_remaining":           ctx.get("deadline_days_remaining"),
+                "missing_documents":                 ctx.get("missing_documents"),
+                "data_gap_status":                   ctx.get("data_gap_status"),
+                "five_methods_summary":              ctx.get("five_methods_summary"),
+                "reconciliation_summary":            ctx.get("reconciliation_summary"),
+                "committee_arguments":               ctx.get("committee_arguments"),
+                "source_registry":                   ctx.get("source_registry"),
+                "recommendation_summary":            ctx.get("recommendation_summary"),
+            }
+        except Exception:
+            pass
+        safe = {k: v for k, v in rec.items() if k not in ("payload_json",)}
+        safe["context"] = context_summary
         return jsonify({"status": "ok", "request": safe})
 
     # ── POST /api/tax-appeal/expert-requests/<id>/review ──────────────────
@@ -687,6 +747,16 @@ def register(app, require_auth, limiter=None) -> None:
                 "message": f"حالة غير صالحة: {new_status!r}. الحالات المقبولة: {sorted(_VALID_ER_STATUSES)}",
             }), 400
 
+        # appeal_report_generated can only be set by the report generation endpoint
+        if new_status == "appeal_report_generated":
+            return jsonify({
+                "status": "error",
+                "message": (
+                    "لا يمكن تعيين حالة 'appeal_report_generated' يدويًا. "
+                    "تُعيَّن تلقائيًا فقط بعد إنشاء ملف تقرير الطعن عبر نقطة النهاية المخصصة."
+                ),
+            }), 422
+
         allowed = _ALLOWED_TRANSITIONS.get(current_status, set())
         if new_status not in allowed:
             return jsonify({
@@ -696,8 +766,12 @@ def register(app, require_auth, limiter=None) -> None:
 
         updates = {
             "approval_status":   new_status,
+            "updated_at":        datetime.utcnow().isoformat(),
             "reviewed_at":       datetime.utcnow().isoformat(),
             "reviewer_notes":    data.get("notes") or "",
+            "expert_notes":      data.get("expert_notes") or "",
+            "missing_documents_note": data.get("missing_documents_note") or "",
+            "decision_reason":   data.get("decision_reason") or "",
         }
         _update_er(request_id, updates)
         return jsonify({"status": "ok", "request_id": request_id, "approval_status": new_status})
@@ -753,8 +827,10 @@ def register(app, require_auth, limiter=None) -> None:
 
             # Advance status to appeal_report_generated
             _update_er(request_id, {
-                "approval_status":        "appeal_report_generated",
+                "approval_status":           "appeal_report_generated",
+                "appeal_report_available":   True,
                 "appeal_report_generated_at": datetime.utcnow().isoformat(),
+                "updated_at":               datetime.utcnow().isoformat(),
             })
 
             return jsonify({
@@ -805,3 +881,29 @@ def register(app, require_auth, limiter=None) -> None:
             as_attachment=True,
             download_name=f"tax_appeal_review_{request_id}.xlsx",
         )
+
+    # ── POST /api/tax-appeal/expert-requests (plural alias) ───────────────
+    # Alias so both /expert-request and /expert-requests work for creation.
+    @app.route("/api/tax-appeal/expert-requests", methods=["POST", "OPTIONS"])
+    def tax_appeal_create_expert_request_plural():
+        return tax_appeal_create_expert_request()
+
+    # ── POST /api/tax-appeal/expert-requests/<id>/appeal-report ───────────
+    # Alias for expert-draft-pdf generation (task-spec-compliant name).
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/appeal-report",
+        methods=["POST"],
+    )
+    @require_auth
+    def tax_appeal_generate_appeal_report(request_id: str):
+        return tax_appeal_generate_expert_draft_pdf(request_id)
+
+    # ── GET /api/tax-appeal/expert-requests/<id>/appeal-report ────────────
+    # Alias download endpoint.
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/appeal-report",
+        methods=["GET"],
+    )
+    @require_auth
+    def tax_appeal_download_appeal_report(request_id: str):
+        return tax_appeal_download_expert_draft_pdf(request_id)

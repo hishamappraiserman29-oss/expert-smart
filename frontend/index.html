@@ -1266,6 +1266,7 @@
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab" data-testid="composite-valuation-tab">📊 التقييم المجمع</button>
         <button class="es-tab-btn" id="es-tab-expert-backoffice" onclick="esShowTab('expert-backoffice')" type="button" role="tab" data-testid="expert-backoffice-tab" style="display:none; border-color:rgba(212,175,55,0.5);">🔐 مكتب الخبير</button>
+        <button class="es-tab-btn" id="es-tab-tax-appeal-backoffice" onclick="esShowTab('tax-appeal-backoffice')" type="button" role="tab" data-testid="tax-appeal-backoffice-tab" style="display:none; border-color:rgba(16,185,129,0.5);">🧾 مكتب طعون الضرائب</button>
     </nav>
     <script>
     function esShowTab(tab) {
@@ -33398,6 +33399,580 @@ function _expertSetBadge(id, label, available) {
 (function() {
     expertBackofficeInit();
     window.addEventListener('hashchange', function() { expertBackofficeInit(); });
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     TAX APPEAL BACKOFFICE — Protected expert-review panel for Tax Appeal requests.
+     Hidden from ordinary users. Accessible only via URL hash #tax-appeal-backoffice.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="es-workspace" id="ws-tax-appeal-backoffice" role="tabpanel"
+     data-testid="tax-appeal-backoffice-section"
+     style="padding:1.5rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(16,185,129,0.3);">
+    <div>
+      <h2 style="color:#10b981; margin:0; font-size:1.25rem;">🧾 مكتب مراجعة طعون الضرائب — داخلي فقط</h2>
+      <p style="color:#94a3b8; margin:4px 0 0; font-size:0.8rem;">هذه اللوحة للاستخدام الداخلي فقط. غير مرئية للمستخدمين العاديين.</p>
+      <p style="color:#f59e0b; margin:4px 0 0; font-size:0.78rem; font-weight:700;">⚠️ مسودة فنية معتمدة من الخبير داخل النظام — تحتاج توقيع واعتماد نهائي قبل التقديم الرسمي.</p>
+    </div>
+    <button onclick="taxAppealBoLoad()" data-testid="tax-appeal-backoffice-refresh"
+            style="padding:7px 16px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#10b981; border-radius:8px; cursor:pointer; font-size:0.82rem;">
+      ↻ تحديث القائمة
+    </button>
+  </div>
+
+  <!-- Auth token input -->
+  <div style="margin-bottom:1rem; padding:10px 14px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+    <label style="color:#94a3b8; font-size:0.78rem; display:block; margin-bottom:4px;">رمز الدخول (Bearer Token):</label>
+    <input id="tax-appeal-bo-token" type="password" dir="ltr"
+           data-testid="tax-appeal-bo-token"
+           placeholder="أدخل JWT token هنا ثم اضغط تحديث"
+           style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; font-family:monospace;"
+           oninput="localStorage.setItem('tax_appeal_bo_token', this.value)" />
+    <p style="color:#64748b; font-size:0.72rem; margin:4px 0 0;">يُستخدم لحماية الوصول. لا يُرسَل إلى أي طرف خارجي.</p>
+  </div>
+
+  <!-- Status message -->
+  <div id="tax-appeal-bo-status" data-testid="tax-appeal-bo-status"
+       style="display:none; margin-bottom:1rem; padding:8px 12px; border-radius:6px; font-size:0.82rem;"></div>
+
+  <!-- Requests table -->
+  <div style="overflow-x:auto; margin-bottom:1.5rem;">
+    <table data-testid="tax-appeal-requests-table"
+           style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#e2e8f0;">
+      <thead>
+        <tr style="background:rgba(5,78,60,0.7); color:#fff;">
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">رقم الطلب</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">المكلف</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">نوع العقار</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">المنطقة</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">نوع الضريبة</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">تاريخ أساس الضريبة</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">تاريخ الإخطار</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">حالة المهلة</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">الوفر المتوقع</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">حالة الطلب</th>
+          <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">التاريخ</th>
+          <th style="padding:7px 8px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.1);">إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="tax-appeal-requests-tbody" data-testid="tax-appeal-requests-tbody">
+        <tr><td colspan="12" style="text-align:center; padding:20px; color:#64748b;">اضغط "تحديث القائمة" لتحميل الطلبات.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail panel -->
+  <div id="tax-appeal-bo-detail-panel" data-testid="tax-appeal-bo-detail-panel"
+       style="display:none; padding:1.2rem; background:rgba(15,23,42,0.7); border:1px solid rgba(16,185,129,0.2); border-radius:10px; margin-bottom:1.5rem;">
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+      <h3 style="color:#10b981; margin:0; font-size:1rem;">تفاصيل طلب الطعن الضريبي</h3>
+      <button onclick="taxAppealBoCloseDetail()"
+              style="padding:4px 10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; border-radius:5px; cursor:pointer; font-size:0.78rem;">✕ إغلاق</button>
+    </div>
+
+    <!-- Key fields grid -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:10px; margin-bottom:1rem;">
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">رقم الطلب</div>
+        <div id="tax-bo-request-id" data-testid="tax-bo-request-id" style="color:#e2e8f0; font-weight:700; font-family:monospace; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">حالة الطلب</div>
+        <div id="tax-bo-status" data-testid="tax-bo-request-status" style="color:#fbbf24; font-weight:700; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">اسم المكلف</div>
+        <div id="tax-bo-taxpayer-name" data-testid="tax-bo-taxpayer-name" style="color:#e2e8f0; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">نوع العقار</div>
+        <div id="tax-bo-property-type" data-testid="tax-bo-property-type" style="color:#e2e8f0; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">نوع الضريبة</div>
+        <div id="tax-bo-tax-mode" data-testid="tax-bo-tax-mode" style="color:#e2e8f0; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">المنطقة</div>
+        <div id="tax-bo-district" data-testid="tax-bo-district" style="color:#e2e8f0; font-size:0.82rem;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">آخر تاريخ حصر الضريبة</div>
+        <div id="tax-bo-basis-date" data-testid="tax-bo-assessment-basis-date" style="color:#34d399; font-weight:700; font-size:0.82rem; direction:ltr; text-align:right;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">تاريخ الإخطار</div>
+        <div id="tax-bo-notice-date" data-testid="tax-bo-notice-date" style="color:#e2e8f0; font-size:0.82rem; direction:ltr; text-align:right;"></div>
+      </div>
+      <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:2px;">تاريخ انتهاء المهلة</div>
+        <div id="tax-bo-deadline-date" data-testid="tax-bo-deadline-date" style="color:#e2e8f0; font-size:0.82rem; direction:ltr; text-align:right;"></div>
+      </div>
+    </div>
+
+    <!-- Deadline warning -->
+    <div id="tax-bo-deadline-warning" data-testid="tax-bo-deadline-warning"
+         style="display:none; margin-bottom:1rem; padding:10px 14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:8px; color:#f87171; font-size:0.82rem; font-weight:700;">
+      ⚠️ <span id="tax-bo-deadline-warning-text"></span>
+    </div>
+
+    <!-- Deadline status badge -->
+    <div style="margin-bottom:1rem; display:flex; gap:8px; flex-wrap:wrap;">
+      <span id="tax-bo-deadline-badge" data-testid="tax-bo-deadline-status"
+            style="padding:4px 12px; border-radius:12px; font-size:0.78rem; font-weight:700; background:rgba(30,41,59,0.6); color:#94a3b8;"></span>
+      <span id="tax-bo-days-remaining" data-testid="tax-bo-days-remaining"
+            style="padding:4px 12px; border-radius:12px; font-size:0.78rem; background:rgba(30,41,59,0.6); color:#94a3b8;"></span>
+      <span id="tax-bo-report-available-badge"
+            style="padding:4px 12px; border-radius:12px; font-size:0.78rem; font-weight:700; background:rgba(30,41,59,0.6); color:#94a3b8;">تقرير الطعن: غير متاح</span>
+    </div>
+
+    <!-- Missing documents -->
+    <div id="tax-bo-missing-docs-wrap" style="display:none; margin-bottom:1rem; padding:10px 14px; background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius:8px;">
+      <div style="color:#f59e0b; font-size:0.8rem; font-weight:700; margin-bottom:6px;">📋 مستندات ناقصة:</div>
+      <ul id="tax-bo-missing-docs-list" data-testid="tax-bo-missing-docs" style="margin:0; padding-right:20px; color:#e2e8f0; font-size:0.8rem;"></ul>
+    </div>
+
+    <!-- Context summaries (five methods, reconciliation, committee, recommendation) -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
+      <div style="background:rgba(30,41,59,0.4); padding:10px 12px; border-radius:7px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:4px; font-weight:700;">ملخص الطرق الخمس</div>
+        <div id="tax-bo-five-methods" data-testid="tax-bo-five-methods" style="color:#e2e8f0; font-size:0.78rem; white-space:pre-wrap;">—</div>
+      </div>
+      <div style="background:rgba(30,41,59,0.4); padding:10px 12px; border-radius:7px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:4px; font-weight:700;">ملخص التوفيق</div>
+        <div id="tax-bo-reconciliation" data-testid="tax-bo-reconciliation" style="color:#e2e8f0; font-size:0.78rem; white-space:pre-wrap;">—</div>
+      </div>
+      <div style="background:rgba(30,41,59,0.4); padding:10px 12px; border-radius:7px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:4px; font-weight:700;">حجج لجنة الطعن</div>
+        <div id="tax-bo-committee" data-testid="tax-bo-committee" style="color:#e2e8f0; font-size:0.78rem; white-space:pre-wrap;">—</div>
+      </div>
+      <div style="background:rgba(30,41,59,0.4); padding:10px 12px; border-radius:7px;">
+        <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:4px; font-weight:700;">التوصية</div>
+        <div id="tax-bo-recommendation" data-testid="tax-bo-recommendation" style="color:#e2e8f0; font-size:0.78rem; white-space:pre-wrap;">—</div>
+      </div>
+    </div>
+
+    <!-- Expert notes (read-only display) -->
+    <div id="tax-bo-expert-notes-wrap" style="display:none; margin-bottom:1rem; padding:8px 12px; background:rgba(30,41,59,0.5); border-radius:7px;">
+      <div style="color:#94a3b8; font-size:0.72rem; margin-bottom:4px;">ملاحظات الخبير السابقة:</div>
+      <div id="tax-bo-expert-notes-display" style="color:#e2e8f0; font-size:0.8rem;"></div>
+    </div>
+
+    <!-- Workbook download (protected — only in this panel) -->
+    <div style="margin-bottom:1rem;">
+      <button id="tax-expert-workbook-download" data-testid="tax-expert-workbook-download"
+              onclick="taxAppealBoDownloadWorkbook()"
+              style="padding:8px 18px; background:rgba(30,78,120,0.4); border:1px solid rgba(45,106,159,0.5); color:#93c5fd; border-radius:7px; cursor:pointer; font-size:0.82rem; font-weight:700;">
+        ⬇ تحميل ملف Excel للخبير
+      </button>
+    </div>
+
+    <!-- Appeal report generation (only when approved_pending_appeal_report) -->
+    <div id="tax-bo-generate-report-wrap" style="display:none; margin-bottom:1rem; padding:12px 14px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:8px;">
+      <div style="font-size:0.82rem; font-weight:700; color:#10b981; margin-bottom:4px;">إصدار تقرير الطعن بعد الاعتماد</div>
+      <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px;">مسودة فنية معتمدة من الخبير داخل النظام — تحتاج توقيع واعتماد نهائي قبل التقديم الرسمي.</div>
+      <button id="tax-generate-appeal-report" data-testid="tax-generate-appeal-report"
+              onclick="taxAppealBoGenerateReport()"
+              style="padding:9px 22px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.5); color:#10b981; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        إصدار تقرير الطعن بعد الاعتماد
+      </button>
+      <div id="tax-bo-generate-report-status" style="display:none; margin-top:8px; font-size:0.8rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Download report (only after appeal_report_generated) -->
+    <div id="tax-bo-download-report-wrap" style="display:none; margin-bottom:1rem;">
+      <button id="tax-appeal-report-download" data-testid="tax-appeal-report-download"
+              onclick="taxAppealBoDownloadReport()"
+              style="padding:8px 18px; background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.4); color:#10b981; border-radius:7px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        ⬇ تحميل تقرير الطعن (.pdf)
+      </button>
+      <div style="font-size:0.72rem; color:#94a3b8; margin-top:4px;">تقرير فني للطعن الضريبي بعد مراجعة الخبير — يستلزم التوقيع النهائي للتقديم الرسمي.</div>
+    </div>
+
+    <!-- Review form -->
+    <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:0.5rem;">
+      <h4 style="color:#94a3b8; font-size:0.88rem; margin:0 0 0.8rem;">تحديث مراجعة الخبير</h4>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">حالة المراجعة:</label>
+          <select id="tax-bo-status-select" data-testid="tax-bo-status-select"
+                  style="width:100%; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر الحالة —</option>
+            <option value="under_review">قيد المراجعة (under_review)</option>
+            <option value="needs_documents">يحتاج مستندات (needs_documents)</option>
+            <option value="approved_pending_appeal_report">موافق — بانتظار تقرير الطعن</option>
+            <option value="rejected">مرفوض (rejected)</option>
+          </select>
+          <!-- appeal_report_generated is NOT a selectable option -->
+        </div>
+        <div>
+          <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">سبب القرار:</label>
+          <input id="tax-bo-decision-reason" type="text" dir="rtl"
+                 placeholder="سبب القرار..."
+                 style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem;" />
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">ملاحظات الخبير:</label>
+        <textarea id="tax-bo-expert-notes" data-testid="tax-bo-expert-notes" rows="2" dir="rtl"
+                  placeholder="ملاحظات عامة عن الطلب..."
+                  style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem; resize:vertical; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;"></textarea>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:3px;">المستندات المطلوبة:</label>
+        <input id="tax-bo-missing-docs-note" type="text" dir="rtl"
+               placeholder="مثال: عقد الملكية، آخر إشعار ضريبي..."
+               style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.82rem;" />
+      </div>
+      <button id="tax-bo-save-review" data-testid="tax-bo-save-review"
+              onclick="taxAppealBoSaveReview()"
+              style="padding:9px 22px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.5); color:#10b981; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        حفظ تحديث المراجعة
+      </button>
+      <div id="tax-bo-review-confirmation" data-testid="tax-bo-review-confirmation"
+           style="display:none; margin-top:10px; padding:8px 14px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:7px; color:#10b981; font-size:0.82rem; direction:rtl;">
+        تم حفظ التحديث. هذا ليس تقريرًا نهائيًا معتمدًا — تقرير الطعن يُصدر فقط بعد الاعتماد الكامل من الخبير.
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- end tax appeal backoffice -->
+
+<script>
+// ── Tax Appeal Backoffice JS ──────────────────────────────────────────────────
+
+var _taxAppealBoCurrentId = null;
+
+function taxAppealBoInit() {
+    if (window.location.hash === '#tax-appeal-backoffice') {
+        var tabBtn = document.getElementById('es-tab-tax-appeal-backoffice');
+        if (tabBtn) tabBtn.style.display = '';
+        esShowTab('tax-appeal-backoffice');
+        var saved = localStorage.getItem('tax_appeal_bo_token');
+        if (saved) {
+            var inp = document.getElementById('tax-appeal-bo-token');
+            if (inp) inp.value = saved;
+        }
+    }
+}
+
+function taxAppealBoGetToken() {
+    return (document.getElementById('tax-appeal-bo-token') || {}).value
+        || localStorage.getItem('tax_appeal_bo_token') || '';
+}
+
+function taxAppealBoStatus(msg, ok) {
+    var el = document.getElementById('tax-appeal-bo-status');
+    if (!el) return;
+    el.style.display = '';
+    el.textContent = msg;
+    el.style.background = ok ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+    el.style.border = ok ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.25)';
+    el.style.color = ok ? '#10b981' : '#f87171';
+}
+
+function _taxBoText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val || '';
+}
+
+function _taxBoShow(id, show) {
+    var el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+}
+
+async function taxAppealBoLoad() {
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول (JWT token) أولاً.', false); return; }
+    var tbody = document.getElementById('tax-appeal-requests-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:#94a3b8;">جارٍ التحميل...</td></tr>';
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (resp.status === 401) { taxAppealBoStatus('رمز الدخول غير صالح أو منتهي الصلاحية (401).', false); return; }
+        if (!resp.ok) { taxAppealBoStatus('خطأ في تحميل البيانات: ' + resp.status, false); return; }
+        var data = await resp.json();
+        var rows = data.requests || [];
+        taxAppealBoStatus('تم تحميل ' + rows.length + ' طلب.', true);
+        if (!rows.length) {
+            if (tbody) tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:20px;color:#64748b;">لا توجد طلبات مسجلة بعد.</td></tr>';
+            return;
+        }
+        var html = '';
+        rows.forEach(function(r) {
+            var statusColor = r.approval_status === 'draft_only' ? '#94a3b8'
+                : r.approval_status === 'under_review' ? '#fbbf24'
+                : r.approval_status === 'needs_documents' ? '#f97316'
+                : r.approval_status === 'approved_pending_appeal_report' ? '#34d399'
+                : r.approval_status === 'appeal_report_generated' ? '#10b981'
+                : r.approval_status === 'rejected' ? '#f87171' : '#e2e8f0';
+            var deadlineColor = (r.deadline_status || '').includes('حرج') || (r.deadline_status || '').includes('منتهية') ? '#f87171' : '#e2e8f0';
+            html += '<tr data-testid="tax-appeal-request-row" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" '
+                + 'onclick="taxAppealBoOpenRequest(\'' + (r.request_id || '') + '\')">'
+                + '<td style="padding:7px 8px; font-family:monospace; color:#93c5fd; font-size:0.78rem;">' + (r.request_id || '') + '</td>'
+                + '<td style="padding:7px 8px;">' + (r.taxpayer_name || '—') + '</td>'
+                + '<td style="padding:7px 8px;">' + (r.property_type || '—') + '</td>'
+                + '<td style="padding:7px 8px;">' + (r.district || '—') + '</td>'
+                + '<td style="padding:7px 8px;">' + (r.tax_mode || '—') + '</td>'
+                + '<td style="padding:7px 8px; direction:ltr; text-align:right; font-size:0.75rem;">' + (r.tax_assessment_basis_date || '—') + '</td>'
+                + '<td style="padding:7px 8px; direction:ltr; text-align:right; font-size:0.75rem;">' + ((r.notice_received_date || '').substring(0,10) || '—') + '</td>'
+                + '<td style="padding:7px 8px; color:' + deadlineColor + '; font-size:0.75rem;">' + (r.deadline_status || '—') + '</td>'
+                + '<td style="padding:7px 8px; font-size:0.75rem;">' + (r.expected_saving ? Number(r.expected_saving).toLocaleString() : '—') + '</td>'
+                + '<td style="padding:7px 8px; font-weight:700; color:' + statusColor + '; font-size:0.75rem;">' + (r.approval_status || '—') + '</td>'
+                + '<td style="padding:7px 8px; font-size:0.72rem; color:#94a3b8; direction:ltr; text-align:right;">' + ((r.created_at || '').substring(0,10)) + '</td>'
+                + '<td style="padding:7px 8px; text-align:center;">'
+                + '<button onclick="event.stopPropagation();taxAppealBoOpenRequest(\'' + (r.request_id || '') + '\')" '
+                + 'style="padding:3px 10px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.4); color:#10b981; border-radius:5px; cursor:pointer; font-size:0.72rem;">فتح</button>'
+                + '</td></tr>';
+        });
+        if (tbody) tbody.innerHTML = html;
+    } catch(e) {
+        taxAppealBoStatus('خطأ في الاتصال: ' + e.message, false);
+    }
+}
+
+async function taxAppealBoOpenRequest(rid) {
+    _taxAppealBoCurrentId = rid;
+    var token = taxAppealBoGetToken();
+    var panel = document.getElementById('tax-appeal-bo-detail-panel');
+    if (panel) panel.style.display = 'block';
+    if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+    _taxBoShow('tax-bo-review-confirmation', false);
+    _taxBoShow('tax-bo-generate-report-status', false);
+
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests/' + rid, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resp.ok) { taxAppealBoStatus('خطأ في تحميل تفاصيل الطلب: ' + resp.status, false); return; }
+        var data = await resp.json();
+        var r = data.request || {};
+        var ctx = r.context || {};
+
+        _taxBoText('tax-bo-request-id',    r.request_id);
+        _taxBoText('tax-bo-status',         r.approval_status);
+        _taxBoText('tax-bo-taxpayer-name',  r.taxpayer_name);
+        _taxBoText('tax-bo-property-type',  r.property_type);
+        _taxBoText('tax-bo-tax-mode',       r.tax_mode);
+        _taxBoText('tax-bo-district',       r.district);
+        _taxBoText('tax-bo-basis-date',     ctx.tax_assessment_basis_date_display || r.tax_assessment_basis_date || '—');
+        _taxBoText('tax-bo-notice-date',    ctx.notice_received_date || r.notice_received_date || '—');
+        _taxBoText('tax-bo-deadline-date',  ctx.deadline_date || '—');
+
+        // Deadline status badge
+        var ds = ctx.deadline_status || '';
+        var dsBadge = document.getElementById('tax-bo-deadline-badge');
+        if (dsBadge) {
+            dsBadge.textContent = 'حالة المهلة: ' + (ds || '—');
+            var isUrgent = ds.includes('حرج') || ds.includes('منتهية');
+            dsBadge.style.background = isUrgent ? 'rgba(239,68,68,0.15)' : 'rgba(30,41,59,0.6)';
+            dsBadge.style.color = isUrgent ? '#f87171' : '#94a3b8';
+        }
+        var dr = ctx.deadline_days_remaining;
+        _taxBoText('tax-bo-days-remaining', dr !== undefined && dr !== null ? 'أيام متبقية: ' + dr : '');
+
+        // Deadline warning
+        var warnEl = document.getElementById('tax-bo-deadline-warning');
+        if (warnEl) {
+            var showWarn = ds.includes('حرج') || ds.includes('منتهية');
+            warnEl.style.display = showWarn ? '' : 'none';
+            if (showWarn) {
+                _taxBoText('tax-bo-deadline-warning-text', 'تحذير: ' + ds + ' — يجب التصرف فوراً.');
+            }
+        }
+
+        // Missing documents
+        var missingDocs = ctx.missing_documents || [];
+        var missingWrap = document.getElementById('tax-bo-missing-docs-wrap');
+        var missingList = document.getElementById('tax-bo-missing-docs-list');
+        if (missingWrap && missingList) {
+            if (missingDocs.length) {
+                missingWrap.style.display = '';
+                missingList.innerHTML = missingDocs.map(function(d) {
+                    return '<li>' + d + '</li>';
+                }).join('');
+            } else {
+                missingWrap.style.display = 'none';
+            }
+        }
+
+        // Context summaries
+        _taxBoText('tax-bo-five-methods',   typeof ctx.five_methods_summary === 'object' ? JSON.stringify(ctx.five_methods_summary, null, 2) : (ctx.five_methods_summary || '—'));
+        _taxBoText('tax-bo-reconciliation', typeof ctx.reconciliation_summary === 'object' ? JSON.stringify(ctx.reconciliation_summary, null, 2) : (ctx.reconciliation_summary || '—'));
+        _taxBoText('tax-bo-committee',      typeof ctx.committee_arguments === 'object' ? JSON.stringify(ctx.committee_arguments, null, 2) : (ctx.committee_arguments || '—'));
+        _taxBoText('tax-bo-recommendation', typeof ctx.recommendation_summary === 'object' ? JSON.stringify(ctx.recommendation_summary, null, 2) : (ctx.recommendation_summary || '—'));
+
+        // Expert notes display
+        if (r.expert_notes) {
+            _taxBoShow('tax-bo-expert-notes-wrap', true);
+            _taxBoText('tax-bo-expert-notes-display', r.expert_notes);
+        } else {
+            _taxBoShow('tax-bo-expert-notes-wrap', false);
+        }
+
+        // Appeal report badge
+        var reportBadge = document.getElementById('tax-bo-report-available-badge');
+        if (reportBadge) {
+            if (r.appeal_report_available) {
+                reportBadge.textContent = 'تقرير الطعن: متاح ✓';
+                reportBadge.style.background = 'rgba(16,185,129,0.12)';
+                reportBadge.style.color = '#34d399';
+            } else {
+                reportBadge.textContent = 'تقرير الطعن: غير متاح';
+                reportBadge.style.background = 'rgba(30,41,59,0.6)';
+                reportBadge.style.color = '#94a3b8';
+            }
+        }
+
+        // Generate report button: visible only when approved_pending_appeal_report
+        _taxBoShow('tax-bo-generate-report-wrap',
+            r.approval_status === 'approved_pending_appeal_report');
+
+        // Download report button: visible only when report is available
+        _taxBoShow('tax-bo-download-report-wrap',
+            r.appeal_report_available || r.approval_status === 'appeal_report_generated');
+
+        // Reset review form
+        var sel = document.getElementById('tax-bo-status-select');
+        if (sel) sel.value = '';
+        var notesEl = document.getElementById('tax-bo-expert-notes');
+        if (notesEl) notesEl.value = r.expert_notes || '';
+
+    } catch(e) {
+        taxAppealBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
+    }
+}
+
+function taxAppealBoCloseDetail() {
+    var panel = document.getElementById('tax-appeal-bo-detail-panel');
+    if (panel) panel.style.display = 'none';
+    _taxAppealBoCurrentId = null;
+}
+
+async function taxAppealBoDownloadWorkbook() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var url = '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/expert-workbook';
+    try {
+        var resp = await fetch(url, { headers: {'Authorization': 'Bearer ' + token} });
+        if (resp.status === 401) { taxAppealBoStatus('غير مصرح.', false); return; }
+        if (!resp.ok) { taxAppealBoStatus('ملف العمل الخبيري غير موجود أو خطأ: ' + resp.status, false); return; }
+        var blob = await resp.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tax_appeal_expert_' + _taxAppealBoCurrentId + '.xlsx';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        taxAppealBoStatus('تم تحميل ملف Excel للخبير بنجاح.', true);
+    } catch(e) {
+        taxAppealBoStatus('خطأ في تحميل الملف: ' + e.message, false);
+    }
+}
+
+async function taxAppealBoSaveReview() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var newStatus = (document.getElementById('tax-bo-status-select') || {}).value || '';
+    var body = {
+        approval_status:        newStatus || undefined,
+        expert_notes:           ((document.getElementById('tax-bo-expert-notes') || {}).value || '').trim(),
+        missing_documents_note: ((document.getElementById('tax-bo-missing-docs-note') || {}).value || '').trim(),
+        decision_reason:        ((document.getElementById('tax-bo-decision-reason') || {}).value || '').trim(),
+    };
+    Object.keys(body).forEach(function(k) { if (!body[k]) delete body[k]; });
+    var btn = document.getElementById('tax-bo-save-review');
+    if (btn) { btn.disabled = true; btn.textContent = 'جارٍ الحفظ...'; }
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/review', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+            body: JSON.stringify(body),
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus('تم حفظ التحديث. الحالة: ' + (data.approval_status || ''), true);
+            _taxBoText('tax-bo-status', data.approval_status || '');
+            _taxBoShow('tax-bo-review-confirmation', true);
+            // Show generate button if newly approved
+            _taxBoShow('tax-bo-generate-report-wrap',
+                data.approval_status === 'approved_pending_appeal_report');
+        } else {
+            taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) {
+        taxAppealBoStatus('خطأ في الاتصال: ' + e.message, false);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'حفظ تحديث المراجعة'; }
+    }
+}
+
+async function taxAppealBoGenerateReport() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var genBtn = document.getElementById('tax-generate-appeal-report');
+    var statusEl = document.getElementById('tax-bo-generate-report-status');
+    if (genBtn) { genBtn.disabled = true; genBtn.textContent = 'جارٍ الإصدار...'; }
+    if (statusEl) { statusEl.style.display = ''; statusEl.textContent = 'جارٍ إنشاء تقرير الطعن...'; }
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/appeal-report', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token},
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus('تم إصدار تقرير الطعن بنجاح.', true);
+            _taxBoText('tax-bo-status', data.approval_status || 'appeal_report_generated');
+            _taxBoShow('tax-bo-generate-report-wrap', false);
+            _taxBoShow('tax-bo-download-report-wrap', true);
+            var reportBadge = document.getElementById('tax-bo-report-available-badge');
+            if (reportBadge) {
+                reportBadge.textContent = 'تقرير الطعن: متاح ✓';
+                reportBadge.style.color = '#34d399';
+            }
+            if (statusEl) statusEl.style.display = 'none';
+        } else {
+            taxAppealBoStatus('خطأ في الإصدار: ' + (data.message || resp.status), false);
+            if (statusEl) statusEl.textContent = data.message || 'فشل الإصدار';
+            if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'إصدار تقرير الطعن بعد الاعتماد'; }
+        }
+    } catch(e) {
+        taxAppealBoStatus('خطأ في الاتصال: ' + e.message, false);
+        if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'إصدار تقرير الطعن بعد الاعتماد'; }
+    }
+}
+
+async function taxAppealBoDownloadReport() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var url = '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/appeal-report';
+    try {
+        var resp = await fetch(url, { headers: {'Authorization': 'Bearer ' + token} });
+        if (resp.status === 401) { taxAppealBoStatus('غير مصرح.', false); return; }
+        if (!resp.ok) { taxAppealBoStatus('تقرير الطعن غير موجود: ' + resp.status, false); return; }
+        var blob = await resp.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'tax_appeal_report_' + _taxAppealBoCurrentId + '.pdf';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        taxAppealBoStatus('تم تحميل تقرير الطعن بنجاح.', true);
+    } catch(e) {
+        taxAppealBoStatus('خطأ في تحميل التقرير: ' + e.message, false);
+    }
+}
+
+// Init on load
+(function() {
+    taxAppealBoInit();
+    window.addEventListener('hashchange', function() { taxAppealBoInit(); });
 })();
 </script>
 

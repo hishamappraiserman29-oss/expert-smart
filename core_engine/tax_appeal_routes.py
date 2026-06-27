@@ -1,17 +1,28 @@
 """
-tax_appeal_routes.py — Tax Appeal Backend Phase 1-3.
+tax_appeal_routes.py — Tax Appeal Backend Phase 1-3 + Phase 4 Expert Workflow.
 
-Public endpoints (no auth required — public contact form):
-  POST /api/tax-appeal/leads          — create lead, upload docs, generate PDF
-  GET  /api/tax-appeal/leads/<id>/pdf — download draft PDF (non-certified)
+Public endpoints (no auth required):
+  POST /api/tax-appeal/leads                              — create lead, upload docs, generate FPDF PDF
+  GET  /api/tax-appeal/leads/<id>/pdf                     — download FPDF draft PDF
+  POST /api/tax-appeal/preliminary-pdf                    — stateless HTML/Playwright preliminary PDF
+
+Expert-request endpoints (public creation, protected admin):
+  POST /api/tax-appeal/expert-request                     — create expert request + generate workbook
+  GET  /api/tax-appeal/expert-requests                    — admin list (requires auth)
+  GET  /api/tax-appeal/expert-requests/<id>               — detail (public by request_id)
+  POST /api/tax-appeal/expert-requests/<id>/review        — admin status transition
+  POST /api/tax-appeal/expert-requests/<id>/expert-draft-pdf — admin generate HTML/Playwright draft
+  GET  /api/tax-appeal/expert-requests/<id>/expert-draft-pdf — admin download
+  GET  /api/tax-appeal/expert-requests/<id>/expert-workbook  — admin download workbook
 
 Admin endpoint:
   GET  /api/tax-appeal/leads          — list leads (requires auth)
 
-Storage (non-public, under core_engine/tax_appeal/):
-  leads.jsonl
-  uploads/<lead_id>/<doc_id><ext>
-  reports/<lead_id>/tax_screening_draft.pdf
+Storage:
+  core_engine/tax_appeal/leads.jsonl             — leads (existing)
+  core_engine/tax_appeal/uploads/<id>/           — uploads (existing)
+  core_engine/tax_appeal/reports/<id>/           — FPDF PDFs (existing)
+  core_engine/instance/tax_appeal_requests/      — expert requests (new)
 """
 from __future__ import annotations
 
@@ -29,8 +40,98 @@ _LEADS_FILE = _BASE / "leads.jsonl"
 _UPLOADS    = _BASE / "uploads"
 _REPORTS    = _BASE / "reports"
 
+# ── Expert-request storage ────────────────────────────────────────────────────
+
+_ER_BASE     = Path(__file__).parent / "instance" / "tax_appeal_requests"
+_ER_FILE     = _ER_BASE / "requests.jsonl"
+_ER_REPORTS  = _ER_BASE / "reports"
+_ER_WB_DIR   = Path(__file__).parent / "instance" / "tax_appeal_workbooks"
+
+for _d in (_ER_BASE, _ER_REPORTS, _ER_WB_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
+
+# Status model for expert requests
+_VALID_ER_STATUSES = {
+    "draft_only", "under_review", "needs_documents",
+    "approved_pending_appeal_report", "appeal_report_generated", "rejected",
+}
+_ALLOWED_TRANSITIONS = {
+    "draft_only":                    {"under_review"},
+    "under_review":                  {"needs_documents", "approved_pending_appeal_report", "rejected"},
+    "needs_documents":               {"under_review", "rejected"},
+    "approved_pending_appeal_report": {"appeal_report_generated", "rejected"},
+    "appeal_report_generated":       set(),
+    "rejected":                      set(),
+}
+
+_ER_ID_RE = re.compile(r"^TAXER-[0-9A-F]{8}$")
+
 for _d in (_BASE, _UPLOADS, _REPORTS):
     _d.mkdir(parents=True, exist_ok=True)
+
+# ── Expert-request persistence helpers ───────────────────────────────────────
+
+def _new_er_id() -> str:
+    return "TAXER-" + uuid.uuid4().hex[:8].upper()
+
+
+def _persist_er(rec: dict) -> None:
+    with open(_ER_FILE, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def _update_er(request_id: str, updates: dict) -> None:
+    if not _ER_FILE.exists():
+        return
+    lines = []
+    with open(_ER_FILE, encoding="utf-8") as fh:
+        for raw in fh:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                rec = json.loads(raw)
+                if rec.get("request_id") == request_id:
+                    rec.update(updates)
+                lines.append(json.dumps(rec, ensure_ascii=False))
+            except json.JSONDecodeError:
+                lines.append(raw)
+    with open(_ER_FILE, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+
+
+def _read_er(request_id: str) -> dict | None:
+    if not _ER_FILE.exists():
+        return None
+    with open(_ER_FILE, encoding="utf-8") as fh:
+        for raw in fh:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                rec = json.loads(raw)
+                if rec.get("request_id") == request_id:
+                    return rec
+            except json.JSONDecodeError:
+                continue
+    return None
+
+
+def _read_all_er(limit: int = 50, offset: int = 0) -> list:
+    if not _ER_FILE.exists():
+        return []
+    rows: list = []
+    with open(_ER_FILE, encoding="utf-8") as fh:
+        for raw in fh:
+            raw = raw.strip()
+            if not raw:
+                continue
+            try:
+                rows.append(json.loads(raw))
+            except json.JSONDecodeError:
+                continue
+    rows.reverse()
+    return rows[offset: offset + limit]
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -43,6 +144,34 @@ _DISCLAIMER = (
     "ولا يستخدم أمام الجهات الرسمية أو القضائية أو التمويلية قبل مراجعة واعتماد "
     "خبير التقييم المختص."
 )
+
+
+# ── Standalone PDF renderers (importable by QA scripts) ───────────────────────
+
+def _render_tax_preliminary_pdf(ctx: dict) -> bytes:
+    """Render the preliminary PDF from a pre-built context dict. Returns PDF bytes."""
+    from pdf_renderer import cairo_font_css, render_pdf_from_html
+    from jinja2 import Environment, FileSystemLoader
+
+    _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
+    env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+    html_str = env.get_template("tax_appeal_preliminary.html").render(
+        font_css_block=cairo_font_css(), **ctx
+    )
+    return render_pdf_from_html(html_str)
+
+
+def _render_tax_expert_draft_pdf(ctx: dict) -> bytes:
+    """Render the expert-draft PDF from a pre-built context dict. Returns PDF bytes."""
+    from pdf_renderer import cairo_font_css, render_pdf_from_html
+    from jinja2 import Environment, FileSystemLoader
+
+    _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
+    env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+    html_str = env.get_template("tax_appeal_expert_draft.html").render(
+        font_css_block=cairo_font_css(), **ctx
+    )
+    return render_pdf_from_html(html_str)
 
 
 # ── Lead persistence ──────────────────────────────────────────────────────────
@@ -414,3 +543,265 @@ def register(app, require_auth, limiter=None) -> None:
             limit, offset = 50, 0
         records = _read_all_leads(limit=limit, offset=offset)
         return jsonify({"status": "ok", "count": len(records), "leads": records})
+
+    # ── POST /api/tax-appeal/preliminary-pdf ──────────────────────────────
+    # Stateless — accepts JSON payload, returns HTML/Playwright PDF bytes.
+    # Does not store any data.  No FPDF used.
+    @app.route("/api/tax-appeal/preliminary-pdf", methods=["POST", "OPTIONS"])
+    def tax_appeal_preliminary_pdf():
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+        except Exception:
+            payload = {}
+
+        try:
+            from tax_appeal_context import _build_tax_appeal_context
+            from pdf_renderer import cairo_font_css, render_pdf_from_html
+            from jinja2 import Environment, FileSystemLoader
+
+            ctx = _build_tax_appeal_context(payload)
+            _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
+            env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+            template = env.get_template("tax_appeal_preliminary.html")
+            html_str = template.render(font_css_block=cairo_font_css(), **ctx)
+            pdf_bytes = render_pdf_from_html(html_str)
+
+            from flask import Response
+            return Response(
+                pdf_bytes,
+                status=200,
+                mimetype="application/pdf",
+                headers={
+                    "Content-Disposition": "attachment; filename=tax_appeal_preliminary.pdf",
+                    "Content-Length": str(len(pdf_bytes)),
+                },
+            )
+        except Exception as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 500
+
+    # ── POST /api/tax-appeal/expert-request ───────────────────────────────
+    @app.route("/api/tax-appeal/expert-request", methods=["POST", "OPTIONS"])
+    def tax_appeal_create_expert_request():
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
+
+        data = request.get_json(force=True, silent=True) or {}
+
+        taxpayer_name = (data.get("taxpayer_name") or data.get("owner_name") or "").strip()
+        taxpayer_phone = (data.get("taxpayer_phone") or data.get("phone") or "").strip()
+        if not taxpayer_name or not taxpayer_phone:
+            return jsonify({
+                "status": "error",
+                "message": "اسم المكلف ورقم الهاتف مطلوبان",
+            }), 400
+
+        request_id = _new_er_id()
+        now        = datetime.utcnow().isoformat()
+
+        rec: dict = {
+            "request_id":     request_id,
+            "created_at":     now,
+            "approval_status": "draft_only",
+            "source_page":    "tax_appeal",
+            "taxpayer_name":  taxpayer_name,
+            "taxpayer_phone": taxpayer_phone,
+            "taxpayer_email": data.get("taxpayer_email") or data.get("email") or "",
+            "payload_json":   json.dumps(data, ensure_ascii=False),
+        }
+
+        # Generate expert workbook (internal — path not returned to user)
+        wb_available = False
+        try:
+            from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+            _create_tax_appeal_workbook(request_id, rec)
+            wb_available = True
+        except Exception:
+            pass
+
+        _persist_er(rec)
+
+        return jsonify({
+            "status":          "success",
+            "request_id":      request_id,
+            "approval_status": "draft_only",
+            "workbook_ready":  wb_available,
+            "message": (
+                f"تم تسجيل طلب المراجعة الضريبية بنجاح. رقم الطلب: {request_id}. "
+                "سيقوم الخبير بمراجعة البيانات."
+            ),
+        }), 201
+
+    # ── GET /api/tax-appeal/expert-requests (admin) ────────────────────────
+    @app.route("/api/tax-appeal/expert-requests", methods=["GET"])
+    @require_auth
+    def tax_appeal_list_expert_requests():
+        try:
+            limit  = min(int(request.args.get("limit",  50)), 200)
+            offset = max(int(request.args.get("offset",  0)),   0)
+        except ValueError:
+            limit, offset = 50, 0
+        records = _read_all_er(limit=limit, offset=offset)
+        summaries = [
+            {
+                "request_id":      r.get("request_id"),
+                "created_at":      r.get("created_at"),
+                "approval_status": r.get("approval_status"),
+                "taxpayer_name":   r.get("taxpayer_name"),
+                "taxpayer_phone":  r.get("taxpayer_phone"),
+                "source_page":     r.get("source_page"),
+            }
+            for r in records
+        ]
+        return jsonify({"status": "ok", "count": len(summaries), "requests": summaries})
+
+    # ── GET /api/tax-appeal/expert-requests/<id> ───────────────────────────
+    @app.route("/api/tax-appeal/expert-requests/<request_id>", methods=["GET"])
+    def tax_appeal_get_expert_request(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        rec = _read_er(request_id)
+        if not rec:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+        safe = {k: v for k, v in rec.items() if k != "payload_json"}
+        return jsonify({"status": "ok", "request": safe})
+
+    # ── POST /api/tax-appeal/expert-requests/<id>/review ──────────────────
+    @app.route("/api/tax-appeal/expert-requests/<request_id>/review", methods=["POST"])
+    @require_auth
+    def tax_appeal_review_expert_request(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        rec = _read_er(request_id)
+        if not rec:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+
+        data           = request.get_json(force=True, silent=True) or {}
+        new_status     = (data.get("approval_status") or "").strip()
+        current_status = rec.get("approval_status", "draft_only")
+
+        if new_status not in _VALID_ER_STATUSES:
+            return jsonify({
+                "status": "error",
+                "message": f"حالة غير صالحة: {new_status!r}. الحالات المقبولة: {sorted(_VALID_ER_STATUSES)}",
+            }), 400
+
+        allowed = _ALLOWED_TRANSITIONS.get(current_status, set())
+        if new_status not in allowed:
+            return jsonify({
+                "status":  "error",
+                "message": f"الانتقال من {current_status!r} إلى {new_status!r} غير مسموح به.",
+            }), 422
+
+        updates = {
+            "approval_status":   new_status,
+            "reviewed_at":       datetime.utcnow().isoformat(),
+            "reviewer_notes":    data.get("notes") or "",
+        }
+        _update_er(request_id, updates)
+        return jsonify({"status": "ok", "request_id": request_id, "approval_status": new_status})
+
+    # ── POST /api/tax-appeal/expert-requests/<id>/expert-draft-pdf ────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/expert-draft-pdf",
+        methods=["POST"],
+    )
+    @require_auth
+    def tax_appeal_generate_expert_draft_pdf(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        rec = _read_er(request_id)
+        if not rec:
+            return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
+
+        current_status = rec.get("approval_status", "")
+        if current_status not in ("approved_pending_appeal_report", "appeal_report_generated"):
+            return jsonify({
+                "status":  "error",
+                "message": (
+                    f"لا يمكن إنشاء مسودة الطعن في الحالة الحالية: {current_status!r}. "
+                    "يجب أن تكون الحالة 'approved_pending_appeal_report' أولًا."
+                ),
+            }), 422
+
+        try:
+            payload: dict = rec.get("payload_json") or {}
+            if isinstance(payload, str):
+                try:
+                    payload = json.loads(payload)
+                except Exception:
+                    payload = {}
+
+            from tax_appeal_context import _build_tax_appeal_context
+            from pdf_renderer import cairo_font_css, render_pdf_from_html
+            from jinja2 import Environment, FileSystemLoader
+
+            payload["request_id"] = request_id
+            ctx = _build_tax_appeal_context(payload)
+
+            _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
+            env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
+            tmpl = env.get_template("tax_appeal_expert_draft.html")
+            html_str = tmpl.render(font_css_block=cairo_font_css(), **ctx)
+            pdf_bytes = render_pdf_from_html(html_str)
+
+            pdf_dir = _ER_REPORTS / request_id
+            pdf_dir.mkdir(parents=True, exist_ok=True)
+            pdf_path = pdf_dir / "tax_appeal_expert_draft.pdf"
+            pdf_path.write_bytes(pdf_bytes)
+
+            # Advance status to appeal_report_generated
+            _update_er(request_id, {
+                "approval_status":        "appeal_report_generated",
+                "appeal_report_generated_at": datetime.utcnow().isoformat(),
+            })
+
+            return jsonify({
+                "status":     "ok",
+                "request_id": request_id,
+                "approval_status": "appeal_report_generated",
+                "pdf_size_bytes": len(pdf_bytes),
+            })
+        except Exception as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 500
+
+    # ── GET /api/tax-appeal/expert-requests/<id>/expert-draft-pdf ─────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/expert-draft-pdf",
+        methods=["GET"],
+    )
+    @require_auth
+    def tax_appeal_download_expert_draft_pdf(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        pdf_path = _ER_REPORTS / request_id / "tax_appeal_expert_draft.pdf"
+        if not pdf_path.exists():
+            return jsonify({"status": "error", "message": "مسودة الطعن غير متاحة بعد"}), 404
+        from flask import send_file
+        return send_file(
+            str(pdf_path),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"tax_appeal_expert_draft_{request_id}.pdf",
+        )
+
+    # ── GET /api/tax-appeal/expert-requests/<id>/expert-workbook ──────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/expert-workbook",
+        methods=["GET"],
+    )
+    @require_auth
+    def tax_appeal_download_expert_workbook(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        wb_path = _ER_WB_DIR / request_id / f"tax_appeal_review_{request_id}.xlsx"
+        if not wb_path.exists():
+            return jsonify({"status": "error", "message": "ملف العمل الخبيري غير متاح"}), 404
+        from flask import send_file
+        return send_file(
+            str(wb_path),
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            as_attachment=True,
+            download_name=f"tax_appeal_review_{request_id}.xlsx",
+        )

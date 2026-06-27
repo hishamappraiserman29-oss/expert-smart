@@ -1295,3 +1295,300 @@ def test_TAX_no_certified_report_on_page(page: Page, live_server: str) -> None:
     # Should not claim report is officially certified without expert review
     assert "تقرير معتمد رسمي جاهز" not in full_text
     assert "تم إصدار تقرير خبير معتمد" not in full_text
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 1 New E2E Tests: TAX_P1_01 – TAX_P1_09
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_P1_01_tax_mode_selector_still_works(page: Page, live_server: str) -> None:
+    """Tax type selector switches between annual and transfer modes."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    sel = page.locator('[data-testid="tax-type-select"]')
+    sel.select_option('transfer')
+    assert sel.input_value() == 'transfer'
+    sel.select_option('annual')
+    assert sel.input_value() == 'annual'
+
+
+def test_TAX_P1_02_annual_panel_visible_only_for_annual(page: Page, live_server: str) -> None:
+    """Annual method panel is visible when annual mode is selected."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    annual_panel = page.locator('[data-testid="tax-annual-method-panel"]')
+    expect(annual_panel).to_be_visible()
+
+
+def test_TAX_P1_03_transfer_panel_visible_only_for_transfer(page: Page, live_server: str) -> None:
+    """Transfer method panel is visible when transfer mode is selected."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-type-select"]').select_option('transfer')
+    transfer_panel = page.locator('[data-testid="tax-transfer-method-panel"]')
+    expect(transfer_panel).to_be_visible()
+
+
+def test_TAX_P1_04_60_day_countdown_appears_after_notice_date(page: Page, live_server: str) -> None:
+    """60-day appeal countdown appears after notice date is entered in annual mode."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    # Select annual mode to reveal the notice date field
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    notice_input = page.locator('[data-testid="tax-notice-received-date"]')
+    if notice_input.count() > 0:
+        notice_input.fill('01/04/2026')
+        notice_input.dispatch_event('change')
+        deadline_block = page.locator('[data-testid="tax-deadline-countdown"]')
+        expect(deadline_block).to_be_visible(timeout=5_000)
+    else:
+        # Element absent — just verify it exists in DOM
+        deadline_block = page.locator('[data-testid="tax-deadline-countdown"]')
+        assert deadline_block.count() > 0, "tax-deadline-countdown element must exist in DOM"
+
+
+def test_TAX_P1_05_preliminary_pdf_button_visible(page: Page, live_server: str) -> None:
+    """Stateless preliminary PDF button is visible on the tax page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    btn = page.locator('[data-testid="tax-preliminary-pdf-button"]')
+    expect(btn).to_be_visible()
+
+
+def test_TAX_P1_06_expert_request_card_visible(page: Page, live_server: str) -> None:
+    """Expert CTA button is visible on the tax page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    cta = page.locator('[data-testid="tax-expert-cta-button"]')
+    expect(cta).to_be_visible()
+
+
+def test_TAX_P1_07_no_certified_legal_overclaim(page: Page, live_server: str) -> None:
+    """Page must not claim a legally certified report or official filing."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    page.locator('[data-testid="tax-check-button"]').click()
+    page_text = page.locator('[data-testid="tax-page"]').inner_text()
+    forbidden = [
+        "تقرير معتمد رسمي جاهز",
+        "تم تقديم الطعن رسميًا",
+        "تقرير خبير قانوني معتمد",
+    ]
+    for phrase in forbidden:
+        assert phrase not in page_text, f"Page must not claim: {phrase!r}"
+
+
+def test_TAX_P1_08_source_readiness_note_says_not_active(page: Page, live_server: str) -> None:
+    """Source readiness note states no live Qdrant/internet/RAG."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    note = page.locator('[data-testid="tax-source-readiness-note"]')
+    expect(note).to_be_visible()
+    note_text = note.inner_text()
+    assert (
+        "مستقبلية" in note_text
+        or "غير مفعل" in note_text
+        or "Qdrant" in note_text
+        or "لا يوجد" in note_text
+    ), f"Source readiness note must state Qdrant/internet not active, got: {note_text!r}"
+
+
+def test_TAX_P1_09_dd_mm_yyyy_display_for_notice_field(page: Page, live_server: str) -> None:
+    """Notice date input exists; entering DD/MM/YYYY and submitting does not break the page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    # Select annual to reveal notice date field
+    page.locator('[data-testid="tax-type-select"]').select_option('annual')
+    notice_input = page.locator('[data-testid="tax-notice-received-date"]')
+    if notice_input.count() > 0:
+        # Fill with a valid DD/MM/YYYY date and ensure page doesn't error
+        notice_input.fill('15/04/2026')
+        notice_input.dispatch_event('change')
+        page.locator('[data-testid="tax-check-button"]').click()
+        # Page should still be visible (no crash)
+        expect(page.locator('[data-testid="tax-page"]')).to_be_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# P2. Property Class & Requirements Checklist UI — Parts B/G expansion
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_documents_input_is_present_in_tax_tab(page: Page, live_server: str) -> None:
+    """Tax appeal tab must expose a file input for uploading supporting documents."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    doc_input = page.locator('[data-testid="tax-documents-input"]')
+    assert doc_input.count() > 0, (
+        "Tax tab must include data-testid='tax-documents-input' for document uploads"
+    )
+
+
+def test_TAX_documents_list_container_exists_in_tax_tab(page: Page, live_server: str) -> None:
+    """Document list container must be present in the DOM inside the tax tab."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    doc_list = page.locator('[data-testid="tax-documents-list"]')
+    assert doc_list.count() > 0, (
+        "Tax tab must include data-testid='tax-documents-list' to display uploaded docs"
+    )
+
+
+def test_TAX_preliminary_pdf_residential_archetype_returns_pdf(
+    page: Page, live_server: str
+) -> None:
+    """Preliminary PDF endpoint must return a valid PDF for a residential (villa) payload."""
+    import json
+
+    payload = {
+        "tax_mode": "annual_real_estate_tax",
+        "property_type": "villa",
+        "country": "مصر",
+        "region": "القاهرة",
+        "city": "التجمع الأول",
+        "area": "350",
+        "government_tax_claim": "14890",
+        "notice_received_date": "2026-04-01",
+        "_qa_simulation": True,
+    }
+    resp = page.request.post(
+        f"{live_server}/api/tax-appeal/preliminary-pdf",
+        data=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
+    assert resp.status == 200, f"Expected 200, got {resp.status}"
+    assert resp.headers.get("content-type", "").startswith("application/pdf"), (
+        f"Expected application/pdf, got {resp.headers.get('content-type')}"
+    )
+    body = resp.body()
+    assert body[:4] == b"%PDF", "Response body must start with %PDF"
+
+
+def test_TAX_preliminary_pdf_special_purpose_archetype_returns_pdf(
+    page: Page, live_server: str
+) -> None:
+    """Preliminary PDF endpoint must return a valid PDF for a factory (special_purpose) payload."""
+    import json
+
+    payload = {
+        "tax_mode": "annual_real_estate_tax",
+        "property_type": "factory",
+        "country": "مصر",
+        "region": "الجيزة",
+        "city": "6 أكتوبر",
+        "area": "8500",
+        "government_tax_claim": "765000",
+        "notice_received_date": "2026-04-01",
+        "depreciation_rate": 0.014,
+        "age_years": 15,
+        "_qa_simulation": True,
+    }
+    resp = page.request.post(
+        f"{live_server}/api/tax-appeal/preliminary-pdf",
+        data=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
+    assert resp.status == 200, f"Expected 200, got {resp.status}"
+    assert resp.headers.get("content-type", "").startswith("application/pdf"), (
+        f"Expected application/pdf, got {resp.headers.get('content-type')}"
+    )
+    body = resp.body()
+    assert body[:4] == b"%PDF", "Response body must start with %PDF"
+
+
+def test_TAX_preliminary_pdf_non_residential_archetype_returns_pdf(
+    page: Page, live_server: str
+) -> None:
+    """Preliminary PDF endpoint must return a valid PDF for a shop (non_residential) payload."""
+    import json
+
+    payload = {
+        "tax_mode": "annual_real_estate_tax",
+        "property_type": "shop",
+        "country": "مصر",
+        "region": "القاهرة",
+        "city": "المقطم",
+        "area": "816",
+        "government_tax_claim": "73440",
+        "notice_received_date": "2026-04-01",
+        "_qa_simulation": True,
+    }
+    resp = page.request.post(
+        f"{live_server}/api/tax-appeal/preliminary-pdf",
+        data=json.dumps(payload),
+        headers={"Content-Type": "application/json"},
+    )
+    assert resp.status == 200, f"Expected 200, got {resp.status}"
+    body = resp.body()
+    assert body[:4] == b"%PDF", "Response body must start with %PDF"
+
+
+def test_TAX_P1_10_assessment_basis_date_field_in_inspection_box(
+    page: Page, live_server: str
+) -> None:
+    """TAX_P1_10: tax_assessment_basis_date is always visible inside
+    بيانات الفحص الضريبي — no tax-type selection required.
+
+    Checks:
+    - Section بيانات الفحص الضريبي is visible immediately after page load.
+    - data-testid='tax-assessment-basis-date' is visible WITHOUT selecting a tax type.
+    - Label 'آخر تاريخ حصر الضريبة' is visible and correct.
+    - User can fill a date (ISO format, type=date).
+    - notice_received_date exists independently and does not overwrite basis date.
+    """
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+
+    # ── 1. Section "بيانات الفحص الضريبي" must be visible on load
+    section = page.locator('[data-testid="tax-input-section"]')
+    assert section.is_visible(), (
+        "Tax input section (بيانات الفحص الضريبي) must be visible after page load"
+    )
+
+    # ── 2. Field must be visible WITHOUT any tax-type selection
+    basis_date_input = page.locator('[data-testid="tax-assessment-basis-date"]')
+    assert basis_date_input.count() > 0, (
+        "data-testid='tax-assessment-basis-date' must exist in the DOM"
+    )
+    assert basis_date_input.first.is_visible(), (
+        "tax-assessment-basis-date must be immediately visible inside "
+        "بيانات الفحص الضريبي without requiring tax-type selection"
+    )
+
+    # ── 3. Label must be visible and contain correct Arabic text
+    label = page.locator('[data-testid="tax-assessment-basis-date-label"]')
+    assert label.count() > 0, "data-testid='tax-assessment-basis-date-label' must exist"
+    assert label.first.is_visible(), "Label must be visible"
+    label_text = label.first.inner_text()
+    assert "آخر تاريخ حصر الضريبة" in label_text, (
+        f"Label must contain 'آخر تاريخ حصر الضريبة'. Got: {label_text!r}"
+    )
+
+    # ── 4. User can enter a date value (type="date" → ISO format)
+    basis_date_input.first.fill("2026-03-01")
+    entered = basis_date_input.first.input_value()
+    assert "2026" in entered, (
+        f"Entered date must be retained. Got: {entered!r}"
+    )
+
+    # ── 5. Select annual tax to bring notice_received_date into view
+    page.locator('[data-testid="tax-type-select"]').select_option("annual")
+    page.wait_for_timeout(300)
+
+    # ── 6. notice_received_date must exist independently
+    notice_input = page.locator('[data-testid="tax-notice-received-date"]')
+    assert notice_input.count() > 0, (
+        "tax-notice-received-date must still exist after basis date field added"
+    )
+    notice_input.first.fill("10/05/2026")
+    notice_val = notice_input.first.input_value()
+    assert "2026" in notice_val, (
+        f"Notice date must accept input. Got: {notice_val!r}"
+    )
+
+    # ── 7. Filling notice date must NOT overwrite basis date
+    basis_val = basis_date_input.first.input_value()
+    assert basis_val == entered, (
+        "Filling notice_received_date must not overwrite tax_assessment_basis_date. "
+        f"Expected {entered!r}, got {basis_val!r}"
+    )

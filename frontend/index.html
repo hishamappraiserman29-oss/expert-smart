@@ -2021,6 +2021,24 @@
                         placeholder="مثال: 40000" min="0">
                 </div>
 
+                <!-- آخر تاريخ حصر الضريبة / تاريخ أساس التقييم الضريبي -->
+                <div class="field-group" data-testid="tax-assessment-basis-date-group">
+                    <label data-testid="tax-assessment-basis-date-label">
+                        آخر تاريخ حصر الضريبة / تاريخ أساس التقييم الضريبي
+                    </label>
+                    <input type="date" class="input-box" id="tax-assessment-basis-date"
+                        data-testid="tax-assessment-basis-date"
+                        style="direction:ltr;">
+                    <div id="tax-assessment-basis-date-error"
+                        data-testid="tax-assessment-basis-date-error"
+                        style="display:none;font-size:0.75rem;color:#ef4444;margin-top:3px;"></div>
+                    <div style="font-size:0.76rem;color:#6b7280;margin-top:4px;line-height:1.6;"
+                        data-testid="tax-assessment-basis-date-note">
+                        هو التاريخ الذي تم على أساسه تحديد وعاء الضريبة أو الحصر الضريبي،
+                        وليس تاريخ إصدار التقرير أو تاريخ استلام الإخطار.
+                    </div>
+                </div>
+
             </div>
 
             <!-- ── Conditional: Transfer Tax ─────────────────────────────── -->
@@ -2428,6 +2446,25 @@
                        font-weight:700;text-decoration:underline;">
                 ⬇️ تحميل تقرير الفحص المبدئي (PDF)
             </a>
+        </div>
+
+        <!-- ══ F2. Preliminary PDF (stateless — always available) ══════════ -->
+        <div style="margin-bottom:0.5rem;text-align:center;">
+            <button type="button" id="tax-preliminary-pdf-btn"
+                data-testid="tax-preliminary-pdf-button"
+                onclick="taxDownloadPreliminaryPdf(this)"
+                style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);
+                       border-radius:9px;color:#34d399;font-family:'Tajawal',sans-serif;
+                       font-size:0.88rem;padding:10px 22px;cursor:pointer;">
+                <i class="fas fa-file-pdf"></i>
+                تحميل تقرير فحص ضريبي مبدئي PDF
+            </button>
+        </div>
+        <div data-testid="tax-source-readiness-note"
+            style="text-align:center;margin:4px auto 8px;max-width:620px;
+                   font-size:0.76rem;color:#6b7280;line-height:1.5;">
+            📌 المصادر: بيانات مدخلة من المستخدم — لا يوجد اتصال بالإنترنت أو Qdrant أو RAG.
+            سجل المصادر الآلي مرحلة مستقبلية غير مفعّلة.
         </div>
 
         <!-- ══ G. Expert CTA ════════════════════════════════════════════════ -->
@@ -2978,6 +3015,71 @@
             }
         }
 
+        /* ── Stateless preliminary PDF — calls POST /api/tax-appeal/preliminary-pdf ── */
+        function taxDownloadPreliminaryPdf(btn) {
+            var orig = btn ? btn.textContent : '';
+            if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري إنشاء التقرير…'; }
+
+            var _v = function(id) { var el = document.getElementById(id); return el ? (el.value || '') : ''; };
+            var noticeVal    = _v('tax-notice-date');
+            var noticeParsed = parseEgyptDate(noticeVal);
+            var saleDateVal  = _v('tax-transfer-sale-date');
+            var saleParsed   = parseEgyptDate(saleDateVal);
+
+            var payload = {
+                tax_mode:                     _v('tax-type') === 'transfer' ? 'transfer_tax' : 'annual_real_estate_tax',
+                asset_type:                   _v('tax-asset-type'),
+                country:                      _v('tax-country'),
+                region:                       _v('tax-region'),
+                city:                         _v('tax-city'),
+                area:                         _v('tax-area'),
+                property_status:              _v('tax-property-status'),
+                government_tax_claim:         _v('tax-government-claim'),
+                sale_value:                   _v('tax-sale-value'),
+                annual_rental_estimate:       _v('tax-annual-rental-estimate'),
+                form3_status:                 _v('tax-form3-status'),
+                assessment_basis_year:        _v('tax-assessment-basis-year'),
+                current_assessment_cycle_year: '2022',
+                next_assessment_cycle_year:   '2027',
+                notice_received_date:         noticeParsed ? toIsoDate(noticeParsed) : '',
+                notice_received_date_display: noticeVal,
+                sale_date:                    saleParsed    ? toIsoDate(saleParsed)   : '',
+                sale_date_display:            saleDateVal,
+                calculated_estimated_tax:     _taxCalcState.estimatedTax !== null ? Math.round(_taxCalcState.estimatedTax) : null,
+                calculated_potential_saving:  _taxCalcState.diff         !== null ? Math.round(_taxCalcState.diff)         : null,
+                calculated_gap_percent:       _taxCalcState.gapPct       !== null ? parseFloat(_taxCalcState.gapPct.toFixed(1)) : null,
+                risk_level:                   _taxCalcState.riskLabel || '',
+            };
+
+            fetch('/api/tax-appeal/preliminary-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            })
+            .then(function(resp) {
+                if (!resp.ok) {
+                    return resp.json().then(function(d) { throw new Error(d.message || 'خطأ في إنشاء التقرير'); });
+                }
+                return resp.blob();
+            })
+            .then(function(blob) {
+                var url = URL.createObjectURL(blob);
+                var a   = document.createElement('a');
+                a.href     = url;
+                a.download = 'tax_appeal_preliminary.pdf';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(function(err) {
+                alert('تعذّر إنشاء التقرير: ' + err.message);
+            })
+            .finally(function() {
+                if (btn) { btn.disabled = false; btn.textContent = orig; }
+            });
+        }
+
         /* ── Lead form submit — calls POST /api/tax-appeal/leads ─────────── */
         function taxSubmitLead() {
             var name   = (document.getElementById('tax-lead-name-input')  || {}).value || '';
@@ -3033,6 +3135,7 @@
             var _saleDateParsed = parseEgyptDate(_saleDateVal);
             fd.append('sale_date_display', _saleDateVal);
             fd.append('sale_date_iso',     _saleDateParsed ? toIsoDate(_saleDateParsed) : '');
+            fd.append('tax_assessment_basis_date', _v('tax-assessment-basis-date'));
 
             /* Calculated advisory values */
             fd.append('calculated_estimated_tax',    _taxCalcState.estimatedTax  !== null ? String(Math.round(_taxCalcState.estimatedTax))  : '');

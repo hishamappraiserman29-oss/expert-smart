@@ -1868,6 +1868,66 @@
 </div>
 {% endif %}
 
+<!-- ══ حالة OCR Pilot (Preliminary — قيم مبدئية غير معتمدة) ════════════════════ -->
+{% set ocr_s_p = ocr_pilot_summary or {} %}
+{% set ocr_sf = ocr_suggested_fields or [] %}
+<div class="sec">
+  <div class="sec-hdr amber">حالة OCR Pilot — قراءة مبدئية للمستندات (غير معتمدة)</div>
+  <div class="sec-body">
+    <table class="ftbl" style="margin-bottom:8px;">
+      <tr><td class="lbl">OCR مفعَّل للـ Pilot</td><td>{{ "نعم" if ocr_s_p.ocr_active_now else "لا" }}</td><td class="lbl">API خارجي</td><td>لا</td></tr>
+      <tr><td class="lbl">Qdrant مفعَّل</td><td>لا</td><td class="lbl">RAG مفعَّل</td><td>لا</td></tr>
+      <tr><td class="lbl">إجمالي مهام OCR</td><td>{{ ocr_s_p.total_ocr_jobs or 0 }}</td><td class="lbl">مهام مكتملة</td><td>{{ ocr_s_p.completed_ocr_jobs or 0 }}</td></tr>
+      <tr><td class="lbl">مسودات استخراج</td><td>{{ ocr_s_p.extraction_drafts_created_from_ocr or 0 }}</td><td class="lbl">قيم مؤكدة من خبير</td><td>{{ ocr_s_p.expert_confirmed_ocr_values or 0 }}</td></tr>
+    </table>
+
+    {% if ocr_sf %}
+    <p style="font-weight:700;color:#1B2E4B;font-size:8.5pt;margin-bottom:4px;">
+      القيم المستخرجة آليًا — مبدئية غير معتمدة (تتطلب مراجعة وتأكيد الخبير):
+    </p>
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th>الحقل</th>
+          <th>القيمة المقروءة آليًا</th>
+          <th>الثقة</th>
+          <th>المصدر</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sf in ocr_sf %}
+        <tr>
+          <td style="font-weight:600;color:#1B2E4B;">{{ sf.field_label_ar }}</td>
+          <td style="font-family:monospace;color:#7F1D1D;">{{ sf.ocr_value }}</td>
+          <td style="{% if sf.confidence >= 0.8 %}color:#1A5E30;{% elif sf.confidence >= 0.6 %}color:#92400E;{% else %}color:#7F1D1D;{% endif %}font-size:8pt;">
+            {{ sf.confidence_label_ar }}
+          </td>
+          <td style="font-size:7.5pt;color:#374151;">{{ sf.evidence_type_label_ar }}</td>
+          <td style="font-size:7.5pt;font-weight:700;color:#DC2626;">{{ sf.label_ar }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="margin-top:6px;padding:5px 8px;background:#FFF7ED;border:1px solid #FCD34D;border-radius:3px;font-size:7.5pt;">
+      <strong>مفتاح مصادر القيم:</strong>
+      <span style="margin-right:10px;">● <strong>بيانات يدوية:</strong> مُدخلة من المستخدم</span>
+      <span style="color:#DC2626;margin-right:10px;">◆ <strong>قراءة OCR:</strong> مبدئية آلية — غير معتمدة</span>
+      <span style="color:#1A5E30;">★ <strong>تأكيد الخبير:</strong> معتمدة بعد المراجعة</span>
+    </div>
+    {% else %}
+    <p style="font-size:8pt;color:#6B7280;font-style:italic;">لا توجد قيم مستخرجة آليًا من مستندات هذا الطلب حتى الآن.</p>
+    {% endif %}
+
+    <p style="color:#DC2626;font-weight:700;font-size:8pt;margin-top:8px;border-right:3px solid #DC2626;padding-right:6px;">
+      تحذير: لا تصلح هذه القراءة للاستخدام الرسمي أو التقرير المعتمد إلا بعد مراجعة وتأكيد الخبير.
+      قيم OCR مُوسَمة "قراءة آلية مبدئية — غير معتمدة" ولا تُعوِّض البيانات اليدوية أو المؤكدة من الخبير.
+      هذا التقرير مبدئي غير معتمد.
+    </p>
+  </div>
+</div>
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

@@ -6274,6 +6274,33 @@ def _build_tax_appeal_context(
             "no_automatic_value_extraction": True,
         }
 
+    # ── OCR Pilot summary + suggested fields ──────────────────────────────────
+    try:
+        from tax_appeal_ocr_routes import (
+            load_ocr_jobs               as _loj,
+            build_ocr_pilot_summary     as _bops,
+            load_ocr_extraction_drafts  as _loed,
+            build_ocr_suggested_fields  as _bosf,
+        )
+        _is_qa         = request_id and request_id.startswith("QA-")
+        _ocr_jobs      = _loj(request_id)  if (request_id and not _is_qa) else []
+        _ocr_pilot_sum = _bops(_ocr_jobs)
+        _ocr_drafts    = _loed(request_id) if (request_id and not _is_qa) else []
+        _ocr_suggested = _bosf(_ocr_drafts)
+    except Exception:
+        _ocr_pilot_sum = {
+            "ocr_active_now": False, "qdrant_active_now": False,
+            "rag_active_now": False, "external_api_used": False,
+            "total_ocr_jobs": 0, "completed_ocr_jobs": 0,
+            "failed_ocr_jobs": 0, "unsupported_ocr_jobs": 0,
+            "extraction_drafts_created_from_ocr": 0,
+            "ocr_values_used_in_report": 0,
+            "expert_confirmed_ocr_values": 0,
+            "production_ready_count": 0,
+            "warnings": [],
+        }
+        _ocr_suggested = []
+
     ctx: dict = {
         # Identifiers
         "request_id":       request_id,
@@ -6436,6 +6463,13 @@ def _build_tax_appeal_context(
 
         # ── Extraction readiness summary ───────────────────────────────────
         "extraction_summary": _ex_summary,
+
+        # ── OCR Pilot summary ──────────────────────────────────────────────
+        "ocr_pilot_summary":    _ocr_pilot_sum,
+        # OCR suggested fields — preliminary/advisory, labeled "غير معتمدة".
+        # Only from unconfirmed/unrejected drafts. production_ready always False.
+        # Final/certified reports must not render these without expert confirmation.
+        "ocr_suggested_fields": _ocr_suggested,
     }
 
     return ctx

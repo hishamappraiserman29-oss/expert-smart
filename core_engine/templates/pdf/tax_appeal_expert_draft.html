@@ -2204,6 +2204,58 @@
   </p>
 </div>
 
+<!-- ══ المدخلات المرتبطة بالمصادر (Field Mapping — Expert Draft) ═══════════════ -->
+{% set fm_sum = field_mapping_summary or {} %}
+{% set sli    = source_linked_inputs   or {} %}
+{% if fm_sum.confirmed_mappings %}
+<div class="section">
+  <div class="section-title">المدخلات المرتبطة بالمصادر — ربط الحقول</div>
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي الروابط</td><td>{{ fm_sum.total_mappings }}</td></tr>
+    <tr><td class="lbl">مؤكدة</td><td>{{ fm_sum.confirmed_mappings }}</td></tr>
+    <tr><td class="lbl">قيد المراجعة</td><td>{{ fm_sum.pending_mappings }}</td></tr>
+    <tr><td class="lbl">جاهزة للإنتاج</td><td>{{ fm_sum.production_ready_mappings }}</td></tr>
+    <tr><td class="lbl">تعارضات</td><td>{{ fm_sum.conflicts_count }}</td></tr>
+    <tr><td class="lbl">تعارضات غير محسومة</td><td>{{ fm_sum.unresolved_conflicts }}</td></tr>
+  </table>
+  {% if sli %}
+  <h4 style="margin:8px 0 4px; font-size:9pt;">الحقول المرتبطة بالمصادر المُطبَّقة</h4>
+  <table class="comp-table">
+    <tr><th>الحقل</th><th>القيمة</th><th>نوع المستند</th><th>حالة المصدر</th><th>إنتاجي</th><th>مؤكد من الخبير</th><th>التعارض</th></tr>
+    {% for fkey, fval in sli.items() %}
+    <tr>
+      <td>{{ fkey }}</td>
+      <td>{{ fval.display_value }}</td>
+      <td>{{ fval.evidence_type }}</td>
+      <td>{{ fval.source_status }}</td>
+      <td>{{ "نعم" if fval.production_ready else "لا" }}</td>
+      <td>{{ "نعم" if fval.expert_confirmed else "لا" }}</td>
+      <td {% if fval.conflict_status != "no_conflict" %}style="color:#B91C1C; font-weight:bold;"{% endif %}>{{ fval.conflict_status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if fm_sum.unresolved_conflicts %}
+  <p style="color:#B91C1C; font-weight:bold;">⚠ يوجد {{ fm_sum.unresolved_conflicts }} تعارض/تعارضات غير محسومة — يجب مراجعة الخبير</p>
+  {% endif %}
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    جميع القيم المرتبطة بالمصادر مُدخلة ومؤكدة يدويًا من الخبير. لا يتم استخلاص أي قيم تلقائيًا.
+    المصدر: {{ fm_sum.applied_source_linked_fields | join("، ") if fm_sum.applied_source_linked_fields else "لا توجد حقول مطبقة بعد" }}.
+  </p>
+</div>
+{% endif %}
+
+<!-- ══ تعارضات البيانات (Conflicts — Expert Draft) ═══════════════════════════ -->
+{% if fm_sum.unresolved_conflicts %}
+<div class="section" style="border-right: 3px solid #B91C1C;">
+  <div class="section-title" style="color:#B91C1C;">تعارضات البيانات — تحتاج قرار الخبير</div>
+  <p style="color:#B91C1C; font-size:8pt;">
+    الحقول التالية تحتوي تعارضًا بين البيانات الأصلية للطلب والقيم المستخرجة من المستندات.
+    لا يمكن تطبيق هذه القيم في التقرير حتى يُحسم التعارض من قِبل الخبير.
+  </p>
+</div>
+{% endif %}
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

@@ -33800,6 +33800,95 @@ function _expertSetBadge(id, label, available) {
     </div>
   </div>
 
+  <!-- ══ ربط الحقول بالمصادر (Field Mapping — Backoffice only) ════════════════ -->
+  <div id="tax-field-mapping-section" data-testid="tax-field-mapping-section"
+       style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:1rem; margin-bottom:1rem; display:none;">
+    <h4 style="color:#60a5fa; font-size:0.9rem; margin:0 0 0.8rem;">ربط الحقول بالمصادر</h4>
+
+    <!-- New mapping form -->
+    <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.2); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+      <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px; font-weight:700;">إنشاء ربط جديد</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">المستند المعتمد:</label>
+          <select id="tax-mapping-evidence-select" data-testid="tax-mapping-evidence-select"
+                  style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر المستند —</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">الحقل المستهدف:</label>
+          <select id="tax-mapping-field-select" data-testid="tax-mapping-field-select"
+                  style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر الحقل —</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">القيمة المُدخلة يدويًا:</label>
+          <input type="text" id="tax-mapping-value-input" data-testid="tax-mapping-value-input" dir="rtl"
+                 placeholder="أدخل القيمة..."
+                 style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+        </div>
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">ملاحظة الخبير (اختياري):</label>
+          <input type="text" id="tax-mapping-note-input" data-testid="tax-mapping-note-input" dir="rtl"
+                 placeholder="ملاحظة داخلية للخبير..."
+                 style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+        </div>
+      </div>
+
+      <div id="tax-mapping-conflict-warning" data-testid="tax-mapping-conflict-warning"
+           style="display:none; margin-bottom:8px; padding:8px 12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px; color:#f87171; font-size:0.78rem; direction:rtl;">
+        ⚠ تحذير: القيمة المدخلة تختلف عن بيانات الطلب الأصلية — يجب الحسم من قِبل الخبير
+      </div>
+
+      <div id="tax-mapping-override-row" style="display:none; margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">سبب تجاوز نوع المستند (override):</label>
+        <input type="text" id="tax-mapping-override-reason" dir="rtl"
+               placeholder="اذكر سبب التجاوز إذا كان نوع المستند غير متوافق..."
+               style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="tax-mapping-save-button" data-testid="tax-mapping-save-button"
+                onclick="taxMappingCreate()"
+                style="padding:7px 16px; background:rgba(96,165,250,0.15); border:1px solid rgba(96,165,250,0.4); color:#60a5fa; border-radius:7px; cursor:pointer; font-size:0.8rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+          حفظ الربط
+        </button>
+        <button id="tax-mapping-apply-context-button" data-testid="tax-mapping-apply-context-button"
+                onclick="taxMappingApplyContext()"
+                style="padding:7px 16px; background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.35); color:#34d399; border-radius:7px; cursor:pointer; font-size:0.8rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+          تطبيق الروابط على السياق
+        </button>
+      </div>
+      <div id="tax-mapping-save-status" style="display:none; margin-top:6px; font-size:0.78rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Mapping list -->
+    <div id="tax-mapping-list" data-testid="tax-mapping-list" style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#e2e8f0;">
+        <thead>
+          <tr style="background:rgba(30,41,59,0.8); text-align:right;">
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">الحقل</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">القيمة</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">المستند</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">الحالة</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">إنتاجي</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">التعارض</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="tax-mapping-table-body">
+          <tr><td colspan="7" style="padding:12px; color:#4b5563; text-align:center; font-style:italic;">لا توجد روابط حقول بعد.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 <!-- end tax appeal backoffice -->
 
@@ -34004,8 +34093,9 @@ async function taxAppealBoOpenRequest(rid) {
         var notesEl = document.getElementById('tax-bo-expert-notes');
         if (notesEl) notesEl.value = r.expert_notes || '';
 
-        // Load evidence for this request
+        // Load evidence and field mappings for this request
         taxEvidenceLoad();
+        taxMappingInit();
 
     } catch(e) {
         taxAppealBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
@@ -34171,6 +34261,8 @@ async function taxEvidenceLoad() {
         // Populate cache
         _taxEvidenceCache = {};
         evList.forEach(function(e) { if (e.evidence_id) _taxEvidenceCache[e.evidence_id] = e; });
+        // Refresh evidence select in field mapping section
+        _taxMappingPopulateEvidenceSelect();
 
         // Update missing mandatory warning
         var approvedStatuses = ['approved_for_report','approved_as_source'];
@@ -34350,6 +34442,266 @@ async function taxEvidenceDownload() {
     taxAppealBoInit();
     window.addEventListener('hashchange', function() { taxAppealBoInit(); });
 })();
+
+// ── Field Mapping Backoffice JS ───────────────────────────────────────────────
+// Rule: This section is ONLY in backoffice. Not visible to ordinary users.
+// No OCR, no Qdrant, no automatic value extraction.
+
+var _taxMappingCatalogue  = {};  // { group: [ {field_key, label_ar, ...} ] }
+var _taxMappingCache      = {};  // mappingId → mapping record
+
+async function taxMappingInit() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+
+    // Show the section
+    var sec = document.getElementById('tax-field-mapping-section');
+    if (sec) sec.style.display = '';
+
+    // Load catalogue
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings/catalogue',
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        if (resp.ok) {
+            var data = await resp.json();
+            _taxMappingCatalogue = data.catalogue_by_group || {};
+            _taxMappingPopulateFieldSelect();
+        }
+    } catch(e) {}
+
+    // Populate evidence select from cache
+    _taxMappingPopulateEvidenceSelect();
+
+    // Load existing mappings
+    taxMappingLoad();
+}
+
+function _taxMappingPopulateFieldSelect() {
+    var sel = document.getElementById('tax-mapping-field-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— اختر الحقل —</option>';
+    for (var grp in _taxMappingCatalogue) {
+        var fields = _taxMappingCatalogue[grp];
+        var og = document.createElement('optgroup');
+        og.label = grp;
+        fields.forEach(function(f) {
+            var opt = document.createElement('option');
+            opt.value = f.field_key;
+            opt.textContent = f.label_ar + ' (' + f.field_key + ')';
+            og.appendChild(opt);
+        });
+        sel.appendChild(og);
+    }
+}
+
+function _taxMappingPopulateEvidenceSelect() {
+    var sel = document.getElementById('tax-mapping-evidence-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— اختر المستند —</option>';
+    for (var evId in _taxEvidenceCache) {
+        var ev = _taxEvidenceCache[evId];
+        var st = ev.status || '';
+        if (st === 'rejected' || st === 'superseded') continue;
+        var opt = document.createElement('option');
+        opt.value = evId;
+        var badge = st === 'approved_as_source' ? ' ★' : st === 'approved_for_report' ? ' ✓' : '';
+        opt.textContent = (ev.evidence_type_label_ar || ev.evidence_type || evId) + badge + ' — ' + evId;
+        sel.appendChild(opt);
+    }
+}
+
+async function taxMappingLoad() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings',
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        if (!resp.ok) return;
+        var data = await resp.json();
+        var mappings = data.mappings || [];
+        _taxMappingCache = {};
+        mappings.forEach(function(m) { _taxMappingCache[m.mapping_id] = m; });
+        _taxMappingRenderTable(mappings);
+    } catch(e) {}
+}
+
+function _taxMappingRenderTable(mappings) {
+    var tbody = document.getElementById('tax-mapping-table-body');
+    if (!tbody) return;
+
+    if (!mappings || !mappings.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:12px; color:#4b5563; text-align:center; font-style:italic;">لا توجد روابط حقول بعد.</td></tr>';
+        return;
+    }
+
+    var statusColors = {
+        'confirmed':    '#34d399',
+        'needs_review': '#fbbf24',
+        'draft':        '#94a3b8',
+        'rejected':     '#f87171',
+        'superseded':   '#6b7280',
+    };
+    var rows = mappings.map(function(m) {
+        var sc     = statusColors[m.mapping_status] || '#94a3b8';
+        var cfWarn = (m.conflict_status && m.conflict_status !== 'no_conflict')
+            ? '<span style="color:#f87171; font-size:0.72rem; font-weight:700;">⚠ ' + m.conflict_status + '</span>'
+            : '<span style="color:#4b5563;">—</span>';
+        var prodBadge = m.production_ready
+            ? '<span style="color:#34d399; font-size:0.72rem;">إنتاجي</span>'
+            : '<span style="color:#4b5563; font-size:0.72rem;">للتقرير</span>';
+        var actions = '';
+        if (m.mapping_status !== 'confirmed' && m.mapping_status !== 'rejected' && m.mapping_status !== 'superseded') {
+            actions += '<button data-testid="tax-mapping-confirm-button" onclick="taxMappingConfirm(\'' + m.mapping_id + '\')" style="padding:3px 8px; margin-left:4px; background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.3); color:#34d399; border-radius:5px; cursor:pointer; font-size:0.72rem;">تأكيد</button>';
+            actions += '<button data-testid="tax-mapping-reject-button" onclick="taxMappingReject(\'' + m.mapping_id + '\')" style="padding:3px 8px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:5px; cursor:pointer; font-size:0.72rem;">رفض</button>';
+        }
+        return '<tr data-testid="tax-mapping-row" style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
+            '<td style="padding:7px 10px;">' + (m.mapped_field_label_ar || m.mapped_field_key || '') + '</td>' +
+            '<td style="padding:7px 10px;">' + (m.mapped_value || '') + '</td>' +
+            '<td style="padding:7px 10px; font-size:0.72rem; color:#94a3b8;">' + (m.evidence_type || m.evidence_id || '') + '</td>' +
+            '<td style="padding:7px 10px;"><span style="color:' + sc + '; font-size:0.72rem; font-weight:700;">' + (m.mapping_status || '') + '</span></td>' +
+            '<td style="padding:7px 10px;">' + prodBadge + '</td>' +
+            '<td style="padding:7px 10px;">' + cfWarn + '</td>' +
+            '<td style="padding:7px 10px;">' + actions + '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = rows.join('');
+}
+
+async function taxMappingCreate() {
+    if (!_taxAppealBoCurrentId) return;
+    var token   = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+
+    var evId    = (document.getElementById('tax-mapping-evidence-select') || {}).value || '';
+    var fKey    = (document.getElementById('tax-mapping-field-select')   || {}).value || '';
+    var val     = ((document.getElementById('tax-mapping-value-input')   || {}).value || '').trim();
+    var notes   = ((document.getElementById('tax-mapping-note-input')    || {}).value || '').trim();
+    var ovReason= ((document.getElementById('tax-mapping-override-reason')|| {}).value || '').trim();
+
+    if (!evId || !fKey || !val) {
+        taxAppealBoStatus('يرجى اختيار المستند والحقل وإدخال القيمة.', false);
+        return;
+    }
+
+    var msgEl = document.getElementById('tax-mapping-save-status');
+    if (msgEl) { msgEl.style.display = ''; msgEl.textContent = 'جارٍ الحفظ...'; }
+
+    var body = {evidence_id: evId, mapped_field_key: fKey, mapped_value: val};
+    if (notes)    body.expert_notes    = notes;
+    if (ovReason) body.override_reason = ovReason;
+
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings',
+            {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+                body: JSON.stringify(body),
+            }
+        );
+        var data = await resp.json();
+        if (resp.ok) {
+            if (msgEl) msgEl.textContent = 'تم حفظ الربط: ' + data.mapping_id;
+            taxAppealBoStatus('تم إنشاء ربط الحقل: ' + (data.mapped_field_label_ar || fKey), true);
+            if (data.conflict_detected) {
+                var cw = document.getElementById('tax-mapping-conflict-warning');
+                if (cw) cw.style.display = '';
+            }
+            taxMappingLoad();
+        } else {
+            if (data.allowed_evidence_types) {
+                // Show override reason field
+                var or2 = document.getElementById('tax-mapping-override-row');
+                if (or2) or2.style.display = '';
+            }
+            if (msgEl) msgEl.textContent = 'خطأ: ' + (data.message || resp.status);
+            taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) {
+        if (msgEl) msgEl.textContent = 'خطأ: ' + e.message;
+    }
+}
+
+async function taxMappingConfirm(mappingId) {
+    if (!_taxAppealBoCurrentId || !mappingId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings/' + mappingId + '/confirm',
+            {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({reviewed_by: 'expert'}),
+            }
+        );
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus('تم تأكيد الربط.', true);
+            taxMappingLoad();
+        } else {
+            taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxMappingReject(mappingId) {
+    if (!_taxAppealBoCurrentId || !mappingId) return;
+    var token  = taxAppealBoGetToken();
+    if (!token) return;
+    var reason = prompt('سبب الرفض (مطلوب):');
+    if (!reason) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings/' + mappingId + '/reject',
+            {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({rejection_reason: reason}),
+            }
+        );
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus('تم رفض الربط.', true);
+            taxMappingLoad();
+        } else {
+            taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxMappingApplyContext() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/field-mappings/apply-to-context',
+            {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({}),
+            }
+        );
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus(
+                'تم تطبيق السياق: ' + data.applied_fields_count + ' حقل مطبق، ' +
+                data.skipped_fields_count + ' محذوف، ' + data.conflicts_count + ' تعارض.',
+                true
+            );
+        } else {
+            taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
+        }
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
 </script>
 
 </body>

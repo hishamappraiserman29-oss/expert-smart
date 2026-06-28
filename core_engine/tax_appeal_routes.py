@@ -625,7 +625,11 @@ def register(app, require_auth, limiter=None) -> None:
         wb_available = False
         try:
             from tax_appeal_workbook_builder import _create_tax_appeal_workbook
-            _create_tax_appeal_workbook(request_id, rec)
+            from tax_appeal_field_mapping import load_mapping_records as _load_fm_wb
+            _create_tax_appeal_workbook(
+                request_id, rec,
+                mapping_records=_load_fm_wb(request_id),
+            )
             wb_available = True
         except Exception:
             pass
@@ -706,8 +710,14 @@ def register(app, require_auth, limiter=None) -> None:
         try:
             from tax_appeal_context import _build_tax_appeal_context
             from tax_appeal_evidence_routes import load_evidence_records
+            from tax_appeal_field_mapping import load_mapping_records as _load_fm
             ev_records = load_evidence_records(request_id)
-            ctx = _build_tax_appeal_context(payload, evidence_records=ev_records)
+            fm_records = _load_fm(request_id)
+            ctx = _build_tax_appeal_context(
+                payload,
+                evidence_records=ev_records,
+                mapping_records=fm_records,
+            )
             context_summary = {
                 "tax_assessment_basis_date":         ctx.get("tax_assessment_basis_date"),
                 "tax_assessment_basis_date_display": ctx.get("tax_assessment_basis_date_display"),
@@ -723,6 +733,8 @@ def register(app, require_auth, limiter=None) -> None:
                 "source_registry":                   ctx.get("source_registry"),
                 "recommendation_summary":            ctx.get("recommendation_summary"),
                 "evidence_summary":                  ctx.get("evidence_summary"),
+                "field_mapping_summary":             ctx.get("field_mapping_summary"),
+                "source_linked_inputs":              ctx.get("source_linked_inputs"),
             }
         except Exception:
             pass
@@ -823,9 +835,14 @@ def register(app, require_auth, limiter=None) -> None:
             from pdf_renderer import cairo_font_css, render_pdf_from_html
             from jinja2 import Environment, FileSystemLoader
             from tax_appeal_evidence_routes import load_evidence_records as _load_ev
+            from tax_appeal_field_mapping import load_mapping_records as _load_fm2
 
             payload["request_id"] = request_id
-            ctx = _build_tax_appeal_context(payload, evidence_records=_load_ev(request_id))
+            ctx = _build_tax_appeal_context(
+                payload,
+                evidence_records=_load_ev(request_id),
+                mapping_records=_load_fm2(request_id),
+            )
 
             _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
             env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
@@ -924,3 +941,7 @@ def register(app, require_auth, limiter=None) -> None:
     # ── Evidence upload & source approval routes ───────────────────────────
     from tax_appeal_evidence_routes import register_evidence_routes
     register_evidence_routes(app, require_auth)
+
+    # ── Field mapping routes ───────────────────────────────────────────────
+    from tax_appeal_field_mapping import register_field_mapping_routes
+    register_field_mapping_routes(app, require_auth)

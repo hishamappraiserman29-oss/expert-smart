@@ -4185,6 +4185,168 @@ def _sheet_visible_text_quality(ws, ctx: dict) -> None:
         _apply_row(ws, row, lbl, val); row += 1
 
 
+# ── Field mapping sheets ──────────────────────────────────────────────────────
+
+def _sheet_field_mappings(ws, mapping_records: list, ctx: dict) -> None:
+    """Populate the ربط الحقول بالمصادر sheet with field mapping data."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill = _hdr_fill("1E40AF")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    ok_fill  = PatternFill("solid", fgColor="D1FAE5")
+    warn_fill= PatternFill("solid", fgColor="FEF3C7")
+    err_fill = PatternFill("solid", fgColor="FEE2E2")
+
+    ws.cell(row=1, column=1, value="ربط الحقول بالمصادر — Field Mapping").font = \
+        Font(name="Cairo", bold=True, size=11, color="1E40AF")
+
+    headers = [
+        "mapping_id", "mapped_field_key", "التسمية العربية", "المجموعة",
+        "القيمة", "نوع القيمة", "evidence_id", "نوع المستند",
+        "source_registry_id", "حالة الربط", "إنتاجي", "مؤكد من الخبير",
+        "تاريخ التأكيد", "تعارض", "مستخدم في التقرير", "ملاحظات الخبير",
+    ]
+    hr = 2
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    if not mapping_records:
+        ws.cell(row=hr + 1, column=1, value="لا توجد روابط حقول مسجلة بعد.").font = \
+            Font(name="Cairo", size=9, color="374151")
+        return
+
+    status_label = {
+        "draft":        "مسودة",
+        "needs_review": "بانتظار المراجعة",
+        "confirmed":    "مؤكد",
+        "rejected":     "مرفوض",
+        "superseded":   "مُستبدل",
+    }
+
+    sli = ctx.get("source_linked_inputs", {})
+
+    for i, m in enumerate(mapping_records, 1):
+        row    = hr + i
+        status = m.get("mapping_status", "")
+        prod   = m.get("production_ready", False)
+        conf   = m.get("expert_confirmed", False)
+        cf_st  = m.get("conflict_status", "no_conflict")
+        fkey   = m.get("mapped_field_key", "")
+
+        # Exclude rejected/superseded expert notes
+        public_notes = "" if status in ("rejected", "superseded") else (m.get("expert_notes") or "")
+
+        vals = [
+            m.get("mapping_id", ""),
+            fkey,
+            m.get("mapped_field_label_ar", ""),
+            m.get("mapped_field_group", ""),
+            m.get("mapped_value", ""),
+            m.get("mapped_value_type", ""),
+            m.get("evidence_id", ""),
+            m.get("evidence_type", ""),
+            m.get("source_registry_id") or "—",
+            status_label.get(status, status),
+            "نعم" if prod else "لا",
+            "نعم" if conf else "لا",
+            (m.get("expert_reviewed_at") or "")[:10],
+            cf_st,
+            "نعم" if m.get("report_usage_allowed") else "لا",
+            public_notes,
+        ]
+        for ci, v in enumerate(vals, 1):
+            c = ws.cell(row=row, column=ci, value=v)
+            c.font = _data_font()
+            if ci == 10:
+                if status == "confirmed":
+                    c.fill = ok_fill
+                elif status in ("rejected", "superseded"):
+                    c.fill = err_fill
+            if ci == 14 and cf_st != "no_conflict":
+                c.fill = warn_fill
+
+    ws.column_dimensions[get_column_letter(3)].width  = 28
+    ws.column_dimensions[get_column_letter(5)].width  = 20
+    ws.column_dimensions[get_column_letter(16)].width = 32
+
+
+def _sheet_field_mapping_conflicts(ws, ctx: dict) -> None:
+    """Populate the تعارضات البيانات sheet from context field_mapping_summary."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill  = _hdr_fill("B91C1C")
+    hdr_font  = _hdr_font()
+    ctr       = _center_align()
+    warn_fill = PatternFill("solid", fgColor="FEE2E2")
+
+    ws.cell(row=1, column=1, value="تعارضات البيانات — Field Mapping Conflicts").font = \
+        Font(name="Cairo", bold=True, size=11, color="B91C1C")
+
+    headers = [
+        "conflict_id", "mapping_id", "field_key", "القيمة الأصلية",
+        "القيمة المرتبطة بالمستند", "evidence_id", "source_registry_id",
+        "الخطورة", "حالة التعارض", "قرار الخبير", "سبب التجاوز",
+    ]
+    hr = 2
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    fm_sum = ctx.get("field_mapping_summary", {})
+    if not fm_sum.get("conflicts_count"):
+        ws.cell(row=hr + 1, column=1, value="لا توجد تعارضات بيانات مسجلة.").font = \
+            Font(name="Cairo", size=9, color="374151")
+        return
+
+    # Load from storage
+    request_id = ctx.get("request_id", "")
+    conflict_records: list = []
+    if request_id and not request_id.startswith("QA-"):
+        try:
+            from tax_appeal_field_mapping import load_conflict_records
+            conflict_records = load_conflict_records(request_id)
+        except Exception:
+            pass
+
+    if not conflict_records:
+        ws.cell(row=hr + 1, column=1, value=f"عدد التعارضات: {fm_sum.get('conflicts_count', 0)} — البيانات التفصيلية غير متاحة.").font = \
+            Font(name="Cairo", size=9, color="374151")
+        return
+
+    for i, c in enumerate(conflict_records, 1):
+        row = hr + i
+        vals = [
+            c.get("conflict_id", ""),
+            c.get("mapping_id", ""),
+            c.get("field_key", ""),
+            c.get("existing_payload_value", ""),
+            c.get("mapped_value", ""),
+            c.get("evidence_id", ""),
+            c.get("source_registry_id") or "—",
+            c.get("severity", ""),
+            c.get("conflict_status", ""),
+            c.get("resolution") or "—",
+            c.get("override_reason") or "—",
+        ]
+        for ci, v in enumerate(vals, 1):
+            cell = ws.cell(row=row, column=ci, value=v)
+            cell.font = _data_font()
+            if c.get("conflict_status") == "needs_expert_decision":
+                cell.fill = warn_fill
+
+    ws.column_dimensions[get_column_letter(4)].width  = 22
+    ws.column_dimensions[get_column_letter(5)].width  = 22
+    ws.column_dimensions[get_column_letter(11)].width = 32
+
+
 # ── Main workbook builder ─────────────────────────────────────────────────────
 
 def _sheet_evidence(ws, evidence_records: list) -> None:
@@ -4279,16 +4441,19 @@ def _create_tax_appeal_workbook(
     request_id: str,
     request_record: dict,
     evidence_records: list = None,
+    mapping_records: list = None,
 ) -> Path:
     """Build and persist the tax appeal expert workbook.
 
     Returns the Path to the saved .xlsx file.
     Internal path never exposed to ordinary users.
     evidence_records: optional list of evidence dicts; pass [] or None if unavailable.
+    mapping_records: optional list of field-mapping dicts; pass [] or None if unavailable.
     """
     import openpyxl
 
     evidence_records = list(evidence_records or [])
+    mapping_records  = list(mapping_records  or [])
 
     # Parse payload
     payload: dict = request_record.get("payload_json") or {}
@@ -4304,9 +4469,13 @@ def _create_tax_appeal_workbook(
             payload[key] = request_record[key]
     payload.setdefault("request_id", request_id)
 
-    # Build tax context (pass evidence so evidence_summary appears in ctx)
+    # Build tax context (pass evidence + mappings so summaries appear in ctx)
     from tax_appeal_context import _build_tax_appeal_context
-    ctx = _build_tax_appeal_context(payload, evidence_records=evidence_records)
+    ctx = _build_tax_appeal_context(
+        payload,
+        evidence_records=evidence_records,
+        mapping_records=mapping_records,
+    )
     tax_mode = ctx.get("tax_mode", "annual_real_estate_tax")
 
     # Create workbook
@@ -4539,6 +4708,14 @@ def _create_tax_appeal_workbook(
         for ws_sp in (wssp1, wssp2, wssp3, wssp4, wssp5, wssp6):
             ws_sp.sheet_properties.tabColor = "1B2E4B"  # special-purpose — dark navy
         wssp7.sheet_properties.tabColor = "1A2E4A"  # factory cost ref — dark navy
+
+    # ── Field mapping sheets ──────────────────────────────────────────────────
+    ws_fm  = wb.create_sheet("ربط الحقول بالمصادر")
+    ws_fmc = wb.create_sheet("تعارضات البيانات")
+    _sheet_field_mappings(ws_fm, mapping_records, ctx)
+    _sheet_field_mapping_conflicts(ws_fmc, ctx)
+    ws_fm.sheet_properties.tabColor  = "1E40AF"  # field mapping — dark blue
+    ws_fmc.sheet_properties.tabColor = "B91C1C"  # conflicts — dark red
 
     # Persist
     out_dir = _WB_DIR / request_id

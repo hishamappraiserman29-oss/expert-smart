@@ -5767,3 +5767,532 @@ def test_TAB395_mime_mismatch_note_stored(client):
     meta = body.get("metadata_notes") or ""
     assert "تحذير" in meta or "تطابق" in meta, \
         "Expected MIME mismatch note in metadata_notes when content doesn't match .pdf extension"
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB396–TAB422 — Field Mapping Workflow Tests
+# ════════════════════════════════════════════════════════════════════════════════
+
+def _fm_url(rid: str, suffix: str = "") -> str:
+    return f"/api/tax-appeal/expert-requests/{rid}/field-mappings{suffix}"
+
+
+def _create_and_approve_ev(client, rid: str, ev_type: str = "tax_notice_form3",
+                            status: str = "approved_as_source") -> str:
+    """Helper: upload + approve evidence; return evidence_id."""
+    ev = _upload_ev(client, rid, ev_type=ev_type)
+    ev_id = ev["evidence_id"]
+    # Transition to needs_review first if required by lifecycle
+    current = ev.get("status", "needs_review")
+    if current == "uploaded":
+        client.post(
+            _ev_url(rid, f"/{ev_id}/review"),
+            json={"status": "needs_review"},
+            content_type="application/json",
+            headers=_auth(),
+        )
+    client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": status},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    return ev_id
+
+
+# TAB396 — catalogue endpoint requires auth
+def test_TAB396_field_mapping_catalogue_requires_auth(client):
+    rid = _create_er(client)
+    resp = client.get(_fm_url(rid, "/catalogue"))
+    assert resp.status_code == 401
+
+
+# TAB397 — catalogue includes tax_notice_number
+def test_TAB397_catalogue_includes_tax_notice_number(client):
+    rid = _create_er(client)
+    resp = client.get(_fm_url(rid, "/catalogue"), headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    all_keys = [
+        f["field_key"]
+        for fields in body.get("catalogue_by_group", {}).values()
+        for f in fields
+    ]
+    assert "tax_notice_number" in all_keys
+
+
+# TAB398 — catalogue includes tax_assessment_basis_date
+def test_TAB398_catalogue_includes_tax_assessment_basis_date(client):
+    rid = _create_er(client)
+    resp = client.get(_fm_url(rid, "/catalogue"), headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    all_keys = [
+        f["field_key"]
+        for fields in body.get("catalogue_by_group", {}).values()
+        for f in fields
+    ]
+    assert "tax_assessment_basis_date" in all_keys
+
+
+# TAB399 — catalogue includes government_tax_amount
+def test_TAB399_catalogue_includes_government_tax_amount(client):
+    rid = _create_er(client)
+    resp = client.get(_fm_url(rid, "/catalogue"), headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    all_keys = [
+        f["field_key"]
+        for fields in body.get("catalogue_by_group", {}).values()
+        for f in fields
+    ]
+    assert "government_tax_amount" in all_keys
+
+
+# TAB400 — field mapping list requires auth
+def test_TAB400_field_mapping_list_requires_auth(client):
+    rid = _create_er(client)
+    resp = client.get(_fm_url(rid))
+    assert resp.status_code == 401
+
+
+# TAB401 — create mapping requires auth
+def test_TAB401_create_mapping_requires_auth(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _fm_url(rid),
+        json={"evidence_id": "EV-00000001", "mapped_field_key": "tax_notice_number", "mapped_value": "123"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# TAB402 — create mapping rejects missing evidence_id
+def test_TAB402_create_mapping_rejects_missing_evidence(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _fm_url(rid),
+        json={"mapped_field_key": "tax_notice_number", "mapped_value": "123"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+
+
+# TAB403 — create mapping rejects nonexistent evidence
+def test_TAB403_create_mapping_rejects_nonexistent_evidence(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _fm_url(rid),
+        json={"evidence_id": "EV-FFFFFFFF", "mapped_field_key": "tax_notice_number", "mapped_value": "123"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 404
+
+
+# TAB404 — create mapping rejects rejected evidence
+def test_TAB404_create_mapping_rejects_rejected_evidence(client):
+    rid  = _create_er(client)
+    ev   = _upload_ev(client, rid)
+    ev_id = ev["evidence_id"]
+    # Reject the evidence
+    client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "needs_review"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "rejected", "rejection_reason": "test"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    resp = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "123"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+
+
+# TAB405 — create mapping validates field key
+def test_TAB405_create_mapping_validates_field_key(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    resp  = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "nonexistent_field_xyz", "mapped_value": "123"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+
+
+# TAB406 — incompatible evidence type without override reason returns 422
+def test_TAB406_incompatible_ev_type_without_override_reason(client):
+    rid   = _create_er(client)
+    # property_photos are not compatible with tax_notice_number
+    ev_id = _create_and_approve_ev(client, rid, ev_type="property_photos", status="approved_for_report")
+    resp  = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "TEST-123"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert "allowed_evidence_types" in body
+
+
+# TAB407 — incompatible type WITH override reason succeeds
+def test_TAB407_incompatible_ev_type_with_override_reason_succeeds(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid, ev_type="property_photos", status="approved_for_report")
+    resp  = client.post(
+        _fm_url(rid),
+        json={
+            "evidence_id":      ev_id,
+            "mapped_field_key": "tax_notice_number",
+            "mapped_value":     "TEST-123",
+            "override_reason":  "تجاوز مقصود بسبب توثيق داخلي",
+        },
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body.get("override_applied") is True
+
+
+# TAB408 — new mapping starts needs_review and not production_ready
+def test_TAB408_new_mapping_starts_needs_review_not_production_ready(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    resp  = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "TEST-001"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body.get("mapping_status") == "needs_review"
+    assert body.get("production_ready") is False
+    assert body.get("expert_confirmed") is False
+    assert body.get("report_usage_allowed") is False
+    assert body.get("no_automatic_value_extraction") is True
+
+
+# TAB409 — confirm mapping sets expert_confirmed and report_usage_allowed
+def test_TAB409_confirm_mapping_sets_confirmed_flags(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-001"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+
+    confirm_resp = client.post(
+        _fm_url(rid, f"/{fm_id}/confirm"),
+        json={"reviewed_by": "expert_test"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert confirm_resp.status_code == 200
+    body = confirm_resp.get_json()
+    assert body.get("mapping_status") == "confirmed"
+    assert body.get("expert_confirmed") is True
+    assert body.get("report_usage_allowed") is True
+
+
+# TAB410 — approved_as_source evidence + confirmed mapping is production_ready
+def test_TAB410_approved_as_source_confirmed_mapping_production_ready(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid, status="approved_as_source")
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-SRC"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+
+    client.post(
+        _fm_url(rid, f"/{fm_id}/confirm"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    updated = client.get(_fm_url(rid), headers=_auth()).get_json()
+    rec = next((m for m in updated.get("mappings", []) if m["mapping_id"] == fm_id), None)
+    assert rec is not None
+    assert rec.get("production_ready") is True
+
+
+# TAB411 — approved_for_report evidence + confirmed mapping NOT auto production_ready
+def test_TAB411_approved_for_report_confirmed_not_auto_production_ready(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid, status="approved_for_report")
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-RPT"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+
+    client.post(
+        _fm_url(rid, f"/{fm_id}/confirm"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    updated = client.get(_fm_url(rid), headers=_auth()).get_json()
+    rec = next((m for m in updated.get("mappings", []) if m["mapping_id"] == fm_id), None)
+    assert rec is not None
+    assert rec.get("production_ready") is False
+
+
+# TAB412 — reject mapping prevents report usage
+def test_TAB412_reject_mapping_prevents_report_usage(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-REJ"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+
+    reject_resp = client.post(
+        _fm_url(rid, f"/{fm_id}/reject"),
+        json={"rejection_reason": "قيمة غير صحيحة"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert reject_resp.status_code == 200
+    body = reject_resp.get_json()
+    assert body.get("mapping_status") == "rejected"
+    assert body.get("report_usage_allowed") is False
+    assert body.get("production_ready") is False
+
+
+# TAB413 — reject mapping requires rejection_reason
+def test_TAB413_reject_requires_reason(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "X"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+
+    resp = client.post(
+        _fm_url(rid, f"/{fm_id}/reject"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+
+
+# TAB414 — conflict detected when mapped value differs from payload value
+def test_TAB414_conflict_detected_when_value_differs(client):
+    # property_area in payload = 200; we'll map it with a different value
+    rid = _create_er(client, extra={"property_area": 200})
+    ev_id = _create_and_approve_ev(client, rid, ev_type="ownership_document",
+                                    status="approved_as_source")
+    resp = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "property_area", "mapped_value": "150"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body.get("conflict_detected") is True
+    assert body.get("conflict_status") == "needs_expert_decision"
+
+
+# TAB415 — unresolved conflict blocks apply-to-context
+def test_TAB415_unresolved_conflict_blocks_apply_to_context(client):
+    rid   = _create_er(client, extra={"property_area": 200})
+    ev_id = _create_and_approve_ev(client, rid, ev_type="ownership_document",
+                                    status="approved_as_source")
+    # Create conflicting mapping
+    fm = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "property_area", "mapped_value": "150"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    fm_id = fm["mapping_id"]
+    # Confirm it (conflict still unresolved)
+    client.post(
+        _fm_url(rid, f"/{fm_id}/confirm"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    apply_resp = client.post(
+        _fm_url(rid, "/apply-to-context"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert apply_resp.status_code == 422
+    body = apply_resp.get_json()
+    assert "تعارض" in (body.get("message") or "")
+
+
+# TAB416 — no conflict when values match
+def test_TAB416_no_conflict_when_values_match(client):
+    rid   = _create_er(client, extra={"property_area": 200})
+    ev_id = _create_and_approve_ev(client, rid, ev_type="ownership_document",
+                                    status="approved_as_source")
+    resp = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "property_area", "mapped_value": "200"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    body = resp.get_json()
+    # Same value — no conflict
+    assert body.get("conflict_detected") is not True
+
+
+# TAB417 — apply-to-context succeeds when no unresolved conflicts
+def test_TAB417_apply_to_context_succeeds_no_conflicts(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-OK"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    client.post(
+        _fm_url(rid, f"/{fm['mapping_id']}/confirm"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    apply_resp = client.post(
+        _fm_url(rid, "/apply-to-context"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert apply_resp.status_code == 200
+    body = apply_resp.get_json()
+    assert body.get("status") == "ok"
+    assert "applied_fields_count" in body
+    assert body.get("no_automatic_value_extraction") is True
+
+
+# TAB418 — source_linked_inputs appears in context
+def test_TAB418_source_linked_inputs_in_context(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    fm    = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-CTX"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    client.post(
+        _fm_url(rid, f"/{fm['mapping_id']}/confirm"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    ctx = detail.get("request", {}).get("context", {})
+    assert "source_linked_inputs" in ctx
+
+
+# TAB419 — field_mapping_summary appears in context
+def test_TAB419_field_mapping_summary_in_context(client):
+    rid = _create_er(client)
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    ctx = detail.get("request", {}).get("context", {})
+    assert "field_mapping_summary" in ctx
+    summary = ctx["field_mapping_summary"]
+    assert "total_mappings" in summary
+    assert "confirmed_mappings" in summary
+    assert summary.get("no_automatic_value_extraction") is True
+
+
+# TAB420 — workbook includes ربط الحقول بالمصادر sheet
+def test_TAB420_workbook_includes_field_mapping_sheet(client):
+    import openpyxl
+    rid = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "2024-WB"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    # Regenerate workbook with mapping records
+    from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+    from tax_appeal_field_mapping import load_mapping_records
+    from tax_appeal_routes import _read_er
+    rec = _read_er(rid)
+    assert rec is not None
+    mapping_records = load_mapping_records(rid)
+    wb_path = _create_tax_appeal_workbook(rid, rec, mapping_records=mapping_records)
+    wb = openpyxl.load_workbook(str(wb_path), data_only=True)
+    assert "ربط الحقول بالمصادر" in wb.sheetnames
+
+
+# TAB421 — workbook includes تعارضات البيانات sheet
+def test_TAB421_workbook_includes_conflicts_sheet(client):
+    import openpyxl
+    rid = _create_er(client)
+    from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+    from tax_appeal_routes import _read_er
+    rec = _read_er(rid)
+    wb_path = _create_tax_appeal_workbook(rid, rec)
+    wb = openpyxl.load_workbook(str(wb_path), data_only=True)
+    assert "تعارضات البيانات" in wb.sheetnames
+
+
+# TAB422 — no internal paths in mapping JSON
+def test_TAB422_no_internal_paths_in_mapping_json(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_notice_number", "mapped_value": "PATH-TEST"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    resp_list  = client.get(_fm_url(rid), headers=_auth())
+    resp_create = client.post(
+        _fm_url(rid),
+        json={"evidence_id": ev_id, "mapped_field_key": "tax_assessment_basis_date", "mapped_value": "01/01/2024"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+    for resp, label in [(resp_list, "list"), (resp_create, "create")]:
+        body_str = resp.data.decode("utf-8", errors="replace")
+        assert "instance" not in body_str or "tax_appeal_field_mappings" not in body_str, \
+            f"{label}: internal storage path exposed"
+        assert "C:\\" not in body_str, f"{label}: Windows absolute path exposed"

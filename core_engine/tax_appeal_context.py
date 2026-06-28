@@ -6091,7 +6091,11 @@ def _build_evidence_summary(evidence_records: list) -> dict:
     }
 
 
-def _build_tax_appeal_context(payload: dict, evidence_records: list = None) -> dict:
+def _build_tax_appeal_context(
+    payload: dict,
+    evidence_records: list = None,
+    mapping_records: list = None,
+) -> dict:
     """Build unified tax appeal context for PDFs, Excel, QA, and API responses.
 
     Supports tax_mode: annual_real_estate_tax | annual | transfer_tax | transfer
@@ -6227,6 +6231,28 @@ def _build_tax_appeal_context(payload: dict, evidence_records: list = None) -> d
         "مكتملة" if not missing_docs
         else f"ناقصة — {len(missing_docs)} بند(ود) مطلوبة"
     )
+
+    # ── Field mapping summary + source-linked inputs ───────────────────────────
+    try:
+        from tax_appeal_field_mapping import (
+            build_field_mapping_summary as _bfms,
+            build_source_linked_inputs  as _bsli,
+            load_conflict_records       as _lcr,
+        )
+        _mr   = mapping_records or []
+        _cr   = _lcr(request_id) if (request_id and not request_id.startswith("QA-")) else []
+        _fm_summary    = _bfms(_mr, _cr)
+        _source_linked = _bsli(_mr, _cr)
+    except Exception:
+        _fm_summary    = {
+            "total_mappings": 0, "confirmed_mappings": 0,
+            "pending_mappings": 0, "rejected_mappings": 0,
+            "production_ready_mappings": 0, "mapped_fields_by_group": {},
+            "conflicts_count": 0, "unresolved_conflicts": 0,
+            "applied_source_linked_fields": [], "expert_actions_required": [],
+            "no_automatic_value_extraction": True,
+        }
+        _source_linked = {}
 
     ctx: dict = {
         # Identifiers
@@ -6383,6 +6409,10 @@ def _build_tax_appeal_context(payload: dict, evidence_records: list = None) -> d
 
         # ── Evidence summary (Part F) ──────────────────────────────────────
         "evidence_summary": _build_evidence_summary(evidence_records or []),
+
+        # ── Field mapping summary + source-linked inputs (Part G) ─────────
+        "field_mapping_summary":  _fm_summary,
+        "source_linked_inputs":   _source_linked,
     }
 
     return ctx

@@ -1823,6 +1823,31 @@
 </div>
 {% endif %}
 
+<!-- ══ المدخلات المرتبطة بالمصادر (Field Mapping — Preliminary) ════════════════ -->
+{% set fm_sum_p = field_mapping_summary or {} %}
+{% set sli_p    = source_linked_inputs   or {} %}
+{% if fm_sum_p.confirmed_mappings %}
+<div class="section">
+  <div class="section-title">المدخلات المرتبطة بالمصادر</div>
+  <table class="data-table">
+    <tr><td class="lbl">حقول مؤكدة مرتبطة بمصادر</td><td>{{ fm_sum_p.confirmed_mappings }}</td></tr>
+    <tr><td class="lbl">جاهزة للإنتاج</td><td>{{ fm_sum_p.production_ready_mappings }}</td></tr>
+    {% if fm_sum_p.unresolved_conflicts %}
+    <tr><td class="lbl" style="color:#B91C1C;">تعارضات غير محسومة</td><td style="color:#B91C1C; font-weight:bold;">{{ fm_sum_p.unresolved_conflicts }}</td></tr>
+    {% endif %}
+  </table>
+  {% for fkey, fval in sli_p.items() %}
+  <p style="font-size:8pt; margin:2px 0;">
+    <strong>{{ fkey }}:</strong> {{ fval.display_value }}
+    <span style="color:#6B7280; font-size:7pt;">(المصدر: {{ fval.evidence_type }} — {{ "إنتاجي" if fval.production_ready else "للتقرير فقط" }})</span>
+  </p>
+  {% endfor %}
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    جميع القيم المرتبطة بالمصادر مُدخلة ومؤكدة يدويًا من الخبير. لا يتم استخلاص أي قيم تلقائيًا.
+  </p>
+</div>
+{% endif %}
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

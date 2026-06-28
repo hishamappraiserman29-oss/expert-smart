@@ -33593,10 +33593,13 @@ function _expertSetBadge(id, label, available) {
               <option value="area_statement">بيان المساحة</option>
               <option value="floor_plan">مسقط الطابق</option>
               <option value="property_photos">صور العقار</option>
+              <option value="map_or_aerial_image">خريطة أو صورة جوية</option>
               <option value="market_comparables_excel">مقارنات السوق (Excel)</option>
               <option value="rental_comparables_excel">مقارنات الإيجار (Excel)</option>
               <option value="tax_comparables_excel">مقارنات الضريبة (Excel)</option>
               <option value="factory_cost_guidance">مرشد تكلفة المصانع</option>
+              <option value="ain_shams_factory_cost_reference">مرجع تكلفة مصانع عين شمس</option>
+              <option value="nuca_land_price_reference">مرجع أسعار أراضي هيئة التعمير</option>
               <option value="expert_note">ملاحظة خبير</option>
               <option value="legal_note">ملاحظة قانونية</option>
               <option value="other">أخرى</option>
@@ -33604,19 +33607,25 @@ function _expertSetBadge(id, label, available) {
           </div>
           <div>
             <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">تاريخ المستند:</label>
-            <input type="date" id="tax-evidence-doc-date"
+            <input type="date" id="tax-evidence-doc-date" data-testid="tax-evidence-document-date"
                    style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
           </div>
           <div>
             <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">الجهة المصدِرة:</label>
-            <input type="text" id="tax-evidence-issuer" dir="rtl"
+            <input type="text" id="tax-evidence-issuer" data-testid="tax-evidence-issuer" dir="rtl"
                    placeholder="مثال: مصلحة الضرائب، الشهر العقاري..."
+                   style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+          </div>
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">رقم المرجع / الإشعار:</label>
+            <input type="text" id="tax-evidence-reference-number" data-testid="tax-evidence-reference-number" dir="rtl"
+                   placeholder="مثال: 2024/001234"
                    style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
           </div>
         </div>
         <div style="margin-bottom:8px;">
           <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">ملاحظات:</label>
-          <input type="text" id="tax-evidence-notes" dir="rtl"
+          <input type="text" id="tax-evidence-notes" data-testid="tax-evidence-notes" dir="rtl"
                  placeholder="ملاحظات اختيارية..."
                  style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
         </div>
@@ -33630,9 +33639,13 @@ function _expertSetBadge(id, label, available) {
 
       <!-- Missing mandatory documents warning (shown when present) -->
       <div id="tax-evidence-missing-warning" data-testid="tax-evidence-missing-warning"
+           data-testid2="tax-evidence-missing-mandatory"
            style="display:none; margin-bottom:1rem; padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#f87171; font-size:0.8rem;">
-        <span style="font-weight:700;">⚠ مستندات إلزامية ناقصة:</span>
+        <span style="font-weight:700;">⚠ مستندات إلزامية ناقصة — يجب استيفاؤها قبل اعتماد الطلب:</span>
         <ul id="tax-evidence-missing-list" style="margin:4px 0 0; padding-right:20px;"></ul>
+        <div style="margin-top:6px; font-size:0.75rem; color:#fca5a5;">
+          لا يمكن إصدار تقرير معتمد دون رفع هذه المستندات والحصول على موافقة الخبير عليها.
+        </div>
       </div>
 
       <!-- Evidence list table -->
@@ -33660,6 +33673,8 @@ function _expertSetBadge(id, label, available) {
       <!-- Per-evidence review panel (shown when a row is selected) -->
       <div id="tax-evidence-review-panel" style="display:none; margin-top:1rem; padding:12px 14px; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px;">
         <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px; font-weight:700;">مراجعة المستند: <span id="tax-evidence-selected-id" style="color:#93c5fd; font-family:monospace;"></span></div>
+        <!-- Contextual status warning — updated by taxEvidenceSelect() -->
+        <div id="tax-evidence-status-warning" style="display:none; margin-bottom:10px; padding:8px 12px; border-radius:6px; font-size:0.78rem; font-weight:600;"></div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
           <div>
             <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">تغيير الحالة:</label>
@@ -34120,6 +34135,7 @@ async function taxAppealBoDownloadReport() {
 // ── Evidence Management JS ────────────────────────────────────────────────────
 
 var _taxEvidenceCurrentEvId = null;
+var _taxEvidenceCache = {};   // evId → evidence record
 
 var _taxEvidenceStatusBadge = {
     'uploaded':            {label: 'مرفوع', color: '#94a3b8'},
@@ -34128,6 +34144,15 @@ var _taxEvidenceStatusBadge = {
     'approved_as_source':  {label: 'معتمد كمصدر ✓', color: '#34d399'},
     'rejected':            {label: 'مرفوض', color: '#f87171'},
     'superseded':          {label: 'مُستبدل', color: '#6b7280'},
+};
+
+var _taxEvidenceStatusWarnings = {
+    'uploaded':            {text: 'هذا المستند لم تتم مراجعته بعد.', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.3)', color: '#fbbf24'},
+    'needs_review':        {text: 'هذا المستند لم تتم مراجعته بعد.', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.3)', color: '#fbbf24'},
+    'approved_for_report': {text: 'هذا المستند معتمد للتقرير فقط وليس مصدرًا حسابيًا.', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.3)', color: '#93c5fd'},
+    'approved_as_source':  {text: 'هذا المستند معتمد كمصدر بواسطة الخبير.', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.3)', color: '#34d399'},
+    'rejected':            {text: 'هذا المستند مرفوض ولا يُستخدم في التقرير.', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.3)', color: '#f87171'},
+    'superseded':          {text: 'هذا المستند مُستبدل بنسخة أحدث ولا يُستخدم في التقرير.', bg: 'rgba(107,114,128,0.1)', border: 'rgba(107,114,128,0.3)', color: '#9ca3af'},
 };
 
 async function taxEvidenceLoad() {
@@ -34143,14 +34168,17 @@ async function taxEvidenceLoad() {
         var data = await resp.json();
         var evList = data.evidence || [];
 
+        // Populate cache
+        _taxEvidenceCache = {};
+        evList.forEach(function(e) { if (e.evidence_id) _taxEvidenceCache[e.evidence_id] = e; });
+
         // Update missing mandatory warning
-        var missing = (evList.filter(function(e) {
-            return e.evidence_type === 'tax_notice_form3' && ['approved_for_report','approved_as_source'].indexOf(e.status) < 0;
-        }).length ? ['إشعار الضريبة — نموذج 3'] : []).concat(
-            evList.filter(function(e) {
-                return e.evidence_type === 'ownership_document' && ['approved_for_report','approved_as_source'].indexOf(e.status) < 0;
-            }).length ? ['وثيقة الملكية'] : []
-        );
+        var approvedStatuses = ['approved_for_report','approved_as_source'];
+        var hasForm3 = evList.some(function(e) { return e.evidence_type === 'tax_notice_form3' && approvedStatuses.indexOf(e.status) >= 0; });
+        var hasOwnership = evList.some(function(e) { return e.evidence_type === 'ownership_document' && approvedStatuses.indexOf(e.status) >= 0; });
+        var missing = [];
+        if (!hasForm3) missing.push('إشعار الضريبة — نموذج 3');
+        if (!hasOwnership) missing.push('وثيقة الملكية');
         var missingWrap = document.getElementById('tax-evidence-missing-warning');
         var missingList = document.getElementById('tax-evidence-missing-list');
         if (missingWrap && missingList) {
@@ -34169,16 +34197,17 @@ async function taxEvidenceLoad() {
         var html = '';
         evList.forEach(function(ev) {
             var badge = _taxEvidenceStatusBadge[ev.status] || {label: ev.status, color: '#94a3b8'};
-            html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="taxEvidenceSelect(\'' + (ev.evidence_id||'') + '\')">'
+            var evIdSafe = (ev.evidence_id||'').replace(/'/g, '');
+            html += '<tr data-testid="tax-evidence-row" data-ev-id="' + evIdSafe + '" style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="taxEvidenceSelect(\'' + evIdSafe + '\')">'
                 + '<td style="padding:6px 8px;">' + (ev.evidence_type_label_ar || ev.evidence_type || '—') + '</td>'
                 + '<td style="padding:6px 8px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + (ev.original_filename||'') + '">' + (ev.original_filename || '—') + '</td>'
-                + '<td style="padding:6px 8px; text-align:center;"><span style="padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:700; background:rgba(30,41,59,0.6); color:' + badge.color + ';">' + badge.label + '</span></td>'
+                + '<td style="padding:6px 8px; text-align:center;"><span data-testid="tax-evidence-status-badge" data-status="' + (ev.status||'') + '" style="padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:700; background:rgba(30,41,59,0.6); color:' + badge.color + ';">' + badge.label + '</span></td>'
                 + '<td style="padding:6px 8px; text-align:center; color:' + (ev.approved_for_report ? '#60a5fa' : '#475569') + ';">' + (ev.approved_for_report ? '✓' : '—') + '</td>'
                 + '<td style="padding:6px 8px; text-align:center; color:' + (ev.approved_as_source ? '#34d399' : '#475569') + ';">' + (ev.approved_as_source ? '✓✓' : '—') + '</td>'
                 + '<td style="padding:6px 8px; font-size:0.72rem; color:#64748b; direction:ltr;">' + ((ev.uploaded_at||'').substring(0,10)) + '</td>'
                 + '<td style="padding:6px 8px; font-size:0.72rem; color:#94a3b8; max-width:120px; overflow:hidden; text-overflow:ellipsis;">' + (ev.expert_review_notes||'—') + '</td>'
                 + '<td style="padding:6px 8px; text-align:center;">'
-                + '<button onclick="event.stopPropagation();taxEvidenceSelect(\'' + (ev.evidence_id||'') + '\')" style="padding:2px 8px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#34d399; border-radius:4px; cursor:pointer; font-size:0.7rem;">فتح</button>'
+                + '<button onclick="event.stopPropagation();taxEvidenceSelect(\'' + evIdSafe + '\')" style="padding:2px 8px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#34d399; border-radius:4px; cursor:pointer; font-size:0.7rem;">فتح</button>'
                 + '</td></tr>';
         });
         tbody.innerHTML = html;
@@ -34201,6 +34230,27 @@ function taxEvidenceSelect(evId) {
     if (rejEl) rejEl.value = '';
     var msgEl = document.getElementById('tax-evidence-review-status-msg');
     if (msgEl) msgEl.style.display = 'none';
+
+    // Show contextual status warning
+    var warnEl = document.getElementById('tax-evidence-status-warning');
+    if (warnEl) {
+        var cached = _taxEvidenceCache[evId];
+        var st = cached && cached.status;
+        var warnCfg = st && _taxEvidenceStatusWarnings[st];
+        if (warnCfg) {
+            warnEl.style.display = '';
+            warnEl.style.background = warnCfg.bg;
+            warnEl.style.border = '1px solid ' + warnCfg.border;
+            warnEl.style.color = warnCfg.color;
+            warnEl.textContent = warnCfg.text;
+        } else {
+            warnEl.style.display = 'none';
+        }
+        // Pre-fill review notes if available
+        if (cached && cached.expert_review_notes && notesEl) {
+            notesEl.value = cached.expert_review_notes || '';
+        }
+    }
 }
 
 async function taxEvidenceUpload() {
@@ -34218,6 +34268,7 @@ async function taxEvidenceUpload() {
     formData.append('evidence_type', (document.getElementById('tax-evidence-type-select')||{}).value || 'other');
     formData.append('document_date', (document.getElementById('tax-evidence-doc-date')||{}).value || '');
     formData.append('document_issuer', (document.getElementById('tax-evidence-issuer')||{}).value || '');
+    formData.append('document_reference_number', (document.getElementById('tax-evidence-reference-number')||{}).value || '');
     formData.append('metadata_notes', (document.getElementById('tax-evidence-notes')||{}).value || '');
     try {
         var resp = await fetch('/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/evidence', {
@@ -34282,9 +34333,11 @@ async function taxEvidenceDownload() {
         var resp = await fetch(url, {headers: {'Authorization': 'Bearer ' + token}});
         if (!resp.ok) { taxAppealBoStatus('خطأ في التحميل: ' + resp.status, false); return; }
         var blob = await resp.blob();
+        var cached = _taxEvidenceCache[_taxEvidenceCurrentEvId];
+        var dlName = (cached && cached.original_filename) || _taxEvidenceCurrentEvId;
         var a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = _taxEvidenceCurrentEvId;
+        a.download = dlName;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         taxAppealBoStatus('تم تحميل الملف.', true);
     } catch(e) {

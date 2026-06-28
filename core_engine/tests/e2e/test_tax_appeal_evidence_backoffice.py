@@ -270,3 +270,136 @@ def test_TAX_EV_12_ordinary_page_no_source_approval(
             assert not loc.first.is_visible(), (
                 f"{testid} must not be visible on the ordinary tax appeal page"
             )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TAX_EV_13–TAX_EV_24 — Visual QA & Mapping Polish
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_TAX_EV_13_evidence_type_select_has_tax_notice_form3(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_13: type select must have tax_notice_form3."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    html = page.content()
+    assert "tax_notice_form3" in html
+
+
+def test_TAX_EV_14_evidence_type_select_has_ain_shams(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_14: type select must have ain_shams_factory_cost_reference."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    html = page.content()
+    assert "ain_shams_factory_cost_reference" in html
+
+
+def test_TAX_EV_15_evidence_type_select_has_nuca_land(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_15: type select must have nuca_land_price_reference."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    html = page.content()
+    assert "nuca_land_price_reference" in html
+
+
+def test_TAX_EV_16_evidence_type_select_has_map_aerial(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_16: type select must have map_or_aerial_image."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    html = page.content()
+    assert "map_or_aerial_image" in html
+
+
+def test_TAX_EV_17_reference_number_field_in_dom(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_17: Reference number field must exist in backoffice DOM."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    fld = page.locator('[data-testid="tax-evidence-reference-number"]')
+    assert fld.count() > 0, "tax-evidence-reference-number missing from backoffice DOM"
+
+
+def test_TAX_EV_18_document_date_field_in_dom(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_18: Document date field must exist in backoffice DOM."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    fld = page.locator('[data-testid="tax-evidence-document-date"]')
+    assert fld.count() > 0, "tax-evidence-document-date missing from backoffice DOM"
+
+
+def test_TAX_EV_19_issuer_field_in_dom(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_19: Issuer field must exist in backoffice DOM."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    fld = page.locator('[data-testid="tax-evidence-issuer"]')
+    assert fld.count() > 0, "tax-evidence-issuer missing from backoffice DOM"
+
+
+def test_TAX_EV_20_notes_field_in_dom(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_20: Notes field must exist in backoffice DOM."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    fld = page.locator('[data-testid="tax-evidence-notes"]')
+    assert fld.count() > 0, "tax-evidence-notes missing from backoffice DOM"
+
+
+def test_TAX_EV_21_status_warning_element_in_dom(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_21: Status warning element must exist in review panel DOM."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    warn = page.locator("#tax-evidence-status-warning")
+    assert warn.count() > 0, "#tax-evidence-status-warning missing from backoffice DOM"
+
+
+def test_TAX_EV_22_no_automatic_value_extraction_flag_in_html(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_22: Page must not claim automatic value extraction is active."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    html = page.content()
+    # The page must not claim OCR/Qdrant/RAG is active
+    assert "OCR_ACTIVE" not in html
+    assert "QDRANT_ACTIVE" not in html
+    assert "RAG_ACTIVE" not in html
+
+
+def test_TAX_EV_23_ordinary_page_no_status_warning_visible(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_23: Status warning element must not be visible on ordinary tax page."""
+    _block_api(page)
+    _go_to_tax_tab(page, live_server)
+    warn = page.locator("#tax-evidence-status-warning")
+    if warn.count() > 0:
+        assert not warn.first.is_visible(), (
+            "#tax-evidence-status-warning must not be visible on ordinary tax page"
+        )
+
+
+def test_TAX_EV_24_missing_mandatory_warning_has_detail_text(
+    page: Page, live_server: str
+) -> None:
+    """TAX_EV_24: Missing mandatory docs warning element must have descriptive content."""
+    _block_api(page)
+    _go_to_tax_backoffice(page, live_server)
+    warn = page.locator('[data-testid="tax-evidence-missing-warning"]')
+    assert warn.count() > 0, "tax-evidence-missing-warning missing from DOM"
+    # The element should contain AR text about mandatory docs even when hidden
+    html = page.content()
+    assert "إلزامية" in html, "Missing mandatory docs warning must contain Arabic text"

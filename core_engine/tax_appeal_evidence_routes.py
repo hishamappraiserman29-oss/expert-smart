@@ -236,21 +236,47 @@ def _ev_safe(rec: dict) -> dict:
         "expert_reviewed_at":        rec.get("expert_reviewed_at"),
         "expert_review_notes":       rec.get("expert_review_notes"),
         "rejection_reason":          rec.get("rejection_reason"),
-        "version":                   rec.get("version", 1),
-        "supersedes_evidence_id":    rec.get("supersedes_evidence_id"),
-        "metadata_notes":            rec.get("metadata_notes"),
+        "version":                       rec.get("version", 1),
+        "supersedes_evidence_id":        rec.get("supersedes_evidence_id"),
+        "metadata_notes":                rec.get("metadata_notes"),
+        "no_automatic_value_extraction": rec.get("no_automatic_value_extraction", True),
     }
 
 
 def _sanitize_ev_filename(name: str) -> str:
-    name = os.path.basename(name)
-    name = name.replace("..", "")
+    """Strip path components and dangerous characters from an upload filename."""
+    name = os.path.basename(name)   # neutralises path traversal (../../etc/passwd → passwd)
+    name = name.replace("..", "")   # belt-and-braces: remove any residual double-dots
     safe = "".join(c for c in name if c.isalnum() or c in "._- ")
     return safe.strip() or "upload"
 
 
 def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+# Map known extension → expected magic-byte prefix (first 4 bytes)
+_MAGIC_PREFIXES: dict[str, tuple[bytes, ...]] = {
+    ".pdf":  (b"%PDF",),
+    ".xlsx": (b"PK\x03\x04", b"PK\x05\x06"),
+    ".xls":  (b"\xd0\xcf\x11\xe0",),
+    ".docx": (b"PK\x03\x04", b"PK\x05\x06"),
+    ".jpg":  (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".png":  (b"\x89PNG",),
+    ".webp": (b"RIFF",),
+}
+
+
+def _check_mime_mismatch(data: bytes, ext: str) -> str | None:
+    """Return a mismatch note if file bytes don't match the declared extension, else None."""
+    prefixes = _MAGIC_PREFIXES.get(ext)
+    if not prefixes:
+        return None
+    head = data[:8]
+    if not any(head.startswith(p) for p in prefixes):
+        return f"تحذير: محتوى الملف لا يتطابق مع الامتداد '{ext}' — يحتاج تحقق يدوي من الخبير"
+    return None
 
 
 # ── Route registration ────────────────────────────────────────────────────────
@@ -296,6 +322,7 @@ def register_evidence_routes(app, require_auth) -> None:
 
         mime = mimetypes.guess_type(orig_name)[0] or "application/octet-stream"
         sha256 = _sha256(data)
+        mime_mismatch_note = _check_mime_mismatch(data, ext)
 
         ev_id = _new_ev_id()
         safe_name = ev_id + ext
@@ -306,6 +333,12 @@ def register_evidence_routes(app, require_auth) -> None:
         ev_type = request.form.get("evidence_type", "other")
         if ev_type not in EVIDENCE_TYPES:
             ev_type = "other"
+
+        user_notes = request.form.get("metadata_notes") or None
+        metadata_notes = (
+            f"{user_notes} | {mime_mismatch_note}" if user_notes and mime_mismatch_note
+            else mime_mismatch_note or user_notes
+        )
 
         now = datetime.utcnow().isoformat()
 
@@ -341,12 +374,17 @@ def register_evidence_routes(app, require_auth) -> None:
             "sha256_hash":               sha256,
             "version":                   1,
             "supersedes_evidence_id":    None,
-            "metadata_notes":            request.form.get("metadata_notes") or None,
+            "metadata_notes":            metadata_notes,
+            "no_automatic_value_extraction": True,
         }
 
         _persist_ev(request_id, rec)
 
-        return jsonify({"status": "ok", **_ev_safe(rec)}), 201
+        return jsonify({
+            "status": "ok",
+            "no_automatic_value_extraction": True,
+            **_ev_safe(rec),
+        }), 201
 
     # ── GET .../evidence — list ────────────────────────────────────────────
     @app.route(
@@ -364,10 +402,11 @@ def register_evidence_routes(app, require_auth) -> None:
 
         records = load_evidence_records(request_id)
         return jsonify({
-            "status":     "ok",
-            "request_id": request_id,
-            "count":      len(records),
-            "evidence":   [_ev_safe(r) for r in records],
+            "status":                       "ok",
+            "request_id":                   request_id,
+            "count":                        len(records),
+            "evidence":                     [_ev_safe(r) for r in records],
+            "no_automatic_value_extraction": True,
         })
 
     # ── GET .../evidence/<ev_id>/download ─────────────────────────────────

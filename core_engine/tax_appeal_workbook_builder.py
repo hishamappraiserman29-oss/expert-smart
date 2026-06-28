@@ -4465,11 +4465,103 @@ def _sheet_extraction_data(ws, ctx: dict) -> None:
     ws.column_dimensions[get_column_letter(12)].width = 32
 
 
+def _sheet_ocr_pilot(ws, ctx: dict) -> None:
+    """Populate the OCR Pilot sheet from ocr_pilot_summary."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    ocr_sum = ctx.get("ocr_pilot_summary") or {}
+    hdr_fill = _hdr_fill("1D4ED8")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    green_fill  = PatternFill("solid", fgColor="D1FAE5")
+    red_fill    = PatternFill("solid", fgColor="FEE2E2")
+    yellow_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1, value="OCR Pilot — قراءة مبدئية للمستندات").font = \
+        Font(name="Cairo", bold=True, size=12, color="1D4ED8")
+    ws.cell(row=2, column=1, value=(
+        "نتائج OCR لا تعد مصدرًا معتمدًا إلا بعد مراجعة وتأكيد الخبير. "
+        "لا يُستخدم أي قيمة في التقرير إلا بعد تأكيد الخبير وربطها بالحقل المناسب."
+    )).font = Font(name="Cairo", size=8, color="DC2626", italic=True)
+
+    # Summary block
+    summary_rows = [
+        ("OCR مفعَّل الآن",       "نعم" if ocr_sum.get("ocr_active_now") else "لا"),
+        ("Qdrant مفعَّل",          "لا"),
+        ("RAG مفعَّل",              "لا"),
+        ("API خارجي مستخدَم",       "لا"),
+        ("إجمالي مهام OCR",         str(ocr_sum.get("total_ocr_jobs", 0))),
+        ("مهام مكتملة",             str(ocr_sum.get("completed_ocr_jobs", 0))),
+        ("مهام فاشلة",              str(ocr_sum.get("failed_ocr_jobs", 0))),
+        ("مهام غير مدعومة",         str(ocr_sum.get("unsupported_ocr_jobs", 0))),
+        ("مسودات استخراج من OCR",   str(ocr_sum.get("extraction_drafts_created_from_ocr", 0))),
+        ("قيم مؤكدة من خبير",       str(ocr_sum.get("expert_confirmed_ocr_values", 0))),
+        ("قيم مستخدمة في التقرير",  str(ocr_sum.get("ocr_values_used_in_report", 0))),
+        ("جاهزية إنتاج OCR",        "لا — يلزم تأكيد الخبير"),
+    ]
+    for ri, (label, val) in enumerate(summary_rows, 4):
+        ws.cell(row=ri, column=1, value=label).font = _data_font()
+        vc = ws.cell(row=ri, column=2, value=val)
+        vc.font = _data_font()
+        if val == "نعم":
+            vc.fill = green_fill
+        elif val == "لا":
+            vc.fill = red_fill
+
+    # Job table headers
+    hr = 4 + len(summary_rows) + 2
+    headers_ocr = [
+        "ocr_job_id", "evidence_id", "evidence_type",
+        "engine_name", "engine_available", "job_status",
+        "confidence", "warnings", "extraction_draft_id",
+        "review_status", "production_ready",
+    ]
+    for ci, h in enumerate(headers_ocr, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    # Job rows from ocr_pilot_summary warnings carry job list if stored in ctx
+    ocr_jobs = ctx.get("ocr_jobs_list") or []
+    for i, job in enumerate(ocr_jobs, 1):
+        row = hr + i
+        vals = [
+            job.get("ocr_job_id", ""),
+            job.get("evidence_id", ""),
+            job.get("evidence_type", ""),
+            job.get("engine_name", ""),
+            "نعم" if job.get("engine_available") else "لا",
+            job.get("job_status", ""),
+            str(round(job.get("confidence_overall", 0.0), 2)),
+            "; ".join(job.get("warnings") or [])[:200],
+            job.get("extraction_draft_id") or "—",
+            job.get("review_status", ""),
+            "لا",  # production_ready always False
+        ]
+        for ci, v in enumerate(vals, 1):
+            c = ws.cell(row=row, column=ci, value=v)
+            c.font = _data_font()
+            if ci == 11:  # production_ready
+                c.fill = red_fill
+                c.font = Font(name="Cairo", size=9, color="B91C1C", bold=True)
+
+    if not ocr_jobs:
+        ws.cell(row=hr + 1, column=1,
+                value="لا توجد مهام OCR لهذا الطلب — الاستخراج يدوي فقط").font = \
+            Font(name="Cairo", size=9, color="6B7280", italic=True)
+
+    for ci in range(1, 12):
+        ws.column_dimensions[get_column_letter(ci)].width = 22
+
+
 def _sheet_ocr_qdrant_readiness(ws, ctx: dict) -> None:
     """Populate the جاهزية OCR-Qdrant المستقبلية sheet.
 
     Rules:
-    - active_now must be False for all OCR/Qdrant entries.
+    - active_now for OCR may be True if OCR Pilot is active.
+    - active_now for Qdrant/RAG is always False.
     - No internal paths.
     - No silent blanks.
     """
@@ -4482,12 +4574,19 @@ def _sheet_ocr_qdrant_readiness(ws, ctx: dict) -> None:
     future_fill = PatternFill("solid", fgColor="F3F4F6")
     inactive_fill = PatternFill("solid", fgColor="FEF3C7")
 
-    ws.cell(row=1, column=1, value="جاهزية OCR / Qdrant المستقبلية — بنية جاهزة، غير مفعَّلة").font = \
-        Font(name="Cairo", bold=True, size=11, color="6B7280")
-    ws.cell(row=2, column=1, value=(
+    ocr_pilot = ctx.get("ocr_pilot_summary") or {}
+    ocr_now = ocr_pilot.get("ocr_active_now", False)
+    title_suffix = "— OCR Pilot مفعَّل" if ocr_now else "— بنية جاهزة، غير مفعَّلة"
+    ws.cell(row=1, column=1, value=f"جاهزية OCR / Qdrant المستقبلية {title_suffix}").font = \
+        Font(name="Cairo", bold=True, size=11, color="1D4ED8" if ocr_now else "6B7280")
+    note = (
+        "OCR Pilot مفعَّل — تتطلب النتائج مراجعة خبير قبل الاستخدام. Qdrant/RAG: غير مفعَّل."
+        if ocr_now else
         "الحالة الحالية: جميع قنوات الاستخراج التلقائي غير مفعَّلة. "
         "يُعدّ هذا الإصدار لاستقبال تكامل OCR / Qdrant لاحقًا. active_now = False لجميع الإدخالات."
-    )).font = Font(name="Cairo", size=8, color="6B7280", italic=True)
+    )
+    ws.cell(row=2, column=1, value=note).font = Font(
+        name="Cairo", size=8, color="DC2626" if ocr_now else "6B7280", italic=True)
 
     headers = [
         "نوع المستند", "قالب الاستخراج موجود",
@@ -4909,10 +5008,13 @@ def _create_tax_appeal_workbook(
     # ── Extraction readiness sheets ───────────────────────────────────────────
     ws_ex   = wb.create_sheet("استخراج البيانات")
     ws_exfr = wb.create_sheet("جاهزية OCR-Qdrant المستقبلية")
+    ws_ocr  = wb.create_sheet("OCR Pilot")
     _sheet_extraction_data(ws_ex, ctx)
     _sheet_ocr_qdrant_readiness(ws_exfr, ctx)
+    _sheet_ocr_pilot(ws_ocr, ctx)
     ws_ex.sheet_properties.tabColor   = "7C3AED"  # extraction — purple
     ws_exfr.sheet_properties.tabColor = "6B7280"  # future readiness — muted gray
+    ws_ocr.sheet_properties.tabColor  = "1D4ED8"  # OCR Pilot — blue
 
     # Persist
     out_dir = _WB_DIR / request_id

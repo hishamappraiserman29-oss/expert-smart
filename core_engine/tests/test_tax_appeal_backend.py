@@ -6655,3 +6655,337 @@ def test_TAB446_qa_output_files_exist():
     ]
     for fname in expected:
         assert (out_dir / fname).exists(), f"QA output missing: {fname}"
+
+# ==============================================================================
+# TAB447-TAB471 -- OCR Pilot tests
+# ==============================================================================
+
+import tempfile
+import os as _os_tab
+
+# -- TAB447 -- OCR endpoint requires auth
+def test_TAB447_ocr_endpoint_requires_auth(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/evidence/EV-BBBBBBBB/ocr",
+        json={},
+    )
+    assert resp.status_code in (401, 403), f"Expected auth error, got {resp.status_code}"
+
+
+# -- TAB448 -- OCR endpoint rejects invalid request_id
+def test_TAB448_ocr_rejects_invalid_request_id(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/INVALID/evidence/EV-AAAAAAAA/ocr",
+        headers=_auth(),
+        json={},
+    )
+    assert resp.status_code == 400
+
+
+# -- TAB449 -- OCR endpoint rejects missing evidence
+def test_TAB449_ocr_rejects_missing_evidence(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/evidence/EV-AAAAAAAA/ocr",
+        headers=_auth(),
+        json={},
+    )
+    assert resp.status_code in (400, 404)
+
+
+# -- TAB450 -- OCR job list requires auth
+def test_TAB450_ocr_job_list_requires_auth(client):
+    resp = client.get("/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs")
+    assert resp.status_code in (401, 403)
+
+
+# -- TAB451 -- OCR job list returns empty for unknown request
+def test_TAB451_ocr_job_list_empty_for_unknown_request(client):
+    resp = client.get(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs",
+        headers=_auth(),
+    )
+    data = resp.get_json()
+    assert resp.status_code == 200
+    assert data.get("ocr_jobs") == []
+
+
+# -- TAB452 -- OCR job get requires auth
+def test_TAB452_ocr_job_get_requires_auth(client):
+    resp = client.get("/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA")
+    assert resp.status_code in (401, 403)
+
+
+# -- TAB453 -- OCR job get returns 404 for unknown job
+def test_TAB453_ocr_job_get_not_found(client):
+    resp = client.get(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA",
+        headers=_auth(),
+    )
+    assert resp.status_code == 404
+
+
+# -- TAB454 -- OCR engine module imports cleanly
+def test_TAB454_ocr_engine_imports():
+    from tax_appeal_ocr_engine import run_local_ocr, get_engine_info
+    info = get_engine_info()
+    assert isinstance(info, dict)
+    assert "pymupdf_available" in info
+    assert "tesseract_available" in info
+    assert info["external_api_used"] is False
+    assert info["qdrant_used"] is False
+    assert info["rag_used"] is False
+
+
+# -- TAB455 -- OCR engine: TXT passthrough works
+def test_TAB455_ocr_engine_txt_passthrough():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", encoding="utf-8", delete=False) as f:
+        f.write("raqm al-ishaar: 2024/15893 mablagh: 3700")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "text/plain")
+        assert result["engine_available"] is True
+        assert result["text"].strip() != ""
+        assert result["production_ready"] is False
+        assert result["external_api_used"] is False
+        assert result["qdrant_used"] is False
+        assert result["rag_used"] is False
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB456 -- OCR engine: production_ready always False
+def test_TAB456_ocr_engine_production_ready_always_false():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", encoding="utf-8", delete=False) as f:
+        f.write("test text")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "text/plain")
+        assert result["production_ready"] is False
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB457 -- OCR engine: external_api_used always False
+def test_TAB457_ocr_engine_external_api_false():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", encoding="utf-8", delete=False) as f:
+        f.write("test")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "text/plain")
+        assert result["external_api_used"] is False
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB458 -- OCR engine: qdrant_used always False
+def test_TAB458_ocr_engine_qdrant_false():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", encoding="utf-8", delete=False) as f:
+        f.write("test")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "text/plain")
+        assert result["qdrant_used"] is False
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB459 -- OCR engine: rag_used always False
+def test_TAB459_ocr_engine_rag_false():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".txt", mode="w", encoding="utf-8", delete=False) as f:
+        f.write("test")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "text/plain")
+        assert result["rag_used"] is False
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB460 -- OCR engine: graceful fallback for unsupported type
+def test_TAB460_ocr_engine_unsupported_graceful():
+    from tax_appeal_ocr_engine import run_local_ocr
+    with tempfile.NamedTemporaryFile(suffix=".xyz", delete=False) as f:
+        f.write(b"unsupported bytes")
+        tmp = f.name
+    try:
+        result = run_local_ocr(tmp, "application/octet-stream")
+        assert result["production_ready"] is False
+        assert result["external_api_used"] is False
+        assert result["qdrant_used"] is False
+        assert result["rag_used"] is False
+        assert len(result.get("errors", [])) > 0
+    finally:
+        _os_tab.unlink(tmp)
+
+
+# -- TAB461 -- OCR candidates: tax_notice fields extracted
+def test_TAB461_ocr_candidates_tax_notice_fields():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    text = (
+        "raqm al-ishaar: 2024/15893\n"
+        "ad-dawra ad-daribiyya: 2023\n"
+    )
+    result = build_ocr_field_candidates(text, "tax_notice_form3")
+    assert result["evidence_type"] == "tax_notice_form3"
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB462 -- OCR candidates: accepted_by_default always False
+def test_TAB462_ocr_candidates_not_accepted_by_default():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    result = build_ocr_field_candidates(
+        "raqm al-ishaar: 2024/12345",
+        "tax_notice_form3",
+    )
+    for c in result["candidates"]:
+        assert c["accepted_by_default"] is False
+
+
+# -- TAB463 -- OCR candidates: needs_human_review always True
+def test_TAB463_ocr_candidates_always_needs_human_review():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    result = build_ocr_field_candidates(
+        "raqm al-ishaar: 2024/12345",
+        "tax_notice_form3",
+    )
+    for c in result["candidates"]:
+        assert c["needs_human_review"] is True
+
+
+# -- TAB464 -- OCR candidates: empty text returns safe empty result
+def test_TAB464_ocr_candidates_empty_text_safe():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    result = build_ocr_field_candidates("", "tax_notice_form3")
+    assert result["candidates"] == []
+    assert len(result["warnings"]) > 0
+
+
+# -- TAB465 -- OCR candidates: unknown evidence type safe
+def test_TAB465_ocr_candidates_unknown_type_safe():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    result = build_ocr_field_candidates("some text", "unknown_type_xyz")
+    assert result["candidates"] == []
+    assert len(result["warnings"]) > 0
+
+
+# -- TAB466 -- create-extraction-draft endpoint requires auth
+def test_TAB466_create_extraction_draft_requires_auth(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA/create-extraction-draft",
+        json={},
+    )
+    assert resp.status_code in (401, 403)
+
+
+# -- TAB467 -- create-extraction-draft fails for unknown job
+def test_TAB467_create_extraction_draft_unknown_job(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA/create-extraction-draft",
+        headers=_auth(),
+        json={},
+    )
+    assert resp.status_code == 404
+
+
+# -- TAB468 -- reject OCR job endpoint requires auth
+def test_TAB468_reject_ocr_requires_auth(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA/reject",
+        json={},
+    )
+    assert resp.status_code in (401, 403)
+
+
+# -- TAB469 -- reject OCR job returns 404 for unknown job
+def test_TAB469_reject_ocr_unknown_job(client):
+    resp = client.post(
+        "/api/tax-appeal/expert-requests/TAXER-AAAAAAAA/ocr-jobs/OCR-AAAAAAAA/reject",
+        headers=_auth(),
+        json={"reason": "test"},
+    )
+    assert resp.status_code == 404
+
+
+# -- TAB470 -- OCR routes module does not expose internal paths
+def test_TAB470_ocr_routes_no_internal_paths():
+    from tax_appeal_ocr_routes import _ocr_safe
+    rec = {
+        "ocr_job_id": "OCR-AAAAAAAA",
+        "internal_file_path": "C:\\secret\\path\\to\\file.pdf",
+        "raw_text_storage_key": "ocr_raw/TAXER-AAAAAAAA/OCR-AAAAAAAA.txt",
+        "job_status": "completed",
+        "production_ready": False,
+    }
+    safe = _ocr_safe(rec)
+    assert "internal_file_path" not in safe
+    assert "raw_text_storage_key" not in safe
+    assert safe["production_ready"] is False
+
+
+# -- TAB471 -- OCR safe enforces invariants
+def test_TAB471_ocr_safe_enforces_invariants():
+    from tax_appeal_ocr_routes import _ocr_safe
+    rec = {
+        "ocr_job_id":        "OCR-AAAAAAAA",
+        "production_ready":  True,
+        "external_api_used": True,
+        "qdrant_used":       True,
+        "rag_used":          True,
+        "job_status":        "completed",
+    }
+    safe = _ocr_safe(rec)
+    assert safe["production_ready"]  is False
+    assert safe["external_api_used"] is False
+    assert safe["qdrant_used"]       is False
+    assert safe["rag_used"]          is False
+
+
+# -- TAB472 -- OCR pilot summary appears in context
+def test_TAB472_ocr_pilot_summary_in_context():
+    from tax_appeal_context import _build_tax_appeal_context
+    ctx = _build_tax_appeal_context({"tax_mode": "residential"}, [], [])
+    assert "ocr_pilot_summary" in ctx
+    s = ctx["ocr_pilot_summary"]
+    assert s["qdrant_active_now"] is False
+    assert s["rag_active_now"] is False
+    assert s["external_api_used"] is False
+
+
+# -- TAB473 -- workbook contains OCR Pilot sheet
+def test_TAB473_workbook_contains_ocr_pilot_sheet():
+    from pathlib import Path
+    out_dir = (
+        Path(__file__).resolve().parents[1]
+        / "instance" / "manual_review_outputs" / "tax_appeal_ocr_pilot"
+    )
+    wb_file = out_dir / "06_expert_workbook_with_ocr_pilot.xlsx"
+    if not wb_file.exists():
+        import pytest; pytest.skip("QA workbook not generated")
+    import openpyxl
+    wb = openpyxl.load_workbook(wb_file)
+    assert "OCR Pilot" in wb.sheetnames
+
+
+# -- TAB474 -- OCR pilot QA outputs all exist
+def test_TAB474_ocr_pilot_qa_outputs_exist():
+    from pathlib import Path
+    out_dir = (
+        Path(__file__).resolve().parents[1]
+        / "instance" / "manual_review_outputs" / "tax_appeal_ocr_pilot"
+    )
+    expected = [
+        "01_ocr_pilot_summary.json",
+        "02_ocr_tax_notice_text_preview.txt",
+        "03_ocr_candidates_tax_notice.json",
+        "04_extraction_draft_from_ocr.json",
+        "05_field_mapping_from_confirmed_ocr_snapshot.json",
+        "06_expert_workbook_with_ocr_pilot.xlsx",
+        "07_appeal_report_with_ocr_pilot.pdf",
+    ]
+    for fname in expected:
+        assert (out_dir / fname).exists(), f"QA output missing: {fname}"

@@ -33997,6 +33997,75 @@ function _expertSetBadge(id, label, available) {
   </div>
   <!-- end extraction section -->
 
+  <!-- ══ OCR Pilot Section ═════════════════════════════════════════════════ -->
+  <div id="tax-ocr-section" data-testid="tax-ocr-section"
+       style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:1rem; margin-bottom:1rem; display:none;">
+    <h4 style="color:#60a5fa; font-size:0.9rem; margin:0 0 0.5rem;">OCR Pilot — قراءة مبدئية للمستند</h4>
+
+    <!-- No-production warning -->
+    <div data-testid="tax-ocr-no-production-warning"
+         style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.3); border-radius:7px; padding:8px 12px; margin-bottom:0.8rem; color:#f87171; font-size:0.76rem; direction:rtl;">
+      ⚠ هذه قراءة آلية مبدئية غير معتمدة. لا تُستخدم أي قيمة في التقرير إلا بعد مراجعة الخبير وتأكيدها وربطها بالحقل المناسب.
+      <br><span data-testid="tax-ocr-warning" style="font-size:0.72rem; color:#fca5a5;">OCR / Qdrant / RAG — Qdrant: غير مفعَّل. RAG: غير مفعَّل.</span>
+    </div>
+
+    <!-- Evidence select + Run OCR -->
+    <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.2); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+      <div style="display:grid; grid-template-columns:1fr auto; gap:10px; align-items:end; margin-bottom:10px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">المستند للقراءة:</label>
+          <select id="tax-ocr-evidence-select" data-testid="tax-ocr-evidence-select"
+                  style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر المستند —</option>
+          </select>
+        </div>
+        <button onclick="taxOcrRun()" data-testid="tax-ocr-run-button"
+                style="padding:7px 16px; background:linear-gradient(135deg,#1d4ed8,#2563eb); border:none; border-radius:7px; color:#fff; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; cursor:pointer; white-space:nowrap;">
+          ▶ تشغيل OCR
+        </button>
+      </div>
+
+      <!-- Status badge -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+        <span style="font-size:0.72rem; color:#94a3b8;">الحالة:</span>
+        <span id="tax-ocr-status-badge" data-testid="tax-ocr-status-badge"
+              style="display:inline-flex; align-items:center; padding:2px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#94a3b8; font-size:0.72rem;">—</span>
+      </div>
+
+      <!-- Action status -->
+      <div id="tax-ocr-action-status" style="display:none; margin-bottom:6px; font-size:0.78rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- OCR text preview (expert-only) -->
+    <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.15); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+      <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:6px; font-weight:700;">معاينة النص المستخرج (للخبير فقط)</div>
+      <pre id="tax-ocr-text-preview" data-testid="tax-ocr-text-preview"
+           style="font-family:Courier,'Courier New',monospace; font-size:0.72rem; color:#cbd5e1; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:5px; padding:8px 10px; max-height:160px; overflow-y:auto; white-space:pre-wrap; direction:rtl; margin:0;">—</pre>
+    </div>
+
+    <!-- Candidate fields table -->
+    <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.15); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+      <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:6px; font-weight:700;">مرشحو الحقول (تتطلب مراجعة الخبير)</div>
+      <div id="tax-ocr-candidate-list" data-testid="tax-ocr-candidate-list"
+           style="font-size:0.75rem; color:#94a3b8; direction:rtl;">
+        <span style="color:#6b7280; font-style:italic;">لا توجد مرشحين بعد — قم بتشغيل OCR أولاً.</span>
+      </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button onclick="taxOcrCreateDraft()" data-testid="tax-ocr-create-extraction-draft"
+              style="padding:6px 14px; background:linear-gradient(135deg,#065f46,#059669); border:none; border-radius:7px; color:#fff; font-size:0.77rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; cursor:pointer;">
+        📄 إنشاء مسودة استخراج من OCR
+      </button>
+      <button onclick="taxOcrReject()" data-testid="tax-ocr-reject-button"
+              style="padding:6px 14px; background:linear-gradient(135deg,#7f1d1d,#dc2626); border:none; border-radius:7px; color:#fff; font-size:0.77rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; cursor:pointer;">
+        ✗ رفض نتيجة OCR
+      </button>
+    </div>
+  </div>
+  <!-- end ocr section -->
+
 </div>
 <!-- end tax appeal backoffice -->
 
@@ -34201,10 +34270,11 @@ async function taxAppealBoOpenRequest(rid) {
         var notesEl = document.getElementById('tax-bo-expert-notes');
         if (notesEl) notesEl.value = r.expert_notes || '';
 
-        // Load evidence, field mappings, and extractions for this request
+        // Load evidence, field mappings, extractions, and reveal OCR section
         taxEvidenceLoad();
         taxMappingInit();
         taxExtractionInit();
+        taxOcrRevealSection(rid);
 
     } catch(e) {
         taxAppealBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
@@ -35075,6 +35145,146 @@ async function taxExtractionCreateMappings() {
         taxAppealBoStatus(resp.ok ? (data.message || 'تم إنشاء الروابط.') : ('خطأ: ' + data.message), resp.ok);
         if (resp.ok) { await taxExtractionLoad(); taxMappingLoad(); }
     } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+// ── OCR Pilot JS ──────────────────────────────────────────────────────────────
+
+var _taxOcrCurrentJobId = null;
+
+function taxOcrSetStatus(msg, color) {
+    var el = document.getElementById('tax-ocr-status-badge');
+    if (el) { el.textContent = msg; el.style.color = color || '#94a3b8'; }
+}
+
+function taxOcrShowActionStatus(msg, ok) {
+    var el = document.getElementById('tax-ocr-action-status');
+    if (!el) return;
+    el.style.display = 'block';
+    el.style.color = ok ? '#4ade80' : '#f87171';
+    el.textContent = msg;
+}
+
+function taxOcrRenderCandidates(candidates) {
+    var el = document.getElementById('tax-ocr-candidate-list');
+    if (!el) return;
+    if (!candidates || !candidates.length) {
+        el.innerHTML = '<span style="color:#6b7280;font-style:italic;">لم يُستخرج أي مرشح — أدخل القيم يدويًا.</span>';
+        return;
+    }
+    var rows = candidates.map(function(c, i) {
+        return '<div data-testid="tax-ocr-candidate-row" style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:4px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+            '<span style="color:#cbd5e1;">' + (c.label_ar || c.field_key) + '</span>' +
+            '<span style="color:#fde68a;">' + (c.candidate_value || '—') + '</span>' +
+            '<span style="color:#f87171;font-size:0.68rem;">يحتاج مراجعة</span>' +
+            '</div>';
+    }).join('');
+    el.innerHTML = '<div style="font-size:0.72rem; color:#6b7280; margin-bottom:4px; padding:0 6px;">⚠ جميع المرشحين يحتاجون مراجعة الخبير — لا يُقبل أي منهم تلقائيًا.</div>' + rows;
+}
+
+async function taxOcrRun() {
+    if (!_taxAppealBoCurrentId) { taxOcrShowActionStatus('افتح طلبًا أولاً.', false); return; }
+    var evSel = document.getElementById('tax-ocr-evidence-select');
+    if (!evSel || !evSel.value) { taxOcrShowActionStatus('اختر مستندًا للـ OCR.', false); return; }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    taxOcrSetStatus('جارٍ التشغيل…', '#fbbf24');
+    taxOcrShowActionStatus('جارٍ تشغيل OCR…', true);
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/evidence/' + evSel.value + '/ocr',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+             body: JSON.stringify({languages: ['ara', 'eng'], mode: 'general'})}
+        );
+        var data = await resp.json();
+        if (!resp.ok) { taxOcrSetStatus('فشل', '#f87171'); taxOcrShowActionStatus('خطأ: ' + data.message, false); return; }
+        var job = data.ocr_job || {};
+        _taxOcrCurrentJobId = job.ocr_job_id || null;
+        taxOcrSetStatus(job.job_status || 'completed', job.job_status === 'completed' ? '#4ade80' : '#fbbf24');
+        var preview = document.getElementById('tax-ocr-text-preview');
+        if (preview) preview.textContent = job.raw_text_preview || '(لا يوجد نص)';
+        // Build candidates client-side from job data (candidates are in response if passed)
+        taxOcrRenderCandidates([]);  // candidates come via separate call or from job
+        taxOcrShowActionStatus('اكتمل OCR. راجع النص وأنشئ مسودة استخراج.', true);
+        // Reload OCR job to get candidates count
+        taxOcrLoadJob(job.ocr_job_id);
+    } catch(e) { taxOcrSetStatus('خطأ', '#f87171'); taxOcrShowActionStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxOcrLoadJob(jobId) {
+    if (!_taxAppealBoCurrentId || !jobId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/ocr-jobs/' + jobId,
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        var data = await resp.json();
+        if (resp.ok && data.ocr_job) {
+            var job = data.ocr_job;
+            taxOcrSetStatus(job.job_status || '—', job.job_status === 'completed' ? '#4ade80' : '#fbbf24');
+            var preview = document.getElementById('tax-ocr-text-preview');
+            if (preview) preview.textContent = job.raw_text_preview || '(لا يوجد نص)';
+        }
+    } catch(e) {}
+}
+
+async function taxOcrCreateDraft() {
+    if (!_taxAppealBoCurrentId || !_taxOcrCurrentJobId) {
+        taxOcrShowActionStatus('شغّل OCR أولاً للحصول على معرف مهمة.', false); return;
+    }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    taxOcrShowActionStatus('جارٍ إنشاء مسودة الاستخراج…', true);
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/ocr-jobs/' + _taxOcrCurrentJobId + '/create-extraction-draft',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: '{}'}
+        );
+        var data = await resp.json();
+        if (!resp.ok) { taxOcrShowActionStatus('خطأ: ' + data.message, false); return; }
+        var draft = data.extraction_draft || {};
+        taxOcrShowActionStatus(
+            'تم إنشاء مسودة الاستخراج: ' + (draft.extraction_id || '') +
+            ' — يتطلب مراجعة الخبير قبل التأكيد.', true);
+    } catch(e) { taxOcrShowActionStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxOcrReject() {
+    if (!_taxAppealBoCurrentId || !_taxOcrCurrentJobId) {
+        taxOcrShowActionStatus('لا توجد مهمة OCR لرفضها.', false); return;
+    }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/ocr-jobs/' + _taxOcrCurrentJobId + '/reject',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+             body: JSON.stringify({reason: 'مرفوضة من الخبير عبر الواجهة'})}
+        );
+        var data = await resp.json();
+        taxOcrSetStatus('مرفوضة', '#f87171');
+        taxOcrShowActionStatus(resp.ok ? 'تم رفض نتيجة OCR.' : ('خطأ: ' + data.message), resp.ok);
+    } catch(e) { taxOcrShowActionStatus('خطأ: ' + e.message, false); }
+}
+
+function taxOcrRevealSection(requestId) {
+    var sec = document.getElementById('tax-ocr-section');
+    if (sec) sec.style.display = '';
+    // Populate evidence select from existing evidence
+    var evSel = document.getElementById('tax-ocr-evidence-select');
+    var srcSel = document.getElementById('tax-extraction-evidence-select');
+    if (evSel && srcSel) {
+        evSel.innerHTML = srcSel.innerHTML;  // mirror extraction evidence options
+    }
+    _taxOcrCurrentJobId = null;
+    taxOcrSetStatus('—', '#94a3b8');
+    var preview = document.getElementById('tax-ocr-text-preview');
+    if (preview) preview.textContent = '—';
+    taxOcrRenderCandidates([]);
 }
 </script>
 

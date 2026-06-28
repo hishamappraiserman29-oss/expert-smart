@@ -950,3 +950,7 @@ def register(app, require_auth, limiter=None) -> None:
     # ── Extraction readiness routes ────────────────────────────────────────
     from tax_appeal_extraction_routes import register_extraction_routes
     register_extraction_routes(app, require_auth)
+
+    # ── OCR Pilot routes ───────────────────────────────────────────────────
+    from tax_appeal_ocr_routes import register_ocr_routes
+    register_ocr_routes(app, require_auth)

@@ -735,6 +735,7 @@ def register(app, require_auth, limiter=None) -> None:
                 "evidence_summary":                  ctx.get("evidence_summary"),
                 "field_mapping_summary":             ctx.get("field_mapping_summary"),
                 "source_linked_inputs":              ctx.get("source_linked_inputs"),
+                "extraction_summary":                ctx.get("extraction_summary"),
             }
         except Exception:
             pass
@@ -945,3 +946,7 @@ def register(app, require_auth, limiter=None) -> None:
     # ── Field mapping routes ───────────────────────────────────────────────
     from tax_appeal_field_mapping import register_field_mapping_routes
     register_field_mapping_routes(app, require_auth)
+
+    # ── Extraction readiness routes ────────────────────────────────────────
+    from tax_appeal_extraction_routes import register_extraction_routes
+    register_extraction_routes(app, require_auth)

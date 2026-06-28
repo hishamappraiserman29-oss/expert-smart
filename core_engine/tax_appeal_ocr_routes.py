@@ -37,8 +37,9 @@ from typing import Optional
 _OCR_JOB_BASE = Path(__file__).parent / "instance" / "tax_appeal_ocr_jobs"
 _OCR_RAW_BASE = Path(__file__).parent / "instance" / "tax_appeal_ocr_raw"
 _EX_BASE      = Path(__file__).parent / "instance" / "tax_appeal_extractions"
+_SP_BASE      = Path(__file__).parent / "instance" / "tax_appeal_structured_parse"
 
-for _d in (_OCR_JOB_BASE, _OCR_RAW_BASE, _EX_BASE):
+for _d in (_OCR_JOB_BASE, _OCR_RAW_BASE, _EX_BASE, _SP_BASE):
     _d.mkdir(parents=True, exist_ok=True)
 
 # ── Regex validators ──────────────────────────────────────────────────────────
@@ -47,6 +48,7 @@ _ER_ID_RE  = re.compile(r"^(?:TAXER|QA)-[0-9A-F]{8}$")
 _EV_ID_RE  = re.compile(r"^EV-[0-9A-F]{8}$")
 _OCR_ID_RE = re.compile(r"^OCR-[0-9A-F]{8}$")
 _EX_ID_RE  = re.compile(r"^EX-[0-9A-F]{8}$")
+_SP_ID_RE  = re.compile(r"^SP-[0-9A-F]{8}$")
 
 # ── Status constants ──────────────────────────────────────────────────────────
 
@@ -600,6 +602,298 @@ def register_ocr_routes(app, require_auth) -> None:
             "total_types":       len(matrix),
             "policy_matrix":     matrix,
         }), 200
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # Structured Parser Pilot — Excel Comparables
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # ── POST .../evidence/<ev_id>/structured-parse — run parser ──────────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/evidence/<evidence_id>/structured-parse",
+        methods=["POST"],
+    )
+    @require_auth
+    def tax_appeal_structured_parse(request_id: str, evidence_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        if not _EV_ID_RE.fullmatch(evidence_id):
+            return jsonify({"status": "error", "message": "معرّف المستند غير صالح"}), 400
+
+        body = request.get_json(silent=True) or {}
+        evidence_type = body.get("evidence_type", "")
+
+        try:
+            from tax_appeal_structured_parser import (  # type: ignore[import-not-found]
+                parse_structured_comparables,
+                STRUCTURED_EVIDENCE_TYPES,
+                get_structured_parser_info,
+            )
+        except ImportError as exc:
+            return jsonify({"status": "error",
+                            "message": f"وحدة المحلل الجدولي غير متاحة: {exc}"}), 500
+
+        if evidence_type not in STRUCTURED_EVIDENCE_TYPES:
+            return jsonify({
+                "status": "error",
+                "message": (
+                    f"نوع المستند '{evidence_type}' لا يدعم المحلل الجدولي. "
+                    f"المدعومة: {sorted(STRUCTURED_EVIDENCE_TYPES)}"
+                ),
+            }), 400
+
+        # Resolve file path from evidence record (safe — not exposed in response)
+        file_path_str = body.get("file_path", "")
+        if not file_path_str:
+            # Try to locate from evidence storage
+            ev_store = Path(__file__).parent / "instance" / "tax_appeal_evidence" / request_id
+            ev_file  = ev_store / f"{evidence_id}.json"
+            if ev_file.exists():
+                try:
+                    ev_rec = json.loads(ev_file.read_text(encoding="utf-8"))
+                    file_path_str = ev_rec.get("file_path") or ev_rec.get("storage_path", "")
+                except Exception:
+                    pass
+
+        if not file_path_str or not Path(file_path_str).exists():
+            return jsonify({
+                "status": "error",
+                "message": "ملف المستند غير موجود أو لم يُحدَّد مساره.",
+            }), 400
+
+        # Run parser
+        parse_result = parse_structured_comparables(
+            file_path=file_path_str,
+            evidence_type=evidence_type,
+            evidence_id=evidence_id,
+            request_id=request_id,
+        )
+
+        # Persist parse job
+        parse_job_id = parse_result["parse_job_id"]
+        job_dir = _SP_BASE / request_id
+        job_dir.mkdir(parents=True, exist_ok=True)
+        job_path = job_dir / "sp_jobs.jsonl"
+        with job_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(parse_result, ensure_ascii=False, default=str) + "\n")
+
+        # Return safe response (no internal paths)
+        safe = {k: v for k, v in parse_result.items()
+                if k not in ("candidate_rows_preview",)}
+        safe.pop("parse_job_id", None)
+        safe["parse_job_id"] = parse_job_id
+        # Strip any accidental path leakage
+        for _key in ("file_path", "storage_path", "internal_path"):
+            safe.pop(_key, None)
+
+        return jsonify({
+            "status":        "ok",
+            "parse_job_id":  parse_job_id,
+            "evidence_id":   evidence_id,
+            "evidence_type": evidence_type,
+            "result":        safe,
+        }), 200
+
+    # ── GET .../structured-parse-jobs — list jobs ─────────────────────────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/structured-parse-jobs",
+        methods=["GET"],
+    )
+    @require_auth
+    def tax_appeal_structured_parse_jobs(request_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+
+        jobs = _list_sp_jobs(request_id)
+        safe_jobs = []
+        for j in jobs:
+            safe_j = {k: v for k, v in j.items()
+                      if k not in ("candidate_rows_preview",)}
+            for _key in ("file_path", "storage_path", "internal_path"):
+                safe_j.pop(_key, None)
+            safe_jobs.append(safe_j)
+
+        return jsonify({
+            "status":     "ok",
+            "request_id": request_id,
+            "total":      len(safe_jobs),
+            "parse_jobs": safe_jobs,
+        }), 200
+
+    # ── GET .../structured-parse-jobs/<parse_job_id> — single job ────────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/structured-parse-jobs/<parse_job_id>",
+        methods=["GET"],
+    )
+    @require_auth
+    def tax_appeal_structured_parse_job_detail(request_id: str, parse_job_id: str):
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        if not _SP_ID_RE.fullmatch(parse_job_id):
+            return jsonify({"status": "error", "message": "معرّف مهمة المحلل غير صالح"}), 400
+
+        job = _read_sp_job(request_id, parse_job_id)
+        if job is None:
+            return jsonify({"status": "error", "message": "مهمة المحلل غير موجودة"}), 404
+
+        safe = {k: v for k, v in job.items()
+                if k not in ("candidate_rows_preview",)}
+        for _key in ("file_path", "storage_path", "internal_path"):
+            safe.pop(_key, None)
+
+        return jsonify({
+            "status":        "ok",
+            "parse_job_id":  parse_job_id,
+            "result":        safe,
+        }), 200
+
+    # ── POST .../structured-parse-jobs/<id>/create-extraction-draft ──────────
+    @app.route(
+        "/api/tax-appeal/expert-requests/<request_id>/structured-parse-jobs/<parse_job_id>/create-extraction-draft",
+        methods=["POST"],
+    )
+    @require_auth
+    def tax_appeal_sp_create_extraction_draft(request_id: str, parse_job_id: str):
+        """
+        Convert structured parser candidates into an extraction draft.
+
+        Does NOT confirm extraction.
+        Does NOT apply values to report context.
+        Does NOT create production-ready values.
+        Expert must still complete the full five-step gate before certified use.
+        """
+        if not _ER_ID_RE.fullmatch(request_id):
+            return jsonify({"status": "error", "message": "معرّف الطلب غير صالح"}), 400
+        if not _SP_ID_RE.fullmatch(parse_job_id):
+            return jsonify({"status": "error", "message": "معرّف مهمة المحلل غير صالح"}), 400
+
+        job = _read_sp_job(request_id, parse_job_id)
+        if job is None:
+            return jsonify({"status": "error", "message": "مهمة المحلل غير موجودة"}), 404
+
+        ex_id  = "EX-" + uuid.uuid4().hex[:8].upper()
+        now    = datetime.utcnow().isoformat()
+        ev_id  = job.get("evidence_id", "")
+        ev_type = job.get("evidence_type", "")
+        summary = job.get("candidate_summary", {})
+
+        # Build extraction draft fields from parser candidate summary
+        draft_fields: dict = {}
+        field_map = {
+            # market
+            "average_price_per_m2":          {"label": "متوسط سعر المتر", "unit": "جنيه/م²"},
+            "min_price_per_m2":              {"label": "أدنى سعر المتر", "unit": "جنيه/م²"},
+            "max_price_per_m2":              {"label": "أعلى سعر المتر", "unit": "جنيه/م²"},
+            "median_price_per_m2":           {"label": "وسيط سعر المتر", "unit": "جنيه/م²"},
+            "average_adjusted_price_per_m2": {"label": "متوسط سعر المتر المعدل", "unit": "جنيه/م²"},
+            # rental
+            "average_rent_per_m2":           {"label": "متوسط إيجار المتر", "unit": "جنيه/م²"},
+            "min_rent_per_m2":               {"label": "أدنى إيجار المتر", "unit": "جنيه/م²"},
+            "max_rent_per_m2":               {"label": "أعلى إيجار المتر", "unit": "جنيه/م²"},
+            "median_rent_per_m2":            {"label": "وسيط إيجار المتر", "unit": "جنيه/م²"},
+            "average_adjusted_rent_per_m2":  {"label": "متوسط إيجار المتر المعدل", "unit": "جنيه/م²"},
+            "average_monthly_rent":          {"label": "متوسط الإيجار الشهري", "unit": "جنيه"},
+            "average_annual_rent":           {"label": "متوسط الإيجار السنوي", "unit": "جنيه"},
+            # tax
+            "average_tax_per_m2":            {"label": "متوسط ضريبة المتر", "unit": "جنيه/م²"},
+            "min_tax_per_m2":                {"label": "أدنى ضريبة المتر", "unit": "جنيه/م²"},
+            "max_tax_per_m2":                {"label": "أعلى ضريبة المتر", "unit": "جنيه/م²"},
+            "median_tax_per_m2":             {"label": "وسيط ضريبة المتر", "unit": "جنيه/م²"},
+            "average_adjusted_tax_per_m2":   {"label": "متوسط ضريبة المتر المعدلة", "unit": "جنيه/م²"},
+        }
+        for field_key, meta in field_map.items():
+            val = summary.get(field_key)
+            if val is not None:
+                draft_fields[field_key] = {
+                    "candidate_value":        val,
+                    "label_ar":               meta["label"],
+                    "unit":                   meta["unit"],
+                    "source":                 "structured_parser_advisory",
+                    "production_ready":       False,
+                    "accepted_by_default":    False,
+                    "needs_human_review":     True,
+                    "certified_usage_allowed": False,
+                    "advisory_label_ar":      "استخلاص جدولي مبدئي — غير معتمد",
+                }
+
+        draft: dict = {
+            "extraction_id":          ex_id,
+            "parse_job_id":           parse_job_id,
+            "request_id":             request_id,
+            "evidence_id":            ev_id,
+            "evidence_type":          ev_type,
+            "created_at":             now,
+            "status":                 "draft",
+            "confirmed":              False,
+            "production_ready":       False,
+            "accepted_by_default":    False,
+            "needs_human_review":     True,
+            "certified_usage_allowed": False,
+            "external_api_used":      False,
+            "qdrant_used":            False,
+            "rag_used":               False,
+            "advisory_label_ar":      "استخلاص جدولي مبدئي — غير معتمد",
+            "fields":                 draft_fields,
+            "row_count":              job.get("row_count", 0),
+            "usable_row_count":       job.get("usable_row_count", 0),
+            "warnings":               job.get("warnings", []),
+            "audit_log": [
+                {"action": "draft_created_from_structured_parser",
+                 "at": now, "by": "expert",
+                 "note": "مسودة استخراج من المحلل الجدولي — غير مؤكدة"}
+            ],
+        }
+
+        # Persist extraction draft
+        ex_dir = _EX_BASE / request_id
+        ex_dir.mkdir(parents=True, exist_ok=True)
+        ex_path = ex_dir / "extractions.jsonl"
+        with ex_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(draft, ensure_ascii=False, default=str) + "\n")
+
+        return jsonify({
+            "status":          "ok",
+            "extraction_id":   ex_id,
+            "parse_job_id":    parse_job_id,
+            "evidence_id":     ev_id,
+            "evidence_type":   ev_type,
+            "confirmed":       False,
+            "production_ready": False,
+            "fields_count":    len(draft_fields),
+            "advisory_note":   (
+                "مسودة استخراج مبدئية من المحلل الجدولي. "
+                "يجب مراجعة الخبير وتأكيد الحقول وإتمام ربط المصادر وفحص التعارضات "
+                "قبل أي استخدام رسمي."
+            ),
+        }), 201
+
+
+# ── Structured parser storage helpers ────────────────────────────────────────
+
+def _list_sp_jobs(request_id: str) -> list[dict]:
+    jobs: dict[str, dict] = {}
+    job_path = _SP_BASE / request_id / "sp_jobs.jsonl"
+    if not job_path.exists():
+        return []
+    with job_path.open(encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+                jid = rec.get("parse_job_id", "")
+                if jid:
+                    jobs[jid] = rec
+            except Exception:
+                continue
+    return list(jobs.values())
+
+
+def _read_sp_job(request_id: str, parse_job_id: str) -> Optional[dict]:
+    for job in _list_sp_jobs(request_id):
+        if job.get("parse_job_id") == parse_job_id:
+            return job
+    return None
 
 
 # ── Public loader (used by context builder) ───────────────────────────────────

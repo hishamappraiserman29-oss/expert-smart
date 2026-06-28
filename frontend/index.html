@@ -34106,6 +34106,80 @@ function _expertSetBadge(id, label, available) {
   </div>
   <!-- end ocr section -->
 
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- Structured Parser Section — Excel/CSV Comparables                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="tax-structured-parser-section" data-testid="tax-structured-parser-section"
+       style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:1rem; margin-bottom:1rem; display:none;">
+    <h4 style="color:#38bdf8; font-size:0.9rem; margin:0 0 0.5rem;">
+      محلل Excel الجدولي — استخلاص مقارنات Excel/CSV (مبدئي غير معتمد)
+    </h4>
+
+    <!-- Advisory section wrapper -->
+    <div data-testid="tax-advisory-section">
+
+    <!-- Excel/CSV type warning (always visible) -->
+    <div data-testid="tax-structured-parser-warning"
+         style="background:rgba(12,74,110,0.18); border:1px solid rgba(56,189,248,0.4); border-radius:7px; padding:6px 12px; margin-bottom:0.6rem; color:#7dd3fc; font-size:0.74rem; direction:rtl;">
+      ⚠ ملفات Excel/CSV لا تُقرأ كـ OCR؛ يتم التعامل معها كبيانات منظمة تحتاج مراجعة.<br>
+      ⚠ الاستخلاص الجدولي مبدئي وغير معتمد ولا يستخدم في التقرير النهائي قبل مراجعة الخبير.
+    </div>
+
+    <!-- Evidence select -->
+    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:0.5rem; flex-wrap:wrap;">
+      <label style="color:#94a3b8; font-size:0.76rem; min-width:80px;">نوع المستند:</label>
+      <select id="tax-sp-evidence-select" data-testid="tax-structured-parser-evidence-select"
+              style="background:#1e2d3d; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; padding:4px 8px; font-size:0.76rem; direction:rtl; min-width:200px;">
+        <option value="">— اختر نوع مقارنات Excel —</option>
+        <option value="market_comparables_excel">مقارنات بيوع (Excel)</option>
+        <option value="rental_comparables_excel">مقارنات إيجار (Excel)</option>
+        <option value="tax_comparables_excel">مقارنات ضريبية (Excel)</option>
+      </select>
+      <input id="tax-sp-evidence-id" placeholder="EV-xxxxxxxx (معرّف المستند)"
+             style="background:#1e2d3d; border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; padding:4px 8px; font-size:0.76rem; width:160px;"
+             value="" />
+      <button data-testid="tax-structured-parser-run-button"
+              onclick="taxSpRun()"
+              style="padding:5px 14px; background:linear-gradient(135deg,#0c4a6e,#0284c7); border:none; border-radius:7px; color:#fff; font-size:0.76rem; cursor:pointer;">
+        ▶ تشغيل المحلل الجدولي
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div id="tax-sp-status" data-testid="tax-structured-parser-status"
+         style="color:#94a3b8; font-size:0.74rem; margin-bottom:0.5rem;">—</div>
+
+    <!-- Detected columns summary -->
+    <div id="tax-sp-columns" data-testid="tax-structured-parser-columns"
+         style="display:none; background:rgba(12,74,110,0.12); border:1px solid rgba(56,189,248,0.25); border-radius:6px; padding:6px 10px; font-size:0.73rem; color:#7dd3fc; margin-bottom:0.5rem; direction:rtl;">
+      <strong>الأعمدة المكتشفة:</strong> <span id="tax-sp-columns-text">—</span>
+    </div>
+
+    <!-- Parser candidate summary -->
+    <div id="tax-sp-summary" data-testid="tax-structured-parser-summary"
+         style="display:none; background:rgba(12,74,110,0.10); border:1px solid rgba(56,189,248,0.3); border-radius:7px; padding:8px 12px; margin-bottom:0.5rem; direction:rtl; font-size:0.74rem;">
+      <p style="color:#38bdf8; font-weight:700; margin:0 0 6px;">ملخص الاستخلاص الجدولي — غير معتمد</p>
+      <table id="tax-sp-summary-table"
+             style="width:100%; border-collapse:collapse; font-size:0.72rem; color:#e2e8f0;"></table>
+      <p style="color:#f87171; font-weight:700; font-size:0.71rem; margin:6px 0 0;">
+        استخلاص جدولي مبدئي — غير معتمد. يلزم مراجعة الخبير قبل أي استخدام رسمي.
+      </p>
+    </div>
+
+    <!-- Create extraction draft button -->
+    <div id="tax-sp-draft-section" style="display:none; margin-top:0.5rem;">
+      <button data-testid="tax-structured-parser-create-extraction-draft"
+              onclick="taxSpCreateDraft()"
+              style="padding:5px 14px; background:linear-gradient(135deg,#164e63,#0e7490); border:none; border-radius:7px; color:#fff; font-size:0.76rem; cursor:pointer;">
+        📋 إنشاء مسودة استخراج من نتيجة المحلل
+      </button>
+      <span id="tax-sp-draft-status" style="color:#94a3b8; font-size:0.73rem; margin-right:8px;">—</span>
+    </div>
+
+    </div><!-- end tax-advisory-section -->
+  </div>
+  <!-- end structured parser section -->
+
 </div>
 <!-- end tax appeal backoffice -->
 
@@ -35379,6 +35453,8 @@ function taxOcrRevealSection(requestId) {
     if (wp) wp.style.display = 'none';
     var sp = document.getElementById('tax-ocr-structured-placeholder');
     if (sp) sp.style.display = 'none';
+    // Also reveal structured parser section
+    if (typeof taxSpRevealSection === 'function') taxSpRevealSection(requestId);
 }
 
 function taxOcrHandleEvidenceChange(evType) {
@@ -35394,6 +35470,158 @@ function taxOcrHandleEvidenceChange(evType) {
         if (btn) btn.disabled = false;
         taxOcrSetStatus('—', '#94a3b8');
     }
+}
+
+// ── Structured Parser JS ──────────────────────────────────────────────────────
+
+var _taxSpCurrentJobId  = null;
+var _taxSpCurrentReqId  = null;
+
+function taxSpRevealSection(requestId) {
+    var sec = document.getElementById('tax-structured-parser-section');
+    if (sec) sec.style.display = '';
+    _taxSpCurrentReqId = requestId;
+    _taxSpCurrentJobId = null;
+    taxSpSetStatus('—', '#94a3b8');
+    var sumDiv = document.getElementById('tax-sp-summary');
+    if (sumDiv) sumDiv.style.display = 'none';
+    var colDiv = document.getElementById('tax-sp-columns');
+    if (colDiv) colDiv.style.display = 'none';
+    var draftDiv = document.getElementById('tax-sp-draft-section');
+    if (draftDiv) draftDiv.style.display = 'none';
+}
+
+function taxSpSetStatus(msg, color) {
+    var el = document.getElementById('tax-sp-status');
+    if (el) { el.textContent = msg; el.style.color = color || '#94a3b8'; }
+}
+
+function taxSpRun() {
+    var evType = (document.getElementById('tax-sp-evidence-select') || {}).value || '';
+    var evId   = ((document.getElementById('tax-sp-evidence-id') || {}).value || '').trim();
+    var reqId  = _taxSpCurrentReqId
+        || (document.getElementById('tax-appeal-bo-current-id') || {}).textContent
+        || '';
+
+    if (!reqId) { taxSpSetStatus('يرجى فتح طلب أولاً.', '#f87171'); return; }
+    if (!evType) { taxSpSetStatus('يرجى اختيار نوع المستند.', '#f87171'); return; }
+
+    taxSpSetStatus('جارٍ التحليل الجدولي…', '#60a5fa');
+    var tok = taxAppealBoGetToken ? taxAppealBoGetToken() : '';
+
+    fetch('/api/tax-appeal/expert-requests/' + reqId + '/evidence/' + (evId || 'EV-00000000') + '/structured-parse', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok},
+        body: JSON.stringify({evidence_type: evType}),
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status !== 'ok') {
+            taxSpSetStatus('خطأ: ' + (data.message || 'فشل التحليل'), '#f87171');
+            return;
+        }
+        _taxSpCurrentJobId = data.parse_job_id;
+        var res = data.result || {};
+        taxSpSetStatus(
+            'اكتمل التحليل — ' + (res.usable_row_count || 0) + ' صف صالح من ' + (res.row_count || 0),
+            '#4ade80'
+        );
+        // Show columns
+        var cols = (res.normalized_columns || []).join('، ') || '—';
+        var colDiv = document.getElementById('tax-sp-columns');
+        var colTxt = document.getElementById('tax-sp-columns-text');
+        if (colTxt) colTxt.textContent = cols;
+        if (colDiv) colDiv.style.display = '';
+        // Show summary
+        taxSpRenderSummary(res.candidate_summary || {});
+        // Show draft button
+        var draftDiv = document.getElementById('tax-sp-draft-section');
+        if (draftDiv) draftDiv.style.display = '';
+    })
+    .catch(function(e) { taxSpSetStatus('خطأ: ' + e.message, '#f87171'); });
+}
+
+function taxSpRenderSummary(summary) {
+    var tbl = document.getElementById('tax-sp-summary-table');
+    if (!tbl) return;
+    var rows = '';
+    var numericKeys = [
+        'average_price_per_m2','min_price_per_m2','max_price_per_m2','median_price_per_m2','average_adjusted_price_per_m2',
+        'average_rent_per_m2','min_rent_per_m2','max_rent_per_m2','median_rent_per_m2','average_adjusted_rent_per_m2',
+        'average_monthly_rent','average_annual_rent',
+        'average_tax_per_m2','min_tax_per_m2','max_tax_per_m2','median_tax_per_m2','average_adjusted_tax_per_m2',
+        'comparable_count','usable_row_count',
+    ];
+    var labelMap = {
+        average_price_per_m2:         'متوسط سعر المتر (جنيه/م²)',
+        min_price_per_m2:             'أدنى سعر المتر',
+        max_price_per_m2:             'أعلى سعر المتر',
+        median_price_per_m2:          'وسيط سعر المتر',
+        average_adjusted_price_per_m2:'متوسط سعر المتر المعدل',
+        average_rent_per_m2:          'متوسط إيجار المتر (جنيه/م²)',
+        min_rent_per_m2:              'أدنى إيجار المتر',
+        max_rent_per_m2:              'أعلى إيجار المتر',
+        median_rent_per_m2:           'وسيط إيجار المتر',
+        average_adjusted_rent_per_m2: 'متوسط إيجار المتر المعدل',
+        average_monthly_rent:         'متوسط الإيجار الشهري',
+        average_annual_rent:          'متوسط الإيجار السنوي',
+        average_tax_per_m2:           'متوسط ضريبة المتر (جنيه/م²)',
+        min_tax_per_m2:               'أدنى ضريبة المتر',
+        max_tax_per_m2:               'أعلى ضريبة المتر',
+        median_tax_per_m2:            'وسيط ضريبة المتر',
+        average_adjusted_tax_per_m2:  'متوسط ضريبة المتر المعدلة',
+        comparable_count:             'عدد المقارنات',
+        usable_row_count:             'الصفوف الصالحة',
+        source_quality_note:          'جودة البيانات',
+    };
+    var keys = Object.keys(summary);
+    if (!keys.length) {
+        tbl.innerHTML = '<tr><td colspan="2" style="color:#94a3b8;font-style:italic;padding:4px;">لا توجد بيانات في الملخص.</td></tr>';
+    } else {
+        keys.forEach(function(k) {
+            var v = summary[k];
+            if (v === null || v === undefined) return;
+            var label = labelMap[k] || k;
+            var displayVal = (typeof v === 'object') ? JSON.stringify(v) : String(v);
+            rows += '<tr style="border-bottom:1px solid rgba(255,255,255,0.06);">' +
+                '<td style="padding:3px 6px;color:#7dd3fc;font-weight:600;width:50%;">' + label + '</td>' +
+                '<td style="padding:3px 6px;color:#e2e8f0;font-family:monospace;">' + displayVal + '</td>' +
+                '</tr>';
+        });
+        tbl.innerHTML = rows || '<tr><td colspan="2" style="color:#94a3b8;padding:4px;">—</td></tr>';
+    }
+    var sumDiv = document.getElementById('tax-sp-summary');
+    if (sumDiv) sumDiv.style.display = '';
+}
+
+function taxSpCreateDraft() {
+    if (!_taxSpCurrentJobId || !_taxSpCurrentReqId) {
+        var el = document.getElementById('tax-sp-draft-status');
+        if (el) el.textContent = 'يرجى تشغيل التحليل أولاً.';
+        return;
+    }
+    var tok = taxAppealBoGetToken ? taxAppealBoGetToken() : '';
+    var el = document.getElementById('tax-sp-draft-status');
+    if (el) el.textContent = 'جارٍ إنشاء المسودة…';
+
+    fetch('/api/tax-appeal/expert-requests/' + _taxSpCurrentReqId +
+          '/structured-parse-jobs/' + _taxSpCurrentJobId + '/create-extraction-draft', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok},
+        body: '{}',
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (el) {
+            el.textContent = data.status === 'ok'
+                ? ('مسودة استخراج ' + (data.extraction_id || '') + ' — غير مؤكدة')
+                : ('خطأ: ' + (data.message || 'فشل الإنشاء'));
+            el.style.color = data.status === 'ok' ? '#4ade80' : '#f87171';
+        }
+    })
+    .catch(function(e) {
+        if (el) { el.textContent = 'خطأ: ' + e.message; el.style.color = '#f87171'; }
+    });
 }
 </script>
 

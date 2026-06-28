@@ -2282,19 +2282,21 @@
 </div>
 {% endif %}
 
-<!-- ══ مراجعة قراءات OCR للمرفقات — مسودة الخبير ══════════════════════════════ -->
+<!-- ══ مراجعة قراءات واستخلاصات المرفقات — مسودة الخبير ═══════════════════════ -->
 {% set ocr_s   = ocr_pilot_summary or {} %}
 {% set ocr_sf  = ocr_suggested_fields or [] %}
 {% set ocr_bas = ocr_broad_advisory_summary or {} %}
 {% set ocr_bev = ocr_advisory_by_evidence_type or [] %}
+{% set sp_sum  = structured_parser_summary or {} %}
+{% set sp_adv  = structured_parser_advisory_by_evidence_type or [] %}
 <div class="sec">
-  <div class="sec-hdr red">مراجعة قراءات OCR للمرفقات — للمراجعة من الخبير (غير معتمدة)</div>
+  <div class="sec-hdr red">مراجعة قراءات واستخلاصات المرفقات — للمراجعة من الخبير (غير معتمدة)</div>
   <div class="sec-body">
 
-    <!-- Summary row -->
+    <!-- Combined summary row -->
     <table class="ftbl" style="margin-bottom:8px;">
       <tr>
-        <td class="lbl">OCR مفعَّل (Pilot)</td>
+        <td class="lbl">OCR مفعَّل</td>
         <td>{{ "نعم" if ocr_s.ocr_active_now else "لا" }}</td>
         <td class="lbl">API خارجي / Qdrant / RAG</td>
         <td style="color:#1A5E30;font-weight:700;">لا — لا — لا</td>
@@ -2306,14 +2308,20 @@
         <td>{{ ocr_s.extraction_drafts_created_from_ocr or 0 }}</td>
       </tr>
       <tr>
+        <td class="lbl">مهام المحلل الجدولي</td>
+        <td>{{ sp_sum.total_parse_jobs or 0 }}</td>
+        <td class="lbl">مكتملة / فاشلة</td>
+        <td>{{ sp_sum.completed_parse_jobs or 0 }} / {{ sp_sum.failed_parse_jobs or 0 }}</td>
+      </tr>
+      <tr>
         <td class="lbl" style="color:#1A5E30;font-weight:700;">قيم مؤكدة من خبير</td>
         <td style="color:#1A5E30;font-weight:700;">{{ ocr_s.expert_confirmed_ocr_values or 0 }}</td>
-        <td class="lbl">مستعدة للإنتاج (production_ready)</td>
+        <td class="lbl">مستعدة للإنتاج</td>
         <td style="color:#DC2626;font-weight:700;">{{ ocr_s.production_ready_count or 0 }}</td>
       </tr>
     </table>
 
-    <!-- Per-evidence-type grouping -->
+    <!-- Per-evidence-type OCR grouping -->
     {% if ocr_bev %}
     <p style="font-weight:700;color:#7F1D1D;font-size:8.5pt;margin:6px 0 4px;">قراءات OCR مجمَّعة حسب نوع المستند:</p>
     {% for eg in ocr_bev %}
@@ -2321,7 +2329,7 @@
       <p style="font-weight:700;font-size:8pt;margin:0 0 3px;color:#1B2E4B;">
         {{ eg.evidence_label_ar }}
         {% if eg.ocr_status == "structured_parser_required" %}
-        — <span style="color:#6B7280;font-weight:400;font-size:7.5pt;">ملف منظم — يحتاج مسار استخلاص جدولي منفصل، ولا يعالج كـ OCR.</span>
+        — <span style="color:#6B7280;font-weight:400;font-size:7.5pt;">ملف منظم — يعالج عبر المحلل الجدولي، لا OCR.</span>
         {% else %}
         — <span style="color:#92400E;font-weight:400;font-size:7.5pt;">{{ eg.suggestions_count }} اقتراح OCR</span>
         {% endif %}
@@ -2348,7 +2356,42 @@
     {% endfor %}
     {% endif %}
 
-    <!-- All field-level suggestions flat -->
+    <!-- Structured parser summaries for Excel comparables -->
+    {% if sp_adv %}
+    <p style="font-weight:700;color:#0C4A6E;font-size:8.5pt;margin:8px 0 4px;">
+      استخلاص جدولي من ملفات Excel المقارنات — للمراجعة من الخبير:
+    </p>
+    {% for spa in sp_adv %}
+    <div style="margin-bottom:8px;border-right:3px solid #0C4A6E;padding-right:6px;padding-bottom:4px;background:#F0F9FF;">
+      <p style="font-weight:700;font-size:8pt;margin:0 0 3px;color:#0C4A6E;padding:3px 6px;">
+        {{ spa.evidence_label_ar }}
+        <span style="font-weight:400;font-size:7.5pt;color:#6B7280;margin-right:8px;">
+          {{ spa.row_count or 0 }} صف إجمالي / {{ spa.usable_row_count or 0 }} صالح
+        </span>
+        <span style="font-size:7pt;color:#DC2626;font-weight:700;">{{ spa.advisory_label_ar }}</span>
+      </p>
+      {% if spa.top_suggestions %}
+      <table class="cmp" style="font-size:7.5pt;margin:4px 6px;">
+        <thead><tr><th>البيان</th><th>القيمة</th><th>الحالة</th></tr></thead>
+        <tbody>
+          {% for key, val in spa.top_suggestions %}
+          <tr>
+            <td style="font-weight:600;color:#1B2E4B;">{{ key }}</td>
+            <td style="font-family:monospace;color:#0C4A6E;">{{ val }}</td>
+            <td style="color:#DC2626;font-weight:700;font-size:7pt;">غير معتمد</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      {% if spa.limitations_ar %}
+      <p style="font-size:7pt;color:#6B7280;margin:2px 6px;">{{ spa.limitations_ar }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- All field-level OCR suggestions flat -->
     {% if ocr_sf and not ocr_bev %}
     <p style="font-weight:700;color:#7F1D1D;font-size:8.5pt;margin-bottom:4px;">
       القيم المستخرجة آليًا — مقترحة للمراجعة من الخبير (غير معتمدة):
@@ -2374,18 +2417,18 @@
         {% endfor %}
       </tbody>
     </table>
-    {% elif not ocr_sf and not ocr_bev %}
+    {% elif not ocr_sf and not ocr_bev and not sp_adv %}
     <p style="font-size:8pt;color:#6B7280;font-style:italic;">لا توجد قيم مستخرجة آليًا من مستندات هذا الطلب حتى الآن.</p>
     {% endif %}
 
     <!-- Expert action gate -->
     <div style="margin-top:8px;padding:6px 10px;background:#FEF3C7;border:1px solid #B8860B;border-radius:3px;font-size:8pt;">
       <strong style="color:#92400E;">إجراء مطلوب من الخبير:</strong>
-      راجع كل قيمة — أكِّد أو ارفض كل حقل على حدة قبل ربطه بالتقرير.
+      راجع كل قيمة OCR وكل استخلاص جدولي — أكِّد أو ارفض كل حقل على حدة قبل ربطه بالتقرير.
       <br>
       <span style="font-size:7.5pt;color:#6B7280;">
-        (1) مراجعة الاستخراج — (2) تأكيد كل حقل — (3) ربط الحقول —
-        (4) فحص التعارضات — (5) overlay السياق
+        (1) مراجعة الاستخراج/القراءة — (2) تأكيد أو تعديل كل حقل — (3) ربط الحقول بالمصادر —
+        (4) فحص التعارضات — (5) تطبيق overlay السياق
       </span>
     </div>
 
@@ -2393,12 +2436,13 @@
       <strong>مفتاح:</strong>
       ● بيانات يدوية &nbsp;
       <span style="color:#DC2626;">◆ قراءة OCR مبدئية — غير معتمدة</span> &nbsp;
+      <span style="color:#0C4A6E;">■ استخلاص جدولي مبدئي — غير معتمد</span> &nbsp;
       <span style="color:#1A5E30;">★ تأكيد الخبير</span>
     </div>
 
     <p style="color:#DC2626;font-weight:700;font-size:8pt;margin-top:8px;border-right:3px solid #DC2626;padding-right:6px;">
-      تحذير: نتائج OCR لا تعد مصدرًا معتمدًا إلا بعد مراجعة وتأكيد الخبير وإتمام الخطوات الخمس أعلاه.
-      لا يُستخدم أي قيمة OCR في التقرير الرسمي النهائي دون إتمام جميع الخطوات.
+      تحذير: نتائج OCR والاستخلاص الجدولي لا تعد مصادر معتمدة إلا بعد مراجعة وتأكيد الخبير وإتمام الخطوات الخمس أعلاه.
+      لا يُستخدم أي قيمة في التقرير الرسمي النهائي دون إتمام جميع الخطوات.
       هذه المسودة غير معتمدة.
     </p>
   </div>

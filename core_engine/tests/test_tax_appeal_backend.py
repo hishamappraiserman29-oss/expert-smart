@@ -7280,3 +7280,324 @@ def test_TAB501_advisory_label_ar_exact_string():
         for c in result["candidates"]:
             assert c.get("advisory_label_ar") == expected_label, \
                 f"{et}[{c.get('field_key')}] advisory_label_ar mismatch: {c.get('advisory_label_ar')!r}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB502–TAB527  Structured Parser Pilot
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _make_excel(tmp_path: Path, evidence_type: str) -> Path:
+    """Create a minimal Excel file with valid headers for the given evidence_type."""
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    if evidence_type == "market_comparables_excel":
+        ws.append(["area_m2", "price_per_m2", "district", "transaction_date"])
+        ws.append([120, 4500, "AlNuzha",  "2024-01"])
+        ws.append([150, 4800, "AlMalaz",  "2024-02"])
+    elif evidence_type == "rental_comparables_excel":
+        ws.append(["area_m2", "rent_per_m2", "district"])
+        ws.append([100, 55, "AlOlaya"])
+        ws.append([200, 60, "AlAzizia"])
+    else:  # tax_comparables_excel
+        ws.append(["area_m2", "tax_per_m2", "district"])
+        ws.append([90,  200, "AlSulaymanya"])
+        ws.append([110, 210, "AlQasim"])
+    out = tmp_path / f"{evidence_type}.xlsx"
+    wb.save(str(out))
+    return out
+
+
+# -- TAB502 -- structured parser module importable
+def test_TAB502_structured_parser_importable():
+    import tax_appeal_structured_parser as sp
+    assert hasattr(sp, "parse_structured_comparables")
+    assert hasattr(sp, "get_structured_parser_info")
+    assert hasattr(sp, "STRUCTURED_EVIDENCE_TYPES")
+
+
+# -- TAB503 -- STRUCTURED_EVIDENCE_TYPES frozenset has exactly 3 correct types
+def test_TAB503_structured_evidence_types_frozenset():
+    from tax_appeal_structured_parser import STRUCTURED_EVIDENCE_TYPES
+    assert isinstance(STRUCTURED_EVIDENCE_TYPES, frozenset)
+    expected = {"market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"}
+    assert STRUCTURED_EVIDENCE_TYPES == expected
+
+
+# -- TAB504 -- get_structured_parser_info returns expected metadata keys
+def test_TAB504_get_structured_parser_info_keys():
+    from tax_appeal_structured_parser import get_structured_parser_info
+    info = get_structured_parser_info()
+    for key in ("parser_name", "advisory_label_ar",
+                "production_ready", "certified_usage_allowed", "external_api_used",
+                "qdrant_used", "rag_used"):
+        assert key in info, f"Missing key in parser info: {key!r}"
+    # accept either key name for the type list
+    assert ("supported_evidence_types" in info or "supported_types" in info), \
+        "Parser info missing supported types list"
+
+
+# -- TAB505 -- parse_structured_comparables rejects unknown evidence_type
+def test_TAB505_parse_rejects_unknown_evidence_type(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    dummy = tmp_path / "dummy.xlsx"
+    dummy.write_bytes(b"PK")
+    result = parse_structured_comparables(str(dummy), "unknown_type", "ev1", "req1")
+    # Unknown type must still be advisory-only — never production ready
+    assert result.get("production_ready") is False
+    assert result.get("certified_usage_allowed") is False
+    assert result.get("needs_human_review") is True
+
+
+# -- TAB506 -- parse_structured_comparables rejects non-Excel files
+def test_TAB506_parse_rejects_non_excel_extension(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    dummy = tmp_path / "file.pdf"
+    dummy.write_bytes(b"%PDF-1.4")
+    result = parse_structured_comparables(str(dummy), "market_comparables_excel", "ev1", "req1")
+    assert result.get("production_ready") is False
+    assert result.get("needs_human_review") is True
+
+
+# -- TAB507 -- market comparables parse: rows parsed, required columns detected
+def test_TAB507_market_comparables_parse_rows(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    path = _make_excel(tmp_path, "market_comparables_excel")
+    result = parse_structured_comparables(str(path), "market_comparables_excel", "ev1", "req1")
+    assert result.get("row_count", 0) >= 2
+    assert result.get("usable_row_count", 0) >= 2
+    assert "price_per_m2" in result.get("normalized_columns", [])
+    assert "area_m2" in result.get("normalized_columns", [])
+
+
+# -- TAB508 -- rental comparables parse: rows parsed, required columns detected
+def test_TAB508_rental_comparables_parse_rows(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    path = _make_excel(tmp_path, "rental_comparables_excel")
+    result = parse_structured_comparables(str(path), "rental_comparables_excel", "ev1", "req1")
+    assert result.get("usable_row_count", 0) >= 2
+    assert "rent_per_m2" in result.get("normalized_columns", [])
+
+
+# -- TAB509 -- tax comparables parse: rows parsed, required columns detected
+def test_TAB509_tax_comparables_parse_rows(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    path = _make_excel(tmp_path, "tax_comparables_excel")
+    result = parse_structured_comparables(str(path), "tax_comparables_excel", "ev1", "req1")
+    assert result.get("usable_row_count", 0) >= 2
+    assert "tax_per_m2" in result.get("normalized_columns", [])
+
+
+# -- TAB510 -- production_ready always False on parsed result
+def test_TAB510_production_ready_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("production_ready") is False, f"{et}: production_ready should be False"
+
+
+# -- TAB511 -- accepted_by_default always False
+def test_TAB511_accepted_by_default_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("accepted_by_default") is False, f"{et}: accepted_by_default should be False"
+
+
+# -- TAB512 -- needs_human_review always True
+def test_TAB512_needs_human_review_always_true(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("needs_human_review") is True, f"{et}: needs_human_review should be True"
+
+
+# -- TAB513 -- certified_usage_allowed always False
+def test_TAB513_certified_usage_allowed_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("certified_usage_allowed") is False, \
+            f"{et}: certified_usage_allowed should be False"
+
+
+# -- TAB514 -- external_api_used always False
+def test_TAB514_external_api_used_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("external_api_used") is False, f"{et}: external_api_used should be False"
+
+
+# -- TAB515 -- qdrant_used always False
+def test_TAB515_qdrant_used_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("qdrant_used") is False, f"{et}: qdrant_used should be False"
+
+
+# -- TAB516 -- rag_used always False
+def test_TAB516_rag_used_always_false(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        assert result.get("rag_used") is False, f"{et}: rag_used should be False"
+
+
+# -- TAB517 -- advisory_label_ar is the structured parser label (not OCR label)
+def test_TAB517_advisory_label_ar_structured_parser(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables, ADVISORY_LABEL_AR
+    path = _make_excel(tmp_path, "market_comparables_excel")
+    result = parse_structured_comparables(str(path), "market_comparables_excel", "ev1", "req1")
+    assert result.get("advisory_label_ar") == ADVISORY_LABEL_AR
+    assert "معتمد" in ADVISORY_LABEL_AR
+
+
+# -- TAB518 -- advisory_source_type is "structured_parser" for valid parse
+def test_TAB518_advisory_source_type_structured_parser(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        path = _make_excel(tmp_path, et)
+        result = parse_structured_comparables(str(path), et, "ev1", "req1")
+        if result.get("usable_row_count", 0) > 0:
+            assert result.get("advisory_source_type") == "structured_parser", \
+                f"{et}: advisory_source_type should be 'structured_parser'"
+
+
+# -- TAB519 -- candidate_summary has required stats keys for market parse
+def test_TAB519_market_candidate_summary_keys(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    path = _make_excel(tmp_path, "market_comparables_excel")
+    result = parse_structured_comparables(str(path), "market_comparables_excel", "ev1", "req1")
+    summary = result.get("candidate_summary", {})
+    # Accept either flat keys or nested stats dict
+    has_count = "count" in summary or "comparable_count" in summary
+    has_avg = "average_price_per_m2" in summary
+    has_min = "min_price_per_m2" in summary
+    has_max = "max_price_per_m2" in summary
+    assert has_count, f"candidate_summary missing count key. Keys: {list(summary)}"
+    assert has_avg,   f"candidate_summary missing average_price_per_m2. Keys: {list(summary)}"
+    assert has_min,   f"candidate_summary missing min_price_per_m2. Keys: {list(summary)}"
+    assert has_max,   f"candidate_summary missing max_price_per_m2. Keys: {list(summary)}"
+
+
+# -- TAB520 -- row_count reported in parse result for valid Excel
+def test_TAB520_row_count_reported(tmp_path):
+    from tax_appeal_structured_parser import parse_structured_comparables
+    path = _make_excel(tmp_path, "market_comparables_excel")
+    result = parse_structured_comparables(str(path), "market_comparables_excel", "ev1", "req1")
+    assert isinstance(result.get("row_count"), int)
+    assert result["row_count"] >= 2
+
+
+# -- TAB521 -- workbook SP Excel parse-jobs sheet builder importable
+def test_TAB521_workbook_sp_excel_jobs_sheet_importable():
+    import tax_appeal_workbook_builder as wb
+    assert hasattr(wb, "_sheet_sp_excel_parse_jobs"), \
+        "Workbook builder missing _sheet_sp_excel_parse_jobs"
+
+
+# -- TAB522 -- workbook SP comparables summary sheet builder importable
+def test_TAB522_workbook_sp_comparables_summary_sheet_importable():
+    import tax_appeal_workbook_builder as wb
+    assert hasattr(wb, "_sheet_sp_comparables_summary"), \
+        "Workbook builder missing _sheet_sp_comparables_summary"
+
+
+# -- TAB523 -- workbook includes both SP sheet names when created
+def test_TAB523_workbook_sp_sheets_created():
+    import openpyxl
+    import tax_appeal_workbook_builder as wb
+    request_record = {
+        "payload_json": {
+            "request_id": "QA-SP-TEST",
+            "_qa_simulation": True,
+            "owner_name": "اختبار",
+            "property_type": "land",
+            "parcel_number": "999",
+            "district": "test",
+            "area": 100,
+            "market_value_sar": 500000,
+            "tax_type": "transfer",
+        }
+    }
+    path = wb._create_tax_appeal_workbook(
+        request_id="QA-SP-TEST",
+        request_record=request_record,
+        mapping_records=[],
+        evidence_records=[],
+    )
+    assert path, "Workbook path should not be empty"
+    wbk = openpyxl.load_workbook(str(path), read_only=True)
+    sheets = wbk.sheetnames
+    wbk.close()
+    assert "استخلاص Excel للمقارنات" in sheets, "Missing SP jobs sheet"
+    assert "ملخص المقارنات المستخلصة" in sheets, "Missing SP summary sheet"
+
+
+# -- TAB524 -- structured parser context key production_ready_count is always 0
+def test_TAB524_context_sp_production_ready_count_zero():
+    from tax_appeal_context import _build_tax_appeal_context
+    ctx = _build_tax_appeal_context({
+        "request_id": "QA-SP-CTX",
+        "owner_name": "اختبار",
+        "property_type": "land",
+        "parcel_number": "000",
+        "district": "test",
+        "area": 100,
+        "market_value_sar": 500000,
+        "tax_type": "transfer",
+    })
+    sp_sum = ctx.get("structured_parser_summary", {})
+    assert sp_sum.get("production_ready_count", 0) == 0
+
+
+# -- TAB525 -- structured parser context key certified_usage_allowed_count is always 0
+def test_TAB525_context_sp_certified_usage_allowed_count_zero():
+    from tax_appeal_context import _build_tax_appeal_context
+    ctx = _build_tax_appeal_context({
+        "request_id": "QA-SP-CTX2",
+        "owner_name": "اختبار",
+        "property_type": "land",
+        "parcel_number": "000",
+        "district": "test",
+        "area": 100,
+        "market_value_sar": 500000,
+        "tax_type": "transfer",
+    })
+    sp_sum = ctx.get("structured_parser_summary", {})
+    assert sp_sum.get("certified_usage_allowed_count", 0) == 0
+
+
+# -- TAB526 -- frontend has tax-structured-parser-section testid
+def test_TAB526_frontend_has_sp_section_testid():
+    html = (_ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+    assert 'data-testid="tax-structured-parser-section"' in html, \
+        "Frontend missing data-testid='tax-structured-parser-section'"
+
+
+# -- TAB527 -- frontend has all required structured parser testids
+def test_TAB527_frontend_has_all_sp_testids():
+    html = (_ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+    required_testids = [
+        "tax-structured-parser-section",
+        "tax-advisory-section",
+        "tax-structured-parser-warning",
+        "tax-structured-parser-evidence-select",
+        "tax-structured-parser-run-button",
+        "tax-structured-parser-status",
+        "tax-structured-parser-columns",
+        "tax-structured-parser-summary",
+        "tax-structured-parser-create-extraction-draft",
+    ]
+    missing = [tid for tid in required_testids
+               if f'data-testid="{tid}"' not in html]
+    assert not missing, f"Frontend missing testids: {missing}"

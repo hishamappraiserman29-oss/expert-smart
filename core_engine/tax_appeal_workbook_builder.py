@@ -4707,6 +4707,301 @@ def _sheet_ocr_evidence_policy(ws, ctx: dict) -> None:
         ws.column_dimensions[get_column_letter(ci)].width = 18
 
 
+def _sheet_sp_excel_parse_jobs(ws, ctx: dict) -> None:
+    """Populate استخلاص Excel للمقارنات sheet from structured parser job records."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill   = _hdr_fill("0C4A6E")
+    hdr_font   = _hdr_font()
+    ctr        = _center_align()
+    green_fill = PatternFill("solid", fgColor="D1FAE5")
+    red_fill   = PatternFill("solid", fgColor="FEE2E2")
+    blue_fill  = PatternFill("solid", fgColor="E0F2FE")
+
+    ws.cell(row=1, column=1,
+            value="استخلاص Excel للمقارنات — مبدئي غير معتمد").font = \
+        Font(name="Cairo", bold=True, size=12, color="0C4A6E")
+    ws.cell(row=2, column=1, value=(
+        "نتائج المحلل الجدولي لملفات Excel/CSV. "
+        "production_ready = False دائمًا. certified_usage_allowed = False دائمًا. "
+        "يلزم مراجعة الخبير وربط المصادر وفحص التعارضات قبل أي استخدام رسمي."
+    )).font = Font(name="Cairo", size=8, color="0C4A6E", italic=True)
+
+    headers = [
+        "parse_job_id", "evidence_id", "evidence_type", "parser_name",
+        "parser_available", "input_file_type", "sheet_names",
+        "detected_columns", "normalized_columns",
+        "row_count", "usable_row_count", "rejected_row_count",
+        "warnings", "errors",
+        "production_ready", "certified_usage_allowed", "needs_human_review",
+        "advisory_label_ar",
+    ]
+    hr = 4
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    # Load parse jobs
+    sp_adv = ctx.get("structured_parser_advisory_by_evidence_type") or []
+    sp_sum = ctx.get("structured_parser_summary") or {}
+
+    # Try loading raw parse jobs via the routes module
+    parse_jobs: list[dict] = []
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from tax_appeal_ocr_routes import _list_sp_jobs  # type: ignore[import-not-found]
+        request_id = ctx.get("request_id") or ""
+        if request_id:
+            parse_jobs = _list_sp_jobs(request_id)
+    except Exception:
+        pass
+
+    if not parse_jobs and sp_adv:
+        # Build synthetic rows from advisory context if raw jobs unavailable
+        for spa in sp_adv:
+            parse_jobs.append({
+                "parse_job_id":        "—",
+                "evidence_id":         "—",
+                "evidence_type":       spa.get("evidence_type", ""),
+                "parser_name":         "structured_parser_advisory",
+                "parser_available":    True,
+                "input_file_type":     ".xlsx",
+                "sheet_names":         [],
+                "detected_columns":    [],
+                "normalized_columns":  [],
+                "row_count":           spa.get("row_count", 0),
+                "usable_row_count":    spa.get("usable_row_count", 0),
+                "rejected_row_count":  0,
+                "warnings":            [],
+                "errors":              [],
+                "production_ready":    False,
+                "certified_usage_allowed": False,
+                "needs_human_review":  True,
+                "advisory_label_ar":   spa.get("advisory_label_ar", "استخلاص جدولي مبدئي — غير معتمد"),
+            })
+
+    if not parse_jobs:
+        ws.cell(row=hr + 1, column=1,
+                value="لا توجد مهام محلل جدولي لهذا الطلب.").font = \
+            Font(name="Cairo", size=9, color="6B7280", italic=True)
+    else:
+        for i, job in enumerate(parse_jobs, 1):
+            row = hr + i
+            def _safe_list(v):
+                if isinstance(v, list):
+                    return ", ".join(str(x) for x in v[:8]) if v else "—"
+                return str(v) if v else "—"
+
+            vals = [
+                job.get("parse_job_id") or "—",
+                job.get("evidence_id") or "—",
+                job.get("evidence_type") or "—",
+                job.get("parser_name") or "—",
+                "نعم" if job.get("parser_available") else "لا",
+                job.get("input_file_type") or "—",
+                _safe_list(job.get("sheet_names")),
+                _safe_list(job.get("detected_columns")),
+                _safe_list(job.get("normalized_columns")),
+                job.get("row_count") or 0,
+                job.get("usable_row_count") or 0,
+                job.get("rejected_row_count") or 0,
+                _safe_list(job.get("warnings")),
+                _safe_list(job.get("errors")),
+                "لا — دائمًا",
+                "لا — دائمًا",
+                "نعم — دائمًا",
+                job.get("advisory_label_ar") or "استخلاص جدولي مبدئي — غير معتمد",
+            ]
+            for ci, v in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=v)
+                c.font = _data_font()
+                if ci in (15, 16):  # production_ready / certified = لا — good
+                    c.fill = green_fill
+                elif ci == 17:      # needs_human_review = نعم
+                    c.fill = blue_fill
+
+    ws.column_dimensions[get_column_letter(1)].width  = 18
+    ws.column_dimensions[get_column_letter(3)].width  = 30
+    ws.column_dimensions[get_column_letter(8)].width  = 35
+    ws.column_dimensions[get_column_letter(9)].width  = 35
+    ws.column_dimensions[get_column_letter(13)].width = 45
+    ws.column_dimensions[get_column_letter(18)].width = 40
+    for ci in [2, 4, 5, 6, 7, 10, 11, 12, 14, 15, 16, 17]:
+        ws.column_dimensions[get_column_letter(ci)].width = 18
+
+
+def _sheet_sp_comparables_summary(ws, ctx: dict) -> None:
+    """Populate ملخص المقارنات المستخلصة sheet from structured parser advisory context."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill   = _hdr_fill("164E63")
+    hdr_font   = _hdr_font()
+    ctr        = _center_align()
+    green_fill = PatternFill("solid", fgColor="D1FAE5")
+    blue_fill  = PatternFill("solid", fgColor="E0F2FE")
+    amber_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1,
+            value="ملخص المقارنات المستخلصة — مبدئي غير معتمد").font = \
+        Font(name="Cairo", bold=True, size=12, color="164E63")
+    ws.cell(row=2, column=1, value=(
+        "ملخص إحصائي مبدئي للمقارنات المستخلصة من ملفات Excel. "
+        "هذه القيم استرشادية فقط وتستلزم مراجعة خبير وتأكيده. "
+        "production_ready = False. certified_usage_allowed = False."
+    )).font = Font(name="Cairo", size=8, color="164E63", italic=True)
+
+    headers = [
+        "evidence_type", "evidence_label_ar",
+        "comparable_count", "usable_row_count",
+        "average_value_per_m2", "min_value_per_m2", "max_value_per_m2", "median_value_per_m2",
+        "adjusted_average_if_available",
+        "reference_date_range", "district_summary",
+        "source_quality_note", "advisory_label_ar",
+        "production_ready", "certified_usage_allowed", "needs_human_review",
+    ]
+    hr = 4
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    # Load structured parser advisory data
+    sp_adv = ctx.get("structured_parser_advisory_by_evidence_type") or []
+
+    # Try loading raw parse jobs for richer summary
+    parse_jobs: list[dict] = []
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from tax_appeal_ocr_routes import _list_sp_jobs  # type: ignore[import-not-found]
+        request_id = ctx.get("request_id") or ""
+        if request_id:
+            parse_jobs = _list_sp_jobs(request_id)
+    except Exception:
+        pass
+
+    # Build summary rows — prefer raw jobs, fall back to advisory context
+    rows_to_write: list[dict] = []
+
+    if parse_jobs:
+        # Group by evidence type, use last job
+        by_et: dict = {}
+        for pj in parse_jobs:
+            et = pj.get("evidence_type", "")
+            by_et[et] = pj
+        for et, pj in by_et.items():
+            cs = pj.get("candidate_summary") or {}
+            label_map = {
+                "market_comparables_excel":  "مقارنات بيوع",
+                "rental_comparables_excel":  "مقارنات إيجار",
+                "tax_comparables_excel":     "مقارنات ضريبية",
+            }
+            # Determine the main value-per-m2 key
+            avg_key = {
+                "market_comparables_excel": "average_price_per_m2",
+                "rental_comparables_excel": "average_rent_per_m2",
+                "tax_comparables_excel":    "average_tax_per_m2",
+            }.get(et, "average_price_per_m2")
+            min_key = avg_key.replace("average_", "min_")
+            max_key = avg_key.replace("average_", "max_")
+            med_key = avg_key.replace("average_", "median_")
+            adj_key = avg_key.replace("average_", "average_adjusted_")
+
+            date_range = cs.get("reference_date_range") or cs.get("assessment_year_range") or {}
+            dist_summary = cs.get("district_summary") or {}
+
+            rows_to_write.append({
+                "evidence_type":           et,
+                "evidence_label_ar":       label_map.get(et, et),
+                "comparable_count":        cs.get("comparable_count", 0),
+                "usable_row_count":        cs.get("usable_row_count", pj.get("usable_row_count", 0)),
+                "average_value_per_m2":    cs.get(avg_key),
+                "min_value_per_m2":        cs.get(min_key),
+                "max_value_per_m2":        cs.get(max_key),
+                "median_value_per_m2":     cs.get(med_key),
+                "adjusted_average":        cs.get(adj_key),
+                "reference_date_range":    f"{date_range.get('earliest','—')} — {date_range.get('latest','—')}",
+                "district_summary":        ", ".join(f"{k}:{v}" for k, v in list(dist_summary.items())[:5]),
+                "source_quality_note":     cs.get("source_quality_note", "—"),
+                "advisory_label_ar":       "استخلاص جدولي مبدئي — غير معتمد",
+            })
+    elif sp_adv:
+        for spa in sp_adv:
+            rows_to_write.append({
+                "evidence_type":           spa.get("evidence_type", ""),
+                "evidence_label_ar":       spa.get("evidence_label_ar", ""),
+                "comparable_count":        0,
+                "usable_row_count":        spa.get("usable_row_count", 0),
+                "average_value_per_m2":    None,
+                "min_value_per_m2":        None,
+                "max_value_per_m2":        None,
+                "median_value_per_m2":     None,
+                "adjusted_average":        None,
+                "reference_date_range":    "—",
+                "district_summary":        "—",
+                "source_quality_note":     "—",
+                "advisory_label_ar":       spa.get("advisory_label_ar", "استخلاص جدولي مبدئي — غير معتمد"),
+            })
+
+    if not rows_to_write:
+        ws.cell(row=hr + 1, column=1,
+                value="لا توجد بيانات مقارنات مستخلصة لهذا الطلب.").font = \
+            Font(name="Cairo", size=9, color="6B7280", italic=True)
+    else:
+        for i, r in enumerate(rows_to_write, 1):
+            row = hr + i
+
+            def _fmt(v):
+                if v is None:
+                    return "—"
+                if isinstance(v, float):
+                    return round(v, 2)
+                return v
+
+            vals = [
+                r["evidence_type"],
+                r["evidence_label_ar"],
+                r["comparable_count"] or 0,
+                r["usable_row_count"] or 0,
+                _fmt(r["average_value_per_m2"]),
+                _fmt(r["min_value_per_m2"]),
+                _fmt(r["max_value_per_m2"]),
+                _fmt(r["median_value_per_m2"]),
+                _fmt(r["adjusted_average"]),
+                r["reference_date_range"],
+                r["district_summary"],
+                r["source_quality_note"],
+                r["advisory_label_ar"],
+                "لا — دائمًا",
+                "لا — دائمًا",
+                "نعم — دائمًا",
+            ]
+            for ci, v in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=v)
+                c.font = _data_font()
+                if ci in (14, 15):
+                    c.fill = green_fill
+                elif ci == 16:
+                    c.fill = blue_fill
+                elif ci == 13:
+                    c.fill = amber_fill
+
+    ws.column_dimensions[get_column_letter(1)].width  = 30
+    ws.column_dimensions[get_column_letter(2)].width  = 22
+    ws.column_dimensions[get_column_letter(10)].width = 30
+    ws.column_dimensions[get_column_letter(11)].width = 35
+    ws.column_dimensions[get_column_letter(12)].width = 45
+    ws.column_dimensions[get_column_letter(13)].width = 40
+    for ci in [3, 4, 5, 6, 7, 8, 9, 14, 15, 16]:
+        ws.column_dimensions[get_column_letter(ci)].width = 18
+
+
 def _sheet_ocr_qdrant_readiness(ws, ctx: dict) -> None:
     """Populate the جاهزية OCR-Qdrant المستقبلية sheet.
 
@@ -5162,16 +5457,22 @@ def _create_tax_appeal_workbook(
     ws_ocr     = wb.create_sheet("OCR Pilot")
     ws_ocr_pr  = wb.create_sheet("قراءات OCR المبدئية")
     ws_ocr_pol = wb.create_sheet("سياسة OCR للمرفقات")
+    ws_sp_jobs = wb.create_sheet("استخلاص Excel للمقارنات")
+    ws_sp_sum  = wb.create_sheet("ملخص المقارنات المستخلصة")
     _sheet_extraction_data(ws_ex, ctx)
     _sheet_ocr_qdrant_readiness(ws_exfr, ctx)
     _sheet_ocr_pilot(ws_ocr, ctx)
     _sheet_ocr_preliminary_readings(ws_ocr_pr, ctx)
     _sheet_ocr_evidence_policy(ws_ocr_pol, ctx)
+    _sheet_sp_excel_parse_jobs(ws_sp_jobs, ctx)
+    _sheet_sp_comparables_summary(ws_sp_sum, ctx)
     ws_ex.sheet_properties.tabColor      = "7C3AED"  # extraction — purple
     ws_exfr.sheet_properties.tabColor    = "6B7280"  # future readiness — muted gray
     ws_ocr.sheet_properties.tabColor     = "1D4ED8"  # OCR Pilot — blue
     ws_ocr_pr.sheet_properties.tabColor  = "92400E"  # preliminary readings — amber
     ws_ocr_pol.sheet_properties.tabColor = "1E3A5F"  # policy matrix — navy
+    ws_sp_jobs.sheet_properties.tabColor = "0C4A6E"  # Excel parse jobs — dark teal
+    ws_sp_sum.sheet_properties.tabColor  = "164E63"  # comparables summary — dark cyan
 
     # Persist
     out_dir = _WB_DIR / request_id

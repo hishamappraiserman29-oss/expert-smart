@@ -6405,6 +6405,94 @@ def _build_tax_appeal_context(
         }
         _advisory_by_ev = []
 
+    # ── Structured Parser summary ─────────────────────────────────────────────
+    try:
+        from tax_appeal_ocr_routes import _list_sp_jobs as _lspj  # type: ignore[import-not-found]
+        from tax_appeal_structured_parser import (  # type: ignore[import-not-found]
+            STRUCTURED_EVIDENCE_TYPES as _SP_TYPES,
+            ADVISORY_LABEL_AR as _SP_LABEL,
+        )
+        from tax_appeal_ocr_routes import _EVIDENCE_LABELS_AR as _ev_labels_sp  # type: ignore[import-not-found]
+        _sp_jobs = _lspj(request_id) if (request_id and not (request_id or "").startswith("QA-")) else []
+
+        _sp_completed  = [j for j in _sp_jobs if not j.get("errors")]
+        _sp_failed     = [j for j in _sp_jobs if j.get("errors")]
+
+        _sp_suggestions_count = sum(
+            len(j.get("candidate_summary", {})) for j in _sp_completed
+        )
+        _sp_prelim_count = sum(
+            1 for j in _sp_completed if j.get("preliminary_visible", True)
+        )
+
+        _structured_parser_summary: dict = {
+            "parser_active_now":                  True,
+            "total_parse_jobs":                   len(_sp_jobs),
+            "completed_parse_jobs":               len(_sp_completed),
+            "failed_parse_jobs":                  len(_sp_failed),
+            "unsupported_parse_jobs":             sum(1 for j in _sp_jobs if j.get("evidence_type") not in _SP_TYPES),
+            "evidence_types_parsed":              list({j.get("evidence_type", "") for j in _sp_completed}),
+            "parser_suggestions_count":           _sp_suggestions_count,
+            "preliminary_visible_suggestions_count": _sp_prelim_count,
+            "expert_review_required_count":       len(_sp_completed),
+            "production_ready_count":             0,
+            "certified_usage_allowed_count":      0,
+            "external_api_used":                  False,
+            "qdrant_active_now":                  False,
+            "rag_active_now":                     False,
+            "warnings": [],
+        }
+
+        # Per-evidence-type advisory grouping for structured parser
+        _sp_by_et: dict = {}
+        for _spj in _sp_completed:
+            _et = _spj.get("evidence_type", "")
+            _sp_by_et.setdefault(_et, [])
+            _sp_by_et[_et].append(_spj)
+
+        _structured_parser_advisory: list[dict] = []
+        for _et, _sp_list in _sp_by_et.items():
+            _latest = _sp_list[-1]
+            _summary = _latest.get("candidate_summary", {})
+            _structured_parser_advisory.append({
+                "evidence_type":           _et,
+                "evidence_label_ar":       _ev_labels_sp.get(_et, _et),
+                "parse_status":            "completed" if not _latest.get("errors") else "failed",
+                "row_count":               _latest.get("row_count", 0),
+                "usable_row_count":        _latest.get("usable_row_count", 0),
+                "suggestions_count":       len(_summary),
+                "top_suggestions":         list(_summary.items())[:5],
+                "preliminary_visible":     True,
+                "expert_review_required":  True,
+                "production_ready":        False,
+                "certified_usage_allowed": False,
+                "advisory_label_ar":       _SP_LABEL,
+                "limitations_ar": (
+                    "استخلاص جدولي مبدئي — يجب مراجعة الخبير وتأكيد الحقول "
+                    "وربط المصادر وفحص التعارضات قبل أي استخدام رسمي."
+                ),
+            })
+
+    except Exception:
+        _structured_parser_summary = {
+            "parser_active_now": True,
+            "total_parse_jobs": 0,
+            "completed_parse_jobs": 0,
+            "failed_parse_jobs": 0,
+            "unsupported_parse_jobs": 0,
+            "evidence_types_parsed": [],
+            "parser_suggestions_count": 0,
+            "preliminary_visible_suggestions_count": 0,
+            "expert_review_required_count": 0,
+            "production_ready_count": 0,
+            "certified_usage_allowed_count": 0,
+            "external_api_used": False,
+            "qdrant_active_now": False,
+            "rag_active_now": False,
+            "warnings": [],
+        }
+        _structured_parser_advisory = []
+
     ctx: dict = {
         # Identifiers
         "request_id":       request_id,
@@ -6580,6 +6668,12 @@ def _build_tax_appeal_context(
         # certified_usage_allowed_count = 0 always for raw OCR suggestions.
         "ocr_broad_advisory_summary":     _broad_advisory_summary,
         "ocr_advisory_by_evidence_type":  _advisory_by_ev,
+
+        # ── Structured Parser (Excel comparables) ──────────────────────────
+        # production_ready_count = 0 always for raw parser suggestions.
+        # certified_usage_allowed_count = 0 always for raw parser suggestions.
+        "structured_parser_summary":               _structured_parser_summary,
+        "structured_parser_advisory_by_evidence_type": _structured_parser_advisory,
     }
 
     return ctx

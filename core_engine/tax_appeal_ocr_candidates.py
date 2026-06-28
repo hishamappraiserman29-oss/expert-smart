@@ -54,7 +54,16 @@ def _candidate(
     method: str,
     value_type: str = "text",
     warning: str = "",
+    advisory_source_type: str = "ocr",
 ) -> dict:
+    # Map extraction method to advisory label
+    _label_map: dict[str, str] = {
+        "txt_passthrough":        "قراءة نصية مبدئية — غير معتمدة",
+        "text_passthrough":       "قراءة نصية مبدئية — غير معتمدة",
+        "structured_placeholder": "استخلاص جدولي مبدئي — غير معتمد",
+        "structured_parser":      "استخلاص جدولي مبدئي — غير معتمد",
+    }
+    adv_label = _label_map.get(method, _ADVISORY_LABEL)
     return {
         "field_key":               field_key,
         "label_ar":                label_ar,
@@ -69,7 +78,8 @@ def _candidate(
         "preliminary_visible":     True,
         "expert_review_visible":   True,
         "certified_usage_allowed": False,
-        "advisory_label_ar":       _ADVISORY_LABEL,
+        "advisory_label_ar":       adv_label,
+        "advisory_source_type":    advisory_source_type,
         "warning":                 warning,
     }
 
@@ -804,6 +814,7 @@ def build_ocr_field_candidates(
             "structured_parser_required", "مسار استخلاص جدولي مطلوب",
             _STRUCTURED_WARNING, 0.0, "", "structured_placeholder",
             warning=_STRUCTURED_WARNING,
+            advisory_source_type="structured_parser",
         )
         return {
             "evidence_type":      evidence_type,

@@ -1804,6 +1804,25 @@
 </div>
 {% endif %}
 
+<!-- ══ حالة مصادر التقرير (Part G — Preliminary) ══════════════════════════════ -->
+{% set ev_sum = evidence_summary or {} %}
+{% if ev_sum.evidence_total_count %}
+<div class="section">
+  <div class="section-title">حالة مصادر التقرير</div>
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي المرفقات</td><td>{{ ev_sum.evidence_total_count }}</td></tr>
+    <tr><td class="lbl">معتمدة للتقرير</td><td>{{ ev_sum.approved_for_report_count }}</td></tr>
+    <tr><td class="lbl">معتمدة كمصدر إنتاجي</td><td>{{ ev_sum.approved_as_source_count }}</td></tr>
+    <tr><td class="lbl">قيد المراجعة</td><td>{{ ev_sum.needs_review_count }}</td></tr>
+  </table>
+  {% if ev_sum.missing_mandatory_evidence %}
+  <p style="color:#B91C1C;">⚠ مستندات مطلوبة ناقصة: {{ ev_sum.missing_mandatory_evidence | join("، ") }}</p>
+  {% endif %}
+  <p class="disclaimer-note">{{ ev_sum.note }}</p>
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">سيتم مراجعة المرفقات بواسطة الخبير — لا يستخدم كمصدر معتمد قبل الاعتماد الرسمي.</p>
+</div>
+{% endif %}
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

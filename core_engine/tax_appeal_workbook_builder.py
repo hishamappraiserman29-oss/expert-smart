@@ -4187,13 +4187,108 @@ def _sheet_visible_text_quality(ws, ctx: dict) -> None:
 
 # ── Main workbook builder ─────────────────────────────────────────────────────
 
-def _create_tax_appeal_workbook(request_id: str, request_record: dict) -> Path:
-    """Build and persist the 14-sheet tax appeal expert workbook.
+def _sheet_evidence(ws, evidence_records: list) -> None:
+    """Populate the المستندات والمرفقات sheet with uploaded evidence data."""
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill = _hdr_fill("374151")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    ok_fill  = PatternFill("solid", fgColor="D1FAE5")
+    err_fill = PatternFill("solid", fgColor="FEE2E2")
+    lbl_font = Font(name="Cairo", size=9, color="374151")
+
+    headers = [
+        "evidence_id", "نوع المستند", "اسم الملف", "الحالة",
+        "جاهز للتقرير", "جاهز كمصدر", "إنتاجي", "source_registry_id",
+        "تاريخ الرفع", "ملاحظات الخبير", "الإجراء المطلوب",
+    ]
+    hr = 1
+    ws.cell(row=hr, column=1, value="المستندات والمرفقات — Evidence & Attachments").font = \
+        Font(name="Cairo", bold=True, size=11, color="1F4E78")
+    hr = 2
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    if not evidence_records:
+        row = hr + 1
+        ws.cell(row=row, column=1, value="لم يتم رفع أي مستندات مرفقة حتى الآن.").font = lbl_font
+        return
+
+    status_label = {
+        "uploaded":            "مرفوع",
+        "needs_review":        "بانتظار المراجعة",
+        "approved_for_report": "معتمد للتقرير",
+        "approved_as_source":  "معتمد كمصدر",
+        "rejected":            "مرفوض",
+        "superseded":          "مُستبدل",
+    }
+
+    for i, ev in enumerate(evidence_records, 1):
+        row = hr + i
+        status              = ev.get("status", "")
+        production_ready    = ev.get("production_ready", False)
+        approved_for_report = ev.get("approved_for_report", False)
+        approved_as_source  = ev.get("approved_as_source", False)
+
+        action = ""
+        if status == "needs_review":
+            action = "يلزم مراجعة الخبير"
+        elif status == "rejected":
+            action = "مستبعد — لا يُستخدم"
+        elif status == "approved_as_source" and not ev.get("source_registry_id"):
+            action = "يمكن إدراجه في سجل المصادر"
+        elif status == "approved_for_report":
+            action = "معتمد للتقرير — ليس مصدرًا إنتاجيًا"
+        elif status == "approved_as_source":
+            action = "مصدر إنتاجي — لا يحتاج إجراء"
+
+        vals = [
+            ev.get("evidence_id", ""),
+            ev.get("evidence_type_label_ar", ev.get("evidence_type", "")),
+            ev.get("original_filename", ""),
+            status_label.get(status, status),
+            "نعم" if approved_for_report else "لا",
+            "نعم" if approved_as_source else "لا",
+            "نعم" if production_ready else "لا",
+            ev.get("source_registry_id") or "—",
+            (ev.get("uploaded_at") or "")[:10],
+            ev.get("expert_review_notes") or "",
+            action,
+        ]
+        for ci, v in enumerate(vals, 1):
+            c = ws.cell(row=row, column=ci, value=v)
+            c.font = _data_font()
+            if ci == 5 and approved_for_report:
+                c.fill = ok_fill
+            elif ci == 6 and approved_as_source:
+                c.fill = ok_fill
+            elif ci in (5, 6) and status == "rejected":
+                c.fill = err_fill
+
+    ws.column_dimensions[get_column_letter(3)].width = 30
+    ws.column_dimensions[get_column_letter(2)].width = 24
+    ws.column_dimensions[get_column_letter(11)].width = 32
+
+
+def _create_tax_appeal_workbook(
+    request_id: str,
+    request_record: dict,
+    evidence_records: list = None,
+) -> Path:
+    """Build and persist the tax appeal expert workbook.
 
     Returns the Path to the saved .xlsx file.
     Internal path never exposed to ordinary users.
+    evidence_records: optional list of evidence dicts; pass [] or None if unavailable.
     """
     import openpyxl
+
+    evidence_records = list(evidence_records or [])
 
     # Parse payload
     payload: dict = request_record.get("payload_json") or {}
@@ -4209,9 +4304,9 @@ def _create_tax_appeal_workbook(request_id: str, request_record: dict) -> Path:
             payload[key] = request_record[key]
     payload.setdefault("request_id", request_id)
 
-    # Build tax context
+    # Build tax context (pass evidence so evidence_summary appears in ctx)
     from tax_appeal_context import _build_tax_appeal_context
-    ctx = _build_tax_appeal_context(payload)
+    ctx = _build_tax_appeal_context(payload, evidence_records=evidence_records)
     tax_mode = ctx.get("tax_mode", "annual_real_estate_tax")
 
     # Create workbook
@@ -4336,6 +4431,11 @@ def _create_tax_appeal_workbook(request_id: str, request_record: dict) -> Path:
     _sheet_industrial_asset_separation(ws51, ctx)
     _sheet_committee_argument_summary(ws52, ctx)
     _sheet_visible_text_quality(ws53, ctx)
+
+    # ── Evidence sheet (Part H) ───────────────────────────────────────────────
+    ws_ev = wb.create_sheet("المستندات والمرفقات")
+    _sheet_evidence(ws_ev, evidence_records)
+    ws_ev.sheet_properties.tabColor = "374151"  # gray — documents category
 
     # Tab colors — group by category
     ws1.sheet_properties.tabColor  = "1B2E4B"  # inputs — dark navy

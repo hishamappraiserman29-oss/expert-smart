@@ -6017,7 +6017,81 @@ def _build_five_method_tax_context(
 
 # ── Main context builder ──────────────────────────────────────────────────────
 
-def _build_tax_appeal_context(payload: dict) -> dict:
+def _build_evidence_summary(evidence_records: list) -> dict:
+    """Build a summary dict from a list of evidence records for inclusion in context."""
+    total = len(evidence_records)
+    by_type: dict = {}
+    approved_for_report_count = 0
+    approved_as_source_count  = 0
+    needs_review_count        = 0
+    rejected_count            = 0
+    source_ready: list        = []
+
+    for ev in evidence_records:
+        ev_type = ev.get("evidence_type", "other")
+        by_type[ev_type] = by_type.get(ev_type, 0) + 1
+        status = ev.get("status", "uploaded")
+        if status == "approved_for_report":
+            approved_for_report_count += 1
+        elif status == "approved_as_source":
+            approved_as_source_count += 1
+            approved_for_report_count += 1  # approved_as_source implies for_report too
+            if ev.get("production_ready"):
+                source_ready.append({
+                    "evidence_id":          ev.get("evidence_id"),
+                    "evidence_type":        ev_type,
+                    "evidence_type_label":  ev.get("evidence_type_label_ar", ""),
+                    "source_registry_id":   ev.get("source_registry_id"),
+                    "source_status":        ev.get("source_status", ""),
+                    "production_ready":     True,
+                })
+        elif status == "needs_review":
+            needs_review_count += 1
+        elif status == "rejected":
+            rejected_count += 1
+
+    # Mandatory evidence types that have no approved record
+    mandatory_types = {
+        "tax_notice_form3",
+        "ownership_document",
+    }
+    uploaded_types = {ev.get("evidence_type") for ev in evidence_records
+                      if ev.get("status") in ("approved_for_report", "approved_as_source")}
+    missing_mandatory = [t for t in mandatory_types if t not in uploaded_types]
+
+    expert_actions = []
+    if needs_review_count:
+        expert_actions.append(f"يوجد {needs_review_count} مستند/مستندات بانتظار المراجعة")
+    if missing_mandatory:
+        expert_actions.append("مستندات إلزامية ناقصة: " + "، ".join(missing_mandatory))
+
+    evidence_gaps = []
+    if not by_type.get("tax_notice_form3"):
+        evidence_gaps.append("إشعار الضريبة — نموذج 3")
+    if not by_type.get("ownership_document"):
+        evidence_gaps.append("وثيقة الملكية")
+
+    return {
+        "evidence_total_count":       total,
+        "evidence_by_type":           by_type,
+        "approved_for_report_count":  approved_for_report_count,
+        "approved_as_source_count":   approved_as_source_count,
+        "needs_review_count":         needs_review_count,
+        "rejected_count":             rejected_count,
+        "missing_mandatory_evidence": missing_mandatory,
+        "source_ready_evidence":      source_ready,
+        "evidence_gaps":              evidence_gaps,
+        "expert_actions_required":    expert_actions,
+        "no_ocr_no_qdrant":           True,
+        "note": (
+            "المستندات المرفقة تحتاج مراجعة خبير معتمد قبل استخدامها كمصادر إنتاجية."
+            if total
+            else "لم يتم رفع أي مستندات مرفقة بعد."
+        ),
+    }
+
+
+def _build_tax_appeal_context(payload: dict, evidence_records: list = None) -> dict:
     """Build unified tax appeal context for PDFs, Excel, QA, and API responses.
 
     Supports tax_mode: annual_real_estate_tax | annual | transfer_tax | transfer
@@ -6063,6 +6137,34 @@ def _build_tax_appeal_context(payload: dict) -> dict:
 
     # Source registry
     source_registry = _build_tax_source_registry(payload, tax_mode, is_qa)
+
+    # Merge approved evidence as source entries (Part E)
+    for _ev in (evidence_records or []):
+        if _ev.get("status") in ("approved_for_report", "approved_as_source"):
+            source_registry.append({
+                "reference_id":      _ev.get("source_registry_id") or _ev.get("evidence_id"),
+                "reference_type":    "uploaded_evidence",
+                "evidence_id":       _ev.get("evidence_id"),
+                "evidence_type":     _ev.get("evidence_type"),
+                "source_label":      _ev.get("evidence_type_label_ar", "مستند مرفق"),
+                "source_status":     _ev.get("source_status", "مستند مرفق ومراجع من الخبير"),
+                "source_origin":     "مستند مرفوع من قِبل الخبير",
+                "source_date":       _ev.get("document_date") or _ev.get("uploaded_at", "")[:10],
+                "production_ready":  _ev.get("production_ready", False),
+                "qa_simulation":     False,
+                "expert_reviewed":   True,
+                "approved_for_report":  _ev.get("approved_for_report", False),
+                "approved_as_source":   _ev.get("approved_as_source", False),
+                "source_quality_score": None,
+                "source_limitations":   "",
+                "used_in_methods":      [],
+                "notes": (
+                    "مستند مرفق ومعتمد كمصدر بواسطة الخبير"
+                    if _ev.get("approved_as_source")
+                    else "مستند مرفق ومعتمد للتقرير — لا يستخدم كمصدر إنتاجي مباشر"
+                ),
+            })
+
     source_registry_summary = {
         "total_sources":    len(source_registry),
         "included_sources": sum(1 for s in source_registry if s.get("source_status") == "مُدرج"),
@@ -6278,6 +6380,9 @@ def _build_tax_appeal_context(payload: dict) -> dict:
         "no_qdrant_disclaimer": (
             "لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant."
         ),
+
+        # ── Evidence summary (Part F) ──────────────────────────────────────
+        "evidence_summary": _build_evidence_summary(evidence_records or []),
     }
 
     return ctx

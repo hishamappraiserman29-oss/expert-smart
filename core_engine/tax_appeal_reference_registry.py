@@ -685,3 +685,54 @@ def _build_tax_reference_registry(payload: dict) -> dict:
             "version":        "v1.0",
         },
     }
+
+
+# ── Evidence-to-source converter (Part E) ────────────────────────────────────
+
+def _build_evidence_source_rows(evidence_records: list) -> list[dict]:
+    """Convert approved evidence records into source registry rows.
+
+    Rules:
+    - approved_as_source → production_ready=True, source_status='مستند مرفق ومعتمد كمصدر'
+    - approved_for_report → production_ready=False, included for report only
+    - rejected/superseded → excluded
+    - No OCR, no Qdrant, no automatic value extraction
+    """
+    rows: list[dict] = []
+    for ev in (evidence_records or []):
+        status = ev.get("status", "uploaded")
+        if status not in ("approved_for_report", "approved_as_source"):
+            continue
+        rows.append({
+            "reference_id":          ev.get("source_registry_id") or ev.get("evidence_id"),
+            "reference_type":        "uploaded_evidence",
+            "evidence_id":           ev.get("evidence_id"),
+            "evidence_type":         ev.get("evidence_type"),
+            "source_document_type":  ev.get("evidence_type"),
+            "source_label":          ev.get("evidence_type_label_ar", "مستند مرفق"),
+            "source_status":         ev.get("source_status", "مستند مرفق — قيد التحقق"),
+            "source_origin":         "مستند مرفوع من قِبل الخبير",
+            "source_date":           ev.get("document_date") or (ev.get("uploaded_at") or "")[:10],
+            "document_issuer":       ev.get("document_issuer"),
+            "production_ready":      ev.get("production_ready", False),
+            "expert_reviewed":       True,
+            "expert_reviewed_at":    ev.get("expert_reviewed_at"),
+            "approved_for_report":   ev.get("approved_for_report", False),
+            "approved_as_source":    ev.get("approved_as_source", False),
+            "source_registry_id":    ev.get("source_registry_id"),
+            "source_quality_score":  None,
+            "source_limitations":    "",
+            "used_in_methods":       [],
+            "evidence_quality":      (
+                "معتمد كمصدر" if ev.get("approved_as_source")
+                else "معتمد للتقرير فقط"
+            ),
+            "confidence_score":      0.8 if ev.get("approved_as_source") else 0.5,
+            "qa_simulation":         False,
+            "notes": (
+                "مستند مرفق ومعتمد كمصدر بواسطة الخبير — لا يتضمن استخلاص OCR تلقائي"
+                if ev.get("approved_as_source")
+                else "مستند مرفق ومراجع من الخبير — معتمد للتقرير فقط"
+            ),
+        })
+    return rows

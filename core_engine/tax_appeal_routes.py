@@ -705,7 +705,9 @@ def register(app, require_auth, limiter=None) -> None:
         context_summary: dict = {}
         try:
             from tax_appeal_context import _build_tax_appeal_context
-            ctx = _build_tax_appeal_context(payload)
+            from tax_appeal_evidence_routes import load_evidence_records
+            ev_records = load_evidence_records(request_id)
+            ctx = _build_tax_appeal_context(payload, evidence_records=ev_records)
             context_summary = {
                 "tax_assessment_basis_date":         ctx.get("tax_assessment_basis_date"),
                 "tax_assessment_basis_date_display": ctx.get("tax_assessment_basis_date_display"),
@@ -720,11 +722,21 @@ def register(app, require_auth, limiter=None) -> None:
                 "committee_arguments":               ctx.get("committee_arguments"),
                 "source_registry":                   ctx.get("source_registry"),
                 "recommendation_summary":            ctx.get("recommendation_summary"),
+                "evidence_summary":                  ctx.get("evidence_summary"),
             }
         except Exception:
             pass
         safe = {k: v for k, v in rec.items() if k not in ("payload_json",)}
         safe["context"] = context_summary
+        # Attach safe evidence list (no internal paths)
+        try:
+            from tax_appeal_evidence_routes import load_evidence_records, _ev_safe
+            ev_list = load_evidence_records(request_id)
+            safe["evidence"] = [_ev_safe(e) for e in ev_list]
+            safe["evidence_count"] = len(ev_list)
+        except Exception:
+            safe["evidence"] = []
+            safe["evidence_count"] = 0
         return jsonify({"status": "ok", "request": safe})
 
     # ── POST /api/tax-appeal/expert-requests/<id>/review ──────────────────
@@ -810,9 +822,10 @@ def register(app, require_auth, limiter=None) -> None:
             from tax_appeal_context import _build_tax_appeal_context
             from pdf_renderer import cairo_font_css, render_pdf_from_html
             from jinja2 import Environment, FileSystemLoader
+            from tax_appeal_evidence_routes import load_evidence_records as _load_ev
 
             payload["request_id"] = request_id
-            ctx = _build_tax_appeal_context(payload)
+            ctx = _build_tax_appeal_context(payload, evidence_records=_load_ev(request_id))
 
             _TMPL_DIR = Path(__file__).parent / "templates" / "pdf"
             env = Environment(loader=FileSystemLoader(str(_TMPL_DIR)), autoescape=False)
@@ -907,3 +920,7 @@ def register(app, require_auth, limiter=None) -> None:
     @require_auth
     def tax_appeal_download_appeal_report(request_id: str):
         return tax_appeal_download_expert_draft_pdf(request_id)
+
+    # ── Evidence upload & source approval routes ───────────────────────────
+    from tax_appeal_evidence_routes import register_evidence_routes
+    register_evidence_routes(app, require_auth)

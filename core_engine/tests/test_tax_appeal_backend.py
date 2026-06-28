@@ -5137,3 +5137,379 @@ def test_TAB354_basis_date_independent_from_notice_and_deadline(client):
             "tax_assessment_basis_date must be independent from notice_received_date. "
             f"basis_date={basis_date!r}, notice_date={notice_date!r}"
         )
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# TAB355–TAB380 — Evidence Upload & Source Approval Workflow
+# ════════════════════════════════════════════════════════════════════════════════
+
+def _ev_url(rid: str, suffix: str = "") -> str:
+    return f"/api/tax-appeal/expert-requests/{rid}/evidence{suffix}"
+
+
+def _upload_ev(client, rid: str, content: bytes = b"%PDF-1.4 test evidence",
+               ev_type: str = "tax_notice_form3", filename: str = "notice.pdf") -> dict:
+    """Helper: upload one evidence file, assert 201, return response JSON."""
+    resp = client.post(
+        _ev_url(rid),
+        data={
+            "evidence_type": ev_type,
+            "file": (io.BytesIO(content), filename, "application/pdf"),
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201, f"Upload failed: {resp.data}"
+    return resp.get_json()
+
+
+# TAB355 — Upload requires auth (401 without token)
+def test_TAB355_upload_evidence_requires_auth(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _ev_url(rid),
+        data={"evidence_type": "other", "file": (io.BytesIO(b"data"), "f.pdf", "application/pdf")},
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 401
+
+
+# TAB356 — Upload rejects missing file
+def test_TAB356_upload_rejects_missing_file(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _ev_url(rid),
+        data={"evidence_type": "other"},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    assert "ملف" in resp.get_json().get("message", "")
+
+
+# TAB357 — Upload rejects dangerous extension
+def test_TAB357_upload_rejects_dangerous_extension(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _ev_url(rid),
+        data={"evidence_type": "other", "file": (io.BytesIO(b"bad"), "malware.exe", "application/octet-stream")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    assert "محظورة" in resp.get_json().get("message", "")
+
+
+# TAB358 — Upload accepts PDF
+def test_TAB358_upload_accepts_pdf(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)  # asserts 201 internally
+    assert body.get("evidence_id", "").startswith("EV-")
+
+
+# TAB359 — Upload accepts XLSX
+def test_TAB359_upload_accepts_xlsx(client):
+    rid = _create_er(client)
+    resp = client.post(
+        _ev_url(rid),
+        data={
+            "evidence_type": "market_comparables_excel",
+            "file": (io.BytesIO(b"PK fake xlsx"), "comps.xlsx",
+                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+
+
+# TAB360 — Upload response contains no internal file path
+def test_TAB360_upload_response_no_internal_path(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    body_str = json.dumps(body)
+    assert "internal_file_path" not in body_str
+    assert "tax_appeal_evidence" not in body_str
+    assert "C:\\" not in body_str and "/home/" not in body_str
+
+
+# TAB361 — Newly uploaded evidence starts needs_review
+def test_TAB361_evidence_starts_needs_review(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    assert body.get("status") == "needs_review"
+
+
+# TAB362 — production_ready is false at upload
+def test_TAB362_production_ready_false_at_upload(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    assert body.get("production_ready") is False
+
+
+# TAB363 — List evidence requires auth
+def test_TAB363_list_evidence_requires_auth(client):
+    rid = _create_er(client)
+    _upload_ev(client, rid)
+    resp = client.get(_ev_url(rid))
+    assert resp.status_code == 401
+
+
+# TAB364 — List evidence with auth returns count
+def test_TAB364_list_evidence_returns_count(client):
+    rid = _create_er(client)
+    _upload_ev(client, rid)
+    _upload_ev(client, rid, filename="second.pdf", ev_type="ownership_document")
+    resp = client.get(_ev_url(rid), headers=_auth())
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["count"] >= 2
+    assert isinstance(data["evidence"], list)
+
+
+# TAB365 — Download evidence requires auth
+def test_TAB365_download_evidence_requires_auth(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.get(_ev_url(rid, f"/{ev_id}/download"))
+    assert resp.status_code == 401
+
+
+# TAB366 — Review evidence requires auth
+def test_TAB366_review_evidence_requires_auth(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "approved_for_report"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# TAB367 — No token cannot approve evidence
+def test_TAB367_no_token_cannot_approve(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "approved_as_source"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# TAB368 — approve_for_report sets approved_for_report=True but production_ready=False
+def test_TAB368_approve_for_report(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "approved_for_report", "expert_review_notes": "اطلع عليه الخبير"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    ev = resp.get_json().get("evidence", {})
+    assert ev.get("approved_for_report") is True
+    assert ev.get("production_ready") is False
+
+
+# TAB369 — approve_as_source sets production_ready=True
+def test_TAB369_approve_as_source_sets_production_ready(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    # needs_review → approved_for_report first
+    client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "approved_for_report"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    # approved_for_report → approved_as_source
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "approved_as_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    ev = resp.get_json().get("evidence", {})
+    assert ev.get("production_ready") is True
+    assert ev.get("approved_as_source") is True
+
+
+# TAB370 — reject sets production_ready=False
+def test_TAB370_reject_sets_production_ready_false(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "rejected", "rejection_reason": "مستند غير صالح"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    ev = resp.get_json().get("evidence", {})
+    assert ev.get("production_ready") is False
+    assert ev.get("approved_for_report") is False
+
+
+# TAB371 — promote-source blocked unless approved_as_source
+def test_TAB371_promote_source_blocked_unless_approved_as_source(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    # still in needs_review — promote should fail
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/promote-source"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+
+
+# TAB372 — promote-source creates source_registry_id
+def test_TAB372_promote_source_creates_source_registry_id(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    # approve via two steps
+    client.post(_ev_url(rid, f"/{ev_id}/review"),
+                json={"status": "approved_for_report"}, content_type="application/json", headers=_auth())
+    client.post(_ev_url(rid, f"/{ev_id}/review"),
+                json={"status": "approved_as_source"}, content_type="application/json", headers=_auth())
+    resp = client.post(_ev_url(rid, f"/{ev_id}/promote-source"),
+                       json={}, content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data.get("source_registry_id", "").startswith("SRC-")
+    assert data.get("production_ready") is True
+
+
+# TAB373 — rejected evidence is excluded from source-ready list
+def test_TAB373_rejected_evidence_not_source_ready(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    client.post(_ev_url(rid, f"/{ev_id}/review"),
+                json={"status": "rejected"}, content_type="application/json", headers=_auth())
+    # evidence summary in detail should not include it as source_ready
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    ev_sum = detail.get("request", {}).get("context", {}).get("evidence_summary", {})
+    source_ready = ev_sum.get("source_ready_evidence", [])
+    assert not any(e.get("evidence_id") == ev_id for e in source_ready)
+
+
+# TAB374 — evidence summary appears in protected detail
+def test_TAB374_evidence_summary_in_detail(client):
+    rid = _create_er(client)
+    _upload_ev(client, rid)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    ctx = resp.get_json()["request"]["context"]
+    ev_sum = ctx.get("evidence_summary", {})
+    assert isinstance(ev_sum, dict)
+    assert "evidence_total_count" in ev_sum
+    assert ev_sum["evidence_total_count"] >= 1
+
+
+# TAB375 — approved evidence updates missing_mandatory
+def test_TAB375_approved_evidence_satisfies_mandatory(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid, ev_type="tax_notice_form3")
+    ev_id = body["evidence_id"]
+    client.post(_ev_url(rid, f"/{ev_id}/review"),
+                json={"status": "approved_for_report"}, content_type="application/json", headers=_auth())
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    ev_sum = detail["request"]["context"].get("evidence_summary", {})
+    missing = ev_sum.get("missing_mandatory_evidence", [])
+    assert "tax_notice_form3" not in missing
+
+
+# TAB376 — no internal paths in evidence list JSON
+def test_TAB376_no_internal_paths_in_evidence_list(client):
+    rid = _create_er(client)
+    _upload_ev(client, rid)
+    resp = client.get(_ev_url(rid), headers=_auth())
+    body_str = resp.data.decode("utf-8", errors="replace")
+    assert "internal_file_path" not in body_str
+    assert "tax_appeal_evidence" not in body_str
+    assert "C:\\" not in body_str
+
+
+# TAB377 — source registry includes approved evidence in context
+def test_TAB377_source_registry_includes_approved_evidence(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    client.post(_ev_url(rid, f"/{ev_id}/review"),
+                json={"status": "approved_for_report"}, content_type="application/json", headers=_auth())
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    source_reg = detail["request"]["context"].get("source_registry", [])
+    # should contain an entry referencing our evidence
+    ev_entries = [s for s in source_reg if s.get("evidence_id") == ev_id]
+    assert len(ev_entries) >= 1
+
+
+# TAB378 — PDF context includes evidence_summary key
+def test_TAB378_pdf_context_has_evidence_summary(client):
+    from tax_appeal_context import _build_tax_appeal_context
+    ctx = _build_tax_appeal_context({**_ER_PAYLOAD, "_qa_simulation": True}, evidence_records=[{
+        "evidence_id":         "EV-TEST0001",
+        "evidence_type":       "tax_notice_form3",
+        "evidence_type_label_ar": "إشعار الضريبة",
+        "status":              "approved_for_report",
+        "production_ready":    False,
+        "approved_for_report": True,
+        "approved_as_source":  False,
+        "uploaded_at":         "2026-06-28T00:00:00",
+    }])
+    ev_sum = ctx.get("evidence_summary", {})
+    assert isinstance(ev_sum, dict)
+    assert ev_sum.get("evidence_total_count") == 1
+    assert ev_sum.get("approved_for_report_count") >= 1
+
+
+# TAB379 — Workbook includes المستندات والمرفقات sheet
+def test_TAB379_workbook_has_evidence_sheet(client):
+    import openpyxl
+    from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+    record = {"request_id": "QA-TAB379", "payload_json": _ER_PAYLOAD}
+    evidence = [{
+        "evidence_id":         "EV-TEST0002",
+        "evidence_type":       "ownership_document",
+        "evidence_type_label_ar": "وثيقة الملكية",
+        "status":              "needs_review",
+        "production_ready":    False,
+        "approved_for_report": False,
+        "approved_as_source":  False,
+        "uploaded_at":         "2026-06-28T00:00:00",
+        "original_filename":   "ownership.pdf",
+        "expert_review_notes": None,
+        "source_registry_id":  None,
+    }]
+    wb_path = _create_tax_appeal_workbook("QA-TAB379", record, evidence_records=evidence)
+    assert wb_path.exists()
+    wb = openpyxl.load_workbook(str(wb_path), data_only=True)
+    assert "المستندات والمرفقات" in wb.sheetnames
+
+
+# TAB380 — Promote-source requires auth
+def test_TAB380_promote_source_requires_auth(client):
+    rid = _create_er(client)
+    body = _upload_ev(client, rid)
+    ev_id = body["evidence_id"]
+    resp = client.post(
+        _ev_url(rid, f"/{ev_id}/promote-source"),
+        json={},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401

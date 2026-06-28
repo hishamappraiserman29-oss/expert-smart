@@ -2167,6 +2167,43 @@
 </div>
 {% endif %}
 
+<!-- ══ المستندات والمرفقات (Part G — Expert Draft) ══════════════════════════════ -->
+{% set ev_sum = evidence_summary or {} %}
+<div class="section">
+  <div class="section-title">المستندات والمرفقات — حالة المصادر</div>
+  {% if ev_sum.evidence_total_count %}
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي المرفقات</td><td>{{ ev_sum.evidence_total_count }}</td></tr>
+    <tr><td class="lbl">معتمدة للتقرير</td><td>{{ ev_sum.approved_for_report_count }}</td></tr>
+    <tr><td class="lbl">معتمدة كمصدر إنتاجي</td><td>{{ ev_sum.approved_as_source_count }}</td></tr>
+    <tr><td class="lbl">قيد المراجعة</td><td>{{ ev_sum.needs_review_count }}</td></tr>
+    <tr><td class="lbl">مرفوضة</td><td>{{ ev_sum.rejected_count }}</td></tr>
+  </table>
+  {% if ev_sum.missing_mandatory_evidence %}
+  <p style="color:#B91C1C; font-weight:bold;">⚠ مستندات إلزامية ناقصة: {{ ev_sum.missing_mandatory_evidence | join("، ") }}</p>
+  {% endif %}
+  {% if ev_sum.source_ready_evidence %}
+  <h4 style="margin:8px 0 4px; font-size:9pt;">مصادر إنتاجية معتمدة</h4>
+  <table class="comp-table">
+    <tr><th>النوع</th><th>المعرّف</th><th>حالة المصدر</th></tr>
+    {% for src in ev_sum.source_ready_evidence %}
+    <tr>
+      <td>{{ src.evidence_type_label }}</td>
+      <td>{{ src.evidence_id }}</td>
+      <td>{{ src.source_status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <p class="disclaimer-note">{{ ev_sum.note }}</p>
+  {% else %}
+  <p class="disclaimer-note">لم يتم اعتماد مستندات كمصادر إنتاجية بعد. {{ ev_sum.note or "" }}</p>
+  {% endif %}
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    لا يتضمن هذا النظام استخلاص OCR أو Qdrant أو مصادر خارجية. المرفقات تحتاج مراجعة الخبير المختص.
+  </p>
+</div>
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

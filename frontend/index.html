@@ -33562,6 +33562,151 @@ function _expertSetBadge(id, label, available) {
       <div id="tax-bo-expert-notes-display" style="color:#e2e8f0; font-size:0.8rem;"></div>
     </div>
 
+    <!-- ══ المستندات والمرفقات (Evidence Section — Backoffice only) ══════════════ -->
+    <div id="tax-evidence-section" data-testid="tax-evidence-section"
+         style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:0.5rem; margin-bottom:1rem;">
+      <h4 style="color:#34d399; font-size:0.9rem; margin:0 0 0.8rem;">المستندات والمرفقات</h4>
+
+      <!-- Evidence upload form -->
+      <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(52,211,153,0.2); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+        <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px; font-weight:700;">رفع مستند جديد</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">الملف:</label>
+            <input type="file" id="tax-evidence-file-input" data-testid="tax-evidence-file-input"
+                   accept=".pdf,.xlsx,.xls,.csv,.jpg,.jpeg,.png,.webp,.txt,.docx"
+                   style="width:100%; box-sizing:border-box; padding:6px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+          </div>
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">نوع المستند:</label>
+            <select id="tax-evidence-type-select" data-testid="tax-evidence-type-select"
+                    style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+              <option value="tax_notice_form3">إشعار الضريبة — نموذج 3</option>
+              <option value="ownership_document">وثيقة الملكية</option>
+              <option value="lease_contract">عقد الإيجار</option>
+              <option value="building_permit">ترخيص البناء</option>
+              <option value="occupancy_or_completion_certificate">شهادة الإشغال أو الإنهاء</option>
+              <option value="activity_license">ترخيص النشاط</option>
+              <option value="commercial_register">السجل التجاري</option>
+              <option value="industrial_license">الترخيص الصناعي</option>
+              <option value="land_allocation_document">وثيقة تخصيص الأرض</option>
+              <option value="area_statement">بيان المساحة</option>
+              <option value="floor_plan">مسقط الطابق</option>
+              <option value="property_photos">صور العقار</option>
+              <option value="market_comparables_excel">مقارنات السوق (Excel)</option>
+              <option value="rental_comparables_excel">مقارنات الإيجار (Excel)</option>
+              <option value="tax_comparables_excel">مقارنات الضريبة (Excel)</option>
+              <option value="factory_cost_guidance">مرشد تكلفة المصانع</option>
+              <option value="expert_note">ملاحظة خبير</option>
+              <option value="legal_note">ملاحظة قانونية</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">تاريخ المستند:</label>
+            <input type="date" id="tax-evidence-doc-date"
+                   style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+          </div>
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">الجهة المصدِرة:</label>
+            <input type="text" id="tax-evidence-issuer" dir="rtl"
+                   placeholder="مثال: مصلحة الضرائب، الشهر العقاري..."
+                   style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">ملاحظات:</label>
+          <input type="text" id="tax-evidence-notes" dir="rtl"
+                 placeholder="ملاحظات اختيارية..."
+                 style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+        </div>
+        <button id="tax-evidence-upload-button" data-testid="tax-evidence-upload-button"
+                onclick="taxEvidenceUpload()"
+                style="padding:7px 18px; background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.4); color:#34d399; border-radius:7px; cursor:pointer; font-size:0.82rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+          ⬆ رفع المستند
+        </button>
+        <div id="tax-evidence-upload-status" style="display:none; margin-top:6px; font-size:0.78rem; color:#94a3b8;"></div>
+      </div>
+
+      <!-- Missing mandatory documents warning (shown when present) -->
+      <div id="tax-evidence-missing-warning" data-testid="tax-evidence-missing-warning"
+           style="display:none; margin-bottom:1rem; padding:10px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#f87171; font-size:0.8rem;">
+        <span style="font-weight:700;">⚠ مستندات إلزامية ناقصة:</span>
+        <ul id="tax-evidence-missing-list" style="margin:4px 0 0; padding-right:20px;"></ul>
+      </div>
+
+      <!-- Evidence list table -->
+      <div style="overflow-x:auto;">
+        <table data-testid="tax-evidence-list" id="tax-evidence-list"
+               style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#e2e8f0;">
+          <thead>
+            <tr style="background:rgba(30,41,59,0.7); border-bottom:1px solid rgba(255,255,255,0.1);">
+              <th style="padding:7px 8px; text-align:right; color:#94a3b8;">نوع المستند</th>
+              <th style="padding:7px 8px; text-align:right; color:#94a3b8;">اسم الملف</th>
+              <th style="padding:7px 8px; text-align:center; color:#94a3b8;">الحالة</th>
+              <th style="padding:7px 8px; text-align:center; color:#94a3b8;">للتقرير</th>
+              <th style="padding:7px 8px; text-align:center; color:#94a3b8;">كمصدر</th>
+              <th style="padding:7px 8px; text-align:right; color:#94a3b8;">تاريخ الرفع</th>
+              <th style="padding:7px 8px; text-align:right; color:#94a3b8;">ملاحظات</th>
+              <th style="padding:7px 8px; text-align:center; color:#94a3b8;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="tax-evidence-list-tbody">
+            <tr><td colspan="8" style="text-align:center; padding:16px; color:#64748b;">لا توجد مستندات مرفقة بعد.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Per-evidence review panel (shown when a row is selected) -->
+      <div id="tax-evidence-review-panel" style="display:none; margin-top:1rem; padding:12px 14px; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.1); border-radius:8px;">
+        <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px; font-weight:700;">مراجعة المستند: <span id="tax-evidence-selected-id" style="color:#93c5fd; font-family:monospace;"></span></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">تغيير الحالة:</label>
+            <select id="tax-evidence-review-status" data-testid="tax-evidence-review-status"
+                    style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+              <option value="">— اختر الحالة —</option>
+              <option value="needs_review">بانتظار المراجعة</option>
+              <option value="approved_for_report">معتمد للتقرير (approved_for_report)</option>
+              <option value="approved_as_source">معتمد كمصدر (approved_as_source)</option>
+              <option value="rejected">مرفوض (rejected)</option>
+              <option value="superseded">مُستبدل (superseded)</option>
+            </select>
+          </div>
+          <div>
+            <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">سبب الرفض (اختياري):</label>
+            <input type="text" id="tax-evidence-rejection-reason" dir="rtl"
+                   style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">ملاحظات المراجعة:</label>
+          <input type="text" id="tax-evidence-review-notes" data-testid="tax-evidence-review-notes" dir="rtl"
+                 style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button data-testid="tax-evidence-approve-report" onclick="taxEvidenceReview('approved_for_report')"
+                  style="padding:6px 14px; background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.4); color:#93c5fd; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:700;">
+            ✓ اعتماد للتقرير
+          </button>
+          <button data-testid="tax-evidence-approve-source" onclick="taxEvidenceReview('approved_as_source')"
+                  style="padding:6px 14px; background:rgba(52,211,153,0.15); border:1px solid rgba(52,211,153,0.4); color:#34d399; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:700;">
+            ✓✓ اعتماد كمصدر
+          </button>
+          <button data-testid="tax-evidence-reject" onclick="taxEvidenceReview('rejected')"
+                  style="padding:6px 14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); color:#f87171; border-radius:6px; cursor:pointer; font-size:0.78rem; font-weight:700;">
+            ✕ رفض
+          </button>
+          <button data-testid="tax-evidence-download" onclick="taxEvidenceDownload()"
+                  style="padding:6px 14px; background:rgba(30,41,59,0.5); border:1px solid rgba(255,255,255,0.15); color:#94a3b8; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+            ⬇ تحميل
+          </button>
+        </div>
+        <div id="tax-evidence-review-status-msg" style="display:none; margin-top:8px; font-size:0.78rem; color:#94a3b8;"></div>
+      </div>
+    </div>
+    <!-- end evidence section -->
+
     <!-- Workbook download (protected — only in this panel) -->
     <div style="margin-bottom:1rem;">
       <button id="tax-expert-workbook-download" data-testid="tax-expert-workbook-download"
@@ -33844,6 +33989,9 @@ async function taxAppealBoOpenRequest(rid) {
         var notesEl = document.getElementById('tax-bo-expert-notes');
         if (notesEl) notesEl.value = r.expert_notes || '';
 
+        // Load evidence for this request
+        taxEvidenceLoad();
+
     } catch(e) {
         taxAppealBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
     }
@@ -33966,6 +34114,181 @@ async function taxAppealBoDownloadReport() {
         taxAppealBoStatus('تم تحميل تقرير الطعن بنجاح.', true);
     } catch(e) {
         taxAppealBoStatus('خطأ في تحميل التقرير: ' + e.message, false);
+    }
+}
+
+// ── Evidence Management JS ────────────────────────────────────────────────────
+
+var _taxEvidenceCurrentEvId = null;
+
+var _taxEvidenceStatusBadge = {
+    'uploaded':            {label: 'مرفوع', color: '#94a3b8'},
+    'needs_review':        {label: 'بانتظار المراجعة', color: '#fbbf24'},
+    'approved_for_report': {label: 'معتمد للتقرير', color: '#60a5fa'},
+    'approved_as_source':  {label: 'معتمد كمصدر ✓', color: '#34d399'},
+    'rejected':            {label: 'مرفوض', color: '#f87171'},
+    'superseded':          {label: 'مُستبدل', color: '#6b7280'},
+};
+
+async function taxEvidenceLoad() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    var tbody = document.getElementById('tax-evidence-list-tbody');
+    if (!token || !tbody) return;
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/evidence', {
+            headers: {'Authorization': 'Bearer ' + token}
+        });
+        if (!resp.ok) return;
+        var data = await resp.json();
+        var evList = data.evidence || [];
+
+        // Update missing mandatory warning
+        var missing = (evList.filter(function(e) {
+            return e.evidence_type === 'tax_notice_form3' && ['approved_for_report','approved_as_source'].indexOf(e.status) < 0;
+        }).length ? ['إشعار الضريبة — نموذج 3'] : []).concat(
+            evList.filter(function(e) {
+                return e.evidence_type === 'ownership_document' && ['approved_for_report','approved_as_source'].indexOf(e.status) < 0;
+            }).length ? ['وثيقة الملكية'] : []
+        );
+        var missingWrap = document.getElementById('tax-evidence-missing-warning');
+        var missingList = document.getElementById('tax-evidence-missing-list');
+        if (missingWrap && missingList) {
+            if (missing.length) {
+                missingWrap.style.display = '';
+                missingList.innerHTML = missing.map(function(m) { return '<li>' + m + '</li>'; }).join('');
+            } else {
+                missingWrap.style.display = 'none';
+            }
+        }
+
+        if (!evList.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:16px;color:#64748b;">لا توجد مستندات مرفقة بعد.</td></tr>';
+            return;
+        }
+        var html = '';
+        evList.forEach(function(ev) {
+            var badge = _taxEvidenceStatusBadge[ev.status] || {label: ev.status, color: '#94a3b8'};
+            html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="taxEvidenceSelect(\'' + (ev.evidence_id||'') + '\')">'
+                + '<td style="padding:6px 8px;">' + (ev.evidence_type_label_ar || ev.evidence_type || '—') + '</td>'
+                + '<td style="padding:6px 8px; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="' + (ev.original_filename||'') + '">' + (ev.original_filename || '—') + '</td>'
+                + '<td style="padding:6px 8px; text-align:center;"><span style="padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:700; background:rgba(30,41,59,0.6); color:' + badge.color + ';">' + badge.label + '</span></td>'
+                + '<td style="padding:6px 8px; text-align:center; color:' + (ev.approved_for_report ? '#60a5fa' : '#475569') + ';">' + (ev.approved_for_report ? '✓' : '—') + '</td>'
+                + '<td style="padding:6px 8px; text-align:center; color:' + (ev.approved_as_source ? '#34d399' : '#475569') + ';">' + (ev.approved_as_source ? '✓✓' : '—') + '</td>'
+                + '<td style="padding:6px 8px; font-size:0.72rem; color:#64748b; direction:ltr;">' + ((ev.uploaded_at||'').substring(0,10)) + '</td>'
+                + '<td style="padding:6px 8px; font-size:0.72rem; color:#94a3b8; max-width:120px; overflow:hidden; text-overflow:ellipsis;">' + (ev.expert_review_notes||'—') + '</td>'
+                + '<td style="padding:6px 8px; text-align:center;">'
+                + '<button onclick="event.stopPropagation();taxEvidenceSelect(\'' + (ev.evidence_id||'') + '\')" style="padding:2px 8px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#34d399; border-radius:4px; cursor:pointer; font-size:0.7rem;">فتح</button>'
+                + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+    } catch(e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="padding:10px;color:#f87171;">خطأ: ' + e.message + '</td></tr>';
+    }
+}
+
+function taxEvidenceSelect(evId) {
+    _taxEvidenceCurrentEvId = evId;
+    var panel = document.getElementById('tax-evidence-review-panel');
+    if (panel) panel.style.display = '';
+    var idEl = document.getElementById('tax-evidence-selected-id');
+    if (idEl) idEl.textContent = evId;
+    var statusEl = document.getElementById('tax-evidence-review-status');
+    if (statusEl) statusEl.value = '';
+    var notesEl = document.getElementById('tax-evidence-review-notes');
+    if (notesEl) notesEl.value = '';
+    var rejEl = document.getElementById('tax-evidence-rejection-reason');
+    if (rejEl) rejEl.value = '';
+    var msgEl = document.getElementById('tax-evidence-review-status-msg');
+    if (msgEl) msgEl.style.display = 'none';
+}
+
+async function taxEvidenceUpload() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var fileInput = document.getElementById('tax-evidence-file-input');
+    if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        taxAppealBoStatus('يرجى اختيار ملف للرفع.', false); return;
+    }
+    var statusDiv = document.getElementById('tax-evidence-upload-status');
+    if (statusDiv) { statusDiv.style.display = ''; statusDiv.textContent = 'جارٍ الرفع...'; }
+    var formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('evidence_type', (document.getElementById('tax-evidence-type-select')||{}).value || 'other');
+    formData.append('document_date', (document.getElementById('tax-evidence-doc-date')||{}).value || '');
+    formData.append('document_issuer', (document.getElementById('tax-evidence-issuer')||{}).value || '');
+    formData.append('metadata_notes', (document.getElementById('tax-evidence-notes')||{}).value || '');
+    try {
+        var resp = await fetch('/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/evidence', {
+            method: 'POST',
+            headers: {'Authorization': 'Bearer ' + token},
+            body: formData,
+        });
+        var data = await resp.json();
+        if (resp.ok) {
+            if (statusDiv) { statusDiv.textContent = 'تم رفع المستند بنجاح. المعرف: ' + (data.evidence_id||''); }
+            taxAppealBoStatus('تم رفع المستند: ' + (data.evidence_type_label_ar||data.evidence_type||''), true);
+            if (fileInput) fileInput.value = '';
+            taxEvidenceLoad();
+        } else {
+            if (statusDiv) { statusDiv.textContent = 'خطأ: ' + (data.message||resp.status); }
+            taxAppealBoStatus('خطأ في الرفع: ' + (data.message||resp.status), false);
+        }
+    } catch(e) {
+        if (statusDiv) statusDiv.textContent = 'خطأ: ' + e.message;
+        taxAppealBoStatus('خطأ في الاتصال: ' + e.message, false);
+    }
+}
+
+async function taxEvidenceReview(forceStatus) {
+    if (!_taxAppealBoCurrentId || !_taxEvidenceCurrentEvId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var status = forceStatus || (document.getElementById('tax-evidence-review-status')||{}).value || '';
+    var notes  = ((document.getElementById('tax-evidence-review-notes')||{}).value || '').trim();
+    var reason = ((document.getElementById('tax-evidence-rejection-reason')||{}).value || '').trim();
+    var msgEl  = document.getElementById('tax-evidence-review-status-msg');
+    if (msgEl) { msgEl.style.display = ''; msgEl.textContent = 'جارٍ الحفظ...'; }
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/evidence/' + _taxEvidenceCurrentEvId + '/review',
+            {
+                method: 'POST',
+                headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+                body: JSON.stringify({status: status, expert_review_notes: notes, rejection_reason: reason}),
+            }
+        );
+        var data = await resp.json();
+        if (resp.ok) {
+            taxAppealBoStatus('تم تحديث حالة المستند: ' + (data.evidence && data.evidence.status || status), true);
+            if (msgEl) msgEl.textContent = 'تم الحفظ.';
+            taxEvidenceLoad();
+        } else {
+            if (msgEl) msgEl.textContent = 'خطأ: ' + (data.message||resp.status);
+            taxAppealBoStatus('خطأ: ' + (data.message||resp.status), false);
+        }
+    } catch(e) {
+        if (msgEl) msgEl.textContent = 'خطأ: ' + e.message;
+    }
+}
+
+async function taxEvidenceDownload() {
+    if (!_taxAppealBoCurrentId || !_taxEvidenceCurrentEvId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var url = '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/evidence/' + _taxEvidenceCurrentEvId + '/download';
+    try {
+        var resp = await fetch(url, {headers: {'Authorization': 'Bearer ' + token}});
+        if (!resp.ok) { taxAppealBoStatus('خطأ في التحميل: ' + resp.status, false); return; }
+        var blob = await resp.blob();
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = _taxEvidenceCurrentEvId;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        taxAppealBoStatus('تم تحميل الملف.', true);
+    } catch(e) {
+        taxAppealBoStatus('خطأ في التحميل: ' + e.message, false);
     }
 }
 

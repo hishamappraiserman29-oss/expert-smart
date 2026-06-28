@@ -33889,6 +33889,114 @@ function _expertSetBadge(id, label, available) {
     </div>
   </div>
 
+  <!-- ══ استخراج البيانات من المستندات — مراجعة يدوية (Extraction — Backoffice only) ═════ -->
+  <div id="tax-extraction-section" data-testid="tax-extraction-section"
+       style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:1rem; margin-bottom:1rem; display:none;">
+    <h4 style="color:#a78bfa; font-size:0.9rem; margin:0 0 0.5rem;">استخراج البيانات من المستندات — مراجعة يدوية</h4>
+
+    <!-- No-auto warning -->
+    <div data-testid="tax-extraction-no-auto-warning"
+         style="background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.3); border-radius:7px; padding:8px 12px; margin-bottom:0.8rem; color:#a78bfa; font-size:0.76rem; direction:rtl;">
+      ⚠ لا يتم استخراج البيانات تلقائيًا في هذه المرحلة. يتم إدخال القيم يدويًا ومراجعتها بواسطة الخبير.
+      <br><span style="font-size:0.72rem; color:#6b7280;">OCR / Qdrant / RAG: غير مفعّلة حاليًا.</span>
+    </div>
+
+    <!-- Extraction form -->
+    <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(167,139,250,0.2); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
+      <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:8px; font-weight:700;">إنشاء استخراج جديد</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">المستند:</label>
+          <select id="tax-extraction-evidence-select" data-testid="tax-extraction-evidence-select"
+                  onchange="taxExtractionLoadTemplate()"
+                  style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر المستند —</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">القالب:</label>
+          <select id="tax-extraction-template-select" data-testid="tax-extraction-template-select"
+                  style="width:100%; padding:7px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+            <option value="">— اختر القالب —</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Template fields (rendered dynamically) -->
+      <div id="tax-extraction-fields-container" style="margin-bottom:8px;">
+        <div data-testid="tax-extraction-field-row"
+             style="color:#4b5563; font-size:0.76rem; font-style:italic; padding:8px 0;">
+          اختر مستندًا لعرض حقول الاستخراج.
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px;">
+        <label style="color:#94a3b8; font-size:0.72rem; display:block; margin-bottom:3px;">ملاحظات الخبير (اختياري):</label>
+        <input type="text" id="tax-extraction-expert-notes" dir="rtl"
+               placeholder="ملاحظات داخلية للخبير..."
+               style="width:100%; box-sizing:border-box; padding:6px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.78rem;" />
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="tax-extraction-save-draft" data-testid="tax-extraction-save-draft"
+                onclick="taxExtractionSaveDraft()"
+                style="padding:7px 16px; background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.35); color:#a78bfa; border-radius:7px; cursor:pointer; font-size:0.8rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+          حفظ المسودة
+        </button>
+        <button id="tax-extraction-submit-review" data-testid="tax-extraction-submit-review"
+                onclick="taxExtractionSubmit()"
+                style="padding:7px 16px; background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.35); color:#fbbf24; border-radius:7px; cursor:pointer; font-size:0.8rem; font-weight:700; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+          إرسال للمراجعة
+        </button>
+      </div>
+      <div id="tax-extraction-save-status" style="display:none; margin-top:6px; font-size:0.78rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Extraction list -->
+    <div style="overflow-x:auto;">
+      <table id="tax-extraction-list" data-testid="tax-extraction-list"
+             style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#e2e8f0;">
+        <thead>
+          <tr style="background:rgba(30,41,59,0.8); text-align:right;">
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">المستند</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">القالب</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">الحالة</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">إنتاجي</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">extraction_id</th>
+            <th style="padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.1);">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="tax-extraction-table-body">
+          <tr><td colspan="6" style="padding:12px; color:#4b5563; text-align:center; font-style:italic;">لا توجد استخراجات بعد.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Per-extraction action badges -->
+    <div id="tax-extraction-action-row" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button id="tax-extraction-confirm" data-testid="tax-extraction-confirm"
+              onclick="taxExtractionConfirm()"
+              style="padding:6px 14px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.3); color:#34d399; border-radius:6px; cursor:pointer; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        تأكيد الاستخراج
+      </button>
+      <button id="tax-extraction-reject" data-testid="tax-extraction-reject"
+              onclick="taxExtractionReject()"
+              style="padding:6px 14px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:6px; cursor:pointer; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        رفض الاستخراج
+      </button>
+      <button id="tax-extraction-create-mappings" data-testid="tax-extraction-create-mappings"
+              onclick="taxExtractionCreateMappings()"
+              style="padding:6px 14px; background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); color:#60a5fa; border-radius:6px; cursor:pointer; font-size:0.78rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif;">
+        إنشاء روابط حقول
+      </button>
+      <span id="tax-extraction-status-badge" data-testid="tax-extraction-status-badge"
+            style="display:inline-flex; align-items:center; padding:4px 12px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#94a3b8; font-size:0.72rem;"></span>
+    </div>
+    <div id="tax-extraction-action-status" style="display:none; margin-top:6px; font-size:0.78rem; color:#94a3b8;"></div>
+  </div>
+  <!-- end extraction section -->
+
 </div>
 <!-- end tax appeal backoffice -->
 
@@ -34093,9 +34201,10 @@ async function taxAppealBoOpenRequest(rid) {
         var notesEl = document.getElementById('tax-bo-expert-notes');
         if (notesEl) notesEl.value = r.expert_notes || '';
 
-        // Load evidence and field mappings for this request
+        // Load evidence, field mappings, and extractions for this request
         taxEvidenceLoad();
         taxMappingInit();
+        taxExtractionInit();
 
     } catch(e) {
         taxAppealBoStatus('خطأ في تحميل التفاصيل: ' + e.message, false);
@@ -34700,6 +34809,271 @@ async function taxMappingApplyContext() {
         } else {
             taxAppealBoStatus('خطأ: ' + (data.message || resp.status), false);
         }
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+// ── Extraction Readiness (human manual queue) ────────────────────────────────
+// No OCR, no Qdrant, no automatic extraction. All values manually entered.
+
+var _taxExtractionCurrentId  = null;  // selected extraction_id
+var _taxExtractionTemplates  = [];    // loaded templates
+
+async function taxExtractionInit() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+
+    var sec = document.getElementById('tax-extraction-section');
+    if (sec) sec.style.display = '';
+
+    // Populate evidence select (reuse evidence cache from mapping module)
+    _taxExtractionPopulateEvidenceSelect();
+
+    // Load templates
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/extraction-templates',
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        if (resp.ok) {
+            var data = await resp.json();
+            _taxExtractionTemplates = data.templates || [];
+        }
+    } catch(e) {}
+
+    // Load extractions list
+    await taxExtractionLoad();
+}
+
+function _taxExtractionPopulateEvidenceSelect() {
+    var sel = document.getElementById('tax-extraction-evidence-select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— اختر المستند —</option>';
+    // Reuse the same evidence cache used by field mapping
+    if (typeof _taxMappingCache !== 'undefined') {
+        // Try to read from evidence list rendered by taxEvidenceLoad
+        var rows = document.querySelectorAll('[data-ev-id]');
+        rows.forEach(function(r) {
+            var evId   = r.getAttribute('data-ev-id');
+            var evType = r.getAttribute('data-ev-type') || '';
+            var label  = r.getAttribute('data-ev-label') || evId;
+            if (evId) {
+                var opt = document.createElement('option');
+                opt.value = evId;
+                opt.textContent = label + ' (' + evType + ')';
+                sel.appendChild(opt);
+            }
+        });
+    }
+}
+
+async function taxExtractionLoadTemplate() {
+    if (!_taxAppealBoCurrentId) return;
+    var token  = taxAppealBoGetToken();
+    var evSel  = document.getElementById('tax-extraction-evidence-select');
+    var evId   = evSel ? evSel.value : '';
+    if (!evId || !token) return;
+
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/evidence/' + evId + '/extraction-template',
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        if (!resp.ok) return;
+        var data = await resp.json();
+        var tmpl = data.template;
+
+        // Populate template select
+        var tmplSel = document.getElementById('tax-extraction-template-select');
+        if (tmplSel) {
+            tmplSel.innerHTML = '<option value="">— اختر القالب —</option>';
+            if (tmpl) {
+                var opt = document.createElement('option');
+                opt.value    = tmpl.template_id;
+                opt.textContent = tmpl.template_label_ar;
+                opt.selected = true;
+                tmplSel.appendChild(opt);
+            }
+            _taxExtractionTemplates.forEach(function(t) {
+                if (!tmpl || t.template_id !== tmpl.template_id) {
+                    var o = document.createElement('option');
+                    o.value       = t.template_id;
+                    o.textContent = t.template_label_ar;
+                    tmplSel.appendChild(o);
+                }
+            });
+        }
+
+        // Render fields
+        var container = document.getElementById('tax-extraction-fields-container');
+        if (!container) return;
+        if (!tmpl || !tmpl.fields || !tmpl.fields.length) {
+            container.innerHTML = '<div style="color:#4b5563; font-size:0.76rem; font-style:italic;">لا توجد حقول للقالب المحدد.</div>';
+            return;
+        }
+        var html = '';
+        tmpl.fields.forEach(function(f) {
+            html += '<div data-testid="tax-extraction-field-row" style="display:grid; grid-template-columns:180px 1fr; gap:6px; margin-bottom:6px; align-items:center;">';
+            html += '<label style="color:#94a3b8; font-size:0.72rem; direction:rtl;">' +
+                f.label_ar + (f.required ? ' *' : '') + '</label>';
+            html += '<input type="text" data-testid="tax-extraction-value-input"' +
+                ' data-field-key="' + f.field_key + '"' +
+                ' placeholder="' + (f.validation_hint || f.help_text || '') + '"' +
+                ' dir="rtl"' +
+                ' style="padding:5px 8px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.15); border-radius:6px; color:#e2e8f0; font-size:0.76rem; width:100%; box-sizing:border-box;" />';
+            html += '</div>';
+        });
+        container.innerHTML = html;
+    } catch(e) {}
+}
+
+async function taxExtractionLoad() {
+    if (!_taxAppealBoCurrentId) return;
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId + '/extractions',
+            {headers: {'Authorization': 'Bearer ' + token}}
+        );
+        if (!resp.ok) return;
+        var data = await resp.json();
+        _taxExtractionRenderTable(data.extractions || []);
+    } catch(e) {}
+}
+
+function _taxExtractionRenderTable(rows) {
+    var tbody = document.getElementById('tax-extraction-table-body');
+    if (!tbody) return;
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:12px; color:#4b5563; text-align:center; font-style:italic;">لا توجد استخراجات بعد.</td></tr>';
+        return;
+    }
+    var statusLabel = {
+        not_started: 'لم يبدأ', draft: 'مسودة',
+        submitted_for_review: 'بانتظار المراجعة', expert_confirmed: 'مؤكد',
+        rejected: 'مرفوض', superseded: 'مُستبدل',
+    };
+    var html = '';
+    rows.forEach(function(ex) {
+        var st    = statusLabel[ex.extraction_status] || ex.extraction_status;
+        var prod  = ex.production_ready ? 'نعم' : 'لا';
+        var color = ex.extraction_status === 'expert_confirmed' ? '#34d399'
+                  : ex.extraction_status === 'rejected'        ? '#f87171'
+                  : '#94a3b8';
+        html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="_taxExtractionSelect(\'' + ex.extraction_id + '\')">';
+        html += '<td style="padding:6px 10px;">' + (ex.evidence_id || '') + '</td>';
+        html += '<td style="padding:6px 10px;">' + (ex.template_id || '—') + '</td>';
+        html += '<td style="padding:6px 10px; color:' + color + ';">' + st + '</td>';
+        html += '<td style="padding:6px 10px;">' + prod + '</td>';
+        html += '<td style="padding:6px 10px; font-size:0.7rem; color:#4b5563;">' + ex.extraction_id + '</td>';
+        html += '<td style="padding:6px 10px;"><button onclick="_taxExtractionSelect(\'' + ex.extraction_id + '\')" style="padding:3px 8px; background:rgba(167,139,250,0.1); border:1px solid rgba(167,139,250,0.3); color:#a78bfa; border-radius:4px; cursor:pointer; font-size:0.72rem;">تحديد</button></td>';
+        html += '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function _taxExtractionSelect(exId) {
+    _taxExtractionCurrentId = exId;
+    var badge = document.getElementById('tax-extraction-status-badge');
+    if (badge) badge.textContent = 'محدد: ' + exId;
+}
+
+async function taxExtractionSaveDraft() {
+    if (!_taxAppealBoCurrentId) return;
+    var token  = taxAppealBoGetToken();
+    if (!token) { taxAppealBoStatus('يرجى إدخال رمز الدخول أولاً.', false); return; }
+    var evSel  = document.getElementById('tax-extraction-evidence-select');
+    var evId   = evSel ? evSel.value : '';
+    if (!evId) { taxAppealBoStatus('اختر مستندًا أولاً.', false); return; }
+    var tmplSel = document.getElementById('tax-extraction-template-select');
+    var tmplId  = tmplSel ? tmplSel.value : '';
+    var notes   = (document.getElementById('tax-extraction-expert-notes') || {}).value || '';
+
+    // Collect field values
+    var vals = {};
+    var inputs = document.querySelectorAll('[data-field-key]');
+    inputs.forEach(function(inp) { if (inp.value.trim()) vals[inp.getAttribute('data-field-key')] = inp.value.trim(); });
+
+    var payload = {template_id: tmplId, extracted_values: vals, expert_notes: notes};
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/evidence/' + evId + '/extractions',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify(payload)}
+        );
+        var data = await resp.json();
+        var st   = document.getElementById('tax-extraction-save-status');
+        if (st) { st.style.display = ''; st.textContent = resp.ok ? (data.message || 'تم الحفظ.') : ('خطأ: ' + data.message); }
+        if (resp.ok) { _taxExtractionCurrentId = data.extraction.extraction_id; await taxExtractionLoad(); }
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxExtractionSubmit() {
+    if (!_taxExtractionCurrentId || !_taxAppealBoCurrentId) { taxAppealBoStatus('حدد استخراجًا أولاً.', false); return; }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/extractions/' + _taxExtractionCurrentId + '/submit',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: '{}'}
+        );
+        var data = await resp.json();
+        taxAppealBoStatus(resp.ok ? (data.message || 'تم الإرسال.') : ('خطأ: ' + data.message), resp.ok);
+        if (resp.ok) await taxExtractionLoad();
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxExtractionConfirm() {
+    if (!_taxExtractionCurrentId || !_taxAppealBoCurrentId) { taxAppealBoStatus('حدد استخراجًا أولاً.', false); return; }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    var notes = (document.getElementById('tax-extraction-expert-notes') || {}).value || '';
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/extractions/' + _taxExtractionCurrentId + '/confirm',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({expert_notes: notes})}
+        );
+        var data = await resp.json();
+        taxAppealBoStatus(resp.ok ? (data.message || 'تم التأكيد.') : ('خطأ: ' + data.message), resp.ok);
+        if (resp.ok) await taxExtractionLoad();
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxExtractionReject() {
+    if (!_taxExtractionCurrentId || !_taxAppealBoCurrentId) { taxAppealBoStatus('حدد استخراجًا أولاً.', false); return; }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    var notes = (document.getElementById('tax-extraction-expert-notes') || {}).value || '';
+    if (!notes) { taxAppealBoStatus('سبب الرفض مطلوب.', false); return; }
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/extractions/' + _taxExtractionCurrentId + '/reject',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({rejection_notes: notes})}
+        );
+        var data = await resp.json();
+        taxAppealBoStatus(resp.ok ? 'تم الرفض.' : ('خطأ: ' + data.message), resp.ok);
+        if (resp.ok) await taxExtractionLoad();
+    } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
+}
+
+async function taxExtractionCreateMappings() {
+    if (!_taxExtractionCurrentId || !_taxAppealBoCurrentId) { taxAppealBoStatus('حدد استخراجًا مؤكدًا أولاً.', false); return; }
+    var token = taxAppealBoGetToken();
+    if (!token) return;
+    try {
+        var resp = await fetch(
+            '/api/tax-appeal/expert-requests/' + _taxAppealBoCurrentId +
+            '/extractions/' + _taxExtractionCurrentId + '/create-mappings',
+            {method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: '{}'}
+        );
+        var data = await resp.json();
+        taxAppealBoStatus(resp.ok ? (data.message || 'تم إنشاء الروابط.') : ('خطأ: ' + data.message), resp.ok);
+        if (resp.ok) { await taxExtractionLoad(); taxMappingLoad(); }
     } catch(e) { taxAppealBoStatus('خطأ: ' + e.message, false); }
 }
 </script>

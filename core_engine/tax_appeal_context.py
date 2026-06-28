@@ -6254,6 +6254,26 @@ def _build_tax_appeal_context(
         }
         _source_linked = {}
 
+    # ── Extraction readiness summary ──────────────────────────────────────────
+    try:
+        from tax_appeal_extraction_routes import (
+            load_extraction_records as _ler,
+            build_extraction_summary as _bes,
+        )
+        _er_recs       = _ler(request_id) if (request_id and not request_id.startswith("QA-")) else []
+        _ex_summary    = _bes(_er_recs)
+    except Exception:
+        _ex_summary = {
+            "total_extractions": 0, "draft_extractions": 0,
+            "submitted_extractions": 0, "confirmed_extractions": 0,
+            "rejected_extractions": 0, "production_ready_extractions": 0,
+            "future_ocr_ready_count": 0, "future_qdrant_ready_count": 0,
+            "expert_actions_required": 0,
+            "ocr_active_now": False, "qdrant_active_now": False,
+            "rag_active_now": False,
+            "no_automatic_value_extraction": True,
+        }
+
     ctx: dict = {
         # Identifiers
         "request_id":       request_id,
@@ -6413,6 +6433,9 @@ def _build_tax_appeal_context(
         # ── Field mapping summary + source-linked inputs (Part G) ─────────
         "field_mapping_summary":  _fm_summary,
         "source_linked_inputs":   _source_linked,
+
+        # ── Extraction readiness summary ───────────────────────────────────
+        "extraction_summary": _ex_summary,
     }
 
     return ctx

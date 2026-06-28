@@ -2256,6 +2256,32 @@
 </div>
 {% endif %}
 
+<!-- ══ حالة استخراج البيانات من المستندات (Extraction Readiness — Expert Draft) ═══ -->
+{% set ex_sum = extraction_summary or {} %}
+{% if ex_sum.total_extractions %}
+<div class="section">
+  <div class="section-title">استخراج البيانات من المستندات — حالة المراجعة</div>
+  <table class="comp-table">
+    <tr>
+      <th>البند</th><th>العدد</th>
+    </tr>
+    <tr><td>إجمالي الاستخراجات</td><td>{{ ex_sum.total_extractions }}</td></tr>
+    <tr><td>مسودة</td><td>{{ ex_sum.draft_extractions }}</td></tr>
+    <tr><td>بانتظار المراجعة</td><td>{{ ex_sum.submitted_extractions }}</td></tr>
+    <tr style="font-weight:bold;"><td>مُؤكَّد من الخبير</td><td>{{ ex_sum.confirmed_extractions }}</td></tr>
+    <tr><td>مرفوض</td><td>{{ ex_sum.rejected_extractions }}</td></tr>
+    <tr><td>إنتاجي (production_ready)</td><td>{{ ex_sum.production_ready_extractions }}</td></tr>
+    {% if ex_sum.expert_actions_required %}
+    <tr style="color:#B45309; font-weight:bold;"><td>يتطلب مراجعة الخبير</td><td>{{ ex_sum.expert_actions_required }}</td></tr>
+    {% endif %}
+  </table>
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280; margin-top:6px;">
+    أوضاع OCR / Qdrant / RAG: غير مفعّلة.
+    جميع القيم المُستخرَجة مُدخلة يدويًا ومُراجَعة من الخبير. لا يتم استخلاص أي قيم تلقائيًا من محتوى الملفات.
+  </p>
+</div>
+{% endif %}
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

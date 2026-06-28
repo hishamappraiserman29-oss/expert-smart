@@ -1848,6 +1848,26 @@
 </div>
 {% endif %}
 
+<!-- ══ حالة استخراج البيانات من المستندات (Extraction Readiness — Preliminary) ════ -->
+{% set ex_sum_p = extraction_summary or {} %}
+{% if ex_sum_p.total_extractions %}
+<div class="section">
+  <div class="section-title">حالة استخراج البيانات من المستندات</div>
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي الاستخراجات</td><td>{{ ex_sum_p.total_extractions }}</td></tr>
+    <tr><td class="lbl">مُؤكَّد من الخبير</td><td>{{ ex_sum_p.confirmed_extractions }}</td></tr>
+    <tr><td class="lbl">إنتاجي</td><td>{{ ex_sum_p.production_ready_extractions }}</td></tr>
+    {% if ex_sum_p.expert_actions_required %}
+    <tr><td class="lbl" style="color:#B45309;">بانتظار مراجعة الخبير</td><td style="color:#B45309; font-weight:bold;">{{ ex_sum_p.expert_actions_required }}</td></tr>
+    {% endif %}
+  </table>
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    لا يتم استخراج أي بيانات تلقائيًا. جميع القيم مُدخلة يدويًا ومُراجَعة من الخبير.
+    OCR: غير مفعّل. Qdrant: غير مفعّل.
+  </p>
+</div>
+{% endif %}
+
 <!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
 <div class="disclaimer">
   <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>

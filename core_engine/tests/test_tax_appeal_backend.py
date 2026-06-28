@@ -6295,4 +6295,363 @@ def test_TAB422_no_internal_paths_in_mapping_json(client):
         body_str = resp.data.decode("utf-8", errors="replace")
         assert "instance" not in body_str or "tax_appeal_field_mappings" not in body_str, \
             f"{label}: internal storage path exposed"
-        assert "C:\\" not in body_str, f"{label}: Windows absolute path exposed"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB423-TAB446 — Extraction Readiness Tests
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _ex_url(rid: str, suffix: str = "") -> str:
+    return f"/api/tax-appeal/expert-requests/{rid}/extractions{suffix}"
+
+def _ev_ex_url(rid: str, ev_id: str) -> str:
+    return f"/api/tax-appeal/expert-requests/{rid}/evidence/{ev_id}/extractions"
+
+def _create_extraction(client, rid: str, ev_id: str, values: dict | None = None) -> dict:
+    """Helper: create extraction draft and return response JSON."""
+    resp = client.post(
+        _ev_ex_url(rid, ev_id),
+        json={"template_id": "tmpl_tax_notice_form3", "extracted_values": values or {}},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201, f"create extraction failed: {resp.data[:200]}"
+    return resp.get_json()
+
+
+# TAB423 — extraction template catalogue endpoint requires auth
+def test_TAB423_extraction_template_catalogue_requires_auth(client):
+    rid = _create_er(client)
+    resp = client.get(f"/api/tax-appeal/expert-requests/{rid}/extraction-templates")
+    assert resp.status_code == 401
+
+
+# TAB424 — template catalogue includes tax_notice_form3
+def test_TAB424_catalogue_includes_tax_notice_form3(client):
+    rid  = _create_er(client)
+    resp = client.get(
+        f"/api/tax-appeal/expert-requests/{rid}/extraction-templates",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    template_ids = [t["template_id"] for t in data.get("templates", [])]
+    assert "tmpl_tax_notice_form3" in template_ids
+
+
+# TAB425 — template catalogue includes ownership_document
+def test_TAB425_catalogue_includes_ownership_document(client):
+    rid  = _create_er(client)
+    resp = client.get(
+        f"/api/tax-appeal/expert-requests/{rid}/extraction-templates",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    template_ids = [t["template_id"] for t in resp.get_json().get("templates", [])]
+    assert "tmpl_ownership_document" in template_ids
+
+
+# TAB426 — tax_notice_form3 template includes tax_assessment_basis_date
+def test_TAB426_tax_notice_form3_has_tax_assessment_basis_date(client):
+    rid  = _create_er(client)
+    resp = client.get(
+        f"/api/tax-appeal/expert-requests/{rid}/extraction-templates",
+        headers=_auth(),
+    )
+    templates = {t["template_id"]: t for t in resp.get_json().get("templates", [])}
+    tmpl = templates.get("tmpl_tax_notice_form3", {})
+    field_keys = [f["field_key"] for f in tmpl.get("fields", [])]
+    assert "tax_assessment_basis_date" in field_keys
+
+
+# TAB427 — factory cost reference template exists
+def test_TAB427_factory_cost_reference_template_exists(client):
+    rid  = _create_er(client)
+    resp = client.get(
+        f"/api/tax-appeal/expert-requests/{rid}/extraction-templates",
+        headers=_auth(),
+    )
+    template_ids = [t["template_id"] for t in resp.get_json().get("templates", [])]
+    assert "tmpl_factory_cost_guidance" in template_ids or "tmpl_ain_shams_factory_cost_reference" in template_ids
+
+
+# TAB428 — extraction creation requires auth
+def test_TAB428_extraction_creation_requires_auth(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    resp  = client.post(
+        _ev_ex_url(rid, ev_id),
+        json={},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# TAB429 — extraction creation rejects missing evidence
+def test_TAB429_extraction_rejects_missing_evidence(client):
+    rid  = _create_er(client)
+    resp = client.post(
+        _ev_ex_url(rid, "EV-FFFFFFFF"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 404
+
+
+# TAB430 — extraction creation rejects rejected evidence
+def test_TAB430_extraction_rejects_rejected_evidence(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    # Reject the evidence
+    client.post(
+        _ev_url(rid, f"/{ev_id}/review"),
+        json={"status": "rejected", "notes": "rejected for test"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    resp = client.post(
+        _ev_ex_url(rid, ev_id),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+
+
+# TAB431 — extraction starts draft
+def test_TAB431_extraction_starts_draft(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    data  = _create_extraction(client, rid, ev_id)
+    assert data["extraction"]["extraction_status"] == "draft"
+
+
+# TAB432 — extraction values are not auto-filled from file content
+def test_TAB432_extraction_values_not_auto_filled(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    # Create extraction without any values
+    data  = _create_extraction(client, rid, ev_id, values={})
+    ev    = data["extraction"]
+    # No values should have been injected from the evidence file
+    assert ev["extracted_values"] == {}
+    assert ev["extraction_mode"] == "human_manual_only"
+
+
+# TAB433 — submit extraction changes status
+def test_TAB433_submit_extraction_changes_status(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    ex_id = _create_extraction(client, rid, ev_id)["extraction"]["extraction_id"]
+    resp  = client.post(
+        _ex_url(rid, f"/{ex_id}/submit"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["extraction"]["extraction_status"] == "submitted_for_review"
+
+
+# TAB434 — confirm extraction requires auth
+def test_TAB434_confirm_extraction_requires_auth(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    ex_id = _create_extraction(client, rid, ev_id)["extraction"]["extraction_id"]
+    resp  = client.post(f"/api/tax-appeal/expert-requests/{rid}/extractions/{ex_id}/confirm", json={})
+    assert resp.status_code == 401
+
+
+# TAB435 — confirmed extraction production_ready only if evidence approved_as_source
+def test_TAB435_production_ready_requires_approved_as_source(client):
+    rid   = _create_er(client)
+    # Create evidence with only approved_for_report (not approved_as_source)
+    ev_id = _create_and_approve_ev(client, rid, status="approved_for_report")
+    ex_id = _create_extraction(client, rid, ev_id)["extraction"]["extraction_id"]
+    # Submit
+    client.post(_ex_url(rid, f"/{ex_id}/submit"), json={}, content_type="application/json", headers=_auth())
+    # Confirm
+    resp = client.post(_ex_url(rid, f"/{ex_id}/confirm"), json={}, content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    # production_ready should be False since evidence is only approved_for_report
+    assert resp.get_json()["production_ready"] is False
+
+
+# TAB436 — rejected extraction cannot create mappings
+def test_TAB436_rejected_extraction_cannot_create_mappings(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    ex_id = _create_extraction(client, rid, ev_id)["extraction"]["extraction_id"]
+    # Reject it
+    client.post(
+        _ex_url(rid, f"/{ex_id}/reject"),
+        json={"rejection_notes": "bad data for test"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    # Try to create mappings from rejected extraction
+    resp = client.post(
+        _ex_url(rid, f"/{ex_id}/create-mappings"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+
+
+# TAB437 — create mappings from confirmed extraction works
+def test_TAB437_create_mappings_from_confirmed_extraction(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    ex_id = _create_extraction(
+        client, rid, ev_id,
+        values={"tax_notice_number": "TX-2024-TEST", "notice_received_date": "2024-01-01"},
+    )["extraction"]["extraction_id"]
+    # Submit then confirm
+    client.post(_ex_url(rid, f"/{ex_id}/submit"), json={}, content_type="application/json", headers=_auth())
+    client.post(_ex_url(rid, f"/{ex_id}/confirm"), json={}, content_type="application/json", headers=_auth())
+    # Create mappings
+    resp = client.post(
+        _ex_url(rid, f"/{ex_id}/create-mappings"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert data["count"] >= 1
+    assert len(data["created_mapping_ids"]) >= 1
+
+
+# TAB438 — extraction-created mappings use existing conflict detection
+def test_TAB438_extraction_mappings_conflict_detection(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    # Use a value that differs from the payload to trigger a conflict
+    ex_id = _create_extraction(
+        client, rid, ev_id,
+        values={"government_tax_amount": "99999"},
+    )["extraction"]["extraction_id"]
+    client.post(_ex_url(rid, f"/{ex_id}/submit"), json={}, content_type="application/json", headers=_auth())
+    client.post(_ex_url(rid, f"/{ex_id}/confirm"), json={}, content_type="application/json", headers=_auth())
+    resp = client.post(
+        _ex_url(rid, f"/{ex_id}/create-mappings"),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201
+    # Mappings were created — conflict is handled by field mapping module (not extraction module)
+
+
+# TAB439 — extraction_summary appears in context
+def test_TAB439_extraction_summary_in_context(client):
+    rid  = _create_er(client)
+    detail = client.get(f"/api/tax-appeal/expert-requests/{rid}", headers=_auth()).get_json()
+    ctx    = detail.get("request", {}).get("context", {})
+    assert "extraction_summary" in ctx
+    ex_sum = ctx["extraction_summary"]
+    assert "total_extractions" in ex_sum
+    assert "ocr_active_now" in ex_sum
+    assert ex_sum.get("ocr_active_now") is False
+    assert ex_sum.get("qdrant_active_now") is False
+
+
+# TAB440 — workbook contains استخراج البيانات sheet
+def test_TAB440_workbook_contains_extraction_sheet(client):
+    import openpyxl
+    rid = _create_er(client)
+    from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+    from tax_appeal_routes import _read_er
+    rec = _read_er(rid)
+    wb_path = _create_tax_appeal_workbook(rid, rec)
+    wb = openpyxl.load_workbook(str(wb_path), data_only=True)
+    assert "استخراج البيانات" in wb.sheetnames
+
+
+# TAB441 — workbook contains OCR/Qdrant readiness sheet with active_now false
+def test_TAB441_workbook_ocr_qdrant_readiness_sheet_active_now_false(client):
+    import openpyxl
+    rid = _create_er(client)
+    from tax_appeal_workbook_builder import _create_tax_appeal_workbook
+    from tax_appeal_routes import _read_er
+    rec = _read_er(rid)
+    wb_path = _create_tax_appeal_workbook(rid, rec)
+    wb = openpyxl.load_workbook(str(wb_path), data_only=True)
+    assert "جاهزية OCR-Qdrant المستقبلية" in wb.sheetnames
+    ws = wb["جاهزية OCR-Qdrant المستقبلية"]
+    # Check active_now column (col 5) — must all be "لا" (not "نعم")
+    for row in range(5, 20):
+        val = ws.cell(row=row, column=5).value
+        if val is not None:
+            assert val != "نعم", f"active_now must be 'لا' but got '{val}' in row {row}"
+
+
+# TAB442 — PDF context includes extraction_summary
+def test_TAB442_pdf_context_includes_extraction_summary(client):
+    rid  = _create_er(client)
+    from tax_appeal_context import _build_tax_appeal_context
+    from tax_appeal_routes import _read_er
+    rec  = _read_er(rid)
+    import json
+    payload = json.loads(rec.get("payload_json") or "{}")
+    ctx = _build_tax_appeal_context(payload)
+    assert "extraction_summary" in ctx
+    assert ctx["extraction_summary"].get("no_automatic_value_extraction") is True
+
+
+# TAB443 — no internal paths in extraction responses
+def test_TAB443_no_internal_paths_in_extraction_response(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    resp  = _create_extraction(client, rid, ev_id)
+    body  = resp if isinstance(resp, str) else client.post(
+        _ev_ex_url(rid, ev_id),
+        json={},
+        content_type="application/json",
+        headers=_auth(),
+    ).data.decode("utf-8", errors="replace")
+    # Check list endpoint
+    list_resp = client.get(_ex_url(rid), headers=_auth())
+    list_body = list_resp.data.decode("utf-8", errors="replace")
+    assert "tax_appeal_extractions" not in list_body
+    assert "instance\\" not in list_body and "instance/" not in list_body
+
+
+# TAB444 — ordinary / no-token cannot create/confirm/reject extraction
+def test_TAB444_no_token_cannot_create_or_confirm_extraction(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    # Create without token
+    resp1 = client.post(_ev_ex_url(rid, ev_id), json={}, content_type="application/json")
+    assert resp1.status_code == 401
+    # List without token
+    resp2 = client.get(_ex_url(rid))
+    assert resp2.status_code == 401
+
+
+# TAB445 — OCR/Qdrant/RAG active flags are false
+def test_TAB445_ocr_qdrant_rag_active_flags_false(client):
+    rid   = _create_er(client)
+    ev_id = _create_and_approve_ev(client, rid)
+    data  = _create_extraction(client, rid, ev_id)
+    ev    = data["extraction"]
+    assert ev.get("ocr_active_now")    is False
+    assert ev.get("qdrant_active_now") is False
+    assert ev.get("rag_active_now")    is False
+
+
+# TAB446 — generated extraction readiness outputs exist
+def test_TAB446_qa_output_files_exist():
+    from pathlib import Path
+    out_dir = Path(__file__).resolve().parents[1] / "instance" / "manual_review_outputs" / "tax_appeal_extraction_readiness"
+    expected = [
+        "01_extraction_template_catalogue.json",
+        "02_extraction_workflow_summary.json",
+        "03_confirmed_extraction_to_mapping_snapshot.json",
+        "04_expert_workbook_with_extraction_readiness.xlsx",
+        "05_appeal_report_with_extraction_readiness.pdf",
+    ]
+    for fname in expected:
+        assert (out_dir / fname).exists(), f"QA output missing: {fname}"

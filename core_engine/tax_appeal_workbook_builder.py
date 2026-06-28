@@ -4347,6 +4347,195 @@ def _sheet_field_mapping_conflicts(ws, ctx: dict) -> None:
     ws.column_dimensions[get_column_letter(11)].width = 32
 
 
+# ── Extraction readiness sheets ───────────────────────────────────────────────
+
+def _sheet_extraction_data(ws, ctx: dict) -> None:
+    """Populate the استخراج البيانات sheet from extraction_summary + storage."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill  = _hdr_fill("7C3AED")
+    hdr_font  = _hdr_font()
+    ctr       = _center_align()
+    ok_fill   = PatternFill("solid", fgColor="EDE9FE")
+    warn_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1, value="استخراج البيانات من المستندات — مراجعة يدوية").font = \
+        Font(name="Cairo", bold=True, size=11, color="7C3AED")
+    ws.cell(row=2, column=1, value=(
+        "لا يتم استخراج أي قيم تلقائيًا من الملفات. جميع القيم مُدخلة يدويًا ومُراجَعة من الخبير."
+    )).font = Font(name="Cairo", size=8, color="6B7280", italic=True)
+
+    ex_sum = ctx.get("extraction_summary") or {}
+    summary_rows = [
+        ("إجمالي الاستخراجات",      ex_sum.get("total_extractions", 0)),
+        ("مسودة",                   ex_sum.get("draft_extractions", 0)),
+        ("بانتظار المراجعة",         ex_sum.get("submitted_extractions", 0)),
+        ("مُؤكَّد من الخبير",         ex_sum.get("confirmed_extractions", 0)),
+        ("مرفوض",                   ex_sum.get("rejected_extractions", 0)),
+        ("إنتاجي",                  ex_sum.get("production_ready_extractions", 0)),
+        ("يتطلب مراجعة الخبير",     ex_sum.get("expert_actions_required", 0)),
+        ("OCR مفعَّل الآن",         "لا" if not ex_sum.get("ocr_active_now") else "نعم"),
+        ("Qdrant مفعَّل الآن",      "لا" if not ex_sum.get("qdrant_active_now") else "نعم"),
+        ("RAG مفعَّل الآن",         "لا" if not ex_sum.get("rag_active_now") else "نعم"),
+    ]
+    sr = 4
+    for lbl, val in summary_rows:
+        ws.cell(row=sr, column=1, value=lbl).font = hdr_font
+        c = ws.cell(row=sr, column=2, value=val)
+        c.font = _data_font()
+        sr += 1
+
+    # Detailed extraction records
+    hr = sr + 1
+    headers = [
+        "extraction_id", "evidence_id", "template_id", "نوع المستند",
+        "حالة الاستخراج", "الحقل", "التسمية العربية", "القيمة",
+        "مؤكد من الخبير", "إنتاجي", "mapping_id", "ملاحظات",
+    ]
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    request_id = ctx.get("request_id", "")
+    extraction_records: list = []
+    if request_id and not request_id.startswith("QA-"):
+        try:
+            from tax_appeal_extraction_routes import load_extraction_records as _ler
+            from tax_appeal_extraction_templates import EXTRACTION_TEMPLATES_BY_ID as _TMPL
+            extraction_records = _ler(request_id)
+        except Exception:
+            pass
+
+    if not extraction_records:
+        ws.cell(row=hr + 1, column=1, value="لا توجد سجلات استخراج بعد.").font = \
+            Font(name="Cairo", size=9, color="374151")
+        return
+
+    data_row = hr + 1
+    for ex in extraction_records:
+        status     = ex.get("extraction_status", "")
+        ev_values  = ex.get("extracted_values") or {}
+        template_id = ex.get("template_id") or ""
+        mapping_ids = ex.get("linked_mapping_ids") or []
+        mapping_str = "; ".join(mapping_ids[:3]) + ("…" if len(mapping_ids) > 3 else "")
+
+        # Get field labels from template
+        try:
+            from tax_appeal_extraction_templates import EXTRACTION_TEMPLATES_BY_ID as _TMPL
+            tmpl   = _TMPL.get(template_id)
+            f_meta = {f["field_key"]: f for f in (tmpl.get("fields") or [])} if tmpl else {}
+        except Exception:
+            f_meta = {}
+
+        if not ev_values:
+            vals = [
+                ex.get("extraction_id", ""), ex.get("evidence_id", ""), template_id,
+                ex.get("evidence_type", ""), status, "—", "—", "—",
+                "نعم" if ex.get("production_ready") else "لا",
+                "نعم" if ex.get("production_ready") else "لا",
+                mapping_str, ex.get("expert_notes") or "",
+            ]
+            for ci, v in enumerate(vals, 1):
+                ws.cell(row=data_row, column=ci, value=v).font = _data_font()
+            data_row += 1
+        else:
+            for fkey, fval in ev_values.items():
+                fm  = f_meta.get(fkey, {})
+                row_fill = ok_fill if status == "expert_confirmed" else (warn_fill if status == "submitted_for_review" else None)
+                vals = [
+                    ex.get("extraction_id", ""), ex.get("evidence_id", ""), template_id,
+                    ex.get("evidence_type", ""), status,
+                    fkey, fm.get("label_ar", fkey), str(fval) if fval is not None else "",
+                    "نعم" if ex.get("production_ready") else "لا",
+                    "نعم" if ex.get("production_ready") else "لا",
+                    mapping_str, ex.get("expert_notes") or "",
+                ]
+                for ci, v in enumerate(vals, 1):
+                    c = ws.cell(row=data_row, column=ci, value=v)
+                    c.font = _data_font()
+                    if row_fill:
+                        c.fill = row_fill
+                data_row += 1
+
+    ws.column_dimensions[get_column_letter(7)].width  = 28
+    ws.column_dimensions[get_column_letter(8)].width  = 20
+    ws.column_dimensions[get_column_letter(12)].width = 32
+
+
+def _sheet_ocr_qdrant_readiness(ws, ctx: dict) -> None:
+    """Populate the جاهزية OCR-Qdrant المستقبلية sheet.
+
+    Rules:
+    - active_now must be False for all OCR/Qdrant entries.
+    - No internal paths.
+    - No silent blanks.
+    """
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill = _hdr_fill("6B7280")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    future_fill = PatternFill("solid", fgColor="F3F4F6")
+    inactive_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1, value="جاهزية OCR / Qdrant المستقبلية — بنية جاهزة، غير مفعَّلة").font = \
+        Font(name="Cairo", bold=True, size=11, color="6B7280")
+    ws.cell(row=2, column=1, value=(
+        "الحالة الحالية: جميع قنوات الاستخراج التلقائي غير مفعَّلة. "
+        "يُعدّ هذا الإصدار لاستقبال تكامل OCR / Qdrant لاحقًا. active_now = False لجميع الإدخالات."
+    )).font = Font(name="Cairo", size=8, color="6B7280", italic=True)
+
+    headers = [
+        "نوع المستند", "قالب الاستخراج موجود",
+        "جاهز OCR مستقبلاً", "جاهز Qdrant مستقبلاً",
+        "active_now", "يتطلب مراجعة يدوية",
+        "ملاحظة",
+    ]
+    hr = 4
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    try:
+        from tax_appeal_extraction_templates import _get_extraction_template_catalogue
+        catalogue = _get_extraction_template_catalogue()
+    except Exception:
+        catalogue = []
+
+    for i, tmpl in enumerate(catalogue, 1):
+        row = hr + i
+        vals = [
+            tmpl.get("evidence_type", ""),
+            "نعم",
+            "نعم" if tmpl.get("future_ocr_ready") else "لا",
+            "نعم" if tmpl.get("future_qdrant_ready") else "لا",
+            "لا",  # active_now — always False
+            "نعم" if tmpl.get("requires_human_entry") else "لا",
+            "استخراج يدوي فعلي — يستلزم مراجعة خبير",
+        ]
+        for ci, v in enumerate(vals, 1):
+            c = ws.cell(row=row, column=ci, value=v)
+            c.font = _data_font()
+            if ci == 5:  # active_now column — highlight as inactive
+                c.fill = inactive_fill
+                c.font = Font(name="Cairo", size=9, color="B91C1C", bold=True)
+            else:
+                c.fill = future_fill
+
+    if not catalogue:
+        ws.cell(row=hr + 1, column=1, value="لم يتم تحميل قوالب الاستخراج.").font = \
+            Font(name="Cairo", size=9, color="374151")
+
+    ws.column_dimensions[get_column_letter(1)].width = 30
+    ws.column_dimensions[get_column_letter(7)].width = 40
+
+
 # ── Main workbook builder ─────────────────────────────────────────────────────
 
 def _sheet_evidence(ws, evidence_records: list) -> None:
@@ -4716,6 +4905,14 @@ def _create_tax_appeal_workbook(
     _sheet_field_mapping_conflicts(ws_fmc, ctx)
     ws_fm.sheet_properties.tabColor  = "1E40AF"  # field mapping — dark blue
     ws_fmc.sheet_properties.tabColor = "B91C1C"  # conflicts — dark red
+
+    # ── Extraction readiness sheets ───────────────────────────────────────────
+    ws_ex   = wb.create_sheet("استخراج البيانات")
+    ws_exfr = wb.create_sheet("جاهزية OCR-Qdrant المستقبلية")
+    _sheet_extraction_data(ws_ex, ctx)
+    _sheet_ocr_qdrant_readiness(ws_exfr, ctx)
+    ws_ex.sheet_properties.tabColor   = "7C3AED"  # extraction — purple
+    ws_exfr.sheet_properties.tabColor = "6B7280"  # future readiness — muted gray
 
     # Persist
     out_dir = _WB_DIR / request_id

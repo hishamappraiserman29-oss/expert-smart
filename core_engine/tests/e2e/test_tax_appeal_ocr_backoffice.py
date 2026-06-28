@@ -133,3 +133,96 @@ def test_TAO13_qdrant_rag_shown_inactive(page: Page, live_server: str) -> None:
         text = warn.text_content() or ""
         assert "Qdrant" in text or "qdrant" in text.lower(), "Qdrant not mentioned in OCR warning"
         assert "RAG" in text or "rag" in text.lower(), "RAG not mentioned in OCR warning"
+
+
+# =============================================================================
+# TAO14-TAO23 — OCR Broad Advisory Pilot e2e tests
+# =============================================================================
+
+# ── TAO14 — Advisory section element exists in DOM ───────────────────────────
+def test_TAO14_advisory_section_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-advisory-section']")
+    assert el.count() > 0, "tax-ocr-advisory-section not found in DOM"
+
+
+# ── TAO15 — Policy matrix element exists in DOM ──────────────────────────────
+def test_TAO15_policy_matrix_element_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-policy-matrix']")
+    assert el.count() > 0, "tax-ocr-policy-matrix not found in DOM"
+
+
+# ── TAO16 — Advisory warning element exists ──────────────────────────────────
+def test_TAO16_advisory_warning_element_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-advisory-warning']")
+    assert el.count() > 0, "tax-ocr-advisory-warning not found in DOM"
+
+
+# ── TAO17 — Evidence type summary element exists ─────────────────────────────
+def test_TAO17_evidence_type_summary_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-evidence-type-summary']")
+    assert el.count() > 0, "tax-ocr-evidence-type-summary not found in DOM"
+
+
+# ── TAO18 — Candidate group element exists in DOM ────────────────────────────
+def test_TAO18_candidate_group_element_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-candidate-group']")
+    assert el.count() > 0, "tax-ocr-candidate-group not found in DOM"
+
+
+# ── TAO19 — Structured placeholder element exists ────────────────────────────
+def test_TAO19_structured_placeholder_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-structured-placeholder']")
+    assert el.count() > 0, "tax-ocr-structured-placeholder not found in DOM"
+
+
+# ── TAO20 — No-final-use warning element exists ──────────────────────────────
+def test_TAO20_no_final_use_warning_exists(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    el = page.locator("[data-testid='tax-ocr-no-final-use-warning']")
+    assert el.count() > 0, "tax-ocr-no-final-use-warning not found in DOM"
+
+
+# ── TAO21 — Ordinary tax page has no raw OCR controls visible ────────────────
+def test_TAO21_ordinary_page_no_ocr_controls_visible(page: Page, live_server: str) -> None:
+    """On the ordinary (non-backoffice) page, OCR controls must not be visible."""
+    _go(page, live_server)
+    ocr_section = page.locator("#tax-ocr-section")
+    if ocr_section.count() > 0:
+        assert not ocr_section.is_visible(), \
+            "OCR section must not be visible on ordinary tax page"
+
+
+# ── TAO22 — Raw OCR text preview is not publicly visible ─────────────────────
+def test_TAO22_raw_ocr_text_not_visible_on_ordinary_page(page: Page, live_server: str) -> None:
+    """The raw OCR text preview must not be visible on the ordinary page."""
+    _go(page, live_server)
+    preview = page.locator("[data-testid='tax-ocr-text-preview']")
+    if preview.count() > 0:
+        # Either inside hidden OCR section or itself hidden
+        ocr_section = page.locator("#tax-ocr-section")
+        section_hidden = ocr_section.count() == 0 or not ocr_section.is_visible()
+        preview_hidden = not preview.is_visible()
+        assert section_hidden or preview_hidden, \
+            "Raw OCR text preview must not be visible to ordinary users"
+
+
+# ── TAO23 — No internal file paths or expert-only notes in DOM ───────────────
+def test_TAO23_no_internal_paths_or_expert_notes_in_dom(page: Page, live_server: str) -> None:
+    _go(page, live_server)
+    html = page.content()
+    forbidden = [
+        "C:\\Users\\",
+        "instance\\tax_appeal_ocr",
+        "internal_file_path",
+        "expert_only_note",
+        "/var/lib/",
+        "ocr_raw_path",
+    ]
+    for token in forbidden:
+        assert token not in html, f"Sensitive token leaked into DOM: {token!r}"

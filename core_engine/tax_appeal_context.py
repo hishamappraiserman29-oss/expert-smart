@@ -6274,7 +6274,7 @@ def _build_tax_appeal_context(
             "no_automatic_value_extraction": True,
         }
 
-    # ── OCR Pilot summary + suggested fields ──────────────────────────────────
+    # ── OCR Pilot summary + suggested fields + broad advisory ─────────────────
     try:
         from tax_appeal_ocr_routes import (
             load_ocr_jobs               as _loj,
@@ -6282,11 +6282,95 @@ def _build_tax_appeal_context(
             load_ocr_extraction_drafts  as _loed,
             build_ocr_suggested_fields  as _bosf,
         )
+        from tax_appeal_ocr_policy import (      # type: ignore[import-not-found]
+            get_ocr_evidence_policy_matrix as _gpm,
+        )
         _is_qa         = request_id and request_id.startswith("QA-")
         _ocr_jobs      = _loj(request_id)  if (request_id and not _is_qa) else []
         _ocr_pilot_sum = _bops(_ocr_jobs)
         _ocr_drafts    = _loed(request_id) if (request_id and not _is_qa) else []
         _ocr_suggested = _bosf(_ocr_drafts)
+
+        # ── Broad advisory summary ─────────────────────────────────────────
+        _policy_matrix  = _gpm()
+        _struct_types   = [r["evidence_type"] for r in _policy_matrix if r["structured_parser_supported"] and not r["ocr_supported"]]
+        _ocr_types_supp = [r["evidence_type"] for r in _policy_matrix if r["ocr_supported"]]
+        _total_ocr_jobs = _ocr_pilot_sum.get("total_ocr_jobs", 0)
+        _struct_placeholders = sum(
+            1 for j in _ocr_jobs if j.get("evidence_type") in _struct_types
+        )
+        _suggestions_by_ev: dict = {}
+        for sf in _ocr_suggested:
+            _et = sf.get("evidence_type", "other")
+            _suggestions_by_ev.setdefault(_et, 0)
+            _suggestions_by_ev[_et] += 1
+
+        _broad_advisory_summary: dict = {
+            "advisory_mode_active":                   True,
+            "supported_evidence_types_count":         len(_policy_matrix),
+            "ocr_supported_types_count":              len(_ocr_types_supp),
+            "structured_parser_types_count":          len(_struct_types),
+            "total_ocr_jobs":                         _total_ocr_jobs,
+            "total_structured_placeholders":          _struct_placeholders,
+            "total_ocr_suggested_fields":             len(_ocr_suggested),
+            "suggestions_by_evidence_type":           _suggestions_by_ev,
+            "preliminary_visible_suggestions_count":  len(_ocr_suggested),
+            "expert_review_required_count":           len(_ocr_suggested),
+            "production_ready_count":                 0,
+            "certified_usage_allowed_count":          0,
+            "external_api_used":                      False,
+            "qdrant_active_now":                      False,
+            "rag_active_now":                         False,
+            "limitations": [
+                "OCR يعمل محليًا فقط — لا API خارجي.",
+                "القيم المستخرجة استرشادية غير معتمدة حتى يؤكدها الخبير.",
+                "ملفات Excel/CSV تحتاج محلل بنيوي منفصل.",
+                "الصور: يُستخرج النص الظاهر فقط — لا استنتاج هندسي تلقائي.",
+            ],
+            "warnings": _ocr_pilot_sum.get("warnings", []),
+        }
+
+        # ── Per-evidence-type advisory grouping ────────────────────────────
+        from tax_appeal_ocr_routes import _EVIDENCE_LABELS_AR as _ev_labels  # type: ignore[import-not-found]
+        _ev_groups: dict = {}
+        for sf in _ocr_suggested:
+            _et = sf.get("evidence_type", "other")
+            _ev_groups.setdefault(_et, [])
+            _ev_groups[_et].append(sf)
+
+        _advisory_by_ev: list[dict] = []
+        for _et, _sfs in _ev_groups.items():
+            _pol = next((r for r in _policy_matrix if r["evidence_type"] == _et), {})
+            _advisory_by_ev.append({
+                "evidence_type":           _et,
+                "evidence_label_ar":       _ev_labels.get(_et, _et),
+                "ocr_status":              "suggestions_available",
+                "suggestions_count":       len(_sfs),
+                "top_suggestions":         _sfs[:3],
+                "preliminary_visible":     True,
+                "expert_review_required":  True,
+                "production_ready":        False,
+                "certified_usage_allowed": False,
+                "limitations_ar":          _pol.get("limitations_ar", ""),
+            })
+        # Add structured types that appeared in jobs but have no suggestions
+        for _j in _ocr_jobs:
+            _jt = _j.get("evidence_type", "")
+            if _jt in _struct_types and _jt not in _ev_groups:
+                _pol = next((r for r in _policy_matrix if r["evidence_type"] == _jt), {})
+                _advisory_by_ev.append({
+                    "evidence_type":           _jt,
+                    "evidence_label_ar":       _ev_labels.get(_jt, _jt),
+                    "ocr_status":              "structured_parser_required",
+                    "suggestions_count":       0,
+                    "top_suggestions":         [],
+                    "preliminary_visible":     True,
+                    "expert_review_required":  True,
+                    "production_ready":        False,
+                    "certified_usage_allowed": False,
+                    "limitations_ar":          _pol.get("limitations_ar", ""),
+                })
+
     except Exception:
         _ocr_pilot_sum = {
             "ocr_active_now": False, "qdrant_active_now": False,
@@ -6299,7 +6383,27 @@ def _build_tax_appeal_context(
             "production_ready_count": 0,
             "warnings": [],
         }
-        _ocr_suggested = []
+        _ocr_suggested         = []
+        _broad_advisory_summary = {
+            "advisory_mode_active": True,
+            "supported_evidence_types_count": 22,
+            "ocr_supported_types_count": 19,
+            "structured_parser_types_count": 3,
+            "total_ocr_jobs": 0,
+            "total_structured_placeholders": 0,
+            "total_ocr_suggested_fields": 0,
+            "suggestions_by_evidence_type": {},
+            "preliminary_visible_suggestions_count": 0,
+            "expert_review_required_count": 0,
+            "production_ready_count": 0,
+            "certified_usage_allowed_count": 0,
+            "external_api_used": False,
+            "qdrant_active_now": False,
+            "rag_active_now": False,
+            "limitations": [],
+            "warnings": [],
+        }
+        _advisory_by_ev = []
 
     ctx: dict = {
         # Identifiers
@@ -6470,6 +6574,12 @@ def _build_tax_appeal_context(
         # Only from unconfirmed/unrejected drafts. production_ready always False.
         # Final/certified reports must not render these without expert confirmation.
         "ocr_suggested_fields": _ocr_suggested,
+
+        # ── Broad advisory OCR (all evidence types) ────────────────────────
+        # production_ready_count = 0 always for raw OCR suggestions.
+        # certified_usage_allowed_count = 0 always for raw OCR suggestions.
+        "ocr_broad_advisory_summary":     _broad_advisory_summary,
+        "ocr_advisory_by_evidence_type":  _advisory_by_ev,
     }
 
     return ctx

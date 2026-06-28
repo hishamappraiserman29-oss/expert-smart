@@ -6989,3 +6989,294 @@ def test_TAB474_ocr_pilot_qa_outputs_exist():
     ]
     for fname in expected:
         assert (out_dir / fname).exists(), f"QA output missing: {fname}"
+
+
+# =============================================================================
+# TAB475-TAB501 — OCR Broad Advisory Pilot tests
+# =============================================================================
+
+import sys as _sys
+import pathlib as _pathlib
+_sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parents[1]))
+
+
+# -- TAB475 -- policy matrix returns list of dicts
+def test_TAB475_policy_matrix_returns_list():
+    from tax_appeal_ocr_policy import get_ocr_evidence_policy_matrix
+    matrix = get_ocr_evidence_policy_matrix()
+    assert isinstance(matrix, list)
+    assert len(matrix) >= 22
+
+
+# -- TAB476 -- every matrix entry has required keys
+def test_TAB476_policy_matrix_entry_required_keys():
+    from tax_appeal_ocr_policy import get_ocr_evidence_policy_matrix
+    required = {
+        "evidence_type", "ocr_supported", "text_passthrough_supported",
+        "structured_parser_supported", "preliminary_advisory_display_allowed",
+        "expert_review_required", "certified_usage_requires_confirmation",
+        "raw_text_visible_to_expert", "raw_text_visible_to_ordinary_user",
+        "candidate_fields_supported", "limitations_ar",
+    }
+    for entry in get_ocr_evidence_policy_matrix():
+        missing = required - set(entry.keys())
+        assert not missing, f"Matrix entry {entry.get('evidence_type')} missing keys: {missing}"
+
+
+# -- TAB477 -- raw_text_visible_to_ordinary_user is always False
+def test_TAB477_raw_text_not_visible_to_ordinary_user():
+    from tax_appeal_ocr_policy import get_ocr_evidence_policy_matrix
+    for entry in get_ocr_evidence_policy_matrix():
+        assert entry["raw_text_visible_to_ordinary_user"] is False, \
+            f"evidence_type={entry['evidence_type']} leaks raw text to ordinary user"
+
+
+# -- TAB478 -- Excel/CSV types have structured_parser_supported=True
+def test_TAB478_excel_types_structured_parser():
+    from tax_appeal_ocr_policy import get_ocr_policy_for_evidence_type
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        pol = get_ocr_policy_for_evidence_type(et)
+        assert pol is not None, f"No policy for {et}"
+        assert pol["structured_parser_supported"] is True, f"{et} must have structured_parser_supported=True"
+        assert pol["ocr_supported"] is False, f"{et} must not be OCR-supported"
+
+
+# -- TAB479 -- tax_notice_form3 has all advisory flags set correctly
+def test_TAB479_tax_notice_form3_policy():
+    from tax_appeal_ocr_policy import get_ocr_policy_for_evidence_type
+    pol = get_ocr_policy_for_evidence_type("tax_notice_form3")
+    assert pol is not None
+    assert pol["ocr_supported"] is True
+    assert pol["preliminary_advisory_display_allowed"] is True
+    assert pol["expert_review_required"] is True
+    assert pol["certified_usage_requires_confirmation"] is True
+    assert pol["raw_text_visible_to_ordinary_user"] is False
+
+
+# -- TAB480 -- get_structured_evidence_types returns exactly the 3 Excel types
+def test_TAB480_structured_evidence_types():
+    from tax_appeal_ocr_policy import get_structured_evidence_types
+    structured = get_structured_evidence_types()
+    assert set(structured) == {
+        "market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"
+    }
+
+
+# -- TAB481 -- build_ocr_field_candidates on tax_notice_form3 returns candidates
+def test_TAB481_candidates_tax_notice_form3():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "المساحة: 250 م²  قيمة إيجارية: 8500  الاستخدام: سكني"
+    result = build_ocr_field_candidates(raw, "tax_notice_form3", "test_tpl")
+    assert result["evidence_type"] == "tax_notice_form3"
+    assert isinstance(result["candidates"], list)
+    assert not result.get("is_structured")
+
+
+# -- TAB482 -- build_ocr_field_candidates on lease_contract returns candidates
+def test_TAB482_candidates_lease_contract():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "عقد إيجار بتاريخ 1/1/2024  الإيجار السنوي: 36000 جنيه"
+    result = build_ocr_field_candidates(raw, "lease_contract", "test_tpl")
+    assert result["evidence_type"] == "lease_contract"
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB483 -- build_ocr_field_candidates on building_permit returns candidates
+def test_TAB483_candidates_building_permit():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "رخصة بناء رقم 456  الارتفاع: 12 م  عدد الأدوار: 4"
+    result = build_ocr_field_candidates(raw, "building_permit", "test_tpl")
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB484 -- build_ocr_field_candidates on commercial_register returns candidates
+def test_TAB484_candidates_commercial_register():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "سجل تجاري رقم 123456  النشاط: تجارة تجزئة"
+    result = build_ocr_field_candidates(raw, "commercial_register", "test_tpl")
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB485 -- build_ocr_field_candidates on land_allocation_document returns candidates
+def test_TAB485_candidates_land_allocation():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "مستند تخصيص أرض رقم 999  المساحة: 500 م²  الجهة: NUCA"
+    result = build_ocr_field_candidates(raw, "land_allocation_document", "test_tpl")
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB486 -- build_ocr_field_candidates on area_statement returns candidates
+def test_TAB486_candidates_area_statement():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "كشف مساحات: الدور الأرضي 120 م²  الإجمالي: 240 م²"
+    result = build_ocr_field_candidates(raw, "area_statement", "test_tpl")
+    assert isinstance(result["candidates"], list)
+
+
+# -- TAB487 -- floor_plan is image-only type
+def test_TAB487_floor_plan_image_only():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "Floor Plan Level 1 Area 120 sqm"
+    result = build_ocr_field_candidates(raw, "floor_plan", "test_tpl")
+    assert result.get("is_image_only") is True
+
+
+# -- TAB488 -- property_photos is image-only type
+def test_TAB488_property_photos_image_only():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "Photo taken 2024"
+    result = build_ocr_field_candidates(raw, "property_photos", "test_tpl")
+    assert result.get("is_image_only") is True
+
+
+# -- TAB489 -- market_comparables_excel is structured type (no OCR)
+def test_TAB489_market_comparables_structured():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = ""
+    result = build_ocr_field_candidates(raw, "market_comparables_excel", "test_tpl")
+    assert result.get("is_structured") is True
+    assert len(result["candidates"]) >= 1
+    assert result["candidates"][0]["field_key"] == "structured_parser_required"
+
+
+# -- TAB490 -- expert_note returns candidates with advisory label
+def test_TAB490_candidates_expert_note():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "مذكرة خبير  القيمة الإيجارية تستوجب المراجعة  2025/3/1"
+    result = build_ocr_field_candidates(raw, "expert_note", "test_tpl")
+    assert isinstance(result["candidates"], list)
+    for c in result["candidates"]:
+        assert c.get("advisory_label_ar") == "قراءة آلية مبدئية — غير معتمدة"
+
+
+# -- TAB491 -- safety invariant: production_ready always False
+def test_TAB491_safety_production_ready_false():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    for et in ("tax_notice_form3", "lease_contract", "ownership_document"):
+        raw = "المساحة: 200 م²  القيمة: 5000"
+        result = build_ocr_field_candidates(raw, et, "test_tpl")
+        for c in result["candidates"]:
+            assert c["production_ready"] is False, f"{et}: production_ready must be False"
+
+
+# -- TAB492 -- safety invariant: accepted_by_default always False
+def test_TAB492_safety_accepted_by_default_false():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    for et in ("tax_notice_form3", "building_permit", "commercial_register"):
+        raw = "المساحة: 200 م²  القيمة: 5000"
+        result = build_ocr_field_candidates(raw, et, "test_tpl")
+        for c in result["candidates"]:
+            assert c["accepted_by_default"] is False, f"{et}: accepted_by_default must be False"
+
+
+# -- TAB493 -- safety invariant: needs_human_review always True
+def test_TAB493_safety_needs_human_review_true():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    for et in ("tax_notice_form3", "land_allocation_document", "area_statement"):
+        raw = "المساحة: 200 م²  القيمة: 5000"
+        result = build_ocr_field_candidates(raw, et, "test_tpl")
+        for c in result["candidates"]:
+            assert c["needs_human_review"] is True, f"{et}: needs_human_review must be True"
+
+
+# -- TAB494 -- safety invariant: certified_usage_allowed always False
+def test_TAB494_safety_certified_usage_allowed_false():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    for et in ("tax_notice_form3", "expert_note", "legal_note"):
+        raw = "المساحة: 200 م²  القيمة: 5000"
+        result = build_ocr_field_candidates(raw, et, "test_tpl")
+        for c in result["candidates"]:
+            assert c["certified_usage_allowed"] is False, f"{et}: certified_usage_allowed must be False"
+
+
+# -- TAB495 -- safety invariant: preliminary_visible always True
+def test_TAB495_safety_preliminary_visible_true():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    raw = "المساحة: 200 م²  القيمة: 5000"
+    result = build_ocr_field_candidates(raw, "tax_notice_form3", "test_tpl")
+    for c in result["candidates"]:
+        assert c["preliminary_visible"] is True
+
+
+# -- TAB496 -- workbook builder function _sheet_ocr_preliminary_readings is importable
+def test_TAB496_workbook_ocr_preliminary_sheet_importable():
+    from tax_appeal_workbook_builder import _sheet_ocr_preliminary_readings
+    assert callable(_sheet_ocr_preliminary_readings)
+
+
+# -- TAB497 -- workbook builder function _sheet_ocr_evidence_policy is importable
+def test_TAB497_workbook_ocr_policy_sheet_importable():
+    from tax_appeal_workbook_builder import _sheet_ocr_evidence_policy
+    assert callable(_sheet_ocr_evidence_policy)
+
+
+# -- TAB498 -- OCR sheet functions write to worksheet without error
+def test_TAB498_workbook_ocr_sheets_created():
+    import openpyxl
+    from tax_appeal_workbook_builder import _sheet_ocr_preliminary_readings, _sheet_ocr_evidence_policy
+    ctx = {
+        "ocr_suggested_fields": [
+            {
+                "evidence_type": "tax_notice_form3",
+                "field_key": "rental_value",
+                "label_ar": "القيمة الإيجارية",
+                "candidate_value": "8500",
+                "confidence": 0.72,
+                "needs_human_review": True,
+                "accepted_by_default": False,
+                "production_ready": False,
+                "preliminary_visible": True,
+                "expert_review_visible": True,
+                "certified_usage_allowed": False,
+                "warning": "",
+            }
+        ],
+    }
+    wb = openpyxl.Workbook()
+    ws_pr  = wb.create_sheet("قراءات OCR المبدئية")
+    ws_pol = wb.create_sheet("سياسة OCR للمرفقات")
+    _sheet_ocr_preliminary_readings(ws_pr, ctx)
+    _sheet_ocr_evidence_policy(ws_pol, ctx)
+    assert "قراءات OCR المبدئية" in wb.sheetnames
+    assert "سياسة OCR للمرفقات" in wb.sheetnames
+    # Sheet must have header row data
+    assert ws_pr.cell(1, 1).value is not None
+    assert ws_pol.cell(1, 1).value is not None
+
+
+# -- TAB499 -- structured placeholder candidate has correct field_key
+def test_TAB499_structured_placeholder_field_key():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    for et in ("market_comparables_excel", "rental_comparables_excel", "tax_comparables_excel"):
+        result = build_ocr_field_candidates("", et, "test_tpl")
+        assert result["is_structured"] is True
+        assert result["candidates"][0]["field_key"] == "structured_parser_required"
+        assert result["candidates"][0]["production_ready"] is False
+        assert result["candidates"][0]["certified_usage_allowed"] is False
+
+
+# -- TAB500 -- structured placeholder warning contains meaningful message
+def test_TAB500_structured_placeholder_warning():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    result = build_ocr_field_candidates("", "market_comparables_excel", "test_tpl")
+    c = result["candidates"][0]
+    assert c.get("warning"), "Structured placeholder must include a warning"
+    assert len(c["warning"]) > 5
+
+
+# -- TAB501 -- advisory_label_ar is exactly the expected Arabic string for all types
+def test_TAB501_advisory_label_ar_exact_string():
+    from tax_appeal_ocr_candidates import build_ocr_field_candidates
+    expected_label = "قراءة آلية مبدئية — غير معتمدة"
+    test_evidence_types = [
+        ("tax_notice_form3",  "المساحة: 200 م²"),
+        ("lease_contract",    "الإيجار: 12000"),
+        ("building_permit",   "رخصة رقم 111"),
+        ("expert_note",       "ملاحظة الخبير"),
+        ("legal_note",        "مذكرة قانونية"),
+    ]
+    for et, raw in test_evidence_types:
+        result = build_ocr_field_candidates(raw, et, "test_tpl")
+        for c in result["candidates"]:
+            assert c.get("advisory_label_ar") == expected_label, \
+                f"{et}[{c.get('field_key')}] advisory_label_ar mismatch: {c.get('advisory_label_ar')!r}"

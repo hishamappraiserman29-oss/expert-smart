@@ -84,13 +84,28 @@ _FIELD_LABELS_AR: dict[str, str] = {
 }
 
 _EVIDENCE_LABELS_AR: dict[str, str] = {
-    "tax_notice_form3":                  "نموذج 3 إخطار ضريبي",
-    "ownership_document":                "وثيقة تمليك",
-    "activity_license":                  "ترخيص نشاط",
-    "industrial_license":                "ترخيص صناعي",
-    "factory_cost_guidance":             "جدول تكاليف المصانع",
-    "ain_shams_factory_cost_reference":  "مرجع عين شمس لتكاليف المصانع",
-    "nuca_land_price_reference":         "مرجع NUCA لأسعار الأراضي",
+    "tax_notice_form3":                    "نموذج 3 إخطار ضريبي",
+    "ownership_document":                  "وثيقة تمليك",
+    "lease_contract":                      "عقد إيجار",
+    "building_permit":                     "رخصة بناء",
+    "occupancy_or_completion_certificate": "شهادة إشغال / إتمام",
+    "activity_license":                    "ترخيص نشاط",
+    "commercial_register":                 "سجل تجاري",
+    "industrial_license":                  "ترخيص صناعي",
+    "land_allocation_document":            "مستند تخصيص أرض",
+    "area_statement":                      "كشف مساحات",
+    "floor_plan":                          "مخطط طابق",
+    "property_photos":                     "صور العقار",
+    "map_or_aerial_image":                 "خريطة / صورة جوية",
+    "market_comparables_excel":            "مقارنات بيوع (Excel)",
+    "rental_comparables_excel":            "مقارنات إيجار (Excel)",
+    "tax_comparables_excel":               "مقارنات ضريبية (Excel)",
+    "factory_cost_guidance":               "جدول تكاليف المصانع",
+    "ain_shams_factory_cost_reference":    "مرجع عين شمس لتكاليف المصانع",
+    "nuca_land_price_reference":           "مرجع NUCA لأسعار الأراضي",
+    "expert_note":                         "مذكرة الخبير",
+    "legal_note":                          "مذكرة قانونية",
+    "other":                               "مستند آخر",
 }
 
 # ── ID generator ──────────────────────────────────────────────────────────────
@@ -204,32 +219,38 @@ def _persist_ex(request_id: str, rec: dict) -> None:
 
 def _ocr_safe(rec: dict) -> dict:
     """Return API-safe OCR job dict — never includes internal file paths."""
+    ev_type = rec.get("evidence_type", "")
     return {
-        "ocr_job_id":          rec.get("ocr_job_id"),
-        "request_id":          rec.get("request_id"),
-        "evidence_id":         rec.get("evidence_id"),
-        "evidence_type":       rec.get("evidence_type"),
-        "job_status":          rec.get("job_status"),
-        "engine_name":         rec.get("engine_name"),
-        "engine_available":    rec.get("engine_available"),
-        "languages_requested": rec.get("languages_requested"),
-        "languages_used":      rec.get("languages_used"),
-        "page_count":          rec.get("page_count"),
-        "text_length":         rec.get("text_length"),
-        "confidence_overall":  rec.get("confidence_overall"),
-        "raw_text_preview":    rec.get("raw_text_preview"),
-        "warnings":            rec.get("warnings"),
-        "errors":              rec.get("errors"),
-        "created_at":          rec.get("created_at"),
-        "completed_at":        rec.get("completed_at"),
-        "created_by":          rec.get("created_by", "expert"),
-        "review_status":       rec.get("review_status"),
-        "production_ready":    False,   # always False
-        "external_api_used":   False,   # always False
-        "qdrant_used":         False,   # always False
-        "rag_used":            False,   # always False
-        "extraction_draft_id": rec.get("extraction_draft_id"),
-        "candidates_count":    rec.get("candidates_count", 0),
+        "ocr_job_id":              rec.get("ocr_job_id"),
+        "request_id":              rec.get("request_id"),
+        "evidence_id":             rec.get("evidence_id"),
+        "evidence_type":           ev_type,
+        "evidence_type_label_ar":  _EVIDENCE_LABELS_AR.get(ev_type, ev_type),
+        "job_status":              rec.get("job_status"),
+        "engine_name":             rec.get("engine_name"),
+        "engine_available":        rec.get("engine_available"),
+        "languages_requested":     rec.get("languages_requested"),
+        "languages_used":          rec.get("languages_used"),
+        "page_count":              rec.get("page_count"),
+        "text_length":             rec.get("text_length"),
+        "confidence_overall":      rec.get("confidence_overall"),
+        "raw_text_preview":        rec.get("raw_text_preview"),
+        "warnings":                rec.get("warnings"),
+        "errors":                  rec.get("errors"),
+        "created_at":              rec.get("created_at"),
+        "completed_at":            rec.get("completed_at"),
+        "created_by":              rec.get("created_by", "expert"),
+        "review_status":           rec.get("review_status"),
+        "production_ready":        False,   # always False
+        "external_api_used":       False,   # always False
+        "qdrant_used":             False,   # always False
+        "rag_used":                False,   # always False
+        "advisory_mode":           True,    # broad advisory mode always active
+        "preliminary_visible":     True,
+        "expert_review_required":  True,
+        "certified_usage_allowed": False,
+        "extraction_draft_id":     rec.get("extraction_draft_id"),
+        "candidates_count":        rec.get("candidates_count", 0),
     }
 
 
@@ -561,6 +582,25 @@ def register_ocr_routes(app, require_auth) -> None:
         info = get_engine_info()
         return jsonify({"status": "ok", "engine_info": info}), 200
 
+    # ── GET /api/tax-appeal/ocr/evidence-policy — policy matrix ───────────
+    @app.route("/api/tax-appeal/ocr/evidence-policy", methods=["GET"])
+    def tax_appeal_ocr_evidence_policy():
+        try:
+            from tax_appeal_ocr_policy import get_ocr_evidence_policy_matrix  # type: ignore[import-not-found]
+            matrix = get_ocr_evidence_policy_matrix()
+        except Exception as exc:
+            return jsonify({"status": "error", "message": str(exc)}), 500
+        return jsonify({
+            "status":            "ok",
+            "advisory_mode":     True,
+            "external_api_used": False,
+            "qdrant_used":       False,
+            "rag_used":          False,
+            "production_ready":  False,
+            "total_types":       len(matrix),
+            "policy_matrix":     matrix,
+        }), 200
+
 
 # ── Public loader (used by context builder) ───────────────────────────────────
 
@@ -665,18 +705,22 @@ def build_ocr_suggested_fields(extraction_drafts: list[dict]) -> list[dict]:
                 conf_label = "منخفضة"
 
             rows.append({
-                "field_key":              field_key,
-                "field_label_ar":         _FIELD_LABELS_AR.get(field_key, field_key),
-                "ocr_value":              str(raw_value),
-                "confidence":             confidence,
-                "confidence_label_ar":    conf_label,
-                "evidence_type":          ev_type,
-                "evidence_type_label_ar": ev_label,
-                "extraction_id":          ex_id,
-                "is_preliminary":         True,
-                "production_ready":       False,
-                "needs_human_review":     True,
-                "accepted_by_default":    False,
-                "label_ar":               "قراءة آلية مبدئية — غير معتمدة",
+                "field_key":               field_key,
+                "field_label_ar":          _FIELD_LABELS_AR.get(field_key, field_key),
+                "ocr_value":               str(raw_value),
+                "confidence":              confidence,
+                "confidence_label_ar":     conf_label,
+                "evidence_type":           ev_type,
+                "evidence_type_label_ar":  ev_label,
+                "extraction_id":           ex_id,
+                "is_preliminary":          True,
+                "production_ready":        False,
+                "needs_human_review":      True,
+                "accepted_by_default":     False,
+                "preliminary_visible":     True,
+                "expert_review_visible":   True,
+                "certified_usage_allowed": False,
+                "advisory_mode":           True,
+                "label_ar":                "قراءة آلية مبدئية — غير معتمدة",
             })
     return rows

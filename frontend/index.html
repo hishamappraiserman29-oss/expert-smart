@@ -34000,13 +34000,36 @@ function _expertSetBadge(id, label, available) {
   <!-- ══ OCR Pilot Section ═════════════════════════════════════════════════ -->
   <div id="tax-ocr-section" data-testid="tax-ocr-section"
        style="border-top:1px solid rgba(255,255,255,0.08); padding-top:1rem; margin-top:1rem; margin-bottom:1rem; display:none;">
-    <h4 style="color:#60a5fa; font-size:0.9rem; margin:0 0 0.5rem;">OCR Pilot — قراءة مبدئية للمستند</h4>
+    <h4 style="color:#60a5fa; font-size:0.9rem; margin:0 0 0.5rem;">OCR Advisory Pilot — قراءات مبدئية للمرفقات</h4>
+
+    <!-- Advisory section wrapper -->
+    <div data-testid="tax-ocr-advisory-section">
+
+    <!-- No-final-use warning (broad advisory) -->
+    <div data-testid="tax-ocr-no-final-use-warning"
+         style="background:rgba(127,29,29,0.10); border:1px solid rgba(220,38,38,0.35); border-radius:7px; padding:6px 12px; margin-bottom:0.6rem; color:#fca5a5; font-size:0.74rem; direction:rtl;">
+      ⚠ قراءات OCR مبدئية وغير معتمدة — لا تستخدم في التقرير النهائي قبل مراجعة الخبير.
+    </div>
 
     <!-- No-production warning -->
     <div data-testid="tax-ocr-no-production-warning"
          style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.3); border-radius:7px; padding:8px 12px; margin-bottom:0.8rem; color:#f87171; font-size:0.76rem; direction:rtl;">
       ⚠ هذه قراءة آلية مبدئية غير معتمدة. لا تُستخدم أي قيمة في التقرير إلا بعد مراجعة الخبير وتأكيدها وربطها بالحقل المناسب.
-      <br><span data-testid="tax-ocr-warning" style="font-size:0.72rem; color:#fca5a5;">OCR / Qdrant / RAG — Qdrant: غير مفعَّل. RAG: غير مفعَّل.</span>
+      <br><span data-testid="tax-ocr-warning" style="font-size:0.72rem; color:#fca5a5;">Qdrant: غير مفعَّل | RAG: غير مفعَّل | API خارجي: لا</span>
+    </div>
+
+    <!-- Evidence type policy matrix summary (collapsed) -->
+    <div data-testid="tax-ocr-policy-matrix"
+         style="background:rgba(30,41,59,0.4); border:1px solid rgba(96,165,250,0.15); border-radius:7px; padding:8px 12px; margin-bottom:0.8rem; font-size:0.73rem; color:#94a3b8; direction:rtl;">
+      <strong style="color:#93c5fd;">سياسة OCR للمرفقات:</strong>
+      PDF/صور: OCR محلي — Excel/CSV: مسار جدولي منفصل (Structured Parser) — لا API خارجي — لا Qdrant — لا RAG.
+      <br><span style="color:#6b7280;">جميع الاقتراحات: production_ready=false · accepted_by_default=false · needs_human_review=true · certified_usage_allowed=false</span>
+    </div>
+
+    <!-- Evidence type summary per type -->
+    <div data-testid="tax-ocr-evidence-type-summary"
+         style="background:rgba(30,41,59,0.3); border:1px solid rgba(255,255,255,0.07); border-radius:7px; padding:8px 12px; margin-bottom:0.8rem; font-size:0.73rem; color:#94a3b8; direction:rtl; display:none;">
+      <!-- Populated by JS from /ocr-jobs response -->
     </div>
 
     <!-- Evidence select + Run OCR -->
@@ -34032,8 +34055,21 @@ function _expertSetBadge(id, label, available) {
               style="display:inline-flex; align-items:center; padding:2px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#94a3b8; font-size:0.72rem;">—</span>
       </div>
 
+      <!-- Structured placeholder notice (shown for Excel/CSV evidence) -->
+      <div id="tax-ocr-structured-placeholder" data-testid="tax-ocr-structured-placeholder"
+           style="display:none; padding:5px 10px; background:rgba(14,165,233,0.08); border:1px solid rgba(14,165,233,0.25); border-radius:5px; color:#7dd3fc; font-size:0.72rem; direction:rtl;">
+        Structured parser required — not OCR.
+        ملف منظم — يحتاج مسار استخلاص جدولي منفصل، ولا يعالج كـ OCR.
+      </div>
+
       <!-- Action status -->
       <div id="tax-ocr-action-status" style="display:none; margin-bottom:6px; font-size:0.78rem; color:#94a3b8;"></div>
+    </div>
+
+    <!-- Advisory warning (shown when OCR result available) -->
+    <div id="tax-ocr-advisory-warning" data-testid="tax-ocr-advisory-warning"
+         style="display:none; background:rgba(146,64,14,0.12); border:1px solid rgba(202,138,4,0.4); border-radius:7px; padding:6px 12px; margin-bottom:0.8rem; color:#fbbf24; font-size:0.73rem; direction:rtl;">
+      قراءة OCR مبدئية — تحتاج مراجعة الخبير قبل أي استخدام رسمي.
     </div>
 
     <!-- OCR text preview (expert-only) -->
@@ -34043,11 +34079,13 @@ function _expertSetBadge(id, label, available) {
            style="font-family:Courier,'Courier New',monospace; font-size:0.72rem; color:#cbd5e1; background:rgba(15,23,42,0.7); border:1px solid rgba(255,255,255,0.08); border-radius:5px; padding:8px 10px; max-height:160px; overflow-y:auto; white-space:pre-wrap; direction:rtl; margin:0;">—</pre>
     </div>
 
-    <!-- Candidate fields table -->
+    <!-- Candidate fields table (grouped by evidence type) -->
     <div style="background:rgba(30,41,59,0.5); border:1px solid rgba(96,165,250,0.15); border-radius:8px; padding:12px 14px; margin-bottom:1rem;">
-      <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:6px; font-weight:700;">مرشحو الحقول (تتطلب مراجعة الخبير)</div>
+      <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:6px; font-weight:700;">مرشحو الحقول (مجمَّعة حسب نوع المستند — تتطلب مراجعة الخبير)</div>
       <div id="tax-ocr-candidate-list" data-testid="tax-ocr-candidate-list"
            style="font-size:0.75rem; color:#94a3b8; direction:rtl;">
+        <!-- Candidate groups rendered here by JS -->
+        <div data-testid="tax-ocr-candidate-group" style="display:none;"></div>
         <span style="color:#6b7280; font-style:italic;">لا توجد مرشحين بعد — قم بتشغيل OCR أولاً.</span>
       </div>
     </div>
@@ -34063,6 +34101,8 @@ function _expertSetBadge(id, label, available) {
         ✗ رفض نتيجة OCR
       </button>
     </div>
+
+    </div><!-- end tax-ocr-advisory-section -->
   </div>
   <!-- end ocr section -->
 
@@ -35168,17 +35208,35 @@ function taxOcrRenderCandidates(candidates) {
     var el = document.getElementById('tax-ocr-candidate-list');
     if (!el) return;
     if (!candidates || !candidates.length) {
-        el.innerHTML = '<span style="color:#6b7280;font-style:italic;">لم يُستخرج أي مرشح — أدخل القيم يدويًا.</span>';
+        el.innerHTML = '<div data-testid="tax-ocr-candidate-group" style="display:none;"></div>' +
+            '<span style="color:#6b7280;font-style:italic;">لم يُستخرج أي مرشح — أدخل القيم يدويًا.</span>';
         return;
     }
-    var rows = candidates.map(function(c, i) {
-        return '<div data-testid="tax-ocr-candidate-row" style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:4px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,0.05);">' +
-            '<span style="color:#cbd5e1;">' + (c.label_ar || c.field_key) + '</span>' +
-            '<span style="color:#fde68a;">' + (c.candidate_value || '—') + '</span>' +
-            '<span style="color:#f87171;font-size:0.68rem;">يحتاج مراجعة</span>' +
-            '</div>';
-    }).join('');
-    el.innerHTML = '<div style="font-size:0.72rem; color:#6b7280; margin-bottom:4px; padding:0 6px;">⚠ جميع المرشحين يحتاجون مراجعة الخبير — لا يُقبل أي منهم تلقائيًا.</div>' + rows;
+    // Group candidates by evidence_type
+    var groups = {};
+    candidates.forEach(function(c) {
+        var et = c.evidence_type || 'other';
+        if (!groups[et]) groups[et] = [];
+        groups[et].push(c);
+    });
+    var evLabels = {};
+    _TAX_OCR_EVIDENCE_TYPES.forEach(function(t) { evLabels[t.value] = t.label; });
+    var html = '<div style="font-size:0.72rem; color:#f87171; margin-bottom:6px; padding:2px 6px;">⚠ جميع المرشحين يحتاجون مراجعة الخبير — لا يُقبل أي منهم تلقائيًا. advisory_label_ar: قراءة آلية مبدئية — غير معتمدة</div>';
+    Object.keys(groups).forEach(function(et) {
+        var label = evLabels[et] || et;
+        var rows = groups[et].map(function(c) {
+            var conf = typeof c.confidence === 'number' ? (c.confidence * 100).toFixed(0) + '%' : '—';
+            return '<div style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:4px;padding:3px 6px;border-bottom:1px solid rgba(255,255,255,0.04);">' +
+                '<span style="color:#cbd5e1;">' + (c.label_ar || c.field_key || '—') + '</span>' +
+                '<span style="color:#fde68a;">' + (c.candidate_value || '—') + '</span>' +
+                '<span style="color:#94a3b8;font-size:0.68rem;">' + conf + ' — غير معتمد</span>' +
+                '</div>';
+        }).join('');
+        html += '<div data-testid="tax-ocr-candidate-group" style="border:1px solid rgba(96,165,250,0.12);border-radius:6px;margin-bottom:6px;overflow:hidden;">' +
+            '<div style="background:rgba(30,41,59,0.7);padding:4px 8px;font-size:0.72rem;color:#93c5fd;font-weight:700;">' + label + ' <span style="color:#6b7280;font-weight:400;">(' + groups[et].length + ')</span></div>' +
+            rows + '</div>';
+    });
+    el.innerHTML = html;
 }
 
 async function taxOcrRun() {
@@ -35203,10 +35261,11 @@ async function taxOcrRun() {
         taxOcrSetStatus(job.job_status || 'completed', job.job_status === 'completed' ? '#4ade80' : '#fbbf24');
         var preview = document.getElementById('tax-ocr-text-preview');
         if (preview) preview.textContent = job.raw_text_preview || '(لا يوجد نص)';
-        // Build candidates client-side from job data (candidates are in response if passed)
-        taxOcrRenderCandidates([]);  // candidates come via separate call or from job
+        var candidates = data.ocr_suggested_fields || job.candidates || [];
+        taxOcrRenderCandidates(candidates);
         taxOcrShowActionStatus('اكتمل OCR. راجع النص وأنشئ مسودة استخراج.', true);
-        // Reload OCR job to get candidates count
+        var wp = document.getElementById('tax-ocr-advisory-warning');
+        if (wp) wp.style.display = '';
         taxOcrLoadJob(job.ocr_job_id);
     } catch(e) { taxOcrSetStatus('خطأ', '#f87171'); taxOcrShowActionStatus('خطأ: ' + e.message, false); }
 }
@@ -35271,20 +35330,70 @@ async function taxOcrReject() {
     } catch(e) { taxOcrShowActionStatus('خطأ: ' + e.message, false); }
 }
 
+var _TAX_OCR_EVIDENCE_TYPES = [
+    {value:'tax_notice_form3',                  label:'نموذج 3 إخطار ضريبي'},
+    {value:'ownership_document',                label:'وثيقة تمليك'},
+    {value:'lease_contract',                    label:'عقد إيجار'},
+    {value:'building_permit',                   label:'رخصة بناء'},
+    {value:'occupancy_or_completion_certificate',label:'شهادة إشغال / إتمام'},
+    {value:'activity_license',                  label:'ترخيص نشاط'},
+    {value:'commercial_register',               label:'سجل تجاري'},
+    {value:'industrial_license',                label:'ترخيص صناعي'},
+    {value:'land_allocation_document',          label:'مستند تخصيص أرض'},
+    {value:'area_statement',                    label:'كشف مساحات'},
+    {value:'floor_plan',                        label:'مخطط طابق'},
+    {value:'property_photos',                   label:'صور العقار'},
+    {value:'map_or_aerial_image',               label:'خريطة / صورة جوية'},
+    {value:'market_comparables_excel',          label:'مقارنات بيوع (Excel)'},
+    {value:'rental_comparables_excel',          label:'مقارنات إيجار (Excel)'},
+    {value:'tax_comparables_excel',             label:'مقارنات ضريبية (Excel)'},
+    {value:'factory_cost_guidance',             label:'جدول تكاليف المصانع'},
+    {value:'ain_shams_factory_cost_reference',  label:'مرجع عين شمس لتكاليف المصانع'},
+    {value:'nuca_land_price_reference',         label:'مرجع NUCA لأسعار الأراضي'},
+    {value:'expert_note',                       label:'مذكرة الخبير'},
+    {value:'legal_note',                        label:'مذكرة قانونية'},
+    {value:'other',                             label:'مستند آخر'},
+];
+var _TAX_OCR_STRUCTURED_TYPES = new Set([
+    'market_comparables_excel','rental_comparables_excel','tax_comparables_excel'
+]);
+
 function taxOcrRevealSection(requestId) {
     var sec = document.getElementById('tax-ocr-section');
     if (sec) sec.style.display = '';
-    // Populate evidence select from existing evidence
+    // Populate evidence select with all 22 advisory evidence types
     var evSel = document.getElementById('tax-ocr-evidence-select');
-    var srcSel = document.getElementById('tax-extraction-evidence-select');
-    if (evSel && srcSel) {
-        evSel.innerHTML = srcSel.innerHTML;  // mirror extraction evidence options
+    if (evSel) {
+        evSel.innerHTML = '<option value="">— اختر المستند —</option>' +
+            _TAX_OCR_EVIDENCE_TYPES.map(function(t) {
+                return '<option value="' + t.value + '">' + t.label + '</option>';
+            }).join('');
+        evSel.onchange = function() { taxOcrHandleEvidenceChange(this.value); };
     }
     _taxOcrCurrentJobId = null;
     taxOcrSetStatus('—', '#94a3b8');
     var preview = document.getElementById('tax-ocr-text-preview');
     if (preview) preview.textContent = '—';
     taxOcrRenderCandidates([]);
+    var wp = document.getElementById('tax-ocr-advisory-warning');
+    if (wp) wp.style.display = 'none';
+    var sp = document.getElementById('tax-ocr-structured-placeholder');
+    if (sp) sp.style.display = 'none';
+}
+
+function taxOcrHandleEvidenceChange(evType) {
+    var sp = document.getElementById('tax-ocr-structured-placeholder');
+    var btn = document.querySelector('[data-testid="tax-ocr-run-button"]');
+    if (_TAX_OCR_STRUCTURED_TYPES.has(evType)) {
+        if (sp) sp.style.display = '';
+        if (btn) btn.disabled = true;
+        taxOcrSetStatus('Structured parser required — not OCR', '#7dd3fc');
+        taxOcrRenderCandidates([]);
+    } else {
+        if (sp) sp.style.display = 'none';
+        if (btn) btn.disabled = false;
+        taxOcrSetStatus('—', '#94a3b8');
+    }
 }
 </script>
 

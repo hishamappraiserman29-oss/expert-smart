@@ -1868,19 +1868,71 @@
 </div>
 {% endif %}
 
-<!-- ══ حالة OCR Pilot (Preliminary — قيم مبدئية غير معتمدة) ════════════════════ -->
+<!-- ══ قراءات OCR المبدئية للمرفقات (Preliminary — غير معتمدة) ═══════════════ -->
 {% set ocr_s_p = ocr_pilot_summary or {} %}
-{% set ocr_sf = ocr_suggested_fields or [] %}
+{% set ocr_sf  = ocr_suggested_fields or [] %}
+{% set ocr_bas = ocr_broad_advisory_summary or {} %}
+{% set ocr_bev = ocr_advisory_by_evidence_type or [] %}
 <div class="sec">
-  <div class="sec-hdr amber">حالة OCR Pilot — قراءة مبدئية للمستندات (غير معتمدة)</div>
+  <div class="sec-hdr amber">قراءات OCR المبدئية للمرفقات — غير معتمدة</div>
   <div class="sec-body">
+
+    <!-- Summary table -->
     <table class="ftbl" style="margin-bottom:8px;">
-      <tr><td class="lbl">OCR مفعَّل للـ Pilot</td><td>{{ "نعم" if ocr_s_p.ocr_active_now else "لا" }}</td><td class="lbl">API خارجي</td><td>لا</td></tr>
-      <tr><td class="lbl">Qdrant مفعَّل</td><td>لا</td><td class="lbl">RAG مفعَّل</td><td>لا</td></tr>
-      <tr><td class="lbl">إجمالي مهام OCR</td><td>{{ ocr_s_p.total_ocr_jobs or 0 }}</td><td class="lbl">مهام مكتملة</td><td>{{ ocr_s_p.completed_ocr_jobs or 0 }}</td></tr>
-      <tr><td class="lbl">مسودات استخراج</td><td>{{ ocr_s_p.extraction_drafts_created_from_ocr or 0 }}</td><td class="lbl">قيم مؤكدة من خبير</td><td>{{ ocr_s_p.expert_confirmed_ocr_values or 0 }}</td></tr>
+      <tr>
+        <td class="lbl">OCR مفعَّل (Pilot)</td>
+        <td>{{ "نعم" if ocr_s_p.ocr_active_now else "لا" }}</td>
+        <td class="lbl">API خارجي / Qdrant / RAG</td>
+        <td style="color:#1A5E30;font-weight:700;">لا — لا — لا</td>
+      </tr>
+      <tr>
+        <td class="lbl">إجمالي مهام OCR</td>
+        <td>{{ ocr_s_p.total_ocr_jobs or 0 }}</td>
+        <td class="lbl">إجمالي اقتراحات الحقول</td>
+        <td>{{ ocr_bas.total_ocr_suggested_fields or 0 }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">نتائج جاهزة للإنتاج</td>
+        <td style="color:#DC2626;font-weight:700;">0 — دائمًا</td>
+        <td class="lbl">مستخدَمة في تقرير معتمد</td>
+        <td style="color:#DC2626;font-weight:700;">0 — يلزم تأكيد الخبير</td>
+      </tr>
     </table>
 
+    <!-- Per-evidence-type document-level summary -->
+    {% if ocr_bev %}
+    <p style="font-weight:700;color:#92400E;font-size:8.5pt;margin:6px 0 4px;">ملخص OCR حسب نوع المستند:</p>
+    <table class="cmp" style="margin-bottom:8px;">
+      <thead>
+        <tr>
+          <th>نوع المستند</th>
+          <th>حالة OCR</th>
+          <th>عدد الاقتراحات</th>
+          <th>حالة الاعتماد</th>
+          <th>ملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eg in ocr_bev %}
+        <tr>
+          <td style="font-weight:600;color:#1B2E4B;font-size:8pt;">{{ eg.evidence_label_ar }}</td>
+          <td style="font-size:7.5pt;">
+            {% if eg.ocr_status == "structured_parser_required" %}
+            <span style="color:#6B7280;">مسار جدولي — ليس OCR</span>
+            {% else %}
+            <span style="color:#92400E;">اقتراحات متاحة</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">{{ eg.suggestions_count }}</td>
+          <td style="color:#DC2626;font-weight:700;font-size:7.5pt;">غير معتمدة</td>
+          <td style="font-size:7pt;color:#6B7280;">{{ eg.limitations_ar[:60] if eg.limitations_ar else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Field-level suggestions (no raw OCR text) -->
     {% if ocr_sf %}
     <p style="font-weight:700;color:#1B2E4B;font-size:8.5pt;margin-bottom:4px;">
       القيم المستخرجة آليًا — مبدئية غير معتمدة (تتطلب مراجعة وتأكيد الخبير):
@@ -1920,9 +1972,19 @@
     <p style="font-size:8pt;color:#6B7280;font-style:italic;">لا توجد قيم مستخرجة آليًا من مستندات هذا الطلب حتى الآن.</p>
     {% endif %}
 
+    <!-- Structured Excel/CSV notice -->
+    {% if ocr_bas.structured_parser_types_count and ocr_bas.structured_parser_types_count > 0 %}
+    <div style="margin-top:6px;padding:5px 8px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:3px;font-size:7.5pt;color:#0C4A6E;">
+      <strong>ملاحظة:</strong>
+      ملفات Excel/CSV (مقارنات بيوع / إيجار / ضريبية) لا تُعالَج بـ OCR —
+      تحتاج مسار استخلاص جدولي منفصل لم يُفعَّل بعد.
+    </div>
+    {% endif %}
+
+    <!-- Disclaimer -->
     <p style="color:#DC2626;font-weight:700;font-size:8pt;margin-top:8px;border-right:3px solid #DC2626;padding-right:6px;">
-      تحذير: لا تصلح هذه القراءة للاستخدام الرسمي أو التقرير المعتمد إلا بعد مراجعة وتأكيد الخبير.
-      قيم OCR مُوسَمة "قراءة آلية مبدئية — غير معتمدة" ولا تُعوِّض البيانات اليدوية أو المؤكدة من الخبير.
+      تحذير: هذه القيم ناتجة عن قراءة آلية مبدئية للمرفقات ولا تعد قيماً معتمدة أو صالحة للتقديم الرسمي
+      إلا بعد مراجعة وتأكيد الخبير. OCR مُوسَم "قراءة آلية مبدئية — غير معتمدة".
       هذا التقرير مبدئي غير معتمد.
     </p>
   </div>

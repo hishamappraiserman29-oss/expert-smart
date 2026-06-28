@@ -4556,6 +4556,157 @@ def _sheet_ocr_pilot(ws, ctx: dict) -> None:
         ws.column_dimensions[get_column_letter(ci)].width = 22
 
 
+def _sheet_ocr_preliminary_readings(ws, ctx: dict) -> None:
+    """Populate the قراءات OCR المبدئية sheet (all evidence-type suggestions)."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill = _hdr_fill("92400E")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    red_fill    = PatternFill("solid", fgColor="FEE2E2")
+    yellow_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1, value="قراءات OCR المبدئية — جميع أنواع المستندات (غير معتمدة)").font = \
+        Font(name="Cairo", bold=True, size=12, color="92400E")
+    ws.cell(row=2, column=1, value=(
+        "هذه القيم ناتجة عن قراءة آلية مبدئية للمرفقات ولا تعد قيماً معتمدة أو صالحة للتقديم "
+        "الرسمي إلا بعد مراجعة وتأكيد الخبير. production_ready = False دائمًا. "
+        "accepted_by_default = False دائمًا."
+    )).font = Font(name="Cairo", size=8, color="DC2626", italic=True)
+
+    headers = [
+        "evidence_type", "field_key", "label_ar", "candidate_value",
+        "confidence", "needs_human_review", "accepted_by_default",
+        "production_ready", "preliminary_visible", "expert_review_visible",
+        "certified_usage_allowed", "warning",
+    ]
+    hr = 4
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    suggestions = ctx.get("ocr_suggested_fields") or []
+    if not suggestions:
+        ws.cell(row=hr + 1, column=1,
+                value="لا توجد قراءات OCR مبدئية لهذا الطلب.").font = \
+            Font(name="Cairo", size=9, color="6B7280", italic=True)
+    else:
+        for i, sf in enumerate(suggestions, 1):
+            row = hr + i
+            vals = [
+                sf.get("evidence_type", ""),
+                sf.get("field_key", ""),
+                sf.get("field_label_ar", sf.get("label_ar", "")),
+                str(sf.get("ocr_value", "")),
+                str(round(float(sf.get("confidence", 0)), 3)),
+                "نعم",  # needs_human_review always True
+                "لا",   # accepted_by_default always False
+                "لا",   # production_ready always False
+                "نعم" if sf.get("preliminary_visible", True) else "لا",
+                "نعم" if sf.get("expert_review_visible", True) else "لا",
+                "لا",   # certified_usage_allowed always False
+                sf.get("label_ar", "قراءة آلية مبدئية — غير معتمدة"),
+            ]
+            for ci, v in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=v)
+                c.font = _data_font()
+                if ci in (7, 8, 11):  # accepted_by_default, production_ready, certified_usage_allowed = لا
+                    c.fill = red_fill
+                    c.font = Font(name="Cairo", size=9, color="B91C1C", bold=True)
+                elif ci == 6:  # needs_human_review = نعم
+                    c.fill = yellow_fill
+
+    for ci in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(ci)].width = 22
+
+
+def _sheet_ocr_evidence_policy(ws, ctx: dict) -> None:
+    """Populate the سياسة OCR للمرفقات sheet from the policy matrix."""
+    from openpyxl.styles import Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    hdr_fill = _hdr_fill("1E3A5F")
+    hdr_font = _hdr_font()
+    ctr      = _center_align()
+    green_fill  = PatternFill("solid", fgColor="D1FAE5")
+    red_fill    = PatternFill("solid", fgColor="FEE2E2")
+    yellow_fill = PatternFill("solid", fgColor="FEF3C7")
+
+    ws.cell(row=1, column=1, value="سياسة OCR للمرفقات — جميع أنواع المستندات المدعومة").font = \
+        Font(name="Cairo", bold=True, size=12, color="1E3A5F")
+    ws.cell(row=2, column=1, value=(
+        "مصفوفة السياسة تحدد ما يمكن معالجته بـ OCR مقابل المحلل البنيوي (structured parser). "
+        "raw_text_visible_to_ordinary_user = False دائمًا. "
+        "expert_review_required = True دائمًا. "
+        "certified_usage_requires_confirmation = True دائمًا."
+    )).font = Font(name="Cairo", size=8, color="1E3A5F", italic=True)
+
+    headers = [
+        "evidence_type", "ocr_supported", "text_passthrough_supported",
+        "structured_parser_supported", "preliminary_advisory_display_allowed",
+        "expert_review_required", "certified_usage_requires_confirmation",
+        "raw_text_visible_to_expert", "raw_text_visible_to_ordinary_user",
+        "limitations_ar",
+    ]
+    hr = 4
+    for ci, h in enumerate(headers, 1):
+        cell = ws.cell(row=hr, column=ci, value=h)
+        cell.font      = hdr_font
+        cell.fill      = hdr_fill
+        cell.alignment = ctr
+
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.dirname(__file__))
+        from tax_appeal_ocr_policy import get_ocr_evidence_policy_matrix  # type: ignore[import-not-found]
+        matrix = get_ocr_evidence_policy_matrix()
+    except Exception:
+        matrix = []
+
+    if not matrix:
+        ws.cell(row=hr + 1, column=1,
+                value="تعذَّر تحميل مصفوفة سياسة OCR.").font = \
+            Font(name="Cairo", size=9, color="DC2626", italic=True)
+    else:
+        for i, pol in enumerate(matrix, 1):
+            row = hr + i
+
+            def _bool_ar(v):
+                return "نعم" if v else "لا"
+
+            vals = [
+                pol.get("evidence_type", ""),
+                _bool_ar(pol.get("ocr_supported")),
+                _bool_ar(pol.get("text_passthrough_supported")),
+                _bool_ar(pol.get("structured_parser_supported")),
+                _bool_ar(pol.get("preliminary_advisory_display_allowed")),
+                _bool_ar(pol.get("expert_review_required")),
+                _bool_ar(pol.get("certified_usage_requires_confirmation")),
+                _bool_ar(pol.get("raw_text_visible_to_expert")),
+                _bool_ar(pol.get("raw_text_visible_to_ordinary_user")),
+                pol.get("limitations_ar", ""),
+            ]
+            for ci, v in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=v)
+                c.font = _data_font()
+                if v == "نعم":
+                    c.fill = green_fill
+                elif v == "لا" and ci in (2, 3):  # ocr / text passthrough disabled
+                    pass  # neutral
+                elif v == "لا" and ci == 9:  # raw_text_to_ordinary_user = لا — good
+                    c.fill = green_fill
+                elif v == "لا" and ci in (5, 6, 7):  # advisory / review / confirmation = لا — warn
+                    c.fill = red_fill
+
+    ws.column_dimensions[get_column_letter(1)].width  = 36
+    ws.column_dimensions[get_column_letter(10)].width = 55
+    for ci in range(2, 10):
+        ws.column_dimensions[get_column_letter(ci)].width = 18
+
+
 def _sheet_ocr_qdrant_readiness(ws, ctx: dict) -> None:
     """Populate the جاهزية OCR-Qdrant المستقبلية sheet.
 
@@ -5006,15 +5157,21 @@ def _create_tax_appeal_workbook(
     ws_fmc.sheet_properties.tabColor = "B91C1C"  # conflicts — dark red
 
     # ── Extraction readiness sheets ───────────────────────────────────────────
-    ws_ex   = wb.create_sheet("استخراج البيانات")
-    ws_exfr = wb.create_sheet("جاهزية OCR-Qdrant المستقبلية")
-    ws_ocr  = wb.create_sheet("OCR Pilot")
+    ws_ex      = wb.create_sheet("استخراج البيانات")
+    ws_exfr    = wb.create_sheet("جاهزية OCR-Qdrant المستقبلية")
+    ws_ocr     = wb.create_sheet("OCR Pilot")
+    ws_ocr_pr  = wb.create_sheet("قراءات OCR المبدئية")
+    ws_ocr_pol = wb.create_sheet("سياسة OCR للمرفقات")
     _sheet_extraction_data(ws_ex, ctx)
     _sheet_ocr_qdrant_readiness(ws_exfr, ctx)
     _sheet_ocr_pilot(ws_ocr, ctx)
-    ws_ex.sheet_properties.tabColor   = "7C3AED"  # extraction — purple
-    ws_exfr.sheet_properties.tabColor = "6B7280"  # future readiness — muted gray
-    ws_ocr.sheet_properties.tabColor  = "1D4ED8"  # OCR Pilot — blue
+    _sheet_ocr_preliminary_readings(ws_ocr_pr, ctx)
+    _sheet_ocr_evidence_policy(ws_ocr_pol, ctx)
+    ws_ex.sheet_properties.tabColor      = "7C3AED"  # extraction — purple
+    ws_exfr.sheet_properties.tabColor    = "6B7280"  # future readiness — muted gray
+    ws_ocr.sheet_properties.tabColor     = "1D4ED8"  # OCR Pilot — blue
+    ws_ocr_pr.sheet_properties.tabColor  = "92400E"  # preliminary readings — amber
+    ws_ocr_pol.sheet_properties.tabColor = "1E3A5F"  # policy matrix — navy
 
     # Persist
     out_dir = _WB_DIR / request_id

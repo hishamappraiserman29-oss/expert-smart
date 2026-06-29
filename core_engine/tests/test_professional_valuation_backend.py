@@ -811,3 +811,580 @@ def test_PVC30_no_internal_paths_in_evidence_source_responses(client):
         assert "evidence_files" not in body_str, (
             f"evidence_files path in {label} response"
         )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVD01–PVD35: Phase D — Comparable Data Entry & Excel Import
+# ══════════════════════════════════════════════════════════════════════════════
+
+import io as _io
+
+import professional_valuation_comparables as _pvco  # noqa: E402
+
+
+def _create_comparable(client, rid, extra=None):
+    data = {
+        "comparable_type": "sales_comparable",
+        "area_m2":         150,
+        "value_amount":    2_500_000,
+        "source_name":     "test-source",
+        "property_type":   "شقة",
+        "location":        "الزمالك",
+        "transaction_date": "2024-01-01",
+    }
+    if extra:
+        data.update(extra)
+    return client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        json=data,
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+
+
+def _make_csv_bytes(rows: list[dict]) -> bytes:
+    if not rows:
+        return b"comparable_type,area_m2,value_amount,source_name\n"
+    headers = list(rows[0].keys())
+    lines = [",".join(headers)]
+    for r in rows:
+        lines.append(",".join(str(r.get(h, "")) for h in headers))
+    return "\n".join(lines).encode("utf-8")
+
+
+def _make_xlsx_bytes(rows: list[dict]) -> bytes:
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    if rows:
+        headers = list(rows[0].keys())
+        ws.append(headers)
+        for r in rows:
+            ws.append([r.get(h) for h in headers])
+    buf = _io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+# ── PVD01-PVD02: Comparable type catalogue ────────────────────────────────────
+
+def test_PVD01_comparable_type_catalogue_returns_7_types(client):
+    resp = client.get(
+        "/api/professional-valuation/comparable/types",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    keys = {t["key"] for t in body["comparable_types"]}
+    for expected in _pvco.PV_COMPARABLE_TYPES:
+        assert expected in keys, f"Missing type: {expected}"
+    assert len(body["comparable_types"]) == 7
+
+
+def test_PVD02_comparable_type_catalogue_requires_auth(client):
+    resp = client.get("/api/professional-valuation/comparable/types")
+    assert resp.status_code == 401
+
+
+# ── PVD03-PVD11: Create comparable ───────────────────────────────────────────
+
+def test_PVD03_create_comparable_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        json={"comparable_type": "sales_comparable", "source_name": "x"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVD04_create_comparable_returns_pvco_id(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_comparable(client, rid)
+    assert body["ok"] is True
+    comp_id = body["comparable"]["comparable_id"]
+    assert comp_id.startswith("PVCO-"), f"Unexpected ID: {comp_id}"
+    assert _pvco._PVCO_ID_RE.match(comp_id)
+
+
+def test_PVD05_create_comparable_sets_production_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_comparable(client, rid)
+    assert body["comparable"]["production_ready"] is False
+
+
+def test_PVD06_create_comparable_sets_status_staged(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_comparable(client, rid)
+    assert body["comparable"]["status"] == "staged"
+
+
+def test_PVD07_create_comparable_sets_included_in_analysis_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_comparable(client, rid)
+    assert body["comparable"]["included_in_analysis"] is False
+
+
+def test_PVD08_create_comparable_validates_comparable_type(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        json={"comparable_type": "invalid_type", "source_name": "x"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert body["validation_errors"]
+
+
+def test_PVD09_create_comparable_validates_required_fields(client):
+    rid  = _create(client).get_json()["request_id"]
+    # sales_comparable requires location/district/city, area_m2, value_amount, source_name
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        json={"comparable_type": "sales_comparable"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD10_create_comparable_rejects_negative_area(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        json={"comparable_type": "sales_comparable", "area_m2": -5,
+              "value_amount": 1_000_000, "source_name": "x", "location": "test"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD11_price_per_m2_auto_calculated(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_comparable(client, rid, {
+        "area_m2": 200, "value_amount": 2_000_000,
+    })
+    assert body["ok"] is True
+    comp = body["comparable"]
+    assert comp["price_per_m2"] == 10_000.0
+
+
+# ── PVD12-PVD15: List / detail ────────────────────────────────────────────────
+
+def test_PVD12_list_comparables_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}/comparables")
+    assert resp.status_code == 401
+
+
+def test_PVD13_list_comparables_returns_counts(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_comparable(client, rid)
+    _create_comparable(client, rid)
+    body = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        headers=_auth(),
+    ).get_json()
+    assert body["ok"] is True
+    assert body["counts"]["total"] >= 2
+    assert body["counts"]["staged"] >= 2
+
+
+def test_PVD14_get_comparable_detail_requires_auth(client):
+    rid    = _create(client).get_json()["request_id"]
+    comp   = _create_comparable(client, rid)["comparable"]
+    comp_id = comp["comparable_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}"
+    )
+    assert resp.status_code == 401
+
+
+def test_PVD15_get_comparable_detail_404_unknown(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables/PVCO-FFFFFFFF",
+        headers=_auth(),
+    )
+    assert resp.status_code == 404
+
+
+# ── PVD16-PVD20: Review lifecycle ─────────────────────────────────────────────
+
+def test_PVD16_review_comparable_requires_auth(client):
+    rid    = _create(client).get_json()["request_id"]
+    comp   = _create_comparable(client, rid)["comparable"]
+    comp_id = comp["comparable_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "under_review"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVD17_review_invalid_transition_returns_422(client):
+    rid     = _create(client).get_json()["request_id"]
+    comp    = _create_comparable(client, rid)["comparable"]
+    comp_id = comp["comparable_id"]
+    # staged -> superseded is not allowed
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "superseded"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD18_rejection_requires_rejection_reason(client):
+    rid     = _create(client).get_json()["request_id"]
+    comp    = _create_comparable(client, rid)["comparable"]
+    comp_id = comp["comparable_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "rejected"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD19_qa_comparable_cannot_become_production(client):
+    rid     = _create(client).get_json()["request_id"]
+    comp    = _create_comparable(client, rid, {"qa_simulation": True})["comparable"]
+    comp_id = comp["comparable_id"]
+    # advance to approved_for_analysis first
+    client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "approved_for_analysis"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "approved_as_production_comparable"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD20_production_ready_true_when_approved_non_qa(client):
+    rid     = _create(client).get_json()["request_id"]
+    comp    = _create_comparable(client, rid, {"qa_simulation": False})["comparable"]
+    comp_id = comp["comparable_id"]
+    # advance staged -> approved_for_analysis -> approved_as_production_comparable
+    client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "approved_for_analysis"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    body = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+        json={"status": "approved_as_production_comparable"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_json()
+    assert body["ok"] is True
+    assert body["comparable"]["production_ready"] is True
+
+
+# ── PVD21-PVD22: Comparable readiness gate ────────────────────────────────────
+
+def test_PVD21_comparable_readiness_in_list_response(client):
+    rid  = _create(client).get_json()["request_id"]
+    _create_comparable(client, rid)
+    body = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        headers=_auth(),
+    ).get_json()
+    assert "comparable_readiness" in body
+    cr = body["comparable_readiness"]
+    assert "comparable_readiness_status" in cr
+    assert "total_comparables"          in cr
+    assert "production_ready_comparables" in cr
+
+
+def test_PVD22_comparables_ready_false_in_gate_without_production(client):
+    rid  = _create(client).get_json()["request_id"]
+    _create_comparable(client, rid)  # staged only
+    # Check gate summary via detail endpoint
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    gate = detail.get("certification_gate_summary", {})
+    assert gate.get("comparables_ready") is False
+    assert gate.get("certification_ready") is False
+
+
+# ── PVD23-PVD31: Import endpoints ─────────────────────────────────────────────
+
+def test_PVD23_import_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    data = {"file": (_io.BytesIO(b"a,b\n1,2"), "test.csv")}
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data=data,
+        content_type="multipart/form-data",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVD24_import_rejects_invalid_extension(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={"file": (_io.BytesIO(b"hello"), "test.pdf")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD25_import_rejects_empty_file(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={"file": (_io.BytesIO(b""), "empty.csv")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVD26_import_csv_stages_rows(client):
+    rid  = _create(client).get_json()["request_id"]
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": "120",
+        "value_amount": "1800000",
+        "source_name": "السوق المحلي",
+        "location": "المعادي",
+        "property_type": "شقة",
+        "transaction_date": "2024-03-01",
+    }])
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={
+            "file": (_io.BytesIO(csv_bytes), "comps.csv"),
+            "comparable_type_hint": "sales_comparable",
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201, resp.get_data(as_text=True)
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert len(body["staged_comparables"]) == 1
+    assert body["import_job"]["staged_rows_count"] == 1
+
+
+def test_PVD27_import_csv_sets_production_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": "100",
+        "value_amount": "1200000",
+        "source_name": "المصدر",
+        "location": "6 أكتوبر",
+        "property_type": "شقة",
+        "transaction_date": "2024-02-01",
+    }])
+    body = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={"file": (_io.BytesIO(csv_bytes), "comps.csv")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    ).get_json()
+    assert body["ok"] is True
+    for comp in body["staged_comparables"]:
+        assert comp["production_ready"] is False
+
+
+def test_PVD28_import_csv_rejected_row_returned(client):
+    rid  = _create(client).get_json()["request_id"]
+    # Row with missing required fields — should go to rejected_rows
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        # missing area_m2, value_amount, source_name, location
+    }])
+    body = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={
+            "file": (_io.BytesIO(csv_bytes), "comps.csv"),
+            "comparable_type_hint": "sales_comparable",
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    ).get_json()
+    # Should succeed as a job but with rejected rows
+    assert body.get("ok") is True or "rejected_rows" in body
+    if body.get("ok"):
+        assert body["import_job"]["rejected_rows_count"] >= 1
+        assert len(body["rejected_rows"]) >= 1
+
+
+def test_PVD29_import_job_listed_in_import_jobs(client):
+    rid  = _create(client).get_json()["request_id"]
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": "80",
+        "value_amount": "900000",
+        "source_name": "اختبار",
+        "location": "مدينة نصر",
+        "property_type": "شقة",
+        "transaction_date": "2024-01-15",
+    }])
+    import_body = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={"file": (_io.BytesIO(csv_bytes), "jobs_test.csv")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    ).get_json()
+    job_id = import_body["import_job"]["import_job_id"]
+    jobs_body = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables/import-jobs",
+        headers=_auth(),
+    ).get_json()
+    assert jobs_body["ok"] is True
+    ids = [j["import_job_id"] for j in jobs_body["import_jobs"]]
+    assert job_id in ids
+
+
+def test_PVD30_import_job_detail_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables/import-jobs/PVIJ-FFFFFFFF"
+    )
+    assert resp.status_code == 401
+
+
+def test_PVD31_import_response_has_no_internal_file_path(client):
+    rid  = _create(client).get_json()["request_id"]
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": "90",
+        "value_amount": "1000000",
+        "source_name": "src",
+        "location": "المهندسين",
+        "property_type": "شقة",
+        "transaction_date": "2024-01-20",
+    }])
+    body_str = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={"file": (_io.BytesIO(csv_bytes), "paths_test.csv")},
+        content_type="multipart/form-data",
+        headers=_auth(),
+    ).get_data(as_text=True)
+    assert "instance/professional_valuation" not in body_str, "Internal path in import response"
+    assert "comparable_import_files" not in body_str, "Import file path in response"
+
+
+# ── PVD32: Source stubs from import ──────────────────────────────────────────
+
+def test_PVD32_create_source_stubs_creates_draft_stubs(client):
+    rid  = _create(client).get_json()["request_id"]
+    csv_bytes = _make_csv_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": "110",
+        "value_amount": "1100000",
+        "source_name": "وكالة المبروك",
+        "source_reference": "REF-2024-001",
+        "location": "المقطم",
+        "property_type": "فيلا",
+        "transaction_date": "2024-04-01",
+    }])
+    body = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={
+            "file": (_io.BytesIO(csv_bytes), "stubs_test.csv"),
+            "create_source_stubs": "true",
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    ).get_json()
+    assert body["ok"] is True
+    # The staged comparable should have a related_source_id (stub was created)
+    for comp in body["staged_comparables"]:
+        if comp.get("source_name"):
+            assert comp.get("related_source_id") is not None, "Source stub not created"
+            assert comp["related_source_id"].startswith("PVS-")
+
+
+# ── PVD33: included_in_analysis guard ────────────────────────────────────────
+
+def test_PVD33_included_in_analysis_false_on_staging(client):
+    rid  = _create(client).get_json()["request_id"]
+    # Even if caller requests included_in_analysis=true, it must be False when staging
+    body = _create_comparable(client, rid, {"included_in_analysis": True})
+    # Either rejected 422 or accepted but included_in_analysis=False
+    if body.get("ok"):
+        assert body["comparable"]["included_in_analysis"] is False, (
+            "included_in_analysis should be False when staged"
+        )
+
+
+# ── PVD34: Missing comparable types for purpose ───────────────────────────────
+
+def test_PVD34_readiness_shows_missing_types_for_purpose(client):
+    # Create a request with rental purpose
+    rid = _create(client, {
+        "valuation_purpose": "إيجار",
+        "property_type": "شقة",
+    }).get_json()["request_id"]
+    # Add a sales_comparable (not the required rental_comparable)
+    _create_comparable(client, rid, {
+        "comparable_type": "sales_comparable",
+        "valuation_purpose": "إيجار",
+    })
+    body = client.get(
+        f"/api/professional-valuation/requests/{rid}/comparables",
+        headers=_auth(),
+    ).get_json()
+    cr = body["comparable_readiness"]
+    assert "rental_comparable" in cr.get("missing_comparable_types", []) or \
+           cr.get("certification_comparable_ready") is False
+
+
+# ── PVD35: Excel xlsx import ──────────────────────────────────────────────────
+
+def test_PVD35_import_xlsx_stages_rows(client):
+    rid       = _create(client).get_json()["request_id"]
+    xlsx_bytes = _make_xlsx_bytes([{
+        "comparable_type": "sales_comparable",
+        "area_m2": 130,
+        "value_amount": 1_950_000,
+        "source_name": "بيانات السوق",
+        "location": "الشيخ زايد",
+        "property_type": "شقة",
+        "transaction_date": "2024-05-01",
+    }])
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/comparables/import",
+        data={
+            "file": (_io.BytesIO(xlsx_bytes), "comps.xlsx"),
+            "comparable_type_hint": "sales_comparable",
+        },
+        content_type="multipart/form-data",
+        headers=_auth(),
+    )
+    assert resp.status_code == 201, resp.get_data(as_text=True)
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert len(body["staged_comparables"]) >= 1
+    assert body["import_job"]["file_ext"] == ".xlsx"

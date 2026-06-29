@@ -340,3 +340,114 @@ def test_PVP30_generate_certified_still_disabled_in_phase_c(page: Page, live_ser
     btn = page.locator('[data-testid="pro-val-generate-certified"]')
     expect(btn).to_have_count(1)
     assert btn.is_disabled(), "Certified report button must remain disabled in Phase C"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase D Tests — PVP31–PVP42 (comparable section & import)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVP31_phase_d_notice_banner_visible(page: Page, live_server: str) -> None:
+    """PVP31: Phase D notice banner is visible and contains 'Phase D'."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-phase-d-notice"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+    expect(el).to_contain_text("Phase D")
+
+
+def test_PVP32_comparable_section_visible(page: Page, live_server: str) -> None:
+    """PVP32: The comparable section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP33_comparable_form_present(page: Page, live_server: str) -> None:
+    """PVP33: The comparable entry form is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-form"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP34_comparable_type_select_present(page: Page, live_server: str) -> None:
+    """PVP34: The comparable type select has 7 type options plus empty."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-comparable-type-select"]')
+    expect(sel).to_have_count(1)
+    expect(sel).to_be_visible()
+    opts = sel.locator("option")
+    assert opts.count() >= 7, "Expected at least 7 comparable type options"
+
+
+def test_PVP35_comparable_submit_button_present(page: Page, live_server: str) -> None:
+    """PVP35: The comparable submit button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-submit"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP36_comparable_table_present(page: Page, live_server: str) -> None:
+    """PVP36: The comparable table is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-table"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP37_comparable_readiness_panel_visible(page: Page, live_server: str) -> None:
+    """PVP37: The comparable readiness panel is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-readiness-panel"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP38_comparable_import_section_visible(page: Page, live_server: str) -> None:
+    """PVP38: The comparable import section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-import-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP39_comparable_import_file_input_present(page: Page, live_server: str) -> None:
+    """PVP39: The comparable import file input is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-import-file"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP40_comparable_import_submit_present(page: Page, live_server: str) -> None:
+    """PVP40: The import submit button is present and visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparable-import-submit"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP41_comparables_ready_gate_indicator_present(page: Page, live_server: str) -> None:
+    """PVP41: The comparables-ready gate indicator is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-comparables-ready"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP42_certified_button_still_disabled_in_phase_d(page: Page, live_server: str) -> None:
+    """PVP42: Phase D regression — certified report button remains disabled."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button must remain disabled in Phase D"

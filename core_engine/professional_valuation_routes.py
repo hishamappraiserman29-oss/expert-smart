@@ -89,15 +89,30 @@ def _empty_gate_summary() -> dict:
 
 
 def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
-    """Return computed gate summary from Phase C evidence/source state.
-    Falls back to empty gate summary if evidence module is not yet loaded.
-    certification_ready is always False in Phase B/C.
+    """Return computed gate summary from Phase C evidence/source state,
+    merged with Phase D comparable readiness.
+    certification_ready is always False in Phase B/C/D.
     """
     try:
         from professional_valuation_evidence_routes import compute_gate_summary
-        return compute_gate_summary(request_id, valuation_purpose)
+        gate = compute_gate_summary(request_id, valuation_purpose)
     except ImportError:
-        return _empty_gate_summary()
+        gate = _empty_gate_summary()
+
+    # Phase D: merge comparable readiness
+    try:
+        from professional_valuation_comparables import evaluate_comparable_readiness
+        cr = evaluate_comparable_readiness(request_id, valuation_purpose)
+        gate["comparables_ready"] = cr.get("certification_comparable_ready", False)
+        gate["certification_ready"] = False  # always False in Phase D
+        if not gate["comparables_ready"]:
+            blocker = "لا توجد مقارنات إنتاجية معتمدة."
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+    except ImportError:
+        gate.setdefault("comparables_ready", False)
+
+    return gate
 
 
 # ── Permission summary placeholder ────────────────────────────────────────────

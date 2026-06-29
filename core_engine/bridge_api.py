@@ -12182,6 +12182,8 @@ from professional_valuation_routes import register as _register_professional_val
 _register_professional_valuation(app, require_auth)
 from professional_valuation_evidence_routes import register_pv_evidence_routes as _register_pv_evidence  # Phase C
 _register_pv_evidence(app, require_auth)
+from professional_valuation_comparables import register_pv_comparable_routes as _register_pv_comparable  # Phase D
+_register_pv_comparable(app, require_auth)
 
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:

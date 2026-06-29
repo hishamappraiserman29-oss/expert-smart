@@ -36166,6 +36166,186 @@ function taxSpCreateDraft() {
     </div>
   </div>
 
+  <!-- ══ PHASE D: Comparable Data Entry & Excel Import ══ -->
+  <div data-testid="pro-val-phase-d-notice"
+       style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:10px 14px; margin:12px 0 0;">
+    <p style="margin:0; color:#34d399; font-weight:700; font-size:0.82rem;">
+      Phase D — إدخال المقارنات واستيراد Excel
+    </p>
+    <p style="margin:2px 0 0; color:#6b7280; font-size:0.74rem;">
+      المقارنات للمراجعة الخبيرة فقط — لا تدخل في الحسابات تلقائياً. production_ready دائماً False عند الإنشاء.
+    </p>
+  </div>
+
+  <!-- Comparable Section -->
+  <div data-testid="pro-val-comparable-section" id="pv-comparable-section"
+       style="background:rgba(16,185,129,0.04); border:1px solid rgba(16,185,129,0.15); border-radius:8px; padding:14px; margin:10px 0 0;">
+    <p style="color:#34d399; font-weight:700; font-size:0.83rem; margin:0 0 10px;">المقارنات السوقية</p>
+
+    <!-- Comparable entry form -->
+    <form data-testid="pro-val-comparable-form" id="pv-comp-form"
+          onsubmit="pvSubmitComparable(event)"
+          style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+      <select data-testid="pro-val-comparable-type-select" id="pv-comp-type"
+              style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem; grid-column:1/4;">
+        <option value="">-- نوع المقارن (مطلوب) --</option>
+        <option value="sales_comparable">مقارن بيعي</option>
+        <option value="rental_comparable">مقارن إيجاري</option>
+        <option value="land_comparable">مقارن أرض</option>
+        <option value="cost_comparable">مقارن تكلفة</option>
+        <option value="cap_rate_comparable">مقارن معدل رسملة</option>
+        <option value="discount_rate_reference">مرجع معدل خصم</option>
+        <option value="mixed_comparable">مقارن مختلط</option>
+      </select>
+      <input data-testid="pro-val-comparable-property-type-input" id="pv-comp-prop-type"
+             placeholder="نوع العقار (شقة/فيلا/...)" type="text"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <input data-testid="pro-val-comparable-location-input" id="pv-comp-location"
+             placeholder="الموقع / الحي / المنطقة" type="text"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <input data-testid="pro-val-comparable-area-input" id="pv-comp-area"
+             placeholder="المساحة م2" type="number" min="0" step="0.01"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <input data-testid="pro-val-comparable-value-input" id="pv-comp-value"
+             placeholder="قيمة البيع (ج.م.)" type="number" min="0" step="1"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <input data-testid="pro-val-comparable-rent-input" id="pv-comp-rent"
+             placeholder="الإيجار الشهري (ج.م.) — للإيجاري" type="number" min="0" step="1"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <input data-testid="pro-val-comparable-source-input" id="pv-comp-source"
+             placeholder="اسم المصدر (مطلوب)" type="text"
+             style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem;" />
+      <label style="display:flex; align-items:center; gap:6px; color:#f59e0b; font-size:0.78rem; padding:4px;">
+        <input data-testid="pro-val-comparable-qa-checkbox" id="pv-comp-qa" type="checkbox" />
+        QA Simulation (لا يُحتسب للإنتاج)
+      </label>
+      <button data-testid="pro-val-comparable-submit" type="submit"
+              style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#34d399; border-radius:6px; padding:6px 14px; font-size:0.8rem; cursor:pointer;">
+        + إضافة مقارن
+      </button>
+    </form>
+
+    <!-- Comparable review status -->
+    <div data-testid="pro-val-comparable-review-status" id="pv-comp-review-status"
+         style="display:none; margin-bottom:8px; padding:6px 10px; border-radius:6px; font-size:0.78rem; color:#94a3b8; background:rgba(15,23,42,0.5);">
+    </div>
+
+    <!-- Comparables table -->
+    <div style="overflow-x:auto; margin-bottom:10px;">
+      <table data-testid="pro-val-comparable-table" id="pv-comp-table"
+             style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+        <thead>
+          <tr style="color:#64748b; border-bottom:1px solid rgba(255,255,255,0.07);">
+            <th style="padding:5px 8px; text-align:right;">المعرّف</th>
+            <th style="padding:5px 8px; text-align:right;">النوع</th>
+            <th style="padding:5px 8px; text-align:right;">العقار</th>
+            <th style="padding:5px 8px; text-align:right;">الموقع</th>
+            <th style="padding:5px 8px; text-align:right;">المساحة</th>
+            <th style="padding:5px 8px; text-align:right;">القيمة</th>
+            <th style="padding:5px 8px; text-align:right;">سعر/م²</th>
+            <th style="padding:5px 8px; text-align:right;">الحالة</th>
+            <th style="padding:5px 8px; text-align:right;">إنتاج</th>
+            <th style="padding:5px 8px; text-align:right;">QA</th>
+          </tr>
+        </thead>
+        <tbody id="pv-comp-tbody">
+          <tr data-testid="pro-val-comparable-row" id="pv-comp-empty-row">
+            <td colspan="10" style="padding:12px; text-align:center; color:#475569; font-size:0.75rem;">
+              لا توجد مقارنات — أضف يدوياً أو استورد ملف Excel.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Comparable readiness panel -->
+    <div data-testid="pro-val-comparable-readiness-panel" id="pv-comp-readiness-panel"
+         style="background:rgba(15,23,42,0.5); border:1px solid rgba(255,255,255,0.07); border-radius:6px; padding:10px 12px; margin-top:6px;">
+      <p style="margin:0 0 4px; color:#94a3b8; font-weight:600; font-size:0.78rem;">بوابة المقارنات</p>
+      <p style="margin:0; color:#6b7280; font-size:0.74rem;" id="pv-comp-readiness-text">
+        لم يتم تحميل بيانات المقارنات بعد.
+      </p>
+      <div data-testid="pro-val-comparables-ready" id="pv-gate-comparables"
+           style="margin-top:4px; font-size:0.76rem; color:#f87171;">❌ المقارنات: غير جاهزة</div>
+      <ul data-testid="pro-val-comparable-blockers-list" id="pv-comp-blockers"
+          style="margin:4px 0 0; padding-right:16px; color:#6b7280; font-size:0.73rem; list-style:disc;"></ul>
+    </div>
+  </div>
+
+  <!-- Excel / CSV Import Section -->
+  <div data-testid="pro-val-comparable-import-section" id="pv-import-section"
+       style="background:rgba(245,158,11,0.04); border:1px solid rgba(245,158,11,0.15); border-radius:8px; padding:14px; margin:10px 0 0;">
+    <p style="color:#fbbf24; font-weight:700; font-size:0.83rem; margin:0 0 10px;">استيراد مقارنات من Excel / CSV</p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+      <div>
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:4px;">ملف Excel / CSV (xlsx, csv)</label>
+        <input data-testid="pro-val-comparable-import-file" id="pv-import-file"
+               type="file" accept=".xlsx,.csv"
+               style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:5px 8px; font-size:0.78rem; width:100%;" />
+      </div>
+      <div>
+        <label style="color:#94a3b8; font-size:0.75rem; display:block; margin-bottom:4px;">نوع المقارن (تلميح)</label>
+        <select data-testid="pro-val-comparable-import-type-hint" id="pv-import-type-hint"
+                style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); color:#e2e8f0; border-radius:6px; padding:6px 8px; font-size:0.8rem; width:100%;">
+          <option value="">-- اختياري --</option>
+          <option value="sales_comparable">مقارن بيعي</option>
+          <option value="rental_comparable">مقارن إيجاري</option>
+          <option value="land_comparable">مقارن أرض</option>
+          <option value="cost_comparable">مقارن تكلفة</option>
+          <option value="cap_rate_comparable">مقارن معدل رسملة</option>
+          <option value="discount_rate_reference">مرجع معدل خصم</option>
+          <option value="mixed_comparable">مقارن مختلط</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; align-items:center; margin-bottom:10px;">
+      <label style="display:flex; align-items:center; gap:6px; color:#f59e0b; font-size:0.78rem;">
+        <input data-testid="pro-val-comparable-import-qa-checkbox" id="pv-import-qa" type="checkbox" />
+        QA Simulation
+      </label>
+      <label style="display:flex; align-items:center; gap:6px; color:#93c5fd; font-size:0.78rem;">
+        <input data-testid="pro-val-comparable-import-source-stubs-checkbox" id="pv-import-stubs" type="checkbox" />
+        إنشاء مصادر مسودة تلقائياً
+      </label>
+      <button data-testid="pro-val-comparable-import-submit" type="button"
+              onclick="pvSubmitComparableImport()"
+              style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); color:#fbbf24; border-radius:6px; padding:6px 14px; font-size:0.8rem; cursor:pointer;">
+        📥 استيراد
+      </button>
+    </div>
+
+    <!-- Import summary -->
+    <div data-testid="pro-val-comparable-import-summary" id="pv-import-summary"
+         style="display:none; margin-bottom:8px; padding:6px 10px; border-radius:6px; font-size:0.78rem; color:#94a3b8; background:rgba(15,23,42,0.5);">
+    </div>
+
+    <!-- Import jobs table -->
+    <div style="overflow-x:auto;">
+      <table data-testid="pro-val-comparable-import-jobs-table" id="pv-import-jobs-table"
+             style="width:100%; border-collapse:collapse; font-size:0.78rem;">
+        <thead>
+          <tr style="color:#64748b; border-bottom:1px solid rgba(255,255,255,0.07);">
+            <th style="padding:5px 8px; text-align:right;">مهمة الاستيراد</th>
+            <th style="padding:5px 8px; text-align:right;">الملف</th>
+            <th style="padding:5px 8px; text-align:right;">الصفوف</th>
+            <th style="padding:5px 8px; text-align:right;">نُظِّم</th>
+            <th style="padding:5px 8px; text-align:right;">مرفوض</th>
+            <th style="padding:5px 8px; text-align:right;">الحالة</th>
+            <th style="padding:5px 8px; text-align:right;">QA</th>
+          </tr>
+        </thead>
+        <tbody id="pv-import-jobs-tbody">
+          <tr data-testid="pro-val-comparable-import-job-row" id="pv-import-jobs-empty-row">
+            <td colspan="7" style="padding:10px; text-align:center; color:#475569; font-size:0.75rem;">
+              لا توجد مهام استيراد.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
 </div><!-- /ws-professional-valuation -->
 
 <script>
@@ -36304,9 +36484,12 @@ function taxSpCreateDraft() {
             }
         })
         .then(function() {
-            /* Phase C: also load evidence + sources for the selected request */
+            /* Phase C+D: also load evidence, sources, comparables, and import jobs */
             pvLoadEvidence(requestId);
             pvLoadSources(requestId);
+            window._pvCurrentRequestId = requestId;
+            pvLoadComparables(requestId);
+            pvLoadImportJobs(requestId);
         })
         .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
     };
@@ -36563,9 +36746,11 @@ function taxSpCreateDraft() {
     function pvRenderGateSummary(gate) {
         var docsEl    = document.getElementById('pv-gate-docs');
         var srcEl     = document.getElementById('pv-gate-sources');
+        var compEl    = document.getElementById('pv-gate-comparables');
         var blockList = document.getElementById('pv-blockers-list');
-        if (docsEl)  docsEl.textContent    = gate.mandatory_documents_ready ? '✅ جاهزة' : '❌ ناقصة';
-        if (srcEl)   srcEl.textContent     = gate.real_sources_ready ? '✅ جاهزة' : '❌ ناقصة';
+        if (docsEl)  docsEl.textContent = gate.mandatory_documents_ready ? '✅ جاهزة' : '❌ ناقصة';
+        if (srcEl)   srcEl.textContent  = gate.real_sources_ready ? '✅ جاهزة' : '❌ ناقصة';
+        if (compEl)  compEl.textContent = gate.comparables_ready   ? '✅ المقارنات: جاهزة' : '❌ المقارنات: غير جاهزة';
         if (blockList) {
             blockList.innerHTML = '<p style="margin:0 0 4px; color:#f87171; font-weight:600;">عوامل الحظر:</p>';
             (gate.blockers || []).forEach(function(b) {
@@ -36579,10 +36764,221 @@ function taxSpCreateDraft() {
         var gateEl = document.getElementById('pro-val-gate-summary');
         if (gateEl) {
             gateEl.innerHTML =
-                '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد (Phase C)</p>' +
+                '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد (Phase D)</p>' +
                 '<p style="margin:0;color:#6b7280;">certification_ready: false — ' + pvEsc(gate.advisory_only_reason || '') + '</p>';
         }
     }
+
+    /* ══ Phase D: Comparable & Import helpers ══ */
+
+    /* ── Submit manual comparable ── */
+    window.pvSubmitComparable = function(evt) {
+        if (evt) evt.preventDefault();
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+
+        var ctype   = (document.getElementById('pv-comp-type')    || {}).value || '';
+        var ptype   = (document.getElementById('pv-comp-prop-type')|| {}).value || '';
+        var loc     = (document.getElementById('pv-comp-location') || {}).value || '';
+        var area    = parseFloat((document.getElementById('pv-comp-area')  || {}).value || '0') || undefined;
+        var val     = parseFloat((document.getElementById('pv-comp-value') || {}).value || '0') || undefined;
+        var rent    = parseFloat((document.getElementById('pv-comp-rent')  || {}).value || '0') || undefined;
+        var src     = (document.getElementById('pv-comp-source')   || {}).value || '';
+        var qa      = !!(document.getElementById('pv-comp-qa') || {}).checked;
+
+        if (!ctype) { pvSetStatus('حدد نوع المقارن.', '#f87171'); return; }
+        if (!src)   { pvSetStatus('اسم المصدر مطلوب.', '#f87171'); return; }
+
+        var body = { comparable_type: ctype, property_type: ptype,
+                     location: loc, source_name: src, qa_simulation: qa };
+        if (area) body.area_m2        = area;
+        if (val)  body.value_amount   = val;
+        if (rent) body.monthly_rent   = rent;
+
+        pvSetStatus('جارٍ حفظ المقارن…', '#93c5fd');
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/comparables', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                pvSetStatus('✅ تم إضافة المقارن: ' + d.comparable.comparable_id, '#4ade80');
+                pvLoadComparables(rid);
+                if (d.certification_gate_summary) pvRenderGateSummary(d.certification_gate_summary);
+            } else {
+                pvSetStatus('خطأ: ' + (d.error || JSON.stringify(d.validation_errors || [])), '#f87171');
+            }
+        })
+        .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
+    };
+
+    /* ── Load comparables list ── */
+    window.pvLoadComparables = function(rid) {
+        var token = pvGetToken();
+        if (!token || !rid) return;
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/comparables', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                pvRenderComparables(d.comparables || []);
+                if (d.comparable_readiness) pvRenderCompReadiness(d.comparable_readiness);
+            }
+        })
+        .catch(function() {});
+    };
+
+    /* ── Render comparable rows ── */
+    window.pvRenderComparables = function(items) {
+        var tbody = document.getElementById('pv-comp-tbody');
+        var empty = document.getElementById('pv-comp-empty-row');
+        if (!tbody) return;
+        /* remove existing dynamic rows */
+        Array.prototype.slice.call(tbody.querySelectorAll('[data-dyn-comp]')).forEach(function(r) { r.remove(); });
+        if (!items || items.length === 0) {
+            if (empty) empty.style.display = '';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+        items.forEach(function(c) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-dyn-comp', '1');
+            tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.05);';
+            tr.innerHTML =
+                '<td style="padding:5px 8px; color:#e2e8f0; font-size:0.73rem;">' + pvEsc(c.comparable_id || '') + '</td>' +
+                '<td style="padding:5px 8px; color:#93c5fd;">'  + pvEsc(c.comparable_label_ar || c.comparable_type || '') + '</td>' +
+                '<td style="padding:5px 8px; color:#cbd5e1;">'  + pvEsc(c.property_type || '—') + '</td>' +
+                '<td style="padding:5px 8px; color:#94a3b8;">'  + pvEsc(c.location || c.district || '—') + '</td>' +
+                '<td style="padding:5px 8px; color:#94a3b8;">'  + (c.area_m2 != null ? pvEsc(String(c.area_m2)) : '—') + '</td>' +
+                '<td style="padding:5px 8px; color:#4ade80;">'  + (c.value_amount != null ? pvEsc(String(Number(c.value_amount).toLocaleString())) : '—') + '</td>' +
+                '<td style="padding:5px 8px; color:#fbbf24;">'  + (c.price_per_m2 != null ? pvEsc(String(Number(c.price_per_m2).toLocaleString())) : (c.rent_per_m2 != null ? pvEsc(String(Number(c.rent_per_m2).toLocaleString())) : '—')) + '</td>' +
+                '<td style="padding:5px 8px; color:#a78bfa;">'  + pvEsc(c.status || '') + '</td>' +
+                '<td style="padding:5px 8px; color:' + (c.production_ready ? '#4ade80' : '#f87171') + ';">' + (c.production_ready ? 'نعم' : 'لا') + '</td>' +
+                '<td style="padding:5px 8px; color:' + (c.qa_simulation ? '#f59e0b' : '#4ade80') + ';">' + (c.qa_simulation ? 'QA' : '—') + '</td>';
+            tbody.appendChild(tr);
+        });
+    };
+
+    /* ── Render comparable readiness panel ── */
+    window.pvRenderCompReadiness = function(cr) {
+        var textEl  = document.getElementById('pv-comp-readiness-text');
+        var gateEl  = document.getElementById('pv-gate-comparables');
+        var listEl  = document.getElementById('pv-comp-blockers');
+        if (textEl) {
+            textEl.textContent =
+                'الحالة: ' + (cr.comparable_readiness_status || '—') +
+                ' | إجمالي: ' + (cr.total_comparables || 0) +
+                ' | معتمد: ' + (cr.approved_for_analysis_comparables || 0) +
+                ' | إنتاج: ' + (cr.production_ready_comparables || 0) +
+                ' | QA: ' + (cr.qa_comparables || 0);
+        }
+        if (gateEl) {
+            gateEl.textContent = cr.certification_comparable_ready
+                ? '✅ المقارنات: جاهزة' : '❌ المقارنات: غير جاهزة';
+            gateEl.style.color = cr.certification_comparable_ready ? '#4ade80' : '#f87171';
+        }
+        if (listEl) {
+            listEl.innerHTML = '';
+            (cr.required_actions || []).forEach(function(a) {
+                var li = document.createElement('li');
+                li.textContent = a;
+                listEl.appendChild(li);
+            });
+        }
+    };
+
+    /* ── Submit Excel/CSV import ── */
+    window.pvSubmitComparableImport = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+
+        var fileInp = document.getElementById('pv-import-file');
+        if (!fileInp || !fileInp.files || !fileInp.files[0]) {
+            pvSetStatus('اختر ملف Excel أو CSV.', '#f87171'); return;
+        }
+
+        var fd = new FormData();
+        fd.append('file', fileInp.files[0]);
+        var typeHint = (document.getElementById('pv-import-type-hint') || {}).value || '';
+        if (typeHint) fd.append('comparable_type_hint', typeHint);
+        fd.append('qa_simulation',     !!(document.getElementById('pv-import-qa')    || {}).checked ? 'true' : 'false');
+        fd.append('create_source_stubs', !!(document.getElementById('pv-import-stubs') || {}).checked ? 'true' : 'false');
+
+        pvSetStatus('جارٍ استيراد الملف…', '#93c5fd');
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/comparables/import', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: fd
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            var summEl = document.getElementById('pv-import-summary');
+            if (d.ok) {
+                var job = d.import_job || {};
+                pvSetStatus('✅ استيراد ناجح: ' + (job.staged_rows_count || 0) + ' صف. مرفوض: ' + (job.rejected_rows_count || 0), '#4ade80');
+                if (summEl) {
+                    summEl.style.display = 'block';
+                    summEl.textContent = 'مهمة: ' + job.import_job_id + ' | ملف: ' + job.original_filename +
+                        ' | صفوف: ' + job.row_count + ' | نُظِّم: ' + job.staged_rows_count +
+                        ' | مرفوض: ' + job.rejected_rows_count;
+                }
+                pvLoadComparables(rid);
+                pvLoadImportJobs(rid);
+                if (d.certification_gate_summary) pvRenderGateSummary(d.certification_gate_summary);
+            } else {
+                pvSetStatus('خطأ: ' + (d.error || ''), '#f87171');
+                if (summEl) { summEl.style.display = 'block'; summEl.textContent = 'فشل: ' + (d.error || ''); }
+                pvLoadImportJobs(rid);
+            }
+        })
+        .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
+    };
+
+    /* ── Load import jobs ── */
+    window.pvLoadImportJobs = function(rid) {
+        var token = pvGetToken();
+        if (!token || !rid) return;
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/comparables/import-jobs', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) { if (d.ok) pvRenderImportJobs(d.import_jobs || []); })
+        .catch(function() {});
+    };
+
+    /* ── Render import jobs table ── */
+    window.pvRenderImportJobs = function(jobs) {
+        var tbody = document.getElementById('pv-import-jobs-tbody');
+        var empty = document.getElementById('pv-import-jobs-empty-row');
+        if (!tbody) return;
+        Array.prototype.slice.call(tbody.querySelectorAll('[data-dyn-job]')).forEach(function(r) { r.remove(); });
+        if (!jobs || jobs.length === 0) {
+            if (empty) empty.style.display = '';
+            return;
+        }
+        if (empty) empty.style.display = 'none';
+        jobs.forEach(function(j) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-dyn-job', '1');
+            tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.05);';
+            tr.innerHTML =
+                '<td style="padding:5px 8px; color:#e2e8f0; font-size:0.73rem;">' + pvEsc(j.import_job_id || '') + '</td>' +
+                '<td style="padding:5px 8px; color:#cbd5e1;">' + pvEsc(j.original_filename || '') + '</td>' +
+                '<td style="padding:5px 8px; color:#94a3b8;">' + (j.row_count || 0) + '</td>' +
+                '<td style="padding:5px 8px; color:#4ade80;">'  + (j.staged_rows_count || 0) + '</td>' +
+                '<td style="padding:5px 8px; color:#f87171;">'  + (j.rejected_rows_count || 0) + '</td>' +
+                '<td style="padding:5px 8px; color:#a78bfa;">'  + pvEsc(j.status || '') + '</td>' +
+                '<td style="padding:5px 8px; color:' + (j.qa_simulation ? '#f59e0b' : '#4ade80') + ';">' + (j.qa_simulation ? 'QA' : '—') + '</td>';
+            tbody.appendChild(tr);
+        });
+    };
 
     /* ── Execute transition ── */
     window.pvDoTransition = function() {

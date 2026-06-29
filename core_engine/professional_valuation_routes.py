@@ -1,5 +1,5 @@
 """
-professional_valuation_routes.py — Professional Valuation Backoffice Phase B.
+professional_valuation_routes.py — Professional Valuation Backoffice Phase B + C.
 
 Public endpoint (no auth required):
   POST /api/professional-valuation/requests              — client intake / create
@@ -15,8 +15,8 @@ Storage (never exposed in API responses):
   core_engine/instance/professional_valuation/requests.jsonl
   core_engine/instance/professional_valuation/events.jsonl
 
-Phase B scope: request model + lifecycle transitions only.
-Evidence upload, source approval, report generation → later phases.
+Phase C: evidence and source routes in professional_valuation_evidence_routes.py.
+Certified report generation → later phases.
 """
 from __future__ import annotations
 
@@ -66,9 +66,10 @@ _ALLOWED_TRANSITIONS: dict[str, set] = {
 
 _PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
 
-# ── Certification gate placeholder ────────────────────────────────────────────
+# ── Certification gate ────────────────────────────────────────────────────────
 
 def _empty_gate_summary() -> dict:
+    """Phase B fallback — used only when evidence module is not available."""
     return {
         "certification_ready":          False,
         "qa_data_cleared":              False,
@@ -85,6 +86,18 @@ def _empty_gate_summary() -> dict:
             "Phase B request workflow only — certification gates are not complete."
         ),
     }
+
+
+def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
+    """Return computed gate summary from Phase C evidence/source state.
+    Falls back to empty gate summary if evidence module is not yet loaded.
+    certification_ready is always False in Phase B/C.
+    """
+    try:
+        from professional_valuation_evidence_routes import compute_gate_summary
+        return compute_gate_summary(request_id, valuation_purpose)
+    except ImportError:
+        return _empty_gate_summary()
 
 
 # ── Permission summary placeholder ────────────────────────────────────────────
@@ -562,6 +575,7 @@ def register(app, require_auth, limiter=None) -> None:
             return jsonify({"ok": False, "error": "الطلب غير موجود"}), 404
 
         user_id = getattr(g, "user_id", None)
+        valuation_purpose = rec.get("valuation_purpose", "")
 
         return jsonify({
             "ok":      True,
@@ -574,7 +588,7 @@ def register(app, require_auth, limiter=None) -> None:
                 ),
                 "is_terminal": rec.get("status") in _TERMINAL_STATUSES,
             },
-            "certification_gate_summary": _empty_gate_summary(),
+            "certification_gate_summary": _get_gate_summary(request_id, valuation_purpose),
             "missing_required_items":    rec.get("missing_required_items", []),
             "event_log":                 _read_events(request_id),
             "permissions_summary":       _permissions_summary(user_id),

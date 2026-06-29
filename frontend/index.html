@@ -35642,10 +35642,18 @@ function taxSpCreateDraft() {
   </div>
   <!-- Phase B: request lifecycle active -->
   <div data-testid="pro-val-phase-b-placeholder"
-       style="margin-bottom:1rem; padding:10px 16px; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.3); border-radius:8px; font-size:0.82rem; color:#93c5fd;">
+       style="margin-bottom:0.5rem; padding:10px 16px; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.3); border-radius:8px; font-size:0.82rem; color:#93c5fd;">
     🔧 <strong>المرحلة ب — نموذج الطلب والمسارات الخلفية نشطة.</strong>
     <span style="display:block; color:#6b7280; font-size:0.76rem; margin-top:3px;">
       Phase B: request workflow active — evidence, sources, methods, and certified reports in later phases.
+    </span>
+  </div>
+  <!-- Phase C: evidence and source readiness -->
+  <div data-testid="pro-val-advisory-only-warning"
+       style="margin-bottom:1rem; padding:10px 16px; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.25); border-radius:8px; font-size:0.82rem; color:#86efac;">
+    📋 <strong>المرحلة ج — رفع المستندات وتسجيل مصادر البيانات نشط.</strong>
+    <span style="display:block; color:#6b7280; font-size:0.76rem; margin-top:3px;">
+      Phase C: evidence and source readiness only — reports and certified outputs are later phases.
     </span>
   </div>
 
@@ -35926,6 +35934,197 @@ function taxSpCreateDraft() {
         </p>
       </div>
 
+      <!-- ══ Phase C: Evidence Section ══════════════════════════════════════════ -->
+      <div data-testid="pro-val-evidence-section"
+           style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(34,197,94,0.15);">
+        <p style="color:#4ade80; font-weight:700; font-size:0.85rem; margin:0 0 10px;">
+          📎 المستندات والمرفقات — Phase C
+        </p>
+
+        <!-- Evidence form -->
+        <div data-testid="pro-val-evidence-form"
+             style="margin-bottom:10px; padding:12px 14px; background:rgba(30,41,59,0.6); border:1px solid rgba(34,197,94,0.2); border-radius:8px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:8px;">
+            <select id="pv-ev-type" data-testid="pro-val-evidence-type-select"
+                    style="padding:6px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+              <option value="">— نوع المستند —</option>
+              <option value="ownership_document">وثيقة الملكية</option>
+              <option value="area_statement">بيان المساحة</option>
+              <option value="building_permit">ترخيص البناء</option>
+              <option value="completion_certificate">شهادة الإنهاء</option>
+              <option value="occupancy_certificate">شهادة الإشغال</option>
+              <option value="inspection_photos">صور المعاينة</option>
+              <option value="location_map">خريطة الموقع</option>
+              <option value="legal_due_diligence_note">ملاحظة الفحص القانوني</option>
+              <option value="lease_contract">عقد الإيجار</option>
+              <option value="sales_comparable_document">مستند مقارن بيعي</option>
+              <option value="rental_comparable_document">مستند مقارن إيجاري</option>
+              <option value="land_price_reference">مرجع سعر الأرض</option>
+              <option value="comparable_excel">ملف Excel للمقارنات</option>
+              <option value="cost_reference">مرجع التكلفة</option>
+              <option value="expert_note">ملاحظة خبير</option>
+              <option value="other">أخرى</option>
+            </select>
+            <input id="pv-ev-file" data-testid="pro-val-evidence-file-input" type="file"
+                   style="padding:4px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:#e2e8f0; font-size:0.78rem;" />
+            <input id="pv-ev-category" placeholder="تصنيف المستند" dir="rtl"
+                   style="padding:6px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:#e2e8f0; font-size:0.8rem;" />
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:#94a3b8; cursor:pointer;">
+              <input id="pv-ev-required" data-testid="pro-val-evidence-required-checkbox" type="checkbox" />
+              مستند إلزامي
+            </label>
+          </div>
+          <div id="pv-ev-msg" style="font-size:0.78rem; color:#f87171; min-height:14px; margin-bottom:6px;"></div>
+          <button data-testid="pro-val-evidence-submit" id="pv-ev-submit-btn"
+                  style="padding:6px 16px; background:rgba(34,197,94,0.15); border:1px solid rgba(34,197,94,0.35); color:#4ade80; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                  onclick="pvSubmitEvidence();">
+            + رفع / تسجيل مستند
+          </button>
+        </div>
+
+        <!-- Document completeness panel -->
+        <div data-testid="pro-val-document-completeness-panel" id="pv-doc-completeness"
+             style="margin-bottom:10px; padding:10px 12px; background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.2); border-radius:6px; font-size:0.78rem; color:#9ca3af;">
+          <p style="margin:0 0 4px; color:#fbbf24; font-weight:600;">اكتمال المستندات</p>
+          <p style="margin:0;" id="pv-doc-score-text">لم يتم التقييم بعد — حدد طلباً وارفع مستنداً.</p>
+          <ul data-testid="pro-val-missing-documents-list" id="pv-missing-docs-list"
+              style="margin:6px 0 0; padding-right:16px; color:#f87171; font-size:0.76rem;"></ul>
+        </div>
+
+        <!-- Evidence table -->
+        <div style="overflow-x:auto;">
+          <table data-testid="pro-val-evidence-table"
+                 style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#e2e8f0;">
+            <thead>
+              <tr style="background:rgba(34,197,94,0.1); color:#86efac;">
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">نوع المستند</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">اسم الملف</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">الحالة</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">جاهز للإنتاج</th>
+              </tr>
+            </thead>
+            <tbody id="pv-evidence-tbody">
+              <tr data-testid="pro-val-evidence-row"
+                  style="display:none; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td colspan="4" style="padding:10px; text-align:center; color:#64748b;">لا توجد مستندات مسجلة.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Evidence review status area -->
+        <div data-testid="pro-val-evidence-review-status" id="pv-ev-review-area"
+             style="display:none; margin-top:8px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid rgba(255,255,255,0.07); border-radius:6px; font-size:0.78rem;">
+          <p style="color:#94a3b8; margin:0 0 4px;">مراجعة المستند المحدد</p>
+        </div>
+      </div>
+
+      <!-- ══ Phase C: Source Registry Section ═══════════════════════════════════ -->
+      <div data-testid="pro-val-source-section"
+           style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(139,92,246,0.15);">
+        <p style="color:#a78bfa; font-weight:700; font-size:0.85rem; margin:0 0 10px;">
+          📊 مصادر البيانات — Phase C
+        </p>
+
+        <!-- Source form -->
+        <div data-testid="pro-val-source-form"
+             style="margin-bottom:10px; padding:12px 14px; background:rgba(30,41,59,0.6); border:1px solid rgba(139,92,246,0.2); border-radius:8px;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:8px;">
+            <select id="pv-src-type" data-testid="pro-val-source-type-select"
+                    style="padding:6px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+              <option value="">— نوع المصدر —</option>
+              <option value="sales_comparable">مقارن بيعي</option>
+              <option value="rental_comparable">مقارن إيجاري</option>
+              <option value="land_price_reference">مرجع سعر الأرض</option>
+              <option value="cap_rate_reference">مرجع معدل الرسملة</option>
+              <option value="discount_rate_reference">مرجع معدل الخصم</option>
+              <option value="construction_cost_reference">مرجع تكاليف البناء</option>
+              <option value="legal_reference">مرجع قانوني</option>
+              <option value="market_research">بحث سوقي</option>
+              <option value="expert_manual_entry">إدخال خبير يدوي</option>
+              <option value="uploaded_document_source">مصدر من مستند مرفق</option>
+              <option value="qa_simulation_source">محاكاة QA (اختبار فقط)</option>
+            </select>
+            <input id="pv-src-name" placeholder="اسم المصدر" dir="rtl"
+                   style="padding:6px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:#e2e8f0; font-size:0.8rem;" />
+            <input id="pv-src-value" data-testid="pro-val-source-value-input"
+                   type="number" placeholder="قيمة/سعر (اختياري)"
+                   style="padding:6px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:5px; color:#e2e8f0; font-size:0.8rem;" />
+            <select id="pv-src-related-ev" data-testid="pro-val-source-related-evidence-select"
+                    style="padding:6px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+              <option value="">— مستند مرتبط (اختياري) —</option>
+            </select>
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:#f87171; cursor:pointer;">
+              <input id="pv-src-qa" data-testid="pro-val-source-qa-checkbox" type="checkbox" />
+              محاكاة QA (لا تصلح للإنتاج)
+            </label>
+          </div>
+          <div id="pv-src-msg" style="font-size:0.78rem; color:#f87171; min-height:14px; margin-bottom:6px;"></div>
+          <button data-testid="pro-val-source-submit" id="pv-src-submit-btn"
+                  style="padding:6px 16px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.35); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                  onclick="pvSubmitSource();">
+            + إضافة مصدر
+          </button>
+        </div>
+
+        <!-- Source quality panel -->
+        <div data-testid="pro-val-source-quality-panel" id="pv-src-quality"
+             style="margin-bottom:10px; padding:10px 12px; background:rgba(139,92,246,0.05); border:1px solid rgba(139,92,246,0.2); border-radius:6px; font-size:0.78rem; color:#9ca3af;">
+          <p style="margin:0 0 4px; color:#a78bfa; font-weight:600;">جودة مصادر البيانات</p>
+          <p style="margin:0;" id="pv-src-quality-text">لم يتم التقييم — أضف مصدراً لتقييم الجودة.</p>
+        </div>
+
+        <!-- Source table -->
+        <div style="overflow-x:auto;">
+          <table data-testid="pro-val-source-table"
+                 style="width:100%; border-collapse:collapse; font-size:0.78rem; color:#e2e8f0;">
+            <thead>
+              <tr style="background:rgba(139,92,246,0.1); color:#c4b5fd;">
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">نوع المصدر</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">الاسم</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">الحالة</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">إنتاج جاهز</th>
+                <th style="padding:5px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.08);">QA</th>
+              </tr>
+            </thead>
+            <tbody id="pv-sources-tbody">
+              <tr data-testid="pro-val-source-row"
+                  style="display:none; border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td colspan="5" style="padding:10px; text-align:center; color:#64748b;">لا توجد مصادر مسجلة.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Source review status -->
+        <div data-testid="pro-val-source-review-status" id="pv-src-review-area"
+             style="display:none; margin-top:8px; padding:8px 12px; background:rgba(30,41,59,0.5); border:1px solid rgba(255,255,255,0.07); border-radius:6px; font-size:0.78rem;">
+          <p style="color:#94a3b8; margin:0 0 4px;">مراجعة المصدر المحدد</p>
+        </div>
+      </div>
+
+      <!-- ══ Phase C: Certification Gate Summary (updated) ══════════════════════ -->
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid rgba(239,68,68,0.15);">
+        <p style="color:#f87171; font-weight:700; font-size:0.85rem; margin:0 0 8px;">🔒 بوابات الاعتماد (Phase C)</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin-bottom:8px;">
+          <div style="padding:8px 12px; background:rgba(30,41,59,0.5); border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">المستندات الإلزامية</div>
+            <div data-testid="pro-val-mandatory-documents-ready" id="pv-gate-docs"
+                 style="color:#fbbf24; font-size:0.8rem;">—</div>
+          </div>
+          <div style="padding:8px 12px; background:rgba(30,41,59,0.5); border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">المصادر الحقيقية</div>
+            <div data-testid="pro-val-real-sources-ready" id="pv-gate-sources"
+                 style="color:#fbbf24; font-size:0.8rem;">—</div>
+          </div>
+        </div>
+        <div data-testid="pro-val-certification-blockers-list" id="pv-blockers-list"
+             style="padding:8px 12px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.15); border-radius:6px; font-size:0.76rem; color:#6b7280;">
+          <p style="margin:0 0 4px; color:#f87171; font-weight:600;">عوامل الحظر:</p>
+          <p style="margin:0;">لم يتم التقييم بعد — حدد طلباً وارفع مستنداً.</p>
+        </div>
+      </div>
+
       <!-- Outputs section (always shown in Phase A scaffold for testid visibility) -->
       <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(139,92,246,0.1);">
         <p style="color:#a78bfa; font-weight:700; font-size:0.82rem; margin:0 0 8px;">التقارير والمخرجات</p>
@@ -36104,6 +36303,11 @@ function taxSpCreateDraft() {
                     ' — ' + pvEsc(gate.advisory_only_reason || '') + '</p>';
             }
         })
+        .then(function() {
+            /* Phase C: also load evidence + sources for the selected request */
+            pvLoadEvidence(requestId);
+            pvLoadSources(requestId);
+        })
         .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
     };
 
@@ -36156,6 +36360,229 @@ function taxSpCreateDraft() {
         })
         .catch(function(e) { setMsg('خطأ: ' + e.message); });
     };
+
+    /* ── Submit evidence (Phase C) ── */
+    window.pvSubmitEvidence = function() {
+        var msgEl = document.getElementById('pv-ev-msg');
+        function setMsg(t, c) { if (msgEl) { msgEl.textContent = t; msgEl.style.color = c || '#f87171'; } }
+        var token = pvGetToken();
+        if (!token) { setMsg('أدخل رمز الدخول أولاً.'); return; }
+        var selTs = document.getElementById('pro-val-transition-select');
+        var rid   = selTs && selTs.dataset.requestId;
+        if (!rid) { setMsg('حدد طلباً أولاً من الجدول.'); return; }
+        var evType   = (document.getElementById('pv-ev-type')    || {}).value || 'other';
+        var evCat    = (document.getElementById('pv-ev-category') || {}).value || '';
+        var isReqd   = (document.getElementById('pv-ev-required') || {}).checked || false;
+        var fileInp  = document.getElementById('pv-ev-file');
+        var hasFile  = fileInp && fileInp.files && fileInp.files.length > 0;
+
+        setMsg('جارٍ الرفع…', '#93c5fd');
+        var submitFetch;
+        if (hasFile) {
+            var fd = new FormData();
+            fd.append('file', fileInp.files[0]);
+            fd.append('evidence_type', evType);
+            fd.append('document_category', evCat);
+            fd.append('is_required_document', isReqd ? 'true' : 'false');
+            submitFetch = fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/evidence', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: fd,
+            });
+        } else {
+            submitFetch = fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/evidence', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({
+                    evidence_type: evType,
+                    document_category: evCat,
+                    is_required_document: isReqd,
+                    original_filename: 'metadata-only',
+                }),
+            });
+        }
+        submitFetch
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.ok) {
+                    setMsg('✅ تم تسجيل المستند: ' + (data.evidence && data.evidence.evidence_id), '#4ade80');
+                    pvLoadEvidence(rid);
+                    if (data.document_completeness_status) pvRenderDocCompleteness(data.document_completeness_status);
+                    if (data.certification_gate_summary)   pvRenderGateSummary(data.certification_gate_summary);
+                } else {
+                    setMsg('خطأ: ' + (data.error || 'فشل'));
+                }
+            })
+            .catch(function(e) { setMsg('خطأ: ' + e.message); });
+    };
+
+    /* ── Load evidence list ── */
+    window.pvLoadEvidence = function(requestId) {
+        var token = pvGetToken();
+        if (!token || !requestId) return;
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(requestId) + '/evidence', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) return;
+            pvRenderEvidence(data.evidence_items || []);
+            if (data.document_completeness_status) pvRenderDocCompleteness(data.document_completeness_status);
+        })
+        .catch(function() {});
+    };
+
+    function pvRenderEvidence(items) {
+        var tbody = document.getElementById('pv-evidence-tbody');
+        if (!tbody) return;
+        var placeholder = tbody.querySelector('[data-testid="pro-val-evidence-row"]');
+        tbody.querySelectorAll('.pv-ev-live').forEach(function(r) { r.remove(); });
+        if (placeholder) placeholder.style.display = items.length ? 'none' : '';
+        items.forEach(function(ev) {
+            var tr = document.createElement('tr');
+            tr.className = 'pv-ev-live';
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+            tr.innerHTML =
+                '<td style="padding:5px 8px;">' + pvEsc(ev.evidence_label_ar || ev.evidence_type) + '</td>' +
+                '<td style="padding:5px 8px; font-family:monospace; font-size:0.73rem;">' + pvEsc(ev.original_filename) + '</td>' +
+                '<td style="padding:5px 8px;"><span style="padding:2px 6px; background:rgba(245,158,11,0.12); color:#fbbf24; border-radius:4px; font-size:0.73rem;">' + pvEsc(ev.status) + '</span></td>' +
+                '<td style="padding:5px 8px; color:' + (ev.production_ready ? '#4ade80' : '#f87171') + ';">' + (ev.production_ready ? 'نعم' : 'لا') + '</td>';
+            tbody.appendChild(tr);
+        });
+        /* update related-evidence select in source form */
+        var sel = document.getElementById('pv-src-related-ev');
+        if (sel) {
+            sel.innerHTML = '<option value="">— مستند مرتبط (اختياري) —</option>';
+            items.forEach(function(ev) {
+                var opt = document.createElement('option');
+                opt.value = ev.evidence_id;
+                opt.textContent = pvEsc(ev.evidence_id) + ' — ' + pvEsc(ev.evidence_type);
+                sel.appendChild(opt);
+            });
+        }
+    }
+
+    function pvRenderDocCompleteness(doc) {
+        var el = document.getElementById('pv-doc-score-text');
+        if (el) el.textContent = 'درجة الاكتمال: ' + (doc.score || 0) + '% — ' + (doc.completeness_level || '');
+        var ul = document.getElementById('pv-missing-docs-list');
+        if (ul) {
+            ul.innerHTML = '';
+            (doc.missing_required_documents || []).forEach(function(m) {
+                var li = document.createElement('li');
+                li.textContent = m;
+                ul.appendChild(li);
+            });
+        }
+    }
+
+    /* ── Submit source (Phase C) ── */
+    window.pvSubmitSource = function() {
+        var msgEl = document.getElementById('pv-src-msg');
+        function setMsg(t, c) { if (msgEl) { msgEl.textContent = t; msgEl.style.color = c || '#f87171'; } }
+        var token = pvGetToken();
+        if (!token) { setMsg('أدخل رمز الدخول أولاً.'); return; }
+        var selTs = document.getElementById('pro-val-transition-select');
+        var rid   = selTs && selTs.dataset.requestId;
+        if (!rid) { setMsg('حدد طلباً أولاً.'); return; }
+        var srcType  = (document.getElementById('pv-src-type')    || {}).value || '';
+        var srcName  = (document.getElementById('pv-src-name')    || {}).value || '';
+        var srcVal   = (document.getElementById('pv-src-value')   || {}).value || null;
+        var relEv    = (document.getElementById('pv-src-related-ev') || {}).value || '';
+        var isQA     = (document.getElementById('pv-src-qa')      || {}).checked || false;
+        if (!srcType) { setMsg('اختر نوع المصدر.'); return; }
+        setMsg('جارٍ الإضافة…', '#93c5fd');
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/sources', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({
+                source_type: srcType,
+                source_name: srcName,
+                value_amount: srcVal ? parseFloat(srcVal) : null,
+                related_evidence_id: relEv || null,
+                qa_simulation: isQA,
+            }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                setMsg('✅ تم إضافة المصدر: ' + (data.source && data.source.source_id), '#4ade80');
+                pvLoadSources(rid);
+                if (data.source_quality_summary)    pvRenderSrcQuality(data.source_quality_summary);
+                if (data.certification_gate_summary) pvRenderGateSummary(data.certification_gate_summary);
+            } else {
+                setMsg('خطأ: ' + (data.error || 'فشل'));
+            }
+        })
+        .catch(function(e) { setMsg('خطأ: ' + e.message); });
+    };
+
+    /* ── Load sources list ── */
+    window.pvLoadSources = function(requestId) {
+        var token = pvGetToken();
+        if (!token || !requestId) return;
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(requestId) + '/sources', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) return;
+            pvRenderSources(data.sources || []);
+            if (data.source_quality_summary) pvRenderSrcQuality(data.source_quality_summary);
+        })
+        .catch(function() {});
+    };
+
+    function pvRenderSources(items) {
+        var tbody = document.getElementById('pv-sources-tbody');
+        if (!tbody) return;
+        var placeholder = tbody.querySelector('[data-testid="pro-val-source-row"]');
+        tbody.querySelectorAll('.pv-src-live').forEach(function(r) { r.remove(); });
+        if (placeholder) placeholder.style.display = items.length ? 'none' : '';
+        items.forEach(function(src) {
+            var tr = document.createElement('tr');
+            tr.className = 'pv-src-live';
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+            tr.innerHTML =
+                '<td style="padding:5px 8px;">' + pvEsc(src.source_type) + '</td>' +
+                '<td style="padding:5px 8px;">' + pvEsc(src.source_name || '—') + '</td>' +
+                '<td style="padding:5px 8px;"><span style="padding:2px 6px; background:rgba(139,92,246,0.12); color:#c4b5fd; border-radius:4px; font-size:0.73rem;">' + pvEsc(src.source_status) + '</span></td>' +
+                '<td style="padding:5px 8px; color:' + (src.production_ready ? '#4ade80' : '#f87171') + ';">' + (src.production_ready ? 'نعم' : 'لا') + '</td>' +
+                '<td style="padding:5px 8px; color:' + (src.qa_simulation ? '#f59e0b' : '#4ade80') + ';">' + (src.qa_simulation ? 'QA' : '—') + '</td>';
+            tbody.appendChild(tr);
+        });
+    }
+
+    function pvRenderSrcQuality(sq) {
+        var el = document.getElementById('pv-src-quality-text');
+        if (el) el.textContent = 'الحالة: ' + (sq.source_quality_status || '—') +
+            ' | مصادر إنتاج: ' + (sq.production_ready_sources || 0) +
+            ' / ' + (sq.total_sources || 0);
+    }
+
+    function pvRenderGateSummary(gate) {
+        var docsEl    = document.getElementById('pv-gate-docs');
+        var srcEl     = document.getElementById('pv-gate-sources');
+        var blockList = document.getElementById('pv-blockers-list');
+        if (docsEl)  docsEl.textContent    = gate.mandatory_documents_ready ? '✅ جاهزة' : '❌ ناقصة';
+        if (srcEl)   srcEl.textContent     = gate.real_sources_ready ? '✅ جاهزة' : '❌ ناقصة';
+        if (blockList) {
+            blockList.innerHTML = '<p style="margin:0 0 4px; color:#f87171; font-weight:600;">عوامل الحظر:</p>';
+            (gate.blockers || []).forEach(function(b) {
+                var p = document.createElement('p');
+                p.style.cssText = 'margin:2px 0; color:#6b7280; font-size:0.75rem;';
+                p.textContent = '• ' + b;
+                blockList.appendChild(p);
+            });
+        }
+        /* also update main gate summary element */
+        var gateEl = document.getElementById('pro-val-gate-summary');
+        if (gateEl) {
+            gateEl.innerHTML =
+                '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد (Phase C)</p>' +
+                '<p style="margin:0;color:#6b7280;">certification_ready: false — ' + pvEsc(gate.advisory_only_reason || '') + '</p>';
+        }
+    }
 
     /* ── Execute transition ── */
     window.pvDoTransition = function() {

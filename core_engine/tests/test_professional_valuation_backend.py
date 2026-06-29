@@ -1,5 +1,5 @@
 """
-test_professional_valuation_backend.py — Professional Valuation Phase B backend tests.
+test_professional_valuation_backend.py — Professional Valuation Phase B + Phase C backend tests.
 
 PVB01  create request returns request_id
 PVB02  create validates required client_name
@@ -11,7 +11,7 @@ PVB07  workflow route requires auth
 PVB08  schema route requires auth
 PVB09  request list returns safe metadata (no internal paths)
 PVB10  detail returns certification_gate_summary
-PVB11  certification_ready is false in Phase B
+PVB11  certification_ready is false in Phase B/C
 PVB12  detail returns permissions_summary with can_generate_certified=false
 PVB13  transition route requires auth
 PVB14  valid transition submitted -> intake_review succeeds
@@ -21,11 +21,42 @@ PVB17  approved_pending_signature blocked without peer_review_completed on recor
 PVB18  rejected -> archived succeeds
 PVB19  event log is appended after transition
 PVB20  no internal storage paths in create/list/detail responses
-PVB21  evidence/source/report generation routes not exposed in Phase B
+PVB21  report/certified-report routes remain unimplemented; evidence/source now 401 (auth required)
 PVB22  workflow route returns all 16 expected statuses
 PVB23  schema route returns required field definitions
 PVB24  QA design outputs directory for Phase A exists
 PVB25  simple valuation route still responds (not 404/405)
+
+PVC01  evidence type catalogue route requires auth
+PVC02  source type catalogue route requires auth
+PVC03  create evidence requires auth
+PVC04  create evidence returns evidence_id
+PVC05  create evidence sets production_ready=false
+PVC06  create evidence sets no_automatic_value_extraction=true
+PVC07  evidence response has no internal file path
+PVC08  list evidence requires auth
+PVC09  get evidence detail requires auth
+PVC10  evidence review requires auth
+PVC11  rejected evidence requires rejection_reason
+PVC12  approved_as_source requires source-eligible evidence_type
+PVC13  document completeness returned after evidence upload
+PVC14  missing mandatory documents keep certification_document_ready=false
+PVC15  create source requires auth
+PVC16  create source returns source_id
+PVC17  create source sets production_ready=false by default
+PVC18  qa_simulation source cannot become approved_as_production_source
+PVC19  non-QA source approved_as_production_source sets production_ready=true
+PVC20  list sources requires auth
+PVC21  get source detail requires auth
+PVC22  source review requires auth
+PVC23  rejected source requires rejection_reason
+PVC24  source quality summary returned after source creation
+PVC25  no production-ready sources → real_sources_ready=false in gate
+PVC26  approved non-QA source → real_sources_ready=true in gate
+PVC27  certification_gate_summary.mandatory_documents_ready updates after evidence
+PVC28  certification_gate_summary.real_sources_ready updates after source approval
+PVC29  event log records evidence and source actions
+PVC30  no internal paths in evidence/source list/detail responses
 """
 from __future__ import annotations
 
@@ -316,14 +347,28 @@ def test_PVB20_no_internal_paths_in_create_response(client):
     assert "instance/professional_valuation" not in body_str
 
 
-def test_PVB21_unimplemented_routes_not_exposed_in_phase_b(client):
-    """Evidence/source/report generation endpoints must not exist yet."""
-    test_id = "PVR-20260629-XXXX"
+def test_PVB21_phase_c_evidence_sources_registered_report_still_blocked(client):
+    """Phase C: evidence/source routes now exist (return 401 without auth).
+    Report and certified-report routes remain unimplemented (404/405).
+    """
+    rid = _create(client).get_json()["request_id"]
+
+    # Evidence and source routes exist — require auth → 401 without token
+    resp_ev  = client.get(f"/api/professional-valuation/requests/{rid}/evidence")
+    resp_src = client.get(f"/api/professional-valuation/requests/{rid}/sources")
+    assert resp_ev.status_code  == 401, f"Evidence list should require auth, got {resp_ev.status_code}"
+    assert resp_src.status_code == 401, f"Source list should require auth, got {resp_src.status_code}"
+
+    # Evidence type and source type catalogues also require auth
+    resp_et = client.get("/api/professional-valuation/evidence/types")
+    resp_st = client.get("/api/professional-valuation/source/types")
+    assert resp_et.status_code == 401
+    assert resp_st.status_code == 401
+
+    # Report/certified-report routes remain unimplemented
     for path in [
-        f"/api/professional-valuation/requests/{test_id}/evidence",
-        f"/api/professional-valuation/requests/{test_id}/sources",
-        f"/api/professional-valuation/requests/{test_id}/report",
-        f"/api/professional-valuation/requests/{test_id}/certified-report",
+        f"/api/professional-valuation/requests/{rid}/report",
+        f"/api/professional-valuation/requests/{rid}/certified-report",
     ]:
         resp = client.get(path)
         assert resp.status_code in (404, 405), (
@@ -373,3 +418,396 @@ def test_PVB25_simple_valuation_route_still_works(client):
     assert resp.status_code not in (404, 405), (
         f"simple-valuation route broken: {resp.status_code}"
     )
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Phase C Tests — PVC01–PVC30 (Evidence Upload & Source Registry)
+# ═════════════════════════════════════════════════════════════════════════════
+
+import professional_valuation_evidence_routes as _pve  # noqa: E402
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _create_evidence(client, request_id: str, extra: dict | None = None) -> dict:
+    """POST evidence (JSON metadata-only) and return parsed response body."""
+    payload = {"evidence_type": "ownership_document", "is_required_document": True}
+    if extra:
+        payload.update(extra)
+    resp = client.post(
+        f"/api/professional-valuation/requests/{request_id}/evidence",
+        json=payload,
+        content_type="application/json",
+        headers=_auth(),
+    )
+    return resp.get_json()
+
+
+def _create_source(client, request_id: str, extra: dict | None = None) -> dict:
+    payload = {
+        "source_type":   "sales_comparable",
+        "source_name":   "مقارن اختبار",
+        "qa_simulation": False,
+    }
+    if extra:
+        payload.update(extra)
+    resp = client.post(
+        f"/api/professional-valuation/requests/{request_id}/sources",
+        json=payload,
+        content_type="application/json",
+        headers=_auth(),
+    )
+    return resp.get_json()
+
+
+# ── PVC01–PVC02: Catalogue routes auth ───────────────────────────────────────
+
+def test_PVC01_evidence_type_catalogue_requires_auth(client):
+    resp = client.get("/api/professional-valuation/evidence/types")
+    assert resp.status_code == 401
+
+
+def test_PVC02_source_type_catalogue_requires_auth(client):
+    resp = client.get("/api/professional-valuation/source/types")
+    assert resp.status_code == 401
+
+
+# ── PVC03–PVC07: Evidence creation ───────────────────────────────────────────
+
+def test_PVC03_create_evidence_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence",
+        json={"evidence_type": "ownership_document"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVC04_create_evidence_returns_evidence_id(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_evidence(client, rid)
+    assert body["ok"] is True
+    ev = body["evidence"]
+    assert ev["evidence_id"].startswith("PVE-"), f"Bad evidence_id: {ev['evidence_id']}"
+    assert ev["request_id"] == rid
+
+
+def test_PVC05_create_evidence_production_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_evidence(client, rid)
+    assert body["evidence"]["production_ready"] is False
+
+
+def test_PVC06_create_evidence_no_automatic_value_extraction_true(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_evidence(client, rid)
+    assert body["evidence"]["no_automatic_value_extraction"] is True
+
+
+def test_PVC07_evidence_response_has_no_internal_path(client):
+    rid      = _create(client).get_json()["request_id"]
+    body_str = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence",
+        json={"evidence_type": "inspection_photos"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_data(as_text=True)
+    assert "instance/professional_valuation" not in body_str, (
+        "Internal storage path leaked in evidence response"
+    )
+    assert "evidence_files" not in body_str
+
+
+# ── PVC08–PVC12: Evidence list/detail/review ─────────────────────────────────
+
+def test_PVC08_list_evidence_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}/evidence")
+    assert resp.status_code == 401
+
+
+def test_PVC09_get_evidence_detail_requires_auth(client):
+    rid   = _create(client).get_json()["request_id"]
+    ev_id = _create_evidence(client, rid)["evidence"]["evidence_id"]
+    resp  = client.get(f"/api/professional-valuation/requests/{rid}/evidence/{ev_id}")
+    assert resp.status_code == 401
+
+
+def test_PVC10_evidence_review_requires_auth(client):
+    rid   = _create(client).get_json()["request_id"]
+    ev_id = _create_evidence(client, rid)["evidence"]["evidence_id"]
+    resp  = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence/{ev_id}/review",
+        json={"status": "under_review"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVC11_rejected_evidence_requires_rejection_reason(client):
+    rid   = _create(client).get_json()["request_id"]
+    ev_id = _create_evidence(client, rid)["evidence"]["evidence_id"]
+    resp  = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence/{ev_id}/review",
+        json={"status": "rejected"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert "rejection_reason" in body["error"]
+
+
+def test_PVC12_approved_as_source_requires_source_eligible_type(client):
+    rid   = _create(client).get_json()["request_id"]
+    # expert_note is NOT source-eligible
+    ev_id = _create_evidence(client, rid, {"evidence_type": "expert_note"})["evidence"]["evidence_id"]
+    resp  = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence/{ev_id}/review",
+        json={"status": "approved_as_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+
+
+# ── PVC13–PVC14: Document completeness gate ───────────────────────────────────
+
+def test_PVC13_document_completeness_returned_after_evidence_upload(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_evidence(client, rid)
+    assert "document_completeness_status" in body
+    doc = body["document_completeness_status"]
+    assert "completeness_level" in doc
+    assert "score" in doc
+    assert 0 <= doc["score"] <= 100
+
+
+def test_PVC14_missing_mandatory_docs_keep_certification_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_evidence(client, rid, {"evidence_type": "expert_note"})
+    doc  = body["document_completeness_status"]
+    # expert_note alone can't satisfy ownership_document, area_statement, inspection_photos, location_map
+    assert doc["certification_document_ready"] is False
+    gate = body["certification_gate_summary"]
+    assert gate["certification_ready"] is False
+    assert gate["mandatory_documents_ready"] is False
+
+
+# ── PVC15–PVC19: Source creation ─────────────────────────────────────────────
+
+def test_PVC15_create_source_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources",
+        json={"source_type": "sales_comparable"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVC16_create_source_returns_source_id(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_source(client, rid)
+    assert body["ok"] is True
+    src = body["source"]
+    assert src["source_id"].startswith("PVS-"), f"Bad source_id: {src['source_id']}"
+    assert src["request_id"] == rid
+
+
+def test_PVC17_create_source_production_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_source(client, rid)
+    assert body["source"]["production_ready"] is False
+
+
+def test_PVC18_qa_simulation_source_cannot_become_production(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid, {"qa_simulation": True})["source"]["source_id"]
+    # Advance to approved_for_analysis first
+    _pve._update_src(rid, src_id, {"source_status": "approved_for_analysis"})
+    resp   = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "approved_as_production_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert "QA" in body["error"]
+
+
+def test_PVC19_non_qa_source_can_become_production(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid, {"qa_simulation": False})["source"]["source_id"]
+    # Advance to approved_for_analysis
+    _pve._update_src(rid, src_id, {"source_status": "approved_for_analysis"})
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "approved_as_production_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["source"]["production_ready"] is True
+
+
+# ── PVC20–PVC23: Source list/detail/review ───────────────────────────────────
+
+def test_PVC20_list_sources_requires_auth(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}/sources")
+    assert resp.status_code == 401
+
+
+def test_PVC21_get_source_detail_requires_auth(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid)["source"]["source_id"]
+    resp   = client.get(f"/api/professional-valuation/requests/{rid}/sources/{src_id}")
+    assert resp.status_code == 401
+
+
+def test_PVC22_source_review_requires_auth(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid)["source"]["source_id"]
+    resp   = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "submitted"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+def test_PVC23_rejected_source_requires_rejection_reason(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid)["source"]["source_id"]
+    # advance to under_review
+    _pve._update_src(rid, src_id, {"source_status": "under_review"})
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "rejected"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 400
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert "rejection_reason" in body["error"]
+
+
+# ── PVC24–PVC28: Gate evaluation ─────────────────────────────────────────────
+
+def test_PVC24_source_quality_summary_returned_after_creation(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_source(client, rid)
+    assert "source_quality_summary" in body
+    sq = body["source_quality_summary"]
+    assert "source_quality_status" in sq
+    assert "total_sources" in sq
+
+
+def test_PVC25_no_production_sources_keeps_real_sources_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _create_source(client, rid)
+    gate = body["certification_gate_summary"]
+    # newly created source is draft → not production_ready
+    assert gate["real_sources_ready"] is False
+    assert gate["certification_ready"] is False
+
+
+def test_PVC26_approved_non_qa_source_sets_real_sources_ready_true(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid, {"qa_simulation": False})["source"]["source_id"]
+    _pve._update_src(rid, src_id, {"source_status": "approved_for_analysis"})
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "approved_as_production_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    gate = resp.get_json()["certification_gate_summary"]
+    assert gate["real_sources_ready"] is True
+    # certification_ready still False in Phase C
+    assert gate["certification_ready"] is False
+
+
+def test_PVC27_gate_mandatory_documents_ready_updates_after_evidence(client):
+    rid = _create(client).get_json()["request_id"]
+    # Upload all required documents for "قيمة سوقية":
+    # common (4) + sales_comparable_document (required by "سوقية" keyword)
+    for ev_type in (
+        "ownership_document", "area_statement",
+        "inspection_photos", "location_map",
+        "sales_comparable_document",
+    ):
+        _create_evidence(client, rid, {"evidence_type": ev_type})
+    # Re-fetch detail to get updated gate summary
+    detail_resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    gate = detail_resp.get_json()["certification_gate_summary"]
+    assert gate["mandatory_documents_ready"] is True
+    assert gate["certification_ready"] is False
+
+
+def test_PVC28_gate_real_sources_ready_updates_after_source_approval(client):
+    rid    = _create(client).get_json()["request_id"]
+    src_id = _create_source(client, rid, {"qa_simulation": False})["source"]["source_id"]
+    _pve._update_src(rid, src_id, {
+        "source_status":  "approved_for_analysis",
+        "production_ready": False,
+    })
+    client.post(
+        f"/api/professional-valuation/requests/{rid}/sources/{src_id}/review",
+        json={"source_status": "approved_as_production_source"},
+        content_type="application/json",
+        headers=_auth(),
+    )
+    detail_resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    gate = detail_resp.get_json()["certification_gate_summary"]
+    assert gate["real_sources_ready"] is True
+
+
+# ── PVC29–PVC30: Safety ───────────────────────────────────────────────────────
+
+def test_PVC29_event_log_records_evidence_and_source_actions(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_evidence(client, rid)
+    _create_source(client, rid)
+    events = _pvr._read_events(rid)
+    actions = [e["action"] for e in events]
+    assert "evidence_upload" in actions, f"evidence_upload not in events: {actions}"
+    assert "source_create"   in actions, f"source_create not in events: {actions}"
+
+
+def test_PVC30_no_internal_paths_in_evidence_source_responses(client):
+    rid = _create(client).get_json()["request_id"]
+    ev_body = client.post(
+        f"/api/professional-valuation/requests/{rid}/evidence",
+        json={"evidence_type": "area_statement"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_data(as_text=True)
+    src_body = client.post(
+        f"/api/professional-valuation/requests/{rid}/sources",
+        json={"source_type": "rental_comparable", "source_name": "test"},
+        content_type="application/json",
+        headers=_auth(),
+    ).get_data(as_text=True)
+    for body_str, label in [(ev_body, "evidence"), (src_body, "source")]:
+        assert "instance/professional_valuation" not in body_str, (
+            f"Internal path in {label} response"
+        )
+        assert "evidence_files" not in body_str, (
+            f"evidence_files path in {label} response"
+        )

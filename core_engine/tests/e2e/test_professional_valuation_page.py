@@ -1,5 +1,5 @@
 """
-PVP01–PVP18 — Professional Valuation Backoffice Page E2E Tests (Phase A + Phase B).
+PVP01–PVP30 — Professional Valuation Backoffice Page E2E Tests (Phase A + B + C).
 
 Phase A tests (PVP01–PVP09):
   Scaffold rendering — tab visibility, hash navigation, governance warnings,
@@ -7,8 +7,12 @@ Phase A tests (PVP01–PVP09):
 
 Phase B tests (PVP10–PVP18):
   Phase B UI elements — phase-b-placeholder, new-request-form, certified-disabled,
-  empty-state, detail-panel, transition controls, gate summary, regression on
-  simple-valuation and tax-appeal tabs.
+  empty-state, detail-panel, transition controls, gate summary.
+
+Phase C tests (PVP19–PVP30):
+  Phase C UI elements — evidence section, source section, document completeness panel,
+  source quality panel, certification blockers list, advisory-only warning.
+  Regression: certified button remains disabled.
 """
 from __future__ import annotations
 
@@ -224,3 +228,115 @@ def test_PVP18_generate_certified_button_disabled(page: Page, live_server: str) 
     btn = page.locator('[data-testid="pro-val-generate-certified"]')
     expect(btn).to_have_count(1)
     assert btn.is_disabled(), "Certified report button should be disabled in Phase B"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase C Tests — PVP19–PVP30 (evidence + source sections)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVP19_evidence_section_visible(page: Page, live_server: str) -> None:
+    """PVP19: The Phase C evidence section is visible in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-evidence-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP20_evidence_form_visible(page: Page, live_server: str) -> None:
+    """PVP20: The evidence form is visible in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-evidence-form"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP21_evidence_type_select_visible(page: Page, live_server: str) -> None:
+    """PVP21: The evidence type select is present and visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-evidence-type-select"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP22_document_completeness_panel_visible(page: Page, live_server: str) -> None:
+    """PVP22: The document completeness panel is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-document-completeness-panel"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP23_evidence_table_present(page: Page, live_server: str) -> None:
+    """PVP23: The evidence table is present in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-evidence-table"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP24_source_section_visible(page: Page, live_server: str) -> None:
+    """PVP24: The Phase C source registry section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-source-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP25_source_form_visible(page: Page, live_server: str) -> None:
+    """PVP25: The source add form is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-source-form"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP26_source_type_select_visible(page: Page, live_server: str) -> None:
+    """PVP26: The source type select is present and visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-source-type-select"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP27_source_quality_panel_visible(page: Page, live_server: str) -> None:
+    """PVP27: The source quality panel is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-source-quality-panel"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP28_certification_blockers_list_present(page: Page, live_server: str) -> None:
+    """PVP28: The certification blockers list is present in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certification-blockers-list"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP29_advisory_only_warning_visible(page: Page, live_server: str) -> None:
+    """PVP29: The Phase C advisory-only warning is visible (contains 'Phase C')."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-advisory-only-warning"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+    expect(el).to_contain_text("Phase C")
+
+
+def test_PVP30_generate_certified_still_disabled_in_phase_c(page: Page, live_server: str) -> None:
+    """PVP30: Phase C regression — the certified report button remains disabled."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button must remain disabled in Phase C"

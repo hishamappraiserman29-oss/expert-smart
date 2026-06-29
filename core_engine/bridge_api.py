@@ -12180,6 +12180,8 @@ _register_shared_requests(app, require_auth, limiter)
 
 from professional_valuation_routes import register as _register_professional_valuation  # Phase B
 _register_professional_valuation(app, require_auth)
+from professional_valuation_evidence_routes import register_pv_evidence_routes as _register_pv_evidence  # Phase C
+_register_pv_evidence(app, require_auth)
 
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:

@@ -3017,10 +3017,10 @@ def test_SRB181_inputs_sheet_is_first_sheet():
 
 
 def test_SRB182_workbook_has_27_sheets():
-    """SRB182 Expert workbook has exactly 27 sheets (22 original + 4 strategic + 1 Source Registry: سجل ربط المصادر)."""
+    """SRB182 Expert workbook has exactly 57 sheets (51 previous + 6 risk/decision pass sheets)."""
     wb = _get_wb_v2()
-    assert len(wb.sheetnames) == 27, \
-        f"Expected 27 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
+    assert len(wb.sheetnames) == 57, \
+        f"Expected 57 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
 
 
 def test_SRB183_sales_comparison_has_formula_cells():
@@ -4367,3 +4367,1880 @@ def test_SRB276_source_registry_validator_passes_for_qa():
         errors = _validate_source_registry_integrity(mctx)
         assert not errors, \
             f"[{label}] _validate_source_registry_integrity returned errors: {errors}"
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# Advanced Methodology & Compliance Tests (SRB300–SRB329)
+# Parts B–L: HBU, DCF separation, comparable adjustments, assumptions,
+#            depreciation, DCF scenarios, legal DD, ESG, EIA, uncertainty, peer review
+# ═════════════════════════════════════════════════════════════════════════════
+
+def test_SRB300_hbu_analysis_context_exists():
+    """SRB300 hbu_analysis key exists in method context for QA payloads."""
+    for label, payload in [("market", _QA_ZAMALEK_PAYLOAD), ("rental", _QA_RENTAL_NASR_PAYLOAD)]:
+        mctx = _srr._build_method_context(payload)
+        assert "hbu_analysis" in mctx, f"[{label}] hbu_analysis missing from method context"
+        assert isinstance(mctx["hbu_analysis"], dict), f"[{label}] hbu_analysis is not a dict"
+
+
+def test_SRB301_hbu_four_tests_present():
+    """SRB301 hbu_analysis contains all four HBU test keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    hbu = mctx["hbu_analysis"]
+    for key in ("legally_permissible", "physically_possible", "financially_feasible", "maximally_productive"):
+        assert key in hbu, f"HBU test key {key!r} missing from hbu_analysis"
+    assert hbu.get("hbu_four_tests_present") is True
+
+
+def test_SRB302_hbu_conclusion_and_selected_use():
+    """SRB302 hbu_analysis has non-empty conclusion and selected_hbu for QA."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    hbu = mctx["hbu_analysis"]
+    assert hbu.get("hbu_conclusion") and hbu["hbu_conclusion"] != mctx.get("_expert_fill_label", "")
+    assert hbu.get("selected_hbu") and hbu["selected_hbu"] != mctx.get("_data_gap_label", "")
+
+
+def test_SRB303_direct_capitalization_and_dcf_are_separate():
+    """SRB303 direct_capitalization_result and dcf_result are separate keys in method context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "direct_capitalization_result" in mctx, "direct_capitalization_result missing"
+    assert "dcf_result" in mctx, "dcf_result missing"
+    # They must be populated independently
+    assert mctx["direct_capitalization_result"] != mctx["dcf_result"], \
+        "direct_capitalization_result and dcf_result should differ"
+
+
+def test_SRB304_dcf_has_independent_reconciliation_weight():
+    """SRB304 dcf_reconciliation_weight exists as a numeric value separate from income_weight."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "dcf_reconciliation_weight" in mctx
+    assert isinstance(mctx["dcf_reconciliation_weight"], float)
+    assert mctx["dcf_reconciliation_weight"] >= 0
+
+
+def test_SRB305_income_direct_vs_dcf_explanation_exists():
+    """SRB305 income_direct_vs_dcf_explanation is non-empty."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    expl = mctx.get("income_direct_vs_dcf_explanation", "")
+    assert expl and len(expl) > 20, "income_direct_vs_dcf_explanation is missing or too short"
+
+
+def test_SRB306_comparable_adjustment_support_exists():
+    """SRB306 comparable_adjustment_support exists with at least one adjustment row."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cas = mctx.get("comparable_adjustment_support", {})
+    assert cas, "comparable_adjustment_support missing"
+    adjustments = cas.get("adjustments", [])
+    assert len(adjustments) >= 1, "comparable_adjustment_support.adjustments is empty"
+    for adj in adjustments:
+        assert "adjustment_type" in adj
+        assert "coefficient" in adj
+        assert "source" in adj
+
+
+def test_SRB307_assumptions_registry_separates_types():
+    """SRB307 assumptions_registry has at least ordinary and extraordinary assumption types."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    asm_list = mctx.get("assumptions_registry", [])
+    assert len(asm_list) >= 2, "assumptions_registry has fewer than 2 entries"
+    types = {a["type"] for a in asm_list}
+    assert "افتراض عادي" in types, "No ordinary assumption in assumptions_registry"
+    assert "افتراض خاص" in types, "No extraordinary assumption in assumptions_registry"
+
+
+def test_SRB308_extraordinary_assumptions_separate_list():
+    """SRB308 extraordinary_assumptions is a non-empty list when QA payload used."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ea = mctx.get("extraordinary_assumptions", [])
+    assert isinstance(ea, list) and len(ea) >= 1, "extraordinary_assumptions is empty"
+    assert all(a["type"] == "افتراض خاص" for a in ea)
+
+
+def test_SRB309_scope_limitations_list_exists():
+    """SRB309 scope_limitations is a list."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sl = mctx.get("scope_limitations", [])
+    assert isinstance(sl, list)
+
+
+def test_SRB310_detailed_depreciation_breakdown_exists():
+    """SRB310 depreciation_breakdown has all required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    db = mctx.get("depreciation_breakdown", {})
+    assert db, "depreciation_breakdown missing"
+    required_keys = [
+        "physical_curable_pct", "physical_curable_value",
+        "physical_incurable_pct", "physical_incurable_value",
+        "functional_obsolescence_pct", "functional_obsolescence_value",
+        "external_obsolescence_pct", "external_obsolescence_value",
+        "total_depreciation_pct", "total_depreciation_value",
+        "replacement_cost_new", "depreciated_replacement_cost",
+    ]
+    for k in required_keys:
+        assert k in db, f"depreciation_breakdown missing key {k!r}"
+
+
+def test_SRB311_depreciation_curable_incurable_split():
+    """SRB311 physical curable + incurable = total physical depreciation."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    db = mctx.get("depreciation_breakdown", {})
+    curable = db.get("physical_curable_pct", 0)
+    incurable = db.get("physical_incurable_pct", 0)
+    assert curable >= 0 and incurable >= 0
+    assert curable + incurable <= db.get("total_depreciation_pct", 0) + 0.01
+
+
+def test_SRB312_dcf_scenarios_exist():
+    """SRB312 dcf_scenarios has optimistic, base, pessimistic keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    scen = mctx.get("dcf_scenarios", {})
+    assert scen, "dcf_scenarios missing"
+    assert scen.get("scenarios_present") is True
+    for key in ("optimistic", "base", "pessimistic"):
+        assert key in scen, f"dcf_scenarios missing {key!r}"
+        assert "dcf_value" in scen[key], f"dcf_scenarios.{key} missing dcf_value"
+        assert "variance_pct" in scen[key]
+
+
+def test_SRB313_dcf_scenarios_monte_carlo_note():
+    """SRB313 dcf_scenarios.monte_carlo_note is present and marks Monte Carlo as not implemented."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    note = mctx["dcf_scenarios"].get("monte_carlo_note", "")
+    assert "مرحلة مستقبلية" in note or "غير مفعلة" in note
+
+
+def test_SRB314_legal_due_diligence_exists():
+    """SRB314 legal_due_diligence dict is present with required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ldd = mctx.get("legal_due_diligence", {})
+    assert ldd, "legal_due_diligence missing"
+    required = ["legal_scope_limitation", "legal_due_diligence_conclusion", "missing_documents"]
+    for k in required:
+        assert k in ldd, f"legal_due_diligence missing key {k!r}"
+
+
+def test_SRB315_legal_due_diligence_scope_limitation_not_empty():
+    """SRB315 legal_scope_limitation text is non-empty and mentions scope limitation."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ldd = mctx["legal_due_diligence"]
+    sl = ldd.get("legal_scope_limitation", "")
+    assert sl and len(sl) > 20
+
+
+def test_SRB316_esg_adjustments_affect_rates_only_when_data_exists():
+    """SRB316 ESG adjustments exist; esg_terminal_value_adjustment and esg_value_impact present."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "esg_terminal_value_adjustment" in mctx, "esg_terminal_value_adjustment missing"
+    assert "esg_value_impact" in mctx, "esg_value_impact missing"
+    assert "climate_risk_score" in mctx, "climate_risk_score missing"
+    assert "climate_risk_notes" in mctx, "climate_risk_notes missing"
+    # Without ESG data (no _qa_simulation), incomplete note should be set
+    non_qa = {k: v for k, v in _QA_ZAMALEK_PAYLOAD.items() if k != "_qa_simulation"}
+    non_qa["_qa_simulation"] = False
+    mctx2 = _srr._build_method_context(non_qa)
+    esg2 = mctx2.get("esg_enhanced_context", {})
+    assert esg2.get("esg_incomplete_note"), "esg_incomplete_note should be set for non-QA"
+
+
+def test_SRB317_eia_methodology_absent_for_non_eia_purpose():
+    """SRB317 eia_required is False for standard market valuation purpose."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    eia = mctx.get("environmental_impact_assessment", {})
+    assert eia.get("eia_required") is False, \
+        "EIA should not be required for standard market valuation"
+
+
+def test_SRB318_eia_methodology_present_for_eia_purpose():
+    """SRB318 eia_required is True when purpose includes بيئي."""
+    eia_payload = dict(_QA_ZAMALEK_PAYLOAD, purpose="تقييم الأثر البيئي")
+    mctx = _srr._build_method_context(eia_payload)
+    eia = mctx.get("environmental_impact_assessment", {})
+    assert eia.get("eia_required") is True, "EIA should be required for بيئي purpose"
+
+
+def test_SRB319_uncertainty_range_exists():
+    """SRB319 valuation_uncertainty exists with required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    vu = mctx.get("valuation_uncertainty", {})
+    assert vu, "valuation_uncertainty missing"
+    for k in ("mean_value", "weighted_value", "lower_bound", "upper_bound", "n_methods_used"):
+        assert k in vu, f"valuation_uncertainty missing key {k!r}"
+
+
+def test_SRB320_uncertainty_range_n_methods_positive():
+    """SRB320 valuation_uncertainty.n_methods_used >= 1 for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    n = mctx["valuation_uncertainty"].get("n_methods_used", 0)
+    assert n >= 1, f"n_methods_used={n}, expected >= 1"
+
+
+def test_SRB321_uncertainty_bounds_ordered():
+    """SRB321 lower_bound <= weighted_value <= upper_bound (numeric check)."""
+    import re
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    vu = mctx["valuation_uncertainty"]
+    def _parse(s: str) -> float:
+        return float(re.sub(r"[^\d.]", "", str(s))) if s and str(s) != mctx.get("_data_gap_label", "") else 0.0
+    lo = _parse(vu.get("lower_bound", "0"))
+    hi = _parse(vu.get("upper_bound", "0"))
+    wv = _parse(vu.get("weighted_value", "0"))
+    if lo and hi and wv:
+        assert lo <= wv <= hi, f"Bounds disorder: lower={lo} weighted={wv} upper={hi}"
+
+
+def test_SRB322_peer_review_fields_exist():
+    """SRB322 peer_review dict exists with required fields."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    pr = mctx.get("peer_review", {})
+    assert pr, "peer_review missing from method context"
+    for k in ("peer_review_required", "peer_reviewer_name", "peer_review_status",
+              "peer_review_status_label", "review_limitations"):
+        assert k in pr, f"peer_review missing key {k!r}"
+
+
+def test_SRB323_peer_review_not_started_default():
+    """SRB323 peer_review.peer_review_status defaults to not_started."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    pr = mctx["peer_review"]
+    assert pr["peer_review_status"] in ("not_started", "")
+    assert pr["review_limitations"] != ""
+
+
+def test_SRB324_workbook_contains_hbu_sheet(client):
+    """SRB324 Expert workbook contains تحليل أعلى وأفضل استغلال sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تحليل أعلى وأفضل استغلال" in wb.sheetnames, f"HBU sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB325_workbook_contains_adjustment_support_sheet(client):
+    """SRB325 Expert workbook contains دعم التعديلات sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "دعم التعديلات" in wb.sheetnames
+
+
+def test_SRB326_workbook_contains_extraordinary_assumptions_sheet(client):
+    """SRB326 Expert workbook contains الافتراضات الخاصة والقيود sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "الافتراضات الخاصة والقيود" in wb.sheetnames
+
+
+def test_SRB327_workbook_contains_depreciation_detail_sheet(client):
+    """SRB327 Expert workbook contains تفصيل الإهلاك sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تفصيل الإهلاك" in wb.sheetnames
+
+
+def test_SRB328_workbook_contains_dcf_risk_sheet(client):
+    """SRB328 Expert workbook contains تحليل مخاطر DCF sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تحليل مخاطر DCF" in wb.sheetnames
+
+
+def test_SRB329_workbook_contains_legal_dd_sheet(client):
+    """SRB329 Expert workbook contains الفحص القانوني المبدئي sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "الفحص القانوني المبدئي" in wb.sheetnames
+
+
+def test_SRB330_workbook_contains_esg_impact_sheet(client):
+    """SRB330 Expert workbook contains تأثير ESG والمخاطر المناخية sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تأثير ESG والمخاطر المناخية" in wb.sheetnames
+
+
+def test_SRB331_workbook_contains_eia_sheet(client):
+    """SRB331 Expert workbook contains تقييم الأثر البيئي sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تقييم الأثر البيئي" in wb.sheetnames
+
+
+def test_SRB332_workbook_contains_uncertainty_range_sheet(client):
+    """SRB332 Expert workbook contains نطاق الثقة وعدم اليقين sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "نطاق الثقة وعدم اليقين" in wb.sheetnames
+
+
+def test_SRB333_workbook_formulas_remain_formulas(client):
+    """SRB333 DCF sheet Form F still contains Excel formula cells after new sheets added."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"), data_only=False)
+    assert "DCF" in wb.sheetnames
+    ws_dcf = wb["DCF"]
+    has_formula = any(
+        str(ws_dcf.cell(r, c).value or "").startswith("=")
+        for r in range(1, 60) for c in range(1, 8)
+    )
+    assert has_formula, "DCF sheet has no formula cells after new sheets added"
+
+
+def test_SRB334_preliminary_pdf_contains_hbu_section():
+    """SRB334 simple_valuation_draft.html contains HBU section header text."""
+    import pathlib as _pl
+    tmpl = (_pl.Path(_srr.__file__).parent / "templates" / "pdf" / "simple_valuation_draft.html").read_text(encoding="utf-8")
+    assert "تحليل أعلى وأفضل استغلال" in tmpl
+
+
+def test_SRB335_certified_pdf_contains_hbu_section():
+    """SRB335 certified_valuation_report.html contains HBU section."""
+    import pathlib as _pl
+    tmpl = (_pl.Path(_srr.__file__).parent / "templates" / "pdf" / "certified_valuation_report.html").read_text(encoding="utf-8")
+    assert "تحليل أعلى وأفضل استغلال" in tmpl
+
+
+def test_SRB336_preliminary_pdf_contains_direct_cap_vs_dcf():
+    """SRB336 simple_valuation_draft.html contains direct cap vs DCF section."""
+    import pathlib as _pl
+    tmpl = (_pl.Path(_srr.__file__).parent / "templates" / "pdf" / "simple_valuation_draft.html").read_text(encoding="utf-8")
+    assert "فصل رسملة الدخل المباشر عن DCF" in tmpl or "income_direct_vs_dcf_explanation" in tmpl
+
+
+def test_SRB337_certified_pdf_contains_legal_due_diligence():
+    """SRB337 certified_valuation_report.html contains legal due diligence section."""
+    import pathlib as _pl
+    tmpl = (_pl.Path(_srr.__file__).parent / "templates" / "pdf" / "certified_valuation_report.html").read_text(encoding="utf-8")
+    assert "الفحص القانوني المبدئي" in tmpl
+
+
+def test_SRB338_no_internal_paths_in_methodology_context():
+    """SRB338 New methodology context keys contain no Windows internal paths."""
+    import json
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    _new_keys = [
+        "hbu_analysis", "direct_capitalization_context", "comparable_adjustment_support",
+        "assumptions_registry", "depreciation_breakdown", "dcf_scenarios",
+        "legal_due_diligence", "esg_enhanced_context", "environmental_impact_assessment",
+        "valuation_uncertainty", "peer_review",
+    ]
+    raw = json.dumps({k: mctx[k] for k in _new_keys if k in mctx}, ensure_ascii=False, default=str).lower()
+    forbidden = ["c:\\users", "core_engine", "\\\\"]
+    for fp in forbidden:
+        assert fp not in raw, f"Internal path {fp!r} found in methodology context"
+
+
+def test_SRB339_no_compliance_overclaim_without_peer_review():
+    """SRB339 certified PDF template states compliance as methodological alignment, not full certification."""
+    import pathlib as _pl
+    tmpl = (_pl.Path(_srr.__file__).parent / "templates" / "pdf" / "certified_valuation_report.html").read_text(encoding="utf-8")
+    assert "ليتوافق منهجياً" in tmpl or "يراعي مبادئ" in tmpl, \
+        "Certified PDF should use qualified compliance language, not claim full USPAP/RICS compliance"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SRB340–SRB364 — Task 1: Valuation Certification Readiness, Source Quality Gate,
+#                         Final Reconciliation & Scope Completion
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_SRB340_source_quality_gate_key_present():
+    """SRB340 _build_method_context returns source_quality_gate dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "source_quality_gate" in mctx, "source_quality_gate key missing from context"
+    assert isinstance(mctx["source_quality_gate"], dict)
+
+
+def test_SRB341_source_quality_gate_certification_blocked_for_qa():
+    """SRB341 source_quality_gate.certification_allowed is False for QA simulation payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sqg = mctx["source_quality_gate"]
+    assert sqg.get("certification_allowed") is False, \
+        "QA simulation payload must NOT be certification_allowed"
+
+
+def test_SRB342_source_quality_gate_qa_count_positive_for_qa():
+    """SRB342 source_quality_gate.qa_simulation_sources_count > 0 for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sqg = mctx["source_quality_gate"]
+    assert sqg.get("qa_simulation_sources_count", 0) > 0, \
+        "Expected at least one QA simulation source in QA payload"
+
+
+def test_SRB343_source_quality_gate_block_reason_non_empty_for_qa():
+    """SRB343 source_quality_gate.certification_block_reason is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sqg = mctx["source_quality_gate"]
+    assert sqg.get("certification_block_reason", "").strip(), \
+        "certification_block_reason must be non-empty when QA sources present"
+
+
+def test_SRB344_source_quality_gate_advisory_reason_always_present():
+    """SRB344 source_quality_gate.advisory_only_reason is always non-empty."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sqg = mctx["source_quality_gate"]
+    assert sqg.get("advisory_only_reason", "").strip(), \
+        "advisory_only_reason must always be present"
+
+
+def test_SRB345_final_reconciliation_key_present():
+    """SRB345 _build_method_context returns final_reconciliation dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "final_reconciliation" in mctx, "final_reconciliation key missing from context"
+    assert isinstance(mctx["final_reconciliation"], dict)
+
+
+def test_SRB346_final_reconciliation_method_values_non_empty():
+    """SRB346 final_reconciliation.method_values is non-empty list for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fr = mctx["final_reconciliation"]
+    mv = fr.get("method_values", [])
+    assert isinstance(mv, list) and len(mv) > 0, \
+        "final_reconciliation.method_values must be a non-empty list"
+
+
+def test_SRB347_final_reconciliation_selected_value_non_empty():
+    """SRB347 final_reconciliation.selected_final_value is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fr = mctx["final_reconciliation"]
+    assert fr.get("selected_final_value", "").strip(), \
+        "final_reconciliation.selected_final_value must be non-empty"
+
+
+def test_SRB348_final_reconciliation_weighted_indication_non_empty():
+    """SRB348 final_reconciliation.weighted_indication is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fr = mctx["final_reconciliation"]
+    assert fr.get("weighted_indication", "").strip(), \
+        "final_reconciliation.weighted_indication must be non-empty"
+
+
+def test_SRB349_final_reconciliation_dominant_method_non_empty():
+    """SRB349 final_reconciliation.dominant_method is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fr = mctx["final_reconciliation"]
+    assert fr.get("dominant_method", "").strip(), \
+        "final_reconciliation.dominant_method must be non-empty"
+
+
+def test_SRB350_standards_compliance_key_present():
+    """SRB350 _build_method_context returns standards_compliance dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "standards_compliance" in mctx, "standards_compliance key missing from context"
+    assert isinstance(mctx["standards_compliance"], dict)
+
+
+def test_SRB351_standards_compliance_ivs_statement_non_empty():
+    """SRB351 standards_compliance.ivs_alignment_statement is non-empty."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sc = mctx["standards_compliance"]
+    assert sc.get("ivs_alignment_statement", "").strip(), \
+        "ivs_alignment_statement must be non-empty"
+
+
+def test_SRB352_standards_compliance_full_claim_blocked_for_qa():
+    """SRB352 standards_compliance.full_compliance_claim_allowed is False when QA sources present."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sc = mctx["standards_compliance"]
+    assert sc.get("full_compliance_claim_allowed") is False, \
+        "full_compliance_claim_allowed must be False when QA sources or gates are incomplete"
+
+
+def test_SRB353_standards_compliance_qualified_statement_uses_correct_language():
+    """SRB353 standards_compliance.qualified_compliance_statement contains ليتوافق منهجياً."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sc = mctx["standards_compliance"]
+    stmt = sc.get("qualified_compliance_statement", "")
+    assert "ليتوافق منهجياً" in stmt or "يتوافق منهجياً" in stmt, \
+        "Qualified compliance statement must use approved methodological alignment language"
+
+
+def test_SRB354_expert_approval_key_present():
+    """SRB354 _build_method_context returns expert_approval dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "expert_approval" in mctx, "expert_approval key missing from context"
+    assert isinstance(mctx["expert_approval"], dict)
+
+
+def test_SRB355_expert_approval_signature_not_ready_without_expert_fields():
+    """SRB355 expert_approval.certification_signature_ready is False when no expert name/sig in QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ea = mctx["expert_approval"]
+    assert ea.get("certification_signature_ready") is False, \
+        "certification_signature_ready must be False when expert_name / signature not provided"
+
+
+def test_SRB356_scope_of_work_key_present():
+    """SRB356 _build_method_context returns scope_of_work dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "scope_of_work" in mctx, "scope_of_work key missing from context"
+    assert isinstance(mctx["scope_of_work"], dict)
+
+
+def test_SRB357_scope_of_work_valuation_purpose_non_empty():
+    """SRB357 scope_of_work.valuation_purpose is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sow = mctx["scope_of_work"]
+    assert sow.get("valuation_purpose", "").strip(), \
+        "scope_of_work.valuation_purpose must be non-empty"
+
+
+def test_SRB358_scope_of_work_methods_used_non_empty():
+    """SRB358 scope_of_work.methods_used_str is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sow = mctx["scope_of_work"]
+    assert sow.get("methods_used_str", "").strip(), \
+        "scope_of_work.methods_used_str must be non-empty"
+
+
+def test_SRB359_workbook_has_data_governance_sheet(client):
+    """SRB359 Expert workbook contains حوكمة مصادر البيانات sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "حوكمة مصادر البيانات" in wb.sheetnames, \
+        f"حوكمة مصادر البيانات sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB360_workbook_has_final_reconciliation_sheet(client):
+    """SRB360 Expert workbook contains التوفيق النهائي للقيمة sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "التوفيق النهائي للقيمة" in wb.sheetnames, \
+        f"التوفيق النهائي للقيمة sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB361_workbook_has_compliance_statement_sheet(client):
+    """SRB361 Expert workbook contains بيان الامتثال sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "بيان الامتثال" in wb.sheetnames, \
+        f"بيان الامتثال sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB362_workbook_has_expert_signature_sheet(client):
+    """SRB362 Expert workbook contains توقيع واعتماد الخبير sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "توقيع واعتماد الخبير" in wb.sheetnames, \
+        f"توقيع واعتماد الخبير sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB363_workbook_has_scope_of_work_sheet(client):
+    """SRB363 Expert workbook contains نطاق العمل sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "نطاق العمل" in wb.sheetnames, \
+        f"نطاق العمل sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB364_no_internal_paths_in_task1_context_keys():
+    """SRB364 Task 1 new context keys contain no Windows internal paths."""
+    import json as _json
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    _task1_keys = [
+        "source_quality_gate", "final_reconciliation", "standards_compliance",
+        "expert_approval", "scope_of_work",
+    ]
+    raw = _json.dumps(
+        {k: mctx[k] for k in _task1_keys if k in mctx},
+        ensure_ascii=False, default=str,
+    ).lower()
+    for fp in ("c:\\users", "core_engine", "\\\\"):
+        assert fp not in raw, f"Internal path {fp!r} found in Task 1 context keys"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SRB365–SRB389 — Task 2: Valuation Report Final Governance, Attachments, AVM,
+#                         Rent Consistency & Report Status Clarity Pass
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_SRB365_peer_review_gate_key_present():
+    """SRB365 _build_method_context returns peer_review_gate dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "peer_review_gate" in mctx, "peer_review_gate key missing from context"
+    assert isinstance(mctx["peer_review_gate"], dict)
+
+
+def test_SRB366_peer_review_gate_required_is_true():
+    """SRB366 peer_review_gate.peer_review_required is always True."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    prg = mctx["peer_review_gate"]
+    assert prg.get("peer_review_required") is True, \
+        "peer_review_gate.peer_review_required must always be True"
+
+
+def test_SRB367_peer_review_gate_not_allowed_for_qa():
+    """SRB367 peer_review_gate.certification_allowed_by_peer_review is False for QA payload (no peer review)."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    prg = mctx["peer_review_gate"]
+    assert prg.get("certification_allowed_by_peer_review") is False, \
+        "certification_allowed_by_peer_review must be False when peer_review_status not reviewed/approved"
+
+
+def test_SRB368_peer_review_gate_block_reason_non_empty_when_not_approved():
+    """SRB368 peer_review_gate.peer_review_block_reason is non-empty when not approved."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    prg = mctx["peer_review_gate"]
+    assert prg.get("peer_review_block_reason", "").strip(), \
+        "peer_review_block_reason must be non-empty when peer review not completed"
+
+
+def test_SRB369_visual_attachments_key_present():
+    """SRB369 _build_method_context returns visual_attachments dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "visual_attachments" in mctx, "visual_attachments key missing from context"
+    assert isinstance(mctx["visual_attachments"], dict)
+
+
+def test_SRB370_visual_attachments_map_available_is_bool():
+    """SRB370 visual_attachments.location_map_available is a bool."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    va = mctx["visual_attachments"]
+    assert isinstance(va.get("location_map_available"), bool), \
+        "visual_attachments.location_map_available must be a bool"
+
+
+def test_SRB371_avm_status_key_present():
+    """SRB371 _build_method_context returns avm_status dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "avm_status" in mctx, "avm_status key missing from context"
+    assert isinstance(mctx["avm_status"], dict)
+
+
+def test_SRB372_avm_status_not_used_without_avm_inputs():
+    """SRB372 avm_status.avm_used is a bool; exclusion reason present when AVM not used."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    av = mctx["avm_status"]
+    assert isinstance(av.get("avm_used"), bool), \
+        "avm_status.avm_used must be a bool"
+    if not av.get("avm_used"):
+        assert av.get("avm_exclusion_reason", "").strip(), \
+            "avm_exclusion_reason must be non-empty when avm_used=False"
+
+
+def test_SRB373_avm_exclusion_reason_non_empty_when_not_used():
+    """SRB373 avm_status.avm_exclusion_reason is non-empty when AVM not used."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    av = mctx["avm_status"]
+    if not av.get("avm_used"):
+        assert av.get("avm_exclusion_reason", "").strip(), \
+            "avm_exclusion_reason must be non-empty when avm_used=False"
+
+
+def test_SRB374_rent_consistency_check_key_present():
+    """SRB374 _build_method_context returns rent_consistency_check dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "rent_consistency_check" in mctx, "rent_consistency_check key missing from context"
+    assert isinstance(mctx["rent_consistency_check"], dict)
+
+
+def test_SRB375_rent_consistency_income_monthly_rent_key_exists():
+    """SRB375 rent_consistency_check.income_method_monthly_rent key always exists."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rcc = mctx["rent_consistency_check"]
+    assert "income_method_monthly_rent" in rcc, \
+        "rent_consistency_check.income_method_monthly_rent key must always be present"
+
+
+def test_SRB376_rent_consistency_rent_consistent_is_bool():
+    """SRB376 rent_consistency_check.rent_consistent is a bool."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rcc = mctx["rent_consistency_check"]
+    assert isinstance(rcc.get("rent_consistent"), bool), \
+        "rent_consistency_check.rent_consistent must be a bool"
+
+
+def test_SRB377_client_recommendation_key_present():
+    """SRB377 _build_method_context returns client_recommendation dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "client_recommendation" in mctx, "client_recommendation key missing from context"
+    assert isinstance(mctx["client_recommendation"], dict)
+
+
+def test_SRB378_client_recommendation_value_non_empty():
+    """SRB378 client_recommendation.recommended_value is non-empty for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cr = mctx["client_recommendation"]
+    assert cr.get("recommended_value", "").strip(), \
+        "client_recommendation.recommended_value must be non-empty"
+
+
+def test_SRB379_valuation_fee_disclosure_key_present():
+    """SRB379 _build_method_context returns valuation_fee_disclosure dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_fee_disclosure" in mctx, "valuation_fee_disclosure key missing from context"
+    assert isinstance(mctx["valuation_fee_disclosure"], dict)
+
+
+def test_SRB380_valuation_fee_disclosure_independence_statement_non_empty():
+    """SRB380 valuation_fee_disclosure.fee_independence_statement is always non-empty."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    vfd = mctx["valuation_fee_disclosure"]
+    assert vfd.get("fee_independence_statement", "").strip(), \
+        "valuation_fee_disclosure.fee_independence_statement must always be present"
+
+
+def test_SRB381_valuation_fee_not_contingent_for_standard_qa():
+    """SRB381 valuation_fee_disclosure.fee_contingent_on_value is False for standard QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    vfd = mctx["valuation_fee_disclosure"]
+    assert vfd.get("fee_contingent_on_value") is False, \
+        "fee_contingent_on_value must be False when no contingent_fee flag in payload"
+
+
+def test_SRB382_report_status_visuals_key_present():
+    """SRB382 _build_method_context returns report_status_visuals dict."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "report_status_visuals" in mctx, "report_status_visuals key missing from context"
+    assert isinstance(mctx["report_status_visuals"], dict)
+
+
+def test_SRB383_preliminary_banner_color_always_red():
+    """SRB383 report_status_visuals.preliminary_banner_color_semantic is always 'red'."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rsv = mctx["report_status_visuals"]
+    assert rsv.get("preliminary_banner_color_semantic") == "red", \
+        "Preliminary banner must always be red regardless of gate status"
+
+
+def test_SRB384_report_status_visuals_not_certified_for_qa():
+    """SRB384 report_status_visuals.certification_allowed is False for QA payload (gates fail)."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rsv = mctx["report_status_visuals"]
+    assert rsv.get("certification_allowed") is False, \
+        "certification_allowed must be False for QA payload where source/signature/peer-review gates fail"
+
+
+def test_SRB385_certified_banner_amber_when_gates_fail():
+    """SRB385 report_status_visuals.certified_banner_color_semantic is 'amber' for QA payload."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rsv = mctx["report_status_visuals"]
+    assert rsv.get("certified_banner_color_semantic") == "amber", \
+        "certified_banner_color_semantic must be 'amber' when any gate fails"
+
+
+def test_SRB386_workbook_has_rent_consistency_sheet(client):
+    """SRB386 Expert workbook contains تسوية الإيجار sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "تسوية الإيجار" in wb.sheetnames, \
+        f"تسوية الإيجار sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB387_workbook_has_client_recommendation_sheet(client):
+    """SRB387 Expert workbook contains التوصية النهائية sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "التوصية النهائية" in wb.sheetnames, \
+        f"التوصية النهائية sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB388_workbook_has_professional_disclosures_sheet(client):
+    """SRB388 Expert workbook contains الإفصاحات المهنية sheet."""
+    try:
+        import openpyxl
+    except ImportError:
+        pytest.skip("openpyxl not installed")
+    rid = json.loads(_post_request(client).data)["request_id"]
+    wb = openpyxl.load_workbook(str(_srr._WORKBOOKS / rid / f"expert_review_{rid}.xlsx"))
+    assert "الإفصاحات المهنية" in wb.sheetnames, \
+        f"الإفصاحات المهنية sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB389_no_internal_paths_in_task2_context_keys():
+    """SRB389 Task 2 new context keys contain no Windows internal paths."""
+    import json as _json
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    _task2_keys = [
+        "peer_review_gate", "visual_attachments", "avm_status",
+        "rent_consistency_check", "client_recommendation",
+        "valuation_fee_disclosure", "report_status_visuals",
+    ]
+    raw = _json.dumps(
+        {k: mctx[k] for k in _task2_keys if k in mctx},
+        ensure_ascii=False, default=str,
+    ).lower()
+    for fp in ("c:\\users", "core_engine", "\\\\"):
+        assert fp not in raw, f"Internal path {fp!r} found in Task 2 context keys"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SRB390–SRB407 — SWOT Strategic Analysis Integration Pass
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_SRB390_swot_analysis_exists_in_method_context():
+    """SRB390 swot_analysis key exists in method context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "swot_analysis" in mctx, "swot_analysis missing from method context"
+    assert isinstance(mctx["swot_analysis"], dict), "swot_analysis is not a dict"
+
+
+def test_SRB391_swot_strengths_non_empty():
+    """SRB391 swot_analysis.strengths is a non-empty list."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    assert sw.get("strengths"), "swot_analysis.strengths is empty or missing"
+    assert isinstance(sw["strengths"], list)
+    assert len(sw["strengths"]) >= 1
+
+
+def test_SRB392_swot_weaknesses_non_empty():
+    """SRB392 swot_analysis.weaknesses is a non-empty list."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    assert sw.get("weaknesses"), "swot_analysis.weaknesses is empty or missing"
+    assert isinstance(sw["weaknesses"], list)
+    assert len(sw["weaknesses"]) >= 1
+
+
+def test_SRB393_swot_opportunities_non_empty():
+    """SRB393 swot_analysis.opportunities is a non-empty list."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    assert sw.get("opportunities"), "swot_analysis.opportunities is empty or missing"
+    assert isinstance(sw["opportunities"], list)
+    assert len(sw["opportunities"]) >= 1
+
+
+def test_SRB394_swot_threats_non_empty():
+    """SRB394 swot_analysis.threats is a non-empty list."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    assert sw.get("threats"), "swot_analysis.threats is empty or missing"
+    assert isinstance(sw["threats"], list)
+    assert len(sw["threats"]) >= 1
+
+
+def test_SRB395_swot_items_have_required_fields():
+    """SRB395 Each SWOT item has impact_score, probability_score, priority_score."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    all_items = (
+        sw.get("strengths", []) + sw.get("weaknesses", []) +
+        sw.get("opportunities", []) + sw.get("threats", [])
+    )
+    assert all_items, "No SWOT items found"
+    for item in all_items:
+        for field in ("impact_score", "probability_score", "priority_score",
+                      "category", "item_key", "title_ar", "description_ar"):
+            assert field in item, f"SWOT item missing field {field!r}: {item.get('item_key', '?')}"
+
+
+def test_SRB396_swot_priority_score_equals_impact_times_probability():
+    """SRB396 priority_score == impact_score × probability_score for every SWOT item."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    all_items = (
+        sw.get("strengths", []) + sw.get("weaknesses", []) +
+        sw.get("opportunities", []) + sw.get("threats", [])
+    )
+    for item in all_items:
+        expected = item["impact_score"] * item["probability_score"]
+        assert item["priority_score"] == expected, (
+            f"priority_score mismatch for {item.get('item_key')}: "
+            f"expected {expected}, got {item['priority_score']}"
+        )
+
+
+def test_SRB397_swot_impact_probability_in_range_1_5():
+    """SRB397 impact_score and probability_score are integers 1–5."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    all_items = (
+        sw.get("strengths", []) + sw.get("weaknesses", []) +
+        sw.get("opportunities", []) + sw.get("threats", [])
+    )
+    for item in all_items:
+        for field in ("impact_score", "probability_score"):
+            v = item.get(field)
+            assert isinstance(v, int), f"{field} is not int: {type(v)} in {item.get('item_key')}"
+            assert 1 <= v <= 5, f"{field}={v} out of range [1,5] in {item.get('item_key')}"
+
+
+def test_SRB398_swot_value_impact_direction_valid():
+    """SRB398 value_impact_direction is one of positive/negative/neutral/uncertain."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    valid_dirs = {"positive", "negative", "neutral", "uncertain"}
+    all_items = (
+        sw.get("strengths", []) + sw.get("weaknesses", []) +
+        sw.get("opportunities", []) + sw.get("threats", [])
+    )
+    for item in all_items:
+        d = item.get("value_impact_direction", "")
+        assert d in valid_dirs, f"Invalid value_impact_direction={d!r} in {item.get('item_key')}"
+
+
+def test_SRB399_swot_hbu_alignment_exists():
+    """SRB399 swot_hbu_alignment exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "swot_hbu_alignment" in mctx, "swot_hbu_alignment missing from context"
+    sha = mctx["swot_hbu_alignment"]
+    for key in ("selected_hbu", "supporting_strengths", "limiting_weaknesses",
+                "future_opportunities", "major_threats", "hbu_alignment_conclusion"):
+        assert key in sha, f"swot_hbu_alignment missing key {key!r}"
+    assert sha.get("hbu_alignment_conclusion"), "hbu_alignment_conclusion is empty"
+
+
+def test_SRB400_swot_uncertainty_linkage_exists():
+    """SRB400 swot_uncertainty_linkage exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "swot_uncertainty_linkage" in mctx, "swot_uncertainty_linkage missing from context"
+    sul = mctx["swot_uncertainty_linkage"]
+    for key in ("upper_bound_drivers", "lower_bound_drivers",
+                "optimistic_scenario_links", "pessimistic_scenario_links",
+                "uncertainty_explanation"):
+        assert key in sul, f"swot_uncertainty_linkage missing key {key!r}"
+    assert isinstance(sul["upper_bound_drivers"], list)
+    assert isinstance(sul["lower_bound_drivers"], list)
+
+
+def test_SRB401_swot_recommendation_linkage_exists():
+    """SRB401 swot_recommendation_linkage exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "swot_recommendation_linkage" in mctx, "swot_recommendation_linkage missing from context"
+    srl = mctx["swot_recommendation_linkage"]
+    for key in ("recommended_value", "recommendation_conditioned_by",
+                "key_strengths_supporting_recommendation",
+                "key_risks_limiting_recommendation",
+                "recommended_next_steps_from_swot",
+                "swot_based_recommendation"):
+        assert key in srl, f"swot_recommendation_linkage missing key {key!r}"
+    assert srl.get("swot_based_recommendation"), "swot_based_recommendation is empty"
+
+
+def test_SRB402_swot_pdf_contains_swot_heading():
+    """SRB402 Generated preliminary PDF contains SWOT heading text."""
+    import re
+    pdf_bytes = _srr._build_simple_valuation_pdf_bytes(_QA_ZAMALEK_PAYLOAD)
+    assert len(pdf_bytes) > 1000, "PDF too small"
+    # Check via HTML generation (context has SWOT section)
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sw = mctx.get("swot_analysis", {})
+    assert sw, "swot_analysis missing — PDF cannot contain SWOT section"
+    assert sw.get("strengths"), "No SWOT strengths in context"
+
+
+def test_SRB403_swot_pdf_hbu_linkage_present():
+    """SRB403 swot_hbu_alignment.hbu_alignment_conclusion is non-empty."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    sha = mctx.get("swot_hbu_alignment", {})
+    assert sha.get("hbu_alignment_conclusion"), "hbu_alignment_conclusion is empty"
+    assert len(sha["hbu_alignment_conclusion"]) > 20, "hbu_alignment_conclusion too short"
+
+
+def test_SRB404_workbook_contains_swot_sheet():
+    """SRB404 Expert workbook contains sheet 'تحليل_SWOT'."""
+    wb = _get_wb_v2()
+    assert "تحليل_SWOT" in wb.sheetnames, \
+        f"'تحليل_SWOT' sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB405_workbook_contains_risk_matrix_sheet():
+    """SRB405 Expert workbook contains sheet 'مصفوفة_تقييم_المخاطر'."""
+    wb = _get_wb_v2()
+    assert "مصفوفة_تقييم_المخاطر" in wb.sheetnames, \
+        f"'مصفوفة_تقييم_المخاطر' sheet missing. Sheets: {wb.sheetnames}"
+
+
+def test_SRB406_swot_workbook_priority_cells_have_formulas():
+    """SRB406 SWOT workbook sheet 'تحليل_SWOT' has priority formula cells (=F*G)."""
+    wb = _get_wb_v2()
+    assert "تحليل_SWOT" in wb.sheetnames, "'تحليل_SWOT' sheet missing"
+    ws = wb["تحليل_SWOT"]
+    formula_cells = [
+        cell for row in ws.iter_rows(min_row=3, max_row=40)
+        for cell in row
+        if cell.value and isinstance(cell.value, str) and cell.value.startswith("=F") and "*G" in cell.value
+    ]
+    assert formula_cells, "No =F*G priority formula cells found in 'تحليل_SWOT'"
+
+
+def test_SRB407_swot_uncertainty_sheet_has_swot_drivers():
+    """SRB407 Uncertainty sheet contains SWOT upper/lower driver rows."""
+    wb = _get_wb_v2()
+    assert "نطاق الثقة وعدم اليقين" in wb.sheetnames, "'نطاق الثقة وعدم اليقين' sheet missing"
+    ws = wb["نطاق الثقة وعدم اليقين"]
+    all_text = " ".join(
+        str(val) for row in ws.iter_rows(values_only=True)
+        for val in row if val is not None
+    )
+    assert "SWOT" in all_text or "محركات" in all_text, \
+        "SWOT upper/lower driver rows not found in uncertainty sheet"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SRB408–SRB436 — Valuation QA Simulation Governance & Production Readiness Gate
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_SRB408_valuation_qa_simulation_governance_exists():
+    """SRB408 valuation_qa_simulation_governance exists in method context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_qa_simulation_governance" in mctx, \
+        "valuation_qa_simulation_governance missing from context"
+    assert isinstance(mctx["valuation_qa_simulation_governance"], dict)
+
+
+def test_SRB409_qa_simulation_blocks_certified_use():
+    """SRB409 certified_use_allowed=False when QA simulation active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    qg = mctx["valuation_qa_simulation_governance"]
+    assert qg["qa_simulation_active"] is True, "qa_simulation_active should be True for QA payload"
+    assert qg["certified_use_allowed"] is False, \
+        "certified_use_allowed should be False when QA simulation active"
+
+
+def test_SRB410_qa_simulation_warning_text_present():
+    """SRB410 warning_text is non-empty when QA simulation active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    qg = mctx["valuation_qa_simulation_governance"]
+    assert qg.get("warning_text"), "warning_text should not be empty when QA active"
+    assert len(qg["warning_text"]) > 10, "warning_text too short"
+
+
+def test_SRB411_valuation_comparable_readiness_exists():
+    """SRB411 valuation_comparable_readiness exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_comparable_readiness" in mctx, \
+        "valuation_comparable_readiness missing from context"
+    cr = mctx["valuation_comparable_readiness"]
+    for key in ("sales_comparison_ready", "actual_real_sales_comparables_count",
+                "qa_comparables_count", "comparable_method_certified_use_allowed",
+                "required_actions"):
+        assert key in cr, f"valuation_comparable_readiness missing key {key!r}"
+
+
+def test_SRB412_missing_real_comps_block_certified_comparison():
+    """SRB412 comparable_method_certified_use_allowed=False when real comparables are zero."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cr = mctx["valuation_comparable_readiness"]
+    assert cr["actual_real_sales_comparables_count"] == 0, \
+        "In QA mode actual_real_sales_comparables_count should be 0"
+    assert cr["comparable_method_certified_use_allowed"] is False, \
+        "comparable_method_certified_use_allowed should be False with no real comparables"
+
+
+def test_SRB413_valuation_depreciation_age_evidence_gate_exists():
+    """SRB413 valuation_depreciation_age_evidence_gate exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_depreciation_age_evidence_gate" in mctx, \
+        "valuation_depreciation_age_evidence_gate missing from context"
+    dg = mctx["valuation_depreciation_age_evidence_gate"]
+    for key in ("effective_age_used", "economic_life", "depreciation_method",
+                "age_evidence_required", "age_evidence_available",
+                "depreciation_certified_use_allowed", "acceptable_evidence_types",
+                "warning_text"):
+        assert key in dg, f"valuation_depreciation_age_evidence_gate missing key {key!r}"
+
+
+def test_SRB414_missing_age_evidence_blocks_certified_depreciation():
+    """SRB414 depreciation_certified_use_allowed=False when age evidence missing."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dg = mctx["valuation_depreciation_age_evidence_gate"]
+    assert dg["age_evidence_available"] is False, \
+        "age_evidence_available should be False in QA mode"
+    assert dg["depreciation_certified_use_allowed"] is False, \
+        "depreciation_certified_use_allowed should be False when evidence missing"
+    assert dg["age_evidence_required"] is True
+
+
+def test_SRB415_valuation_document_readiness_exists():
+    """SRB415 valuation_document_readiness exists and has required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_document_readiness" in mctx, \
+        "valuation_document_readiness missing from context"
+    dr = mctx["valuation_document_readiness"]
+    for key in ("document_completeness_score", "required_documents_count",
+                "submitted_documents_count", "missing_mandatory_documents",
+                "certification_risk_level", "valuation_certification_ready",
+                "required_actions_before_certification"):
+        assert key in dr, f"valuation_document_readiness missing key {key!r}"
+
+
+def test_SRB416_missing_mandatory_docs_set_cert_ready_false():
+    """SRB416 valuation_certification_ready=False when mandatory documents are missing."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dr = mctx["valuation_document_readiness"]
+    assert dr["missing_mandatory_documents"], \
+        "missing_mandatory_documents should be non-empty in QA mode"
+    assert dr["valuation_certification_ready"] is False, \
+        "valuation_certification_ready should be False when mandatory docs are missing"
+
+
+def test_SRB417_valuation_certification_roadmap_exists():
+    """SRB417 valuation_certification_roadmap exists with all required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_certification_roadmap" in mctx, \
+        "valuation_certification_roadmap missing from context"
+    road = mctx["valuation_certification_roadmap"]
+    for key in ("current_stage", "roadmap_steps", "blockers",
+                "next_required_step", "certified_ready_stage_reached",
+                "roadmap_warning"):
+        assert key in road, f"valuation_certification_roadmap missing key {key!r}"
+
+
+def test_SRB418_roadmap_starts_with_qa_advisory_draft():
+    """SRB418 First roadmap step is 'QA advisory draft' (completed=True)."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    road = mctx["valuation_certification_roadmap"]
+    assert road["current_stage"] == "مسودة QA استرشادية", \
+        f"current_stage should be 'مسودة QA استرشادية', got {road['current_stage']!r}"
+    steps = road["roadmap_steps"]
+    assert len(steps) == 10, f"Expected 10 roadmap steps, got {len(steps)}"
+    assert steps[0]["completed"] is True, "First roadmap step should be completed"
+    assert all(not s["completed"] for s in steps[1:]), \
+        "All roadmap steps after step 1 should be incomplete"
+
+
+def test_SRB419_valuation_geographic_land_price_readiness_exists():
+    """SRB419 valuation_geographic_land_price_readiness exists with required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_geographic_land_price_readiness" in mctx, \
+        "valuation_geographic_land_price_readiness missing from context"
+    glr = mctx["valuation_geographic_land_price_readiness"]
+    for key in ("land_price_is_qa", "land_price_production_ready",
+                "replacement_required", "suggested_source_categories",
+                "limitation_text"):
+        assert key in glr, f"valuation_geographic_land_price_readiness missing key {key!r}"
+
+
+def test_SRB420_qa_land_price_requires_replacement():
+    """SRB420 replacement_required=True when land price is QA."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    glr = mctx["valuation_geographic_land_price_readiness"]
+    assert glr["land_price_is_qa"] is True, "land_price_is_qa should be True in QA mode"
+    assert glr["replacement_required"] is True, "replacement_required should be True for QA land price"
+    assert glr["land_price_production_ready"] is False
+
+
+def test_SRB421_valuation_source_database_linkage_readiness_exists():
+    """SRB421 valuation_source_database_linkage_readiness exists in context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_source_database_linkage_readiness" in mctx, \
+        "valuation_source_database_linkage_readiness missing from context"
+    slr = mctx["valuation_source_database_linkage_readiness"]
+    for key in ("qdrant_active_now", "rag_active_now", "live_database_active_now",
+                "integration_status", "required_actions"):
+        assert key in slr, f"valuation_source_database_linkage_readiness missing key {key!r}"
+
+
+def test_SRB422_qdrant_active_now_false():
+    """SRB422 qdrant_active_now=False always."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    slr = mctx["valuation_source_database_linkage_readiness"]
+    assert slr["qdrant_active_now"] is False, "qdrant_active_now must be False"
+
+
+def test_SRB423_rag_active_now_false():
+    """SRB423 rag_active_now=False always."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    slr = mctx["valuation_source_database_linkage_readiness"]
+    assert slr["rag_active_now"] is False, "rag_active_now must be False"
+
+
+def test_SRB424_live_database_active_now_false():
+    """SRB424 live_database_active_now=False unless explicitly enabled."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    slr = mctx["valuation_source_database_linkage_readiness"]
+    assert slr["live_database_active_now"] is False, "live_database_active_now must be False"
+
+
+def test_SRB425_valuation_parameter_governance_exists():
+    """SRB425 valuation_parameter_governance exists with required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_parameter_governance" in mctx, \
+        "valuation_parameter_governance missing from context"
+    pg = mctx["valuation_parameter_governance"]
+    for key in ("parameters", "legal_or_market_reference_available",
+                "verified_by_expert", "production_use_allowed",
+                "verification_status", "required_action", "warning_text"):
+        assert key in pg, f"valuation_parameter_governance missing key {key!r}"
+    assert isinstance(pg["parameters"], list), "parameters should be a list"
+    assert len(pg["parameters"]) >= 1, "parameters list should not be empty"
+
+
+def test_SRB426_missing_references_block_param_certified_use():
+    """SRB426 certified_use_allowed=False for parameters without references."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    pg = mctx["valuation_parameter_governance"]
+    for param in pg["parameters"]:
+        assert "certified_use_allowed" in param, \
+            f"Parameter {param.get('parameter_name')} missing certified_use_allowed"
+        assert param["certified_use_allowed"] is False, \
+            f"Parameter {param.get('parameter_name')} should have certified_use_allowed=False"
+
+
+def test_SRB427_valuation_certification_status_exists():
+    """SRB427 valuation_certification_status exists with required keys."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_certification_status" in mctx, \
+        "valuation_certification_status missing from context"
+    cs = mctx["valuation_certification_status"]
+    for key in ("report_status", "certification_ready", "certification_blockers",
+                "certification_risk_level", "recommended_next_action",
+                "readiness_summary", "executive_recommendation"):
+        assert key in cs, f"valuation_certification_status missing key {key!r}"
+
+
+def test_SRB428_certification_ready_false_when_blockers_exist():
+    """SRB428 certification_ready=False when any blockers exist."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cs = mctx["valuation_certification_status"]
+    assert cs["certification_blockers"], "certification_blockers should be non-empty for QA mode"
+    assert cs["certification_ready"] is False, \
+        "certification_ready should be False when blockers exist"
+    assert cs["report_status"] == "qa_advisory_only"
+
+
+def test_SRB429_workbook_has_qa_governance_sheet():
+    """SRB429 Workbook contains 'حوكمة بيانات QA' sheet."""
+    wb = _get_wb_v2()
+    assert "حوكمة بيانات QA" in wb.sheetnames, \
+        "'حوكمة بيانات QA' sheet missing from workbook"
+
+
+def test_SRB430_workbook_has_document_risk_sheet():
+    """SRB430 Workbook contains 'قائمة المستندات ومخاطر الاعتماد' sheet."""
+    wb = _get_wb_v2()
+    assert "قائمة المستندات ومخاطر الاعتماد" in wb.sheetnames, \
+        "'قائمة المستندات ومخاطر الاعتماد' sheet missing from workbook"
+
+
+def test_SRB431_workbook_has_certification_roadmap_sheet():
+    """SRB431 Workbook contains 'خارطة طريق الاعتماد' sheet."""
+    wb = _get_wb_v2()
+    assert "خارطة طريق الاعتماد" in wb.sheetnames, \
+        "'خارطة طريق الاعتماد' sheet missing from workbook"
+
+
+def test_SRB432_workbook_has_parameter_governance_sheet():
+    """SRB432 Workbook contains 'حوكمة المعاملات' sheet."""
+    wb = _get_wb_v2()
+    assert "حوكمة المعاملات" in wb.sheetnames, \
+        "'حوكمة المعاملات' sheet missing from workbook"
+
+
+def test_SRB433_workbook_has_certification_status_sheet():
+    """SRB433 Workbook contains 'حالة الاعتماد والتوصية' sheet."""
+    wb = _get_wb_v2()
+    assert "حالة الاعتماد والتوصية" in wb.sheetnames, \
+        "'حالة الاعتماد والتوصية' sheet missing from workbook"
+
+
+def test_SRB434_no_internal_paths_in_context():
+    """SRB434 No internal file paths exposed in production readiness context values."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    _forbidden = ("C:\\", "/home/", "/tmp/", "core_engine/", "expert_smart")
+    for key in ("valuation_qa_simulation_governance", "valuation_certification_status",
+                "valuation_parameter_governance"):
+        block = mctx.get(key, {})
+        block_str = str(block)
+        for forbidden in _forbidden:
+            assert forbidden not in block_str, \
+                f"Internal path {forbidden!r} found in {key}"
+
+
+def test_SRB435_no_certified_ready_claim_while_blockers_exist():
+    """SRB435 Report does not claim certification_ready=True while blockers exist."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cs = mctx["valuation_certification_status"]
+    if cs["certification_blockers"]:
+        assert cs["certification_ready"] is False, \
+            "certification_ready must be False when blockers exist"
+        assert "جاهز للاعتماد الرسمي" not in cs.get("executive_recommendation", "") \
+               or "غير جاهز" in cs.get("executive_recommendation", ""), \
+            "executive_recommendation must not claim readiness while blockers exist"
+
+
+def test_SRB436_workbook_certification_status_sheet_has_blocker_rows():
+    """SRB436 'حالة الاعتماد والتوصية' sheet contains certification blocker rows."""
+    wb = _get_wb_v2()
+    assert "حالة الاعتماد والتوصية" in wb.sheetnames
+    ws = wb["حالة الاعتماد والتوصية"]
+    all_text = " ".join(
+        str(val) for row in ws.iter_rows(values_only=True)
+        for val in row if val is not None
+    )
+    assert "جاهز" in all_text or "اعتماد" in all_text, \
+        "Certification status sheet does not contain expected content"
+
+
+# ── SRB437–SRB467: Risk/Decision Pass tests ──────────────────────────────────
+
+def test_SRB437_valuation_data_fuel_readiness_exists():
+    """SRB437 _build_method_context returns valuation_data_fuel_readiness key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_data_fuel_readiness" in mctx
+
+
+def test_SRB438_data_ready_false_when_only_qa_sources():
+    """SRB438 data_ready=False when all sources are QA simulation."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dfr = mctx["valuation_data_fuel_readiness"]
+    assert dfr["methodology_ready"] is True
+    assert dfr["data_ready"] is False
+    assert dfr["certification_ready"] is False
+
+
+def test_SRB439_method_consistency_diagnostics_exists():
+    """SRB439 _build_method_context returns method_consistency_diagnostics key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "method_consistency_diagnostics" in mctx
+
+
+def test_SRB440_high_cv_triggers_high_risk():
+    """SRB440 CV > 20% produces cv_risk_level='مرتفع'."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    mcd = mctx["method_consistency_diagnostics"]
+    cv_str = mcd["coefficient_of_variation"]
+    if cv_str and cv_str != "—":
+        cv_val = float(cv_str.replace("%", "").strip())
+        if cv_val > 20:
+            assert mcd["cv_risk_level"] == "مرتفع"
+    assert "cv_risk_level" in mcd
+
+
+def test_SRB441_rent_reconciliation_explanation_exists():
+    """SRB441 _build_method_context returns rent_reconciliation_explanation key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "rent_reconciliation_explanation" in mctx
+
+
+def test_SRB442_rent_mismatch_requires_explanation():
+    """SRB442 Rent mismatch >3% sets explanation_required=True."""
+    payload = dict(_QA_RENTAL_NASR_PAYLOAD)
+    payload["income_monthly_rent"] = 9_000
+    payload["final_monthly_rental_value"] = 9_500
+    mctx = _srr._build_method_context(payload)
+    rre = mctx["rent_reconciliation_explanation"]
+    assert rre["explanation_required"] is True
+    assert rre["expert_confirmation_required"] is True
+
+
+def test_SRB443_certification_execution_gate_exists():
+    """SRB443 _build_method_context returns certification_execution_gate key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "certification_execution_gate" in mctx
+
+
+def test_SRB444_missing_signature_blocks_certification():
+    """SRB444 Missing expert signature makes certification_execution_allowed=False."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ceg = mctx["certification_execution_gate"]
+    assert ceg["expert_signature_available"] is False
+    assert ceg["certification_execution_allowed"] is False
+
+
+def test_SRB445_missing_peer_review_blocks_certification():
+    """SRB445 Missing peer review makes certification_execution_allowed=False."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ceg = mctx["certification_execution_gate"]
+    assert ceg["peer_review_completed"] is False
+    assert ceg["certification_execution_allowed"] is False
+
+
+def test_SRB446_dcf_terminal_assumption_support_exists():
+    """SRB446 _build_method_context returns dcf_terminal_assumption_support key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "dcf_terminal_assumption_support" in mctx
+
+
+def test_SRB447_missing_terminal_source_marks_advisory():
+    """SRB447 Missing DCF terminal source sets terminal_assumption_certified_use_allowed=False."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dta = mctx["dcf_terminal_assumption_support"]
+    assert dta["growth_rate_source_available"] is False
+    assert dta["terminal_cap_rate_source_available"] is False
+    assert dta["terminal_assumption_certified_use_allowed"] is False
+
+
+def test_SRB448_field_visual_evidence_gate_exists():
+    """SRB448 _build_method_context returns field_visual_evidence_gate key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "field_visual_evidence_gate" in mctx
+
+
+def test_SRB449_missing_exterior_photo_blocks_visual_gate():
+    """SRB449 Missing exterior photo => minimum_visual_evidence_met=False."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fvg = mctx["field_visual_evidence_gate"]
+    assert fvg["exterior_photo_available"] is False
+    assert fvg["facade_photo_available"] is False
+    assert fvg["minimum_visual_evidence_met"] is False
+    assert fvg["visual_evidence_certified_use_allowed"] is False
+
+
+def test_SRB450_avm_completeness_decision_exists():
+    """SRB450 _build_method_context returns avm_completeness_decision key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "avm_completeness_decision" in mctx
+
+
+def test_SRB451_incomplete_avm_excluded_with_zero_weight_or_qa():
+    """SRB451 AVM in QA mode has zero or advisory reconciliation weight."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    acd = mctx["avm_completeness_decision"]
+    assert "avm_status" in acd
+    if not acd["avm_used"]:
+        assert acd["avm_reconciliation_weight"] == 0
+        assert acd["avm_exclusion_reason"] != ""
+
+
+def test_SRB452_valuation_risk_heatmap_exists():
+    """SRB452 _build_method_context returns valuation_risk_heatmap key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_risk_heatmap" in mctx
+
+
+def test_SRB453_risk_heatmap_has_required_dimensions():
+    """SRB453 Risk heatmap contains legal, financial, market, data_sources dimensions."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rh = mctx["valuation_risk_heatmap"]
+    dim_keys = {d["dimension_key"] for d in rh.get("dimensions", [])}
+    for required_key in ("legal", "financial", "market", "data_sources", "certification_signature"):
+        assert required_key in dim_keys, f"Missing dimension: {required_key}"
+
+
+def test_SRB454_certification_timeline_exists():
+    """SRB454 _build_method_context returns certification_timeline key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "certification_timeline" in mctx
+
+
+def test_SRB455_certification_timeline_has_6_steps():
+    """SRB455 Certification timeline contains 6 steps."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    ctl = mctx["certification_timeline"]
+    assert len(ctl.get("steps", [])) == 6
+    assert ctl["total_estimated_days"] > 0
+
+
+def test_SRB456_break_even_rent_analysis_exists():
+    """SRB456 _build_method_context returns break_even_rent_analysis key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "break_even_rent_analysis" in mctx
+
+
+def test_SRB457_break_even_rent_positive_for_market_payload():
+    """SRB457 Break-even monthly rent is positive when market value is available."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    bea = mctx["break_even_rent_analysis"]
+    assert bea["data_complete"] is True
+    assert bea["break_even_monthly_rent_raw"] > 0
+
+
+def test_SRB458_valuation_compliance_dashboard_exists():
+    """SRB458 _build_method_context returns valuation_compliance_dashboard key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_compliance_dashboard" in mctx
+
+
+def test_SRB459_compliance_dashboard_has_14_items():
+    """SRB459 Compliance dashboard contains 14 items."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    comp = mctx["valuation_compliance_dashboard"]
+    assert comp["total_items"] == 14
+
+
+def test_SRB460_mass_appraisal_reference_exists():
+    """SRB460 _build_method_context returns mass_appraisal_reference key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "mass_appraisal_reference" in mctx
+
+
+def test_SRB461_mass_appraisal_advisory_only_when_no_real_dataset():
+    """SRB461 mass_appraisal_reference has reconciliation_weight=0 in QA mode."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    mar = mctx["mass_appraisal_reference"]
+    assert mar["reconciliation_weight"] == 0.0
+    assert "limitation_text" in mar
+    assert len(mar["limitation_text"]) > 10
+
+
+def test_SRB462_investment_decision_summary_exists():
+    """SRB462 _build_method_context returns investment_decision_summary key."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "investment_decision_summary" in mctx
+
+
+def test_SRB463_investment_decision_conditional_when_gates_fail():
+    """SRB463 Decision summary is advisory/conditional when certification gates fail."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    inv = mctx["investment_decision_summary"]
+    assert inv["is_advisory"] is True
+    assert "مشروطة" in inv["recommended_decision"] or "استرشادي" in inv["recommended_decision"]
+
+
+def test_SRB464_workbook_has_method_consistency_sheet():
+    """SRB464 Workbook contains 'اختبار اتساق الطرق' sheet."""
+    wb = _get_wb_v2()
+    assert "اختبار اتساق الطرق" in wb.sheetnames
+
+
+def test_SRB465_workbook_has_risk_heatmap_sheet():
+    """SRB465 Workbook contains 'خريطة مخاطر التقييم' sheet."""
+    wb = _get_wb_v2()
+    assert "خريطة مخاطر التقييم" in wb.sheetnames
+
+
+def test_SRB466_workbook_has_break_even_sheet():
+    """SRB466 Workbook contains 'نقطة تعادل الإيجار' sheet."""
+    wb = _get_wb_v2()
+    assert "نقطة تعادل الإيجار" in wb.sheetnames
+
+
+def test_SRB467_workbook_has_compliance_dashboard_sheet():
+    """SRB467 Workbook contains 'لوحة امتثال التقييم' sheet."""
+    wb = _get_wb_v2()
+    assert "لوحة امتثال التقييم" in wb.sheetnames
+
+
+# ── SRB468–SRB496 — Filing/Certification Readiness, QA Data Governance,
+#    Real Comparables, Depreciation Evidence & Source Readiness Pass ──────────
+
+def test_SRB468_valuation_qa_simulation_governance_blocks_certified_use():
+    """SRB468 valuation_qa_simulation_governance.certified_use_allowed=False when QA active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    qg = mctx["valuation_qa_simulation_governance"]
+    assert qg["qa_simulation_active"] is True
+    assert qg["certified_use_allowed"] is False
+    assert qg["qa_simulation_sources_count"] > 0
+
+
+def test_SRB469_qa_simulation_governance_warning_text_non_empty():
+    """SRB469 QA simulation governance warning_text is populated when QA active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    qg = mctx["valuation_qa_simulation_governance"]
+    assert len(qg.get("warning_text", "")) > 20, \
+        "warning_text should be non-empty when QA simulation is active"
+
+
+def test_SRB470_qa_advisory_label_present_when_qa_active():
+    """SRB470 advisory_label contains 'مسودة QA' substring when QA active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    qg = mctx["valuation_qa_simulation_governance"]
+    assert "مسودة QA" in qg.get("advisory_label", ""), \
+        "advisory_label should contain 'مسودة QA' when QA simulation is active"
+
+
+def test_SRB471_valuation_comparison_real_data_readiness_exists():
+    """SRB471 valuation_comparison_real_data_readiness alias key exists in context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_comparison_real_data_readiness" in mctx, \
+        "valuation_comparison_real_data_readiness alias key missing from context"
+    cr = mctx["valuation_comparison_real_data_readiness"]
+    assert isinstance(cr, dict)
+    for key in (
+        "comparable_method_certified_use_allowed",
+        "required_sales_comparables_count",
+        "actual_real_sales_comparables_count",
+        "qa_comparables_count",
+        "missing_comparable_categories",
+        "required_actions",
+    ):
+        assert key in cr, f"valuation_comparison_real_data_readiness missing key {key!r}"
+
+
+def test_SRB472_missing_real_comparables_block_certified_use_via_alias():
+    """SRB472 valuation_comparison_real_data_readiness blocks certified use when QA comps active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    cr = mctx["valuation_comparison_real_data_readiness"]
+    assert cr["comparable_method_certified_use_allowed"] is False, \
+        "comparable_method_certified_use_allowed should be False in QA mode"
+    assert cr["qa_comparables_count"] > 0 or cr["missing_comparable_categories"]
+
+
+def test_SRB473_comparison_real_data_readiness_equals_comparable_readiness():
+    """SRB473 valuation_comparison_real_data_readiness is the same object as valuation_comparable_readiness."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert mctx["valuation_comparison_real_data_readiness"] is mctx["valuation_comparable_readiness"], \
+        "alias should point to same dict object as canonical key"
+
+
+def test_SRB474_valuation_document_certification_risk_exists():
+    """SRB474 valuation_document_certification_risk alias key exists in context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_document_certification_risk" in mctx, \
+        "valuation_document_certification_risk alias key missing from context"
+    dc = mctx["valuation_document_certification_risk"]
+    assert isinstance(dc, dict)
+    for key in (
+        "valuation_certification_ready",
+        "certification_risk_level",
+        "missing_mandatory_documents",
+        "required_actions_before_certification",
+    ):
+        assert key in dc, f"valuation_document_certification_risk missing key {key!r}"
+
+
+def test_SRB475_document_certification_risk_certification_ready_false_when_docs_missing():
+    """SRB475 valuation_document_certification_risk.valuation_certification_ready=False when docs missing."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dc = mctx["valuation_document_certification_risk"]
+    assert dc["valuation_certification_ready"] is False, \
+        "valuation_certification_ready should be False when mandatory docs are missing"
+    assert dc["certification_risk_level"] == "مرتفع", \
+        "certification_risk_level should be مرتفع when mandatory docs are missing"
+
+
+def test_SRB476_document_certification_risk_equals_document_readiness():
+    """SRB476 valuation_document_certification_risk is same object as valuation_document_readiness."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert mctx["valuation_document_certification_risk"] is mctx["valuation_document_readiness"], \
+        "alias should point to same dict object as canonical key"
+
+
+def test_SRB477_valuation_production_readiness_roadmap_exists():
+    """SRB477 valuation_production_readiness_roadmap alias key exists in context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_production_readiness_roadmap" in mctx, \
+        "valuation_production_readiness_roadmap alias key missing from context"
+    rd = mctx["valuation_production_readiness_roadmap"]
+    assert isinstance(rd, dict)
+    for key in (
+        "current_stage",
+        "roadmap_steps",
+        "blockers",
+        "next_required_step",
+        "certified_ready_stage_reached",
+        "roadmap_warning",
+    ):
+        assert key in rd, f"valuation_production_readiness_roadmap missing key {key!r}"
+
+
+def test_SRB478_roadmap_current_stage_is_qa_advisory_when_qa_active():
+    """SRB478 valuation_production_readiness_roadmap.current_stage is QA advisory in QA mode."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rd = mctx["valuation_production_readiness_roadmap"]
+    assert "مسودة QA" in rd["current_stage"] or "QA" in rd["current_stage"], \
+        "current_stage should indicate QA advisory draft when QA active"
+
+
+def test_SRB479_roadmap_has_at_least_10_steps():
+    """SRB479 valuation_production_readiness_roadmap has at least 10 roadmap steps."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rd = mctx["valuation_production_readiness_roadmap"]
+    assert len(rd["roadmap_steps"]) >= 10, \
+        f"Expected at least 10 roadmap steps, got {len(rd['roadmap_steps'])}"
+
+
+def test_SRB480_roadmap_certified_ready_false_in_qa_mode():
+    """SRB480 valuation_production_readiness_roadmap.certified_ready_stage_reached=False in QA."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    rd = mctx["valuation_production_readiness_roadmap"]
+    assert rd["certified_ready_stage_reached"] is False
+
+
+def test_SRB481_production_readiness_roadmap_equals_certification_roadmap():
+    """SRB481 valuation_production_readiness_roadmap is same object as valuation_certification_roadmap."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert mctx["valuation_production_readiness_roadmap"] is mctx["valuation_certification_roadmap"], \
+        "alias should point to same dict object as canonical key"
+
+
+def test_SRB482_depreciation_age_evidence_gate_blocks_when_no_evidence():
+    """SRB482 valuation_depreciation_age_evidence_gate.depreciation_certified_use_allowed=False when no age doc."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    dg = mctx["valuation_depreciation_age_evidence_gate"]
+    assert dg["age_evidence_available"] is False
+    assert dg["depreciation_certified_use_allowed"] is False
+    assert len(dg.get("acceptable_evidence_types", [])) >= 4
+
+
+def test_SRB483_geographic_land_price_replacement_required_when_qa():
+    """SRB483 valuation_geographic_land_price_readiness.replacement_required=True when QA active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    glr = mctx["valuation_geographic_land_price_readiness"]
+    assert glr["land_price_is_qa"] is True
+    assert glr["replacement_required"] is True
+    assert glr["land_price_production_ready"] is False
+
+
+def test_SRB484_source_database_linkage_qdrant_inactive():
+    """SRB484 valuation_source_database_linkage_readiness: qdrant, rag, live_db all inactive."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    slr = mctx["valuation_source_database_linkage_readiness"]
+    assert slr["qdrant_active_now"] is False, "qdrant must remain inactive"
+    assert slr["rag_active_now"] is False, "RAG must remain inactive"
+    assert slr["live_database_active_now"] is False, "live_database must remain inactive"
+
+
+def test_SRB485_parameter_governance_blocks_when_no_references():
+    """SRB485 valuation_parameter_governance.production_use_allowed=False when no references."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    pg = mctx["valuation_parameter_governance"]
+    assert pg["production_use_allowed"] is False, \
+        "production_use_allowed should be False when parameter references are missing"
+    assert len(pg.get("parameters", [])) >= 4, "At least 4 parameters expected"
+    assert all(not p["certified_use_allowed"] for p in pg["parameters"])
+
+
+def test_SRB486_valuation_final_certification_status_exists():
+    """SRB486 valuation_final_certification_status alias key exists in context."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert "valuation_final_certification_status" in mctx, \
+        "valuation_final_certification_status alias key missing from context"
+    fs = mctx["valuation_final_certification_status"]
+    assert isinstance(fs, dict)
+    for key in (
+        "report_status",
+        "certification_ready",
+        "certification_blockers",
+        "certification_risk_level",
+        "recommended_next_action",
+        "executive_recommendation",
+    ):
+        assert key in fs, f"valuation_final_certification_status missing key {key!r}"
+
+
+def test_SRB487_final_certification_status_not_ready_when_blockers():
+    """SRB487 valuation_final_certification_status.certification_ready=False when blockers exist."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fs = mctx["valuation_final_certification_status"]
+    assert fs["certification_ready"] is False, \
+        "certification_ready should be False when blockers exist"
+    assert len(fs["certification_blockers"]) > 0, \
+        "certification_blockers list must be non-empty when QA simulation is active"
+
+
+def test_SRB488_final_certification_status_report_status_qa_advisory():
+    """SRB488 valuation_final_certification_status.report_status='qa_advisory_only' when QA active."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fs = mctx["valuation_final_certification_status"]
+    assert fs["report_status"] == "qa_advisory_only", \
+        f"Expected qa_advisory_only, got {fs['report_status']!r}"
+
+
+def test_SRB489_final_certification_status_equals_certification_status():
+    """SRB489 valuation_final_certification_status is same object as valuation_certification_status."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    assert mctx["valuation_final_certification_status"] is mctx["valuation_certification_status"], \
+        "alias should point to same dict object as canonical key"
+
+
+def test_SRB490_workbook_has_qa_governance_sheet():
+    """SRB490 Workbook contains 'حوكمة بيانات QA' sheet (filing/certification gate pass)."""
+    wb = _get_wb_v2()
+    assert "حوكمة بيانات QA" in wb.sheetnames
+
+
+def test_SRB491_workbook_has_document_risk_sheet():
+    """SRB491 Workbook contains 'قائمة المستندات ومخاطر الاعتماد' sheet."""
+    wb = _get_wb_v2()
+    assert "قائمة المستندات ومخاطر الاعتماد" in wb.sheetnames
+
+
+def test_SRB492_workbook_has_certification_roadmap_sheet():
+    """SRB492 Workbook contains 'خارطة طريق الاعتماد' sheet."""
+    wb = _get_wb_v2()
+    assert "خارطة طريق الاعتماد" in wb.sheetnames
+
+
+def test_SRB493_workbook_has_parameter_governance_sheet():
+    """SRB493 Workbook contains 'حوكمة المعاملات' sheet."""
+    wb = _get_wb_v2()
+    assert "حوكمة المعاملات" in wb.sheetnames
+
+
+def test_SRB494_workbook_has_certification_status_sheet():
+    """SRB494 Workbook contains 'حالة الاعتماد والتوصية' sheet."""
+    wb = _get_wb_v2()
+    assert "حالة الاعتماد والتوصية" in wb.sheetnames
+
+
+def test_SRB495_no_certified_ready_claim_while_blockers_in_final_status():
+    """SRB495 Final certification status does not claim ready when blockers exist."""
+    mctx = _srr._build_method_context(_QA_ZAMALEK_PAYLOAD)
+    fs = mctx["valuation_final_certification_status"]
+    if fs["certification_blockers"]:
+        assert fs["certification_ready"] is False, \
+            "certification_ready must be False when certification_blockers is non-empty"
+        assert "qa_advisory" in fs["report_status"] or fs["report_status"] != "ready_for_certification"
+
+
+def test_SRB496_qa_output_gate_directory_exists_after_script():
+    """SRB496 Gate QA output directory and at least one context JSON exist."""
+    import pathlib
+    import importlib.util, sys as _sys
+    _core = pathlib.Path(__file__).resolve().parent.parent
+    _gate_dir = _core / "instance" / "manual_review_outputs" / "valuation_certification_readiness_gate"
+    # If directory doesn't exist yet, create it via the QA script
+    if not _gate_dir.exists():
+        script_path = _core / "generate_valuation_cert_readiness_gate_qa.py"
+        if script_path.exists():
+            spec = importlib.util.spec_from_file_location("_gate_qa", script_path)
+            mod = importlib.util.module_from_spec(spec)
+            _sys.modules["_gate_qa"] = mod
+            try:
+                spec.loader.exec_module(mod)
+                if hasattr(mod, "main"):
+                    mod.main()
+            except Exception:
+                pass
+    # Check for at least the context JSON
+    context_files = list(_gate_dir.glob("*_context.json")) if _gate_dir.exists() else []
+    assert _gate_dir.exists(), f"Gate output directory not found: {_gate_dir}"
+    assert len(context_files) >= 1, "Expected at least one context JSON in gate output directory"

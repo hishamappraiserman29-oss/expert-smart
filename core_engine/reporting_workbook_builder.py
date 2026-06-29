@@ -57,6 +57,41 @@ def _validate_workbook_formulas_and_no_silent_blanks(workbook_path) -> list:
         "سيناريوهات What-If", "شراء أم إيجار", "ESG والاستدامة", "مؤشرات تكلفة البناء",
         # Source Registry readiness sheet
         "سجل ربط المصادر",
+        # Advanced Methodology & Compliance sheets (Parts B–L)
+        "تحليل أعلى وأفضل استغلال",
+        "دعم التعديلات",
+        "الافتراضات الخاصة والقيود",
+        "تفصيل الإهلاك",
+        "تحليل مخاطر DCF",
+        "الفحص القانوني المبدئي",
+        "تأثير ESG والمخاطر المناخية",
+        "تقييم الأثر البيئي",
+        "نطاق الثقة وعدم اليقين",
+        # Certification readiness & governance sheets (Tasks 1–2)
+        "حوكمة مصادر البيانات",
+        "التوفيق النهائي للقيمة",
+        "بيان الامتثال",
+        "توقيع واعتماد الخبير",
+        "نطاق العمل",
+        "تسوية الإيجار",
+        "التوصية النهائية",
+        "الإفصاحات المهنية",
+        # SWOT Strategic Analysis sheets
+        "تحليل_SWOT",
+        "مصفوفة_تقييم_المخاطر",
+        # Production Readiness & Governance sheets
+        "حوكمة بيانات QA",
+        "قائمة المستندات ومخاطر الاعتماد",
+        "خارطة طريق الاعتماد",
+        "حوكمة المعاملات",
+        "حالة الاعتماد والتوصية",
+        # Risk / Decision Pass sheets
+        "اختبار اتساق الطرق",
+        "خريطة مخاطر التقييم",
+        "جدول الاعتماد الزمني",
+        "نقطة تعادل الإيجار",
+        "لوحة امتثال التقييم",
+        "مرجع التقييم الجماعي",
     ]
     for sname in _REQUIRED:
         if sname not in wb.sheetnames:
@@ -3137,6 +3172,1190 @@ def _create_expert_review_workbook(request_id: str, req: dict, docs_meta: list) 
     _cc_disc.font = Font(color="B43200", name="Arial", size=8, italic=True)
     ws_cc.merge_cells(f"A{_r_cc}:J{_r_cc}")
     ws_cc.freeze_panes = ws_cc["A3"]
+
+    # ════════════════════════════════════════════════════════════════════════
+    # Advanced Methodology & Compliance Sheets (Parts B–L)
+    # ════════════════════════════════════════════════════════════════════════
+
+    # ── Sheet: تحليل أعلى وأفضل استغلال (HBU) ──────────────────────────────
+    ws_hbu = wb.create_sheet("تحليل أعلى وأفضل استغلال")
+    _rtl(ws_hbu)
+    _widths(ws_hbu, [28, 32, 30, 24, 30])
+    ws_hbu.merge_cells("A1:E1")
+    ws_hbu["A1"].value = "تحليل أعلى وأفضل استغلال (HBU) — الاختبارات الأربعة"
+    ws_hbu["A1"].font = F_TITLE; ws_hbu["A1"].fill = _fill("1F4E78"); ws_hbu["A1"].alignment = AL_CTR
+    ws_hbu.row_dimensions[1].height = 26
+    _hbu_hdrs = ["الاختبار", "نتيجة الاختبار", "الدليل / المدخل المستخدم", "الأثر على القيمة", "ملاحظات الخبير"]
+    for ci, h in enumerate(_hbu_hdrs, 1):
+        c = ws_hbu.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _hbu_mctx = mctx.get("hbu_analysis", {})
+    _ef_hbu   = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    _hbu_rows = [
+        ("قانوني مسموح", _hbu_mctx.get("legally_permissible", _ef_hbu), "تصاريح البناء والمخطط", "تحديد مؤهلية الاستخدام البديل", _ef_hbu),
+        ("ممكن فيزيائياً", _hbu_mctx.get("physically_possible", _ef_hbu), "المساحة والتصميم والهيكل", "تحديد جدوى التحويل", _ef_hbu),
+        ("مجدي اقتصادياً", _hbu_mctx.get("financially_feasible", _ef_hbu), f"تكلفة التحويل: {_hbu_mctx.get('conversion_cost', _ef_hbu)}", f"دخل إضافي: {_hbu_mctx.get('incremental_income', _ef_hbu)}", _ef_hbu),
+        ("الأعلى ربحية", _hbu_mctx.get("maximally_productive", _ef_hbu), "مقارنة صافي القيمة بعد التكاليف", f"قيمة إضافية: {_hbu_mctx.get('incremental_value', _ef_hbu)}", _ef_hbu),
+    ]
+    for ri, (test, result_txt, evidence, impact, notes) in enumerate(_hbu_rows, 3):
+        ws_hbu.cell(ri, 1, test).font = Font(bold=True, name="Arial", size=9); ws_hbu.cell(ri, 1).alignment = AL_RT
+        ws_hbu.cell(ri, 2, result_txt).alignment = AL_RT
+        ws_hbu.cell(ri, 3, evidence).alignment = AL_RT
+        ws_hbu.cell(ri, 4, impact).alignment = AL_RT
+        ws_hbu.cell(ri, 5, notes).alignment = AL_RT
+    _r_hbu = len(_hbu_rows) + 3
+    ws_hbu.row_dimensions[_r_hbu].height = 6; _r_hbu += 1
+    ws_hbu.merge_cells(f"A{_r_hbu}:E{_r_hbu}")
+    ws_hbu.cell(_r_hbu, 1, f"الاستخدام الحالي: {_hbu_mctx.get('current_use', _ef_hbu)}").font = Font(bold=True, name="Arial", size=9)
+    ws_hbu.cell(_r_hbu, 1).alignment = AL_RT; _r_hbu += 1
+    ws_hbu.merge_cells(f"A{_r_hbu}:E{_r_hbu}")
+    ws_hbu.cell(_r_hbu, 1, f"الاستخدام المُختار (HBU): {_hbu_mctx.get('selected_hbu', _ef_hbu)}").font = Font(bold=True, color="0C4A6E", name="Arial", size=9)
+    ws_hbu.cell(_r_hbu, 1).alignment = AL_RT; _r_hbu += 1
+    ws_hbu.merge_cells(f"A{_r_hbu}:E{_r_hbu}")
+    ws_hbu.cell(_r_hbu, 1, f"الخلاصة: {_hbu_mctx.get('hbu_conclusion', _ef_hbu)}").alignment = AL_RT; _r_hbu += 1
+    ws_hbu.merge_cells(f"A{_r_hbu}:E{_r_hbu}")
+    _hbu_lim = ws_hbu.cell(_r_hbu, 1, f"القيود: {_hbu_mctx.get('limitations', '')}")
+    _hbu_lim.font = Font(color="B43200", name="Arial", size=8, italic=True); _hbu_lim.alignment = AL_RT
+    ws_hbu.freeze_panes = ws_hbu["A3"]
+
+    # ── Sheet: دعم التعديلات (Comparable Adjustment Support) ────────────────
+    ws_adj = wb.create_sheet("دعم التعديلات")
+    _rtl(ws_adj)
+    _widths(ws_adj, [22, 14, 12, 26, 30, 16, 14, 30])
+    ws_adj.merge_cells("A1:H1")
+    ws_adj["A1"].value = "دعم التعديلات — مصدر ومنهجية معاملات التسوية"
+    ws_adj["A1"].font = F_TITLE; ws_adj["A1"].fill = _fill("2D5A27"); ws_adj["A1"].alignment = AL_CTR
+    ws_adj.row_dimensions[1].height = 26
+    _adj_hdrs = ["نوع التعديل", "المعامل", "النسبة %", "مصدر التعديل", "أساس الاحتساب", "عدد المشاهدات", "مستوى الثقة", "ملاحظات"]
+    for ci, h in enumerate(_adj_hdrs, 1):
+        c = ws_adj.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _adj_mctx = mctx.get("comparable_adjustment_support", {})
+    _adj_items = _adj_mctx.get("adjustments", [])
+    _r_adj = 3
+    for adj in _adj_items:
+        ws_adj.cell(_r_adj, 1, adj.get("adjustment_type", "")).alignment = AL_RT
+        ws_adj.cell(_r_adj, 2, adj.get("coefficient", "")).alignment = AL_CTR
+        ws_adj.cell(_r_adj, 3, adj.get("pct", "")).alignment = AL_CTR
+        ws_adj.cell(_r_adj, 4, adj.get("source", "")).alignment = AL_RT
+        ws_adj.cell(_r_adj, 5, adj.get("basis", "")).alignment = AL_RT
+        ws_adj.cell(_r_adj, 6, adj.get("n_observations", 0)).alignment = AL_CTR
+        ws_adj.cell(_r_adj, 7, adj.get("confidence", "")).alignment = AL_RT
+        ws_adj.cell(_r_adj, 8, adj.get("notes", "")).alignment = AL_RT
+        _r_adj += 1
+    ws_adj.row_dimensions[_r_adj].height = 6; _r_adj += 1
+    _adj_dis = ws_adj.cell(_r_adj, 1, _adj_mctx.get("paired_sales_disclaimer", ""))
+    _adj_dis.font = Font(color="B43200", name="Arial", size=8, italic=True)
+    ws_adj.merge_cells(f"A{_r_adj}:H{_r_adj}"); _r_adj += 1
+    ws_adj.cell(_r_adj, 1, f"الدعم الإحصائي: {_adj_mctx.get('regression_support', '')}").alignment = AL_RT
+    ws_adj.merge_cells(f"A{_r_adj}:H{_r_adj}")
+    ws_adj.freeze_panes = ws_adj["A3"]
+
+    # ── Sheet: الافتراضات الخاصة والقيود (Assumptions & Scope Limitations) ──
+    ws_asm = wb.create_sheet("الافتراضات الخاصة والقيود")
+    _rtl(ws_asm)
+    _widths(ws_asm, [20, 40, 32, 36, 16, 30])
+    ws_asm.merge_cells("A1:F1")
+    ws_asm["A1"].value = "الافتراضات العادية والافتراضات الخاصة وقيود نطاق العمل"
+    ws_asm["A1"].font = F_TITLE; ws_asm["A1"].fill = _fill("7C3AED"); ws_asm["A1"].alignment = AL_CTR
+    ws_asm.row_dimensions[1].height = 26
+    _asm_hdrs = ["نوع الافتراض", "الوصف", "سبب استخدام الافتراض", "الأثر المتوقع على القيمة لو ثبت خطؤه", "يحتاج مستند؟", "ملاحظات الخبير"]
+    for ci, h in enumerate(_asm_hdrs, 1):
+        c = ws_asm.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _asm_list = mctx.get("assumptions_registry", [])
+    _r_asm = 3
+    _type_colors = {
+        "افتراض عادي":         "E8F5E9",
+        "افتراض خاص":          "FFF3E0",
+        "حالة افتراضية":       "FCE4EC",
+        "قيد على نطاق العمل":  "E3F2FD",
+    }
+    for asm in _asm_list:
+        _atype = asm.get("type", "")
+        _fill_color = _type_colors.get(_atype, "FFFFFF")
+        for ci in range(1, 7):
+            ws_asm.cell(_r_asm, ci).fill = _fill(_fill_color)
+        ws_asm.cell(_r_asm, 1, _atype).font = Font(bold=True, name="Arial", size=9); ws_asm.cell(_r_asm, 1).alignment = AL_RT
+        ws_asm.cell(_r_asm, 2, asm.get("description", "")).alignment = AL_RT
+        ws_asm.cell(_r_asm, 3, asm.get("reason", "")).alignment = AL_RT
+        ws_asm.cell(_r_asm, 4, asm.get("value_impact_if_wrong", "")).alignment = AL_RT
+        ws_asm.cell(_r_asm, 5, "نعم" if asm.get("needs_supporting_doc") else "لا").alignment = AL_CTR
+        ws_asm.cell(_r_asm, 6, asm.get("expert_notes", "")).alignment = AL_RT
+        _r_asm += 1
+    ws_asm.freeze_panes = ws_asm["A3"]
+
+    # ── Sheet: تفصيل الإهلاك (Detailed Depreciation) ───────────────────────
+    ws_dep = wb.create_sheet("تفصيل الإهلاك")
+    _rtl(ws_dep)
+    _widths(ws_dep, [36, 18, 22, 36])
+    ws_dep.merge_cells("A1:D1")
+    ws_dep["A1"].value = "تفصيل الإهلاك في طريقة التكلفة — إهلاك مادي ووظيفي وخارجي"
+    ws_dep["A1"].font = F_TITLE; ws_dep["A1"].fill = _fill("92400E"); ws_dep["A1"].alignment = AL_CTR
+    ws_dep.row_dimensions[1].height = 26
+    for ci, h in enumerate(["بند الإهلاك", "النسبة %", "القيمة (ج.م)", "الأساس / المصدر"], 1):
+        c = ws_dep.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _dep_mctx = mctx.get("depreciation_breakdown", {})
+    _ef_dep   = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    _dep_rows_data = [
+        ("إهلاك مادي قابل للإصلاح", _dep_mctx.get("physical_curable_pct", 0), _dep_mctx.get("physical_curable_value", _ef_dep), "إصلاحات صغيرة — دهانات وأرضيات"),
+        ("إهلاك مادي غير قابل للإصلاح", _dep_mctx.get("physical_incurable_pct", 0), _dep_mctx.get("physical_incurable_value", _ef_dep), _dep_mctx.get("physical_incurable_age_formula", _ef_dep)),
+        ("تقادم وظيفي", _dep_mctx.get("functional_obsolescence_pct", 0), _dep_mctx.get("functional_obsolescence_value", _ef_dep), "تصميم قديم أو غير فعّال"),
+        ("تقادم خارجي / اقتصادي", _dep_mctx.get("external_obsolescence_pct", 0), _dep_mctx.get("external_obsolescence_value", _ef_dep), "عوامل خارجية سلبية"),
+    ]
+    _r_dep = 3
+    for row_d in _dep_rows_data:
+        ws_dep.cell(_r_dep, 1, row_d[0]).font = Font(bold=True, name="Arial", size=9); ws_dep.cell(_r_dep, 1).alignment = AL_RT
+        ws_dep.cell(_r_dep, 2, row_d[1]).alignment = AL_CTR
+        ws_dep.cell(_r_dep, 3, row_d[2]).alignment = AL_CTR
+        ws_dep.cell(_r_dep, 4, row_d[3]).alignment = AL_RT
+        _r_dep += 1
+    # Totals row
+    ws_dep.cell(_r_dep, 1, "إجمالي الإهلاك").font = Font(bold=True, name="Arial", size=9, color="8B0000")
+    ws_dep.cell(_r_dep, 1).fill = _fill("FFF3CD"); ws_dep.cell(_r_dep, 1).alignment = AL_RT
+    ws_dep.cell(_r_dep, 2, f"={_dep_mctx.get('total_depreciation_pct', 0):.2f}%").alignment = AL_CTR
+    ws_dep.cell(_r_dep, 3, _dep_mctx.get("total_depreciation_value", _ef_dep)).alignment = AL_CTR
+    ws_dep.cell(_r_dep, 4).fill = _fill("FFF3CD"); _r_dep += 1
+    ws_dep.row_dimensions[_r_dep].height = 6; _r_dep += 1
+    for lbl, val in [
+        ("تكلفة الإحلال الجديدة", _dep_mctx.get("replacement_cost_new", _ef_dep)),
+        ("تكلفة الإحلال المُستهلكة", _dep_mctx.get("depreciated_replacement_cost", _ef_dep)),
+        ("العمر الفعلي (سنة)", str(_dep_mctx.get("effective_age", _ef_dep))),
+        ("العمر الاقتصادي (سنة)", str(_dep_mctx.get("economic_life", _ef_dep))),
+        ("أساس التقدير", _dep_mctx.get("evidence_basis", _ef_dep)),
+    ]:
+        ws_dep.cell(_r_dep, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_dep.cell(_r_dep, 1).alignment = AL_RT
+        ws_dep.cell(_r_dep, 2, val); ws_dep.cell(_r_dep, 2).alignment = AL_RT
+        ws_dep.merge_cells(f"B{_r_dep}:D{_r_dep}"); _r_dep += 1
+    ws_dep.freeze_panes = ws_dep["A3"]
+
+    # ── Sheet: تحليل مخاطر DCF (DCF Scenario / Risk Analysis) ───────────────
+    ws_drf = wb.create_sheet("تحليل مخاطر DCF")
+    _rtl(ws_drf)
+    _widths(ws_drf, [20, 14, 18, 24, 20, 20])
+    ws_drf.merge_cells("A1:F1")
+    ws_drf["A1"].value = "تحليل مخاطر DCF — السيناريوهات الثلاثة"
+    ws_drf["A1"].font = F_TITLE; ws_drf["A1"].fill = _fill("164E63"); ws_drf["A1"].alignment = AL_CTR
+    ws_drf.row_dimensions[1].height = 26
+    for ci, h in enumerate(["السيناريو", "نمو الإيجار %", "معدل الرسملة الطرفي %", "قيمة DCF", "الفارق عن الأساسي", "الفارق %"], 1):
+        c = ws_drf.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _scen_mctx = mctx.get("dcf_scenarios", {})
+    _ef_drf    = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    _scen_colors = {"optimistic": "E8F5E9", "base": "E3F2FD", "pessimistic": "FFF3E0"}
+    _r_drf = 3
+    for skey in ("optimistic", "base", "pessimistic"):
+        sd = _scen_mctx.get(skey, {})
+        for ci in range(1, 7):
+            ws_drf.cell(_r_drf, ci).fill = _fill(_scen_colors[skey])
+        ws_drf.cell(_r_drf, 1, sd.get("label", skey)).font = Font(bold=True, name="Arial", size=9); ws_drf.cell(_r_drf, 1).alignment = AL_RT
+        ws_drf.cell(_r_drf, 2, sd.get("rent_growth_pct", _ef_drf)).alignment = AL_CTR
+        ws_drf.cell(_r_drf, 3, sd.get("terminal_cap_rate_pct", _ef_drf)).alignment = AL_CTR
+        ws_drf.cell(_r_drf, 4, sd.get("dcf_value", _ef_drf)).alignment = AL_CTR
+        ws_drf.cell(_r_drf, 5, sd.get("variance_from_base", "—")).alignment = AL_CTR
+        ws_drf.cell(_r_drf, 6, sd.get("variance_pct", "—")).alignment = AL_CTR
+        _r_drf += 1
+    ws_drf.row_dimensions[_r_drf].height = 6; _r_drf += 1
+    ws_drf.merge_cells(f"A{_r_drf}:F{_r_drf}")
+    ws_drf.cell(_r_drf, 1, f"نطاق السيناريوهات: {_scen_mctx.get('scenario_spread', _ef_drf)}").font = Font(bold=True, name="Arial", size=9)
+    ws_drf.cell(_r_drf, 1).alignment = AL_RT; _r_drf += 1
+    ws_drf.merge_cells(f"A{_r_drf}:F{_r_drf}")
+    _drf_mc = ws_drf.cell(_r_drf, 1, _scen_mctx.get("monte_carlo_note", ""))
+    _drf_mc.font = Font(color="B43200", name="Arial", size=8, italic=True); _drf_mc.alignment = AL_RT; _r_drf += 1
+    ws_drf.merge_cells(f"A{_r_drf}:F{_r_drf}")
+    ws_drf.cell(_r_drf, 1, _scen_mctx.get("dcf_risk_disclaimer", "")).font = Font(color="555555", name="Arial", size=8, italic=True)
+    ws_drf.cell(_r_drf, 1).alignment = AL_RT
+    ws_drf.freeze_panes = ws_drf["A3"]
+
+    # ── Sheet: الفحص القانوني المبدئي (Legal Due Diligence) ─────────────────
+    ws_leg = wb.create_sheet("الفحص القانوني المبدئي")
+    _rtl(ws_leg)
+    _widths(ws_leg, [32, 50])
+    ws_leg.merge_cells("A1:B1")
+    ws_leg["A1"].value = "الفحص القانوني المبدئي — ملاحظة: هذا ليس رأياً قانونياً"
+    ws_leg["A1"].font = F_TITLE; ws_leg["A1"].fill = _fill("8B1A1A"); ws_leg["A1"].alignment = AL_CTR
+    ws_leg.row_dimensions[1].height = 26
+    _leg_mctx = mctx.get("legal_due_diligence", {})
+    _ef_leg   = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    _leg_fields = [
+        ("نوع الملكية", _leg_mctx.get("ownership_type", _ef_leg)),
+        ("هل راجع الخبير وثيقة الملكية؟", _leg_mctx.get("ownership_document_reviewed", _ef_leg)),
+        ("حالة الرهن أو الأعباء", _leg_mctx.get("mortgage_or_lien_status", _ef_leg)),
+        ("حالة النزاعات القانونية", _leg_mctx.get("legal_dispute_status", _ef_leg)),
+        ("تاريخ آخر تصرف", _leg_mctx.get("last_transfer_date", _ef_leg)),
+        ("قضايا نزع ملكية أو قضايا معلقة", _leg_mctx.get("expropriation_or_pending", _ef_leg)),
+        ("المستندات التي تمت مراجعتها", _leg_mctx.get("reviewed_documents", _ef_leg)),
+        ("المستندات الناقصة", _leg_mctx.get("missing_documents", _ef_leg)),
+        ("قيود نطاق الفحص القانوني", _leg_mctx.get("legal_scope_limitation", _ef_leg)),
+        ("خلاصة الفحص القانوني", _leg_mctx.get("legal_due_diligence_conclusion", _ef_leg)),
+    ]
+    ws_leg.cell(2, 1, "البند").font = F_HDR; ws_leg.cell(2, 1).fill = _fill(C_BLUE_D); ws_leg.cell(2, 1).alignment = AL_CTR
+    ws_leg.cell(2, 2, "التفاصيل").font = F_HDR; ws_leg.cell(2, 2).fill = _fill(C_BLUE_D); ws_leg.cell(2, 2).alignment = AL_CTR
+    for ri, (lbl, val) in enumerate(_leg_fields, 3):
+        ws_leg.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_leg.cell(ri, 1).alignment = AL_RT
+        ws_leg.cell(ri, 2, val).alignment = AL_RT
+    ws_leg.freeze_panes = ws_leg["A3"]
+
+    # ── Sheet: تأثير ESG والمخاطر المناخية ──────────────────────────────────
+    ws_esg2 = wb.create_sheet("تأثير ESG والمخاطر المناخية")
+    _rtl(ws_esg2)
+    _widths(ws_esg2, [36, 40])
+    ws_esg2.merge_cells("A1:B1")
+    ws_esg2["A1"].value = "تأثير الاستدامة والمخاطر المناخية على القيمة"
+    ws_esg2["A1"].font = F_TITLE; ws_esg2["A1"].fill = _fill("166534"); ws_esg2["A1"].alignment = AL_CTR
+    ws_esg2.row_dimensions[1].height = 26
+    _esg2_mctx = mctx.get("esg_enhanced_context", {})
+    _ef_esg2   = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    _esg2_fields = [
+        ("درجة ESG الإجمالية", str(_esg2_mctx.get("esg_score", mctx.get("esg_total_score", _ef_esg2)))),
+        ("تصنيف ESG", _esg2_mctx.get("esg_category", _ef_esg2)),
+        ("تعديل معدل الرسملة (ESG)", mctx.get("esg_cap_rate_adjustment", _ef_esg2)),
+        ("تعديل معدل الخصم (ESG)", mctx.get("esg_discount_rate_adjustment", _ef_esg2)),
+        ("تعديل القيمة الطرفية (ESG)", mctx.get("esg_terminal_value_adjustment", _ef_esg2)),
+        ("الأثر على القيمة (ESG)", mctx.get("esg_value_impact", _ef_esg2)),
+        ("درجة المخاطر المناخية", mctx.get("climate_risk_score", _ef_esg2)),
+        ("ملاحظات المخاطر المناخية", mctx.get("climate_risk_notes", _ef_esg2)),
+        ("ملاحظة البيانات غير المكتملة", _esg2_mctx.get("esg_incomplete_note", "—")),
+    ]
+    ws_esg2.cell(2, 1, "البند").font = F_HDR; ws_esg2.cell(2, 1).fill = _fill(C_BLUE_D); ws_esg2.cell(2, 1).alignment = AL_CTR
+    ws_esg2.cell(2, 2, "القيمة / النص").font = F_HDR; ws_esg2.cell(2, 2).fill = _fill(C_BLUE_D); ws_esg2.cell(2, 2).alignment = AL_CTR
+    for ri, (lbl, val) in enumerate(_esg2_fields, 3):
+        ws_esg2.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_esg2.cell(ri, 1).alignment = AL_RT
+        ws_esg2.cell(ri, 2, val).alignment = AL_RT
+    # Formula row for adjusted cap rate
+    _r_esg2 = len(_esg2_fields) + 3
+    ws_esg2.row_dimensions[_r_esg2].height = 6; _r_esg2 += 1
+    ws_esg2.merge_cells(f"A{_r_esg2}:B{_r_esg2}")
+    ws_esg2.cell(_r_esg2, 1, "ملاحظة: تعديلات ESG تُطبَّق على معدل الرسملة ومعدل الخصم والقيمة الطرفية فقط عند توفر بيانات موثقة.")
+    ws_esg2.cell(_r_esg2, 1).font = Font(color="B43200", name="Arial", size=8, italic=True); ws_esg2.cell(_r_esg2, 1).alignment = AL_RT
+    ws_esg2.freeze_panes = ws_esg2["A3"]
+
+    # ── Sheet: تقييم الأثر البيئي (EIA) ─────────────────────────────────────
+    ws_eia = wb.create_sheet("تقييم الأثر البيئي")
+    _rtl(ws_eia)
+    _widths(ws_eia, [36, 50])
+    ws_eia.merge_cells("A1:B1")
+    ws_eia["A1"].value = "منهجية تقييم الأثر البيئي — مشروط بغرض التقييم"
+    ws_eia["A1"].font = F_TITLE; ws_eia["A1"].fill = _fill("1A5276"); ws_eia["A1"].alignment = AL_CTR
+    ws_eia.row_dimensions[1].height = 26
+    _eia_mctx = mctx.get("environmental_impact_assessment", {})
+    _ef_eia   = mctx.get("_na_purpose_label", "غير مطبق")
+    ws_eia.cell(2, 1, "البند").font = F_HDR; ws_eia.cell(2, 1).fill = _fill(C_BLUE_D); ws_eia.cell(2, 1).alignment = AL_CTR
+    ws_eia.cell(2, 2, "النتيجة / التفاصيل").font = F_HDR; ws_eia.cell(2, 2).fill = _fill(C_BLUE_D); ws_eia.cell(2, 2).alignment = AL_CTR
+    _eia_fields = [
+        ("هل يُطبَّق تقييم الأثر البيئي؟", "نعم" if _eia_mctx.get("eia_required") else "لا — غير مطبق"),
+        ("خطر التلوث", _eia_mctx.get("contamination_risk", _ef_eia)),
+        ("خطر المياه الجوفية", _eia_mctx.get("groundwater_risk", _ef_eia)),
+        ("جودة الهواء / الضوضاء", _eia_mctx.get("air_quality_noise_risk", _ef_eia)),
+        ("القرب من مناطق حساسة", _eia_mctx.get("proximity_to_sensitive", _ef_eia)),
+        ("تكلفة المعالجة المقدرة", _eia_mctx.get("remediation_cost_estimate", _ef_eia)),
+        ("نسبة الخصم البيئي %", str(_eia_mctx.get("environmental_discount_pct", 0))),
+        ("الأثر على قيمة الأرض", _eia_mctx.get("land_value_impact", _ef_eia)),
+        ("خلاصة EIA", _eia_mctx.get("eia_conclusion", _ef_eia)),
+        ("قيود نطاق EIA", _eia_mctx.get("eia_scope_limitation", _ef_eia)),
+    ]
+    for ri, (lbl, val) in enumerate(_eia_fields, 3):
+        ws_eia.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_eia.cell(ri, 1).alignment = AL_RT
+        ws_eia.cell(ri, 2, val).alignment = AL_RT
+    ws_eia.freeze_panes = ws_eia["A3"]
+
+    # ── Sheet: نطاق الثقة وعدم اليقين (Confidence / Uncertainty Range) ──────
+    ws_unc = wb.create_sheet("نطاق الثقة وعدم اليقين")
+    _rtl(ws_unc)
+    _widths(ws_unc, [30, 22, 22, 22, 30])
+    ws_unc.merge_cells("A1:E1")
+    ws_unc["A1"].value = "نطاق عدم اليقين في القيمة — تحليل تشتت الطرق"
+    ws_unc["A1"].font = F_TITLE; ws_unc["A1"].fill = _fill("4A235A"); ws_unc["A1"].alignment = AL_CTR
+    ws_unc.row_dimensions[1].height = 26
+    _unc_mctx = mctx.get("valuation_uncertainty", {})
+    _ef_unc   = mctx.get("_data_gap_label", "غير متاح")
+    # Method values table
+    for ci, h in enumerate(["طريقة التقييم", "القيمة (ج.م)", "الوزن النسبي", "الانحراف عن المتوسط", "ملاحظة"], 1):
+        c = ws_unc.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _unc_methods = _unc_mctx.get("method_values", [])
+    _r_unc = 3
+    _unc_val_rows: list = []
+    for mv in _unc_methods:
+        ws_unc.cell(_r_unc, 1, mv.get("method", "")).alignment = AL_RT
+        ws_unc.cell(_r_unc, 2, mv.get("value", "")).alignment = AL_CTR
+        ws_unc.cell(_r_unc, 2).number_format = "#,##0"
+        _unc_val_rows.append(_r_unc)
+        _r_unc += 1
+    # Summary rows
+    if _unc_val_rows:
+        _val_start = _unc_val_rows[0]; _val_end = _unc_val_rows[-1]
+        ws_unc.row_dimensions[_r_unc].height = 6; _r_unc += 1
+        _summary_rows = [
+            ("المتوسط الحسابي", f"=AVERAGE(B{_val_start}:B{_val_end})"),
+            ("القيمة الموزونة (القيمة النهائية)", _unc_mctx.get("weighted_value", _ef_unc)),
+            ("الانحراف المعياري", f"=STDEV(B{_val_start}:B{_val_end})" if len(_unc_val_rows) > 1 else _ef_unc),
+            ("معامل الاختلاف (CV)", _unc_mctx.get("coefficient_of_variation", _ef_unc)),
+            ("الحد الأدنى — نطاق 90%", _unc_mctx.get("lower_bound", _ef_unc)),
+            ("الحد الأعلى — نطاق 90%", _unc_mctx.get("upper_bound", _ef_unc)),
+        ]
+        for lbl, val in _summary_rows:
+            ws_unc.cell(_r_unc, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_unc.cell(_r_unc, 1).alignment = AL_RT
+            ws_unc.cell(_r_unc, 2, val).alignment = AL_CTR; _r_unc += 1
+    ws_unc.row_dimensions[_r_unc].height = 6; _r_unc += 1
+    ws_unc.merge_cells(f"A{_r_unc}:E{_r_unc}")
+    _unc_comm = ws_unc.cell(_r_unc, 1, _unc_mctx.get("uncertainty_comment", ""))
+    _unc_comm.font = Font(color="B43200", name="Arial", size=8, italic=True); _unc_comm.alignment = AL_RT
+    ws_unc.freeze_panes = ws_unc["A3"]
+
+    # ── Enhance سجل المراجعة with Peer Review fields ─────────────────────────
+    # The review log sheet already exists; append peer review rows after existing content
+    if "سجل المراجعة" in wb.sheetnames:
+        ws_rev = wb["سجل المراجعة"]
+        _pr_mctx = mctx.get("peer_review", {})
+        _ef_pr   = mctx.get("_data_gap_label", "غير متاح")
+        # Find the last used row
+        _last_rev_row = ws_rev.max_row + 2
+        ws_rev.merge_cells(f"A{_last_rev_row}:H{_last_rev_row}")
+        ws_rev.cell(_last_rev_row, 1, "مراجعة الجودة الداخلية (Peer Review)").font = Font(bold=True, color="1F4E78", name="Arial", size=9)
+        ws_rev.cell(_last_rev_row, 1).alignment = AL_RT; _last_rev_row += 1
+        for pr_lbl, pr_val in [
+            ("المراجع الداخلي", _pr_mctx.get("peer_reviewer_name", _ef_pr)),
+            ("دور المراجع", _pr_mctx.get("peer_reviewer_role", _ef_pr)),
+            ("تاريخ المراجعة", _pr_mctx.get("peer_review_date", _ef_pr)),
+            ("حالة المراجعة", _pr_mctx.get("peer_review_status_label", _ef_pr)),
+            ("ملاحظات المراجع", _pr_mctx.get("peer_review_notes", _ef_pr)),
+            ("قيود المراجعة", _pr_mctx.get("review_limitations", _ef_pr)),
+        ]:
+            ws_rev.cell(_last_rev_row, 1, pr_lbl).font = Font(bold=True, name="Arial", size=8); ws_rev.cell(_last_rev_row, 1).alignment = AL_RT
+            ws_rev.cell(_last_rev_row, 2, pr_val).alignment = AL_RT
+            _last_rev_row += 1
+
+    # ── Sheet: حوكمة مصادر البيانات (Source Quality Gate) ───────────────────
+    ws_sqg = wb.create_sheet("حوكمة مصادر البيانات")
+    _rtl(ws_sqg)
+    _widths(ws_sqg, [36, 16, 16, 24, 28, 28])
+    ws_sqg.merge_cells("A1:F1")
+    ws_sqg["A1"].value = "حوكمة جودة مصادر البيانات — بوابة الاعتماد"
+    ws_sqg["A1"].font = F_TITLE; ws_sqg["A1"].fill = _fill("1F4E78"); ws_sqg["A1"].alignment = AL_CTR
+    ws_sqg.row_dimensions[1].height = 26
+    _sqg_mctx = mctx.get("source_quality_gate", {})
+    _ef_sqg   = mctx.get("_data_gap_label", "غير متاح")
+    for ci, h in enumerate(["معرّف المصدر", "نوع المصدر", "حالة الجودة", "جاهز للإنتاج؟", "مطلوب للاعتماد؟", "إجراء مطلوب"], 1):
+        c = ws_sqg.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _src_reg = mctx.get("source_registry", [])
+    for ri, _sr in enumerate(_src_reg, 3):
+        _is_qa_src = "QA" in str(_sr.get("source_status", "")) or "محاكاة" in str(_sr.get("source_status", ""))
+        ws_sqg.cell(ri, 1, _sr.get("source_id") or _sr.get("source_registry_id", "")).alignment = AL_RT
+        ws_sqg.cell(ri, 2, _sr.get("source_type", "")).alignment = AL_RT
+        ws_sqg.cell(ri, 3, _sr.get("source_status", "")).alignment = AL_CTR
+        ws_sqg.cell(ri, 4, "لا" if _is_qa_src else "نعم").alignment = AL_CTR
+        ws_sqg.cell(ri, 5, "نعم").alignment = AL_CTR
+        ws_sqg.cell(ri, 6, "استبدل ببيانات حقيقية" if _is_qa_src else "—").alignment = AL_RT
+        if _is_qa_src:
+            for ci in range(1, 7):
+                ws_sqg.cell(ri, ci).fill = _fill("FFF3CD")
+    _sqg_sum_r = len(_src_reg) + 4
+    ws_sqg.row_dimensions[_sqg_sum_r - 1].height = 6
+    for lbl, val in [
+        ("إجمالي مصادر QA", str(_sqg_mctx.get("qa_simulation_sources_count", ""))),
+        ("مصادر جاهزة للإنتاج", str(_sqg_mctx.get("production_ready_sources_count", ""))),
+        ("الاعتماد مسموح؟", "نعم" if _sqg_mctx.get("certification_allowed") else "لا — محاكاة QA"),
+        ("سبب الحجب", _sqg_mctx.get("certification_block_reason", "")),
+        ("الإجراء المطلوب", " | ".join(_sqg_mctx.get("required_actions", []))),
+    ]:
+        ws_sqg.cell(_sqg_sum_r, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_sqg.cell(_sqg_sum_r, 1).alignment = AL_RT
+        ws_sqg.merge_cells(f"B{_sqg_sum_r}:F{_sqg_sum_r}")
+        ws_sqg.cell(_sqg_sum_r, 2, val).alignment = AL_RT; _sqg_sum_r += 1
+    ws_sqg.freeze_panes = ws_sqg["A3"]
+
+    # ── Sheet: التوفيق النهائي للقيمة (Final Reconciliation) ─────────────────
+    ws_fr = wb.create_sheet("التوفيق النهائي للقيمة")
+    _rtl(ws_fr)
+    _widths(ws_fr, [30, 24, 12, 12, 24, 28, 28])
+    ws_fr.merge_cells("A1:G1")
+    ws_fr["A1"].value = "التوفيق النهائي للقيمة — الاختيار النهائي للخبير"
+    ws_fr["A1"].font = F_TITLE; ws_fr["A1"].fill = _fill("2D5A8E"); ws_fr["A1"].alignment = AL_CTR
+    ws_fr.row_dimensions[1].height = 26
+    for ci, h in enumerate(["طريقة التقييم", "القيمة (ج.م)", "الوزن %", "المساهمة الموزونة", "موثوقية البيانات", "ملاحظات الخبير"], 1):
+        c = ws_fr.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _fr_mctx   = mctx.get("final_reconciliation", {})
+    _ef_fr     = mctx.get("_data_gap_label", "غير متاح")
+    _fr_rows   = _fr_mctx.get("method_values", [])
+    _fr_start  = 3
+    for ri, row in enumerate(_fr_rows, _fr_start):
+        ws_fr.cell(ri, 1, row.get("method", "")).alignment = AL_RT
+        ws_fr.cell(ri, 2, row.get("value", "")).alignment = AL_CTR
+        ws_fr.cell(ri, 2).number_format = "#,##0"
+        ws_fr.cell(ri, 3, row.get("weight_pct", "")).alignment = AL_CTR
+        ws_fr.cell(ri, 4, f"=B{ri}*{row.get('weight', 0):.2f}").alignment = AL_CTR
+        ws_fr.cell(ri, 5, row.get("data_reliability", "")).alignment = AL_RT
+        ws_fr.cell(ri, 6, mctx.get("_expert_fill_label", "يحتاج استكمال")).alignment = AL_RT
+    _fr_data_end = _fr_start + len(_fr_rows) - 1
+    _fr_sum_r = _fr_data_end + 2
+    ws_fr.row_dimensions[_fr_sum_r - 1].height = 6
+    for lbl, val in [
+        ("المتوسط الموزون (القيمة الموصى بها)", _fr_mctx.get("weighted_indication", _ef_fr)),
+        ("القيمة النهائية المختارة", _fr_mctx.get("selected_final_value", _ef_fr)),
+        ("القيمة النهائية (مدورة)", _fr_mctx.get("selected_final_value_rounded", _ef_fr)),
+        ("الحد الأدنى — نطاق 90%", _fr_mctx.get("lower_value_bound", _ef_fr)),
+        ("الحد الأعلى — نطاق 90%", _fr_mctx.get("upper_value_bound", _ef_fr)),
+        ("الطريقة المهيمنة", _fr_mctx.get("dominant_method", _ef_fr)),
+        ("حالة الاختيار", _fr_mctx.get("expert_selection_status", _ef_fr)),
+        ("مبرر التوفيق", _fr_mctx.get("reconciliation_rationale", _ef_fr)),
+        ("تفسير التفاوت بين الطرق", _fr_mctx.get("divergence_explanation", _ef_fr)),
+    ]:
+        ws_fr.cell(_fr_sum_r, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_fr.cell(_fr_sum_r, 1).alignment = AL_RT
+        ws_fr.merge_cells(f"B{_fr_sum_r}:G{_fr_sum_r}")
+        ws_fr.cell(_fr_sum_r, 2, val).alignment = AL_RT; _fr_sum_r += 1
+    ws_fr.freeze_panes = ws_fr["A3"]
+
+    # ── Sheet: بيان الامتثال (Standards Compliance) ───────────────────────────
+    ws_sc = wb.create_sheet("بيان الامتثال")
+    _rtl(ws_sc)
+    _widths(ws_sc, [30, 16, 20, 20, 20, 28])
+    ws_sc.merge_cells("A1:F1")
+    ws_sc["A1"].value = "بيان الامتثال والمعايير المهنية"
+    ws_sc["A1"].font = F_TITLE; ws_sc["A1"].fill = _fill("1A5276"); ws_sc["A1"].alignment = AL_CTR
+    ws_sc.row_dimensions[1].height = 26
+    for ci, h in enumerate(["قسم التقرير", "مرجع IVS", "مرجع USPAP", "مرجع FRA", "حالة الامتثال", "القيد / الإجراء المطلوب"], 1):
+        c = ws_sc.cell(2, ci, h)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _sc_mctx = mctx.get("standards_compliance", {})
+    _ef_sc   = mctx.get("_data_gap_label", "غير متاح")
+    for ri, row in enumerate(_sc_mctx.get("standards_mapping_table", []), 3):
+        ws_sc.cell(ri, 1, row.get("methodology_section", "")).alignment = AL_RT
+        ws_sc.cell(ri, 2, row.get("ivs_reference", "")).alignment = AL_CTR
+        ws_sc.cell(ri, 3, row.get("uspap_reference", "")).alignment = AL_CTR
+        ws_sc.cell(ri, 4, row.get("fra_reference", "")).alignment = AL_CTR
+        ws_sc.cell(ri, 5, row.get("alignment_status", "")).alignment = AL_CTR
+        ws_sc.cell(ri, 6, row.get("limitation", "")).alignment = AL_RT
+    _sc_note_r = len(_sc_mctx.get("standards_mapping_table", [])) + 4
+    for lbl, val in [
+        ("بيان الامتثال المؤهل", _sc_mctx.get("qualified_compliance_statement", _ef_sc)),
+        ("قيود الامتثال", " | ".join(_sc_mctx.get("compliance_limitations", []))),
+        ("متطلبات ناقصة", " | ".join(_sc_mctx.get("missing_compliance_requirements", []))),
+    ]:
+        ws_sc.cell(_sc_note_r, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_sc.cell(_sc_note_r, 1).alignment = AL_RT
+        ws_sc.merge_cells(f"B{_sc_note_r}:F{_sc_note_r}")
+        ws_sc.cell(_sc_note_r, 2, val).alignment = AL_RT; _sc_note_r += 1
+    ws_sc.freeze_panes = ws_sc["A3"]
+
+    # ── Sheet: توقيع واعتماد الخبير (Expert Signature & Approval) ─────────────
+    ws_ea = wb.create_sheet("توقيع واعتماد الخبير")
+    _rtl(ws_ea)
+    _widths(ws_ea, [36, 50])
+    ws_ea.merge_cells("A1:B1")
+    ws_ea["A1"].value = "توقيع واعتماد الخبير — بوابة الاعتماد النهائي"
+    ws_ea["A1"].font = F_TITLE; ws_ea["A1"].fill = _fill("1F4E78"); ws_ea["A1"].alignment = AL_CTR
+    ws_ea.row_dimensions[1].height = 26
+    _ea_mctx = mctx.get("expert_approval", {})
+    _ef_ea   = mctx.get("_data_gap_label", "غير متاح")
+    ws_ea.cell(2, 1, "البند").font = F_HDR; ws_ea.cell(2, 1).fill = _fill(C_BLUE_D); ws_ea.cell(2, 1).alignment = AL_CTR
+    ws_ea.cell(2, 2, "القيمة / الحالة").font = F_HDR; ws_ea.cell(2, 2).fill = _fill(C_BLUE_D); ws_ea.cell(2, 2).alignment = AL_CTR
+    _ea_fields = [
+        ("اسم الخبير",           _ea_mctx.get("expert_name", _ef_ea)),
+        ("رقم الترخيص",          _ea_mctx.get("expert_license_number", _ef_ea)),
+        ("الصفة / الدور",        _ea_mctx.get("expert_role", _ef_ea)),
+        ("الشركة / الجهة",       _ea_mctx.get("firm_name", _ef_ea)),
+        ("تاريخ الاعتماد",       _ea_mctx.get("approval_date", _ef_ea)),
+        ("حالة التوقيع",         "متوفر" if _ea_mctx.get("signature_available") else "غير مرفق"),
+        ("حالة الختم",           "متوفر" if _ea_mctx.get("stamp_available") else "غير مرفق"),
+        ("حالة الاعتماد",        _ea_mctx.get("approval_status", _ef_ea)),
+        ("الاعتماد النهائي جاهز؟", "نعم" if _ea_mctx.get("certification_signature_ready") else "لا — يلزم الاستكمال"),
+        ("ملاحظة التوقيع",       _ea_mctx.get("unsigned_notice", "")),
+        ("قيود الاعتماد",        _ea_mctx.get("approval_limitations", "")),
+    ]
+    for ri, (lbl, val) in enumerate(_ea_fields, 3):
+        ws_ea.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_ea.cell(ri, 1).alignment = AL_RT
+        ws_ea.cell(ri, 2, val).alignment = AL_RT
+    ws_ea.freeze_panes = ws_ea["A3"]
+
+    # ── Sheet: نطاق العمل (Scope of Work) ────────────────────────────────────
+    ws_sow = wb.create_sheet("نطاق العمل")
+    _rtl(ws_sow)
+    _widths(ws_sow, [36, 50])
+    ws_sow.merge_cells("A1:B1")
+    ws_sow["A1"].value = "نطاق العمل — متطلبات USPAP / IVS / FRA"
+    ws_sow["A1"].font = F_TITLE; ws_sow["A1"].fill = _fill("2D6A9F"); ws_sow["A1"].alignment = AL_CTR
+    ws_sow.row_dimensions[1].height = 26
+    _sow_mctx = mctx.get("scope_of_work", {})
+    _ef_sow   = mctx.get("_expert_fill_label", "يحتاج استكمال")
+    ws_sow.cell(2, 1, "البند").font = F_HDR; ws_sow.cell(2, 1).fill = _fill(C_BLUE_D); ws_sow.cell(2, 1).alignment = AL_CTR
+    ws_sow.cell(2, 2, "التفاصيل").font = F_HDR; ws_sow.cell(2, 2).fill = _fill(C_BLUE_D); ws_sow.cell(2, 2).alignment = AL_CTR
+    _sow_fields = [
+        ("غرض التقييم",             _sow_mctx.get("valuation_purpose", _ef_sow)),
+        ("المستخدمون المقصودون",    _sow_mctx.get("intended_users", _ef_sow)),
+        ("الاستخدام المقصود",       _sow_mctx.get("intended_use", _ef_sow)),
+        ("أساس القيمة",             _sow_mctx.get("basis_of_value", _ef_sow)),
+        ("حق الملكية محل التقييم", _sow_mctx.get("property_interest_valued", _ef_sow)),
+        ("تاريخ التقييم",           _sow_mctx.get("valuation_date", _ef_sow)),
+        ("تاريخ المعاينة",          _sow_mctx.get("inspection_date", _ef_sow)),
+        ("تاريخ التقرير",           _sow_mctx.get("report_date", _ef_sow)),
+        ("الطرق المستخدمة",         _sow_mctx.get("methods_used_str", _ef_sow)),
+        ("الطرق المستبعدة",         _sow_mctx.get("methods_excluded_str", "لا يوجد")),
+        ("مبرر اختيار الطرق",       _sow_mctx.get("method_selection_rationale", _ef_sow)),
+        ("البيانات غير المتاحة",    _sow_mctx.get("unavailable_data", _ef_sow)),
+        ("قيود نطاق العمل",         " | ".join(_sow_mctx.get("scope_limitations", [_ef_sow]))),
+        ("قيود الاعتماد",           _sow_mctx.get("reliance_restrictions", _ef_sow)),
+    ]
+    for ri, (lbl, val) in enumerate(_sow_fields, 3):
+        ws_sow.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_sow.cell(ri, 1).alignment = AL_RT
+        ws_sow.cell(ri, 2, val).alignment = AL_RT
+    ws_sow.freeze_panes = ws_sow["A3"]
+
+    # ── Sheet: تسوية الإيجار (Rent Consistency) ───────────────────────────────
+    ws_rc = wb.create_sheet("تسوية الإيجار")
+    _rtl(ws_rc)
+    _widths(ws_rc, [36, 50])
+    ws_rc.merge_cells("A1:B1")
+    ws_rc["A1"].value = "تسوية الإيجار المستخدم في طريقة الدخل مع القيمة الإيجارية النهائية"
+    ws_rc["A1"].font = F_TITLE; ws_rc["A1"].fill = _fill("164E63"); ws_rc["A1"].alignment = AL_CTR
+    ws_rc.row_dimensions[1].height = 26
+    _rc_mctx = mctx.get("rent_consistency_check", {})
+    _ef_rc   = mctx.get("_data_gap_label", "غير متاح")
+    ws_rc.cell(2, 1, "البند").font = F_HDR; ws_rc.cell(2, 1).fill = _fill(C_BLUE_D); ws_rc.cell(2, 1).alignment = AL_CTR
+    ws_rc.cell(2, 2, "القيمة / التفسير").font = F_HDR; ws_rc.cell(2, 2).fill = _fill(C_BLUE_D); ws_rc.cell(2, 2).alignment = AL_CTR
+    _rc_fields = [
+        ("إيجار طريقة الدخل (شهري)",         _rc_mctx.get("income_method_monthly_rent", _ef_rc)),
+        ("القيمة الإيجارية النهائية (شهري)",  _rc_mctx.get("final_selected_monthly_rent", _ef_rc)),
+        ("مؤشر مقارنات الإيجار",             _rc_mctx.get("rental_comparison_indication", _ef_rc)),
+        ("الفرق (ج.م/شهر)",                  _rc_mctx.get("rent_difference_value", _ef_rc)),
+        ("نسبة الفرق",                        _rc_mctx.get("rent_difference_percent", _ef_rc)),
+        ("هل الفرق مبرر / متسق؟",            "نعم" if _rc_mctx.get("rent_consistent") else "لا — يلزم توثيق"),
+        ("التفسير",                           _rc_mctx.get("rent_difference_explanation", "") or "—"),
+        ("إجراء مطلوب",                       _rc_mctx.get("rent_consistency_required_action", "") or "—"),
+    ]
+    for ri, (lbl, val) in enumerate(_rc_fields, 3):
+        ws_rc.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_rc.cell(ri, 1).alignment = AL_RT
+        ws_rc.cell(ri, 2, val).alignment = AL_RT
+        if not _rc_mctx.get("rent_consistent") and ri == 6:
+            ws_rc.cell(ri, 2).fill = _fill("FFF3CD")
+    ws_rc.freeze_panes = ws_rc["A3"]
+
+    # ── Sheet: التوصية النهائية (Client Recommendation) ──────────────────────
+    ws_cr = wb.create_sheet("التوصية النهائية")
+    _rtl(ws_cr)
+    _widths(ws_cr, [36, 50])
+    ws_cr.merge_cells("A1:B1")
+    ws_cr["A1"].value = "التوصية النهائية للعميل"
+    ws_cr["A1"].font = F_TITLE; ws_cr["A1"].fill = _fill("4A235A"); ws_cr["A1"].alignment = AL_CTR
+    ws_cr.row_dimensions[1].height = 26
+    _crec_mctx = mctx.get("client_recommendation", {})
+    _ef_crec   = mctx.get("_data_gap_label", "غير متاح")
+    ws_cr.cell(2, 1, "البند").font = F_HDR; ws_cr.cell(2, 1).fill = _fill(C_BLUE_D); ws_cr.cell(2, 1).alignment = AL_CTR
+    ws_cr.cell(2, 2, "التفاصيل").font = F_HDR; ws_cr.cell(2, 2).fill = _fill(C_BLUE_D); ws_cr.cell(2, 2).alignment = AL_CTR
+    _cr_fields = [
+        ("القيمة الموصى بها",              _crec_mctx.get("recommended_value", _ef_crec)),
+        ("نطاق القيمة الموصى بها",         _crec_mctx.get("recommended_value_range", _ef_crec)),
+        ("الاستخدام الموصى به",            _crec_mctx.get("recommended_use", _ef_crec)),
+        ("الخطوات التالية",                " | ".join(_crec_mctx.get("next_steps", [_ef_crec]))),
+        ("المخاطر الرئيسية",              " | ".join(_crec_mctx.get("key_risks", []))),
+        ("مستندات مطلوبة للاعتماد",        " | ".join(_crec_mctx.get("required_documents_before_certification", []))),
+        ("الإجراء الموصى به",             _crec_mctx.get("recommended_action", _ef_crec)),
+        ("قيود استخدام التقرير",           _crec_mctx.get("report_use_limitations", _ef_crec)),
+    ]
+    for ri, (lbl, val) in enumerate(_cr_fields, 3):
+        ws_cr.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_cr.cell(ri, 1).alignment = AL_RT
+        ws_cr.cell(ri, 2, val).alignment = AL_RT
+    ws_cr.freeze_panes = ws_cr["A3"]
+
+    # ── Sheet: الإفصاحات المهنية (Professional Disclosures / Fee) ─────────────
+    ws_fd = wb.create_sheet("الإفصاحات المهنية")
+    _rtl(ws_fd)
+    _widths(ws_fd, [36, 50])
+    ws_fd.merge_cells("A1:B1")
+    ws_fd["A1"].value = "الإفصاحات المهنية وأتعاب التقييم واستقلالية المقيِّم"
+    ws_fd["A1"].font = F_TITLE; ws_fd["A1"].fill = _fill("374151"); ws_fd["A1"].alignment = AL_CTR
+    ws_fd.row_dimensions[1].height = 26
+    _fd_mctx = mctx.get("valuation_fee_disclosure", {})
+    _ef_fd   = mctx.get("_data_gap_label", "غير متاح")
+    ws_fd.cell(2, 1, "البند").font = F_HDR; ws_fd.cell(2, 1).fill = _fill(C_BLUE_D); ws_fd.cell(2, 1).alignment = AL_CTR
+    ws_fd.cell(2, 2, "التفاصيل").font = F_HDR; ws_fd.cell(2, 2).fill = _fill(C_BLUE_D); ws_fd.cell(2, 2).alignment = AL_CTR
+    _fd_fields = [
+        ("تم الإفصاح عن الأتعاب؟",        "نعم" if _fd_mctx.get("fee_disclosed") else "لا"),
+        ("مبلغ الأتعاب",                   str(_fd_mctx.get("fee_amount", _ef_fd))),
+        ("أساس الأتعاب",                   _fd_mctx.get("fee_basis", _ef_fd)),
+        ("الأتعاب مشروطة بالقيمة؟",       "نعم — تحذير أخلاقي" if _fd_mctx.get("fee_contingent_on_value") else "لا"),
+        ("بيان استقلالية المقيِّم",        _fd_mctx.get("fee_independence_statement", _ef_fd)),
+        ("حالة الإفصاح الأخلاقي",         _fd_mctx.get("ethics_disclosure_status", _ef_fd)),
+        ("إقرار الاستقلالية",              _fd_mctx.get("independence_declaration", _ef_fd)),
+    ]
+    for ri, (lbl, val) in enumerate(_fd_fields, 3):
+        ws_fd.cell(ri, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_fd.cell(ri, 1).alignment = AL_RT
+        ws_fd.cell(ri, 2, val).alignment = AL_RT
+    if _fd_mctx.get("fee_contingent_on_value"):
+        ws_fd.cell(5, 2).fill = _fill("FFCCCC")
+    ws_fd.freeze_panes = ws_fd["A3"]
+
+    # ── Sheet: تحليل_SWOT (SWOT Analysis) ──────────────────────────────────────
+    ws_swot = wb.create_sheet("تحليل_SWOT")
+    _rtl(ws_swot)
+    _widths(ws_swot, [8, 20, 38, 36, 28, 10, 10, 10, 16, 38, 24])
+    ws_swot.merge_cells("A1:K1")
+    ws_swot["A1"].value = "التحليل الاستراتيجي الرباعي (SWOT) للعقار"
+    ws_swot["A1"].font = F_TITLE; ws_swot["A1"].fill = _fill("1a3a5c"); ws_swot["A1"].alignment = AL_CTR
+    ws_swot.row_dimensions[1].height = 26
+    _swot_mctx = mctx.get("swot_analysis", {})
+    _ef_swot   = mctx.get("_data_gap_label", "غير متاح")
+    # QA advisory banner
+    if _swot_mctx.get("source_quality_advisory"):
+        ws_swot.merge_cells("A2:K2")
+        ws_swot["A2"].value = "Advisory: بيانات محاكاة QA — تحليل استرشادي فقط"
+        ws_swot["A2"].font = Font(bold=True, name="Arial", size=9, color="92400E")
+        ws_swot["A2"].fill = _fill("FEF3C7"); ws_swot["A2"].alignment = AL_CTR
+        ws_swot.row_dimensions[2].height = 16
+        _swot_hdr_row = 3
+    else:
+        _swot_hdr_row = 2
+    _swot_cols = [
+        "الفئة", "المفتاح", "العنوان", "الوصف", "الدليل/الأساس",
+        "التأثير", "الاحتمال", "الأولوية", "اتجاه الأثر", "الإجراء", "حالة المصدر",
+    ]
+    for ci, ch in enumerate(_swot_cols, 1):
+        c = ws_swot.cell(_swot_hdr_row, ci, ch)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _all_swot_items = (
+        _swot_mctx.get("strengths", []) +
+        _swot_mctx.get("weaknesses", []) +
+        _swot_mctx.get("opportunities", []) +
+        _swot_mctx.get("threats", [])
+    )
+    _swot_row_colors = {
+        "strength": "DBEAFE", "weakness": "FED7AA",
+        "opportunity": "BBF7D0", "threat": "FECDD3",
+    }
+    for ri, item in enumerate(_all_swot_items, _swot_hdr_row + 1):
+        ws_swot.row_dimensions[ri].height = 20
+        _cat = item.get("category", "")
+        _bg  = _swot_row_colors.get(_cat, "FFFFFF")
+        _imp = item.get("impact_score", 1)
+        _prb = item.get("probability_score", 1)
+        # priority cell uses formula
+        ws_swot.cell(ri, 1, _cat).fill = _fill(_bg); ws_swot.cell(ri, 1).alignment = AL_CTR
+        ws_swot.cell(ri, 2, item.get("item_key", "")).alignment = AL_RT
+        ws_swot.cell(ri, 3, item.get("title_ar", "")).alignment = AL_RT
+        ws_swot.cell(ri, 4, item.get("description_ar", "")).alignment = AL_RT
+        ws_swot.cell(ri, 5, item.get("evidence_basis", "")).alignment = AL_RT
+        ws_swot.cell(ri, 6, _imp).alignment = AL_CTR
+        ws_swot.cell(ri, 7, _prb).alignment = AL_CTR
+        ws_swot.cell(ri, 8, f"=F{ri}*G{ri}").alignment = AL_CTR  # formula
+        ws_swot.cell(ri, 8).font = Font(bold=True, name="Arial", size=9)
+        ws_swot.cell(ri, 9, item.get("value_impact_direction", "")).alignment = AL_CTR
+        ws_swot.cell(ri, 10, item.get("expert_action", "")).alignment = AL_RT
+        ws_swot.cell(ri, 11, item.get("source_quality_status", "")).alignment = AL_RT
+    # Conclusion row
+    _swot_conc_row = _swot_hdr_row + len(_all_swot_items) + 2
+    ws_swot.merge_cells(f"A{_swot_conc_row}:K{_swot_conc_row}")
+    ws_swot[f"A{_swot_conc_row}"].value = _swot_mctx.get("swot_conclusion", _ef_swot)
+    ws_swot[f"A{_swot_conc_row}"].font = Font(italic=True, name="Arial", size=8, color="374151")
+    ws_swot[f"A{_swot_conc_row}"].alignment = AL_RT
+    ws_swot.freeze_panes = ws_swot[f"A{_swot_hdr_row + 1}"]
+
+    # ── Sheet: مصفوفة_تقييم_المخاطر (Risk Evaluation Matrix) ─────────────────
+    ws_rm = wb.create_sheet("مصفوفة_تقييم_المخاطر")
+    _rtl(ws_rm)
+    _widths(ws_rm, [32, 14, 10, 10, 10, 16, 28, 36, 36])
+    ws_rm.merge_cells("A1:I1")
+    ws_rm["A1"].value = "مصفوفة تقييم المخاطر والفرص — SWOT"
+    ws_rm["A1"].font = F_TITLE; ws_rm["A1"].fill = _fill("1a3a5c"); ws_rm["A1"].alignment = AL_CTR
+    ws_rm.row_dimensions[1].height = 26
+    _rm_hdr = ["عامل الخطر/الفرصة", "النوع", "التأثير", "الاحتمال", "الأولوية",
+               "مستوى الأولوية", "الأثر على نطاق عدم اليقين", "إجراء التخفيف أو الاستفادة", "حالة المصدر"]
+    for ci, ch in enumerate(_rm_hdr, 1):
+        c = ws_rm.cell(2, ci, ch)
+        c.font = F_HDR; c.fill = _fill(C_BLUE_D); c.alignment = AL_CTR
+    _rm_items = (
+        [(i, "ضعف") for i in _swot_mctx.get("weaknesses", [])] +
+        [(i, "تهديد") for i in _swot_mctx.get("threats", [])] +
+        [(i, "قوة") for i in _swot_mctx.get("strengths", [])] +
+        [(i, "فرصة") for i in _swot_mctx.get("opportunities", [])]
+    )
+    for ri, (item, nw_type) in enumerate(_rm_items, 3):
+        ws_rm.row_dimensions[ri].height = 20
+        _imp_rm = item.get("impact_score", 1)
+        _prb_rm = item.get("probability_score", 1)
+        ws_rm.cell(ri, 1, item.get("title_ar", "")).alignment = AL_RT
+        ws_rm.cell(ri, 2, nw_type).alignment = AL_CTR
+        ws_rm.cell(ri, 3, _imp_rm).alignment = AL_CTR
+        ws_rm.cell(ri, 4, _prb_rm).alignment = AL_CTR
+        ws_rm.cell(ri, 5, f"=C{ri}*D{ri}").alignment = AL_CTR  # formula
+        ws_rm.cell(ri, 5).font = Font(bold=True, name="Arial", size=9)
+        # Priority level formula: 1-5=منخفض, 6-12=متوسط, 13-25=مرتفع
+        ws_rm.cell(ri, 6, f'=IF(E{ri}<=5,"منخفض",IF(E{ri}<=12,"متوسط","مرتفع"))').alignment = AL_CTR
+        ws_rm.cell(ri, 7, item.get("value_impact_note", "")).alignment = AL_RT
+        ws_rm.cell(ri, 8, item.get("expert_action", "")).alignment = AL_RT
+        ws_rm.cell(ri, 9, item.get("source_quality_status", "")).alignment = AL_RT
+        # Color by type
+        _rm_bg = {"ضعف": "FED7AA", "تهديد": "FECDD3", "قوة": "DBEAFE", "فرصة": "BBF7D0"}.get(nw_type, "FFFFFF")
+        ws_rm.cell(ri, 1).fill = _fill(_rm_bg)
+    ws_rm.freeze_panes = ws_rm["A3"]
+
+    # ── Enhance: نطاق الثقة وعدم اليقين — add SWOT upper/lower drivers ────────
+    _unc_linkage = mctx.get("swot_uncertainty_linkage", {})
+    if "نطاق الثقة وعدم اليقين" in wb.sheetnames and _unc_linkage:
+        ws_unc = wb["نطاق الثقة وعدم اليقين"]
+        # Find last used row
+        _unc_last = ws_unc.max_row + 2
+        ws_unc.merge_cells(f"A{_unc_last}:B{_unc_last}")
+        ws_unc[f"A{_unc_last}"].value = "محركات الحد الأعلى (SWOT — الفرص)"
+        ws_unc[f"A{_unc_last}"].font = Font(bold=True, name="Arial", size=9)
+        ws_unc[f"A{_unc_last}"].fill = _fill("BBF7D0")
+        _unc_last += 1
+        for drv in _unc_linkage.get("upper_bound_drivers", []):
+            ws_unc.cell(_unc_last, 1, drv).alignment = AL_RT
+            _unc_last += 1
+        ws_unc.merge_cells(f"A{_unc_last}:B{_unc_last}")
+        ws_unc[f"A{_unc_last}"].value = "محركات الحد الأدنى (SWOT — التهديدات)"
+        ws_unc[f"A{_unc_last}"].font = Font(bold=True, name="Arial", size=9)
+        ws_unc[f"A{_unc_last}"].fill = _fill("FECDD3")
+        _unc_last += 1
+        for drv in _unc_linkage.get("lower_bound_drivers", []):
+            ws_unc.cell(_unc_last, 1, drv).alignment = AL_RT
+            _unc_last += 1
+        _unc_expl = _unc_linkage.get("uncertainty_explanation", "")
+        if _unc_expl:
+            ws_unc.merge_cells(f"A{_unc_last}:B{_unc_last}")
+            ws_unc[f"A{_unc_last}"].value = _unc_expl
+            ws_unc[f"A{_unc_last}"].font = Font(italic=True, name="Arial", size=8, color="374151")
+            ws_unc[f"A{_unc_last}"].alignment = AL_RT
+
+    # ── Enhance: التوصية النهائية — add SWOT-linked recommendation ─────────────
+    _rec_linkage = mctx.get("swot_recommendation_linkage", {})
+    if "التوصية النهائية" in wb.sheetnames and _rec_linkage:
+        ws_cr2 = wb["التوصية النهائية"]
+        _cr2_last = ws_cr2.max_row + 2
+        ws_cr2.merge_cells(f"A{_cr2_last}:B{_cr2_last}")
+        ws_cr2[f"A{_cr2_last}"].value = "توصية SWOT المرتبطة"
+        ws_cr2[f"A{_cr2_last}"].font = Font(bold=True, name="Arial", size=9)
+        ws_cr2[f"A{_cr2_last}"].fill = _fill("EFF6FF")
+        _cr2_last += 1
+        _swot_rec_txt = _rec_linkage.get("swot_based_recommendation", "")
+        if _swot_rec_txt:
+            ws_cr2.merge_cells(f"A{_cr2_last}:B{_cr2_last}")
+            ws_cr2[f"A{_cr2_last}"].value = _swot_rec_txt
+            ws_cr2[f"A{_cr2_last}"].font = Font(italic=True, name="Arial", size=8)
+            ws_cr2[f"A{_cr2_last}"].alignment = AL_RT
+            _cr2_last += 1
+        _swot_conds = _rec_linkage.get("recommendation_conditioned_by", [])
+        if _swot_conds:
+            ws_cr2.merge_cells(f"A{_cr2_last}:B{_cr2_last}")
+            ws_cr2[f"A{_cr2_last}"].value = "التوصية مشروطة بـ: " + " | ".join(_swot_conds)
+            ws_cr2[f"A{_cr2_last}"].font = Font(bold=True, name="Arial", size=8, color="B43200")
+            ws_cr2[f"A{_cr2_last}"].alignment = AL_RT
+
+    # ── Sheet: حوكمة بيانات QA ────────────────────────────────────────────────
+    _qag = mctx.get("valuation_qa_simulation_governance", {})
+    ws_qag = wb.create_sheet("حوكمة بيانات QA")
+    ws_qag.sheet_view.rightToLeft = True
+    ws_qag.column_dimensions["A"].width = 28
+    ws_qag.column_dimensions["B"].width = 22
+    ws_qag.column_dimensions["C"].width = 22
+    ws_qag.column_dimensions["D"].width = 10
+    ws_qag.column_dimensions["E"].width = 12
+    ws_qag.column_dimensions["F"].width = 12
+    ws_qag.column_dimensions["G"].width = 26
+    ws_qag.column_dimensions["H"].width = 22
+    ws_qag.merge_cells("A1:H1")
+    ws_qag["A1"].value = "حوكمة بيانات QA — حالة المحاكاة والاعتماد"
+    ws_qag["A1"].font = F_TITLE; ws_qag["A1"].fill = _fill("7C3AED"); ws_qag["A1"].alignment = AL_CTR
+    ws_qag.row_dimensions[1].height = 26
+    _qag_hdrs = ["نوع البيان", "القيمة المستخدمة", "مصدر القيمة", "هل هي QA؟",
+                 "جاهزة للإنتاج؟", "هل تمنع الاعتماد؟", "الإجراء المطلوب", "ملاحظات الخبير"]
+    for ci, h in enumerate(_qag_hdrs, 1):
+        c = ws_qag.cell(row=2, column=ci, value=h)
+        c.font = F_HDR; c.fill = _fill("EDE9FE"); c.alignment = AL_CTR
+    ws_qag.row_dimensions[2].height = 18
+    _qag_rows = [
+        ("محاكاة QA نشطة", str(_qag.get("qa_simulation_active", "")),
+         "سجل المصادر الداخلي", "نعم" if _qag.get("qa_simulation_active") else "لا",
+         "لا" if _qag.get("qa_simulation_active") else "نعم",
+         "نعم" if _qag.get("qa_simulation_active") else "لا",
+         "استبدال جميع مصادر QA ببيانات إنتاجية", ""),
+        ("عدد مصادر QA", str(_qag.get("qa_simulation_sources_count", 0)),
+         "سجل المصادر", "نعم", "لا", "نعم",
+         "إدخال مصادر سوقية حقيقية", ""),
+        ("مصادر جاهزة للإنتاج", str(_qag.get("production_ready_sources_count", 0)),
+         "سجل المصادر", "لا", "نعم", "لا",
+         "الحفاظ على المصادر الجاهزة وتوسيعها", ""),
+        ("الاعتماد الرسمي مسموح؟", str(_qag.get("certified_use_allowed", False)),
+         "نظام الحوكمة", "—", "—", "—",
+         _qag.get("certified_use_block_reason", "")[:60], ""),
+    ]
+    for _qri, _qrow in enumerate(_qag_rows, 3):
+        for _qci, _qval in enumerate(_qrow, 1):
+            _qc = ws_qag.cell(row=_qri, column=_qci, value=_qval)
+            _qc.alignment = AL_RT
+            if _qci in (4, 5, 6):
+                _qc.alignment = AL_CTR
+        _fill_col = "FEE2E2" if _qrow[5] == "نعم" else "D1FAE5"
+        ws_qag.cell(row=_qri, column=6).fill = _fill(_fill_col)
+    _qri_cur = len(_qag_rows) + 3
+    if _qag.get("warning_text"):
+        ws_qag.merge_cells(f"A{_qri_cur}:H{_qri_cur}")
+        ws_qag[f"A{_qri_cur}"].value = _qag["warning_text"]
+        ws_qag[f"A{_qri_cur}"].font = Font(bold=True, name="Arial", size=8, color="7C3AED")
+        ws_qag[f"A{_qri_cur}"].fill = _fill("F5F3FF")
+        ws_qag[f"A{_qri_cur}"].alignment = AL_RT
+
+    # ── Sheet: قائمة المستندات ومخاطر الاعتماد ───────────────────────────────
+    _docr = mctx.get("valuation_document_readiness", {})
+    ws_doc = wb.create_sheet("قائمة المستندات ومخاطر الاعتماد")
+    ws_doc.sheet_view.rightToLeft = True
+    ws_doc.column_dimensions["A"].width = 38
+    ws_doc.column_dimensions["B"].width = 10
+    ws_doc.column_dimensions["C"].width = 10
+    ws_doc.column_dimensions["D"].width = 14
+    ws_doc.column_dimensions["E"].width = 14
+    ws_doc.column_dimensions["F"].width = 28
+    ws_doc.column_dimensions["G"].width = 22
+    ws_doc.merge_cells("A1:G1")
+    ws_doc["A1"].value = "قائمة المستندات ومخاطر الاعتماد"
+    ws_doc["A1"].font = F_TITLE; ws_doc["A1"].fill = _fill("DC2626"); ws_doc["A1"].alignment = AL_CTR
+    ws_doc.row_dimensions[1].height = 26
+    _doc_hdrs = ["المستند", "إلزامي؟", "متوفر؟", "حالة المراجعة",
+                 "هل يمنع الاعتماد؟", "الإجراء المطلوب", "ملاحظات"]
+    for ci, h in enumerate(_doc_hdrs, 1):
+        c = ws_doc.cell(row=2, column=ci, value=h)
+        c.font = F_HDR; c.fill = _fill("FEE2E2"); c.alignment = AL_CTR
+    ws_doc.row_dimensions[2].height = 18
+    _doc_ri = 3
+    for _mdoc in _docr.get("missing_mandatory_documents", []):
+        _dc = ws_doc.cell(row=_doc_ri, column=1, value=_mdoc)
+        _dc.alignment = AL_RT
+        ws_doc.cell(row=_doc_ri, column=2, value="نعم").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=3, value="لا").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=4, value="مفقود").alignment = AL_CTR
+        _blk = ws_doc.cell(row=_doc_ri, column=5, value="نعم")
+        _blk.alignment = AL_CTR; _blk.fill = _fill("FEE2E2")
+        ws_doc.cell(row=_doc_ri, column=6, value=f"إرفاق: {_mdoc[:40]}").alignment = AL_RT
+        _doc_ri += 1
+    for _sdoc in _docr.get("missing_supporting_documents", []):
+        ws_doc.cell(row=_doc_ri, column=1, value=_sdoc).alignment = AL_RT
+        ws_doc.cell(row=_doc_ri, column=2, value="لا").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=3, value="لا").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=4, value="مفقود").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=5, value="محتمل").alignment = AL_CTR
+        ws_doc.cell(row=_doc_ri, column=6, value="إرفاق عند التوفر").alignment = AL_RT
+        _doc_ri += 1
+    ws_doc.merge_cells(f"A{_doc_ri}:G{_doc_ri}")
+    _risk_val = _docr.get("risk_warning_text", "")
+    ws_doc[f"A{_doc_ri}"].value = _risk_val
+    ws_doc[f"A{_doc_ri}"].font = Font(bold=True, name="Arial", size=8, color="DC2626")
+    ws_doc[f"A{_doc_ri}"].fill = _fill("FEF2F2")
+    ws_doc[f"A{_doc_ri}"].alignment = AL_RT
+
+    # ── Sheet: خارطة طريق الاعتماد ────────────────────────────────────────────
+    _road = mctx.get("valuation_certification_roadmap", {})
+    ws_road = wb.create_sheet("خارطة طريق الاعتماد")
+    ws_road.sheet_view.rightToLeft = True
+    ws_road.column_dimensions["A"].width = 8
+    ws_road.column_dimensions["B"].width = 42
+    ws_road.column_dimensions["C"].width = 26
+    ws_road.column_dimensions["D"].width = 12
+    ws_road.merge_cells("A1:D1")
+    ws_road["A1"].value = "خارطة طريق الاعتماد — من مسودة QA إلى تقرير معتمد"
+    ws_road["A1"].font = F_TITLE; ws_road["A1"].fill = _fill("065F46"); ws_road["A1"].alignment = AL_CTR
+    ws_road.row_dimensions[1].height = 26
+    _road_hdrs = ["الخطوة", "العنوان", "الحالة", "مكتمل؟"]
+    for ci, h in enumerate(_road_hdrs, 1):
+        c = ws_road.cell(row=2, column=ci, value=h)
+        c.font = F_HDR; c.fill = _fill("D1FAE5"); c.alignment = AL_CTR
+    ws_road.row_dimensions[2].height = 18
+    for _rri, _rstep in enumerate(_road.get("roadmap_steps", []), 3):
+        ws_road.cell(row=_rri, column=1, value=_rstep.get("step")).alignment = AL_CTR
+        ws_road.cell(row=_rri, column=2, value=_rstep.get("title")).alignment = AL_RT
+        ws_road.cell(row=_rri, column=3, value=_rstep.get("status")).alignment = AL_RT
+        _comp_cell = ws_road.cell(row=_rri, column=4,
+                                  value="نعم" if _rstep.get("completed") else "لا")
+        _comp_cell.alignment = AL_CTR
+        _comp_cell.fill = _fill("D1FAE5") if _rstep.get("completed") else _fill("FEE2E2")
+    _rri_cur = len(_road.get("roadmap_steps", [])) + 3
+    ws_road.merge_cells(f"A{_rri_cur}:D{_rri_cur}")
+    ws_road[f"A{_rri_cur}"].value = _road.get("roadmap_warning", "")
+    ws_road[f"A{_rri_cur}"].font = Font(italic=True, name="Arial", size=8, color="065F46")
+    ws_road[f"A{_rri_cur}"].alignment = AL_RT
+
+    # ── Sheet: حوكمة المعاملات ────────────────────────────────────────────────
+    _pgov = mctx.get("valuation_parameter_governance", {})
+    ws_par = wb.create_sheet("حوكمة المعاملات")
+    ws_par.sheet_view.rightToLeft = True
+    ws_par.column_dimensions["A"].width = 24
+    ws_par.column_dimensions["B"].width = 18
+    ws_par.column_dimensions["C"].width = 18
+    ws_par.column_dimensions["D"].width = 14
+    ws_par.column_dimensions["E"].width = 18
+    ws_par.column_dimensions["F"].width = 14
+    ws_par.column_dimensions["G"].width = 14
+    ws_par.column_dimensions["H"].width = 30
+    ws_par.merge_cells("A1:H1")
+    ws_par["A1"].value = "حوكمة المعاملات والمراجع المستخدمة"
+    ws_par["A1"].font = F_TITLE; ws_par["A1"].fill = _fill("B45309"); ws_par["A1"].alignment = AL_CTR
+    ws_par.row_dimensions[1].height = 26
+    _par_hdrs = ["المعامل", "القيمة المستخدمة", "نوع المعامل", "المرجع",
+                 "تاريخ المرجع", "حالة التحقق", "مسموح للاعتماد؟", "الإجراء المطلوب"]
+    for ci, h in enumerate(_par_hdrs, 1):
+        c = ws_par.cell(row=2, column=ci, value=h)
+        c.font = F_HDR; c.fill = _fill("FEF3C7"); c.alignment = AL_CTR
+    ws_par.row_dimensions[2].height = 18
+    for _pri, _param in enumerate(_pgov.get("parameters", []), 3):
+        ws_par.cell(row=_pri, column=1, value=_param.get("parameter_name", "")).alignment = AL_RT
+        ws_par.cell(row=_pri, column=2, value=str(_param.get("value_used", ""))).alignment = AL_CTR
+        ws_par.cell(row=_pri, column=3, value=_param.get("parameter_type", "")).alignment = AL_RT
+        ws_par.cell(row=_pri, column=4, value=_param.get("reference_name") or "غير متاح").alignment = AL_RT
+        ws_par.cell(row=_pri, column=5, value=str(_param.get("reference_date") or "—")).alignment = AL_CTR
+        ws_par.cell(row=_pri, column=6, value="غير محقق").alignment = AL_CTR
+        _ca_cell = ws_par.cell(row=_pri, column=7,
+                               value="نعم" if _param.get("certified_use_allowed") else "لا")
+        _ca_cell.alignment = AL_CTR
+        _ca_cell.fill = _fill("D1FAE5") if _param.get("certified_use_allowed") else _fill("FEE2E2")
+        ws_par.cell(row=_pri, column=8, value=_param.get("required_action", "")).alignment = AL_RT
+    _pri_cur = len(_pgov.get("parameters", [])) + 3
+    ws_par.merge_cells(f"A{_pri_cur}:H{_pri_cur}")
+    ws_par[f"A{_pri_cur}"].value = _pgov.get("warning_text", "")
+    ws_par[f"A{_pri_cur}"].font = Font(italic=True, bold=True, name="Arial", size=8, color="B45309")
+    ws_par[f"A{_pri_cur}"].alignment = AL_RT
+
+    # ── Sheet: حالة الاعتماد والتوصية ────────────────────────────────────────
+    _cstat = mctx.get("valuation_certification_status", {})
+    ws_cst = wb.create_sheet("حالة الاعتماد والتوصية")
+    ws_cst.sheet_view.rightToLeft = True
+    ws_cst.column_dimensions["A"].width = 30
+    ws_cst.column_dimensions["B"].width = 50
+    ws_cst.merge_cells("A1:B1")
+    ws_cst["A1"].value = "حالة الاعتماد والتوصية التنفيذية"
+    ws_cst["A1"].font = F_TITLE
+    _cst_color = "16A34A" if _cstat.get("certification_ready") else "DC2626"
+    ws_cst["A1"].fill = _fill(_cst_color); ws_cst["A1"].alignment = AL_CTR
+    ws_cst.row_dimensions[1].height = 26
+    _cst_rows = [
+        ("حالة التقرير",        _cstat.get("report_status", "")),
+        ("جاهز للاعتماد؟",      "نعم" if _cstat.get("certification_ready") else "لا"),
+        ("مستوى مخاطر الاعتماد", _cstat.get("certification_risk_level", "")),
+        ("ملخص الجاهزية",       _cstat.get("readiness_summary", "")),
+        ("الإجراء التالي المطلوب", _cstat.get("recommended_next_action", "")),
+        ("التوصية التنفيذية",    _cstat.get("executive_recommendation", "")),
+    ]
+    for _cri, (_ck, _cv) in enumerate(_cst_rows, 2):
+        _kc = ws_cst.cell(row=_cri, column=1, value=_ck)
+        _kc.font = Font(bold=True, name="Arial", size=9); _kc.fill = _fill("F3F4F6")
+        _kc.alignment = AL_RT
+        _vc = ws_cst.cell(row=_cri, column=2, value=_cv)
+        _vc.alignment = AL_RT; _vc.font = Font(name="Arial", size=9)
+        if _ck == "جاهز للاعتماد؟":
+            _vc.fill = _fill("D1FAE5") if _cv == "نعم" else _fill("FEE2E2")
+    _cst_bloc_start = len(_cst_rows) + 2 + 1
+    ws_cst.merge_cells(f"A{_cst_bloc_start}:B{_cst_bloc_start}")
+    ws_cst[f"A{_cst_bloc_start}"].value = "العوائق الحالية"
+    ws_cst[f"A{_cst_bloc_start}"].font = Font(bold=True, name="Arial", size=9)
+    ws_cst[f"A{_cst_bloc_start}"].fill = _fill("FEE2E2")
+    ws_cst[f"A{_cst_bloc_start}"].alignment = AL_CTR
+    for _bri, _bloc in enumerate(_cstat.get("certification_blockers", []), _cst_bloc_start + 1):
+        ws_cst.merge_cells(f"A{_bri}:B{_bri}")
+        ws_cst[f"A{_bri}"].value = f"• {_bloc}"
+        ws_cst[f"A{_bri}"].font = Font(name="Arial", size=9, color="DC2626")
+        ws_cst[f"A{_bri}"].alignment = AL_RT
+
+    # ── Sheet: اختبار اتساق الطرق ────────────────────────────────────────────
+    _mcd = mctx.get("method_consistency_diagnostics", {})
+    ws_mcd = wb.create_sheet("اختبار اتساق الطرق")
+    ws_mcd.sheet_view.rightToLeft = True
+    _widths(ws_mcd, [30, 20, 22, 22, 16, 28, 28])
+    ws_mcd.merge_cells("A1:G1")
+    ws_mcd["A1"].value = "اختبار اتساق طرق التقييم"
+    ws_mcd["A1"].font = F_TITLE; ws_mcd["A1"].alignment = AL_CTR
+    _cv_clr = "DC2626" if _mcd.get("cv_color_semantic") == "red" else ("B45309" if _mcd.get("cv_color_semantic") == "amber" else "16A34A")
+    ws_mcd["A1"].fill = _fill(_cv_clr)
+    ws_mcd.row_dimensions[1].height = 26
+    _mcd_hdr_cols = ["الطريقة", "القيمة (ج.م)", "الانحراف عن المتوسط", "الانحراف عن المرجح", "متباين؟", "السبب المحتمل", "إجراء مطلوب"]
+    for ci_, hl in enumerate(_mcd_hdr_cols, 1):
+        c_ = ws_mcd.cell(2, ci_, hl); c_.font = F_HDR; c_.fill = _fill(C_BLUE_D); c_.alignment = AL_CTR
+    for ri_, row in enumerate(_mcd.get("method_values", []), 3):
+        ws_mcd.cell(ri_, 1, row.get("method", "")).alignment = AL_RT
+        ws_mcd.cell(ri_, 2, row.get("value_formatted", "")).alignment = AL_CTR
+        ws_mcd.cell(ri_, 3, row.get("dev_from_mean", "")).alignment = AL_CTR
+        ws_mcd.cell(ri_, 4, row.get("dev_from_weighted", "")).alignment = AL_CTR
+        _dv_cell = ws_mcd.cell(ri_, 5, "نعم" if row.get("divergent") else "لا")
+        _dv_cell.fill = _fill("FEE2E2") if row.get("divergent") else _fill("D1FAE5")
+        _dv_cell.alignment = AL_CTR
+        ws_mcd.cell(ri_, 6, row.get("suspected_cause", "")).alignment = AL_RT
+        ws_mcd.cell(ri_, 7, "مراجعة ودعم المصدر" if row.get("divergent") else "—").alignment = AL_RT
+    _mcd_sum_row = len(_mcd.get("method_values", [])) + 4
+    ws_mcd.merge_cells(f"A{_mcd_sum_row}:G{_mcd_sum_row}")
+    ws_mcd[f"A{_mcd_sum_row}"].value = (
+        f"متوسط: {_mcd.get('mean_value','—')} | موزون: {_mcd.get('weighted_value','—')} | "
+        f"CV: {_mcd.get('coefficient_of_variation','—')} | مستوى خطر: {_mcd.get('cv_risk_level','—')}"
+    )
+    ws_mcd[f"A{_mcd_sum_row}"].font = Font(bold=True, italic=True, name="Arial", size=8)
+    ws_mcd[f"A{_mcd_sum_row}"].fill = _fill("FEF9C3" if _mcd.get("cv_color_semantic") == "amber" else ("FEE2E2" if _mcd.get("cv_color_semantic") == "red" else "D1FAE5"))
+    ws_mcd[f"A{_mcd_sum_row}"].alignment = AL_RT
+    if _mcd.get("consistency_warning"):
+        _warn_row = _mcd_sum_row + 1
+        ws_mcd.merge_cells(f"A{_warn_row}:G{_warn_row}")
+        ws_mcd[f"A{_warn_row}"].value = _mcd.get("consistency_warning", "")
+        ws_mcd[f"A{_warn_row}"].font = Font(bold=True, name="Arial", size=9, color="DC2626")
+        ws_mcd[f"A{_warn_row}"].alignment = AL_RT
+    ws_mcd.freeze_panes = ws_mcd["A3"]
+
+    # ── Sheet: خريطة مخاطر التقييم ───────────────────────────────────────────
+    _rh = mctx.get("valuation_risk_heatmap", {})
+    ws_rh = wb.create_sheet("خريطة مخاطر التقييم")
+    ws_rh.sheet_view.rightToLeft = True
+    _widths(ws_rh, [28, 12, 12, 14, 36, 40])
+    ws_rh.merge_cells("A1:F1")
+    ws_rh["A1"].value = f"خريطة مخاطر التقييم — إجمالي: {_rh.get('overall_risk_level','—')} ({_rh.get('overall_risk_score','—')}/5)"
+    ws_rh["A1"].font = F_TITLE; ws_rh["A1"].alignment = AL_CTR
+    _rh_overall_clr = "DC2626" if _rh.get("overall_risk_level") == "مرتفع" else ("B45309" if _rh.get("overall_risk_level") == "متوسط" else "16A34A")
+    ws_rh["A1"].fill = _fill(_rh_overall_clr)
+    ws_rh.row_dimensions[1].height = 26
+    _rh_hdrs = ["البُعد", "الدرجة", "المستوى", "اللون", "المحرك الرئيسي", "إجراء التخفيف"]
+    for ci_, hl in enumerate(_rh_hdrs, 1):
+        c_ = ws_rh.cell(2, ci_, hl); c_.font = F_HDR; c_.fill = _fill(C_BLUE_D); c_.alignment = AL_CTR
+    for ri_, dim in enumerate(_rh.get("dimensions", []), 3):
+        ws_rh.cell(ri_, 1, dim.get("label_ar", "")).alignment = AL_RT
+        _sc_cell = ws_rh.cell(ri_, 2, dim.get("risk_score", ""))
+        _sc_cell.alignment = AL_CTR
+        _clr_map = {"red": "FEE2E2", "amber": "FEF9C3", "green": "D1FAE5"}
+        _sc_cell.fill = _fill(_clr_map.get(dim.get("color_semantic", ""), "FFFFFF"))
+        ws_rh.cell(ri_, 3, dim.get("risk_level", "")).alignment = AL_CTR
+        ws_rh.cell(ri_, 4, dim.get("color_semantic", "")).alignment = AL_CTR
+        ws_rh.cell(ri_, 5, dim.get("key_driver", "")).alignment = AL_RT
+        ws_rh.cell(ri_, 6, dim.get("mitigation_action", "")).alignment = AL_RT
+    _rh_note_row = len(_rh.get("dimensions", [])) + 4
+    ws_rh.merge_cells(f"A{_rh_note_row}:F{_rh_note_row}")
+    ws_rh[f"A{_rh_note_row}"].value = _rh.get("heatmap_summary", "")
+    ws_rh[f"A{_rh_note_row}"].font = Font(bold=True, italic=True, name="Arial", size=9)
+    ws_rh[f"A{_rh_note_row}"].alignment = AL_RT
+    ws_rh.freeze_panes = ws_rh["A3"]
+
+    # ── Sheet: جدول الاعتماد الزمني ──────────────────────────────────────────
+    _ctl = mctx.get("certification_timeline", {})
+    ws_ctl = wb.create_sheet("جدول الاعتماد الزمني")
+    ws_ctl.sheet_view.rightToLeft = True
+    _widths(ws_ctl, [8, 40, 18, 16])
+    ws_ctl.merge_cells("A1:D1")
+    ws_ctl["A1"].value = f"الجدول الزمني المتوقع للاعتماد — الإجمالي: {_ctl.get('total_estimated_days','—')} يوم"
+    ws_ctl["A1"].font = F_TITLE; ws_ctl["A1"].fill = _fill("1E3A5F"); ws_ctl["A1"].alignment = AL_CTR
+    ws_ctl.row_dimensions[1].height = 26
+    _ctl_hdrs = ["الخطوة", "المهمة", "المدة التقديرية (يوم)", "الحالة"]
+    for ci_, hl in enumerate(_ctl_hdrs, 1):
+        c_ = ws_ctl.cell(2, ci_, hl); c_.font = F_HDR; c_.fill = _fill(C_BLUE_D); c_.alignment = AL_CTR
+    for ri_, stp in enumerate(_ctl.get("steps", []), 3):
+        ws_ctl.cell(ri_, 1, stp.get("step", "")).alignment = AL_CTR
+        ws_ctl.cell(ri_, 2, stp.get("title", "")).alignment = AL_RT
+        ws_ctl.cell(ri_, 3, stp.get("estimated_days", "")).alignment = AL_CTR
+        _st_cell = ws_ctl.cell(ri_, 4, "مكتمل" if stp.get("status") == "completed" else "معلق")
+        _st_cell.fill = _fill("D1FAE5") if stp.get("status") == "completed" else _fill("FEF9C3")
+        _st_cell.alignment = AL_CTR
+    _ctl_note_row = len(_ctl.get("steps", [])) + 4
+    ws_ctl.merge_cells(f"A{_ctl_note_row}:D{_ctl_note_row}")
+    ws_ctl[f"A{_ctl_note_row}"].value = _ctl.get("timeline_notes", "")
+    ws_ctl[f"A{_ctl_note_row}"].font = Font(italic=True, name="Arial", size=8, color="6B7280")
+    ws_ctl[f"A{_ctl_note_row}"].alignment = AL_RT
+    ws_ctl.freeze_panes = ws_ctl["A3"]
+
+    # ── Sheet: نقطة تعادل الإيجار ─────────────────────────────────────────────
+    _bea = mctx.get("break_even_rent_analysis", {})
+    ws_bea = wb.create_sheet("نقطة تعادل الإيجار")
+    ws_bea.sheet_view.rightToLeft = True
+    _widths(ws_bea, [40, 40])
+    ws_bea.merge_cells("A1:B1")
+    ws_bea["A1"].value = "تحليل نقطة تعادل الإيجار"
+    ws_bea["A1"].font = F_TITLE; ws_bea["A1"].fill = _fill("0F4C75"); ws_bea["A1"].alignment = AL_CTR
+    ws_bea.row_dimensions[1].height = 26
+    ws_bea.cell(2, 1, "البند").font = F_HDR; ws_bea.cell(2, 1).fill = _fill(C_BLUE_D); ws_bea.cell(2, 1).alignment = AL_CTR
+    ws_bea.cell(2, 2, "القيمة").font = F_HDR;  ws_bea.cell(2, 2).fill = _fill(C_BLUE_D); ws_bea.cell(2, 2).alignment = AL_CTR
+    _bea_rows = [
+        ("القيمة السوقية",                          _bea.get("market_value", "—")),
+        ("تكلفة رأس المال (%)",                     _bea.get("cost_of_capital_pct", "—")),
+        ("تكاليف الصيانة السنوية",                  _bea.get("annual_maintenance_cost", "—")),
+        ("إيجار نقطة التعادل الشهري",              _bea.get("break_even_monthly_rent", "—")),
+        ("الإيجار الحالي / المتوقع الشهري",         _bea.get("current_or_expected_monthly_rent", "—")),
+        ("فجوة الإيجار (ج.م/شهر)",                  _bea.get("rent_gap_value", "—")),
+        ("فجوة الإيجار (%)",                        _bea.get("rent_gap_percent", "—")),
+        ("الإيجار يتجاوز نقطة التعادل؟",            ("نعم" if _bea.get("rent_above_break_even") else "لا") if _bea.get("rent_above_break_even") is not None else "—"),
+        ("تفسير",                                   _bea.get("interpretation", "—")),
+        ("ملاحظة للمستثمر",                         _bea.get("investor_decision_note", "—")),
+    ]
+    for ri_, (lbl, val) in enumerate(_bea_rows, 3):
+        ws_bea.cell(ri_, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_bea.cell(ri_, 1).alignment = AL_RT
+        _v_cell = ws_bea.cell(ri_, 2, val); _v_cell.alignment = AL_RT
+        if lbl == "الإيجار يتجاوز نقطة التعادل؟":
+            _v_cell.fill = _fill("D1FAE5") if val == "نعم" else _fill("FEE2E2")
+    _bea_warn_row = len(_bea_rows) + 4
+    ws_bea.merge_cells(f"A{_bea_warn_row}:B{_bea_warn_row}")
+    ws_bea[f"A{_bea_warn_row}"].value = (
+        "تحذير: تكلفة رأس المال استرشادية — يُنصح بتحديثها بمعدل السوق الفعلي."
+        if _bea.get("cost_of_capital_is_advisory") else ""
+    )
+    ws_bea[f"A{_bea_warn_row}"].font = Font(italic=True, name="Arial", size=8, color="B45309")
+    ws_bea[f"A{_bea_warn_row}"].alignment = AL_RT
+
+    # ── Sheet: لوحة امتثال التقييم ────────────────────────────────────────────
+    _comp = mctx.get("valuation_compliance_dashboard", {})
+    ws_cmp = wb.create_sheet("لوحة امتثال التقييم")
+    ws_cmp.sheet_view.rightToLeft = True
+    _widths(ws_cmp, [44, 20, 12])
+    ws_cmp.merge_cells("A1:C1")
+    _cmp_overall = _comp.get("overall_status", "")
+    _cmp_hdr_clr = "DC2626" if "عوائق" in _cmp_overall else ("B45309" if "جزئي" in _cmp_overall else "16A34A")
+    ws_cmp["A1"].value = f"لوحة امتثال التقييم — {_cmp_overall} ({_comp.get('completed_count',0)}/{_comp.get('total_items',0)} مكتمل)"
+    ws_cmp["A1"].font = F_TITLE; ws_cmp["A1"].fill = _fill(_cmp_hdr_clr); ws_cmp["A1"].alignment = AL_CTR
+    ws_cmp.row_dimensions[1].height = 26
+    ws_cmp.cell(2, 1, "عنصر الامتثال").font = F_HDR; ws_cmp.cell(2, 1).fill = _fill(C_BLUE_D); ws_cmp.cell(2, 1).alignment = AL_CTR
+    ws_cmp.cell(2, 2, "الحالة").font = F_HDR;         ws_cmp.cell(2, 2).fill = _fill(C_BLUE_D); ws_cmp.cell(2, 2).alignment = AL_CTR
+    ws_cmp.cell(2, 3, "عائق؟").font = F_HDR;          ws_cmp.cell(2, 3).fill = _fill(C_BLUE_D); ws_cmp.cell(2, 3).alignment = AL_CTR
+    _status_colors = {
+        "complete":      "D1FAE5",
+        "missing":       "FEE2E2",
+        "blocker":       "FCA5A5",
+        "advisory_only": "FEF9C3",
+    }
+    _status_labels = {
+        "complete":      "مكتمل",
+        "missing":       "مفقود",
+        "blocker":       "عائق حرج",
+        "advisory_only": "استرشادي فقط",
+    }
+    for ri_, item in enumerate(_comp.get("compliance_items", []), 3):
+        ws_cmp.cell(ri_, 1, item.get("item", "")).alignment = AL_RT
+        _st = item.get("status", "")
+        _st_cell = ws_cmp.cell(ri_, 2, _status_labels.get(_st, _st))
+        _st_cell.fill = _fill(_status_colors.get(_st, "FFFFFF"))
+        _st_cell.alignment = AL_CTR
+        _bl_cell = ws_cmp.cell(ri_, 3, "نعم" if item.get("is_blocker") else "—")
+        if item.get("is_blocker") and _st in ("missing", "blocker"):
+            _bl_cell.fill = _fill("FEE2E2")
+        _bl_cell.alignment = AL_CTR
+    ws_cmp.freeze_panes = ws_cmp["A3"]
+
+    # ── Sheet: مرجع التقييم الجماعي ──────────────────────────────────────────
+    _mar = mctx.get("mass_appraisal_reference", {})
+    ws_mar = wb.create_sheet("مرجع التقييم الجماعي")
+    ws_mar.sheet_view.rightToLeft = True
+    _widths(ws_mar, [40, 40])
+    ws_mar.merge_cells("A1:B1")
+    ws_mar["A1"].value = "مرجع التقييم الجماعي — استرشادي"
+    ws_mar["A1"].font = F_TITLE; ws_mar["A1"].fill = _fill("374151"); ws_mar["A1"].alignment = AL_CTR
+    ws_mar.row_dimensions[1].height = 26
+    ws_mar.cell(2, 1, "البند").font = F_HDR; ws_mar.cell(2, 1).fill = _fill(C_BLUE_D); ws_mar.cell(2, 1).alignment = AL_CTR
+    ws_mar.cell(2, 2, "القيمة").font = F_HDR;  ws_mar.cell(2, 2).fill = _fill(C_BLUE_D); ws_mar.cell(2, 2).alignment = AL_CTR
+    _mar_rows = [
+        ("مستخدم في التوفيق؟",       "نعم" if _mar.get("mass_appraisal_used") else "لا"),
+        ("متوسط سعر المنطقة",        _mar.get("average_area_price", "—")),
+        ("القيمة المرجعية التقديرية", _mar.get("estimated_reference_value", "—")),
+        ("مصدر متوفر؟",             "نعم" if _mar.get("source_available") else "لا"),
+        ("جودة المصدر",             _mar.get("source_quality_status", "—")),
+        ("مستوى الثقة",             _mar.get("confidence_level", "—")),
+        ("وزن التوفيق",             str(_mar.get("reconciliation_weight", 0))),
+        ("محدودية",                  _mar.get("limitation_text", "—")),
+        ("ملاحظة",                   _mar.get("display_note", "—")),
+    ]
+    for ri_, (lbl, val) in enumerate(_mar_rows, 3):
+        ws_mar.cell(ri_, 1, lbl).font = Font(bold=True, name="Arial", size=9); ws_mar.cell(ri_, 1).alignment = AL_RT
+        _v_cell = ws_mar.cell(ri_, 2, val); _v_cell.alignment = AL_RT
+        if lbl == "مستخدم في التوفيق؟":
+            _v_cell.fill = _fill("D1FAE5") if val == "نعم" else _fill("FEF9C3")
+        if lbl == "جودة المصدر" and "QA" in str(val):
+            _v_cell.fill = _fill("FEF9C3")
 
     # Save
     wb_dir  = _WORKBOOKS / request_id

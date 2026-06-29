@@ -1267,6 +1267,7 @@
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab" data-testid="composite-valuation-tab">📊 التقييم المجمع</button>
         <button class="es-tab-btn" id="es-tab-expert-backoffice" onclick="esShowTab('expert-backoffice')" type="button" role="tab" data-testid="expert-backoffice-tab" style="display:none; border-color:rgba(212,175,55,0.5);">🔐 مكتب الخبير</button>
         <button class="es-tab-btn" id="es-tab-tax-appeal-backoffice" onclick="esShowTab('tax-appeal-backoffice')" type="button" role="tab" data-testid="tax-appeal-backoffice-tab" style="display:none; border-color:rgba(16,185,129,0.5);">🧾 مكتب طعون الضرائب</button>
+        <button class="es-tab-btn" id="es-tab-professional-valuation" onclick="esShowTab('professional-valuation')" type="button" role="tab" data-testid="professional-valuation-tab" style="display:none; border-color:rgba(139,92,246,0.5);">📋 مكتب التقييم المحترف</button>
     </nav>
     <script>
     function esShowTab(tab) {
@@ -35623,6 +35624,286 @@ function taxSpCreateDraft() {
         if (el) { el.textContent = 'خطأ: ' + e.message; el.style.color = '#f87171'; }
     });
 }
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PROFESSIONAL VALUATION BACKOFFICE — Phase A Design Scaffold.
+     Hidden from ordinary users. Accessible only via URL hash #professional-valuation.
+     Phase A: static placeholders only — no API calls — not production workflow yet.
+     ══════════════════════════════════════════════════════════════════════════ -->
+<div class="es-workspace" id="ws-professional-valuation" role="tabpanel"
+     data-testid="pro-val-workspace"
+     style="padding:1.5rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
+
+  <!-- Phase A Notice -->
+  <div data-testid="pro-val-phase-a-notice"
+       style="margin-bottom:1rem; padding:10px 16px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.35); border-radius:8px; font-size:0.82rem; color:#a78bfa;">
+    ⚠️ <strong>هيكل تصميمي — المرحلة أ فقط — ليس سير عمل إنتاجياً بعد.</strong>
+    <span style="color:#6b7280; margin-right:8px;">Phase A design scaffold — not production workflow yet.</span>
+  </div>
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(139,92,246,0.3);">
+    <div>
+      <h2 style="color:#a78bfa; margin:0; font-size:1.25rem;">📋 مكتب التقييم المحترف — داخلي فقط</h2>
+      <p style="color:#94a3b8; margin:4px 0 0; font-size:0.8rem;">هذه اللوحة للاستخدام الداخلي فقط. غير مرئية للمستخدمين العاديين.</p>
+      <p style="color:#f59e0b; margin:4px 0 0; font-size:0.78rem; font-weight:700;">⚠️ مسودة تصميمية — المرحلة أ — تحتاج تطوير خلفي كامل قبل الاستخدام الفعلي.</p>
+    </div>
+    <button data-testid="pro-val-refresh"
+            style="padding:7px 16px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:8px; cursor:pointer; font-size:0.82rem;"
+            onclick="alert('Phase A scaffold — Backend not implemented yet.');">
+      ↻ تحديث القائمة
+    </button>
+  </div>
+
+  <!-- Auth token input -->
+  <div style="margin-bottom:1rem; padding:10px 14px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+    <label style="color:#94a3b8; font-size:0.78rem; display:block; margin-bottom:4px;">رمز الدخول (Bearer Token):</label>
+    <input id="pro-val-bo-token-input" type="password" dir="ltr"
+           data-testid="pro-val-bo-token"
+           placeholder="أدخل JWT token هنا — المرحلة أ: لا يُرسَل لأي API بعد"
+           style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; font-family:monospace;"
+           oninput="localStorage.setItem('pro_val_bo_token', this.value)" />
+    <p style="color:#64748b; font-size:0.72rem; margin:4px 0 0;">يُستخدم لحماية الوصول. لا يُرسَل إلى أي طرف خارجي.</p>
+  </div>
+
+  <!-- Governance Warnings -->
+  <div data-testid="pro-val-qa-data-warning"
+       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; font-size:0.8rem; color:#f87171; display:block;">
+    ⛔ <strong>تحذير QA:</strong> لا يمكن اعتماد التقرير لأن بعض مصادر البيانات ما زالت محاكاة QA وليست مصادر سوقية معتمدة.
+  </div>
+  <div data-testid="pro-val-certification-blocked-warning"
+       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:6px; font-size:0.8rem; color:#f87171; display:block;">
+    🔒 <strong>الاعتماد محظور:</strong> هذا التقرير استرشادي فقط ولا يصلح للاستخدام الرسمي قبل استكمال بوابات الاعتماد.
+  </div>
+  <div data-testid="pro-val-missing-documents-warning"
+       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; font-size:0.8rem; color:#fbbf24; display:block;">
+    📄 <strong>مستندات ناقصة:</strong> لا يمكن إصدار تقرير معتمد قبل استكمال المستندات الإلزامية.
+  </div>
+  <div data-testid="pro-val-source-quality-warning"
+       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; font-size:0.8rem; color:#fbbf24; display:block;">
+    📊 <strong>مصادر البيانات:</strong> يجب اعتماد مصادر المقارنات والقيم السوقية من الخبير قبل استخدامها في التقرير المعتمد.
+  </div>
+  <div data-testid="pro-val-peer-review-warning"
+       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
+    👥 <strong>مراجعة النظراء:</strong> مراجعة النظراء مطلوبة قبل الاعتماد النهائي.
+  </div>
+  <div data-testid="pro-val-signature-warning"
+       style="margin-bottom:1rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
+    ✍️ <strong>التوقيع:</strong> توقيع الخبير ورقم الترخيص والختم مطلوبة قبل إصدار التقرير المعتمد.
+  </div>
+
+  <!-- Dashboard -->
+  <div data-testid="pro-val-dashboard" style="margin-bottom:1.5rem;">
+
+    <!-- Dashboard Header Row -->
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:0.8rem; flex-wrap:wrap;">
+      <h3 style="color:#d4af37; margin:0; font-size:1rem;">لوحة طلبات التقييم المحترف</h3>
+      <button data-testid="pro-val-new-request-button"
+              style="padding:5px 14px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem; margin-right:auto;"
+              onclick="alert('Phase A scaffold — Create request endpoint not implemented yet.');">
+        + طلب جديد
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div style="display:flex; gap:10px; margin-bottom:0.8rem; flex-wrap:wrap;">
+      <select data-testid="pro-val-status-filter"
+              style="padding:5px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+        <option value="">— كل الحالات —</option>
+        <option value="draft_request">مسودة الطلب</option>
+        <option value="submitted">مُقدَّم</option>
+        <option value="intake_review">مراجعة الاستلام</option>
+        <option value="needs_documents">يحتاج مستندات</option>
+        <option value="evidence_review">مراجعة المستندات</option>
+        <option value="data_entry">إدخال البيانات</option>
+        <option value="method_analysis">التحليل المنهجي</option>
+        <option value="expert_review">مراجعة الخبير</option>
+        <option value="peer_review_required">مراجعة النظراء مطلوبة</option>
+        <option value="peer_review_in_progress">مراجعة النظراء جارية</option>
+        <option value="changes_requested">تعديلات مطلوبة</option>
+        <option value="approved_pending_signature">موافق عليه — ينتظر التوقيع</option>
+        <option value="signed_pending_certification">موقَّع — ينتظر الاعتماد</option>
+        <option value="certified_report_generated">تقرير معتمد صادر</option>
+        <option value="rejected">مرفوض</option>
+      </select>
+      <select data-testid="pro-val-cert-readiness-filter"
+              style="padding:5px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+        <option value="">— جاهزية الاعتماد —</option>
+        <option value="ready">جاهز للاعتماد</option>
+        <option value="blocked">محظور — بوابات ناقصة</option>
+        <option value="advisory_only">استرشادي فقط</option>
+      </select>
+    </div>
+
+    <!-- Status message -->
+    <div id="pro-val-bo-status" data-testid="pro-val-bo-status"
+         style="display:none; margin-bottom:0.8rem; padding:8px 12px; border-radius:6px; font-size:0.82rem;"></div>
+
+    <!-- Requests Table -->
+    <div style="overflow-x:auto;">
+      <table data-testid="pro-val-request-table"
+             style="width:100%; border-collapse:collapse; font-size:0.8rem; color:#e2e8f0;">
+        <thead>
+          <tr style="background:rgba(88,28,135,0.5); color:#fff;">
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">رقم الطلب</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">العميل</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">نوع العقار</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">المنطقة</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">الغرض</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">تاريخ التقييم</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">الخبير</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">حالة الاعتماد</th>
+            <th style="padding:7px 8px; text-align:right; border-bottom:1px solid rgba(255,255,255,0.1);">الحالة</th>
+            <th style="padding:7px 8px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.1);">إجراء</th>
+          </tr>
+        </thead>
+        <tbody id="pro-val-requests-tbody">
+          <!-- Placeholder row -->
+          <tr data-testid="pro-val-request-row"
+              style="border-bottom:1px solid rgba(255,255,255,0.05); opacity:0.5;">
+            <td style="padding:6px 8px; color:#7dd3fc; font-family:monospace;">PRV-PLACEHOLDER-001</td>
+            <td style="padding:6px 8px;">محمد أحمد (نموذج)</td>
+            <td style="padding:6px 8px;">شقة سكنية</td>
+            <td style="padding:6px 8px;">الزمالك — القاهرة</td>
+            <td style="padding:6px 8px;">قيمة سوقية</td>
+            <td style="padding:6px 8px;">2026-06-29</td>
+            <td style="padding:6px 8px;">م. هشام المهدي</td>
+            <td style="padding:6px 8px; color:#f87171;">محظور — QA نشط</td>
+            <td style="padding:6px 8px;">
+              <span style="background:rgba(245,158,11,0.15); color:#fbbf24; padding:2px 8px; border-radius:4px; font-size:0.75rem;">إدخال البيانات</span>
+            </td>
+            <td style="padding:6px 8px; text-align:center;">
+              <button style="padding:3px 10px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.3); color:#a78bfa; border-radius:4px; cursor:pointer; font-size:0.75rem;"
+                      onclick="alert('Phase A scaffold — Detail view not implemented yet.');">
+                عرض
+              </button>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="10" style="padding:12px; text-align:center; color:#64748b; font-style:italic; font-size:0.78rem;">
+              المرحلة أ — هيكل تصميمي فقط. سيتم تحميل الطلبات الفعلية بعد تطوير الواجهة الخلفية (المرحلة ب).
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Detail Workspace (Phase A: static tab headers only) -->
+  <div data-testid="pro-val-detail-workspace"
+       style="border:1px solid rgba(139,92,246,0.2); border-radius:10px; overflow:hidden;">
+
+    <!-- Detail workspace header -->
+    <div style="padding:10px 16px; background:rgba(139,92,246,0.08); border-bottom:1px solid rgba(139,92,246,0.15); display:flex; align-items:center; gap:10px;">
+      <span style="background:#7c3aed; color:#fff; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;">⚙</span>
+      <span style="font-weight:700; color:#a78bfa; font-size:0.9rem;">مساحة عمل طلب التقييم</span>
+      <span style="font-size:0.72rem; color:#6b7280; margin-right:auto;">PRV-PLACEHOLDER-001</span>
+    </div>
+
+    <!-- Tab strip -->
+    <div style="display:flex; gap:4px; padding:8px 12px; background:rgba(15,23,42,0.4); flex-wrap:wrap; border-bottom:1px solid rgba(139,92,246,0.1);">
+      <button data-testid="pro-val-tab-summary"     style="padding:4px 10px; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:4px; font-size:0.75rem; cursor:pointer;">ملخص الطلب</button>
+      <button data-testid="pro-val-tab-property"    style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">بيانات العقار</button>
+      <button data-testid="pro-val-tab-scope"       style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">نطاق العمل</button>
+      <button data-testid="pro-val-tab-evidence"    style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">المستندات والمرفقات</button>
+      <button data-testid="pro-val-tab-sources"     style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">مصادر البيانات</button>
+      <button data-testid="pro-val-tab-methods"     style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">طرق التقييم</button>
+      <button data-testid="pro-val-tab-hbu"         style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">HBU</button>
+      <button data-testid="pro-val-tab-dcf"         style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">DCF والدخل</button>
+      <button data-testid="pro-val-tab-swot"        style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">SWOT والمخاطر</button>
+      <button data-testid="pro-val-tab-esg"         style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">ESG والمناخ</button>
+      <button data-testid="pro-val-tab-legal"       style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">الفحص القانوني</button>
+      <button data-testid="pro-val-tab-governance"  style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">حوكمة البيانات</button>
+      <button data-testid="pro-val-tab-peer-review" style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">مراجعة النظراء</button>
+      <button data-testid="pro-val-tab-signature"   style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">التوقيع والاعتماد</button>
+      <button data-testid="pro-val-tab-outputs"     style="padding:4px 10px; background:rgba(30,41,59,0.6); border:1px solid rgba(255,255,255,0.08); color:#94a3b8; border-radius:4px; font-size:0.75rem; cursor:pointer;">التقارير والمخرجات</button>
+    </div>
+
+    <!-- Tab content area (Phase A: summary tab shown, others placeholder) -->
+    <div style="padding:14px 16px;">
+      <!-- Summary tab content (default visible) -->
+      <div data-testid="pro-val-summary-panel" style="color:#9ca3af; font-size:0.82rem;">
+        <p style="color:#a78bfa; font-weight:700; margin:0 0 8px;">ملخص الطلب — المرحلة أ هيكل تصميمي</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin-bottom:10px;">
+          <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">رقم الطلب</div>
+            <div style="color:#e2e8f0;">PRV-PLACEHOLDER-001</div>
+          </div>
+          <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">الحالة</div>
+            <div style="color:#fbbf24;">إدخال البيانات</div>
+          </div>
+          <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">جاهزية الاعتماد</div>
+            <div style="color:#f87171;">محظور — 6 بوابات ناقصة</div>
+          </div>
+          <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
+            <div style="color:#64748b; font-size:0.72rem;">نوع التقرير</div>
+            <div style="color:#fbbf24;">استرشادي فقط (QA نشط)</div>
+          </div>
+        </div>
+        <p style="color:#6b7280; font-style:italic; font-size:0.76rem; margin:0;">
+          Phase A: هذا اللوح سيُعرض بيانات فعلية بعد تطوير المرحلة ب (Backend Request Model).
+        </p>
+      </div>
+
+      <!-- Outputs section (always shown in Phase A scaffold for testid visibility) -->
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid rgba(139,92,246,0.1);">
+        <p style="color:#a78bfa; font-weight:700; font-size:0.82rem; margin:0 0 8px;">التقارير والمخرجات</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button data-testid="pro-val-generate-preliminary"
+                  style="padding:6px 14px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#4ade80; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                  onclick="alert('Phase A scaffold — Preliminary report backend not implemented yet.');">
+            📄 تقرير استرشادي أولي
+          </button>
+          <button data-testid="pro-val-generate-expert-draft"
+                  style="padding:6px 14px; background:rgba(96,165,250,0.1); border:1px solid rgba(96,165,250,0.3); color:#93c5fd; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                  onclick="alert('Phase A scaffold — Expert draft backend not implemented yet.');">
+            📝 مسودة خبير
+          </button>
+          <button data-testid="pro-val-generate-certified" disabled
+                  title="الاعتماد محظور — استكمل بوابات الاعتماد أولاً"
+                  style="padding:6px 14px; background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.3); color:#64748b; border-radius:6px; cursor:not-allowed; font-size:0.8rem; opacity:0.55;">
+            🔒 تقرير معتمد (محظور)
+          </button>
+          <button data-testid="pro-val-download-workbook"
+                  style="padding:6px 14px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#fbbf24; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                  onclick="alert('Phase A scaffold — Workbook download backend not implemented yet.');">
+            📊 ملف Excel
+          </button>
+          <button data-testid="pro-val-download-certified-report" disabled
+                  title="يتطلب تقريراً معتمداً صادراً"
+                  style="padding:6px 14px; background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.3); color:#64748b; border-radius:6px; cursor:not-allowed; font-size:0.8rem; opacity:0.55;">
+            ⬇ تحميل التقرير المعتمد (محظور)
+          </button>
+        </div>
+        <p style="color:#64748b; font-size:0.72rem; margin:6px 0 0; font-style:italic;">
+          التقرير المعتمد محظور — يجب استكمال: QA data cleared + مستندات إلزامية + توقيع خبير + مراجعة النظراء + مصادر معتمدة.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ws-professional-valuation -->
+
+<script>
+/* Professional Valuation Backoffice — Hash Navigation (Phase A scaffold) */
+(function() {
+    function pvShowIfHash() {
+        if (window.location.hash === '#professional-valuation') {
+            var tabBtn = document.getElementById('es-tab-professional-valuation');
+            if (tabBtn) {
+                tabBtn.style.display = '';
+            }
+            if (typeof esShowTab === 'function') {
+                esShowTab('professional-valuation');
+            }
+        }
+    }
+    pvShowIfHash();
+    window.addEventListener('hashchange', function() { pvShowIfHash(); });
+})();
 </script>
 
 </body>

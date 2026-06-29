@@ -12178,6 +12178,9 @@ _register_tax_appeal(app, require_auth, limiter)
 from shared_request_routes import register as _register_shared_requests  # Shared Request Backend
 _register_shared_requests(app, require_auth, limiter)
 
+from professional_valuation_routes import register as _register_professional_valuation  # Phase B
+_register_professional_valuation(app, require_auth)
+
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:
     from dev_auth import register as _register_dev_auth   # DEV ONLY — see dev_auth.py

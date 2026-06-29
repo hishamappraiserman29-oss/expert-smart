@@ -1,14 +1,14 @@
 """
-PVP01–PVP09 — Professional Valuation Backoffice Page E2E Tests (Phase A Scaffold).
+PVP01–PVP18 — Professional Valuation Backoffice Page E2E Tests (Phase A + Phase B).
 
-Verifies that the Phase A frontend scaffold is correctly in place:
-- Tab hidden by default, shown via hash
-- Dashboard placeholder and request table visible
-- All required data-testids present
-- Certification gate warnings visible
-- Existing simple valuation and tax appeal tabs still work
+Phase A tests (PVP01–PVP09):
+  Scaffold rendering — tab visibility, hash navigation, governance warnings,
+  placeholder table, detail tabs, no API calls without auth.
 
-Phase A: scaffold only — no API calls tested here (backend not implemented).
+Phase B tests (PVP10–PVP18):
+  Phase B UI elements — phase-b-placeholder, new-request-form, certified-disabled,
+  empty-state, detail-panel, transition controls, gate summary, regression on
+  simple-valuation and tax-appeal tabs.
 """
 from __future__ import annotations
 
@@ -23,7 +23,6 @@ from playwright.sync_api import Page, expect
 def _go_to_pro_val(page: Page, live_server: str) -> None:
     """Navigate to the professional valuation backoffice via hash."""
     page.goto(f"{live_server}#professional-valuation", wait_until="domcontentloaded")
-    # Wait for the workspace to become visible
     page.locator('[data-testid="pro-val-workspace"]').wait_for(state="visible", timeout=10_000)
 
 
@@ -35,7 +34,7 @@ def _block_api(page: Page) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# PVP01 — Tab hidden by default
+# Phase A Tests — PVP01–PVP09 (scaffold rendering)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_PVP01_professional_valuation_tab_hidden_by_default(page: Page, live_server: str) -> None:
@@ -44,15 +43,10 @@ def test_PVP01_professional_valuation_tab_hidden_by_default(page: Page, live_ser
     page.goto(live_server, wait_until="domcontentloaded")
     tab_btn = page.locator('[data-testid="professional-valuation-tab"]')
     expect(tab_btn).to_have_count(1)
-    # Verify it is not visible (hidden via display:none)
     assert tab_btn.evaluate("el => window.getComputedStyle(el).display") == "none", (
         "Professional valuation tab should be hidden by default"
     )
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP02 — Hash shows workspace
-# ─────────────────────────────────────────────────────────────────────────────
 
 def test_PVP02_hash_shows_professional_valuation_workspace(page: Page, live_server: str) -> None:
     """PVP02: Navigating to #professional-valuation shows the ws-professional-valuation workspace."""
@@ -62,10 +56,6 @@ def test_PVP02_hash_shows_professional_valuation_workspace(page: Page, live_serv
     expect(ws).to_be_visible()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP03 — Dashboard placeholder visible
-# ─────────────────────────────────────────────────────────────────────────────
-
 def test_PVP03_dashboard_placeholder_visible(page: Page, live_server: str) -> None:
     """PVP03: The pro-val-dashboard section is visible in the scaffold."""
     _block_api(page)
@@ -73,10 +63,6 @@ def test_PVP03_dashboard_placeholder_visible(page: Page, live_server: str) -> No
     dashboard = page.locator('[data-testid="pro-val-dashboard"]')
     expect(dashboard).to_be_visible()
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP04 — Request table placeholder visible
-# ─────────────────────────────────────────────────────────────────────────────
 
 def test_PVP04_request_table_placeholder_visible(page: Page, live_server: str) -> None:
     """PVP04: The pro-val-request-table is visible and contains a placeholder row."""
@@ -88,23 +74,14 @@ def test_PVP04_request_table_placeholder_visible(page: Page, live_server: str) -
     expect(placeholder_row).to_have_count(1)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP05 — Certification gate warning visible
-# ─────────────────────────────────────────────────────────────────────────────
-
 def test_PVP05_certification_blocked_warning_visible(page: Page, live_server: str) -> None:
-    """PVP05: The certification-blocked warning is visible in the scaffold."""
+    """PVP05: The certification-blocked warning is visible and contains Arabic advisory text."""
     _block_api(page)
     _go_to_pro_val(page, live_server)
     warning = page.locator('[data-testid="pro-val-certification-blocked-warning"]')
     expect(warning).to_be_visible()
-    # Must contain the Arabic advisory text
     expect(warning).to_contain_text("الاعتماد")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP06 — All 15 tab buttons visible
-# ─────────────────────────────────────────────────────────────────────────────
 
 def test_PVP06_all_detail_tabs_visible(page: Page, live_server: str) -> None:
     """PVP06: All 15 detail workspace tab buttons are present in the scaffold."""
@@ -132,29 +109,22 @@ def test_PVP06_all_detail_tabs_visible(page: Page, live_server: str) -> None:
         expect(el).to_have_count(1), f"Tab {testid} not found"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP07 — No API calls required for scaffold
-# ─────────────────────────────────────────────────────────────────────────────
-
-def test_PVP07_scaffold_visible_without_api_calls(page: Page, live_server: str) -> None:
-    """PVP07: The scaffold is fully visible without any backend API calls succeeding."""
+def test_PVP07_scaffold_visible_without_pro_val_api_calls(page: Page, live_server: str) -> None:
+    """PVP07: Dashboard is visible even if professional-valuation API returns 503.
+    Without a stored auth token, no API calls are made on scaffold load.
+    """
     api_calls: list[str] = []
     page.route("**/api/professional-valuation/**", lambda r: (
         api_calls.append(r.request.url), r.fulfill(status=503, body=b'{"error":"not implemented"}')
     ))
     _go_to_pro_val(page, live_server)
-    # Dashboard and workspace should be visible even with 503 from professional API
     expect(page.locator('[data-testid="pro-val-dashboard"]')).to_be_visible()
-    # Phase A scaffold makes no API calls on load
+    # Phase B: without a stored token, no API calls are made on load
     assert api_calls == [], f"Scaffold made unexpected API calls: {api_calls}"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP08 — Existing simple valuation tab still works
-# ─────────────────────────────────────────────────────────────────────────────
-
 def test_PVP08_existing_simple_valuation_tab_still_works(page: Page, live_server: str) -> None:
-    """PVP08: The simple valuation tab still renders correctly after scaffold addition."""
+    """PVP08: The simple valuation tab still renders correctly after Phase B changes."""
     _block_api(page)
     page.goto(live_server, wait_until="domcontentloaded")
     val_btn = page.locator('#es-tab-valuation')
@@ -164,12 +134,8 @@ def test_PVP08_existing_simple_valuation_tab_still_works(page: Page, live_server
     expect(page.locator('[data-testid="simple-valuation-tab"]')).to_be_visible()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# PVP09 — Tax appeal tab still works
-# ─────────────────────────────────────────────────────────────────────────────
-
 def test_PVP09_tax_appeal_tab_still_works(page: Page, live_server: str) -> None:
-    """PVP09: The tax appeal tab still renders correctly after scaffold addition."""
+    """PVP09: The tax appeal tab still renders correctly after Phase B changes."""
     _block_api(page)
     page.goto(live_server, wait_until="domcontentloaded")
     tax_btn = page.locator('[data-testid="tax-tab"]')
@@ -177,3 +143,84 @@ def test_PVP09_tax_appeal_tab_still_works(page: Page, live_server: str) -> None:
     tax_btn.click()
     page.locator('[data-testid="tax-page"]').wait_for(state="visible", timeout=10_000)
     expect(page.locator('[data-testid="tax-page"]')).to_be_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase B Tests — PVP10–PVP18 (new UI elements)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVP10_phase_b_placeholder_visible(page: Page, live_server: str) -> None:
+    """PVP10: The Phase B placeholder/notice banner is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ph = page.locator('[data-testid="pro-val-phase-b-placeholder"]')
+    expect(ph).to_be_visible()
+    expect(ph).to_contain_text("Phase B")
+
+
+def test_PVP11_new_request_form_present(page: Page, live_server: str) -> None:
+    """PVP11: The new-request-form element is present in the DOM (may be hidden initially)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    form = page.locator('[data-testid="pro-val-new-request-form"]')
+    expect(form).to_have_count(1)
+
+
+def test_PVP12_create_request_button_present(page: Page, live_server: str) -> None:
+    """PVP12: The create-request-button is present inside the new-request-form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-create-request-button"]')
+    expect(btn).to_have_count(1)
+
+
+def test_PVP13_certified_disabled_element_present(page: Page, live_server: str) -> None:
+    """PVP13: The pro-val-certified-disabled indicator is present (certified report blocked)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-disabled"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP14_request_empty_state_present(page: Page, live_server: str) -> None:
+    """PVP14: The request-empty-state element is present in the DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-request-empty-state"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP15_detail_panel_present(page: Page, live_server: str) -> None:
+    """PVP15: The pro-val-detail-panel element is present in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-detail-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP16_transition_controls_present(page: Page, live_server: str) -> None:
+    """PVP16: Transition select and button are present in the detail panel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-transition-select"]')
+    btn = page.locator('[data-testid="pro-val-transition-button"]')
+    expect(sel).to_have_count(1)
+    expect(btn).to_have_count(1)
+
+
+def test_PVP17_certification_gate_summary_present(page: Page, live_server: str) -> None:
+    """PVP17: The certification-gate-summary placeholder is visible in the workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certification-gate-summary"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP18_generate_certified_button_disabled(page: Page, live_server: str) -> None:
+    """PVP18: The generate-certified button is disabled — certification blocked in Phase B."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button should be disabled in Phase B"

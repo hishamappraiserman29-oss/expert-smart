@@ -35635,11 +35635,18 @@ function taxSpCreateDraft() {
      data-testid="pro-val-workspace"
      style="padding:1.5rem; font-family:Tajawal,'Segoe UI',Tahoma,Arial,sans-serif; direction:rtl;">
 
-  <!-- Phase A Notice -->
+  <!-- Phase A Notice (retained) -->
   <div data-testid="pro-val-phase-a-notice"
-       style="margin-bottom:1rem; padding:10px 16px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.35); border-radius:8px; font-size:0.82rem; color:#a78bfa;">
-    ⚠️ <strong>هيكل تصميمي — المرحلة أ فقط — ليس سير عمل إنتاجياً بعد.</strong>
-    <span style="color:#6b7280; margin-right:8px;">Phase A design scaffold — not production workflow yet.</span>
+       style="margin-bottom:0.5rem; padding:8px 16px; background:rgba(139,92,246,0.06); border:1px solid rgba(139,92,246,0.25); border-radius:8px; font-size:0.78rem; color:#7c5abf;">
+    ✓ هيكل المرحلة أ محمّل — Phase A design scaffold retained.
+  </div>
+  <!-- Phase B: request lifecycle active -->
+  <div data-testid="pro-val-phase-b-placeholder"
+       style="margin-bottom:1rem; padding:10px 16px; background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.3); border-radius:8px; font-size:0.82rem; color:#93c5fd;">
+    🔧 <strong>المرحلة ب — نموذج الطلب والمسارات الخلفية نشطة.</strong>
+    <span style="display:block; color:#6b7280; font-size:0.76rem; margin-top:3px;">
+      Phase B: request workflow active — evidence, sources, methods, and certified reports in later phases.
+    </span>
   </div>
 
   <!-- Header -->
@@ -35651,7 +35658,7 @@ function taxSpCreateDraft() {
     </div>
     <button data-testid="pro-val-refresh"
             style="padding:7px 16px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:8px; cursor:pointer; font-size:0.82rem;"
-            onclick="alert('Phase A scaffold — Backend not implemented yet.');">
+            onclick="pvLoadRequests();">
       ↻ تحديث القائمة
     </button>
   </div>
@@ -35661,7 +35668,7 @@ function taxSpCreateDraft() {
     <label style="color:#94a3b8; font-size:0.78rem; display:block; margin-bottom:4px;">رمز الدخول (Bearer Token):</label>
     <input id="pro-val-bo-token-input" type="password" dir="ltr"
            data-testid="pro-val-bo-token"
-           placeholder="أدخل JWT token هنا — المرحلة أ: لا يُرسَل لأي API بعد"
+           placeholder="أدخل JWT token هنا للوصول إلى API (Bearer token)"
            style="width:100%; box-sizing:border-box; padding:7px 10px; background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; font-family:monospace;"
            oninput="localStorage.setItem('pro_val_bo_token', this.value)" />
     <p style="color:#64748b; font-size:0.72rem; margin:4px 0 0;">يُستخدم لحماية الوصول. لا يُرسَل إلى أي طرف خارجي.</p>
@@ -35701,9 +35708,41 @@ function taxSpCreateDraft() {
       <h3 style="color:#d4af37; margin:0; font-size:1rem;">لوحة طلبات التقييم المحترف</h3>
       <button data-testid="pro-val-new-request-button"
               style="padding:5px 14px; background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem; margin-right:auto;"
-              onclick="alert('Phase A scaffold — Create request endpoint not implemented yet.');">
+              onclick="pvToggleNewRequestForm();">
         + طلب جديد
       </button>
+    </div>
+
+    <!-- Phase B: New Request Form (hidden until toggled) -->
+    <div id="pro-val-new-request-form-wrap" data-testid="pro-val-new-request-form"
+         style="display:none; margin-bottom:1rem; padding:14px 16px; background:rgba(30,41,59,0.7); border:1px solid rgba(139,92,246,0.3); border-radius:8px;">
+      <p style="color:#a78bfa; font-weight:700; font-size:0.85rem; margin:0 0 10px;">📋 طلب تقييم مهني جديد</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:8px; margin-bottom:10px;">
+        <input id="pvr-client-name" placeholder="اسم العميل *" dir="rtl"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+        <input id="pvr-property-type" placeholder="نوع العقار *" dir="rtl"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+        <input id="pvr-valuation-purpose" placeholder="غرض التقييم *" dir="rtl"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+        <input id="pvr-city" placeholder="المدينة" dir="rtl"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+        <input id="pvr-district" placeholder="الحي / المنطقة" dir="rtl"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+        <input id="pvr-client-email" placeholder="البريد الإلكتروني" dir="ltr"
+               style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+      </div>
+      <div id="pro-val-create-msg" style="font-size:0.78rem; color:#f87171; min-height:16px; margin-bottom:6px;"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button data-testid="pro-val-create-request-button"
+                style="padding:7px 18px; background:rgba(139,92,246,0.25); border:1px solid rgba(139,92,246,0.5); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.82rem;"
+                onclick="pvSubmitNewRequest();">
+          ✅ إرسال الطلب
+        </button>
+        <button style="padding:7px 14px; background:rgba(100,116,139,0.15); border:1px solid rgba(100,116,139,0.3); color:#64748b; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                onclick="document.getElementById('pro-val-new-request-form-wrap').style.display='none';">
+          إلغاء
+        </button>
+      </div>
     </div>
 
     <!-- Filters -->
@@ -35780,9 +35819,10 @@ function taxSpCreateDraft() {
               </button>
             </td>
           </tr>
-          <tr>
-            <td colspan="10" style="padding:12px; text-align:center; color:#64748b; font-style:italic; font-size:0.78rem;">
-              المرحلة أ — هيكل تصميمي فقط. سيتم تحميل الطلبات الفعلية بعد تطوير الواجهة الخلفية (المرحلة ب).
+          <tr id="pro-val-empty-state-row" data-testid="pro-val-request-empty-state"
+              style="display:none; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td colspan="10" style="padding:16px; text-align:center; color:#64748b; font-size:0.82rem;">
+              لا توجد طلبات. أدخل رمز الدخول وانقر "تحديث" لتحميل الطلبات، أو أضف طلباً جديداً.
             </td>
           </tr>
         </tbody>
@@ -35790,7 +35830,7 @@ function taxSpCreateDraft() {
     </div>
   </div>
 
-  <!-- Detail Workspace (Phase A: static tab headers only) -->
+  <!-- Detail Workspace (Phase B: request detail + transition controls) -->
   <div data-testid="pro-val-detail-workspace"
        style="border:1px solid rgba(139,92,246,0.2); border-radius:10px; overflow:hidden;">
 
@@ -35824,27 +35864,65 @@ function taxSpCreateDraft() {
     <div style="padding:14px 16px;">
       <!-- Summary tab content (default visible) -->
       <div data-testid="pro-val-summary-panel" style="color:#9ca3af; font-size:0.82rem;">
-        <p style="color:#a78bfa; font-weight:700; margin:0 0 8px;">ملخص الطلب — المرحلة أ هيكل تصميمي</p>
+        <p style="color:#a78bfa; font-weight:700; margin:0 0 8px;">ملخص الطلب — المرحلة ب</p>
+
+        <!-- Phase B: request-status badge -->
+        <div style="margin-bottom:8px;">
+          <span style="color:#64748b; font-size:0.72rem;">الحالة الحالية: </span>
+          <span data-testid="pro-val-request-status" id="pro-val-request-status-badge"
+                style="background:rgba(245,158,11,0.15); color:#fbbf24; padding:2px 8px; border-radius:4px; font-size:0.75rem;">
+            لم يُحدد
+          </span>
+        </div>
+
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:8px; margin-bottom:10px;">
           <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
             <div style="color:#64748b; font-size:0.72rem;">رقم الطلب</div>
-            <div style="color:#e2e8f0;">PRV-PLACEHOLDER-001</div>
+            <div id="pro-val-detail-req-id" style="color:#e2e8f0;">—</div>
           </div>
           <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="color:#64748b; font-size:0.72rem;">الحالة</div>
-            <div style="color:#fbbf24;">إدخال البيانات</div>
+            <div style="color:#64748b; font-size:0.72rem;">العميل</div>
+            <div id="pro-val-detail-client" style="color:#e2e8f0;">—</div>
           </div>
           <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
             <div style="color:#64748b; font-size:0.72rem;">جاهزية الاعتماد</div>
-            <div style="color:#f87171;">محظور — 6 بوابات ناقصة</div>
+            <div style="color:#f87171;">محظور — المرحلة ب</div>
           </div>
           <div style="background:rgba(30,41,59,0.5); padding:8px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);">
             <div style="color:#64748b; font-size:0.72rem;">نوع التقرير</div>
-            <div style="color:#fbbf24;">استرشادي فقط (QA نشط)</div>
+            <div style="color:#fbbf24;">استرشادي فقط</div>
           </div>
         </div>
-        <p style="color:#6b7280; font-style:italic; font-size:0.76rem; margin:0;">
-          Phase A: هذا اللوح سيُعرض بيانات فعلية بعد تطوير المرحلة ب (Backend Request Model).
+
+        <!-- Phase B: detail panel with transition controls -->
+        <div data-testid="pro-val-detail-panel" id="pro-val-transition-section"
+             style="margin-top:10px; padding:10px 12px; background:rgba(30,41,59,0.5); border:1px solid rgba(139,92,246,0.15); border-radius:6px;">
+          <p style="color:#94a3b8; font-size:0.78rem; margin:0 0 6px; font-weight:600;">انتقال الحالة (المرحلة ب)</p>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <select data-testid="pro-val-transition-select" id="pro-val-transition-select"
+                    style="padding:5px 10px; background:#1a2235; color:#e5e7eb; border:1px solid #374151; border-radius:5px; font-size:0.8rem;">
+              <option value="">— اختر الحالة الهدف —</option>
+            </select>
+            <input id="pro-val-transition-note" placeholder="ملاحظة (اختياري)" dir="rtl"
+                   style="flex:1; min-width:120px; padding:5px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.1); border-radius:5px; color:#e2e8f0; font-size:0.8rem;" />
+            <button data-testid="pro-val-transition-button" id="pro-val-transition-btn"
+                    style="padding:5px 14px; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.4); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+                    onclick="pvDoTransition();">
+              انتقل →
+            </button>
+          </div>
+          <p style="color:#64748b; font-size:0.72rem; margin:4px 0 0;">التقرير المعتمد محظور عبر هذه النقطة.</p>
+        </div>
+
+        <!-- Phase B: certification gate summary placeholder -->
+        <div data-testid="pro-val-certification-gate-summary" id="pro-val-gate-summary"
+             style="margin-top:8px; padding:8px 12px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:6px; font-size:0.78rem; color:#9ca3af;">
+          <p style="margin:0 0 2px; color:#f87171; font-weight:600;">بوابات الاعتماد (المرحلة ب — نائب)</p>
+          <p style="margin:0; color:#6b7280;">certification_ready: false — Phase B: gates not evaluated yet.</p>
+        </div>
+
+        <p style="color:#6b7280; font-style:italic; font-size:0.76rem; margin:8px 0 0;">
+          Phase B: حدد طلباً من الجدول أعلاه لعرض تفاصيله وانتقالاته.
         </p>
       </div>
 
@@ -35867,6 +35945,10 @@ function taxSpCreateDraft() {
                   style="padding:6px 14px; background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.3); color:#64748b; border-radius:6px; cursor:not-allowed; font-size:0.8rem; opacity:0.55;">
             🔒 تقرير معتمد (محظور)
           </button>
+          <span data-testid="pro-val-certified-disabled"
+                style="display:inline-flex; align-items:center; padding:4px 10px; background:rgba(100,116,139,0.08); border:1px solid rgba(100,116,139,0.2); color:#64748b; border-radius:4px; font-size:0.74rem;">
+            الاعتماد: محظور المرحلة ب
+          </span>
           <button data-testid="pro-val-download-workbook"
                   style="padding:6px 14px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:#fbbf24; border-radius:6px; cursor:pointer; font-size:0.8rem;"
                   onclick="alert('Phase A scaffold — Workbook download backend not implemented yet.');">
@@ -35888,21 +35970,228 @@ function taxSpCreateDraft() {
 </div><!-- /ws-professional-valuation -->
 
 <script>
-/* Professional Valuation Backoffice — Hash Navigation (Phase A scaffold) */
+/* Professional Valuation Backoffice — Phase B: Hash Navigation + API Integration */
 (function() {
+    /* ── Hash navigation ── */
     function pvShowIfHash() {
         if (window.location.hash === '#professional-valuation') {
             var tabBtn = document.getElementById('es-tab-professional-valuation');
-            if (tabBtn) {
-                tabBtn.style.display = '';
-            }
-            if (typeof esShowTab === 'function') {
-                esShowTab('professional-valuation');
-            }
+            if (tabBtn) { tabBtn.style.display = ''; }
+            if (typeof esShowTab === 'function') { esShowTab('professional-valuation'); }
+            /* Auto-load dashboard if token already stored */
+            var stored = localStorage.getItem('pro_val_bo_token');
+            if (stored && stored.trim()) { pvLoadRequests(); }
         }
     }
     pvShowIfHash();
     window.addEventListener('hashchange', function() { pvShowIfHash(); });
+
+    /* ── Token helper ── */
+    function pvGetToken() {
+        var inp = document.getElementById('pro-val-bo-token-input');
+        if (inp && inp.value.trim()) return inp.value.trim();
+        return (localStorage.getItem('pro_val_bo_token') || '').trim();
+    }
+
+    function pvSetStatus(msg, color) {
+        var el = document.getElementById('pro-val-bo-status');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = msg ? 'block' : 'none';
+        el.style.color = color || '#94a3b8';
+        el.style.background = 'rgba(30,41,59,0.5)';
+        el.style.border = '1px solid rgba(255,255,255,0.07)';
+    }
+
+    /* ── Load requests dashboard ── */
+    window.pvLoadRequests = function() {
+        var token = pvGetToken();
+        if (!token) {
+            pvSetStatus('أدخل رمز الدخول (JWT token) أولاً لتحميل الطلبات.', '#f87171');
+            document.getElementById('pro-val-empty-state-row').style.display = '';
+            return;
+        }
+        pvSetStatus('جارٍ تحميل الطلبات…', '#93c5fd');
+        fetch('/api/professional-valuation/requests', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) {
+                pvSetStatus('خطأ: ' + (data.error || 'فشل التحميل'), '#f87171');
+                return;
+            }
+            pvRenderRequests(data.requests || []);
+            pvSetStatus('تم تحميل ' + (data.total || 0) + ' طلب.', '#4ade80');
+        })
+        .catch(function(e) {
+            pvSetStatus('خطأ في الاتصال: ' + e.message, '#f87171');
+        });
+    };
+
+    /* ── Render request table ── */
+    function pvRenderRequests(rows) {
+        var tbody = document.getElementById('pro-val-requests-tbody');
+        if (!tbody) return;
+        /* Keep the placeholder row hidden, show empty state if needed */
+        var placeholder = tbody.querySelector('[data-testid="pro-val-request-row"]');
+        var emptyRow = document.getElementById('pro-val-empty-state-row');
+        if (placeholder) placeholder.style.display = 'none';
+        if (emptyRow) emptyRow.style.display = rows.length ? 'none' : '';
+
+        /* Remove old live rows */
+        tbody.querySelectorAll('.pv-live-row').forEach(function(r) { r.remove(); });
+
+        rows.forEach(function(req) {
+            var tr = document.createElement('tr');
+            tr.className = 'pv-live-row';
+            tr.style.cssText = 'border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer;';
+            tr.onclick = function() { pvShowDetail(req.request_id); };
+            tr.innerHTML =
+                '<td style="padding:6px 8px; color:#7dd3fc; font-family:monospace; font-size:0.75rem;">' + pvEsc(req.request_id) + '</td>' +
+                '<td style="padding:6px 8px;">' + pvEsc(req.client_name) + '</td>' +
+                '<td style="padding:6px 8px;">' + pvEsc(req.property_type) + '</td>' +
+                '<td style="padding:6px 8px;">' + pvEsc(req.district || req.city || '—') + '</td>' +
+                '<td style="padding:6px 8px;">' + pvEsc(req.valuation_purpose) + '</td>' +
+                '<td style="padding:6px 8px; font-size:0.75rem;">' + pvEsc(req.valuation_date || '—') + '</td>' +
+                '<td style="padding:6px 8px;">' + pvEsc(req.assigned_expert || '—') + '</td>' +
+                '<td style="padding:6px 8px; color:#f87171; font-size:0.75rem;">محظور — المرحلة ب</td>' +
+                '<td style="padding:6px 8px;"><span style="background:rgba(245,158,11,0.12);color:#fbbf24;padding:2px 7px;border-radius:4px;font-size:0.74rem;">' + pvEsc(req.status) + '</span></td>' +
+                '<td style="padding:6px 8px; text-align:center;"><button onclick="event.stopPropagation();pvShowDetail(\'' + pvEsc(req.request_id) + '\');" style="padding:2px 8px;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;border-radius:4px;cursor:pointer;font-size:0.73rem;">عرض</button></td>';
+            tbody.appendChild(tr);
+        });
+    }
+
+    function pvEsc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ── Show request detail ── */
+    window.pvShowDetail = function(requestId) {
+        var token = pvGetToken();
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(requestId), {
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.ok) { pvSetStatus('خطأ: ' + data.error, '#f87171'); return; }
+            var req = data.request;
+            var badge = document.getElementById('pro-val-request-status-badge');
+            if (badge) badge.textContent = req.status || '—';
+            var rid = document.getElementById('pro-val-detail-req-id');
+            if (rid) rid.textContent = req.request_id || '—';
+            var cli = document.getElementById('pro-val-detail-client');
+            if (cli) cli.textContent = req.client_name || '—';
+            /* Populate transition select */
+            var sel = document.getElementById('pro-val-transition-select');
+            if (sel) {
+                sel.innerHTML = '<option value="">— اختر الحالة الهدف —</option>';
+                (req.available_transitions || []).forEach(function(st) {
+                    var opt = document.createElement('option');
+                    opt.value = st; opt.textContent = st;
+                    sel.appendChild(opt);
+                });
+                sel.dataset.requestId = req.request_id;
+            }
+            /* Update gate summary */
+            var gate = data.certification_gate_summary || {};
+            var gateEl = document.getElementById('pro-val-gate-summary');
+            if (gateEl) {
+                gateEl.innerHTML =
+                    '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد</p>' +
+                    '<p style="margin:0;color:#6b7280;">certification_ready: ' + (gate.certification_ready ? 'true' : 'false') +
+                    ' — ' + pvEsc(gate.advisory_only_reason || '') + '</p>';
+            }
+        })
+        .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
+    };
+
+    /* ── Toggle new request form ── */
+    window.pvToggleNewRequestForm = function() {
+        var wrap = document.getElementById('pro-val-new-request-form-wrap');
+        if (!wrap) return;
+        wrap.style.display = wrap.style.display === 'none' ? '' : 'none';
+    };
+
+    /* ── Submit new request ── */
+    window.pvSubmitNewRequest = function() {
+        var msg = document.getElementById('pro-val-create-msg');
+        function setMsg(t, c) { if (msg) { msg.textContent = t; msg.style.color = c || '#f87171'; } }
+
+        var clientName  = (document.getElementById('pvr-client-name')  || {}).value || '';
+        var propType    = (document.getElementById('pvr-property-type') || {}).value || '';
+        var purpose     = (document.getElementById('pvr-valuation-purpose') || {}).value || '';
+        var city        = (document.getElementById('pvr-city')    || {}).value || '';
+        var district    = (document.getElementById('pvr-district') || {}).value || '';
+        var email       = (document.getElementById('pvr-client-email') || {}).value || '';
+
+        if (!clientName.trim())  { setMsg('اسم العميل مطلوب'); return; }
+        if (!propType.trim())    { setMsg('نوع العقار مطلوب'); return; }
+        if (!purpose.trim())     { setMsg('غرض التقييم مطلوب'); return; }
+        if (!city.trim() && !district.trim()) { setMsg('المدينة أو الحي مطلوب'); return; }
+
+        setMsg('جارٍ الإرسال…', '#93c5fd');
+        fetch('/api/professional-valuation/requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_name: clientName.trim(),
+                property_type: propType.trim(),
+                valuation_purpose: purpose.trim(),
+                city: city.trim(),
+                district: district.trim(),
+                client_email: email.trim()
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                setMsg('✅ تم إنشاء الطلب: ' + data.request_id, '#4ade80');
+                document.getElementById('pro-val-new-request-form-wrap').style.display = 'none';
+                pvLoadRequests();
+            } else {
+                setMsg('خطأ: ' + (data.error || 'فشل الإرسال'));
+            }
+        })
+        .catch(function(e) { setMsg('خطأ: ' + e.message); });
+    };
+
+    /* ── Execute transition ── */
+    window.pvDoTransition = function() {
+        var sel   = document.getElementById('pro-val-transition-select');
+        var note  = document.getElementById('pro-val-transition-note');
+        var token = pvGetToken();
+        if (!sel || !sel.value) { pvSetStatus('اختر الحالة الهدف أولاً.', '#f87171'); return; }
+        if (!sel.dataset.requestId) { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+
+        var rid = sel.dataset.requestId;
+        var target = sel.value;
+        pvSetStatus('جارٍ تنفيذ الانتقال…', '#93c5fd');
+        fetch('/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/transition', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({
+                target_status: target,
+                note: (note && note.value) || ''
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                pvSetStatus('✅ انتقل إلى: ' + data.to_status, '#4ade80');
+                pvShowDetail(rid);
+                pvLoadRequests();
+            } else {
+                pvSetStatus('خطأ ' + (data.error_code || '') + ': ' + data.error, '#f87171');
+            }
+        })
+        .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
+    };
 })();
 </script>
 

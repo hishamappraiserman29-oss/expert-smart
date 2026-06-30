@@ -89,9 +89,8 @@ def _empty_gate_summary() -> dict:
 
 
 def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
-    """Return computed gate summary from Phase C evidence/source state,
-    merged with Phase D comparable readiness.
-    certification_ready is always False in Phase B/C/D.
+    """Return computed gate summary from Phase C/D/E state.
+    certification_ready is always False in Phase B/C/D/E.
     """
     try:
         from professional_valuation_evidence_routes import compute_gate_summary
@@ -104,13 +103,46 @@ def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
         from professional_valuation_comparables import evaluate_comparable_readiness
         cr = evaluate_comparable_readiness(request_id, valuation_purpose)
         gate["comparables_ready"] = cr.get("certification_comparable_ready", False)
-        gate["certification_ready"] = False  # always False in Phase D
+        gate["certification_ready"] = False
         if not gate["comparables_ready"]:
             blocker = "لا توجد مقارنات إنتاجية معتمدة."
             if blocker not in gate.get("blockers", []):
                 gate.setdefault("blockers", []).append(blocker)
     except ImportError:
         gate.setdefault("comparables_ready", False)
+
+    # Phase E: merge method analysis and reconciliation readiness
+    try:
+        from professional_valuation_methods import (
+            evaluate_method_readiness_for_request,
+            get_reconciliation_for_request,
+        )
+        mr = evaluate_method_readiness_for_request(request_id)
+        gate["methods_completed"] = mr.get("methods_completed", False)
+        recon = get_reconciliation_for_request(request_id)
+        gate["reconciliation_completed"] = bool(
+            recon and recon.get("weighted_value") is not None
+        )
+        gate["certification_ready"] = False  # always False in Phase E
+        if not gate["methods_completed"]:
+            blocker = "لا توجد طرق تقييم مكتملة ببيانات كافية."
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+    except ImportError:
+        gate.setdefault("methods_completed", False)
+        gate.setdefault("reconciliation_completed", False)
+
+    # Phase E addendum: preliminary approval readiness
+    try:
+        from professional_valuation_methods import get_preliminary_approval_for_request
+        prelim = get_preliminary_approval_for_request(request_id)
+        gate["preliminary_approval_ready"] = bool(prelim and prelim.get("preliminary_approval_ready"))
+        gate["preliminary_use_allowed"]    = bool(prelim and prelim.get("preliminary_use_allowed"))
+        gate["certified_use_allowed"]      = False
+    except ImportError:
+        gate.setdefault("preliminary_approval_ready", False)
+        gate.setdefault("preliminary_use_allowed",    False)
+        gate.setdefault("certified_use_allowed",      False)
 
     return gate
 

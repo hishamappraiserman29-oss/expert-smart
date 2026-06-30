@@ -36346,6 +36346,317 @@ function taxSpCreateDraft() {
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════ Phase E ══ -->
+  <div data-testid="pro-val-phase-e-notice"
+       style="margin:18px 0 10px; padding:10px 14px; background:rgba(234,179,8,0.08);
+              border:1px solid rgba(234,179,8,0.3); border-radius:8px; font-size:0.78rem; color:#ca8a04;">
+    <strong>Phase E — Method Analysis Workspace:</strong>
+    طرق التقييم استشارية فقط. لا يتم إصدار تقارير معتمدة ولا يصبح الطلب جاهزاً للاعتماد في هذه المرحلة.
+  </div>
+
+  <!-- ── Method Analysis Section ───────────────────────────────────────── -->
+  <div data-testid="pro-val-method-section" id="pv-method-section"
+       style="margin-bottom:18px; padding:14px; background:rgba(30,30,46,0.6);
+              border:1px solid rgba(139,92,246,0.2); border-radius:10px;">
+    <h4 style="margin:0 0 12px; color:#a78bfa; font-size:0.9rem;">تحليل طرق التقييم</h4>
+
+    <!-- Method catalogue -->
+    <div data-testid="pro-val-method-catalogue" id="pv-method-catalogue"
+         style="margin-bottom:12px; padding:8px 10px; background:rgba(139,92,246,0.06);
+                border-radius:6px; font-size:0.75rem; color:#94a3b8;">
+      <strong style="color:#a78bfa;">الطرق المدعومة:</strong>
+      مقارنة المبيعات / الإيجارات / نهج التكلفة / الرسملة المباشرة / DCF / الرسوب على الأرض / مرجع التقييم الشامل
+    </div>
+
+    <!-- Subject inputs -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">مساحة العقار (م²)</label>
+        <input data-testid="pro-val-method-subject-area-input" id="pv-method-area"
+               type="number" min="0" step="0.01"
+               placeholder="مساحة العقار م²"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">مساحة الأرض (م²)</label>
+        <input data-testid="pro-val-method-land-area-input" id="pv-method-land-area"
+               type="number" min="0" step="0.01"
+               placeholder="مساحة الأرض م²"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">الإيجار الشهري (ج.م)</label>
+        <input data-testid="pro-val-method-monthly-rent-input" id="pv-method-monthly-rent"
+               type="number" min="0" step="0.01"
+               placeholder="الإيجار الشهري"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">تكلفة البناء/م²</label>
+        <input data-testid="pro-val-method-construction-cost-input" id="pv-method-cc"
+               type="number" min="0" step="0.01"
+               placeholder="تكلفة البناء لكل م²"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">سعر الأرض/م²</label>
+        <input data-testid="pro-val-method-land-price-input" id="pv-method-lp"
+               type="number" min="0" step="0.01"
+               placeholder="سعر الأرض لكل م²"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">معدل الرسملة (%)</label>
+        <input data-testid="pro-val-method-cap-rate-input" id="pv-method-cap"
+               type="number" min="0" step="0.01"
+               placeholder="معدل الرسملة %"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">معدل الخصم (%)</label>
+        <input data-testid="pro-val-method-discount-rate-input" id="pv-method-dr"
+               type="number" min="0" step="0.01"
+               placeholder="معدل الخصم %"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">معدل الرسملة النهائية (%)</label>
+        <input data-testid="pro-val-method-terminal-cap-rate-input" id="pv-method-tcr"
+               type="number" min="0" step="0.01"
+               placeholder="معدل الرسملة النهائية %"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">نمو الإيجار السنوي (%)</label>
+        <input data-testid="pro-val-method-rent-growth-input" id="pv-method-rg"
+               type="number" min="0" step="0.01"
+               placeholder="نمو الإيجار %"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">سنوات التنبؤ (DCF)</label>
+        <input data-testid="pro-val-method-forecast-years-input" id="pv-method-fy"
+               type="number" min="1" max="30" step="1" value="5"
+               placeholder="سنوات التنبؤ"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+    </div>
+
+    <!-- Method selection -->
+    <div style="margin-bottom:10px; display:flex; flex-wrap:wrap; gap:12px;">
+      <label style="font-size:0.77rem; color:#cbd5e1; cursor:pointer;">
+        <input data-testid="pro-val-method-sales-checkbox" id="pv-m-sales" type="checkbox" value="sales_comparison"/>
+        مقارنة المبيعات
+      </label>
+      <label style="font-size:0.77rem; color:#cbd5e1; cursor:pointer;">
+        <input data-testid="pro-val-method-rental-checkbox" id="pv-m-rental" type="checkbox" value="rental_comparison"/>
+        مقارنة الإيجارات
+      </label>
+      <label style="font-size:0.77rem; color:#cbd5e1; cursor:pointer;">
+        <input data-testid="pro-val-method-cost-checkbox" id="pv-m-cost" type="checkbox" value="cost_approach"/>
+        نهج التكلفة
+      </label>
+      <label style="font-size:0.77rem; color:#cbd5e1; cursor:pointer;">
+        <input data-testid="pro-val-method-direct-cap-checkbox" id="pv-m-cap" type="checkbox" value="direct_capitalization"/>
+        الرسملة المباشرة
+      </label>
+      <label style="font-size:0.77rem; color:#cbd5e1; cursor:pointer;">
+        <input data-testid="pro-val-method-dcf-checkbox" id="pv-m-dcf" type="checkbox" value="dcf"/>
+        DCF
+      </label>
+    </div>
+
+    <!-- Run button -->
+    <button data-testid="pro-val-method-run-button"
+            onclick="pvRunMethodAnalysis()"
+            style="padding:7px 18px; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.5);
+                   color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem; margin-bottom:12px;">
+      تشغيل تحليل الطرق
+    </button>
+
+    <!-- Method output table -->
+    <table data-testid="pro-val-method-output-table" id="pv-method-output-table"
+           style="width:100%; border-collapse:collapse; font-size:0.76rem; margin-bottom:10px;">
+      <thead>
+        <tr style="background:rgba(139,92,246,0.12);">
+          <th style="padding:6px 8px; text-align:right; color:#a78bfa; border-bottom:1px solid rgba(139,92,246,0.2);">الطريقة</th>
+          <th style="padding:6px 8px; text-align:right; color:#a78bfa; border-bottom:1px solid rgba(139,92,246,0.2);">الحالة</th>
+          <th style="padding:6px 8px; text-align:right; color:#a78bfa; border-bottom:1px solid rgba(139,92,246,0.2);">القيمة الإشارية</th>
+          <th style="padding:6px 8px; text-align:right; color:#a78bfa; border-bottom:1px solid rgba(139,92,246,0.2);">تنبيهات</th>
+        </tr>
+      </thead>
+      <tbody id="pv-method-output-tbody">
+        <tr data-empty-method-row>
+          <td colspan="4" style="padding:10px; text-align:center; color:#475569; font-size:0.75rem;">
+            لا توجد نتائج طرق تقييم. اختر الطرق وشغّل التحليل.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Method readiness panel -->
+    <div data-testid="pro-val-method-readiness-panel" id="pv-method-readiness"
+         style="padding:8px 12px; background:rgba(30,30,46,0.7); border-radius:6px;
+                border:1px solid rgba(139,92,246,0.15); font-size:0.76rem; color:#94a3b8;">
+      <span data-testid="pro-val-methods-completed" id="pv-gate-methods">❓ طرق التقييم: لم يتم التشغيل</span>
+      <span style="margin:0 8px;">|</span>
+      <span data-testid="pro-val-reconciliation-completed" id="pv-gate-recon">❓ التوفيق: غير مكتمل</span>
+      <div data-testid="pro-val-method-blockers-list" id="pv-method-blockers" style="margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- ── Reconciliation Section ─────────────────────────────────────────── -->
+  <div data-testid="pro-val-reconciliation-section" id="pv-reconciliation-section"
+       style="margin-bottom:18px; padding:14px; background:rgba(30,30,46,0.6);
+              border:1px solid rgba(139,92,246,0.2); border-radius:10px;">
+    <h4 style="margin:0 0 12px; color:#a78bfa; font-size:0.9rem;">التوفيق بين الطرق</h4>
+
+    <!-- Weights -->
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">وزن مقارنة المبيعات (%)</label>
+        <input data-testid="pro-val-reconciliation-weight-sales" id="pv-rc-w-sales"
+               type="number" min="0" max="100" step="1" placeholder="0"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">وزن مقارنة الإيجارات (%)</label>
+        <input data-testid="pro-val-reconciliation-weight-rental" id="pv-rc-w-rental"
+               type="number" min="0" max="100" step="1" placeholder="0"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">وزن نهج التكلفة (%)</label>
+        <input data-testid="pro-val-reconciliation-weight-cost" id="pv-rc-w-cost"
+               type="number" min="0" max="100" step="1" placeholder="0"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">وزن الرسملة المباشرة (%)</label>
+        <input data-testid="pro-val-reconciliation-weight-direct-cap" id="pv-rc-w-cap"
+               type="number" min="0" max="100" step="1" placeholder="0"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+      <div>
+        <label style="font-size:0.72rem; color:#94a3b8;">وزن DCF (%)</label>
+        <input data-testid="pro-val-reconciliation-weight-dcf" id="pv-rc-w-dcf"
+               type="number" min="0" max="100" step="1" placeholder="0"
+               style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                      background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;"/>
+      </div>
+    </div>
+
+    <!-- Reconciliation results -->
+    <div style="display:flex; gap:12px; margin-bottom:10px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:160px;">
+        <label style="font-size:0.72rem; color:#94a3b8;">القيمة الموزونة (نظام)</label>
+        <div data-testid="pro-val-reconciliation-weighted-value" id="pv-rc-weighted"
+             style="padding:6px 10px; background:rgba(139,92,246,0.08); border-radius:5px;
+                    font-size:0.82rem; color:#a78bfa; min-height:28px;">—</div>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <label style="font-size:0.72rem; color:#94a3b8;">معامل الاختلاف CV%</label>
+        <div data-testid="pro-val-reconciliation-cv" id="pv-rc-cv"
+             style="padding:6px 10px; background:rgba(139,92,246,0.08); border-radius:5px;
+                    font-size:0.82rem; color:#94a3b8; min-height:28px;">—</div>
+      </div>
+      <div style="flex:1; min-width:160px;">
+        <label style="font-size:0.72rem; color:#94a3b8;">القيمة الاستشارية النهائية</label>
+        <div data-testid="pro-val-reconciliation-advisory-value" id="pv-rc-advisory"
+             style="padding:6px 10px; background:rgba(139,92,246,0.08); border-radius:5px;
+                    font-size:0.82rem; color:#a78bfa; min-height:28px;">—</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:8px;">
+      <label style="font-size:0.72rem; color:#94a3b8;">القيمة النهائية المختارة من قبل الخبير (اختياري)</label>
+      <input data-testid="pro-val-reconciliation-selected-value" id="pv-rc-selected"
+             type="number" min="0" step="0.01"
+             placeholder="أدخل القيمة المختارة من قبل الخبير"
+             style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                    background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem; margin-top:3px;"/>
+    </div>
+    <div style="margin-bottom:8px;">
+      <label style="font-size:0.72rem; color:#94a3b8;">مسوّغ التوفيق</label>
+      <textarea data-testid="pro-val-reconciliation-rationale" id="pv-rc-rationale"
+                rows="3" placeholder="أدخل مسوّغ التوفيق والاستنتاج الاستشاري..."
+                style="width:100%; padding:5px 8px; border-radius:5px; border:1px solid rgba(139,92,246,0.3);
+                       background:rgba(30,30,46,0.8); color:#e2e8f0; font-size:0.78rem;
+                       resize:vertical; margin-top:3px;"></textarea>
+    </div>
+
+    <div data-testid="pro-val-reconciliation-divergence-warning" id="pv-rc-divergence"
+         style="display:none; margin-bottom:8px; padding:6px 10px;
+                background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+                border-radius:5px; font-size:0.75rem; color:#f87171;"></div>
+
+    <button data-testid="pro-val-reconciliation-save-button"
+            onclick="pvSaveReconciliation()"
+            style="padding:7px 18px; background:rgba(139,92,246,0.2); border:1px solid rgba(139,92,246,0.5);
+                   color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.8rem;">
+      حفظ التوفيق (استشاري)
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ Phase E — Preliminary Approval ══ -->
+  <div data-testid="pro-val-preliminary-approval-section"
+       style="margin:20px 0 0; padding:14px 16px; background:rgba(16,185,129,0.06);
+              border:1px solid rgba(16,185,129,0.25); border-radius:8px;">
+    <div style="font-size:0.78rem; color:#6ee7b7; font-weight:600; margin-bottom:6px;">
+      الاعتماد المبدئي الداخلي (استشاري) — Phase E
+    </div>
+    <div style="font-size:0.72rem; color:#94a3b8; margin-bottom:10px; line-height:1.6;">
+      يمكن اعتماد هذه النتائج كتقرير مبدئي داخلي، لكنها لا تمثل تقريراً معتمداً نهائياً
+      ولا تصلح للاستخدام الرسمي قبل استكمال بوابات الاعتماد.
+    </div>
+
+    <div data-testid="pro-val-preliminary-approved-warning"
+         style="display:none; margin-bottom:10px; padding:8px 12px;
+                background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4);
+                border-radius:6px; font-size:0.75rem; color:#6ee7b7;">
+      تقرير مبدئي معتمد داخلياً — غير صالح للاستخدام الرسمي أو الاعتماد النهائي
+    </div>
+
+    <div style="margin-bottom:8px;">
+      <label style="font-size:0.72rem; color:#94a3b8; display:block; margin-bottom:3px;">
+        ملاحظة الاعتماد المبدئي <span style="color:#f87171;">*</span>
+      </label>
+      <textarea data-testid="pro-val-preliminary-approval-note"
+                id="pv-prelim-note" rows="3"
+                placeholder="أدخل ملاحظة الاعتماد المبدئي..."
+                style="width:100%; padding:6px 10px; background:rgba(15,23,42,0.6);
+                       border:1px solid rgba(255,255,255,0.1); border-radius:5px;
+                       color:#e2e8f0; font-size:0.8rem; resize:vertical; box-sizing:border-box;"></textarea>
+    </div>
+
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <button data-testid="pro-val-preliminary-approval-button"
+              onclick="pvSubmitPreliminaryApproval()"
+              style="padding:7px 18px; background:rgba(16,185,129,0.18);
+                     border:1px solid rgba(16,185,129,0.4);
+                     color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.8rem;">
+        اعتماد مبدئي (استشاري)
+      </button>
+      <span data-testid="pro-val-preliminary-approval-status"
+            id="pv-prelim-status"
+            style="font-size:0.72rem; color:#94a3b8; display:none;"></span>
+    </div>
+  </div>
+
 </div><!-- /ws-professional-valuation -->
 
 <script>
@@ -36760,14 +37071,195 @@ function taxSpCreateDraft() {
                 blockList.appendChild(p);
             });
         }
+        /* Phase E gate indicators */
+        var methEl  = document.getElementById('pv-gate-methods');
+        var reconEl = document.getElementById('pv-gate-recon');
+        if (methEl)  methEl.textContent  = gate.methods_completed        ? '✅ طرق التقييم: مكتملة' : '❌ طرق التقييم: غير مكتملة';
+        if (reconEl) reconEl.textContent = gate.reconciliation_completed ? '✅ التوفيق: مكتمل'     : '❌ التوفيق: غير مكتمل';
+
         /* also update main gate summary element */
         var gateEl = document.getElementById('pro-val-gate-summary');
         if (gateEl) {
             gateEl.innerHTML =
-                '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد (Phase D)</p>' +
+                '<p style="margin:0 0 2px;color:#f87171;font-weight:600;">بوابات الاعتماد (Phase E)</p>' +
                 '<p style="margin:0;color:#6b7280;">certification_ready: false — ' + pvEsc(gate.advisory_only_reason || '') + '</p>';
         }
     }
+
+    /* ══ Phase E: Method Analysis & Reconciliation helpers ══ */
+
+    /* ── Run method analysis ── */
+    window.pvRunMethodAnalysis = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+
+        var selected = [];
+        ['pv-m-sales','pv-m-rental','pv-m-cost','pv-m-cap','pv-m-dcf'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el && el.checked) selected.push(el.value);
+        });
+        if (!selected.length) { pvSetStatus('حدد طريقة واحدة على الأقل.', '#f87171'); return; }
+
+        var si = {
+            subject_area_m2:          parseFloat((document.getElementById('pv-method-area')         || {}).value) || undefined,
+            land_area_m2:             parseFloat((document.getElementById('pv-method-land-area')    || {}).value) || undefined,
+            monthly_rent:             parseFloat((document.getElementById('pv-method-monthly-rent') || {}).value) || undefined,
+            construction_cost_per_m2: parseFloat((document.getElementById('pv-method-cc')           || {}).value) || undefined,
+            land_price_per_m2:        parseFloat((document.getElementById('pv-method-lp')           || {}).value) || undefined,
+            cap_rate:                 parseFloat((document.getElementById('pv-method-cap')          || {}).value) || undefined,
+            discount_rate:            parseFloat((document.getElementById('pv-method-dr')           || {}).value) || undefined,
+            terminal_cap_rate:        parseFloat((document.getElementById('pv-method-tcr')          || {}).value) || undefined,
+            rent_growth_rate:         parseFloat((document.getElementById('pv-method-rg')           || {}).value) || undefined,
+            forecast_years:           parseInt((document.getElementById('pv-method-fy')             || {}).value) || undefined,
+            starting_noi:             parseFloat((document.getElementById('pv-method-monthly-rent') || {}).value || 0) * 12 || undefined,
+        };
+
+        var weights = {
+            sales_comparison:      parseFloat((document.getElementById('pv-rc-w-sales')  || {}).value) || 0,
+            rental_comparison:     parseFloat((document.getElementById('pv-rc-w-rental') || {}).value) || 0,
+            cost_approach:         parseFloat((document.getElementById('pv-rc-w-cost')   || {}).value) || 0,
+            direct_capitalization: parseFloat((document.getElementById('pv-rc-w-cap')    || {}).value) || 0,
+            dcf:                   parseFloat((document.getElementById('pv-rc-w-dcf')    || {}).value) || 0,
+        };
+
+        fetch('/api/professional-valuation/requests/' + rid + '/methods/run', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ selected_methods: selected, subject_inputs: si, method_weights: weights }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                window._pvLastMethodRunId = d.method_run_id || null;
+                pvRenderMethodOutputs(d.method_outputs || []);
+                pvRenderReconciliationResult(d.reconciliation_preview);
+                if (d.certification_gate_summary) pvRenderGateSummary(d.certification_gate_summary);
+                pvSetStatus('تم تشغيل التحليل بنجاح.', '#4ade80');
+            } else {
+                pvSetStatus('خطأ: ' + (d.error || 'فشل التحليل'), '#f87171');
+            }
+        })
+        .catch(function() { pvSetStatus('خطأ في الاتصال.', '#f87171'); });
+    };
+
+    /* ── Render method output table ── */
+    window.pvRenderMethodOutputs = function(outputs) {
+        var tbody = document.getElementById('pv-method-output-tbody');
+        if (!tbody) return;
+        tbody.querySelectorAll('[data-dyn-method]').forEach(function(el) { el.remove(); });
+        var empty = tbody.querySelector('[data-empty-method-row]');
+        if (empty) empty.style.display = outputs.length ? 'none' : '';
+        outputs.forEach(function(o) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-dyn-method', '1');
+            tr.style.cssText = 'border-bottom:1px solid rgba(139,92,246,0.1);';
+            var ind = o.indicated_value ? o.indicated_value.toLocaleString('ar-EG') : (o.indicated_monthly_rent ? o.indicated_monthly_rent.toLocaleString('ar-EG') + '/شهر' : '—');
+            tr.innerHTML =
+                '<td style="padding:6px 8px; color:#e2e8f0;">' + pvEsc(o.method_label_ar || o.method_key || '') + '</td>' +
+                '<td style="padding:6px 8px; color:#94a3b8;">' + pvEsc(o.method_status || '') + '</td>' +
+                '<td style="padding:6px 8px; color:#4ade80; font-weight:600;">' + pvEsc(String(ind)) + '</td>' +
+                '<td style="padding:6px 8px; color:#f87171; font-size:0.72rem;">' + pvEsc((o.warnings || []).join(' | ')) + '</td>';
+            tbody.appendChild(tr);
+        });
+    };
+
+    /* ── Render reconciliation result ── */
+    window.pvRenderReconciliationResult = function(r) {
+        if (!r) return;
+        var wEl  = document.getElementById('pv-rc-weighted');
+        var cvEl = document.getElementById('pv-rc-cv');
+        var aEl  = document.getElementById('pv-rc-advisory');
+        var dEl  = document.getElementById('pv-rc-divergence');
+        if (wEl)  wEl.textContent  = r.weighted_value ? Number(r.weighted_value).toLocaleString('ar-EG') + ' ج.م' : '—';
+        if (cvEl) cvEl.textContent = r.coefficient_of_variation != null ? r.coefficient_of_variation + '%' : '—';
+        if (aEl)  aEl.textContent  = r.selected_final_value ? Number(r.selected_final_value).toLocaleString('ar-EG') + ' ج.م' : '—';
+        if (dEl) {
+            var flags = r.divergence_flags || [];
+            if (flags.length) {
+                dEl.style.display = '';
+                dEl.textContent = flags.join(' | ');
+            } else {
+                dEl.style.display = 'none';
+            }
+        }
+    };
+
+    /* ── Save reconciliation ── */
+    window.pvSaveReconciliation = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+
+        var weights = {
+            sales_comparison:      parseFloat((document.getElementById('pv-rc-w-sales')  || {}).value) || 0,
+            rental_comparison:     parseFloat((document.getElementById('pv-rc-w-rental') || {}).value) || 0,
+            cost_approach:         parseFloat((document.getElementById('pv-rc-w-cost')   || {}).value) || 0,
+            direct_capitalization: parseFloat((document.getElementById('pv-rc-w-cap')    || {}).value) || 0,
+            dcf:                   parseFloat((document.getElementById('pv-rc-w-dcf')    || {}).value) || 0,
+        };
+        var selVal    = parseFloat((document.getElementById('pv-rc-selected') || {}).value) || null;
+        var rationale = ((document.getElementById('pv-rc-rationale') || {}).value || '').trim();
+
+        fetch('/api/professional-valuation/requests/' + rid + '/reconciliation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ method_weights: weights, selected_final_value: selVal, rationale: rationale }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                pvRenderReconciliationResult(d.reconciliation);
+                if (d.certification_gate_summary) pvRenderGateSummary(d.certification_gate_summary);
+                pvSetStatus('تم حفظ التوفيق.', '#4ade80');
+            } else {
+                pvSetStatus('خطأ: ' + (d.error || 'فشل الحفظ'), '#f87171');
+            }
+        })
+        .catch(function() { pvSetStatus('خطأ في الاتصال.', '#f87171'); });
+    };
+
+    /* ── Submit preliminary approval ── */
+    window.pvSubmitPreliminaryApproval = function() {
+        var token  = pvGetToken();
+        var rid    = window._pvCurrentRequestId;
+        var runId  = window._pvLastMethodRunId;
+        var noteEl = document.getElementById('pv-prelim-note');
+        var stEl   = document.getElementById('pv-prelim-status');
+        var warnEl = document.querySelector('[data-testid="pro-val-preliminary-approved-warning"]');
+
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        if (!runId) { pvSetStatus('نفّذ تحليل الطرق أولاً.', '#f87171'); return; }
+        var note = (noteEl ? noteEl.value : '').trim();
+        if (!note) {
+            if (stEl) { stEl.textContent = 'ملاحظة الاعتماد المبدئي مطلوبة.'; stEl.style.display = ''; stEl.style.color = '#f87171'; }
+            return;
+        }
+
+        if (stEl) { stEl.textContent = 'جارٍ الاعتماد المبدئي…'; stEl.style.display = ''; stEl.style.color = '#93c5fd'; }
+
+        fetch('/api/professional-valuation/requests/' + rid + '/preliminary-approval', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ method_run_id: runId, approval_note: note }),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.ok) {
+                if (stEl)   { stEl.textContent = '✓ اعتماد مبدئي ناجح — ' + pvEsc(d.warning_text || ''); stEl.style.color = '#6ee7b7'; }
+                if (warnEl) { warnEl.style.display = ''; }
+                if (d.certification_gate_summary) pvRenderGateSummary(d.certification_gate_summary);
+            } else {
+                if (stEl) { stEl.textContent = 'خطأ: ' + pvEsc(d.error || 'فشل الاعتماد المبدئي.'); stEl.style.color = '#f87171'; }
+            }
+        })
+        .catch(function(err) {
+            if (stEl) { stEl.textContent = 'خطأ في الاتصال: ' + pvEsc(String(err)); stEl.style.color = '#f87171'; }
+        });
+    };
 
     /* ══ Phase D: Comparable & Import helpers ══ */
 

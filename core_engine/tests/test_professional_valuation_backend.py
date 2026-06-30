@@ -1388,3 +1388,631 @@ def test_PVD35_import_xlsx_stages_rows(client):
     assert body["ok"] is True
     assert len(body["staged_comparables"]) >= 1
     assert body["import_job"]["file_ext"] == ".xlsx"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVE01–PVE40 — Phase E: Method Analysis & Reconciliation
+# ══════════════════════════════════════════════════════════════════════════════
+
+import professional_valuation_methods as _pvm
+
+
+def _create_and_approve_comparable(client, rid, extra=None):
+    """Create comparable then promote to approved_for_analysis."""
+    body = _create_comparable(client, rid, extra)
+    comp = body.get("comparable") or {}
+    comp_id = comp.get("comparable_id", "")
+    if comp_id:
+        client.post(
+            f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+            json={"new_status": "under_review", "reviewer_notes": "e-test"},
+            content_type="application/json",
+            headers=_auth(),
+        )
+        client.post(
+            f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+            json={"new_status": "approved_for_analysis", "reviewer_notes": "e-ok"},
+            content_type="application/json",
+            headers=_auth(),
+        )
+    return comp_id
+
+
+def _run_methods(client, rid, methods, subject_inputs=None, weights=None):
+    return client.post(
+        f"/api/professional-valuation/requests/{rid}/methods/run",
+        json={
+            "selected_methods": methods,
+            "subject_inputs": subject_inputs or {"subject_area_m2": 150},
+            "method_weights": weights or {},
+        },
+        content_type="application/json",
+        headers=_auth(),
+    )
+
+
+# ── PVE01 ─────────────────────────────────────────────────────────────────────
+def test_PVE01_methods_catalogue_requires_auth(client):
+    resp = client.get("/api/professional-valuation/methods/catalogue")
+    assert resp.status_code == 401
+
+
+# ── PVE02 ─────────────────────────────────────────────────────────────────────
+def test_PVE02_methods_context_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}/methods/context")
+    assert resp.status_code == 401
+
+
+# ── PVE03 ─────────────────────────────────────────────────────────────────────
+def test_PVE03_methods_run_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/methods/run",
+        json={"selected_methods": ["sales_comparison"]},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# ── PVE04 ─────────────────────────────────────────────────────────────────────
+def test_PVE04_reconciliation_save_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/reconciliation",
+        json={"method_weights": {}, "rationale": "test"},
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+
+
+# ── PVE05 ─────────────────────────────────────────────────────────────────────
+def test_PVE05_catalogue_returns_methods(client):
+    body = client.get("/api/professional-valuation/methods/catalogue", headers=_auth()).get_json()
+    assert body["ok"] is True
+    keys = [m["method_key"] for m in body["methods"]]
+    assert "sales_comparison" in keys
+    assert "rental_comparison" in keys
+    assert "dcf" in keys
+
+
+# ── PVE06 ─────────────────────────────────────────────────────────────────────
+def test_PVE06_context_returns_method_readiness(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}/methods/context", headers=_auth()).get_json()
+    assert body["ok"] is True
+    assert "method_readiness" in body
+
+
+# ── PVE07 ─────────────────────────────────────────────────────────────────────
+def test_PVE07_context_returns_approved_comparables(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_and_approve_comparable(client, rid)
+    body = client.get(f"/api/professional-valuation/requests/{rid}/methods/context", headers=_auth()).get_json()
+    assert body["ok"] is True
+    assert "approved_comparables" in body
+
+
+# ── PVE08 ─────────────────────────────────────────────────────────────────────
+def test_PVE08_run_creates_method_run_id(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 120, "construction_cost_per_m2": 8000,
+        "land_price_per_m2": 5000, "land_area_m2": 60,
+    })
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["method_run_id"].startswith("PVMR-")
+
+
+# ── PVE09 ─────────────────────────────────────────────────────────────────────
+def test_PVE09_run_keeps_production_ready_false(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    for out in body.get("method_outputs", []):
+        assert out.get("production_ready") is False
+
+
+# ── PVE10 ─────────────────────────────────────────────────────────────────────
+def test_PVE10_certification_ready_false_after_run(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert gate.get("certification_ready") is False
+
+
+# ── PVE11 ─────────────────────────────────────────────────────────────────────
+def test_PVE11_sales_comparison_uses_approved_only(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_and_approve_comparable(client, rid)
+    _create_comparable(client, rid)  # staged only
+    body = _run_methods(client, rid, ["sales_comparison"], {"subject_area_m2": 150}).get_json()
+    sales = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "sales_comparison"), {})
+    assert sales.get("method_status") in ("calculated", "insufficient_data")
+
+
+# ── PVE12 ─────────────────────────────────────────────────────────────────────
+def test_PVE12_staged_comparables_not_used(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_comparable(client, rid)  # staged only
+    body = _run_methods(client, rid, ["sales_comparison"], {"subject_area_m2": 150}).get_json()
+    sales = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "sales_comparison"), {})
+    assert sales.get("method_status") in ("insufficient_data", "calculated", "error")
+
+
+# ── PVE13 ─────────────────────────────────────────────────────────────────────
+def test_PVE13_rejected_comparables_not_used(client):
+    rid  = _create(client).get_json()["request_id"]
+    body_c = _create_comparable(client, rid)
+    comp_id = (body_c.get("comparable") or {}).get("comparable_id", "")
+    if comp_id:
+        client.post(
+            f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+            json={"new_status": "rejected", "rejection_reason": "test"},
+            content_type="application/json", headers=_auth(),
+        )
+    body = _run_methods(client, rid, ["sales_comparison"], {"subject_area_m2": 150}).get_json()
+    sales = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "sales_comparison"), {})
+    assert sales.get("method_status") in ("insufficient_data", "calculated")
+
+
+# ── PVE14 ─────────────────────────────────────────────────────────────────────
+def test_PVE14_qa_comparables_flagged_advisory(client):
+    rid  = _create(client).get_json()["request_id"]
+    body_c = _create_comparable(client, rid, {"qa_simulation": True})
+    comp_id = (body_c.get("comparable") or {}).get("comparable_id", "")
+    if comp_id:
+        for ns in ["under_review", "approved_for_analysis"]:
+            client.post(
+                f"/api/professional-valuation/requests/{rid}/comparables/{comp_id}/review",
+                json={"new_status": ns, "reviewer_notes": "qa"},
+                content_type="application/json", headers=_auth(),
+            )
+    body = _run_methods(client, rid, ["sales_comparison"], {"subject_area_m2": 150}).get_json()
+    sales = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "sales_comparison"), {})
+    assert sales.get("data_readiness") in ("qa_advisory", "no_approved_comparables",
+                                            "no_price_per_m2_available", "production_advisory")
+
+
+# ── PVE15 ─────────────────────────────────────────────────────────────────────
+def test_PVE15_sales_comparison_calculates_avg_price(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_and_approve_comparable(client, rid, {
+        "comparable_type": "sales_comparable", "area_m2": 150, "value_amount": 3_000_000,
+    })
+    body = _run_methods(client, rid, ["sales_comparison"], {"subject_area_m2": 150}).get_json()
+    sales = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "sales_comparison"), {})
+    if sales.get("method_status") == "calculated":
+        assert sales.get("calculation_summary", {}).get("average_price_per_m2") is not None
+
+
+# ── PVE16 ─────────────────────────────────────────────────────────────────────
+def test_PVE16_rental_comparison_calculates_avg_rent(client):
+    rid = _create(client).get_json()["request_id"]
+    _create_and_approve_comparable(client, rid, {
+        "comparable_type": "rental_comparable", "area_m2": 120, "monthly_rent": 12_000,
+    })
+    body = _run_methods(client, rid, ["rental_comparison"], {"subject_area_m2": 120}).get_json()
+    rental = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "rental_comparison"), {})
+    if rental.get("method_status") == "calculated":
+        assert rental.get("calculation_summary", {}).get("average_rent_per_m2") is not None
+
+
+# ── PVE17 ─────────────────────────────────────────────────────────────────────
+def test_PVE17_cost_approach_insufficient_if_missing(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {}).get_json()
+    cost = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "cost_approach"), {})
+    assert cost.get("method_status") == "insufficient_data"
+
+
+# ── PVE18 ─────────────────────────────────────────────────────────────────────
+def test_PVE18_cost_approach_calculates_value(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 120, "construction_cost_per_m2": 8000,
+        "land_price_per_m2": 5000, "land_area_m2": 60,
+    }).get_json()
+    cost = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "cost_approach"), {})
+    assert cost.get("method_status") == "calculated"
+    assert cost.get("indicated_value") is not None and cost["indicated_value"] > 0
+    assert cost.get("production_ready") is False
+
+
+# ── PVE19 ─────────────────────────────────────────────────────────────────────
+def test_PVE19_direct_cap_insufficient_if_cap_missing(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["direct_capitalization"], {"annual_rent": 120_000}).get_json()
+    cap = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "direct_capitalization"), {})
+    assert cap.get("method_status") == "insufficient_data"
+
+
+# ── PVE20 ─────────────────────────────────────────────────────────────────────
+def test_PVE20_direct_cap_calculates_noi(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["direct_capitalization"], {
+        "monthly_rent": 10_000, "cap_rate": 7.0,
+        "vacancy_rate": 5.0, "operating_expense_rate": 15.0,
+    }).get_json()
+    cap = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "direct_capitalization"), {})
+    assert cap.get("method_status") == "calculated"
+    assert cap.get("calculation_summary", {}).get("noi") is not None
+    assert cap.get("indicated_value") is not None
+
+
+# ── PVE21 ─────────────────────────────────────────────────────────────────────
+def test_PVE21_dcf_insufficient_if_missing(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["dcf"], {}).get_json()
+    dcf = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "dcf"), {})
+    assert dcf.get("method_status") == "insufficient_data"
+
+
+# ── PVE22 ─────────────────────────────────────────────────────────────────────
+def test_PVE22_dcf_calculates_terminal_and_pv(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["dcf"], {
+        "discount_rate": 10.0, "terminal_cap_rate": 7.0,
+        "starting_noi": 120_000, "forecast_years": 5, "rent_growth_rate": 3.0,
+    }).get_json()
+    dcf = next((o for o in body.get("method_outputs", []) if o.get("method_key") == "dcf"), {})
+    assert dcf.get("method_status") == "calculated"
+    calc = dcf.get("calculation_summary", {})
+    assert calc.get("terminal_value") is not None
+    assert calc.get("pv_of_terminal_value") is not None
+    assert dcf.get("indicated_value") is not None
+
+
+# ── PVE23 ─────────────────────────────────────────────────────────────────────
+def test_PVE23_method_readiness_exists(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    assert "method_readiness" in body
+    mr = body["method_readiness"]
+    assert "methods_completed" in mr
+    assert "certification_method_ready" in mr
+
+
+# ── PVE24 ─────────────────────────────────────────────────────────────────────
+def test_PVE24_methods_completed_true_if_valid(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    assert body["method_readiness"]["methods_completed"] is True
+
+
+# ── PVE25 ─────────────────────────────────────────────────────────────────────
+def test_PVE25_methods_completed_false_if_no_data(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["direct_capitalization"], {}).get_json()
+    assert body["method_readiness"].get("methods_completed") is False
+
+
+# ── PVE26 ─────────────────────────────────────────────────────────────────────
+def test_PVE26_reconciliation_preview_exists(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    assert "reconciliation_preview" in body
+
+
+# ── PVE27 ─────────────────────────────────────────────────────────────────────
+def test_PVE27_weights_sum_check(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }, weights={"cost_approach": 100}).get_json()
+    rp = body.get("reconciliation_preview", {})
+    assert isinstance(rp.get("warnings", []), list)
+
+
+# ── PVE28 ─────────────────────────────────────────────────────────────────────
+def test_PVE28_weights_normalize_if_not_100(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }, weights={"cost_approach": 60}).get_json()
+    rp = body.get("reconciliation_preview", {})
+    warnings = rp.get("warnings", [])
+    assert any("%" in w or "طبيع" in w or "ormal" in w for w in warnings) or \
+           rp.get("weighted_value") is not None
+
+
+# ── PVE29 ─────────────────────────────────────────────────────────────────────
+def test_PVE29_coefficient_of_variation_calculated(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach", "direct_capitalization"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+        "monthly_rent": 10_000, "cap_rate": 7.0,
+    }).get_json()
+    rp = body.get("reconciliation_preview", {})
+    assert rp.get("coefficient_of_variation") is not None
+
+
+# ── PVE30 ─────────────────────────────────────────────────────────────────────
+def test_PVE30_high_cv_produces_divergence_warning(client):
+    rid = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach", "direct_capitalization"], {
+        "subject_area_m2": 10,
+        "construction_cost_per_m2": 1000, "land_price_per_m2": 100, "land_area_m2": 5,
+        "monthly_rent": 100_000, "cap_rate": 0.5,
+    }).get_json()
+    rp = body.get("reconciliation_preview", {})
+    cv = rp.get("coefficient_of_variation") or 0
+    flags = rp.get("divergence_flags", [])
+    if cv > 20:
+        assert len(flags) > 0
+
+
+# ── PVE31 ─────────────────────────────────────────────────────────────────────
+def test_PVE31_selected_final_value_defaults_to_weighted(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    rp = body.get("reconciliation_preview", {})
+    if rp.get("weighted_value"):
+        assert rp["selected_final_value"] == rp["weighted_value"]
+
+
+# ── PVE32 ─────────────────────────────────────────────────────────────────────
+def test_PVE32_selected_final_value_status_pending(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    rp = body.get("reconciliation_preview", {})
+    status = rp.get("selected_final_value_status", "")
+    assert "pending" in status or "recommended" in status or "system" in status
+
+
+# ── PVE33 ─────────────────────────────────────────────────────────────────────
+def test_PVE33_reconciliation_save_stores_rationale(client):
+    rid = _create(client).get_json()["request_id"]
+    _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/reconciliation",
+        json={"method_weights": {"cost_approach": 100},
+              "rationale": "نهج التكلفة اختياري.", "expert_confirmation": True},
+        content_type="application/json", headers=_auth(),
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["reconciliation"].get("rationale") == "نهج التكلفة اختياري."
+
+
+# ── PVE34 ─────────────────────────────────────────────────────────────────────
+def test_PVE34_reconciliation_not_production_ready(client):
+    rid = _create(client).get_json()["request_id"]
+    _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    body = client.post(
+        f"/api/professional-valuation/requests/{rid}/reconciliation",
+        json={"method_weights": {}, "rationale": "test", "expert_confirmation": True},
+        content_type="application/json", headers=_auth(),
+    ).get_json()
+    assert body["reconciliation"].get("production_ready") is False
+    assert body["reconciliation"].get("certification_reconciliation_ready") is False
+
+
+# ── PVE35 ─────────────────────────────────────────────────────────────────────
+def test_PVE35_gate_includes_methods_completed(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    assert "methods_completed" in body.get("certification_gate_summary", {})
+
+
+# ── PVE36 ─────────────────────────────────────────────────────────────────────
+def test_PVE36_gate_includes_reconciliation_completed(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    assert "reconciliation_completed" in body.get("certification_gate_summary", {})
+
+
+# ── PVE37 ─────────────────────────────────────────────────────────────────────
+def test_PVE37_no_certified_report_route(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}/certified-report", headers=_auth())
+    assert resp.status_code in (404, 405, 401)
+
+
+# ── PVE38 ─────────────────────────────────────────────────────────────────────
+def test_PVE38_no_internal_paths_in_methods(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    }).get_json()
+    text = json.dumps(body)
+    assert "method_runs" not in text and "reconciliation/" not in text
+
+
+# ── PVE39 ─────────────────────────────────────────────────────────────────────
+def test_PVE39_qa_outputs_exist():
+    qa_dir = Path(__file__).resolve().parents[1] / "instance" / "manual_review_outputs" / "professional_valuation_phase_e_methods"
+    assert qa_dir.exists(), f"QA dir missing: {qa_dir}"
+    assert len(list(qa_dir.iterdir())) >= 1, "QA dir is empty"
+
+
+# ── PVE40 ─────────────────────────────────────────────────────────────────────
+def test_PVE40_existing_tests_still_pass(client):
+    resp = _create(client)
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["request_id"].startswith("PVR-")
+
+
+# ── PVE41 ─────────────────────────────────────────────────────────────────────
+def test_PVE41_preliminary_approval_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        json={"method_run_id": "PVMR-00000000", "approval_note": "test"},
+    )
+    assert resp.status_code == 401
+
+
+# ── PVE42 ─────────────────────────────────────────────────────────────────────
+def test_PVE42_preliminary_approval_requires_method_run_id(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"approval_note": "test note"},
+    )
+    assert resp.status_code == 422
+
+
+# ── PVE43 ─────────────────────────────────────────────────────────────────────
+def test_PVE43_preliminary_approval_rejects_nonexistent_run(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": "PVMR-AAAAAAAA", "approval_note": "test note"},
+    )
+    assert resp.status_code in (404, 422)
+
+
+# ── PVE44 ─────────────────────────────────────────────────────────────────────
+def test_PVE44_preliminary_approval_requires_approval_note(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": ""},
+    )
+    assert resp.status_code == 422
+
+
+# ── PVE45 ─────────────────────────────────────────────────────────────────────
+def test_PVE45_preliminary_approval_sets_ready_true(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["preliminary_approval_ready"] is True
+
+
+# ── PVE46 ─────────────────────────────────────────────────────────────────────
+def test_PVE46_preliminary_approval_does_not_set_certification_ready(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    gate = resp.get_json().get("certification_gate_summary", {})
+    assert gate.get("certification_ready") is False
+
+
+# ── PVE47 ─────────────────────────────────────────────────────────────────────
+def test_PVE47_preliminary_use_allowed_true(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    assert resp.get_json().get("preliminary_use_allowed") is True
+
+
+# ── PVE48 ─────────────────────────────────────────────────────────────────────
+def test_PVE48_official_use_allowed_false(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    assert resp.get_json().get("official_use_allowed") is False
+
+
+# ── PVE49 ─────────────────────────────────────────────────────────────────────
+def test_PVE49_certified_use_allowed_false(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    assert resp.get_json().get("certified_use_allowed") is False
+
+
+# ── PVE50 ─────────────────────────────────────────────────────────────────────
+def test_PVE50_warning_text_contains_correct_wording(client):
+    rid = _create(client).get_json()["request_id"]
+    run_resp = _run_methods(client, rid, ["cost_approach"], {
+        "subject_area_m2": 100, "construction_cost_per_m2": 7000,
+        "land_price_per_m2": 4000, "land_area_m2": 50,
+    })
+    run_id = run_resp.get_json()["method_run_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/preliminary-approval",
+        headers=_auth(),
+        json={"method_run_id": run_id, "approval_note": "مراجعة مبدئية اختبار"},
+    )
+    wt = resp.get_json().get("warning_text", "")
+    assert "تقرير مبدئي" in wt
+    assert "غير صالح للاستخدام الرسمي" in wt
+

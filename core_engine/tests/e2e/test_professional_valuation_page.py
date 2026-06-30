@@ -451,3 +451,218 @@ def test_PVP42_certified_button_still_disabled_in_phase_d(page: Page, live_serve
     btn = page.locator('[data-testid="pro-val-generate-certified"]')
     expect(btn).to_have_count(1)
     assert btn.is_disabled(), "Certified report button must remain disabled in Phase D"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVP43–PVP58 — Phase E: Method Analysis & Reconciliation E2E
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVP43_method_section_visible(page: Page, live_server: str) -> None:
+    """PVP43: Method analysis section is visible in the professional valuation workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP44_method_catalogue_visible(page: Page, live_server: str) -> None:
+    """PVP44: Method catalogue div is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-catalogue"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP45_subject_area_input_visible(page: Page, live_server: str) -> None:
+    """PVP45: Subject area input is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-subject-area-input"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP46_monthly_rent_input_visible(page: Page, live_server: str) -> None:
+    """PVP46: Monthly rent input is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-monthly-rent-input"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP47_cap_rate_input_visible(page: Page, live_server: str) -> None:
+    """PVP47: Cap rate input is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-cap-rate-input"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP48_dcf_inputs_visible(page: Page, live_server: str) -> None:
+    """PVP48: DCF-specific inputs (discount rate, terminal cap rate, forecast years) are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    expect(page.locator('[data-testid="pro-val-method-discount-rate-input"]')).to_have_count(1)
+    expect(page.locator('[data-testid="pro-val-method-terminal-cap-rate-input"]')).to_have_count(1)
+    expect(page.locator('[data-testid="pro-val-method-forecast-years-input"]')).to_have_count(1)
+
+
+def test_PVP49_method_checkboxes_visible(page: Page, live_server: str) -> None:
+    """PVP49: All five method selection checkboxes are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for testid in [
+        "pro-val-method-sales-checkbox",
+        "pro-val-method-rental-checkbox",
+        "pro-val-method-cost-checkbox",
+        "pro-val-method-direct-cap-checkbox",
+        "pro-val-method-dcf-checkbox",
+    ]:
+        expect(page.locator(f'[data-testid="{testid}"]')).to_have_count(1)
+
+
+def test_PVP50_run_button_visible(page: Page, live_server: str) -> None:
+    """PVP50: Run analysis button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-run-button"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP51_method_output_table_visible(page: Page, live_server: str) -> None:
+    """PVP51: Method output table is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-output-table"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP52_method_readiness_panel_visible(page: Page, live_server: str) -> None:
+    """PVP52: Method readiness panel is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-method-readiness-panel"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP53_reconciliation_section_visible(page: Page, live_server: str) -> None:
+    """PVP53: Reconciliation section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-reconciliation-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP54_reconciliation_weight_fields_visible(page: Page, live_server: str) -> None:
+    """PVP54: Reconciliation weight inputs are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for testid in [
+        "pro-val-reconciliation-weight-sales",
+        "pro-val-reconciliation-weight-rental",
+        "pro-val-reconciliation-weight-cost",
+        "pro-val-reconciliation-weight-direct-cap",
+        "pro-val-reconciliation-weight-dcf",
+    ]:
+        expect(page.locator(f'[data-testid="{testid}"]')).to_have_count(1)
+
+
+def test_PVP55_weighted_value_display_visible(page: Page, live_server: str) -> None:
+    """PVP55: Weighted value display is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-reconciliation-weighted-value"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP56_selected_value_input_visible(page: Page, live_server: str) -> None:
+    """PVP56: Selected final value input is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-reconciliation-selected-value"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP57_divergence_warning_placeholder_visible(page: Page, live_server: str) -> None:
+    """PVP57: Divergence warning element is in the DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-reconciliation-divergence-warning"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP58_certified_button_still_disabled_in_phase_e(page: Page, live_server: str) -> None:
+    """PVP58: Phase E regression — certified report button remains disabled."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button must remain disabled in Phase E"
+
+
+
+def test_PVP59_preliminary_approval_section_visible(page: Page, live_server: str) -> None:
+    """PVP59: Preliminary approval section is present in Phase E."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-approval-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP60_preliminary_approval_note_present(page: Page, live_server: str) -> None:
+    """PVP60: Preliminary approval note textarea is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-approval-note"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP61_preliminary_approval_button_present(page: Page, live_server: str) -> None:
+    """PVP61: Preliminary approval submit button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-approval-button"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP62_preliminary_approval_status_present(page: Page, live_server: str) -> None:
+    """PVP62: Preliminary approval status indicator is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-approval-status"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP63_preliminary_approved_warning_in_dom(page: Page, live_server: str) -> None:
+    """PVP63: Preliminary approved warning element exists in DOM (initially hidden)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-approved-warning"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP64_certified_still_disabled_after_preliminary_section(page: Page, live_server: str) -> None:
+    """PVP64: Regression — certified report button remains disabled with preliminary approval section present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified button must remain disabled in Phase E"
+
+
+def test_PVP65_no_official_use_wording_in_preliminary_section(page: Page, live_server: str) -> None:
+    """PVP65: Preliminary approval section must not claim certified/official use."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    section = page.locator('[data-testid="pro-val-preliminary-approval-section"]')
+    expect(section).to_have_count(1)
+    text = section.inner_text()
+    assert "تقرير معتمد نهائياً" not in text
+    assert "صالح للتقديم الرسمي" not in text
+

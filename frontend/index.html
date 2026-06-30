@@ -37299,8 +37299,285 @@ function taxSpCreateDraft() {
       if (wb)  wb.disabled  = true;
     }).catch(function() {});
   };
+
+  /* ── Phase H: Certified outputs helpers ─────────────────────────────────── */
+
+  function _pvhBaseUrl(rid) {
+    return '/api/professional-valuation/requests/' + encodeURIComponent(rid);
+  }
+
+  function _pvhToken() {
+    return window._pvToken || window.localStorage.getItem('pvToken') || '';
+  }
+
+  function _pvhSetStatus(msg, color) {
+    var el = document.getElementById('pvh-gen-status');
+    if (el) { el.textContent = msg; el.style.color = color || '#555'; }
+  }
+
+  function _pvhRenderGate(gate) {
+    var ready = gate && gate.certification_ready;
+    var el = document.getElementById('pvh-gate-status');
+    if (el) {
+      el.textContent = ready
+        ? 'معتمد ✓ — جميع البوابات مكتملة'
+        : ('غير معتمد — ' + (gate && gate.certification_status || 'not_ready'));
+      el.style.color = ready ? '#1a7a4a' : '#b43200';
+    }
+    var bEl = document.getElementById('pvh-blockers');
+    if (bEl) {
+      var blockers = (gate && gate.blockers) || [];
+      bEl.textContent = blockers.length
+        ? blockers.join(' | ')
+        : (ready ? '✅ لا توجد موانع' : '—');
+      bEl.style.color = blockers.length ? '#b43200' : '#1a7a4a';
+    }
+    var reportAllowed  = ready && gate && gate.final_report_generation_allowed;
+    var workbookAllowed = ready && gate && gate.final_workbook_generation_allowed;
+    var pdfBtn = document.getElementById('pvh-generate-pdf-btn');
+    var wbBtn  = document.getElementById('pvh-generate-wb-btn');
+    if (pdfBtn) { pdfBtn.disabled = !reportAllowed;  pdfBtn.style.opacity  = reportAllowed  ? '1' : '0.65'; }
+    if (wbBtn)  { wbBtn.disabled  = !workbookAllowed; wbBtn.style.opacity  = workbookAllowed ? '1' : '0.65'; }
+  }
+
+  function _pvhRenderRegistry(outputs) {
+    var tbody = document.getElementById('pvh-registry-body');
+    if (!tbody) return;
+    if (!outputs || !outputs.length) {
+      tbody.innerHTML = '<tr data-testid="pro-val-output-registry-row"><td colspan="6" style="padding:8px;color:#94a3b8;text-align:center;">لا توجد مخرجات بعد</td></tr>';
+      return;
+    }
+    var html = '';
+    outputs.forEach(function(o) {
+      var hash = (o.file_hash_sha256 || '—').substring(0, 16) + (o.file_hash_sha256 ? '...' : '');
+      html += '<tr data-testid="pro-val-output-registry-row" style="border-bottom:1px solid #e8eaf0;">'
+        + '<td style="padding:4px 6px;font-size:0.82em;direction:ltr;">' + pvEsc(o.output_id || '—') + '</td>'
+        + '<td style="padding:4px 6px;">' + pvEsc(o.output_type || '—') + '</td>'
+        + '<td style="padding:4px 6px;">' + pvEsc(String(o.output_version || '—')) + '</td>'
+        + '<td style="padding:4px 6px;">' + pvEsc(o.output_status || '—') + '</td>'
+        + '<td style="padding:4px 6px;font-size:0.82em;">' + pvEsc((o.generated_at || '—').substring(0, 19)) + '</td>'
+        + '<td style="padding:4px 6px;font-size:0.80em;direction:ltr;">' + pvEsc(hash) + '</td>'
+        + '</tr>';
+    });
+    tbody.innerHTML = html;
+    var dlPdf = document.getElementById('pvh-download-pdf-btn');
+    var dlWb  = document.getElementById('pvh-download-wb-btn');
+    var hasPdf = outputs.some(function(o) { return o.output_type === 'certified_pdf' && o.file_available; });
+    var hasWb  = outputs.some(function(o) { return o.output_type === 'final_workbook' && o.file_available; });
+    if (dlPdf) { dlPdf.disabled = !hasPdf; dlPdf.style.opacity = hasPdf ? '1' : '0.65'; }
+    if (dlWb)  { dlWb.disabled  = !hasWb;  dlWb.style.opacity  = hasWb  ? '1' : '0.65'; }
+  }
+
+  function pvhLoadOutputs() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) return;
+    var tok = _pvhToken();
+    if (!tok) return;
+    fetch(_pvhBaseUrl(rid) + '/outputs', {
+      headers: { 'Authorization': 'Bearer ' + tok }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.ok) return;
+      _pvhRenderGate(d.gate_summary || {});
+      _pvhRenderRegistry(d.outputs || []);
+    })
+    .catch(function() {});
+  }
+
+  window.pvhGenerateCertifiedReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvhSetStatus('الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvhToken();
+    if (!tok) { _pvhSetStatus('الرجاء تسجيل الدخول أولاً', '#b43200'); return; }
+    _pvhSetStatus('جاري توليد التقرير المعتمد...', '#2d6a9f');
+    fetch(_pvhBaseUrl(rid) + '/certified-report', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        _pvhSetStatus(
+          'تم توليد التقرير: ' + pvEsc(d.output && d.output.output_id || '—')
+          + (d.generation_success ? ' ✓' : ' (توليد الملف فشل — السجل مُنشأ)'),
+          d.generation_success ? '#1a7a4a' : '#7a5500'
+        );
+        pvhLoadOutputs();
+      } else {
+        _pvhSetStatus('خطأ: ' + pvEsc(d.error || 'فشل التوليد'), '#b43200');
+      }
+    })
+    .catch(function() { _pvhSetStatus('خطأ في الاتصال', '#b43200'); });
+  };
+
+  window.pvhGenerateFinalWorkbook = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvhSetStatus('الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvhToken();
+    if (!tok) { _pvhSetStatus('الرجاء تسجيل الدخول أولاً', '#b43200'); return; }
+    _pvhSetStatus('جاري توليد ملف Excel النهائي...', '#2d6a9f');
+    fetch(_pvhBaseUrl(rid) + '/final-workbook', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        _pvhSetStatus(
+          'تم توليد الملف: ' + pvEsc(d.output && d.output.output_id || '—') + ' ✓',
+          '#1a7a4a'
+        );
+        pvhLoadOutputs();
+      } else {
+        _pvhSetStatus('خطأ: ' + pvEsc(d.error || 'فشل التوليد'), '#b43200');
+      }
+    })
+    .catch(function() { _pvhSetStatus('خطأ في الاتصال', '#b43200'); });
+  };
+
+  window.pvhDownloadCertifiedReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvhSetStatus('الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvhToken();
+    if (!tok) { _pvhSetStatus('الرجاء تسجيل الدخول أولاً', '#b43200'); return; }
+    fetch(_pvhBaseUrl(rid) + '/certified-report', {
+      headers: { 'Authorization': 'Bearer ' + tok }
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('download_failed');
+      return r.blob();
+    })
+    .then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a   = document.createElement('a');
+      a.href  = url;
+      a.download = 'professional_valuation_certified_report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
+    .catch(function() { _pvhSetStatus('تعذّر تحميل التقرير', '#b43200'); });
+  };
+
+  window.pvhDownloadFinalWorkbook = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvhSetStatus('الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvhToken();
+    if (!tok) { _pvhSetStatus('الرجاء تسجيل الدخول أولاً', '#b43200'); return; }
+    fetch(_pvhBaseUrl(rid) + '/final-workbook', {
+      headers: { 'Authorization': 'Bearer ' + tok }
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('download_failed');
+      return r.blob();
+    })
+    .then(function(blob) {
+      var url = URL.createObjectURL(blob);
+      var a   = document.createElement('a');
+      a.href  = url;
+      a.download = 'professional_valuation_final_workbook.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    })
+    .catch(function() { _pvhSetStatus('تعذّر تحميل الملف', '#b43200'); });
+  };
+
 })();
 </script>
+
+<!-- ══ Phase H: Protected Certified Outputs ══════════════════════════════════ -->
+<div data-testid="pro-val-certified-output-section"
+     style="margin:18px 0 0 0;padding:14px 16px;border:1.5px solid #1f4e78;border-radius:6px;background:#f7faff;">
+  <h4 style="color:#1f4e78;font-size:1.05em;margin-bottom:10px;">
+    المخرجات المعتمدة النهائية — Phase H
+  </h4>
+
+  <!-- Warning banner -->
+  <div data-testid="pro-val-certified-output-warning"
+       style="background:#fff3cd;border:1px solid #e8c87a;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:0.88em;color:#7a5500;">
+    لا يمكن توليد التقرير المعتمد أو ملف Excel النهائي إلا بعد اكتمال جميع بوابات الاعتماد.
+  </div>
+
+  <!-- Gate status -->
+  <div style="margin-bottom:8px;">
+    <span style="font-weight:600;color:#2d6a9f;">حالة بوابة الاعتماد:</span>
+    <span data-testid="pro-val-certified-output-gate-status"
+          id="pvh-gate-status"
+          style="margin-right:6px;font-size:0.9em;color:#555;">جاري التحقق...</span>
+  </div>
+
+  <!-- Blockers -->
+  <div style="margin-bottom:10px;">
+    <span style="font-weight:600;color:#b43200;font-size:0.9em;">الموانع:</span>
+    <div data-testid="pro-val-certified-output-blockers"
+         id="pvh-blockers"
+         style="font-size:0.85em;color:#b43200;margin-top:2px;min-height:18px;">—</div>
+  </div>
+
+  <!-- Action buttons -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+    <button data-testid="pro-val-generate-certified-report"
+            id="pvh-generate-pdf-btn"
+            disabled
+            onclick="pvhGenerateCertifiedReport()"
+            style="background:#1f4e78;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+      توليد التقرير المعتمد (PDF)
+    </button>
+    <button data-testid="pvh-download-certified-report"
+            id="pvh-download-pdf-btn"
+            disabled
+            onclick="pvhDownloadCertifiedReport()"
+            style="background:#2d6a9f;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+      تحميل التقرير المعتمد
+    </button>
+    <button data-testid="pro-val-generate-final-workbook"
+            id="pvh-generate-wb-btn"
+            disabled
+            onclick="pvhGenerateFinalWorkbook()"
+            style="background:#1a7a4a;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+      توليد ملف Excel النهائي
+    </button>
+    <button data-testid="pvh-download-final-workbook"
+            id="pvh-download-wb-btn"
+            disabled
+            onclick="pvhDownloadFinalWorkbook()"
+            style="background:#1a5a3a;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+      تحميل ملف Excel النهائي
+    </button>
+  </div>
+
+  <!-- Generation status -->
+  <div id="pvh-gen-status" style="font-size:0.85em;color:#555;margin-bottom:10px;min-height:18px;"></div>
+
+  <!-- Output registry table -->
+  <div style="overflow-x:auto;margin-top:8px;">
+    <table data-testid="pro-val-output-registry-table"
+           id="pvh-registry-table"
+           style="width:100%;border-collapse:collapse;font-size:0.84em;">
+      <thead>
+        <tr style="background:#1f4e78;color:#fff;">
+          <th style="padding:5px 8px;text-align:right;">معرف المخرجات</th>
+          <th style="padding:5px 8px;text-align:right;">النوع</th>
+          <th data-testid="pro-val-output-version" style="padding:5px 8px;text-align:right;">النسخة</th>
+          <th data-testid="pro-val-output-status" style="padding:5px 8px;text-align:right;">الحالة</th>
+          <th data-testid="pro-val-output-generated-at" style="padding:5px 8px;text-align:right;">تاريخ الإنشاء</th>
+          <th data-testid="pro-val-output-hash" style="padding:5px 8px;text-align:right;">SHA-256</th>
+        </tr>
+      </thead>
+      <tbody id="pvh-registry-body">
+        <tr data-testid="pro-val-output-registry-row">
+          <td colspan="6" style="padding:8px;color:#94a3b8;text-align:center;">لا توجد مخرجات بعد</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div><!-- /pro-val-certified-output-section -->
 
 </div><!-- /ws-professional-valuation -->
 

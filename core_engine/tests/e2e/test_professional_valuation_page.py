@@ -1083,3 +1083,195 @@ def test_PVP110_phase_a_to_f_sections_still_visible(page: Page, live_server: str
     ]:
         el = page.locator(f'[data-testid="{tid}"]')
         expect(el).to_have_count(1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVP111–PVP130 — Phase H: Protected Certified Outputs
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVP111_certified_output_section_visible(page: Page, live_server: str) -> None:
+    """PVP111: Phase H certified output section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP112_certified_output_warning_visible(page: Page, live_server: str) -> None:
+    """PVP112: Phase H warning banner is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-warning"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP113_gate_status_element_present(page: Page, live_server: str) -> None:
+    """PVP113: Gate status display element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-gate-status"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP114_blockers_element_present(page: Page, live_server: str) -> None:
+    """PVP114: Blockers display element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-blockers"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP115_generate_certified_report_button_visible(page: Page, live_server: str) -> None:
+    """PVP115: Generate certified report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-certified-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP116_download_certified_report_button_visible(page: Page, live_server: str) -> None:
+    """PVP116: Phase H download certified report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pvh-download-certified-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP117_generate_final_workbook_button_visible(page: Page, live_server: str) -> None:
+    """PVP117: Generate final workbook button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-final-workbook"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP118_download_final_workbook_button_visible(page: Page, live_server: str) -> None:
+    """PVP118: Phase H download final workbook button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pvh-download-final-workbook"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP119_output_registry_table_visible(page: Page, live_server: str) -> None:
+    """PVP119: Output registry table is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-registry-table"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP120_output_version_column_present(page: Page, live_server: str) -> None:
+    """PVP120: Output version column header is present in table."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-version"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP121_output_hash_column_present(page: Page, live_server: str) -> None:
+    """PVP121: Output hash column header is present in table."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-hash"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP122_output_generated_at_column_present(page: Page, live_server: str) -> None:
+    """PVP122: Output generated_at column header is present in table."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-generated-at"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP123_output_status_column_present(page: Page, live_server: str) -> None:
+    """PVP123: Output status column header is present in table."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-status"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP124_generate_buttons_disabled_by_default(page: Page, live_server: str) -> None:
+    """PVP124: Both generate buttons are disabled when gate is not ready."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    pdf_btn = page.locator('[data-testid="pro-val-generate-certified-report"]')
+    wb_btn  = page.locator('[data-testid="pro-val-generate-final-workbook"]')
+    assert pdf_btn.is_disabled(), "Generate PDF button must be disabled by default"
+    assert wb_btn.is_disabled(),  "Generate workbook button must be disabled by default"
+
+
+def test_PVP125_download_buttons_disabled_by_default(page: Page, live_server: str) -> None:
+    """PVP125: Phase H download buttons disabled when no outputs generated."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    dl_pdf = page.locator('[data-testid="pvh-download-certified-report"]')
+    dl_wb  = page.locator('[data-testid="pvh-download-final-workbook"]')
+    assert dl_pdf.is_disabled(), "Download PDF button must be disabled by default"
+    assert dl_wb.is_disabled(),  "Download workbook button must be disabled by default"
+
+
+def test_PVP126_phase_g_certified_button_remains_disabled(page: Page, live_server: str) -> None:
+    """PVP126: Phase G pro-val-generate-certified button remains disabled in Phase H."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Phase G certified button must remain disabled in Phase H"
+
+
+def test_PVP127_no_internal_path_in_professional_valuation_dom(page: Page, live_server: str) -> None:
+    """PVP127: No internal storage path text is visible in the professional valuation workspace DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws_text = ws.inner_text()
+    assert "instance/professional_valuation" not in ws_text
+    assert "certified_outputs/" not in ws_text
+    assert ".jsonl" not in ws_text
+
+
+def test_PVP128_phase_h_warning_text_visible(page: Page, live_server: str) -> None:
+    """PVP128: Phase H warning text contains expected Arabic message."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-warning"]')
+    text = el.inner_text()
+    assert "بعد اكتمال" in text or "بوابات الاعتماد" in text
+
+
+def test_PVP129_earlier_phase_sections_still_visible(page: Page, live_server: str) -> None:
+    """PVP129: All prior phase sections remain visible after Phase H additions."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in [
+        "pro-val-workspace",
+        "pro-val-hbu-section",
+        "pro-val-legal-section",
+        "pro-val-esg-section",
+        "pro-val-swot-section",
+        "pro-val-peer-review-section",
+        "pro-val-signature-section",
+        "pro-val-final-certification-section",
+        "pro-val-certified-output-section",
+    ]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)
+
+
+def test_PVP130_output_registry_row_present(page: Page, live_server: str) -> None:
+    """PVP130: Output registry row element present in DOM (initially shows no-outputs message)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-output-registry-row"]')
+    expect(el).to_have_count(1)

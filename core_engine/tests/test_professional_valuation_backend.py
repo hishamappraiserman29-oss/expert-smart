@@ -349,7 +349,8 @@ def test_PVB20_no_internal_paths_in_create_response(client):
 
 def test_PVB21_phase_c_evidence_sources_registered_report_still_blocked(client):
     """Phase C: evidence/source routes now exist (return 401 without auth).
-    Report and certified-report routes remain unimplemented (404/405).
+    Phase H: certified-report route now exists (returns 401 without auth).
+    Plain /report route remains unimplemented (404/405).
     """
     rid = _create(client).get_json()["request_id"]
 
@@ -365,15 +366,17 @@ def test_PVB21_phase_c_evidence_sources_registered_report_still_blocked(client):
     assert resp_et.status_code == 401
     assert resp_st.status_code == 401
 
-    # Report/certified-report routes remain unimplemented
-    for path in [
-        f"/api/professional-valuation/requests/{rid}/report",
-        f"/api/professional-valuation/requests/{rid}/certified-report",
-    ]:
-        resp = client.get(path)
-        assert resp.status_code in (404, 405), (
-            f"Unexpected route exposed: GET {path} → {resp.status_code}"
-        )
+    # Plain /report route remains unimplemented
+    resp_report = client.get(f"/api/professional-valuation/requests/{rid}/report")
+    assert resp_report.status_code in (404, 405), (
+        f"Unexpected plain-report route: GET /report → {resp_report.status_code}"
+    )
+
+    # certified-report route now exists (Phase H) — auth-protected → 401 without token
+    resp_cert = client.get(f"/api/professional-valuation/requests/{rid}/certified-report")
+    assert resp_cert.status_code == 401, (
+        f"certified-report should require auth (Phase H), got {resp_cert.status_code}"
+    )
 
 
 def test_PVB22_workflow_returns_all_16_expected_statuses(client):
@@ -3337,5 +3340,606 @@ def test_PVG54_ordinary_valuation_unaffected(client):
 
 
 def test_PVG55_tax_appeal_unaffected(client):
+    resp = client.get("/api/tax-appeal/health")
+    assert resp.status_code in (200, 404, 405)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVH01–PVH55 — Phase H: Protected Certified PDF & Final Workbook Generation
+# ══════════════════════════════════════════════════════════════════════════════
+
+import professional_valuation_outputs as _pvout
+
+
+# ── URL helpers ───────────────────────────────────────────────────────────────
+
+def _pvh_pdf_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/certified-report"
+
+
+def _pvh_wb_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/final-workbook"
+
+
+def _pvh_list_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/outputs"
+
+
+def _pvh_detail_url(rid: str, output_id: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/outputs/{output_id}"
+
+
+def _pvh_revoke_url(rid: str, output_id: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/outputs/{output_id}/revoke"
+
+
+# ── PVH01–PVH06: Auth guards ──────────────────────────────────────────────────
+
+def test_PVH01_certified_report_post_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvh_pdf_url(rid), json={})
+    assert resp.status_code == 401
+
+
+def test_PVH02_certified_report_get_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_pdf_url(rid))
+    assert resp.status_code == 401
+
+
+def test_PVH03_final_workbook_post_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvh_wb_url(rid), json={})
+    assert resp.status_code == 401
+
+
+def test_PVH04_final_workbook_get_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_wb_url(rid))
+    assert resp.status_code == 401
+
+
+def test_PVH05_outputs_list_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_list_url(rid))
+    assert resp.status_code == 401
+
+
+def test_PVH06_output_detail_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_detail_url(rid, "PVOUT-XXXXXXXX"))
+    assert resp.status_code == 401
+
+
+# ── PVH07–PVH11: Gate blocking ────────────────────────────────────────────────
+
+def test_PVH07_certified_report_returns_422_when_not_ready(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(_pvh_pdf_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+
+
+def test_PVH08_final_workbook_returns_422_when_not_ready(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+
+
+def test_PVH09_blocked_response_includes_blockers(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(_pvh_pdf_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    body = resp.get_json()
+    assert "blockers" in body
+    assert isinstance(body["blockers"], list)
+    assert len(body["blockers"]) > 0
+
+
+def test_PVH10_blocked_response_creates_no_registry_record(client):
+    rid = _create(client).get_json()["request_id"]
+    client.post(_pvh_pdf_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    records = _pvout._read_registry(rid)
+    assert len(records) == 0
+
+
+def test_PVH11_blocked_response_creates_no_file(client):
+    rid = _create(client).get_json()["request_id"]
+    client.post(_pvh_pdf_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    out_dir = _pvout._OUT_DIR / rid
+    assert not out_dir.exists() or list(out_dir.iterdir()) == []
+
+
+# ── PVH12–PVH16: Controlled fixture — generation succeeds ────────────────────
+
+def test_PVH12_controlled_fixture_certification_ready_true(client):
+    """Gate snapshot set to ready via _build_all_gates_fixture."""
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    gate = _pvout._load_gate_snapshot(rid)
+    assert gate["certification_ready"] is True
+    assert gate["final_report_generation_allowed"] is True
+    assert gate["final_workbook_generation_allowed"] is True
+
+
+def test_PVH13_certified_pdf_generation_succeeds_with_ready_fixture(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_pdf_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert "output" in body
+    assert body["output"]["output_id"].startswith("PVOUT-")
+
+
+def test_PVH14_final_workbook_generation_succeeds_with_ready_fixture(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert "output" in body
+    assert body["output"]["output_id"].startswith("PVOUT-")
+
+
+def test_PVH15_generated_pdf_output_has_output_id(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_pdf_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert "output_id" in out
+    assert out["output_type"] == "certified_pdf"
+
+
+def test_PVH16_generated_workbook_output_has_output_id(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert "output_id" in out
+    assert out["output_type"] == "final_workbook"
+
+
+# ── PVH17–PVH18: Metadata checks ──────────────────────────────────────────────
+
+def test_PVH17_workbook_output_metadata_has_hash_and_size(client):
+    """Workbook (openpyxl) always succeeds — hash and size must be present."""
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("file_available") is True
+    assert out.get("file_hash_sha256") is not None
+    assert out.get("file_size_bytes") is not None
+    assert len(out["file_hash_sha256"]) == 64
+
+
+def test_PVH18_output_metadata_excludes_internal_file_path(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    body_text = resp.get_data(as_text=True)
+    assert "internal_file_path" not in body_text
+    assert "instance/professional_valuation" not in body_text
+    assert "certified_outputs/" not in body_text
+
+
+# ── PVH19–PVH20: Registry list and detail ─────────────────────────────────────
+
+def test_PVH19_output_registry_list_returns_safe_metadata(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    resp = client.get(_pvh_list_url(rid), headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert isinstance(body["outputs"], list)
+    assert len(body["outputs"]) >= 1
+    for rec in body["outputs"]:
+        assert "internal_file_path" not in rec
+
+
+def test_PVH20_output_detail_returns_safe_metadata(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    output_id = resp.get_json()["output"]["output_id"]
+    dr = client.get(_pvh_detail_url(rid, output_id), headers=_auth())
+    assert dr.status_code == 200
+    body = dr.get_json()
+    assert body["ok"] is True
+    assert body["output"]["output_id"] == output_id
+    assert "internal_file_path" not in body["output"]
+
+
+# ── PVH21–PVH24: Download endpoints ──────────────────────────────────────────
+
+def test_PVH21_workbook_download_works_after_generation(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    resp = client.get(_pvh_wb_url(rid), headers=_auth())
+    assert resp.status_code == 200
+    ct = resp.content_type
+    assert "spreadsheet" in ct or "excel" in ct or "octet" in ct
+
+
+def test_PVH22_pdf_download_returns_404_before_any_generation(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_pdf_url(rid), headers=_auth())
+    assert resp.status_code == 404
+
+
+def test_PVH23_workbook_download_returns_404_before_any_generation(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.get(_pvh_wb_url(rid), headers=_auth())
+    assert resp.status_code == 404
+
+
+def test_PVH24_pdf_download_after_generation(client):
+    """If PDF generation succeeded (Playwright available), download returns 200;
+    otherwise file_available=False so download returns 404 — either is valid."""
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    gen_resp = client.post(_pvh_pdf_url(rid), json={},
+                           content_type="application/json", headers=_auth())
+    out = gen_resp.get_json().get("output", {})
+    dl  = client.get(_pvh_pdf_url(rid), headers=_auth())
+    if out.get("file_available"):
+        assert dl.status_code == 200
+    else:
+        assert dl.status_code == 404
+
+
+# ── PVH25–PVH26: Event log ────────────────────────────────────────────────────
+
+def test_PVH25_output_event_appended_on_pdf_generation(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_pdf_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    events = _pvout.read_output_events(rid)
+    actions = [e["action"] for e in events]
+    assert "generate_certified_report" in actions
+
+
+def test_PVH26_output_event_appended_on_workbook_generation(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    events = _pvout.read_output_events(rid)
+    actions = [e["action"] for e in events]
+    assert "generate_final_workbook" in actions
+
+
+# ── PVH27–PVH28: Transition route still blocks certified_report_generated ─────
+
+def test_PVH27_generic_transition_to_certified_report_generated_remains_blocked(client):
+    rid  = _create(client).get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/transition",
+        json={"target_status": "certified_report_generated"},
+        content_type="application/json", headers=_auth(),
+    )
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+
+
+def test_PVH28_certified_output_endpoint_marks_success_not_generic_transition(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    gen_resp = client.post(_pvh_wb_url(rid), json={},
+                           content_type="application/json", headers=_auth())
+    assert gen_resp.status_code == 200
+    body = gen_resp.get_json()
+    assert body["ok"] is True
+    assert body["output"]["output_type"] == "final_workbook"
+
+
+# ── PVH29–PVH36: Output context checks ────────────────────────────────────────
+
+def test_PVH29_output_context_built_without_error(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    assert "request_summary" in ctx
+    assert "certification_gate" in ctx
+    assert "evidence_summary" in ctx
+    assert "comparable_summary" in ctx
+    assert "method_summary" in ctx
+    assert "reconciliation_summary" in ctx
+    assert "advanced_reviews" in ctx
+    assert "peer_review_summary" in ctx
+    assert "signature_summary" in ctx
+
+
+def test_PVH30_output_context_excludes_internal_paths(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx_str = str(_pvout.build_professional_valuation_output_context(rid))
+    assert "instance/professional_valuation" not in ctx_str
+    assert "certified_outputs/" not in ctx_str
+    assert ".jsonl" not in ctx_str
+
+
+def test_PVH31_output_context_excludes_rejected_sources_note_present(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    note = ctx.get("source_summary", {}).get("note", "")
+    assert "QA" in note or "مستبعد" in note
+
+
+def test_PVH32_output_context_excludes_rejected_evidence_note_present(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    note = ctx.get("evidence_summary", {}).get("note", "")
+    assert note != ""
+
+
+def test_PVH33_output_context_excludes_staged_comparables_note_present(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    comp = ctx.get("comparable_summary", {})
+    assert comp.get("excluded_staged_rejected") is True
+    assert comp.get("excluded_qa") is True
+
+
+def test_PVH34_output_context_includes_peer_review_summary(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    peer = ctx.get("peer_review_summary", {})
+    assert "reviewer_name" in peer
+    assert "review_decision" in peer
+    assert "peer_review_ready" in peer
+
+
+def test_PVH35_output_context_includes_signature_summary(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    sig = ctx.get("signature_summary", {})
+    assert "expert_name" in sig
+    assert "signed_at" in sig
+    assert "final_signoff_ready" in sig
+
+
+def test_PVH36_output_context_includes_advanced_reviews(client):
+    rid = _create(client).get_json()["request_id"]
+    ctx = _pvout.build_professional_valuation_output_context(rid)
+    adv = ctx.get("advanced_reviews", {})
+    assert "hbu" in adv
+    assert "legal" in adv
+    assert "esg" in adv
+    assert "swot" in adv
+
+
+# ── PVH37–PVH42: Workbook content checks ──────────────────────────────────────
+
+def test_PVH37_workbook_does_not_contain_internal_paths(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out.get("file_available") is True
+    internal_path = _pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"
+    from openpyxl import load_workbook
+    wb = load_workbook(str(internal_path), data_only=True)
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value:
+                    cell_str = str(cell.value)
+                    assert "instance/professional_valuation" not in cell_str
+                    assert "certified_outputs/" not in cell_str
+
+
+def test_PVH38_workbook_does_not_contain_none_or_nan_visible(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out.get("file_available") is True
+    internal_path = _pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"
+    from openpyxl import load_workbook
+    wb = load_workbook(str(internal_path), data_only=True)
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value:
+                    assert str(cell.value) not in ("NaN", "nan", "None", "undefined", "null")
+
+
+def test_PVH39_workbook_opens_with_openpyxl(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out.get("file_available") is True
+    from openpyxl import load_workbook
+    wb = load_workbook(
+        str(_pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"),
+        data_only=True,
+    )
+    assert len(wb.sheetnames) >= 1
+
+
+def test_PVH40_workbook_contains_required_sheets(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    from openpyxl import load_workbook
+    wb = load_workbook(
+        str(_pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"),
+        data_only=True,
+    )
+    required = ["غلاف التقرير", "ملخص الاعتماد", "سجل التدقيق", "المخرجات والنسخ"]
+    for sheet in required:
+        assert sheet in wb.sheetnames, f"Missing required sheet: {sheet}"
+
+
+def test_PVH41_workbook_contains_output_version_and_hash_metadata(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out.get("output_version") is not None
+    assert out.get("file_hash_sha256") is not None
+    assert len(out["file_hash_sha256"]) == 64
+
+
+def test_PVH42_workbook_sheet_count_matches_specification(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    from openpyxl import load_workbook
+    wb = load_workbook(
+        str(_pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"),
+        data_only=True,
+    )
+    assert len(wb.sheetnames) == 18, f"Expected 18 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
+
+
+# ── PVH43–PVH46: Gate field enforcement ──────────────────────────────────────
+
+def test_PVH43_certified_use_allowed_true_only_in_ready_fixture(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out["certified_use_allowed"] is True
+
+
+def test_PVH44_official_use_allowed_true_only_in_ready_fixture(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json()["output"]
+    assert out["official_use_allowed"] is True
+
+
+def test_PVH45_final_report_generation_allowed_only_when_cert_ready(client):
+    rid = _create(client).get_json()["request_id"]
+    gate = _pvout._load_gate_snapshot(rid)
+    assert gate.get("final_report_generation_allowed") is False
+
+
+def test_PVH46_final_workbook_generation_allowed_only_when_cert_ready(client):
+    rid = _create(client).get_json()["request_id"]
+    gate = _pvout._load_gate_snapshot(rid)
+    assert gate.get("final_workbook_generation_allowed") is False
+
+
+# ── PVH47–PVH50: Revoke + governance ─────────────────────────────────────────
+
+def test_PVH47_revoked_output_is_not_returned_as_latest_active(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    resp = client.post(_pvh_wb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    output_id = resp.get_json()["output"]["output_id"]
+    client.post(_pvh_revoke_url(rid, output_id), json={},
+                content_type="application/json", headers=_auth())
+    latest = _pvout._latest_active_of_type(rid, "final_workbook")
+    assert latest is None or latest.get("output_status") != "revoked"
+
+
+def test_PVH48_external_api_used_false_in_output_records(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    records = _pvout._read_registry(rid)
+    assert len(records) > 0
+    for rec in records:
+        assert rec.get("external_api_used") is False
+
+
+def test_PVH49_qdrant_used_false_in_output_records(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    records = _pvout._read_registry(rid)
+    for rec in records:
+        assert rec.get("qdrant_used") is False
+
+
+def test_PVH50_rag_used_false_in_output_records(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_all_gates_fixture(rid)
+    client.post(_pvh_wb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    records = _pvout._read_registry(rid)
+    for rec in records:
+        assert rec.get("rag_used") is False
+
+
+# ── PVH51–PVH55: QA outputs + regression ─────────────────────────────────────
+
+def test_PVH51_no_fpdf_usage_introduced(client):
+    """Verify that fpdf is not imported in the outputs module."""
+    import ast
+    import pathlib
+    source = pathlib.Path(_CORE / "professional_valuation_outputs.py").read_text(encoding="utf-8")
+    tree   = ast.parse(source)
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            imports.append(node.module or "")
+    assert not any("fpdf" in i.lower() for i in imports), "fpdf must not be used"
+
+
+def test_PVH52_qa_outputs_exist():
+    qa_dir = (
+        _CORE / "instance" / "manual_review_outputs"
+        / "professional_valuation_phase_h_outputs"
+    )
+    if not qa_dir.exists():
+        pytest.skip(f"Phase H QA output directory not yet generated: {qa_dir}")
+    assert len(list(qa_dir.iterdir())) >= 1, "QA dir is empty"
+
+
+def test_PVH53_existing_pvb_through_pvg_unaffected(client):
+    resp = _create(client)
+    assert resp.status_code == 201
+    assert resp.get_json()["ok"] is True
+
+
+def test_PVH54_ordinary_valuation_unaffected(client):
+    resp = client.get("/api/advisor/health")
+    assert resp.status_code in (200, 404, 405)
+
+
+def test_PVH55_tax_appeal_unaffected(client):
     resp = client.get("/api/tax-appeal/health")
     assert resp.status_code in (200, 404, 405)

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <style>
+    {{ font_css_block }}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 9.5pt;
+      color: #1a1a2e;
+      line-height: 1.7;
+      background: #ffffff;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      font-size: 30px;
+      font-weight: 700;
+      color: rgba(31, 78, 120, 0.06);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .page-footer {
+      position: fixed;
+      bottom: 5mm;
+      left: 10mm;
+      right: 10mm;
+      text-align: center;
+      font-size: 7pt;
+      color: #bbb;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 2px;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* ── Cover ── */
+    .cover {
+      background: linear-gradient(135deg, #1f4e78 0%, #2d6a9f 100%);
+      color: #fff;
+      padding: 22px 24px 18px;
+      margin-bottom: 14px;
+      page-break-after: avoid;
+    }
+    .cover-badge   { font-size: 8.5pt; font-weight: 700; color: #d4af37; letter-spacing: 1.5px; margin-bottom: 5px; }
+    .cover-title   { font-size: 18pt; font-weight: 700; color: #fff; margin-bottom: 5px; }
+    .cover-sub     { font-size: 9pt; color: rgba(255,255,255,0.80); margin-bottom: 12px; }
+    .cover-meta    { display: flex; gap: 22px; flex-wrap: wrap; font-size: 8pt; color: rgba(255,255,255,0.88); margin-bottom: 12px; }
+    .cover-meta span { display: inline-block; }
+    .cert-seal {
+      display: inline-block;
+      background: rgba(212,175,55,0.20);
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 9.5pt;
+      padding: 4px 22px;
+      border-radius: 20px;
+      margin-top: 6px;
+    }
+
+    /* ── Section blocks ── */
+    .section { margin-bottom: 12px; page-break-inside: avoid; }
+    .section-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #fff;
+      background: #1f4e78;
+      padding: 5px 12px;
+      border-right: 4px solid #d4af37;
+      margin-bottom: 7px;
+    }
+    .section-body { padding: 0 6px; }
+
+    /* ── Data grid ── */
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; margin-bottom: 6px; }
+    .data-row  { display: flex; gap: 5px; align-items: baseline; font-size: 9pt; border-bottom: 1px solid #f2f2f2; padding: 2px 0; }
+    .data-label { color: #3a5a7a; font-weight: 700; white-space: nowrap; min-width: 130px; }
+    .data-value { color: #1a1a2e; flex: 1; }
+    .data-na    { color: #94a3b8; font-style: italic; font-size: 8.5pt; }
+
+    /* ── Field table ── */
+    .field-tbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 6px; }
+    .field-tbl td { padding: 2.5px 7px; border: 1px solid #e8eaf0; vertical-align: top; }
+    .field-tbl .fl { font-weight: 700; color: #1f4e78; background: #f4f8ff; width: 35%; }
+    .field-tbl .fv { color: #333; }
+    .field-tbl tr:nth-child(even) td { background: #fafcff; }
+
+    /* ── Status badges ── */
+    .badge-ok   { color: #1a7a4a; font-weight: 700; }
+    .badge-warn { color: #b43200; font-weight: 700; }
+    .badge-na   { color: #94a3b8; font-style: italic; }
+
+    /* ── Cert statement block ── */
+    .cert-block {
+      border: 1.5px solid #d4af37;
+      border-radius: 6px;
+      padding: 12px 16px;
+      background: #fffdf0;
+      margin: 8px 0;
+    }
+    .cert-text { font-size: 9.5pt; font-weight: 700; color: #1f4e78; margin-bottom: 8px; }
+
+    /* ── Final value box ── */
+    .final-value-box {
+      background: #ebf3fb;
+      border: 2px solid #1f4e78;
+      border-radius: 8px;
+      padding: 12px 18px;
+      margin: 10px 0;
+      text-align: center;
+    }
+    .final-value-label  { font-size: 9pt; color: #2d6a9f; font-weight: 700; margin-bottom: 4px; }
+    .final-value-number { font-size: 20pt; font-weight: 700; color: #1f4e78; direction: ltr; }
+    .final-value-currency { font-size: 8pt; color: #94a3b8; margin-top: 3px; }
+
+    /* ── Note box ── */
+    .note-box {
+      background: #fff8f0;
+      border: 1px solid #e8c87a;
+      border-radius: 3px;
+      padding: 5px 10px;
+      font-size: 8.5pt;
+      color: #7a5500;
+      margin: 4px 0;
+    }
+
+    .source-box {
+      background: #f8f9fa;
+      border: 1px solid #e0e6ef;
+      border-right: 3px solid #2d6a9f;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 8.5pt;
+      color: #555;
+      line-height: 1.75;
+    }
+
+    .footer-disclaimer {
+      font-size: 7.5pt;
+      color: #999;
+      background: #f9f9f9;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 8px 10px;
+      margin-top: 14px;
+      line-height: 1.8;
+    }
+
+    .page-break { page-break-before: always; padding-top: 10mm; }
+    .no-break   { page-break-inside: avoid; }
+  </style>
+</head>
+<body>
+
+<div class="watermark">تقرير معتمد — نسخة رسمية</div>
+
+<div class="page-footer">
+  تقرير التقييم العقاري المهني المعتمد — رقم التقرير: {{ ctx.get('report_number', 'غير محدد') }} — صفحة <span class="page-number"></span>
+</div>
+
+<div class="content">
+
+<!-- ══ 1. COVER ══════════════════════════════════════════════════════════════ -->
+{% set req = ctx.get('request_summary', {}) %}
+{% set gate = ctx.get('certification_gate', {}) %}
+{% set sig = ctx.get('signature_summary', {}) %}
+{% set peer = ctx.get('peer_review_summary', {}) %}
+
+<div class="cover">
+  <div class="cover-badge">تقرير تقييم عقاري مهني</div>
+  <div class="cover-title">تقرير تقييم عقاري معتمد</div>
+  <div class="cover-sub">Professional Certified Valuation Report</div>
+  <div class="cover-meta">
+    <span>رقم التقرير: <strong>{{ ctx.get('report_number', 'غير محدد') }}</strong></span>
+    <span>رقم الطلب: <strong>{{ req.get('request_id', 'غير محدد') }}</strong></span>
+    <span>تاريخ التقييم: <strong>{{ req.get('valuation_date', 'غير محدد') }}</strong></span>
+    <span>تاريخ الإصدار: <strong>{{ generated_at[:10] if generated_at else 'غير محدد' }}</strong></span>
+  </div>
+  <div class="cover-meta">
+    <span>العميل: <strong>{{ req.get('client_name', 'غير محدد') }}</strong></span>
+    <span>الغرض: <strong>{{ req.get('valuation_purpose', 'غير محدد') }}</strong></span>
+    <span>أساس القيمة: <strong>{{ req.get('basis_of_value', 'غير محدد') }}</strong></span>
+  </div>
+  <div class="cover-meta">
+    <span>الخبير: <strong>{{ sig.get('expert_name', 'غير محدد') }}</strong></span>
+    <span>الرخصة: <strong>{{ sig.get('expert_license', 'غير محدد') }}</strong></span>
+    <span>المراجع: <strong>{{ peer.get('reviewer_name', 'غير محدد') }}</strong></span>
+  </div>
+  {% if gate.get('certification_ready') %}
+  <div class="cert-seal">تقرير معتمد — جميع بوابات الاعتماد اجتُزت</div>
+  {% else %}
+  <div class="cert-seal" style="border-color:#e57373;color:#e57373;">غير معتمد — بوابات الاعتماد لم تجتز</div>
+  {% endif %}
+</div>
+
+<!-- ══ 2. CERTIFICATION STATEMENT ═══════════════════════════════════════════ -->
+<div class="section no-break">
+  <div class="section-title">٢. بيان الاعتماد</div>
+  <div class="section-body">
+    <div class="cert-block">
+      {% if gate.get('certification_ready') %}
+      <div class="cert-text">
+        يُشهد بأن هذا التقرير صادر عن خبير تقييم مختص بعد استيفاء جميع متطلبات الاعتماد المهني
+        وفق المعايير الدولية للتقييم العقاري (IVS). جميع بوابات مراحل C–G اجتُزت بنجاح.
+      </div>
+      {% else %}
+      <div class="cert-text badge-warn">
+        تحذير: هذا التقرير لم يجتز جميع بوابات الاعتماد ولا يُعد تقريراً معتمداً رسمياً.
+      </div>
+      {% endif %}
+      <table class="field-tbl">
+        <tr><td class="fl">حالة الاعتماد</td><td class="fv {% if gate.get('certification_ready') %}badge-ok{% else %}badge-warn{% endif %}">{{ 'معتمد ✓' if gate.get('certification_ready') else 'غير معتمد ✗' }}</td></tr>
+        <tr><td class="fl">بيان موافقة الخبير</td><td class="fv">{{ sig.get('approval_statement', 'غير متاح') }}</td></tr>
+        <tr><td class="fl">تأكيد مراجعة النظراء</td><td class="fv">{{ 'مكتملة ✓' if peer.get('peer_review_ready') else 'غير مكتملة' }}</td></tr>
+        <tr><td class="fl">التوقيع والرخصة</td><td class="fv">{{ 'متاح ✓' if sig.get('signature_available') else 'غير متاح' }}</td></tr>
+        <tr><td class="fl">الختم</td><td class="fv">{{ 'متاح ✓' if sig.get('stamp_available') else 'غير متاح' }}</td></tr>
+        <tr><td class="fl">تاريخ تقييم البوابة</td><td class="fv">{{ gate.get('evaluated_at', 'غير محدد')[:19] if gate.get('evaluated_at') else 'غير محدد' }}</td></tr>
+      </table>
+      <div class="note-box">
+        ملاحظة: لا تحتوي هذه الوثيقة على صورة توقيع أو ختم مُؤمَّل — البيانات الوصفية للتوقيع مُدرجة فقط.
+        هذه الوثيقة معتمدة بموجب البيانات الرقمية المسجلة في سجل التدقيق.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 3. SCOPE OF WORK ══════════════════════════════════════════════════════ -->
+<div class="section no-break">
+  <div class="section-title">٣. نطاق العمل</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">الاستخدام المقصود</td><td class="fv">{{ req.get('valuation_purpose', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">المستخدمون المقصودون</td><td class="fv">{{ req.get('client_name', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">مصلحة العقار</td><td class="fv">{{ req.get('basis_of_value', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">تاريخ المعاينة</td><td class="fv">{{ req.get('inspection_date', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">القيود والتحفظات</td><td class="fv">{{ sig.get('note', 'غير منطبق') }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 4. PROPERTY SUMMARY ═══════════════════════════════════════════════════ -->
+<div class="section no-break">
+  <div class="section-title">٤. ملخص العقار</div>
+  <div class="section-body">
+    <div class="data-grid">
+      <div class="data-row"><span class="data-label">عنوان العقار</span><span class="data-value">{{ req.get('property_address', 'غير متاح') }}</span></div>
+      <div class="data-row"><span class="data-label">نوع العقار</span><span class="data-value">{{ req.get('property_type', 'غير متاح') }}</span></div>
+      <div class="data-row"><span class="data-label">عنوان الطلب</span><span class="data-value">{{ req.get('property_title', 'غير متاح') }}</span></div>
+      <div class="data-row"><span class="data-label">العملة</span><span class="data-value">{{ req.get('currency', 'SAR') }}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 5. EVIDENCE & SOURCE GOVERNANCE ══════════════════════════════════════ -->
+{% set ev = ctx.get('evidence_summary', {}) %}
+{% set src = ctx.get('source_summary', {}) %}
+<div class="section no-break page-break">
+  <div class="section-title">٥. حوكمة المستندات والمصادر</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">جاهزية المستندات الإلزامية</td><td class="fv {{ 'badge-ok' if ev.get('mandatory_document_readiness') else 'badge-warn' }}">{{ 'مكتملة ✓' if ev.get('mandatory_document_readiness') else 'غير مكتملة ✗' }}</td></tr>
+      <tr><td class="fl">عدد المستندات المعتمدة</td><td class="fv">{{ ev.get('approved_count', 0) }}</td></tr>
+      <tr><td class="fl">عدد المصادر الإنتاجية</td><td class="fv">{{ src.get('production_ready_count', 0) }}</td></tr>
+      <tr><td class="fl">بيانات QA مُعالَجة</td><td class="fv {{ 'badge-ok' if src.get('qa_cleared') else 'badge-warn' }}">{{ 'نعم ✓' if src.get('qa_cleared') else 'لا ✗' }}</td></tr>
+    </table>
+    <div class="source-box">{{ ev.get('note', '') }} — {{ src.get('note', '') }}</div>
+    {% if ev.get('missing_categories') %}
+    <div class="note-box">الفئات المفقودة: {{ ev.get('missing_categories', []) | join('، ') }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ 6. COMPARABLE ANALYSIS ════════════════════════════════════════════════ -->
+{% set comp = ctx.get('comparable_summary', {}) %}
+<div class="section no-break">
+  <div class="section-title">٦. المقارنات المعتمدة</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">عدد المقارنات الإنتاجية</td><td class="fv">{{ comp.get('production_ready_count', 0) }}</td></tr>
+      <tr><td class="fl">جاهزية المقارنات للاعتماد</td><td class="fv {{ 'badge-ok' if comp.get('certification_comparable_ready') else 'badge-warn' }}">{{ 'نعم ✓' if comp.get('certification_comparable_ready') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">المقارنات المستبعدة</td><td class="fv">مرفوضة / مؤقتة / QA — مستبعدة من التقرير المعتمد</td></tr>
+    </table>
+    <div class="source-box">{{ comp.get('note', '') }}</div>
+  </div>
+</div>
+
+<!-- ══ 7. METHOD ANALYSIS ════════════════════════════════════════════════════ -->
+{% set mth = ctx.get('method_summary', {}) %}
+{% set recon = ctx.get('reconciliation_summary', {}) %}
+<div class="section no-break">
+  <div class="section-title">٧. تحليل طرق التقييم</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اكتمال طرق التقييم</td><td class="fv {{ 'badge-ok' if mth.get('methods_completed') else 'badge-warn' }}">{{ 'مكتملة ✓' if mth.get('methods_completed') else 'غير مكتملة ✗' }}</td></tr>
+      <tr><td class="fl">حالة الجاهزية</td><td class="fv">{{ mth.get('readiness_status', 'غير متاح') }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 8. RECONCILIATION & FINAL VALUE ══════════════════════════════════════ -->
+<div class="section no-break">
+  <div class="section-title">٨. التوفيق والقيمة النهائية</div>
+  <div class="section-body">
+    {% set fv = recon.get('selected_final_value') or recon.get('weighted_value') %}
+    {% if fv is not none %}
+    <div class="final-value-box">
+      <div class="final-value-label">القيمة النهائية المختارة</div>
+      <div class="final-value-number">{{ '{:,.0f}'.format(fv) }}</div>
+      <div class="final-value-currency">{{ req.get('currency', 'SAR') }}</div>
+    </div>
+    {% else %}
+    <div class="note-box">القيمة النهائية: غير متاحة — يجب إكمال التوفيق أولاً</div>
+    {% endif %}
+    <table class="field-tbl">
+      <tr><td class="fl">المبرر</td><td class="fv">{{ recon.get('rationale', 'غير متاح') }}</td></tr>
+      {% if recon.get('method_weights') %}
+      <tr><td class="fl">أوزان الطرق</td><td class="fv">
+        {% for m, w in recon.get('method_weights', {}).items() %}{{ m }}: {{ w }}{% if not loop.last %}، {% endif %}{% endfor %}
+      </td></tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- ══ 9. HBU REVIEW ════════════════════════════════════════════════════════ -->
+{% set adv = ctx.get('advanced_reviews', {}) %}
+{% set hbu = adv.get('hbu', {}) %}
+<div class="section no-break page-break">
+  <div class="section-title">٩. مراجعة الاستخدام الأمثل (HBU)</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اكتمال مراجعة HBU</td><td class="fv {{ 'badge-ok' if hbu.get('completed') else 'badge-warn' }}">{{ 'مكتمل ✓' if hbu.get('completed') else 'غير مكتمل ✗' }}</td></tr>
+      <tr><td class="fl">معتمد للاستخدام المبدئي</td><td class="fv {{ 'badge-ok' if hbu.get('approved_for_preliminary') else 'badge-warn' }}">{{ 'نعم ✓' if hbu.get('approved_for_preliminary') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">الحالة</td><td class="fv">{{ hbu.get('status', 'غير محدد') }}</td></tr>
+      <tr><td class="fl">معتمد للاستخدام النهائي</td><td class="fv badge-na">غير منطبق في هذه المرحلة</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 10. LEGAL DUE DILIGENCE ══════════════════════════════════════════════ -->
+{% set legal = adv.get('legal', {}) %}
+<div class="section no-break">
+  <div class="section-title">١٠. الفحص القانوني</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اكتمال الفحص القانوني</td><td class="fv {{ 'badge-ok' if legal.get('completed') else 'badge-warn' }}">{{ 'مكتمل ✓' if legal.get('completed') else 'غير مكتمل ✗' }}</td></tr>
+      <tr><td class="fl">معتمد للاستخدام المبدئي</td><td class="fv {{ 'badge-ok' if legal.get('approved_for_preliminary') else 'badge-warn' }}">{{ 'نعم ✓' if legal.get('approved_for_preliminary') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">الحالة</td><td class="fv">{{ legal.get('status', 'غير محدد') }}</td></tr>
+    </table>
+    <div class="note-box">
+      تحفظ قانوني: هذا الفحص القانوني ليس رأياً قانونياً ولا يُغني عن استشارة محامٍ مختص.
+      يُدرج هنا كجزء من إجراءات العناية الواجبة لخبير التقييم فقط.
+    </div>
+  </div>
+</div>
+
+<!-- ══ 11. ESG / CLIMATE RISK ════════════════════════════════════════════════ -->
+{% set esg = adv.get('esg', {}) %}
+<div class="section no-break">
+  <div class="section-title">١١. مراجعة ESG والمخاطر المناخية</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اكتمال مراجعة ESG</td><td class="fv {{ 'badge-ok' if esg.get('completed') else 'badge-warn' }}">{{ 'مكتملة ✓' if esg.get('completed') else 'غير مكتملة ✗' }}</td></tr>
+      <tr><td class="fl">معتمدة للاستخدام المبدئي</td><td class="fv {{ 'badge-ok' if esg.get('approved_for_preliminary') else 'badge-warn' }}">{{ 'نعم ✓' if esg.get('approved_for_preliminary') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">أثر تلقائي على القيمة</td><td class="fv badge-na">لا — ESG استشاري فقط</td></tr>
+      <tr><td class="fl">الحالة</td><td class="fv">{{ esg.get('status', 'غير محدد') }}</td></tr>
+    </table>
+    <div class="source-box">
+      بيانات ESG المُدرجة ذات طابع استشاري. لا يُطبق أي تعديل تلقائي على قيمة العقار بناءً على هذه البيانات.
+    </div>
+  </div>
+</div>
+
+<!-- ══ 12. SWOT / RISK REVIEW ════════════════════════════════════════════════ -->
+{% set swot = adv.get('swot', {}) %}
+<div class="section no-break">
+  <div class="section-title">١٢. تحليل SWOT والمخاطر الاستراتيجية</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اكتمال تحليل SWOT</td><td class="fv {{ 'badge-ok' if swot.get('completed') else 'badge-warn' }}">{{ 'مكتمل ✓' if swot.get('completed') else 'غير مكتمل ✗' }}</td></tr>
+      <tr><td class="fl">معتمد للاستخدام المبدئي</td><td class="fv {{ 'badge-ok' if swot.get('approved_for_preliminary') else 'badge-warn' }}">{{ 'نعم ✓' if swot.get('approved_for_preliminary') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">الحالة</td><td class="fv">{{ swot.get('status', 'غير محدد') }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 13. PEER REVIEW ═══════════════════════════════════════════════════════ -->
+<div class="section no-break page-break">
+  <div class="section-title">١٣. مراجعة النظراء</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اسم المراجع</td><td class="fv">{{ peer.get('reviewer_name', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">دور المراجع</td><td class="fv">{{ peer.get('reviewer_role', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">رخصة المراجع</td><td class="fv">{{ peer.get('reviewer_license', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">قرار المراجعة</td><td class="fv {{ 'badge-ok' if peer.get('review_decision') == 'approved' else '' }}">{{ peer.get('review_decision', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">تاريخ المراجعة</td><td class="fv">{{ peer.get('review_date', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">الأقسام المراجَعة</td><td class="fv">{{ peer.get('reviewed_sections', []) | join('، ') or 'غير متاح' }}</td></tr>
+      <tr><td class="fl">جاهزية مراجعة النظراء</td><td class="fv {{ 'badge-ok' if peer.get('peer_review_ready') else 'badge-warn' }}">{{ 'مكتملة ✓' if peer.get('peer_review_ready') else 'غير مكتملة ✗' }}</td></tr>
+    </table>
+    {% if peer.get('review_notes_summary') and peer.get('review_notes_summary') != 'غير متاح' %}
+    <div class="source-box">ملخص الملاحظات: {{ peer.get('review_notes_summary') }}</div>
+    {% endif %}
+    <div class="note-box">ملاحظة: لا تُدرج الملاحظات الداخلية للخبير في هذا القسم من التقرير.</div>
+  </div>
+</div>
+
+<!-- ══ 14. EXPERT SIGNATURE & APPROVAL ══════════════════════════════════════ -->
+<div class="section no-break">
+  <div class="section-title">١٤. توقيع واعتماد الخبير</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">اسم الخبير</td><td class="fv">{{ sig.get('expert_name', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">دور الخبير</td><td class="fv">{{ sig.get('expert_role', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">رخصة الخبير</td><td class="fv">{{ sig.get('expert_license', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">الشركة</td><td class="fv">{{ sig.get('firm_name', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">تاريخ التوقيع</td><td class="fv">{{ sig.get('signed_at', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">التوقيع متاح</td><td class="fv {{ 'badge-ok' if sig.get('signature_available') else 'badge-warn' }}">{{ 'نعم ✓' if sig.get('signature_available') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">الختم متاح</td><td class="fv {{ 'badge-ok' if sig.get('stamp_available') else 'badge-warn' }}">{{ 'نعم ✓' if sig.get('stamp_available') else 'لا ✗' }}</td></tr>
+      <tr><td class="fl">الجاهزية النهائية</td><td class="fv {{ 'badge-ok' if sig.get('final_signoff_ready') else 'badge-warn' }}">{{ 'مكتملة ✓' if sig.get('final_signoff_ready') else 'غير مكتملة ✗' }}</td></tr>
+    </table>
+    {% if sig.get('approval_statement') and sig.get('approval_statement') != 'غير متاح' %}
+    <div class="cert-block">
+      <div class="cert-text">بيان موافقة الخبير:</div>
+      {{ sig.get('approval_statement') }}
+    </div>
+    {% endif %}
+    <div class="note-box">{{ sig.get('note', '') }}</div>
+  </div>
+</div>
+
+<!-- ══ 15. CERTIFICATION AUDIT TRAIL ════════════════════════════════════════ -->
+{% set out_meta = ctx.get('output_metadata', {}) %}
+<div class="section no-break">
+  <div class="section-title">١٥. سجل التدقيق والاعتماد</div>
+  <div class="section-body">
+    <table class="field-tbl">
+      <tr><td class="fl">تقييم بوابة الاعتماد</td><td class="fv">{{ gate.get('evaluated_at', 'غير متاح')[:19] if gate.get('evaluated_at') else 'غير متاح' }}</td></tr>
+      <tr><td class="fl">تاريخ توليد التقرير</td><td class="fv">{{ generated_at[:19] if generated_at else 'غير متاح' }}</td></tr>
+      <tr><td class="fl">معرف المخرجات</td><td class="fv">{{ out_meta.get('output_id', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">نسخة المخرجات</td><td class="fv">{{ out_meta.get('output_version', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">منشئ التقرير</td><td class="fv">{{ out_meta.get('generated_by', 'غير متاح') }}</td></tr>
+      <tr><td class="fl">تجزئة SHA-256</td><td class="fv" style="direction:ltr;font-size:8pt;">{{ out_meta.get('file_hash_sha256', 'يُحسب بعد الإنشاء') }}</td></tr>
+    </table>
+    <div class="source-box">
+      هذا التقرير لا يستخدم OCR ولا Qdrant ولا RAG ولا واجهات برمجة خارجية.
+      جميع البيانات مُستمَدة من الوحدات الداخلية للمنصة فقط.
+      بيانات محاكاة QA مستبعدة كلياً من هذا التقرير المعتمد.
+    </div>
+    <div class="footer-disclaimer">
+      هذا التقرير صادر عن منصة Expert Smart للتقييم العقاري المهني.
+      يُعدّ معتمداً فقط إذا كانت جميع بوابات الاعتماد في المراحل C–G قد اجتُزت بنجاح
+      وكان الحقل <em>certification_ready</em> مساوياً لـ <em>true</em>.
+      في حال الشك، يُرجى التحقق من سجل التدقيق وحالة بوابة الاعتماد في المنصة.
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+</body>
+</html>

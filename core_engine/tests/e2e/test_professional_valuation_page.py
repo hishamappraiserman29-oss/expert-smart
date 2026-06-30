@@ -853,3 +853,233 @@ def test_PVP85_phase_a_to_e_sections_still_visible(page: Page, live_server: str)
     ]:
         el = page.locator(f'[data-testid="{tid}"]')
         expect(el).to_have_count(1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVP86–PVP110 — Phase G: Peer Review, Signature & Final Certification Gate E2E
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+# ── Phase G notice banner ─────────────────────────────────────────────────────
+
+def test_PVP86_phase_g_notice_banner_visible(page: Page, live_server: str) -> None:
+    """PVP86: Phase G notice banner is visible in the professional valuation workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-phase-g-notice"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+# ── Peer review section ───────────────────────────────────────────────────────
+
+def test_PVP87_peer_review_section_visible(page: Page, live_server: str) -> None:
+    """PVP87: Peer review section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP88_peer_review_assignment_form_exists(page: Page, live_server: str) -> None:
+    """PVP88: Peer review assignment form is present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-assignment-form"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP89_peer_reviewer_name_input_exists(page: Page, live_server: str) -> None:
+    """PVP89: Peer reviewer name input field present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-reviewer-name"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP90_peer_reviewer_role_input_exists(page: Page, live_server: str) -> None:
+    """PVP90: Peer reviewer role input field present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-reviewer-role"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP91_peer_reviewer_license_input_exists(page: Page, live_server: str) -> None:
+    """PVP91: Peer reviewer license input field present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-reviewer-license"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP92_peer_review_assign_button_exists(page: Page, live_server: str) -> None:
+    """PVP92: Peer review assign button present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-assign-button"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP93_peer_review_start_button_exists(page: Page, live_server: str) -> None:
+    """PVP93: Peer review start button present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-start-button"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP94_peer_review_notes_textarea_exists(page: Page, live_server: str) -> None:
+    """PVP94: Peer review notes textarea present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-notes"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP95_peer_review_submit_approved_button_exists(page: Page, live_server: str) -> None:
+    """PVP95: Submit peer review (approved) button present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-submit-approved"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP96_peer_review_submit_changes_button_exists(page: Page, live_server: str) -> None:
+    """PVP96: Submit peer review (changes_requested) button present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-submit-changes"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP97_peer_review_warning_present(page: Page, live_server: str) -> None:
+    """PVP97: Peer review advisory warning element present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-peer-review-warning"]')
+    expect(el).to_have_count(1)
+
+
+# ── Signature section ─────────────────────────────────────────────────────────
+
+def test_PVP98_signature_section_visible(page: Page, live_server: str) -> None:
+    """PVP98: Expert signature section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-signature-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP99_signature_expert_name_input_exists(page: Page, live_server: str) -> None:
+    """PVP99: Expert name input in signature section present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-expert-name"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP100_signature_expert_license_input_exists(page: Page, live_server: str) -> None:
+    """PVP100: Expert license input in signature section present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-expert-license"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP101_signature_save_button_exists(page: Page, live_server: str) -> None:
+    """PVP101: Signature save button present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-signature-save-button"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP102_signature_warning_present(page: Page, live_server: str) -> None:
+    """PVP102: Signature advisory warning element present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-signature-warning"]')
+    expect(el).to_have_count(1)
+
+
+# ── Final certification gate section ─────────────────────────────────────────
+
+def test_PVP103_final_certification_section_visible(page: Page, live_server: str) -> None:
+    """PVP103: Final certification gate section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP104_final_certification_status_element_present(page: Page, live_server: str) -> None:
+    """PVP104: Certification status element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-status"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP105_final_certification_evaluate_button_exists(page: Page, live_server: str) -> None:
+    """PVP105: Evaluate certification gate button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-evaluate-button"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP106_final_certification_blockers_element_present(page: Page, live_server: str) -> None:
+    """PVP106: Blockers display element is present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-blockers"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP107_final_certification_ready_indicator_present(page: Page, live_server: str) -> None:
+    """PVP107: Certification ready indicator present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-ready"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP108_generate_certified_button_disabled(page: Page, live_server: str) -> None:
+    """PVP108: Generate certified report button must be disabled (Phase G does not generate final outputs)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button must be disabled — final generation not enabled in Phase G"
+
+
+def test_PVP109_final_certification_warning_present(page: Page, live_server: str) -> None:
+    """PVP109: Final certification advisory warning present in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-final-certification-warning"]')
+    expect(el).to_have_count(1)
+
+
+# ── Regression ────────────────────────────────────────────────────────────────
+
+def test_PVP110_phase_a_to_f_sections_still_visible(page: Page, live_server: str) -> None:
+    """PVP110: Phase A–F sections still visible after Phase G additions (regression)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in [
+        "pro-val-workspace",
+        "pro-val-method-section",
+        "pro-val-reconciliation-section",
+        "pro-val-preliminary-approval-section",
+        "pro-val-hbu-section",
+        "pro-val-peer-review-section",
+        "pro-val-signature-section",
+        "pro-val-final-certification-section",
+    ]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)

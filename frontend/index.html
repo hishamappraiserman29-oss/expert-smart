@@ -35699,12 +35699,10 @@ function taxSpCreateDraft() {
        style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.3); border-radius:6px; font-size:0.8rem; color:#fbbf24; display:block;">
     📊 <strong>مصادر البيانات:</strong> يجب اعتماد مصادر المقارنات والقيم السوقية من الخبير قبل استخدامها في التقرير المعتمد.
   </div>
-  <div data-testid="pro-val-peer-review-warning"
-       style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
+  <div style="margin-bottom:0.6rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
     👥 <strong>مراجعة النظراء:</strong> مراجعة النظراء مطلوبة قبل الاعتماد النهائي.
   </div>
-  <div data-testid="pro-val-signature-warning"
-       style="margin-bottom:1rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
+  <div style="margin-bottom:1rem; padding:8px 14px; background:rgba(96,165,250,0.08); border:1px solid rgba(96,165,250,0.3); border-radius:6px; font-size:0.8rem; color:#93c5fd; display:block;">
     ✍️ <strong>التوقيع:</strong> توقيع الخبير ورقم الترخيص والختم مطلوبة قبل إصدار التقرير المعتمد.
   </div>
 
@@ -36938,6 +36936,371 @@ function taxSpCreateDraft() {
   </div>
 </div>
 <!-- /Phase F Advanced Expert Review -->
+
+<!-- ══ Phase G: Peer Review, Signature & Final Certification Gate ════════════ -->
+<div data-testid="pro-val-phase-g-notice"
+     style="margin:1rem 0 0.5rem; padding:10px 16px; background:rgba(16,185,129,0.07); border:1px solid rgba(16,185,129,0.3); border-radius:8px; font-size:0.82rem; color:#6ee7b7;">
+  🔐 <strong>المرحلة ح — بوابة الاعتماد النهائية:</strong>
+  <span style="display:block; color:#6b7280; font-size:0.76rem; margin-top:3px;">
+    Phase G: peer review and signature gates can make the request certification-ready only when all previous gates (C, D, E, F) are complete. Certified output generation is a later protected phase (Phase H).
+  </span>
+</div>
+
+<!-- ── Peer Review Section ─────────────────────────────────────────────────── -->
+<div data-testid="pro-val-peer-review-section"
+     style="margin-bottom:1.2rem; padding:14px 16px; background:rgba(30,41,59,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:8px;">
+  <h4 style="color:#6ee7b7; margin:0 0 10px; font-size:0.9rem;">👥 مراجعة النظراء</h4>
+
+  <div data-testid="pro-val-peer-review-warning"
+       style="margin-bottom:8px; padding:7px 12px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:6px; font-size:0.77rem; color:#f87171;">
+    ⚠ مراجعة النظراء مطلوبة قبل الاعتماد النهائي — يجب تعيين مراجع وإكمال المراجعة واعتمادها.
+  </div>
+
+  <!-- Status indicator -->
+  <div data-testid="pro-val-peer-review-status" id="pv-pr-status"
+       style="font-size:0.78rem; color:#94a3b8; margin-bottom:10px;">
+    الحالة: غير معيّن
+  </div>
+
+  <!-- Assignment Form -->
+  <div data-testid="pro-val-peer-review-assignment-form"
+       style="padding:10px 12px; background:rgba(15,23,42,0.5); border:1px solid rgba(16,185,129,0.15); border-radius:6px; margin-bottom:10px;">
+    <p style="color:#6ee7b7; font-size:0.8rem; font-weight:700; margin:0 0 8px;">تعيين مراجع النظراء</p>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:8px;">
+      <input data-testid="pro-val-peer-reviewer-name" id="pv-pr-name"
+             placeholder="اسم المراجع *" dir="rtl"
+             style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+      <input data-testid="pro-val-peer-reviewer-role" id="pv-pr-role"
+             placeholder="دور المراجع *" dir="rtl"
+             style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+      <input data-testid="pro-val-peer-reviewer-license" id="pv-pr-license"
+             placeholder="رقم الترخيص" dir="ltr"
+             style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+      <input data-testid="pro-val-peer-reviewer-email" id="pv-pr-email"
+             placeholder="البريد الإلكتروني" dir="ltr"
+             style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    </div>
+    <button data-testid="pro-val-peer-review-assign-button"
+            style="padding:7px 16px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+            onclick="pvAssignPeerReviewer();">
+      تعيين المراجع
+    </button>
+  </div>
+
+  <!-- Start / Submit Controls -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+    <button data-testid="pro-val-peer-review-start-button"
+            style="padding:6px 14px; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; border-radius:6px; cursor:pointer; font-size:0.78rem;"
+            onclick="pvStartPeerReview();">
+      بدء المراجعة
+    </button>
+  </div>
+
+  <!-- Review Notes -->
+  <div style="margin-bottom:8px;">
+    <label style="color:#94a3b8; font-size:0.76rem; display:block; margin-bottom:4px;">ملاحظات المراجعة *</label>
+    <textarea data-testid="pro-val-peer-review-notes" id="pv-pr-notes" rows="3" dir="rtl"
+              placeholder="أدخل ملاحظات المراجعة هنا..."
+              style="width:100%; box-sizing:border-box; padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; resize:vertical;"></textarea>
+  </div>
+  <div style="margin-bottom:10px;">
+    <label style="color:#94a3b8; font-size:0.76rem; display:block; margin-bottom:4px;">التغييرات المطلوبة (عند الاقتضاء)</label>
+    <textarea data-testid="pro-val-peer-review-required-changes" id="pv-pr-changes" rows="2" dir="rtl"
+              placeholder="حدد التغييرات المطلوبة إذا طُلب التعديل..."
+              style="width:100%; box-sizing:border-box; padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; resize:vertical;"></textarea>
+  </div>
+
+  <!-- Signature available checkbox -->
+  <div style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+    <input type="checkbox" data-testid="pro-val-peer-review-signature-available" id="pv-pr-sig-available"
+           style="width:16px; height:16px; cursor:pointer;" />
+    <label for="pv-pr-sig-available" style="color:#94a3b8; font-size:0.78rem; cursor:pointer;">
+      توقيع المراجع متوفر (peer_review_signature_available)
+    </label>
+  </div>
+
+  <!-- Submit Buttons -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button data-testid="pro-val-peer-review-submit-approved"
+            style="padding:7px 16px; background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.45); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+            onclick="pvSubmitPeerReview('approved');">
+      ✅ موافقة
+    </button>
+    <button data-testid="pro-val-peer-review-submit-changes"
+            style="padding:7px 16px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:#fbbf24; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+            onclick="pvSubmitPeerReview('changes_requested');">
+      ✏️ طلب تعديلات
+    </button>
+    <button data-testid="pro-val-peer-review-submit-rejected"
+            style="padding:7px 16px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+            onclick="pvSubmitPeerReview('rejected');">
+      ❌ رفض
+    </button>
+  </div>
+</div>
+
+<!-- ── Signature / License / Stamp Section ─────────────────────────────────── -->
+<div data-testid="pro-val-signature-section"
+     style="margin-bottom:1.2rem; padding:14px 16px; background:rgba(30,41,59,0.6); border:1px solid rgba(139,92,246,0.2); border-radius:8px;">
+  <h4 style="color:#a78bfa; margin:0 0 10px; font-size:0.9rem;">✍️ توقيع الخبير والترخيص والختم</h4>
+
+  <div data-testid="pro-val-signature-warning"
+       style="margin-bottom:8px; padding:7px 12px; background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.25); border-radius:6px; font-size:0.77rem; color:#fbbf24;">
+    ⚠ توقيع الخبير ورقم الترخيص والختم مطلوبة قبل إصدار التقرير المعتمد. لا يجوز استخدام توقيع مزيف أو صورة ختم غير حقيقية.
+  </div>
+
+  <div data-testid="pro-val-signature-status" id="pv-sig-status"
+       style="font-size:0.78rem; color:#94a3b8; margin-bottom:10px;">
+    الحالة: not_started
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-bottom:10px;">
+    <input data-testid="pro-val-expert-name" id="pv-sig-expert-name"
+           placeholder="اسم الخبير *" dir="rtl"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-expert-role" id="pv-sig-expert-role"
+           placeholder="دور الخبير / المسمى الوظيفي" dir="rtl"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-expert-license" id="pv-sig-expert-license"
+           placeholder="رقم الترخيص *" dir="ltr"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-expert-email" id="pv-sig-expert-email"
+           placeholder="بريد الخبير الإلكتروني" dir="ltr"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-firm-name" id="pv-sig-firm-name"
+           placeholder="اسم الشركة / المكتب" dir="rtl"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-company-registration" id="pv-sig-company-reg"
+           placeholder="رقم السجل التجاري" dir="ltr"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+    <input data-testid="pro-val-signed-at" id="pv-sig-signed-at"
+           type="date" placeholder="تاريخ التوقيع *" dir="ltr"
+           style="padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem;" />
+  </div>
+
+  <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:10px;">
+    <label style="display:flex; align-items:center; gap:8px; color:#94a3b8; font-size:0.78rem; cursor:pointer;">
+      <input type="checkbox" data-testid="pro-val-signature-available" id="pv-sig-available"
+             style="width:16px; height:16px;" />
+      التوقيع متوفر
+    </label>
+    <label style="display:flex; align-items:center; gap:8px; color:#94a3b8; font-size:0.78rem; cursor:pointer;">
+      <input type="checkbox" data-testid="pro-val-stamp-available" id="pv-sig-stamp-available"
+             style="width:16px; height:16px;" />
+      الختم متوفر
+    </label>
+  </div>
+
+  <div style="margin-bottom:10px;">
+    <label style="color:#94a3b8; font-size:0.76rem; display:block; margin-bottom:4px;">بيان الاعتماد (Approval Statement) *</label>
+    <textarea data-testid="pro-val-approval-statement" id="pv-sig-approval-stmt" rows="3" dir="rtl"
+              placeholder="أدخل بيان الاعتماد الرسمي هنا..."
+              style="width:100%; box-sizing:border-box; padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; resize:vertical;"></textarea>
+  </div>
+  <div style="margin-bottom:10px;">
+    <label style="color:#94a3b8; font-size:0.76rem; display:block; margin-bottom:4px;">نطاق الاعتماد (Approval Scope)</label>
+    <textarea data-testid="pro-val-approval-scope" id="pv-sig-approval-scope" rows="2" dir="rtl"
+              placeholder="نطاق استخدام التقرير والقيود..."
+              style="width:100%; box-sizing:border-box; padding:7px 10px; background:#0f172a; border:1px solid rgba(255,255,255,0.12); border-radius:6px; color:#e2e8f0; font-size:0.8rem; resize:vertical;"></textarea>
+  </div>
+
+  <button data-testid="pro-val-signature-save-button"
+          style="padding:7px 18px; background:rgba(139,92,246,0.18); border:1px solid rgba(139,92,246,0.45); color:#a78bfa; border-radius:6px; cursor:pointer; font-size:0.82rem;"
+          onclick="pvSaveSignature('signed');">
+    💾 حفظ بيانات التوقيع
+  </button>
+</div>
+
+<!-- ── Final Certification Gate Section ────────────────────────────────────── -->
+<div data-testid="pro-val-final-certification-section"
+     style="margin-bottom:1.2rem; padding:14px 16px; background:rgba(30,41,59,0.6); border:1px solid rgba(239,68,68,0.25); border-radius:8px;">
+  <h4 style="color:#f87171; margin:0 0 10px; font-size:0.9rem;">🔐 بوابة الاعتماد النهائية</h4>
+
+  <div data-testid="pro-val-final-certification-warning"
+       style="margin-bottom:8px; padding:7px 12px; background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.25); border-radius:6px; font-size:0.77rem; color:#f87171;">
+    ⛔ Phase G: تُتيح هذه البوابة الاعتماد النهائي فقط عند اكتمال جميع بوابات المراحل السابقة (C/D/E/F/G). إنشاء التقرير المعتمد محجوب حتى المرحلة التالية (Phase H).
+  </div>
+
+  <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:6px; margin-bottom:12px; font-size:0.75rem;">
+    <span data-testid="pro-val-final-certification-status" id="pv-final-cert-status"
+          style="color:#94a3b8;">الحالة: not_ready</span>
+    <span data-testid="pro-val-final-certification-ready" id="pv-final-cert-ready"
+          style="color:#f87171;">🔴 certification_ready: false</span>
+    <span data-testid="pro-val-final-official-use-allowed" id="pv-final-official-use"
+          style="color:#f87171;">🔴 official_use_allowed: false</span>
+    <span data-testid="pro-val-final-certified-use-allowed" id="pv-final-certified-use"
+          style="color:#f87171;">🔴 certified_use_allowed: false</span>
+    <span data-testid="pro-val-final-report-generation-allowed" id="pv-final-report-gen"
+          style="color:#f87171;">🔴 final_report_generation_allowed: false</span>
+    <span data-testid="pro-val-final-workbook-generation-allowed" id="pv-final-workbook-gen"
+          style="color:#f87171;">🔴 final_workbook_generation_allowed: false</span>
+  </div>
+
+  <div data-testid="pro-val-final-certification-blockers" id="pv-final-blockers"
+       style="margin-bottom:12px; font-size:0.73rem; color:#fbbf24; padding:8px 10px; background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.15); border-radius:6px; min-height:24px;">
+    جاري تحميل الموانع...
+  </div>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <button data-testid="pro-val-final-certification-evaluate-button"
+            style="padding:7px 16px; background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; border-radius:6px; cursor:pointer; font-size:0.8rem;"
+            onclick="pvEvaluateCertificationGate();">
+      🔍 تقييم البوابة
+    </button>
+    <button id="pv-generate-certified-btn"
+            disabled
+            style="padding:7px 16px; background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.25); color:#475569; border-radius:6px; cursor:not-allowed; font-size:0.8rem;"
+            title="محجوب — التقرير المعتمد سيُتاح في المرحلة التالية (Phase H) عند اكتمال جميع البوابات">
+      📄 إنشاء التقرير المعتمد — محجوب (Phase H)
+    </button>
+    <button data-testid="pro-val-download-final-workbook" id="pv-download-workbook-btn"
+            disabled
+            style="padding:7px 16px; background:rgba(100,116,139,0.1); border:1px solid rgba(100,116,139,0.25); color:#475569; border-radius:6px; cursor:not-allowed; font-size:0.8rem;"
+            title="محجوب — ملف Excel النهائي سيُتاح في المرحلة التالية (Phase H)">
+      📊 تنزيل Workbook النهائي — محجوب (Phase H)
+    </button>
+  </div>
+</div>
+<!-- /Phase G Certification Gate -->
+
+<script>
+/* Phase G: Peer Review + Signature + Certification Gate helpers */
+(function() {
+  function pvGetToken() {
+    return (localStorage.getItem('pro_val_bo_token') || '').trim();
+  }
+  function pvCurrentRequestId() {
+    var el = document.getElementById('pro-val-detail-panel');
+    return el ? (el.dataset.currentRequestId || '') : '';
+  }
+
+  window.pvAssignPeerReviewer = function() {
+    var rid   = pvCurrentRequestId();
+    var token = pvGetToken();
+    var name  = (document.getElementById('pv-pr-name') || {}).value || '';
+    var role  = (document.getElementById('pv-pr-role') || {}).value || '';
+    if (!rid || !token || !name || !role) return;
+    fetch('/api/professional-valuation/requests/' + rid + '/peer-review/assign', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({
+        reviewer_name:    name,
+        reviewer_role:    role,
+        reviewer_license: (document.getElementById('pv-pr-license') || {}).value || '',
+        reviewer_email:   (document.getElementById('pv-pr-email') || {}).value || '',
+      }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      var el = document.getElementById('pv-pr-status');
+      if (el && d.peer_review) el.textContent = 'الحالة: ' + d.peer_review.status;
+    }).catch(function() {});
+  };
+
+  window.pvStartPeerReview = function() {
+    var rid = pvCurrentRequestId(); var token = pvGetToken();
+    if (!rid || !token) return;
+    fetch('/api/professional-valuation/requests/' + rid + '/peer-review/start', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({}),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      var el = document.getElementById('pv-pr-status');
+      if (el && d.peer_review) el.textContent = 'الحالة: ' + d.peer_review.status;
+    }).catch(function() {});
+  };
+
+  window.pvSubmitPeerReview = function(decision) {
+    var rid = pvCurrentRequestId(); var token = pvGetToken();
+    if (!rid || !token) return;
+    var notes   = (document.getElementById('pv-pr-notes') || {}).value || '';
+    var changes = (document.getElementById('pv-pr-changes') || {}).value || '';
+    var sigAvail = !!(document.getElementById('pv-pr-sig-available') || {}).checked;
+    var sections = ['methods','reconciliation','hbu','legal','esg','swot'];
+    fetch('/api/professional-valuation/requests/' + rid + '/peer-review/submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({
+        review_decision: decision,
+        review_notes: notes,
+        required_changes: changes,
+        reviewed_sections: sections,
+        methodology_review_complete:    true,
+        source_review_complete:         true,
+        document_review_complete:       true,
+        hbu_review_complete:            true,
+        legal_review_complete:          true,
+        esg_review_complete:            true,
+        swot_review_complete:           true,
+        reconciliation_review_complete: true,
+        peer_review_signature_available: sigAvail,
+      }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      var el = document.getElementById('pv-pr-status');
+      if (el && d.peer_review) el.textContent = 'الحالة: ' + d.peer_review.status;
+    }).catch(function() {});
+  };
+
+  window.pvSaveSignature = function(status) {
+    var rid = pvCurrentRequestId(); var token = pvGetToken();
+    if (!rid || !token) return;
+    fetch('/api/professional-valuation/requests/' + rid + '/signature', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({
+        approval_status:        status || 'draft',
+        expert_name:            (document.getElementById('pv-sig-expert-name') || {}).value || '',
+        expert_role:            (document.getElementById('pv-sig-expert-role') || {}).value || '',
+        expert_license_number:  (document.getElementById('pv-sig-expert-license') || {}).value || '',
+        expert_email:           (document.getElementById('pv-sig-expert-email') || {}).value || '',
+        firm_name:              (document.getElementById('pv-sig-firm-name') || {}).value || '',
+        company_registration_number: (document.getElementById('pv-sig-company-reg') || {}).value || '',
+        signed_at:              (document.getElementById('pv-sig-signed-at') || {}).value || '',
+        approval_statement:     (document.getElementById('pv-sig-approval-stmt') || {}).value || '',
+        approval_scope:         (document.getElementById('pv-sig-approval-scope') || {}).value || '',
+        signature_available:    !!(document.getElementById('pv-sig-available') || {}).checked,
+        stamp_available:        !!(document.getElementById('pv-sig-stamp-available') || {}).checked,
+      }),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      var el = document.getElementById('pv-sig-status');
+      if (el && d.signature) el.textContent = 'الحالة: ' + (d.signature.approval_status || 'draft');
+    }).catch(function() {});
+  };
+
+  window.pvEvaluateCertificationGate = function() {
+    var rid = pvCurrentRequestId(); var token = pvGetToken();
+    if (!rid || !token) return;
+    fetch('/api/professional-valuation/requests/' + rid + '/certification-gate/evaluate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({}),
+    }).then(function(r) { return r.json(); }).then(function(d) {
+      if (!d.gate) return;
+      var g = d.gate;
+      var certReady = g.certification_ready;
+      var f = function(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+      };
+      f('pv-final-cert-status',  'الحالة: ' + (g.certification_status || 'not_ready'));
+      f('pv-final-cert-ready',   (certReady ? '🟢' : '🔴') + ' certification_ready: ' + certReady);
+      f('pv-final-official-use', (g.official_use_allowed ? '🟢' : '🔴') + ' official_use_allowed: ' + g.official_use_allowed);
+      f('pv-final-certified-use', (g.certified_use_allowed ? '🟢' : '🔴') + ' certified_use_allowed: ' + g.certified_use_allowed);
+      f('pv-final-report-gen',   (g.final_report_generation_allowed ? '🟢' : '🔴') + ' final_report_generation_allowed: ' + g.final_report_generation_allowed);
+      f('pv-final-workbook-gen', (g.final_workbook_generation_allowed ? '🟢' : '🔴') + ' final_workbook_generation_allowed: ' + g.final_workbook_generation_allowed);
+      var bEl = document.getElementById('pv-final-blockers');
+      if (bEl) {
+        bEl.textContent = (g.blockers || []).length > 0
+          ? (g.blockers || []).join(' | ')
+          : '✅ لا توجد موانع';
+      }
+      /* Keep certified button disabled — final reports are Phase H */
+      var btn = document.getElementById('pv-generate-certified-btn');
+      if (btn) btn.disabled = true;
+      var wb  = document.getElementById('pv-download-workbook-btn');
+      if (wb)  wb.disabled  = true;
+    }).catch(function() {});
+  };
+})();
+</script>
 
 </div><!-- /ws-professional-valuation -->
 

@@ -153,8 +153,7 @@ def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
         gate["esg_reviewed"]                = adv.get("esg_reviewed", False)
         gate["swot_completed"]              = adv.get("swot_completed", False)
         gate["advanced_reviews_prelim_ready"] = adv.get("advanced_reviews_prelim_ready", False)
-        gate["advanced_reviews_cert_ready"] = False  # always False in Phase F
-        gate["certification_ready"]         = False  # always False in Phase F
+        gate["advanced_reviews_cert_ready"] = False  # overridden by Phase G if all gates pass
         if not adv.get("hbu_completed", False):
             blocker = "HBU review incomplete — الاستخدام الأمثل غير مكتمل"
             if blocker not in gate.get("blockers", []):
@@ -178,6 +177,39 @@ def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
         gate.setdefault("swot_completed",              False)
         gate.setdefault("advanced_reviews_prelim_ready", False)
         gate.setdefault("advanced_reviews_cert_ready", False)
+
+    # Phase G: peer review and signature gate fragment
+    try:
+        from professional_valuation_certification import (
+            compute_final_certification_gate as _final_gate,
+        )
+        final = _final_gate(request_id, valuation_purpose)
+        gate["peer_review_completed"]   = final.get("peer_review_completed", False)
+        gate["expert_signature_ready"]  = final.get("expert_signature_ready", False)
+        gate["phase_g_peer_review_ready"] = final.get("phase_g_peer_review_ready", False)
+        gate["phase_g_signature_ready"] = final.get("phase_g_signature_ready", False)
+        gate["phase_g_license_ready"]   = final.get("phase_g_license_ready", False)
+        gate["phase_g_stamp_ready"]     = final.get("phase_g_stamp_ready", False)
+        gate["certification_ready"]     = final.get("certification_ready", False)
+        gate["official_use_allowed"]    = final.get("official_use_allowed", False)
+        gate["certified_use_allowed"]   = final.get("certified_use_allowed", False)
+        gate["final_report_generation_allowed"]   = final.get("final_report_generation_allowed", False)
+        gate["final_workbook_generation_allowed"] = final.get("final_workbook_generation_allowed", False)
+        gate["certification_status"]    = final.get("certification_status", "not_ready")
+        gate["blockers"]                = final.get("blockers", gate.get("blockers", []))
+        gate["next_required_actions"]   = final.get("next_required_actions", [])
+        if not final.get("peer_review_completed"):
+            blocker = "Peer review not approved — مراجعة النظراء غير مكتملة أو غير معتمدة"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+        if not final.get("expert_signature_ready"):
+            blocker = "Expert signature/license not completed — التوقيع والترخيص غير مكتملين"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+    except ImportError:
+        gate.setdefault("peer_review_completed",  False)
+        gate.setdefault("expert_signature_ready", False)
+        gate["certification_ready"] = False  # always False without Phase G
 
     return gate
 
@@ -414,6 +446,19 @@ def _validate_transition(
             f"الانتقالات المتاحة من '{current_status}': {allowed_str}"
         )
 
+    # Gate: peer_review_required → peer_review_in_progress requires assigned peer review
+    if target_status == "peer_review_in_progress":
+        try:
+            from professional_valuation_certification import get_peer_review_gate_fragment
+            pr_frag = get_peer_review_gate_fragment(record.get("request_id", ""))
+            if pr_frag.get("peer_review_status", "not_assigned") == "not_assigned":
+                return False, "gate_blocked", (
+                    "لا يمكن البدء في مراجعة النظراء قبل تعيين مراجع النظراء. "
+                    "استخدم نقطة /peer-review/assign لتعيين المراجع أولاً."
+                )
+        except ImportError:
+            pass  # Phase G not loaded — allow for backward compat
+
     # Gate: approved_pending_signature requires peer_review_completed on record
     if target_status == "approved_pending_signature":
         if not record.get("peer_review_completed"):
@@ -422,13 +467,21 @@ def _validate_transition(
                 "يجب تعيين peer_review_completed=true على السجل أولاً."
             )
 
-    # Gate: signed_pending_certification requires signature_gate_cleared in request body
+    # Gate: signed_pending_certification requires signature gate (body flag OR Phase G record)
     if target_status == "signed_pending_certification":
-        if not body.get("signature_gate_cleared"):
+        sig_gate_cleared = bool(body.get("signature_gate_cleared"))
+        if not sig_gate_cleared:
+            try:
+                from professional_valuation_certification import get_signature_gate_fragment
+                sig_frag = get_signature_gate_fragment(record.get("request_id", ""))
+                sig_gate_cleared = bool(sig_frag.get("final_signoff_ready"))
+            except ImportError:
+                pass
+        if not sig_gate_cleared:
             return False, "gate_blocked", (
-                "لا يمكن الانتقال إلى 'signed_pending_certification' بدون بوابة التوقيع. "
-                "يجب تمرير signature_gate_cleared=true في جسم الطلب "
-                "(ستُتاح هذه البوابة عبر نقطة التوقيع في مرحلة لاحقة)."
+                "لا يمكن الانتقال إلى 'signed_pending_certification' بدون إتمام بوابة التوقيع. "
+                "يجب أن يكون سجل التوقيع في حالة 'signed' مع توفر التوقيع والترخيص، "
+                "أو تمرير signature_gate_cleared=true في جسم الطلب."
             )
 
     # Gate: method_analysis requires basic intake data

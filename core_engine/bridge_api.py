@@ -12188,6 +12188,8 @@ from professional_valuation_methods import register_pv_method_routes as _registe
 _register_pv_methods(app, require_auth)
 from professional_valuation_advanced_review import register_pv_advanced_review_routes as _register_pv_advanced_review  # Phase F
 _register_pv_advanced_review(app, require_auth)
+from professional_valuation_certification import register_pv_certification_routes as _register_pv_certification  # Phase G
+_register_pv_certification(app, require_auth)
 
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:

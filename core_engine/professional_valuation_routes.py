@@ -144,6 +144,41 @@ def _get_gate_summary(request_id: str, valuation_purpose: str = "") -> dict:
         gate.setdefault("preliminary_use_allowed",    False)
         gate.setdefault("certified_use_allowed",      False)
 
+    # Phase F: advanced review gate fragment
+    try:
+        from professional_valuation_advanced_review import get_advanced_review_gate_fragment
+        adv = get_advanced_review_gate_fragment(request_id)
+        gate["hbu_completed"]               = adv.get("hbu_completed", False)
+        gate["legal_due_diligence_ready"]   = adv.get("legal_due_diligence_ready", False)
+        gate["esg_reviewed"]                = adv.get("esg_reviewed", False)
+        gate["swot_completed"]              = adv.get("swot_completed", False)
+        gate["advanced_reviews_prelim_ready"] = adv.get("advanced_reviews_prelim_ready", False)
+        gate["advanced_reviews_cert_ready"] = False  # always False in Phase F
+        gate["certification_ready"]         = False  # always False in Phase F
+        if not adv.get("hbu_completed", False):
+            blocker = "HBU review incomplete — الاستخدام الأمثل غير مكتمل"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+        if not adv.get("legal_due_diligence_ready", False):
+            blocker = "Legal due diligence incomplete — العناية القانونية غير مكتملة"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+        if not adv.get("esg_reviewed", False):
+            blocker = "ESG/climate review incomplete — تقييم ESG غير مكتمل"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+        if not adv.get("swot_completed", False):
+            blocker = "SWOT/risk review incomplete — تحليل SWOT غير مكتمل"
+            if blocker not in gate.get("blockers", []):
+                gate.setdefault("blockers", []).append(blocker)
+    except ImportError:
+        gate.setdefault("hbu_completed",               False)
+        gate.setdefault("legal_due_diligence_ready",   False)
+        gate.setdefault("esg_reviewed",                False)
+        gate.setdefault("swot_completed",              False)
+        gate.setdefault("advanced_reviews_prelim_ready", False)
+        gate.setdefault("advanced_reviews_cert_ready", False)
+
     return gate
 
 

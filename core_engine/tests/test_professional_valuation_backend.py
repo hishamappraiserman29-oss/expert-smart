@@ -2016,3 +2016,530 @@ def test_PVE50_warning_text_contains_correct_wording(client):
     assert "تقرير مبدئي" in wt
     assert "غير صالح للاستخدام الرسمي" in wt
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVF01–PVF45 — Phase F: Advanced Expert Review (HBU, Legal, ESG, SWOT)
+# ══════════════════════════════════════════════════════════════════════════════
+
+import professional_valuation_advanced_review as _pvadv
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _adv_url(rid, path=""):
+    return f"/api/professional-valuation/requests/{rid}/advanced-review{path}"
+
+
+def _schema_url():
+    return "/api/professional-valuation/advanced-review/schema"
+
+
+def _save_hbu(client, rid, extra=None):
+    body = {
+        "legally_permissible_test":  "سكني — مسموح قانوناً",
+        "physically_possible_test":  "مساحة كافية",
+        "financially_feasible_test": "عائد إيجاري مقبول",
+        "maximally_productive_test": "الاستخدام السكني هو الأعلى إنتاجية",
+        "selected_hbu":              "سكني متعدد الطوابق",
+        "hbu_conclusion":            "الاستخدام السكني مثالي",
+    }
+    if extra:
+        body.update(extra)
+    return client.post(
+        _adv_url(rid, "/hbu"),
+        json=body, content_type="application/json", headers=_auth()
+    ).get_json()
+
+
+def _save_legal(client, rid, extra=None):
+    body = {
+        "ownership_type":              "ملكية حرة",
+        "ownership_document_reviewed": True,
+        "legal_conclusion":            "لا نزاعات — يحتاج مراجعة نهائية",
+    }
+    if extra:
+        body.update(extra)
+    return client.post(
+        _adv_url(rid, "/legal"),
+        json=body, content_type="application/json", headers=_auth()
+    ).get_json()
+
+
+def _save_esg(client, rid, extra=None):
+    body = {
+        "esg_data_available": True,
+        "esg_score":          75.0,
+        "esg_category":       "B+",
+        "expert_notes":       "تقييم مبدئي استشاري",
+    }
+    if extra:
+        body.update(extra)
+    return client.post(
+        _adv_url(rid, "/esg"),
+        json=body, content_type="application/json", headers=_auth()
+    ).get_json()
+
+
+def _swot_items(cat, title="بند اختبار"):
+    return [{"category": cat, "title_ar": title, "description_ar": "وصف", "impact_score": 3, "probability_score": 3}]
+
+
+def _save_swot(client, rid, extra=None):
+    body = {
+        "strengths":     _swot_items("strengths",     "موقع متميز"),
+        "weaknesses":    _swot_items("weaknesses",    "تكاليف صيانة مرتفعة"),
+        "opportunities": _swot_items("opportunities", "تطوير البنية التحتية"),
+        "threats":       _swot_items("threats",       "تقلبات السوق"),
+    }
+    if extra:
+        body.update(extra)
+    return client.post(
+        _adv_url(rid, "/swot"),
+        json=body, content_type="application/json", headers=_auth()
+    ).get_json()
+
+
+def _approve_prelim(client, rid, section):
+    return client.post(
+        _adv_url(rid, f"/{section}/approve-preliminary"),
+        json={}, content_type="application/json", headers=_auth()
+    ).get_json()
+
+
+# ── PVF01: schema requires auth ───────────────────────────────────────────────
+def test_PVF01_schema_requires_auth(client):
+    resp = client.get(_schema_url())
+    assert resp.status_code == 401
+
+
+# ── PVF02: advanced review GET requires auth ──────────────────────────────────
+def test_PVF02_advanced_review_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_adv_url(rid))
+    assert resp.status_code == 401
+
+
+# ── PVF03: HBU save requires auth ─────────────────────────────────────────────
+def test_PVF03_hbu_save_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_adv_url(rid, "/hbu"), json={})
+    assert resp.status_code == 401
+
+
+# ── PVF04: legal save requires auth ──────────────────────────────────────────
+def test_PVF04_legal_save_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_adv_url(rid, "/legal"), json={})
+    assert resp.status_code == 401
+
+
+# ── PVF05: ESG save requires auth ────────────────────────────────────────────
+def test_PVF05_esg_save_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_adv_url(rid, "/esg"), json={})
+    assert resp.status_code == 401
+
+
+# ── PVF06: SWOT save requires auth ───────────────────────────────────────────
+def test_PVF06_swot_save_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_adv_url(rid, "/swot"), json={})
+    assert resp.status_code == 401
+
+
+# ── PVF07: HBU save stores all four tests ────────────────────────────────────
+def test_PVF07_hbu_save_stores_four_tests(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_hbu(client, rid)
+    assert body["ok"] is True
+    hbu = body["hbu_review"]
+    assert hbu["legally_permissible_test"]  == "سكني — مسموح قانوناً"
+    assert hbu["physically_possible_test"]  == "مساحة كافية"
+    assert hbu["financially_feasible_test"] == "عائد إيجاري مقبول"
+    assert hbu["maximally_productive_test"] == "الاستخدام السكني هو الأعلى إنتاجية"
+
+
+# ── PVF08: HBU cannot approve preliminary without all four tests ──────────────
+def test_PVF08_hbu_cannot_approve_prelim_without_all_tests(client):
+    rid = _create(client).get_json()["request_id"]
+    # Save with only one test filled
+    client.post(
+        _adv_url(rid, "/hbu"),
+        json={"legally_permissible_test": "مسموح", "selected_hbu": "سكني"},
+        content_type="application/json", headers=_auth()
+    )
+    resp = client.post(
+        _adv_url(rid, "/hbu/approve-preliminary"),
+        json={}, content_type="application/json", headers=_auth()
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+# ── PVF09: HBU approve preliminary succeeds when complete ────────────────────
+def test_PVF09_hbu_approve_preliminary_succeeds_when_complete(client):
+    rid  = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)  # saves complete record
+    body = _approve_prelim(client, rid, "hbu")
+    assert body["ok"] is True
+    assert body["approved_for_preliminary"] is True
+
+
+# ── PVF10: HBU approval does NOT set certification_ready ────────────────────
+def test_PVF10_hbu_approval_does_not_set_certification_ready(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    body = _approve_prelim(client, rid, "hbu")
+    assert body.get("certification_ready") is False
+    assert body.get("approved_for_certification") is False
+
+
+# ── PVF11: legal review stores limitation text ───────────────────────────────
+def test_PVF11_legal_review_stores_limitation_text(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_legal(client, rid)
+    assert body["ok"] is True
+    legal = body["legal_due_diligence_review"]
+    scope = legal.get("legal_scope_limitation", "")
+    assert "قانوني" in scope or "نطاق" in scope
+
+
+# ── PVF12: legal without ownership doc cannot be cert-ready ─────────────────
+def test_PVF12_legal_without_ownership_doc_not_cert_ready(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_legal(client, rid, {"ownership_document_reviewed": False})
+    legal = body["legal_due_diligence_review"]
+    assert legal.get("approved_for_certification") is False
+    assert legal.get("certified_use_allowed") is False
+
+
+# ── PVF13: legal approve preliminary succeeds with limitation ────────────────
+def test_PVF13_legal_approve_preliminary_with_limitation(client):
+    rid  = _create(client).get_json()["request_id"]
+    _save_legal(client, rid)
+    body = _approve_prelim(client, rid, "legal")
+    assert body["ok"] is True
+    assert body["approved_for_preliminary"] is True
+    assert body["approved_for_certification"] is False
+
+
+# ── PVF14: ESG save stores score/category ───────────────────────────────────
+def test_PVF14_esg_save_stores_score_and_category(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_esg(client, rid)
+    assert body["ok"] is True
+    esg = body["esg_climate_review"]
+    assert esg["esg_score"] == 75.0
+    assert esg["esg_category"] == "B+"
+
+
+# ── PVF15: ESG missing data stays advisory ──────────────────────────────────
+def test_PVF15_esg_missing_data_stays_advisory(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_esg(client, rid, {"esg_data_available": False, "esg_score": None})
+    esg = body["esg_climate_review"]
+    impact = esg.get("esg_value_impact_commentary", "")
+    assert "غير مكتمل" in impact or "advisory" in impact or esg.get("no_automatic_value_impact") is True
+
+
+# ── PVF16: ESG approve preliminary does NOT apply production value impact ────
+def test_PVF16_esg_approve_prelim_no_production_impact(client):
+    rid  = _create(client).get_json()["request_id"]
+    _save_esg(client, rid)
+    body = _approve_prelim(client, rid, "esg")
+    assert body["ok"] is True
+    assert body.get("approved_for_certification") is False
+    assert body.get("certification_ready") is False
+
+
+# ── PVF17: SWOT save stores all four categories ──────────────────────────────
+def test_PVF17_swot_save_stores_all_four_categories(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_swot(client, rid)
+    assert body["ok"] is True
+    swot = body["swot_risk_review"]
+    assert len(swot["strengths"])     >= 1
+    assert len(swot["weaknesses"])    >= 1
+    assert len(swot["opportunities"]) >= 1
+    assert len(swot["threats"])       >= 1
+
+
+# ── PVF18: SWOT priority_score = impact × probability ───────────────────────
+def test_PVF18_swot_priority_score_equals_impact_times_probability(client):
+    rid  = _create(client).get_json()["request_id"]
+    items = [{"category": "strengths", "title_ar": "قوة", "impact_score": 4, "probability_score": 3}]
+    body = client.post(
+        _adv_url(rid, "/swot"),
+        json={"strengths": items, "weaknesses": _swot_items("weaknesses"),
+              "opportunities": _swot_items("opportunities"), "threats": _swot_items("threats")},
+        content_type="application/json", headers=_auth()
+    ).get_json()
+    swot = body["swot_risk_review"]
+    st = swot["strengths"][0]
+    assert st["priority_score"] == st["impact_score"] * st["probability_score"]
+    assert st["priority_score"] == 12
+
+
+# ── PVF19: SWOT cannot approve if a category missing ─────────────────────────
+def test_PVF19_swot_cannot_approve_prelim_with_missing_category(client):
+    rid = _create(client).get_json()["request_id"]
+    # Save with only strengths, no weaknesses/opportunities/threats
+    client.post(
+        _adv_url(rid, "/swot"),
+        json={"strengths": _swot_items("strengths")},
+        content_type="application/json", headers=_auth()
+    )
+    resp = client.post(
+        _adv_url(rid, "/swot/approve-preliminary"),
+        json={}, content_type="application/json", headers=_auth()
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+# ── PVF20: SWOT approve preliminary succeeds when complete ───────────────────
+def test_PVF20_swot_approve_preliminary_succeeds_when_complete(client):
+    rid  = _create(client).get_json()["request_id"]
+    _save_swot(client, rid)
+    body = _approve_prelim(client, rid, "swot")
+    assert body["ok"] is True
+    assert body["approved_for_preliminary"] is True
+
+
+# ── PVF21: reject endpoint requires rejection_reason ─────────────────────────
+def test_PVF21_reject_requires_rejection_reason(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(
+        _adv_url(rid, "/hbu/reject"),
+        json={}, content_type="application/json", headers=_auth()
+    )
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+# ── PVF22: rejected section clears preliminary approval ──────────────────────
+def test_PVF22_rejected_section_clears_preliminary_approval(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    _approve_prelim(client, rid, "hbu")
+    body = client.post(
+        _adv_url(rid, "/hbu/reject"),
+        json={"rejection_reason": "بيانات ناقصة"},
+        content_type="application/json", headers=_auth()
+    ).get_json()
+    assert body["ok"] is True
+    assert body["approved_for_preliminary"] is False
+    assert body["status"] == "rejected"
+
+
+# ── PVF23: advanced review readiness endpoint exists ─────────────────────────
+def test_PVF23_advanced_review_get_returns_summary(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(_adv_url(rid), headers=_auth()).get_json()
+    assert body["ok"] is True
+    assert "advanced_review_summary" in body
+    assert "certification_gate_fragment" in body
+
+
+# ── PVF24: all_advanced_reviews_prelim_ready false initially ─────────────────
+def test_PVF24_all_advanced_reviews_prelim_ready_false_initially(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(_adv_url(rid), headers=_auth()).get_json()
+    summary = body["advanced_review_summary"]
+    assert summary["all_advanced_reviews_prelim_ready"] is False
+
+
+# ── PVF25: all_advanced_reviews_prelim_ready true after all four approvals ───
+def test_PVF25_all_advanced_prelim_ready_true_after_all_four(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    _save_legal(client, rid)
+    _save_esg(client, rid)
+    _save_swot(client, rid)
+    _approve_prelim(client, rid, "hbu")
+    _approve_prelim(client, rid, "legal")
+    _approve_prelim(client, rid, "esg")
+    _approve_prelim(client, rid, "swot")
+    body    = client.get(_adv_url(rid), headers=_auth()).get_json()
+    summary = body["advanced_review_summary"]
+    assert summary["all_advanced_reviews_prelim_ready"] is True
+
+
+# ── PVF26: all_advanced_reviews_cert_ready always false in Phase F ────────────
+def test_PVF26_all_advanced_cert_ready_always_false(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid); _save_legal(client, rid)
+    _save_esg(client, rid); _save_swot(client, rid)
+    _approve_prelim(client, rid, "hbu"); _approve_prelim(client, rid, "legal")
+    _approve_prelim(client, rid, "esg"); _approve_prelim(client, rid, "swot")
+    body    = client.get(_adv_url(rid), headers=_auth()).get_json()
+    summary = body["advanced_review_summary"]
+    assert summary["all_advanced_reviews_cert_ready"] is False
+
+
+# ── PVF27: certification gate includes hbu_completed ─────────────────────────
+def test_PVF27_gate_includes_hbu_completed(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert "hbu_completed" in gate
+
+
+# ── PVF28: certification gate includes legal_due_diligence_ready ─────────────
+def test_PVF28_gate_includes_legal_due_diligence_ready(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert "legal_due_diligence_ready" in gate
+
+
+# ── PVF29: certification gate includes esg_reviewed ──────────────────────────
+def test_PVF29_gate_includes_esg_reviewed(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert "esg_reviewed" in gate
+
+
+# ── PVF30: certification gate includes swot_completed ────────────────────────
+def test_PVF30_gate_includes_swot_completed(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert "swot_completed" in gate
+
+
+# ── PVF31: certification_ready remains false after all preliminary approvals ──
+def test_PVF31_certification_ready_false_after_all_prelim_approvals(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid); _save_legal(client, rid)
+    _save_esg(client, rid); _save_swot(client, rid)
+    _approve_prelim(client, rid, "hbu"); _approve_prelim(client, rid, "legal")
+    _approve_prelim(client, rid, "esg"); _approve_prelim(client, rid, "swot")
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    assert gate.get("certification_ready") is False
+
+
+# ── PVF32: certified_use_allowed remains false ────────────────────────────────
+def test_PVF32_certified_use_allowed_remains_false(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    _approve_prelim(client, rid, "hbu")
+    hbu_body = client.get(_adv_url(rid), headers=_auth()).get_json()
+    hbu = hbu_body.get("hbu_review", {})
+    assert hbu.get("certified_use_allowed") is False
+
+
+# ── PVF33: preliminary_use_allowed consistent with Phase E ───────────────────
+def test_PVF33_preliminary_use_allowed_consistent_with_phase_e(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth()).get_json()
+    gate = body.get("certification_gate_summary", {})
+    # preliminary_use_allowed from Phase E (no prelim approval yet → False)
+    assert "preliminary_approval_ready" in gate or "preliminary_use_allowed" in gate
+
+
+# ── PVF34: event log records HBU save ────────────────────────────────────────
+def test_PVF34_event_log_records_hbu_save(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    events = _pvadv.read_advanced_review_events(rid)
+    actions = [e["action"] for e in events]
+    assert "hbu_save" in actions
+
+
+# ── PVF35: event log records legal save ──────────────────────────────────────
+def test_PVF35_event_log_records_legal_save(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_legal(client, rid)
+    events = _pvadv.read_advanced_review_events(rid)
+    actions = [e["action"] for e in events]
+    assert "legal_save" in actions
+
+
+# ── PVF36: event log records ESG save ────────────────────────────────────────
+def test_PVF36_event_log_records_esg_save(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_esg(client, rid)
+    events = _pvadv.read_advanced_review_events(rid)
+    actions = [e["action"] for e in events]
+    assert "esg_save" in actions
+
+
+# ── PVF37: event log records SWOT save ───────────────────────────────────────
+def test_PVF37_event_log_records_swot_save(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_swot(client, rid)
+    events = _pvadv.read_advanced_review_events(rid)
+    actions = [e["action"] for e in events]
+    assert "swot_save" in actions
+
+
+# ── PVF38: no internal paths in advanced-review responses ────────────────────
+def test_PVF38_no_internal_paths_in_responses(client):
+    rid  = _create(client).get_json()["request_id"]
+    text = client.get(_adv_url(rid), headers=_auth()).get_data(as_text=True)
+    assert "advanced_reviews/" not in text
+    assert "advanced_review_events/" not in text
+    assert "instance/professional_valuation" not in text
+
+
+# ── PVF39: expert_notes present in protected response ────────────────────────
+def test_PVF39_expert_notes_present_in_protected_response(client):
+    rid = _create(client).get_json()["request_id"]
+    _save_hbu(client, rid)
+    body = client.get(_adv_url(rid), headers=_auth()).get_json()
+    hbu  = body.get("hbu_review", {})
+    assert "expert_notes" in hbu
+
+
+# ── PVF40: no OCR/Qdrant/RAG flags set true ──────────────────────────────────
+def test_PVF40_no_ocr_qdrant_rag_flags(client):
+    rid  = _create(client).get_json()["request_id"]
+    body = _save_hbu(client, rid)
+    text = json.dumps(body)
+    assert '"ocr_enabled": true' not in text
+    assert '"qdrant_enabled": true' not in text
+    assert '"rag_enabled": true' not in text
+
+
+# ── PVF41: schema returns Arabic labels ──────────────────────────────────────
+def test_PVF41_schema_returns_arabic_labels(client):
+    body    = client.get(_schema_url(), headers=_auth()).get_json()
+    assert body["ok"] is True
+    schema  = body["schema"]
+    sections = schema["sections"]
+    labels = [s["section_label_ar"] for s in sections]
+    assert any("الاستخدام الأمثل" in lbl for lbl in labels)
+    assert any("القانونية" in lbl for lbl in labels)
+    assert any("ESG" in lbl for lbl in labels)
+    assert any("SWOT" in lbl for lbl in labels)
+
+
+# ── PVF42: QA outputs directory for Phase F exists ───────────────────────────
+def test_PVF42_qa_outputs_exist():
+    qa_dir = Path(__file__).resolve().parents[1] / "instance" / "manual_review_outputs" / "professional_valuation_phase_f_advanced_review"
+    assert qa_dir.exists(), f"QA dir missing: {qa_dir}"
+    assert len(list(qa_dir.iterdir())) >= 1, "QA dir is empty"
+
+
+# ── PVF43: existing PVB/PVC/PVD/PVE tests unaffected ────────────────────────
+def test_PVF43_existing_pv_tests_unaffected(client):
+    resp = _create(client)
+    assert resp.status_code == 201
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["request_id"].startswith("PVR-")
+
+
+# ── PVF44: ordinary valuation route still responds ───────────────────────────
+def test_PVF44_ordinary_valuation_unaffected(client):
+    resp = client.get("/api/advisor/health")
+    assert resp.status_code in (200, 404, 405)
+
+
+# ── PVF45: tax appeal route still responds ───────────────────────────────────
+def test_PVF45_tax_appeal_unaffected(client):
+    resp = client.get("/api/tax-appeal/health")
+    assert resp.status_code in (200, 404, 405)

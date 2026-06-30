@@ -36657,6 +36657,288 @@ function taxSpCreateDraft() {
     </div>
   </div>
 
+
+<!-- ══ Phase F: Advanced Expert Review Workspace ════════════════════════════ -->
+<div style="margin:24px 0 0; padding:0 0 4px;">
+  <div style="font-size:0.7rem; color:#f59e0b; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:10px;">
+    ⚠ Phase F: Advanced Expert Reviews — اعتماد مبدئي داخلي فقط — Final Certification Blocked
+  </div>
+  <div data-testid="pro-val-phase-f-warning"
+       style="font-size:0.72rem; color:#fbbf24; background:rgba(251,191,36,0.07); border:1px solid rgba(251,191,36,0.25); border-radius:6px; padding:8px 12px; margin-bottom:14px;">
+    Phase F: advanced expert reviews can be approved for preliminary/internal use only. Final certification remains blocked.
+  </div>
+
+  <!-- HBU Section -->
+  <div data-testid="pro-val-hbu-section"
+       style="margin:0 0 14px; padding:14px 16px; background:rgba(99,102,241,0.06); border:1px solid rgba(99,102,241,0.22); border-radius:8px;">
+    <div style="font-size:0.78rem; color:#a5b4fc; font-weight:600; margin-bottom:8px;">الاستخدام الأمثل والأعلى إنتاجية (HBU)</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">الاستخدام الحالي</label>
+        <input data-testid="pro-val-hbu-current-use" id="pv-hbu-current-use" type="text"
+               placeholder="الاستخدام الحالي للعقار..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">الاستخدامات البديلة (فاصل بفاصلة)</label>
+        <input data-testid="pro-val-hbu-candidate-uses" id="pv-hbu-candidate-uses" type="text"
+               placeholder="استخدام1, استخدام2, ..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">① قانوني مسموح</label>
+        <textarea data-testid="pro-val-hbu-legal-test" id="pv-hbu-legal-test" rows="2"
+                  placeholder="نتيجة اختبار المسموحية القانونية..."
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">② ممكن فيزيائياً</label>
+        <textarea data-testid="pro-val-hbu-physical-test" id="pv-hbu-physical-test" rows="2"
+                  placeholder="نتيجة اختبار الإمكانية الفيزيائية..."
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">③ مجدي اقتصادياً</label>
+        <textarea data-testid="pro-val-hbu-financial-test" id="pv-hbu-financial-test" rows="2"
+                  placeholder="نتيجة اختبار الجدوى الاقتصادية..."
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">④ الأعلى ربحية</label>
+        <textarea data-testid="pro-val-hbu-max-productivity-test" id="pv-hbu-max-prod-test" rows="2"
+                  placeholder="نتيجة اختبار الأعلى إنتاجية..."
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">الاستخدام الأمثل المختار</label>
+        <input data-testid="pro-val-hbu-selected-use" id="pv-hbu-selected-use" type="text"
+               placeholder="الاستخدام الأمثل المختار..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">الخلاصة</label>
+        <input data-testid="pro-val-hbu-conclusion" id="pv-hbu-conclusion" type="text"
+               placeholder="خلاصة تحليل HBU..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(99,102,241,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button data-testid="pro-val-hbu-save" onclick="pvSaveHbu()"
+              style="padding:6px 14px; background:rgba(99,102,241,0.18); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        حفظ HBU
+      </button>
+      <button data-testid="pro-val-hbu-approve-prelim" onclick="pvApprovePrelim('hbu')"
+              style="padding:6px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        اعتماد مبدئي HBU
+      </button>
+      <span data-testid="pro-val-hbu-status" id="pv-hbu-status"
+            style="font-size:0.72rem; color:#94a3b8;"></span>
+    </div>
+  </div>
+
+  <!-- Legal Section -->
+  <div data-testid="pro-val-legal-section"
+       style="margin:0 0 14px; padding:14px 16px; background:rgba(234,179,8,0.05); border:1px solid rgba(234,179,8,0.2); border-radius:8px;">
+    <div style="font-size:0.78rem; color:#fde68a; font-weight:600; margin-bottom:8px;">العناية القانونية الواجبة</div>
+    <div style="font-size:0.7rem; color:#94a3b8; margin-bottom:8px; line-height:1.5;">
+      ⚠ لم يتم إجراء فحص قانوني كامل، ويعد ذلك قيداً على نطاق العمل ولا يمثل التقرير رأياً قانونياً في صحة الملكية.
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">نوع الملكية</label>
+        <input data-testid="pro-val-legal-ownership-type" id="pv-legal-ownership-type" type="text"
+               placeholder="ملكية حرة / إيجارية / مشتركة..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">وثيقة الملكية</label>
+        <input data-testid="pro-val-legal-doc-reviewed" id="pv-legal-doc-reviewed" type="text"
+               placeholder="رقم الوثيقة أو 'تمت المراجعة'..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">النزاعات القانونية</label>
+        <input data-testid="pro-val-legal-disputes" id="pv-legal-disputes" type="text"
+               placeholder="حالة النزاعات القانونية..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">القيود والرهونات</label>
+        <input data-testid="pro-val-legal-restrictions" id="pv-legal-restrictions" type="text"
+               placeholder="القيود والرهونات..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="margin-bottom:8px;">
+      <label style="font-size:0.7rem; color:#94a3b8;">تحديد نطاق العمل القانوني</label>
+      <textarea data-testid="pro-val-legal-scope-limitation" id="pv-legal-scope-limitation" rows="2"
+                placeholder="قيود نطاق الفحص القانوني..."
+                style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:0.7rem; color:#94a3b8;">خلاصة الفحص القانوني</label>
+      <textarea data-testid="pro-val-legal-conclusion" id="pv-legal-conclusion" rows="2"
+                placeholder="الخلاصة العامة للفحص القانوني..."
+                style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(234,179,8,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; resize:vertical; box-sizing:border-box;"></textarea>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button data-testid="pro-val-legal-save" onclick="pvSaveLegal()"
+              style="padding:6px 14px; background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.35); color:#fde68a; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        حفظ الفحص القانوني
+      </button>
+      <button data-testid="pro-val-legal-approve-prelim" onclick="pvApprovePrelim('legal')"
+              style="padding:6px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        اعتماد مبدئي قانوني
+      </button>
+      <span data-testid="pro-val-legal-status" id="pv-legal-status"
+            style="font-size:0.72rem; color:#94a3b8;"></span>
+    </div>
+  </div>
+
+  <!-- ESG Section -->
+  <div data-testid="pro-val-esg-section"
+       style="margin:0 0 14px; padding:14px 16px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2); border-radius:8px;">
+    <div style="font-size:0.78rem; color:#6ee7b7; font-weight:600; margin-bottom:8px;">تقييم ESG والمخاطر المناخية</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">بيانات ESG متوفرة؟</label>
+        <select data-testid="pro-val-esg-data-available" id="pv-esg-data-available"
+                style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem;">
+          <option value="false">لا — غير متوفرة</option>
+          <option value="true">نعم — متوفرة</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">درجة ESG (0-100)</label>
+        <input data-testid="pro-val-esg-score" id="pv-esg-score" type="number" min="0" max="100"
+               placeholder="مثال: 72"
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">فئة ESG</label>
+        <input data-testid="pro-val-esg-category" id="pv-esg-category" type="text"
+               placeholder="A+ / B / غير مصنف..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">درجة المخاطر المناخية</label>
+        <input data-testid="pro-val-esg-climate-risk" id="pv-esg-climate-risk" type="text"
+               placeholder="منخفض / متوسط / مرتفع..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">تأثير ESG على القيمة (استشاري)</label>
+        <input data-testid="pro-val-esg-value-impact" id="pv-esg-value-impact" type="text"
+               placeholder="غير مكتمل — لا يطبق أثر إنتاجي"
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(16,185,129,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button data-testid="pro-val-esg-save" onclick="pvSaveEsg()"
+              style="padding:6px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        حفظ ESG
+      </button>
+      <button data-testid="pro-val-esg-approve-prelim" onclick="pvApprovePrelim('esg')"
+              style="padding:6px 14px; background:rgba(16,185,129,0.18); border:1px solid rgba(16,185,129,0.45); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        اعتماد مبدئي ESG
+      </button>
+      <span data-testid="pro-val-esg-status" id="pv-esg-status"
+            style="font-size:0.72rem; color:#94a3b8;"></span>
+    </div>
+  </div>
+
+  <!-- SWOT Section -->
+  <div data-testid="pro-val-swot-section"
+       style="margin:0 0 14px; padding:14px 16px; background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.2); border-radius:8px;">
+    <div style="font-size:0.78rem; color:#fca5a5; font-weight:600; margin-bottom:8px;">تحليل SWOT والمخاطر الاستراتيجية</div>
+    <div style="font-size:0.7rem; color:#94a3b8; margin-bottom:8px;">
+      درجة التأثير والاحتمالية: 1–5 | الأولوية = التأثير × الاحتمالية
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#4ade80; font-weight:600;">نقاط القوة (Strengths)</label>
+        <textarea data-testid="pro-val-swot-strengths" id="pv-swot-strengths" rows="3"
+                  placeholder='[{"title_ar":"ميزة","impact_score":4,"probability_score":3}]&#10;أو أدخل نصاً حراً'
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(74,222,128,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.72rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#f87171; font-weight:600;">نقاط الضعف (Weaknesses)</label>
+        <textarea data-testid="pro-val-swot-weaknesses" id="pv-swot-weaknesses" rows="3"
+                  placeholder='[{"title_ar":"ضعف","impact_score":3,"probability_score":3}]'
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(248,113,113,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.72rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#60a5fa; font-weight:600;">الفرص (Opportunities)</label>
+        <textarea data-testid="pro-val-swot-opportunities" id="pv-swot-opportunities" rows="3"
+                  placeholder='[{"title_ar":"فرصة","impact_score":4,"probability_score":4}]'
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(96,165,250,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.72rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#fb923c; font-weight:600;">التهديدات (Threats)</label>
+        <textarea data-testid="pro-val-swot-threats" id="pv-swot-threats" rows="3"
+                  placeholder='[{"title_ar":"تهديد","impact_score":3,"probability_score":4}]'
+                  style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(251,146,60,0.25); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.72rem; resize:vertical; box-sizing:border-box;"></textarea>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px;">
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">الربط مع HBU</label>
+        <input data-testid="pro-val-swot-hbu-linkage" id="pv-swot-hbu-linkage" type="text"
+               placeholder="كيف يرتبط SWOT بتحليل HBU..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(239,68,68,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="font-size:0.7rem; color:#94a3b8;">التوصية الاستراتيجية</label>
+        <input data-testid="pro-val-swot-recommendation-linkage" id="pv-swot-recommendation" type="text"
+               placeholder="التوصية الاستراتيجية المقترحة..."
+               style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(239,68,68,0.2); border-radius:5px; padding:5px 8px; color:#e2e8f0; font-size:0.78rem; box-sizing:border-box;" />
+      </div>
+    </div>
+    <div data-testid="pro-val-swot-risk-matrix" id="pv-swot-risk-matrix"
+         style="font-size:0.72rem; color:#94a3b8; margin-bottom:10px; min-height:20px;">
+      <!-- Risk matrix / priority results rendered here -->
+      مصفوفة المخاطر — ستظهر بعد الحفظ
+    </div>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button data-testid="pro-val-swot-save" onclick="pvSaveSwot()"
+              style="padding:6px 14px; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.35); color:#fca5a5; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        حفظ SWOT
+      </button>
+      <button data-testid="pro-val-swot-approve-prelim" onclick="pvApprovePrelim('swot')"
+              style="padding:6px 14px; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7; border-radius:6px; cursor:pointer; font-size:0.78rem;">
+        اعتماد مبدئي SWOT
+      </button>
+      <span data-testid="pro-val-swot-status" id="pv-swot-status"
+            style="font-size:0.72rem; color:#94a3b8;"></span>
+    </div>
+  </div>
+
+  <!-- Advanced Review Summary / Gate -->
+  <div data-testid="pro-val-advanced-review-summary"
+       style="padding:12px 16px; background:rgba(15,23,42,0.5); border:1px solid rgba(148,163,184,0.15); border-radius:8px;">
+    <div style="font-size:0.75rem; color:#94a3b8; font-weight:600; margin-bottom:8px;">حالة المراجعات المتقدمة — Advanced Review Gate</div>
+    <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:8px;">
+      <span data-testid="pro-val-advanced-reviews-prelim-ready" id="pv-adv-prelim-ready"
+            style="font-size:0.72rem; color:#6ee7b7;">
+        🔲 اعتماد مبدئي مكتمل: —
+      </span>
+      <span data-testid="pro-val-advanced-reviews-cert-ready" id="pv-adv-cert-ready"
+            style="font-size:0.72rem; color:#f87171;">
+        🔴 اعتماد نهائي: محجوب في Phase F
+      </span>
+    </div>
+    <div data-testid="pro-val-advanced-review-blockers" id="pv-adv-blockers"
+         style="font-size:0.7rem; color:#fbbf24;"></div>
+  </div>
+</div>
+<!-- /Phase F Advanced Expert Review -->
+
 </div><!-- /ws-professional-valuation -->
 
 <script>
@@ -37507,6 +37789,190 @@ function taxSpCreateDraft() {
         })
         .catch(function(e) { pvSetStatus('خطأ: ' + e.message, '#f87171'); });
     };
+
+    /* ══ Phase F: Advanced Expert Review Helpers ══ */
+
+    function pvAdvUrl(rid, path) {
+        return '/api/professional-valuation/requests/' + encodeURIComponent(rid) + '/advanced-review' + (path || '');
+    }
+
+    function pvAdvSetStatus(elId, msg, color) {
+        var el = document.getElementById(elId);
+        if (el) { el.textContent = msg; el.style.color = color || '#94a3b8'; }
+    }
+
+    function pvRenderAdvSummary(summary, gate) {
+        var prelimEl  = document.getElementById('pv-adv-prelim-ready');
+        var certEl    = document.getElementById('pv-adv-cert-ready');
+        var blockEl   = document.getElementById('pv-adv-blockers');
+        if (summary) {
+            if (prelimEl) prelimEl.textContent = summary.all_advanced_reviews_prelim_ready
+                ? '✅ اعتماد مبدئي مكتمل: نعم'
+                : '🔲 اعتماد مبدئي مكتمل: ' + (summary.preliminary_approved_sections || 0) + '/4';
+            if (certEl) certEl.textContent = '🔴 اعتماد نهائي: محجوب في Phase F';
+            if (blockEl) {
+                var bl = (summary.blockers || []);
+                blockEl.textContent = bl.length ? ('⚠ ' + bl.join(' | ')) : '';
+            }
+        }
+        if (gate && typeof pvRenderGateSummary === 'function') pvRenderGateSummary(gate);
+    }
+
+    function pvParseSwotItems(raw) {
+        var s = (raw || '').trim();
+        if (!s) return [];
+        try {
+            var arr = JSON.parse(s);
+            if (Array.isArray(arr)) return arr;
+        } catch(e) {}
+        return [{ title_ar: s, description_ar: '', impact_score: 3, probability_score: 3 }];
+    }
+
+    window.pvSaveHbu = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        pvAdvSetStatus('pv-hbu-status', 'جارٍ الحفظ…', '#93c5fd');
+        var body = {
+            current_use:               (document.getElementById('pv-hbu-current-use') || {}).value || '',
+            candidate_uses:            ((document.getElementById('pv-hbu-candidate-uses') || {}).value || '').split(',').map(function(s){return s.trim();}).filter(Boolean),
+            legally_permissible_test:  (document.getElementById('pv-hbu-legal-test') || {}).value || '',
+            physically_possible_test:  (document.getElementById('pv-hbu-physical-test') || {}).value || '',
+            financially_feasible_test: (document.getElementById('pv-hbu-financial-test') || {}).value || '',
+            maximally_productive_test: (document.getElementById('pv-hbu-max-prod-test') || {}).value || '',
+            selected_hbu:              (document.getElementById('pv-hbu-selected-use') || {}).value || '',
+            hbu_conclusion:            (document.getElementById('pv-hbu-conclusion') || {}).value || '',
+        };
+        fetch(pvAdvUrl(rid, '/hbu'), {
+            method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+            body: JSON.stringify(body)
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.ok) {
+                pvAdvSetStatus('pv-hbu-status', d.hbu_review && d.hbu_review.completed ? '✅ مكتمل' : '⚠ غير مكتمل — ' + ((d.hbu_review && d.hbu_review.blockers || []).join(', ')), d.hbu_review && d.hbu_review.completed ? '#6ee7b7' : '#fbbf24');
+                pvRenderAdvSummary(d.advanced_review_summary, d.certification_gate_fragment);
+            } else {
+                pvAdvSetStatus('pv-hbu-status', 'خطأ: ' + pvEsc(d.error || ''), '#f87171');
+            }
+        }).catch(function(e){ pvAdvSetStatus('pv-hbu-status', 'خطأ: '+pvEsc(String(e)), '#f87171'); });
+    };
+
+    window.pvSaveLegal = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        pvAdvSetStatus('pv-legal-status', 'جارٍ الحفظ…', '#93c5fd');
+        var body = {
+            ownership_type:        (document.getElementById('pv-legal-ownership-type') || {}).value || '',
+            legal_dispute_status:  (document.getElementById('pv-legal-disputes') || {}).value || '',
+            title_restrictions:    (document.getElementById('pv-legal-restrictions') || {}).value || '',
+            legal_scope_limitation:(document.getElementById('pv-legal-scope-limitation') || {}).value || '',
+            legal_conclusion:      (document.getElementById('pv-legal-conclusion') || {}).value || '',
+        };
+        var docEl = document.getElementById('pv-legal-doc-reviewed');
+        if (docEl && docEl.value) {
+            body.ownership_document_evidence_id = docEl.value;
+            body.ownership_document_reviewed = true;
+        }
+        fetch(pvAdvUrl(rid, '/legal'), {
+            method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+            body: JSON.stringify(body)
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.ok) {
+                pvAdvSetStatus('pv-legal-status', d.legal_due_diligence_review && d.legal_due_diligence_review.completed ? '✅ مكتمل' : '⚠ غير مكتمل', d.legal_due_diligence_review && d.legal_due_diligence_review.completed ? '#6ee7b7' : '#fbbf24');
+                pvRenderAdvSummary(d.advanced_review_summary, d.certification_gate_fragment);
+            } else {
+                pvAdvSetStatus('pv-legal-status', 'خطأ: ' + pvEsc(d.error || ''), '#f87171');
+            }
+        }).catch(function(e){ pvAdvSetStatus('pv-legal-status', 'خطأ: '+pvEsc(String(e)), '#f87171'); });
+    };
+
+    window.pvSaveEsg = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        pvAdvSetStatus('pv-esg-status', 'جارٍ الحفظ…', '#93c5fd');
+        var dataAvailEl = document.getElementById('pv-esg-data-available');
+        var body = {
+            esg_data_available:        dataAvailEl ? (dataAvailEl.value === 'true') : false,
+            esg_score:                 parseFloat((document.getElementById('pv-esg-score') || {}).value || '') || null,
+            esg_category:              (document.getElementById('pv-esg-category') || {}).value || '',
+            climate_risk_category:     (document.getElementById('pv-esg-climate-risk') || {}).value || '',
+            esg_value_impact_commentary:(document.getElementById('pv-esg-value-impact') || {}).value || '',
+        };
+        fetch(pvAdvUrl(rid, '/esg'), {
+            method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+            body: JSON.stringify(body)
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.ok) {
+                pvAdvSetStatus('pv-esg-status', d.esg_climate_review && d.esg_climate_review.completed ? '✅ مكتمل' : '⚠ بيانات ESG غير مكتملة', d.esg_climate_review && d.esg_climate_review.completed ? '#6ee7b7' : '#fbbf24');
+                pvRenderAdvSummary(d.advanced_review_summary, d.certification_gate_fragment);
+            } else {
+                pvAdvSetStatus('pv-esg-status', 'خطأ: ' + pvEsc(d.error || ''), '#f87171');
+            }
+        }).catch(function(e){ pvAdvSetStatus('pv-esg-status', 'خطأ: '+pvEsc(String(e)), '#f87171'); });
+    };
+
+    window.pvSaveSwot = function() {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        pvAdvSetStatus('pv-swot-status', 'جارٍ الحفظ…', '#93c5fd');
+        function parseItems(id, cat) {
+            var raw = ((document.getElementById(id) || {}).value || '').trim();
+            if (!raw) return [];
+            try { var arr = JSON.parse(raw); if(Array.isArray(arr)) { arr.forEach(function(it){it.category=cat;}); return arr; } } catch(e){}
+            return raw.split('\n').filter(Boolean).map(function(l){ return {category:cat, title_ar:l.trim(), impact_score:3, probability_score:3}; });
+        }
+        var body = {
+            strengths:     parseItems('pv-swot-strengths',     'strengths'),
+            weaknesses:    parseItems('pv-swot-weaknesses',    'weaknesses'),
+            opportunities: parseItems('pv-swot-opportunities', 'opportunities'),
+            threats:       parseItems('pv-swot-threats',       'threats'),
+            hbu_linkage:           (document.getElementById('pv-swot-hbu-linkage') || {}).value || '',
+            recommendation_linkage:(document.getElementById('pv-swot-recommendation') || {}).value || '',
+        };
+        fetch(pvAdvUrl(rid, '/swot'), {
+            method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+            body: JSON.stringify(body)
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.ok) {
+                pvAdvSetStatus('pv-swot-status', d.swot_risk_review && d.swot_risk_review.completed ? '✅ مكتمل' : '⚠ غير مكتمل — ' + ((d.swot_risk_review && d.swot_risk_review.blockers || []).join(', ')), d.swot_risk_review && d.swot_risk_review.completed ? '#6ee7b7' : '#fbbf24');
+                pvRenderAdvSummary(d.advanced_review_summary, d.certification_gate_fragment);
+                var matrix = d.swot_risk_review && d.swot_risk_review.weighted_priority_matrix || [];
+                var matEl = document.getElementById('pv-swot-risk-matrix');
+                if (matEl && matrix.length) {
+                    matEl.innerHTML = '<strong style="color:#fca5a5;">مصفوفة الأولوية:</strong> ' + matrix.slice(0,5).map(function(it){ return pvEsc(it.title_ar||'') + ' (' + it.priority_score + ')'; }).join(' | ');
+                }
+            } else {
+                pvAdvSetStatus('pv-swot-status', 'خطأ: ' + pvEsc(d.error || ''), '#f87171');
+            }
+        }).catch(function(e){ pvAdvSetStatus('pv-swot-status', 'خطأ: '+pvEsc(String(e)), '#f87171'); });
+    };
+
+    window.pvApprovePrelim = function(sectionKey) {
+        var token = pvGetToken();
+        var rid   = window._pvCurrentRequestId;
+        if (!token) { pvSetStatus('أدخل رمز الدخول أولاً.', '#f87171'); return; }
+        if (!rid)   { pvSetStatus('حدد طلباً أولاً.', '#f87171'); return; }
+        var statusId = 'pv-' + sectionKey + '-status';
+        pvAdvSetStatus(statusId, 'جارٍ الاعتماد المبدئي…', '#93c5fd');
+        fetch(pvAdvUrl(rid, '/' + sectionKey + '/approve-preliminary'), {
+            method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+            body: JSON.stringify({})
+        }).then(function(r){return r.json();}).then(function(d){
+            if (d.ok) {
+                pvAdvSetStatus(statusId, '✅ اعتماد مبدئي ناجح — ' + pvEsc(d.warning_text || 'غير صالح للاستخدام الرسمي'), '#6ee7b7');
+                pvRenderAdvSummary(d.advanced_review_summary, d.certification_gate_fragment);
+            } else {
+                pvAdvSetStatus(statusId, 'خطأ: ' + pvEsc(d.error || '') + (d.blockers ? ' | ' + d.blockers.join(', ') : ''), '#f87171');
+            }
+        }).catch(function(e){ pvAdvSetStatus(statusId, 'خطأ: '+pvEsc(String(e)), '#f87171'); });
+    };
+
 })();
 </script>
 

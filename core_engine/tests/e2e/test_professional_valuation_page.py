@@ -666,3 +666,190 @@ def test_PVP65_no_official_use_wording_in_preliminary_section(page: Page, live_s
     assert "تقرير معتمد نهائياً" not in text
     assert "صالح للتقديم الرسمي" not in text
 
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVP66–PVP85 — Phase F: Advanced Expert Review E2E Tests
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVP66_hbu_section_visible(page: Page, live_server: str) -> None:
+    """PVP66: HBU expert review section is present in the professional valuation workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-hbu-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP67_hbu_four_tests_visible(page: Page, live_server: str) -> None:
+    """PVP67: All four HBU test inputs are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in ["pro-val-hbu-legal-test", "pro-val-hbu-physical-test",
+                "pro-val-hbu-financial-test", "pro-val-hbu-max-productivity-test"]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)
+
+
+def test_PVP68_hbu_approve_prelim_button_visible(page: Page, live_server: str) -> None:
+    """PVP68: HBU approve-preliminary button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-hbu-approve-prelim"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP69_legal_section_visible(page: Page, live_server: str) -> None:
+    """PVP69: Legal due diligence section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-legal-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP70_legal_scope_limitation_field_visible(page: Page, live_server: str) -> None:
+    """PVP70: Legal scope limitation field is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-legal-scope-limitation"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP71_legal_approve_prelim_button_visible(page: Page, live_server: str) -> None:
+    """PVP71: Legal approve-preliminary button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-legal-approve-prelim"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP72_esg_section_visible(page: Page, live_server: str) -> None:
+    """PVP72: ESG/climate review section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-esg-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP73_esg_score_and_category_visible(page: Page, live_server: str) -> None:
+    """PVP73: ESG score and category inputs are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in ["pro-val-esg-score", "pro-val-esg-category"]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)
+
+
+def test_PVP74_esg_approve_prelim_button_visible(page: Page, live_server: str) -> None:
+    """PVP74: ESG approve-preliminary button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-esg-approve-prelim"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP75_swot_section_visible(page: Page, live_server: str) -> None:
+    """PVP75: SWOT/risk review section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-swot-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP76_swot_four_category_textareas_visible(page: Page, live_server: str) -> None:
+    """PVP76: All four SWOT category textareas are present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in ["pro-val-swot-strengths", "pro-val-swot-weaknesses",
+                "pro-val-swot-opportunities", "pro-val-swot-threats"]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)
+
+
+def test_PVP77_swot_risk_matrix_placeholder_visible(page: Page, live_server: str) -> None:
+    """PVP77: SWOT risk matrix placeholder element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-swot-risk-matrix"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP78_swot_approve_prelim_button_visible(page: Page, live_server: str) -> None:
+    """PVP78: SWOT approve-preliminary button is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-swot-approve-prelim"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP79_advanced_review_summary_visible(page: Page, live_server: str) -> None:
+    """PVP79: Advanced review summary section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-advanced-review-summary"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP80_advanced_review_blockers_visible(page: Page, live_server: str) -> None:
+    """PVP80: Advanced review blockers element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-advanced-review-blockers"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP81_advanced_prelim_ready_indicator_visible(page: Page, live_server: str) -> None:
+    """PVP81: Advanced reviews prelim-ready indicator is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-advanced-reviews-prelim-ready"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP82_advanced_cert_ready_indicator_visible(page: Page, live_server: str) -> None:
+    """PVP82: Advanced reviews cert-ready indicator is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-advanced-reviews-cert-ready"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVP83_phase_f_warning_visible(page: Page, live_server: str) -> None:
+    """PVP83: Phase F advisory warning is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-phase-f-warning"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP84_certified_button_still_disabled_in_phase_f(page: Page, live_server: str) -> None:
+    """PVP84: Phase F regression — certified report button remains disabled."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-certified"]')
+    expect(btn).to_have_count(1)
+    assert btn.is_disabled(), "Certified report button must remain disabled in Phase F"
+
+
+def test_PVP85_phase_a_to_e_sections_still_visible(page: Page, live_server: str) -> None:
+    """PVP85: Phase A–E sections still visible (regression)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in [
+        "pro-val-workspace",
+        "pro-val-method-section",
+        "pro-val-reconciliation-section",
+        "pro-val-preliminary-approval-section",
+    ]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)

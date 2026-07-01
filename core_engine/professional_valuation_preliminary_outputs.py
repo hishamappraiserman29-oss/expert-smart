@@ -383,11 +383,11 @@ def _generate_preliminary_pdf(
         html = tmpl.render(ctx=ctx, generated_at=generated_at, font_css_block=font_css)
 
         from pdf_renderer import render_pdf_from_html
-        render_pdf_from_html(html, str(out_path))
+        pdf_bytes = render_pdf_from_html(html)
+        out_path.write_bytes(pdf_bytes)
 
-        data   = out_path.read_bytes()
-        sha256 = hashlib.sha256(data).hexdigest()
-        return True, "", len(data), sha256
+        sha256 = hashlib.sha256(pdf_bytes).hexdigest()
+        return True, "", len(pdf_bytes), sha256
 
     except Exception as exc:
         return False, str(exc), 0, ""
@@ -421,11 +421,11 @@ def _generate_expert_draft_pdf(
         html = tmpl.render(ctx=ctx, generated_at=generated_at, font_css_block=font_css)
 
         from pdf_renderer import render_pdf_from_html
-        render_pdf_from_html(html, str(out_path))
+        pdf_bytes = render_pdf_from_html(html)
+        out_path.write_bytes(pdf_bytes)
 
-        data   = out_path.read_bytes()
-        sha256 = hashlib.sha256(data).hexdigest()
-        return True, "", len(data), sha256
+        sha256 = hashlib.sha256(pdf_bytes).hexdigest()
+        return True, "", len(pdf_bytes), sha256
 
     except Exception as exc:
         return False, str(exc), 0, ""

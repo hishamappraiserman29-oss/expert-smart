@@ -37491,6 +37491,255 @@ function taxSpCreateDraft() {
 })();
 </script>
 
+<script>
+(function() {
+  'use strict';
+
+  /* ── Phase H Addendum: Preliminary / Expert Draft / Expert Workbook ────────── */
+
+  function _pvpBase() {
+    return '/api/professional-valuation/requests/' + (window._pvCurrentRequestId || '');
+  }
+  function _pvpToken() { return window._pvAuthToken || ''; }
+
+  function _pvpSetStatus(id, msg, color) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = msg; el.style.color = color || '#333'; }
+  }
+
+  function pvpLoadPrelimOutputs() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) return;
+    var tok = _pvpToken();
+    if (!tok) return;
+    fetch('/api/professional-valuation/requests/' + rid + '/outputs', {
+      headers: { 'Authorization': 'Bearer ' + tok }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(body) {
+      if (!body.ok) return;
+      var outputs = body.outputs || [];
+      var hasPrelim = outputs.some(function(o) { return o.output_type === 'preliminary_pdf' && o.file_available; });
+      var hasDraft  = outputs.some(function(o) { return o.output_type === 'expert_draft_pdf' && o.file_available; });
+      var hasWb     = outputs.some(function(o) { return o.output_type === 'expert_workbook' && o.file_available; });
+      var dlPrelim  = document.getElementById('pvp-download-prelim-btn');
+      var dlDraft   = document.getElementById('pvp-download-draft-btn');
+      var dlWb      = document.getElementById('pvp-download-ewb-btn');
+      if (dlPrelim) { dlPrelim.disabled = !hasPrelim; dlPrelim.style.opacity = hasPrelim ? '1' : '0.65'; }
+      if (dlDraft)  { dlDraft.disabled  = !hasDraft;  dlDraft.style.opacity  = hasDraft  ? '1' : '0.65'; }
+      if (dlWb)     { dlWb.disabled     = !hasWb;     dlWb.style.opacity     = hasWb     ? '1' : '0.65'; }
+    })
+    .catch(function() {});
+  }
+
+  window.pvpGeneratePreliminaryReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvpSetStatus('pvp-prelim-status', 'الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvpToken();
+    if (!tok) { _pvpSetStatus('pvp-prelim-status', 'تسجيل الدخول مطلوب', '#b43200'); return; }
+    _pvpSetStatus('pvp-prelim-status', 'جارٍ توليد التقرير المبدئي…', '#2d6a9f');
+    fetch(_pvpBase() + '/preliminary-report', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(body) {
+      if (body.ok) {
+        _pvpSetStatus('pvp-prelim-status', 'تم توليد التقرير المبدئي بنجاح', '#1e8449');
+        pvpLoadPrelimOutputs();
+      } else {
+        var msg = 'خطأ: ' + pvEsc(body.error || 'فشل التوليد');
+        _pvpSetStatus('pvp-prelim-status', msg, '#b43200');
+      }
+    })
+    .catch(function() { _pvpSetStatus('pvp-prelim-status', 'خطأ في الاتصال', '#b43200'); });
+  };
+
+  window.pvpDownloadPreliminaryReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) return;
+    var tok = _pvpToken();
+    fetch(_pvpBase() + '/preliminary-report', { headers: { 'Authorization': 'Bearer ' + tok } })
+    .then(function(r) {
+      if (!r.ok) { _pvpSetStatus('pvp-prelim-status', 'الملف غير متاح', '#b43200'); return null; }
+      return r.blob();
+    })
+    .then(function(blob) {
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'preliminary_report_' + rid + '.pdf';
+      document.body.appendChild(a); a.click();
+      setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    })
+    .catch(function() { _pvpSetStatus('pvp-prelim-status', 'تعذّر تحميل الملف', '#b43200'); });
+  };
+
+  window.pvpGenerateExpertDraftReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvpSetStatus('pvp-expert-status', 'الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvpToken();
+    if (!tok) { _pvpSetStatus('pvp-expert-status', 'تسجيل الدخول مطلوب', '#b43200'); return; }
+    _pvpSetStatus('pvp-expert-status', 'جارٍ توليد مسودة الخبير…', '#2d6a9f');
+    fetch(_pvpBase() + '/expert-draft-report', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(body) {
+      if (body.ok) {
+        _pvpSetStatus('pvp-expert-status', 'تم توليد مسودة الخبير بنجاح', '#1e8449');
+        pvpLoadPrelimOutputs();
+      } else {
+        _pvpSetStatus('pvp-expert-status', 'خطأ: ' + pvEsc(body.error || ''), '#b43200');
+      }
+    })
+    .catch(function() { _pvpSetStatus('pvp-expert-status', 'خطأ في الاتصال', '#b43200'); });
+  };
+
+  window.pvpDownloadExpertDraftReport = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) return;
+    var tok = _pvpToken();
+    fetch(_pvpBase() + '/expert-draft-report', { headers: { 'Authorization': 'Bearer ' + tok } })
+    .then(function(r) {
+      if (!r.ok) { _pvpSetStatus('pvp-expert-status', 'المسودة غير متاحة', '#b43200'); return null; }
+      return r.blob();
+    })
+    .then(function(blob) {
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'expert_draft_' + rid + '.pdf';
+      document.body.appendChild(a); a.click();
+      setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    })
+    .catch(function() { _pvpSetStatus('pvp-expert-status', 'تعذّر تحميل المسودة', '#b43200'); });
+  };
+
+  window.pvpGenerateExpertWorkbook = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) { _pvpSetStatus('pvp-expert-status', 'الرجاء تحديد طلب أولاً', '#b43200'); return; }
+    var tok = _pvpToken();
+    if (!tok) { _pvpSetStatus('pvp-expert-status', 'تسجيل الدخول مطلوب', '#b43200'); return; }
+    _pvpSetStatus('pvp-expert-status', 'جارٍ توليد ملف Excel الخبير…', '#2d6a9f');
+    fetch(_pvpBase() + '/expert-workbook', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(body) {
+      if (body.ok) {
+        _pvpSetStatus('pvp-expert-status', 'تم توليد ملف Excel الخبير بنجاح', '#1e8449');
+        pvpLoadPrelimOutputs();
+      } else {
+        _pvpSetStatus('pvp-expert-status', 'خطأ: ' + pvEsc(body.error || ''), '#b43200');
+      }
+    })
+    .catch(function() { _pvpSetStatus('pvp-expert-status', 'خطأ في الاتصال', '#b43200'); });
+  };
+
+  window.pvpDownloadExpertWorkbook = function() {
+    var rid = window._pvCurrentRequestId;
+    if (!rid) return;
+    var tok = _pvpToken();
+    fetch(_pvpBase() + '/expert-workbook', { headers: { 'Authorization': 'Bearer ' + tok } })
+    .then(function(r) {
+      if (!r.ok) { _pvpSetStatus('pvp-expert-status', 'ملف Excel غير متاح', '#b43200'); return null; }
+      return r.blob();
+    })
+    .then(function(blob) {
+      if (!blob) return;
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'expert_workbook_' + rid + '.xlsx';
+      document.body.appendChild(a); a.click();
+      setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 1000);
+    })
+    .catch(function() { _pvpSetStatus('pvp-expert-status', 'تعذّر تحميل ملف Excel', '#b43200'); });
+  };
+
+})();
+</script>
+
+<!-- ══ Phase H Addendum: Preliminary & Expert Draft Outputs ══════════════════ -->
+<div data-testid="pro-val-preliminary-output-section"
+     style="margin:18px 0 0 0;padding:14px 16px;border:1.5px solid #e67e22;border-radius:6px;background:#fef9f0;">
+  <h4 style="color:#784212;font-size:1.05em;margin-bottom:10px;">
+    المخرجات المبدئية ومسودات الخبير — Phase H Addendum
+  </h4>
+  <div data-testid="pro-val-preliminary-output-warning"
+       style="background:#fef9e7;border:1px solid #f39c12;border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:0.88em;color:#784212;font-weight:bold;">
+    المخرجات المبدئية ومسودات الخبير للاستخدام الداخلي فقط، ولا تمثل تقريراً معتمداً أو صالحاً للاستخدام الرسمي.
+  </div>
+
+  <!-- Preliminary Report row -->
+  <div style="margin-bottom:10px;">
+    <strong style="color:#784212;font-size:0.9em;">التقرير المبدئي (PDF)</strong>
+    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button data-testid="pro-val-generate-preliminary-report"
+              id="pvp-generate-prelim-btn"
+              onclick="pvpGeneratePreliminaryReport()"
+              style="background:#e67e22;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+        توليد التقرير المبدئي
+      </button>
+      <button data-testid="pro-val-download-preliminary-report"
+              id="pvp-download-prelim-btn"
+              disabled
+              onclick="pvpDownloadPreliminaryReport()"
+              style="background:#8e6020;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+        تحميل التقرير المبدئي
+      </button>
+    </div>
+    <span data-testid="pro-val-preliminary-output-status"
+          id="pvp-prelim-status"
+          style="display:block;margin-top:5px;font-size:0.82em;color:#555;"></span>
+  </div>
+
+  <!-- Expert Draft row -->
+  <div style="margin-bottom:10px;">
+    <strong style="color:#1a5276;font-size:0.9em;">مسودة الخبير (PDF داخلي)</strong>
+    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button data-testid="pro-val-generate-expert-draft-report"
+              id="pvp-generate-draft-btn"
+              onclick="pvpGenerateExpertDraftReport()"
+              style="background:#1a5276;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+        توليد مسودة الخبير
+      </button>
+      <button data-testid="pro-val-download-expert-draft-report"
+              id="pvp-download-draft-btn"
+              disabled
+              onclick="pvpDownloadExpertDraftReport()"
+              style="background:#154360;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+        تحميل مسودة الخبير
+      </button>
+    </div>
+  </div>
+
+  <!-- Expert Workbook row -->
+  <div style="margin-bottom:6px;">
+    <strong style="color:#1e8449;font-size:0.9em;">ملف Excel الخبير (داخلي)</strong>
+    <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button data-testid="pro-val-generate-expert-workbook"
+              id="pvp-generate-ewb-btn"
+              onclick="pvpGenerateExpertWorkbook()"
+              style="background:#1e8449;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;">
+        توليد ملف Excel الخبير
+      </button>
+      <button data-testid="pro-val-download-expert-workbook"
+              id="pvp-download-ewb-btn"
+              disabled
+              onclick="pvpDownloadExpertWorkbook()"
+              style="background:#145a32;color:#fff;border:none;padding:7px 16px;border-radius:4px;cursor:pointer;font-size:0.9em;opacity:0.65;">
+        تحميل ملف Excel الخبير
+      </button>
+    </div>
+    <span data-testid="pro-val-expert-output-status"
+          id="pvp-expert-status"
+          style="display:block;margin-top:5px;font-size:0.82em;color:#555;"></span>
+  </div>
+</div><!-- /pro-val-preliminary-output-section -->
+
 <!-- ══ Phase H: Protected Certified Outputs ══════════════════════════════════ -->
 <div data-testid="pro-val-certified-output-section"
      style="margin:18px 0 0 0;padding:14px 16px;border:1.5px solid #1f4e78;border-radius:6px;background:#f7faff;">

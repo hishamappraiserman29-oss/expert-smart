@@ -1275,3 +1275,125 @@ def test_PVP130_output_registry_row_present(page: Page, live_server: str) -> Non
     _go_to_pro_val(page, live_server)
     el = page.locator('[data-testid="pro-val-output-registry-row"]')
     expect(el).to_have_count(1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase H Addendum — Preliminary & Expert Draft Outputs E2E tests
+# Tests: PVP131–PVP142
+# ══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVP131_preliminary_output_section_visible(page: Page, live_server: str) -> None:
+    """PVP131: Preliminary output section is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-output-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP132_advisory_warning_visible(page: Page, live_server: str) -> None:
+    """PVP132: Advisory warning text is visible in preliminary section."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-output-warning"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP133_advisory_warning_contains_internal_use_text(page: Page, live_server: str) -> None:
+    """PVP133: Advisory warning contains 'داخلي' or 'رسمي' text."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-preliminary-output-warning"]')
+    text = el.text_content() or ""
+    assert "داخلي" in text or "رسمي" in text or "مبدئي" in text, (
+        f"Warning must contain advisory text, got: {text!r}"
+    )
+
+
+def test_PVP134_generate_preliminary_report_button_visible(page: Page, live_server: str) -> None:
+    """PVP134: Generate preliminary report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-preliminary-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP135_download_preliminary_report_button_visible(page: Page, live_server: str) -> None:
+    """PVP135: Download preliminary report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-download-preliminary-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP136_generate_expert_draft_button_visible(page: Page, live_server: str) -> None:
+    """PVP136: Generate expert draft report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-expert-draft-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP137_download_expert_draft_button_visible(page: Page, live_server: str) -> None:
+    """PVP137: Download expert draft report button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-download-expert-draft-report"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP138_generate_expert_workbook_button_visible(page: Page, live_server: str) -> None:
+    """PVP138: Generate expert workbook button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-expert-workbook"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP139_download_expert_workbook_button_visible(page: Page, live_server: str) -> None:
+    """PVP139: Download expert workbook button is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-download-expert-workbook"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP140_certified_output_section_still_visible(page: Page, live_server: str) -> None:
+    """PVP140: Phase H certified output section still visible after addendum added."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-certified-output-section"]')
+    expect(el).to_have_count(1)
+    expect(el).to_be_visible()
+
+
+def test_PVP141_no_internal_paths_in_dom(page: Page, live_server: str) -> None:
+    """PVP141: No internal file paths in DOM after page load."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    content = page.content()
+    assert "preliminary_outputs/" not in content
+    assert "instance/professional_valuation" not in content
+
+
+def test_PVP142_prior_phase_sections_still_visible(page: Page, live_server: str) -> None:
+    """PVP142: Regression — prior Phase A–H sections still visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in [
+        "pro-val-workspace",
+        "pro-val-evidence-section",
+        "pro-val-comparable-section",
+        "pro-val-preliminary-output-section",
+        "pro-val-certified-output-section",
+    ]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1)

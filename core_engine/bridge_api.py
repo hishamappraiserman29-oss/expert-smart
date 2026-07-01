@@ -12192,6 +12192,8 @@ from professional_valuation_certification import register_pv_certification_route
 _register_pv_certification(app, require_auth)
 from professional_valuation_outputs import register_pv_outputs_routes as _register_pv_outputs  # Phase H
 _register_pv_outputs(app, require_auth)
+from professional_valuation_preliminary_outputs import register_pv_preliminary_routes as _register_pv_preliminary  # Phase H Addendum
+_register_pv_preliminary(app, require_auth)
 
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:

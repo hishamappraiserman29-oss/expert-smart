@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<title>تقرير تقييم عقاري محترف مبدئي</title>
+<style>
+{{ font_css_block }}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Cairo', 'Arial', sans-serif;
+  direction: rtl; text-align: right;
+  font-size: 10pt; color: #1a1a1a;
+  background: #fff; padding: 20px 28px;
+}
+h1 { font-size: 16pt; color: #1a5276; margin-bottom: 6px; }
+h2 { font-size: 12pt; color: #1a5276; margin: 18px 0 6px 0; border-bottom: 2px solid #1a5276; padding-bottom: 3px; }
+h3 { font-size: 10.5pt; color: #2e86c1; margin: 12px 0 4px 0; }
+.advisory-banner {
+  background: #fef9e7; border: 2px solid #f39c12; border-radius: 6px;
+  padding: 12px 16px; margin: 12px 0 18px 0; text-align: center;
+  font-size: 11pt; font-weight: bold; color: #7d6608;
+}
+.advisory-banner .label { font-size: 13pt; color: #922b21; display: block; margin-bottom: 4px; }
+.section { margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+th { background: #1a5276; color: #fff; padding: 6px 8px; font-size: 9.5pt; }
+td { padding: 5px 8px; border: 1px solid #d0d0d0; font-size: 9.5pt; }
+tr:nth-child(even) td { background: #ebf5fb; }
+.kv-table td:first-child { font-weight: bold; width: 35%; background: #eaf4fb; }
+.blockers-list { list-style: none; padding: 0; }
+.blockers-list li { padding: 4px 8px; margin: 3px 0; background: #fef9e7; border-right: 4px solid #f39c12; font-size: 9pt; }
+.ok  { color: #1e8449; font-weight: bold; }
+.nok { color: #922b21; font-weight: bold; }
+.na  { color: #7f8c8d; }
+.footer { margin-top: 24px; border-top: 1px solid #bdc3c7; padding-top: 8px; font-size: 8pt; color: #7f8c8d; text-align: center; }
+@page { size: A4; margin: 18mm 15mm; }
+</style>
+</head>
+<body>
+
+<!-- ══ Cover ══════════════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h1>تقرير تقييم عقاري محترف مبدئي</h1>
+  <p style="color:#555;font-size:9pt;">Professional Valuation Preliminary Report</p>
+</div>
+
+<!-- ══ Advisory Warning ═══════════════════════════════════════════════════════ -->
+<div class="advisory-banner">
+  <span class="label">تحذير مهم</span>
+  {{ ctx.advisory_label | default("تقرير مبدئي — غير صالح للاستخدام الرسمي أو الاعتماد النهائي") }}
+</div>
+
+<!-- ══ 1. Request & Property Summary ═══════════════════════════════════════════ -->
+<div class="section">
+  <h2>١. بيانات الطلب والعقار</h2>
+  {% set req = ctx.request_summary | default({}) %}
+  <table class="kv-table">
+    <tr><td>رقم الطلب</td><td>{{ req.request_id | default("غير متاح") }}</td></tr>
+    <tr><td>اسم العميل</td><td>{{ req.client_name | default("غير متاح") }}</td></tr>
+    <tr><td>نوع العميل</td><td>{{ req.client_type | default("غير متاح") }}</td></tr>
+    <tr><td>عنوان العقار</td><td>{{ req.property_address | default("غير متاح") }}</td></tr>
+    <tr><td>نوع العقار</td><td>{{ req.property_type | default("غير متاح") }}</td></tr>
+    <tr><td>غرض التقييم</td><td>{{ req.valuation_purpose | default("غير متاح") }}</td></tr>
+    <tr><td>أساس القيمة</td><td>{{ req.basis_of_value | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ التقييم</td><td>{{ req.valuation_date | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ المعاينة</td><td>{{ req.inspection_date | default("غير متاح") }}</td></tr>
+    <tr><td>العملة</td><td>{{ req.currency | default("SAR") }}</td></tr>
+    <tr><td>تاريخ إعداد التقرير</td><td>{{ generated_at }}</td></tr>
+  </table>
+</div>
+
+<!-- ══ 2. Scope of Work ════════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٢. نطاق العمل</h2>
+  <p>يعتمد هذا التقرير على البيانات المتوفرة في مرحلة الدراسة الأولية. نطاق العمل مبدئي وقابل للتعديل بعد اكتمال جميع المستندات والمصادر والمقارنات المطلوبة.</p>
+</div>
+
+<!-- ══ 3. Evidence & Source Readiness ══════════════════════════════════════════ -->
+<div class="section">
+  <h2>٣. جاهزية المستندات والمصادر</h2>
+  {% set ev = ctx.evidence_summary | default({}) %}
+  <table class="kv-table">
+    <tr><td>جاهزية المستندات الإلزامية</td>
+        <td class="{{ 'ok' if ev.mandatory_document_readiness else 'nok' }}">
+          {{ "مكتملة" if ev.mandatory_document_readiness else "غير مكتملة" }}</td></tr>
+    <tr><td>عدد المستندات المعتمدة</td><td>{{ ev.approved_count | default(0) }}</td></tr>
+    <tr><td>الفئات المفقودة</td>
+        <td>{{ ev.missing_categories | join("، ") if ev.missing_categories else "لا توجد فئات مفقودة معروفة" }}</td></tr>
+    <tr><td>بيانات QA موجودة</td>
+        <td class="nok" style="font-size:8.5pt;">{{ "نعم — للاستخدام المبدئي فقط" if ev.qa_data_present else "لا" }}</td></tr>
+  </table>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ ev.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 4. Comparable Summary ══════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٤. ملخص المقارنات</h2>
+  {% set comp = ctx.comparable_summary | default({}) %}
+  <table class="kv-table">
+    <tr><td>إجمالي المقارنات</td><td>{{ comp.total_count | default(0) }}</td></tr>
+    <tr><td>مقارنات جاهزة إنتاجياً</td><td>{{ comp.production_ready_count | default(0) }}</td></tr>
+    <tr><td>مقارنات في مرحلة التهيئة</td><td class="{{ 'nok' if comp.staged_count else '' }}">{{ comp.staged_count | default(0) }}</td></tr>
+  </table>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ comp.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 5. Method Analysis ══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٥. تحليل طرق التقييم</h2>
+  {% set methods = ctx.method_summary | default({}) %}
+  {% if methods.methods %}
+  <table>
+    <tr><th>الطريقة</th><th>القيمة المؤشرة</th><th>الحالة</th></tr>
+    {% for m in methods.methods %}
+    <tr>
+      <td>{{ m.method_type | default("غير متاح") }}</td>
+      <td>{{ m.indicated_value | default("غير متاح") }}</td>
+      <td>{{ m.status | default("غير متاح") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="nok">لم يتم تشغيل أي طريقة تقييم بعد.</p>
+  {% endif %}
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ methods.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 6. Reconciliation Preview ══════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٦. التوفيق المبدئي</h2>
+  {% set methods = ctx.method_summary | default({}) %}
+  {% set prelim = ctx.preliminary_approval | default({}) %}
+  <table class="kv-table">
+    <tr><td>اكتملت التسوية</td>
+        <td class="{{ 'ok' if methods.reconciliation_completed else 'nok' }}">
+          {{ "نعم" if methods.reconciliation_completed else "لا — مبدئي" }}</td></tr>
+    <tr><td>القيمة المُسوَّاة المبدئية</td><td>{{ methods.reconciliation_value | default("غير متاح") }}</td></tr>
+    <tr><td>الموافقة المبدئية</td>
+        <td class="{{ 'ok' if prelim.preliminary_approval_ready else 'nok' }}">
+          {{ "صادرة" if prelim.preliminary_approval_ready else "غير صادرة" }}</td></tr>
+  </table>
+</div>
+
+<!-- ══ 7. Advanced Reviews Status ══════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٧. حالة المراجعات المتقدمة</h2>
+  {% set adv = ctx.advanced_reviews | default({}) %}
+  <table>
+    <tr><th>المراجعة</th><th>الحالة</th></tr>
+    <tr><td>تحليل HBU</td>
+        <td class="{{ 'ok' if adv.hbu_completed else 'nok' }}">{{ "مكتمل" if adv.hbu_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>الفحص القانوني</td>
+        <td class="{{ 'ok' if adv.legal_completed else 'nok' }}">{{ "مكتمل" if adv.legal_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>ESG والمخاطر المناخية</td>
+        <td class="{{ 'ok' if adv.esg_completed else 'nok' }}">{{ "مكتمل" if adv.esg_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>تحليل SWOT</td>
+        <td class="{{ 'ok' if adv.swot_completed else 'nok' }}">{{ "مكتمل" if adv.swot_completed else "يحتاج استكمال" }}</td></tr>
+  </table>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ adv.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 8. Certification Blockers ══════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٨. موانع الاعتماد النهائي</h2>
+  {% set missing = ctx.missing_certification_gates | default({}) %}
+  <p style="font-size:8.5pt;color:#7d6608;margin-bottom:6px;">{{ missing.advisory_note | default("") }}</p>
+  {% if missing.blockers %}
+  <ul class="blockers-list">
+    {% for b in missing.blockers %}
+    <li>{{ b }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="ok">لا توجد موانع معروفة — تحقق من اكتمال جميع البوابات.</p>
+  {% endif %}
+</div>
+
+<!-- ══ 9. Recommended Next Actions ════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٩. الإجراءات الموصى بها</h2>
+  {% set actions = ctx.expert_next_actions | default({}) %}
+  <ul class="blockers-list" style="border-right-color:#1a5276;">
+    {% for action in actions.actions | default([]) %}
+    <li style="border-right-color:#1a5276;">{{ action }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- ══ Footer ══════════════════════════════════════════════════════════════════ -->
+<div class="footer">
+  <strong>تقرير مبدئي / غير معتمد / للاستخدام الداخلي فقط</strong><br/>
+  تاريخ الإنشاء: {{ generated_at }} | رقم المخرج: {{ ctx.get("output_id", "") if ctx is mapping else "" }} | رقم التقرير: {{ ctx.report_number | default("") }}<br/>
+  لا يجوز الاحتجاج بهذا التقرير في أي إجراء رسمي أو قانوني. يستلزم الاعتماد النهائي استيفاء جميع بوابات الاعتماد.
+</div>
+
+</body>
+</html>

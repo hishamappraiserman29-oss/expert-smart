@@ -3943,3 +3943,348 @@ def test_PVH54_ordinary_valuation_unaffected(client):
 def test_PVH55_tax_appeal_unaffected(client):
     resp = client.get("/api/tax-appeal/health")
     assert resp.status_code in (200, 404, 405)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Phase H Addendum — Preliminary Report, Expert Draft & Expert Workbook
+# Tests: PVH56–PVH84
+# ══════════════════════════════════════════════════════════════════════════════
+
+import professional_valuation_preliminary_outputs as _pvprelim
+
+
+def _pvp_prelim_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/preliminary-report"
+
+
+def _pvp_draft_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/expert-draft-report"
+
+
+def _pvp_ewb_url(rid: str) -> str:
+    return f"/api/professional-valuation/requests/{rid}/expert-workbook"
+
+
+def _build_methods_fixture(rid: str) -> None:
+    """Inject gate snapshot with methods_completed=True but certification_ready=False."""
+    import json as _json
+    from datetime import datetime as _dt
+    import professional_valuation_certification as _pvcert
+    snap = {
+        "certification_ready":               False,
+        "official_use_allowed":              False,
+        "certified_use_allowed":             False,
+        "final_report_generation_allowed":   False,
+        "final_workbook_generation_allowed": False,
+        "methods_completed":                 True,
+        "reconciliation_completed":          True,
+        "preliminary_approval_ready":        False,
+        "qa_data_cleared":                   False,
+        "real_sources_ready":                False,
+        "comparables_ready":                 False,
+        "mandatory_documents_ready":         False,
+        "blockers": [
+            "مراجعة النظراء غير مكتملة",
+            "التوقيع غير مكتمل",
+        ],
+        "certification_status": "in_progress",
+        "evaluated_at": _dt.utcnow().isoformat(),
+        "qdrant_used": False,
+        "rag_used":    False,
+    }
+    from pathlib import Path
+    snap_path = Path(_pvcert._GATE_DIR) / f"{rid}.json"
+    snap_path.write_text(_json.dumps(snap, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# ── PVH56–PVH61: Auth guards ──────────────────────────────────────────────────
+
+def test_PVH56_preliminary_report_post_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_prelim_url(rid), json={})
+    assert resp.status_code == 401
+
+
+def test_PVH57_preliminary_report_get_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvp_prelim_url(rid))
+    assert resp.status_code == 401
+
+
+def test_PVH58_expert_draft_post_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_draft_url(rid), json={})
+    assert resp.status_code == 401
+
+
+def test_PVH59_expert_draft_get_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvp_draft_url(rid))
+    assert resp.status_code == 401
+
+
+def test_PVH60_expert_workbook_post_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_ewb_url(rid), json={})
+    assert resp.status_code == 401
+
+
+def test_PVH61_expert_workbook_get_requires_auth(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvp_ewb_url(rid))
+    assert resp.status_code == 401
+
+
+# ── PVH62–PVH64: Gate blocking (no method data → 422) ─────────────────────────
+
+def test_PVH62_preliminary_blocked_when_no_method_data(client):
+    """Without method data, preliminary generation is blocked."""
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422
+    body = resp.get_json()
+    assert body["ok"] is False
+    assert "blockers" in body
+
+
+def test_PVH63_expert_draft_blocked_when_no_method_data(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_draft_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+def test_PVH64_expert_workbook_blocked_when_no_method_data(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.post(_pvp_ewb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422
+    assert resp.get_json()["ok"] is False
+
+
+# ── PVH65–PVH68: Methods fixture — generation succeeds ──────────────────────
+
+def test_PVH65_preliminary_allowed_when_methods_complete(client):
+    """With methods_completed=True, preliminary generation succeeds."""
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert "output" in body
+    assert body["output"]["output_id"].startswith("PVOUT-")
+
+
+def test_PVH66_expert_draft_allowed_when_methods_complete(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_draft_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["output"]["output_type"] == "expert_draft_pdf"
+
+
+def test_PVH67_expert_workbook_allowed_when_methods_complete(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_ewb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["output"]["output_type"] == "expert_workbook"
+
+
+def test_PVH68_preliminary_does_not_require_certification_ready(client):
+    """Methods fixture has certification_ready=False but allows preliminary generation."""
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    gate = _pvout._load_gate_snapshot(rid)
+    assert gate["certification_ready"] is False, "Fixture should have certification_ready=False"
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 200, "Preliminary must succeed even when certification_ready=False"
+
+
+# ── PVH69–PVH71: Advisory metadata checks ─────────────────────────────────────
+
+def test_PVH69_preliminary_output_official_use_allowed_false(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("official_use_allowed") is False
+
+
+def test_PVH70_preliminary_output_certified_use_allowed_false(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("certified_use_allowed") is False
+
+
+def test_PVH71_expert_draft_advisory_only_true(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_draft_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("advisory_only") is True
+
+
+def test_PVH72_expert_workbook_advisory_only_true(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_ewb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("advisory_only") is True
+
+
+# ── PVH73–PVH75: Download endpoints ──────────────────────────────────────────
+
+def test_PVH73_preliminary_download_returns_404_before_generation(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvp_prelim_url(rid), headers=_auth())
+    assert resp.status_code == 404
+
+
+def test_PVH74_expert_draft_download_returns_404_before_generation(client):
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(_pvp_draft_url(rid), headers=_auth())
+    assert resp.status_code == 404
+
+
+def test_PVH75_expert_workbook_download_works_after_generation(client):
+    """Workbook (openpyxl) always succeeds — download must return 200."""
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    client.post(_pvp_ewb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    resp = client.get(_pvp_ewb_url(rid), headers=_auth())
+    assert resp.status_code == 200
+    ct = resp.content_type
+    assert "spreadsheet" in ct or "excel" in ct or "octet" in ct
+
+
+# ── PVH76–PVH77: No internal paths ────────────────────────────────────────────
+
+def test_PVH76_no_internal_paths_in_preliminary_response(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    body_text = resp.get_data(as_text=True)
+    assert "internal_file_path" not in body_text
+    assert "instance/professional_valuation" not in body_text
+    assert "preliminary_outputs/" not in body_text
+
+
+def test_PVH77_no_internal_paths_in_workbook_response(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_ewb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    body_text = resp.get_data(as_text=True)
+    assert "internal_file_path" not in body_text
+    assert "preliminary_outputs/" not in body_text
+
+
+# ── PVH78–PVH80: Workbook file checks ────────────────────────────────────────
+
+def test_PVH78_expert_workbook_file_available_true(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_ewb_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("file_available") is True
+    assert out.get("file_hash_sha256") is not None
+    assert len(out["file_hash_sha256"]) == 64
+
+
+def test_PVH79_expert_workbook_opens_with_openpyxl(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    client.post(_pvp_ewb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    rec = _pvprelim._latest_active_of_type(rid, "expert_workbook")
+    assert rec is not None and rec.get("file_available")
+    import openpyxl
+    fpath = rec["internal_file_path"]
+    wb = openpyxl.load_workbook(fpath)
+    assert len(wb.sheetnames) == 15
+    wb.close()
+
+
+def test_PVH80_expert_workbook_contains_required_sheets(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    client.post(_pvp_ewb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    rec = _pvprelim._latest_active_of_type(rid, "expert_workbook")
+    import openpyxl
+    wb = openpyxl.load_workbook(rec["internal_file_path"])
+    sheets = wb.sheetnames
+    for required in ["ملخص المسودة", "بوابات الاعتماد", "مراجعة الخبير", "ملاحظات داخلية", "سجل المخرجات"]:
+        assert required in sheets, f"Required sheet missing: {required}"
+    wb.close()
+
+
+# ── PVH81–PVH82: No external/OCR/RAG flags ───────────────────────────────────
+
+def test_PVH81_no_qdrant_rag_external_api_in_preliminary(client):
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    resp = client.post(_pvp_prelim_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    out = resp.get_json().get("output", {})
+    assert out.get("external_api_used") is False
+    assert out.get("qdrant_used") is False
+    assert out.get("rag_used") is False
+
+
+def test_PVH82_no_fpdf_in_preliminary_module(client):
+    import ast, pathlib
+    source = pathlib.Path(_CORE / "professional_valuation_preliminary_outputs.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            imports.append(node.module or "")
+    assert not any("fpdf" in i.lower() for i in imports), "fpdf must not be in preliminary module"
+
+
+# ── PVH83–PVH84: Regression — Phase H certified gate unchanged ───────────────
+
+def test_PVH83_certified_gate_unchanged_after_addendum(client):
+    """Phase H certified output still requires certification_ready=True."""
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)   # methods_completed=True but certification_ready=False
+    resp = client.post(_pvh_pdf_url(rid), json={},
+                       content_type="application/json", headers=_auth())
+    assert resp.status_code == 422, (
+        "Certified PDF must be blocked even when methods_completed=True but certification_ready=False"
+    )
+
+
+def test_PVH84_preliminary_and_certified_in_same_registry(client):
+    """Both preliminary and certified outputs share the same output registry."""
+    rid = _create(client).get_json()["request_id"]
+    _build_methods_fixture(rid)
+    client.post(_pvp_ewb_url(rid), json={},
+                content_type="application/json", headers=_auth())
+    records = _pvout._read_registry(rid)
+    types = {r["output_type"] for r in records}
+    assert "expert_workbook" in types

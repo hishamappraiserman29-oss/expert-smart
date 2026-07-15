@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="detailed">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>{{ data.get('report_title', 'تقرير التقييم العقاري التفصيلي') }}</title>
+  <style>
+{{ font_css }}
+{{ css }}
+/* ── Detailed-only compact spacing ── */
+.section       { margin-bottom: 2px; }
+.section-title { margin-bottom: 2px; }
+.section-body  { padding: 0 4px; }
+body           { line-height: 1.52; }
+table          { margin: 3px 0; }
+th             { padding: 3px 7px; }
+td             { padding: 3px 7px; }
+.note-box      { padding: 3px 8px; margin: 2px 0; }
+.source-box    { padding: 5px 10px; margin-bottom: 2px; }
+.kpi-card      { padding: 5px 8px; }
+  </style>
+</head>
+<body>
+
+<!-- Fixed Header — every page -->
+<div class="pv-header">
+  <span class="hdr-firm">{{ data.get('firm_name', 'Expert Smart | PropTech Platform') }}</span>
+  <span class="hdr-ref">{{ data.get('report_ref', '') }}</span>
+  <span class="hdr-status">تقرير تقييم آلي تفصيلي — غير معتمد رسميًا</span>
+</div>
+
+<!-- Fixed Footer — every page -->
+<div class="pv-footer">
+  <span class="ftr-advisory">تقرير آلي استرشادي — غير معتمد رسميًا</span>
+  <span class="ftr-date">{{ data.get('report_date', '') }}</span>
+  <span>تم إنشاء هذا المستند بواسطة محرك HTML/PDF | تقرير آلي استرشادي — غير معتمد رسميًا</span>
+</div>
+
+<!-- Background watermark -->
+<div class="watermark">مسودة غير معتمدة</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     01 — Cover Page
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="cover-page" id="sec-cover">
+  <div>
+    <div class="cover-badge">تقرير تقييم عقاري آلي — النسخة التفصيلية الموسّعة | Detailed Tier v1.0</div>
+    <div class="cover-title">{{ data.get('report_title', 'تقرير التقييم العقاري التفصيلي') }}</div>
+    <div class="cover-sub">{{ data.get('property_address', NA) }}</div>
+    <hr class="cover-divider">
+    <div class="cover-meta">
+      <span><strong>نوع العقار:</strong> {{ data.get('property_type', NA) }}</span>
+      <span><strong>المساحة:</strong> {{ data.get('area_sqm', NA) }} م²</span>
+      <span><strong>تاريخ التقرير:</strong> {{ data.get('report_date', NA) }}</span>
+      <span><strong>الغرض:</strong> {{ data.get('valuation_purpose', NA) }}</span>
+      <span><strong>أساس التقييم:</strong> {{ data.get('valuation_basis', NA) }}</span>
+      <span><strong>رقم المرجع:</strong> {{ data.get('report_ref', NA) }}</span>
+    </div>
+    <div class="cover-seal draft">مسودة غير معتمدة — تقرير آلي تفصيلي استرشادي</div>
+    <table class="kv-table" style="font-size:8pt;margin-top:6px;width:100%;">
+      <tr><td>القيمة السوقية الإرشادية</td><td class="td-num"><strong>{{ _fmt(data.get('final_value','')) }} م.ج</strong></td><td>المساحة</td><td class="td-num">{{ data.get('area_sqm',NA) }} م²</td></tr>
+      <tr><td>سعر المتر المربع</td><td class="td-num">{{ _fmt(data.get('value_per_sqm','')) }} م.ج/م²</td><td>نوع العقار</td><td>{{ data.get('property_type',NA) }}</td></tr>
+      <tr><td>الغرض من التقييم</td><td>{{ data.get('valuation_purpose',NA) }}</td><td>أساس التقييم</td><td>{{ data.get('valuation_basis',NA) }}</td></tr>
+      <tr><td>تاريخ الفحص</td><td>{{ data.get('inspection_date',NA) }}</td><td>تاريخ التقرير</td><td>{{ data.get('report_date',NA) }}</td></tr>
+      <tr><td>درجة الثقة</td><td class="td-num">{{ data.get('confidence_score',NA) }}%</td><td>نطاق القيمة</td><td class="td-na">{{ _fmt(data.get('confidence_low','')) }} — {{ _fmt(data.get('confidence_high','')) }} م.ج</td></tr>
+    </table>
+  </div>
+  <div>
+    <div class="cover-confidential">
+      لا يستند هذا التقرير للإنترنت · Qdrant/RAG غير مفعَّل · لا يُستخدم للأغراض الرسمية
+    </div>
+    <div class="cover-report-id">{{ data.get('report_ref', 'DET-AI-DRAFT') }} | Expert Smart PropTech Platform | Detailed Tier v1.0</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     02 — Advisory Notice
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-advisory">
+  <div class="draft-disclaimer">
+    <span class="dd-label">⚠ تقرير آلي استرشادي تفصيلي — غير معتمد رسميًا</span>
+    <span class="dd-sub">
+      هذا التقرير مُنتَج آليًا بواسطة محرك HTML/PDF ولا يُعدّ شهادة تقييم معتمدة.
+      لا يستند للإنترنت أو قواعد بيانات RAG/Qdrant.
+      لا يحمل توقيعًا من خبير مرخّص ولا يُقبل في الإجراءات الرسمية.
+      البيانات التفصيلية المعروضة إرشادية تمثيلية — محاكاة داخلية/QA — غير معتمدة.
+    </span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     03 — Executive Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-exec-summary">
+  <div class="section-title"><span class="sec-num">01</span> الملخص التنفيذي</div>
+  <div class="section-body">
+    <div class="value-conclusion-box">
+      <div class="vcb-label">القيمة السوقية الإرشادية المُقدَّرة</div>
+      <span class="vcb-amount">{{ _fmt(data.get('final_value', '')) }}</span>
+      <div class="vcb-amount-words">{{ data.get('value_in_words', '') }}</div>
+      <div class="vcb-currency">{{ data.get('currency', 'م.ج') }}</div>
+      <div class="vcb-range">
+        نطاق الثقة: {{ _fmt(data.get('confidence_low', '')) }} — {{ _fmt(data.get('confidence_high', '')) }} م.ج
+      </div>
+      <div class="vcb-advisory">⚠ قيمة إرشادية — غير معتمدة رسميًا — مسودة غير معتمدة</div>
+    </div>
+    <p style="font-size:10pt;line-height:1.9;margin-top:10px;">
+      {{ data.get('exec_summary', NA) }}
+    </p>
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <span class="kpi-value">{{ _fmt(data.get('final_value', '')) }}</span>
+        <span class="kpi-label">القيمة النهائية (م.ج)</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">{{ _fmt(data.get('value_per_sqm', '')) }}</span>
+        <span class="kpi-label">سعر المتر (م.ج/م²)</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card kpi-warn">
+        <span class="kpi-value">{{ data.get('confidence_score', NA) }}%</span>
+        <span class="kpi-label">درجة الثقة</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">{{ data.get('discount_rate', NA) }}%</span>
+        <span class="kpi-label">معدل الخصم</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">{{ data.get('cap_rate_exit', NA) }}%</span>
+        <span class="kpi-label">سقف الرسملة</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card kpi-ok">
+        <span class="kpi-value ltr">{{ _fmt(data.get('npv', '')) if data.get('npv') else NA }}</span>
+        <span class="kpi-label">NPV (م.ج)</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+    </div>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">مصالحة المناهج التقييمية — الملخص التنفيذي:</div>
+    <table>
+      <thead><tr><th>المنهج</th><th>القيمة (م.ج)</th><th>الوزن</th><th>المساهمة الموزونة (م.ج)</th><th>مستوى الثقة</th></tr></thead>
+      <tbody>
+        <tr><td>مدخل المقارنة السوقية (Sales Comparison)</td><td class="td-num">{{ _fmt(data.get('market_value','')) }}</td><td class="td-num">{{ data.get('market_weight','40%') }}</td><td class="td-num">{{ _fmt(data.get('market_value',0)|int * 40 // 100) }}</td><td><span class="td-ok">جيد</span></td></tr>
+        <tr><td>مدخل التكلفة (Cost Approach)</td><td class="td-num">{{ _fmt(data.get('cost_approach_value','')) }}</td><td class="td-num">{{ data.get('cost_weight','25%') }}</td><td class="td-num">{{ _fmt(data.get('cost_approach_value',0)|int * 25 // 100) }}</td><td><span style="color:var(--c-warn);font-weight:700;">متوسط</span></td></tr>
+        <tr><td>مدخل الدخل / DCF</td><td class="td-num">{{ _fmt(data.get('dcf_value','')) }}</td><td class="td-num">{{ data.get('dcf_weight','35%') }}</td><td class="td-num">{{ _fmt(data.get('dcf_value',0)|int * 35 // 100) }}</td><td><span class="td-ok">جيد</span></td></tr>
+        <tr style="font-weight:700;background:#f0f4f8;"><td>القيمة السوقية الإرشادية النهائية</td><td class="td-num">{{ _fmt(data.get('final_value','')) }}</td><td class="td-num">100%</td><td class="td-num">{{ _fmt(data.get('final_value','')) }}</td><td><span class="td-warn">إرشادي</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     04 — Property and Assignment Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-facts">
+  <div class="section-title"><span class="sec-num">02</span> بيانات العقار والمهمة</div>
+  <div class="section-body">
+    <div class="data-grid">
+      <div class="data-row"><span class="data-label">العنوان:</span><span class="data-value">{{ data.get('property_address', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">نوع العقار:</span><span class="data-value">{{ data.get('property_type', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">المساحة:</span><span class="data-value">{{ data.get('area_sqm', NA) }} م²</span></div>
+      <div class="data-row"><span class="data-label">الطابق:</span><span class="data-value">{{ data.get('floor', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">عمر المبنى:</span><span class="data-value">{{ data.get('age_years', NA) }} سنة</span></div>
+      <div class="data-row"><span class="data-label">الحالة الإنشائية:</span><span class="data-value">{{ data.get('condition', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">الغرض من التقييم:</span><span class="data-value">{{ data.get('valuation_purpose', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">أساس التقييم:</span><span class="data-value">{{ data.get('valuation_basis', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">تاريخ الفحص:</span><span class="data-value">{{ data.get('inspection_date', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">تاريخ التقرير:</span><span class="data-value">{{ data.get('report_date', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">مقدّم الطلب:</span><span class="data-value">{{ data.get('client_name', NA) }}</span></div>
+      <div class="data-row"><span class="data-label">الغرض المقصود:</span><span class="data-value">{{ data.get('intended_use', NA) }}</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     05 — Source Registry Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-sources">
+  <div class="section-title"><span class="sec-num">03</span> سجل المصادر والبيانات</div>
+  <div class="section-body">
+    {% if data.get('sources') %}
+    <table>
+      <thead>
+        <tr><th>#</th><th>المصدر</th><th>النوع</th><th>الحالة</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for src in data.get('sources', []) %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ src.get('name', NA) }}</td>
+          <td>{{ src.get('type', NA) }}</td>
+          <td>{% if src.get('status') == 'متاح' %}<span class="td-ok">✓ متاح</span>{% else %}<span class="td-nok">غير متاح</span>{% endif %}</td>
+          <td class="td-na">{{ src.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">سجل المصادر:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">جميع المصادر إرشادية تمثيلية — محاكاة داخلية — Qdrant/RAG غير مفعَّل — لا scraping</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     06 — Data Quality Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-data-quality">
+  <div class="section-title"><span class="sec-num">04</span> ملخص جودة البيانات</div>
+  <div class="section-body">
+    {% if data.get('data_quality') %}
+    <table>
+      <thead>
+        <tr><th>البُعد</th><th>الدرجة</th><th>التفاصيل</th></tr>
+      </thead>
+      <tbody>
+        {% for dq in data.get('data_quality', []) %}
+        <tr>
+          <td>{{ dq.get('dimension', NA) }}</td>
+          <td>
+            {% set score = dq.get('score', 0) %}
+            {% if score >= 70 %}<span class="td-ok">{{ score }}%</span>
+            {% elif score >= 40 %}<span style="color:var(--c-warn);font-weight:700;">{{ score }}%</span>
+            {% else %}<span class="td-nok">{{ score }}%</span>{% endif %}
+          </td>
+          <td class="td-na">{{ dq.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">جودة البيانات:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="kpi-row">
+      <div class="kpi-card kpi-warn">
+        <span class="kpi-value">{{ data.get('data_completeness', NA) }}%</span>
+        <span class="kpi-label">اكتمال البيانات</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value">{{ data.get('data_reliability', NA) }}%</span>
+        <span class="kpi-label">موثوقية البيانات</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     07 — Market Evidence Table
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-market-evidence">
+  <div class="section-title"><span class="sec-num">05</span> جدول الأدلة السوقية</div>
+  <div class="section-body">
+    <div class="warning-box">
+      <span class="wb-label">⚠ إخلاء:</span>
+      الأدلة السوقية تمثيلية إرشادية — لا تستند لقواعد بيانات رسمية مُتحقَّق منها.
+      Qdrant/RAG غير مفعَّل — لا scraping — محاكاة داخلية/QA — غير معتمدة.
+    </div>
+    {% if data.get('market_evidence') %}
+    <table>
+      <thead>
+        <tr><th>نوع الدليل</th><th>المصدر</th><th>القيمة/المؤشر</th><th>التاريخ</th><th>الحالة</th></tr>
+      </thead>
+      <tbody>
+        {% for ev in data.get('market_evidence', []) %}
+        <tr>
+          <td>{{ ev.get('type', NA) }}</td>
+          <td>{{ ev.get('source', NA) }}</td>
+          <td class="td-num">{{ ev.get('value', NA) }}</td>
+          <td>{{ ev.get('date', NA) }}</td>
+          <td class="td-na">{{ ev.get('status', 'تمثيلي') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">الأدلة السوقية:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">مؤشرات السوق المحلي — تمثيلية:</div>
+    <table>
+      <thead><tr><th>المؤشر السوقي</th><th>القيمة</th><th>التوجه</th><th>الأثر على التقييم</th></tr></thead>
+      <tbody>
+        <tr><td>متوسط سعر م² في المنطقة</td><td class="td-num">{{ _fmt(data.get('avg_price_sqm','')) }} م.ج</td><td><span class="td-ok">مستقر — ↔</span></td><td class="td-na">مؤشر مرجعي للمقارنة — محاكاة QA</td></tr>
+        <tr><td>معدل التغيير السنوي للأسعار</td><td class="td-num">{{ data.get('growth_rate', NA) }}%</td><td><span class="td-ok">نمو إيجابي — ↑</span></td><td class="td-na">يدعم قيمة الدخل والمقارنة</td></tr>
+        <tr><td>معدل الشواغر في المنطقة</td><td class="td-num">5.0%</td><td><span class="td-ok">منخفض — ↔</span></td><td class="td-na">يدعم معدل رسملة منخفض</td></tr>
+        <tr><td>معدل الإيجار للمتر المربع/سنة</td><td class="td-num">{{ _fmt(data.get('annual_noi',0)|int // data.get('area_sqm',180)|int) }} م.ج</td><td><span class="td-ok">معقول — ↔</span></td><td class="td-na">أعلى من نقطة التعادل بمعامل آمن</td></tr>
+        <tr><td>مخزون الوحدات المعروضة</td><td class="td-num">محدود QA</td><td><span class="td-ok">ندرة نسبية — ↑</span></td><td class="td-na">عامل دعم للقيمة في الأجل المتوسط</td></tr>
+        <tr><td>حجم الصفقات المسجلة (آخر 12 شهراً)</td><td class="td-num">محاكاة QA</td><td><span class="td-warn">غير متاح — ?</span></td><td class="td-na">يُستكمل عند تفعيل Qdrant/RAG</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     08 — AVM / Regression Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-avm">
+  <div class="section-title"><span class="sec-num">06</span> نموذج AVM والانحدار التفصيلي</div>
+  <div class="section-body">
+    <div class="note-box">نماذج AVM إرشادية — لا تستند لبيانات رسمية — Qdrant/RAG غير مفعَّل.</div>
+    <div class="section-title" style="font-size:9pt;margin-top:2px;margin-bottom:2px;">جودة مدخلات نموذج AVM (إرشادي):</div>
+    <table>
+      <thead><tr><th>متغير AVM</th><th>القيمة</th><th>المصدر</th><th>جودة البيانات</th></tr></thead>
+      <tbody>
+        <tr><td>المساحة الإجمالية (م²)</td><td class="td-num">{{ data.get('area_sqm',NA) }}</td><td class="td-na">بيانات الطلب</td><td><span class="td-ok">موثوق</span></td></tr>
+        <tr><td>الطابق</td><td class="td-num">{{ data.get('floor',NA) }}</td><td class="td-na">بيانات الطلب</td><td><span class="td-ok">موثوق</span></td></tr>
+        <tr><td>عمر المبنى (سنة)</td><td class="td-num">{{ data.get('age_years',NA) }}</td><td class="td-na">بيانات الطلب</td><td><span style="color:var(--c-warn);font-weight:700;">متوسط</span></td></tr>
+        <tr><td>الحالة الإنشائية</td><td>{{ data.get('condition',NA) }}</td><td class="td-na">تقدير المقيّم</td><td><span style="color:var(--c-warn);font-weight:700;">متوسط</span></td></tr>
+        <tr><td>المتوسط السعري بالمنطقة</td><td class="td-num">{{ _fmt(data.get('avg_price_sqm','')) }} م.ج/م²</td><td class="td-na">محاكاة QA</td><td><span class="td-nok">ضعيف — QA</span></td></tr>
+        <tr><td>معدل الرسملة المرجعي</td><td class="td-num">{{ data.get('cap_rate_used',NA) }}%</td><td class="td-na">محاكاة QA</td><td><span class="td-nok">ضعيف — QA</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note-box" style="font-size:9pt;">يُعدّ نموذج AVM أداة تحليلية إحصائية تعتمد على الانحدار الخطي متعدد المتغيرات لاشتقاق قيمة تمثيلية من مجموعة مدخلات محاكاة. يستخدم هذا التقرير ١٠ متغيرات تشمل: المساحة، الموقع، العمر، الحالة، الطابق، نسبة الإشغال، معدل رسملة السوق، مؤشر السوق المحلي، درجة الوصول، والمرافق المتاحة. نتيجة النموذج إرشادية تمثيلية — محاكاة داخلية/QA — لا تستند لبيانات سوق حقيقية موثقة.</div>
+    {% if data.get('avm_results') %}
+    <table>
+      <thead>
+        <tr><th>النموذج</th><th>القيمة (م.ج)</th><th>R²</th><th>RMSE</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for row in data.get('avm_results', []) %}
+        <tr>
+          <td>{{ row.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(row.get('value', '')) }}</td>
+          <td class="td-num">{{ row.get('r2', NA) }}</td>
+          <td class="td-num">{{ row.get('rmse', NA) }}</td>
+          <td class="td-na">{{ row.get('note', 'إرشادي') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">AVM:</span> {{ NA }}</div>
+    {% endif %}
+    {% if data.get('regression_equation') %}
+    <div class="note-box"><strong>معادلة الانحدار (تمثيلية):</strong> {{ data.get('regression_equation') }}</div>
+    {% endif %}
+    {% if data.get('avm_regression_rows') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">تفصيل متغيرات الانحدار — QA</div>
+    <table>
+      <thead>
+        <tr><th>المتغير</th><th>القيمة</th><th>المعامل</th><th>الأثر (م.ج)</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for row in data.get('avm_regression_rows', []) %}
+        <tr>
+          <td>{{ row.get('variable', NA) }}</td>
+          <td class="td-num">{{ row.get('value', NA) }}</td>
+          <td class="td-num">{{ row.get('coefficient', NA) }}</td>
+          <td class="td-num">{{ row.get('impact', NA) }}</td>
+          <td class="td-na">{{ row.get('notes', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     09 — Sales Comparison
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-comparables">
+  <div class="section-title"><span class="sec-num">07</span> مقارنة المبيعات — المعاملات المقارنة</div>
+  <div class="section-body">
+    {% if data.get('comparables') %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>العنوان</th><th>المساحة م²</th>
+          <th>السعر الإجمالي</th><th>سعر/م²</th>
+          <th>التسوية %</th><th>القيمة المعدَّلة</th>
+          <th>التاريخ</th><th>ملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in data.get('comparables', []) %}
+        <tr>
+          <td>{{ c.get('id', loop.index) }}</td>
+          <td>{{ c.get('address', NA) }}</td>
+          <td class="td-num">{{ _fmt(c.get('area', '')) }}</td>
+          <td class="td-num">{{ _fmt(c.get('price', '')) }}</td>
+          <td class="td-num">{{ _fmt(c.get('price_sqm', '')) }}</td>
+          <td class="td-num">{{ c.get('adj_total', NA) }}%</td>
+          <td class="td-num">{{ _fmt(c.get('adj_value', '')) }}</td>
+          <td>{{ c.get('date', NA) }}</td>
+          <td class="td-na">{{ c.get('note', 'بيانات تمثيلية') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مقارنة المبيعات:</span> {{ NA }}</div>
+    {% endif %}
+    {% set cs = data.get('comparables_stats', {}) %}
+    {% if cs %}
+    <table style="margin-top:4px;font-size:8pt;">
+      <thead><tr><th>الإحصاء</th><th>القيمة (م.ج)</th><th>سعر/م² (م.ج)</th></tr></thead>
+      <tbody>
+        <tr><td>الحد الأدنى</td><td class="td-num">{{ _fmt(cs.get('min_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('min_psm', '')) }}</td></tr>
+        <tr><td>الوسيط</td>    <td class="td-num">{{ _fmt(cs.get('median_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('median_psm', '')) }}</td></tr>
+        <tr><td>المتوسط</td>   <td class="td-num">{{ _fmt(cs.get('mean_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('max_psm', '')) }}</td></tr>
+        <tr><td>الحد الأقصى</td><td class="td-num">{{ _fmt(cs.get('max_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('max_psm', '')) }}</td></tr>
+        <tr><td>نطاق التشتت</td><td class="td-num" colspan="2">{{ cs.get('range_pct', NA) }}% — مقبول إرشادياً للمقارنات QA</td></tr>
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box" style="font-size:9pt;">يُعدّ منهج مقارنة البيوع (Sales Comparison Approach) المنهجَ الأكثر موثوقية لتقييم العقارات السكنية في الأسواق النشطة. يتطلب المنهج في صورته المعتمدة ثلاث صفقات بيع حقيقية موثقة على الأقل من نفس النطاق الجغرافي والفترة الزمنية (لا تزيد عن ١٢ شهراً). جميع المقارنات المعروضة هنا هي محاكاة داخلية/QA — تُستبدل ببيانات سوق حقيقية قبل الاعتماد الرسمي. التسويات المطبقة تشمل: الموقع، الحالة الإنشائية، المساحة، التشطيبات، العمر، وعوامل السوق.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     10 — Sales Adjustment Matrix
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-sales-adj">
+  <div class="section-title"><span class="sec-num">08</span> مصفوفة التسويات — مقارنة المبيعات</div>
+  <div class="section-body">
+    {% if data.get('sales_adj_matrix') %}
+    <table>
+      <thead>
+        <tr>
+          <th>عامل التسوية</th>
+          {% for c in data.get('comparables', [])[:4] %}
+          <th>عقار {{ loop.index }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for adj in data.get('sales_adj_matrix', []) %}
+        <tr>
+          <td>{{ adj.get('factor', NA) }}</td>
+          {% for val in adj.get('values', [])[:4] %}
+          <td class="td-num">{{ val }}%</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مصفوفة التسويات:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">التسويات تمثيلية — محاكاة داخلية/QA — غير مستندة لبيانات سوقية رسمية.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     11 — Land Sales Comparison
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-land-sales">
+  <div class="section-title"><span class="sec-num">09</span> مقارنة مبيعات الأراضي</div>
+  <div class="section-body">
+    {% set land_rows = data.get('land_comparable_rows') or data.get('land_sales') or [] %}
+    {% if land_rows %}
+    <table>
+      <thead>
+        <tr><th>المرجع</th><th>الموقع</th><th>المساحة م²</th><th>سعر/م² (م.ج)</th><th>الإجمالي (م.ج)</th><th>التاريخ</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for ls in land_rows %}
+        <tr>
+          <td>{{ ls.get('ref', loop.index) }}</td>
+          <td>{{ ls.get('location', ls.get('address', NA)) }}</td>
+          <td class="td-num">{{ _fmt(ls.get('area', '')) }}</td>
+          <td class="td-num">{{ _fmt(ls.get('price_sqm', '')) }}</td>
+          <td class="td-num">{{ _fmt(ls.get('total_price', ls.get('total', ''))) }}</td>
+          <td>{{ ls.get('date', NA) }}</td>
+          <td class="td-na">{{ ls.get('notes', ls.get('note', 'تمثيلي')) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مقارنة مبيعات الأراضي:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">مقارنات الأراضي تمثيلية — محاكاة QA — لا تستند لمصادر رسمية.</div>
+    <div class="note-box" style="font-size:9pt;">يعتمد منهج مقارنة مبيعات الأراضي على تجميع صفقات بيع أراضٍ مماثلة في المنطقة وتسويتها وفق عوامل: الموقع والإطلالة، والمساحة وشكل القطعة، ومدى توفر الخدمات، ومستوى النشاط السوقي، وتاريخ الصفقة. الهدف الوصول إلى سعر متر مربع موزون يعكس السوق الراهن. جميع مقارنات الأراضي المعروضة محاكاة QA.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     12 — Land Adjustment Matrix
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-land-adj">
+  <div class="section-title"><span class="sec-num">10</span> مصفوفة تسويات الأرض</div>
+  <div class="section-body">
+    {% if data.get('land_adj_items') %}
+    <table>
+      <thead>
+        <tr><th>عامل التسوية</th><th>أرض 1</th><th>أرض 2</th><th>أرض 3</th></tr>
+      </thead>
+      <tbody>
+        {% for adj in data.get('land_adj_items', []) %}
+        <tr>
+          <td>{{ adj.get('factor', NA) }}</td>
+          {% for val in adj.get('values', [])[:3] %}
+          <td class="td-num">{{ val }}%</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مصفوفة تسويات الأرض:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">تسويات الأرض إرشادية تمثيلية — محاكاة داخلية/QA.</div>
+    <div class="note-box" style="font-size:9pt;">تشمل عوامل تسوية الأرض في هذا التحليل: الموقع ومدى القرب من المرافق العامة (+/-)، والمساحة وتأثير خصم الكمية (+/-)، وشكل القطعة وملاءمتها للاستخدام المخطط له (+/-)، ومستوى الخدمات المتاحة في الشبكة (+/-)، ونشاط السوق وعمر الصفقة المرجعية (+/-). المصدر: محاكاة QA.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     13 — Land Extraction Method
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-land-extraction">
+  <div class="section-title"><span class="sec-num">11</span> طريقة الاستخلاص لتقييم الأرض</div>
+  <div class="section-body">
+    {% set le = data.get('land_extraction', {}) %}
+    {% if le %}
+    <table class="kv-table">
+      <tr><td>قيمة العقار الكاملة (مبنى وأرض)</td><td class="td-num">{{ _fmt(le.get('total_value', '')) }} م.ج</td></tr>
+      <tr><td>تكلفة إحلال المبنى (RCN)</td><td class="td-num">{{ _fmt(le.get('rcn', '')) }} م.ج</td></tr>
+      <tr><td>الاستهلاك المتراكم</td><td class="td-num">{{ le.get('depreciation', NA) }}%</td></tr>
+      <tr><td>قيمة المبنى المستهلَك</td><td class="td-num">{{ _fmt(le.get('building_dep_value', '')) }} م.ج</td></tr>
+      <tr><td>قيمة الأرض المستخلَصة</td><td class="td-num">{{ _fmt(le.get('extracted_land_value', '')) }} م.ج</td></tr>
+      <tr><td>سعر م² الأرض (مستخلَص)</td><td class="td-num">{{ _fmt(le.get('land_price_sqm', '')) }} م.ج/م²</td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">طريقة الاستخلاص:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">الاستخلاص إرشادي تمثيلي — محاكاة داخلية/QA — غير معتمد.</div>
+    <div class="note-box" style="font-size:9pt;">تعتمد طريقة الاستخلاص على عكس عملية التقييم التراكمي: تُحتسب قيمة الأرض بطرح قيمة المبنى المستهلَك من القيمة الإجمالية للعقار. تتطلب دقة هذه الطريقة: (أ) قيمة سوقية موثوقة للعقار ككل — مستخلصة من مقارنات مبيعات، (ب) تقدير دقيق لتكلفة الإحلال الجديدة RCN من مهندس مرخص، (ج) تقدير موضوعي للاستهلاك المتراكم الفعلي. تعتمد الأرقام الحالية على محاكاة QA وتستلزم التحقق الميداني.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     14 — Residual Land Method
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-land-residual">
+  <div class="section-title"><span class="sec-num">12</span> طريقة المتبقي لتقييم الأرض</div>
+  <div class="section-body">
+    {% set lr = data.get('land_residual', {}) %}
+    {% if lr %}
+    <table class="kv-table">
+      <tr><td>إجمالي القيمة بعد التطوير (GDV)</td><td class="td-num">{{ _fmt(lr.get('gdv', '')) }} م.ج</td></tr>
+      <tr><td>تكاليف البناء والتطوير</td><td class="td-num">{{ _fmt(lr.get('build_cost', '')) }} م.ج</td></tr>
+      <tr><td>هامش المطوّر</td><td class="td-num">{{ lr.get('developer_margin', NA) }}%</td></tr>
+      <tr><td>قيمة الأرض المتبقية</td><td class="td-num">{{ _fmt(lr.get('residual_land_value', '')) }} م.ج</td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">طريقة المتبقي:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">طريقة المتبقي إرشادية تمثيلية — محاكاة داخلية/QA.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     15 — Land Reconciliation
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-land-recon">
+  <div class="section-title"><span class="sec-num">13</span> مصالحة الأرض — الخلاصة</div>
+  <div class="section-body">
+    <div class="reconciliation-box">
+      <div class="rec-header">مصالحة مناهج تقييم الأرض — إرشادية</div>
+      <div class="rec-method-row">
+        <span class="rm-name">مقارنة مبيعات الأراضي</span>
+        <span class="rm-value">{{ _fmt(data.get('land_sales_value', '')) }} م.ج/م²</span>
+        <span class="rm-weight">{{ data.get('land_sales_weight', '50%') }}</span>
+      </div>
+      <div class="rec-method-row">
+        <span class="rm-name">طريقة الاستخلاص</span>
+        <span class="rm-value">{{ _fmt(data.get('land_extraction_value', '')) }} م.ج/م²</span>
+        <span class="rm-weight">{{ data.get('land_extraction_weight', '30%') }}</span>
+      </div>
+      <div class="rec-method-row">
+        <span class="rm-name">طريقة المتبقي</span>
+        <span class="rm-value">{{ _fmt(data.get('land_residual_value', '')) }} م.ج/م²</span>
+        <span class="rm-weight">{{ data.get('land_residual_weight', '20%') }}</span>
+      </div>
+      <div class="rec-final-row">
+        <span>قيمة م² الأرض المُصالَح عليها (إرشادية)</span>
+        <span>{{ _fmt(data.get('land_price_sqm', '')) }} م.ج/م²</span>
+      </div>
+    </div>
+    <div class="note-box">مصالحة الأرض إرشادية تمثيلية — محاكاة داخلية/QA.</div>
+    <div class="note-box" style="font-size:9pt;">تُعدّ مصالحة طرق تقييم الأرض خطوة جوهرية تضمن اتساق النتائج. يُعطى الوزن الأكبر لطريقة المقارنة (50%) لكونها الأكثر صلة بالسوق، يليها الاستخلاص (30%) لارتكازه على قيمة السوق الكلية للعقار، ثم المتبقي (20%) بوصفه مؤشراً تحقق تكميلياً. القيمة المُصالَح عليها إرشادية وتُستخدم في حساب مدخل التكلفة.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     16 — Cost Approach
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-cost">
+  <div class="section-title"><span class="sec-num">14</span> مدخل التكلفة</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>قيمة الأرض</td><td class="td-num">{{ _fmt(data.get('land_value', '')) }} م.ج</td></tr>
+      <tr><td>تكلفة إحلال جديدة (RCN)</td><td class="td-num">{{ _fmt(data.get('rcn', '')) }} م.ج</td></tr>
+      <tr><td>إجمالي الاستهلاك</td><td class="td-num">{{ data.get('total_depreciation', NA) }}%</td></tr>
+      <tr><td>قيمة المبنى بعد الاستهلاك</td><td class="td-num">{{ _fmt(data.get('building_value', '')) }} م.ج</td></tr>
+      <tr><td>تحسينات الموقع</td><td class="td-num">{{ _fmt(data.get('site_improvements_value', '')) }} م.ج</td></tr>
+      <tr><td>قيمة مدخل التكلفة الإجمالية</td><td class="td-num">{{ _fmt(data.get('cost_approach_value', '')) }} م.ج</td></tr>
+    </table>
+    <div class="value-conclusion-box">
+      <div class="vcb-label">قيمة مدخل التكلفة الإرشادية</div>
+      <span class="vcb-amount">{{ _fmt(data.get('cost_approach_value', '')) }}</span>
+      <div class="vcb-currency">{{ data.get('currency', 'م.ج') }} — تقدير إرشادي</div>
+      <div class="vcb-advisory">⚠ غير معتمد رسميًا — مسودة غير معتمدة</div>
+    </div>
+    <div class="note-box" style="font-size:9pt;">يعتمد مدخل التكلفة على مبدأ الإحلال (Replacement Cost Approach): تحتسب تكلفة إحلال مبنى مماثل جديد (RCN) ثم يُطرح منها الاستهلاك المتراكم (مادي + وظيفي + اقتصادي) للوصول إلى قيمة المبنى. تُضاف إليها قيمة الأرض المستقلة للوصول للقيمة الإجمالية. هذا المدخل أكثر ملاءمة للعقارات الجديدة أو الخاصة التي لا تتوفر لها مقارنات سوقية كافية. الأرقام المعروضة تمثيلية — محاكاة QA — تتطلب تقدير مهندس مرخص للمصادقة.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     17 — Building Cost Breakdown (BOQ)
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-boq">
+  <div class="section-title"><span class="sec-num">15</span> تفصيل تكاليف المبنى (BOQ)</div>
+  <div class="section-body">
+    {% if data.get('boq_items') %}
+    <table>
+      <thead>
+        <tr><th>البند</th><th>الوحدة</th><th>الكمية</th><th>سعر الوحدة (م.ج)</th><th>الإجمالي (م.ج)</th><th>% من الكلي</th></tr>
+      </thead>
+      <tbody>
+        {% for item in data.get('boq_items', []) %}
+        <tr>
+          <td>{{ item.get('item', NA) }}</td>
+          <td>{{ item.get('unit', 'م²') }}</td>
+          <td class="td-num">{{ _fmt(item.get('qty', '')) }}</td>
+          <td class="td-num">{{ _fmt(item.get('unit_price', '')) }}</td>
+          <td class="td-num">{{ _fmt(item.get('total', '')) }}</td>
+          <td class="td-num">{{ item.get('pct', '—') }}</td>
+        </tr>
+        {% endfor %}
+        {% if data.get('boq_grand_total') %}
+        <tr style="background:#f0f4f8;font-weight:700;">
+          <td colspan="4">الإجمالي الكلي (RCN) — إرشادي QA</td>
+          <td class="td-num">{{ _fmt(data.get('boq_grand_total', '')) }}</td>
+          <td class="td-num">100%</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">BOQ:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">بنود BOQ إرشادية تمثيلية — محاكاة QA — تتطلب مراجعة مهندس مرخص قبل الاستخدام الرسمي.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     18 — Replacement Cost New (RCN)
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-rcn">
+  <div class="section-title"><span class="sec-num">16</span> تكلفة الإحلال الجديدة (RCN)</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>تكلفة البناء الأساسية</td><td class="td-num">{{ _fmt(data.get('base_construction_cost', '')) }} م.ج</td></tr>
+      <tr><td>تشطيبات وتجهيزات</td><td class="td-num">{{ _fmt(data.get('finishing_cost', '')) }} م.ج</td></tr>
+      <tr><td>الخدمات والبنية التحتية</td><td class="td-num">{{ _fmt(data.get('services_cost', '')) }} م.ج</td></tr>
+      <tr><td>مصاريف احتياطية</td><td class="td-num">{{ _fmt(data.get('contingency_cost', '')) }} م.ج</td></tr>
+      <tr><td>إجمالي RCN</td><td class="td-num"><strong>{{ _fmt(data.get('rcn', '')) }} م.ج</strong></td></tr>
+      <tr><td>RCN / م²</td><td class="td-num">{{ _fmt(data.get('rcn_per_sqm', '')) }} م.ج/م²</td></tr>
+    </table>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">تفصيل مكونات RCN (إرشادي):</div>
+    <table>
+      <thead><tr><th>المكوّن</th><th>التكلفة (م.ج)</th><th>نسبة من الإجمالي</th><th>أساس التقدير</th></tr></thead>
+      <tbody>
+        <tr><td>أعمال الهيكل الإنشائي والخرسانة</td><td class="td-num">{{ _fmt(data.get('base_construction_cost','')) }}</td><td class="td-num">~50%</td><td class="td-na">أسعار مشتريات BOQ — محاكاة QA</td></tr>
+        <tr><td>أعمال التشطيبات الداخلية والخارجية</td><td class="td-num">{{ _fmt(data.get('finishing_cost','')) }}</td><td class="td-num">~30%</td><td class="td-na">معدلات سوق محلي — محاكاة QA</td></tr>
+        <tr><td>الخدمات والبنية التحتية (كهرباء/سباكة/تكييف)</td><td class="td-num">{{ _fmt(data.get('services_cost','')) }}</td><td class="td-num">~15%</td><td class="td-na">معدلات سوق عقود مقاولات — محاكاة QA</td></tr>
+        <tr><td>مصاريف احتياطية وإدارة مشروع</td><td class="td-num">{{ _fmt(data.get('contingency_cost','')) }}</td><td class="td-num">~5%</td><td class="td-na">نسبة قياسية صناعة البناء</td></tr>
+        <tr style="font-weight:700;background:#f0f4f8;"><td>إجمالي تكلفة إحلال جديدة (RCN)</td><td class="td-num">{{ _fmt(data.get('rcn','')) }}</td><td class="td-num">100%</td><td class="td-na">قبل خصم الاستهلاك</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     19 — Depreciation (Physical / Functional / External)
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-depreciation">
+  <div class="section-title"><span class="sec-num">17</span> الاستهلاك (مادي · وظيفي · اقتصادي)</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>الاستهلاك المادي (عمر وتلف)</td><td class="td-num">{{ data.get('physical_depreciation', NA) }}%</td></tr>
+      <tr><td>الاستهلاك الوظيفي (قِدَم التصميم)</td><td class="td-num">{{ data.get('functional_depreciation', NA) }}%</td></tr>
+      <tr><td>الاستهلاك الاقتصادي (خارجي)</td><td class="td-num">{{ data.get('economic_depreciation', '0') }}%</td></tr>
+      <tr><td>إجمالي الاستهلاك</td><td class="td-num">{{ data.get('total_depreciation', NA) }}%</td></tr>
+      <tr><td>معدل الاستهلاك السنوي</td><td class="td-num">{{ _fmt(data.get('annual_depreciation_rate', ''), 2) }}%</td></tr>
+      <tr><td>العمر الاقتصادي المتبقي (سنة)</td><td class="td-num">{{ data.get('remaining_economic_life', NA) }}</td></tr>
+    </table>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">جدول الاستهلاك التفصيلي (إرشادي):</div>
+    <table>
+      <thead><tr><th>نوع الاستهلاك</th><th>النسبة %</th><th>المبلغ المستهلَك (م.ج)</th><th>السبب</th><th>طريقة التقدير</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>مادي (Physical) — عمر وتلف طبيعي</td>
+          <td class="td-num">{{ data.get('physical_depreciation', NA) }}%</td>
+          <td class="td-num">{{ _fmt(data.get('rcn', 0)|int * data.get('physical_depreciation', 0)|int // 100) }}</td>
+          <td class="td-na">عمر المبنى {{ data.get('age_years', NA) }} سنة من {{ data.get('economic_life', NA) }} سنة</td>
+          <td class="td-na">Age/Life Method — عمر فعلي/عمر اقتصادي</td>
+        </tr>
+        <tr>
+          <td>وظيفي (Functional) — قِدَم التصميم</td>
+          <td class="td-num">{{ data.get('functional_depreciation', NA) }}%</td>
+          <td class="td-num">{{ _fmt(data.get('rcn', 0)|int * data.get('functional_depreciation', 0)|int // 100) }}</td>
+          <td class="td-na">تصميم لا يتوافق مع المعايير الحديثة</td>
+          <td class="td-na">تقييم مهندس مرخص — محاكاة QA</td>
+        </tr>
+        <tr>
+          <td>اقتصادي (Economic) — عوامل خارجية</td>
+          <td class="td-num">{{ data.get('economic_depreciation', '0') }}%</td>
+          <td class="td-num">{{ _fmt(data.get('rcn', 0)|int * data.get('economic_depreciation', 0)|int // 100) }}</td>
+          <td class="td-na">لا عوامل خارجية سلبية مؤثرة معروفة</td>
+          <td class="td-na">تحليل بيئي ومحلي — محاكاة QA</td>
+        </tr>
+        <tr style="font-weight:700;background:#f0f4f8;">
+          <td>إجمالي الاستهلاك</td>
+          <td class="td-num">{{ data.get('total_depreciation', NA) }}%</td>
+          <td class="td-num">{{ _fmt(data.get('rcn', 0)|int * data.get('total_depreciation', 0)|int // 100) }}</td>
+          <td colspan="2" class="td-na">يُطرح من RCN للوصول لقيمة المبنى الحالية</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     20 — Site Improvements
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-site-improvements">
+  <div class="section-title"><span class="sec-num">18</span> تحسينات الموقع</div>
+  <div class="section-body">
+    {% if data.get('site_improvements') %}
+    <table>
+      <thead>
+        <tr><th>التحسين</th><th>التكلفة (م.ج)</th><th>الاستهلاك %</th><th>القيمة المساهِمة (م.ج)</th></tr>
+      </thead>
+      <tbody>
+        {% for si in data.get('site_improvements', []) %}
+        <tr>
+          <td>{{ si.get('item', NA) }}</td>
+          <td class="td-num">{{ _fmt(si.get('cost', '')) }}</td>
+          <td class="td-num">{{ si.get('dep_pct', NA) }}%</td>
+          <td class="td-num">{{ _fmt(si.get('contrib_value', '')) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">تحسينات الموقع:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     21 — Income Capitalization
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-income-cap">
+  <div class="section-title"><span class="sec-num">19</span> مدخل الرسملة (الدخل)</div>
+  <div class="section-body">
+    {% set ic = data.get('income_cap', {}) %}
+    {% if ic %}
+    <table class="kv-table">
+      <tr><td>الإيجار السنوي الإجمالي (GRI)</td><td class="td-num">{{ _fmt(ic.get('gross_rent', '')) }} م.ج</td></tr>
+      <tr><td>نسبة الشواغر والمخصصات</td><td class="td-num">{{ ic.get('vacancy_rate', NA) }}%</td></tr>
+      <tr><td>الإيجار الفعلي (ERI)</td><td class="td-num">{{ _fmt(ic.get('eri', '')) }} م.ج</td></tr>
+      <tr><td>مصاريف التشغيل (OE)</td><td class="td-num">{{ _fmt(ic.get('opex', '')) }} م.ج</td></tr>
+      <tr><td>صافي دخل التشغيل (NOI)</td><td class="td-num">{{ _fmt(ic.get('noi', '')) }} م.ج</td></tr>
+      <tr><td>معدل الرسملة (Cap Rate)</td><td class="td-num">{{ ic.get('cap_rate', NA) }}%</td></tr>
+      <tr><td>قيمة مدخل الرسملة</td><td class="td-num"><strong>{{ _fmt(ic.get('capitalized_value', '')) }} م.ج</strong></td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مدخل الرسملة:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">مقارنة منهج رسملة الدخل مقابل DCF:</div>
+    <table>
+      <thead><tr><th>وجه المقارنة</th><th>رسملة الدخل المباشر</th><th>DCF المخصوم</th></tr></thead>
+      <tbody>
+        <tr><td>القيمة المحتسبة</td><td class="td-num">{{ _fmt(data.get('income_cap',{}).get('capitalized_value','') if data.get('income_cap') else '') }} م.ج</td><td class="td-num">{{ _fmt(data.get('dcf_value','')) }} م.ج</td></tr>
+        <tr><td>أفق التحليل</td><td class="td-na">سنة واحدة (NOI ثابت)</td><td class="td-na">{{ data.get('investment_horizon','5 سنوات') }}</td></tr>
+        <tr><td>المعدل الأساسي</td><td class="td-num">{{ data.get('cap_rate_used', NA) }}% (Cap Rate)</td><td class="td-num">{{ data.get('discount_rate', NA) }}% (WACC)</td></tr>
+        <tr><td>يأخذ النمو بعين الاعتبار؟</td><td class="td-na">ضمنياً فقط</td><td class="td-na">صريحاً — معدل {{ data.get('growth_rate', NA) }}%</td></tr>
+        <tr><td>القيمة الطرفية</td><td class="td-na">مدمجة في Cap Rate</td><td class="td-num">{{ _fmt(data.get('terminal_value','')) }} م.ج (صريح)</td></tr>
+        <tr><td>أنسب لـ</td><td class="td-na">استثمارات مستقرة وناضجة</td><td class="td-na">مشاريع نامية أو ذات دخل متغير</td></tr>
+      </tbody>
+    </table>
+    {% if data.get('cap_rate_models') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">نماذج احتساب معدل الرسملة الأربعة (إرشادي):</div>
+    <table>
+      <thead><tr><th>النموذج</th><th>المعدل %</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        {% for cm in data.get('cap_rate_models', []) %}
+        <tr>
+          <td>{{ cm.get('model', NA) }}</td>
+          <td class="td-num">{{ cm.get('rate', NA) }}%</td>
+          <td class="td-na">{{ cm.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     22 — Rent Comparables
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-rent-comps">
+  <div class="section-title"><span class="sec-num">20</span> مقارنة الإيجارات</div>
+  <div class="section-body">
+    {% if data.get('rent_comps') %}
+    <table>
+      <thead>
+        <tr><th>#</th><th>الموقع</th><th>المساحة م²</th><th>الإيجار السنوي (م.ج)</th><th>إيجار/م²</th><th>التاريخ</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for rc in data.get('rent_comps', []) %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ rc.get('location', NA) }}</td>
+          <td class="td-num">{{ _fmt(rc.get('area', '')) }}</td>
+          <td class="td-num">{{ _fmt(rc.get('annual_rent', '')) }}</td>
+          <td class="td-num">{{ _fmt(rc.get('rent_sqm', '')) }}</td>
+          <td>{{ rc.get('date', NA) }}</td>
+          <td class="td-na">{{ rc.get('note', 'تمثيلي') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مقارنة الإيجارات:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     23 — Sale vs Rent Analysis
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-sale-rent">
+  <div class="section-title"><span class="sec-num">21</span> تحليل البيع مقابل الإيجار</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>القيمة السوقية للبيع</td><td class="td-num">{{ _fmt(data.get('market_value', '')) }} م.ج</td></tr>
+      <tr><td>الإيجار السنوي الصافي (NOI)</td><td class="td-num">{{ _fmt(data.get('noi', '')) }} م.ج</td></tr>
+      <tr><td>مضاعف الإيجار الإجمالي (GRM)</td><td class="td-num">{{ _fmt(data.get('grm', ''), 2) }}</td></tr>
+      <tr><td>معدل العائد الإجمالي</td><td class="td-num">{{ data.get('gross_yield', NA) }}%</td></tr>
+      <tr><td>معدل العائد الصافي</td><td class="td-num">{{ data.get('net_yield', NA) }}%</td></tr>
+      <tr><td>توصية (بيع أم إيجار)</td><td>{{ data.get('sale_rent_recommendation', NA) }}</td></tr>
+    </table>
+    {% set bke = data.get('breakeven', {}) %}
+    {% if bke %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">تحليل نقطة التعادل (إرشادي):</div>
+    <table class="kv-table">
+      <tr><td>الإيجار الشهري الحالي/المتوقع</td><td class="td-num">{{ _fmt(bke.get('current_rent', '')) }} م.ج/شهر</td></tr>
+      <tr><td>عتبة نقطة التعادل (8% عائد سنوي)</td><td class="td-num">{{ _fmt(bke.get('breakeven_threshold', '')) }} م.ج/شهر</td></tr>
+      <tr><td>الفجوة</td><td class="td-num">{{ _fmt(bke.get('gap', '')) }} م.ج/شهر</td></tr>
+    </table>
+    <div class="note-box">{{ bke.get('note', '') }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     24 — DCF Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-dcf">
+  <div class="section-title"><span class="sec-num">22</span> ملخص التدفقات النقدية المخصومة (DCF)</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>معدل الخصم</td><td class="td-num">{{ data.get('discount_rate', NA) }}%</td></tr>
+      <tr><td>معدل نمو الإيجار</td><td class="td-num">{{ data.get('growth_rate', NA) }}%</td></tr>
+      <tr><td>أفق الاستثمار</td><td>{{ data.get('investment_horizon', '5 سنوات') }}</td></tr>
+      <tr><td>القيمة الطرفية (Terminal)</td><td class="td-num">{{ _fmt(data.get('terminal_value', '')) }} م.ج</td></tr>
+      <tr><td>إجمالي قيمة DCF</td><td class="td-num">{{ _fmt(data.get('dcf_value', '')) }} م.ج</td></tr>
+    </table>
+    {% if data.get('dcf_years') %}
+    <table>
+      <thead>
+        <tr><th>السنة</th><th>الإيجار (م.ج)</th><th>شواغر%</th><th>الدخل الفعلي</th><th>مصاريف</th><th>NOI (م.ج)</th><th>خصم%</th><th>القيمة الحالية</th><th>PV تراكمي</th></tr>
+      </thead>
+      <tbody>
+        {% for yr in data.get('dcf_years', []) %}
+        <tr>
+          <td>{{ yr.get('year', loop.index) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('rent', '')) }}</td>
+          <td class="td-num">{{ yr.get('vacancy', NA) }}%</td>
+          <td class="td-num">{{ _fmt(yr.get('egi', '')) if yr.get('egi') else '—' }}</td>
+          <td class="td-num">{{ _fmt(yr.get('expenses', '')) if yr.get('expenses') else '—' }}</td>
+          <td class="td-num">{{ _fmt(yr.get('noi', '')) }}</td>
+          <td class="td-num">{{ yr.get('discount', NA) }}%</td>
+          <td class="td-num">{{ _fmt(yr.get('pv', '')) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('cum_pv', '')) if yr.get('cum_pv') else '—' }}</td>
+        </tr>
+        {% endfor %}
+        {% if data.get('terminal_value') %}
+        <tr style="background:#f0f4f8;font-weight:600;">
+          <td>القيمة الطرفية</td>
+          <td colspan="6" class="td-na">معدل الرسملة الطرفي: {{ data.get('cap_rate_exit', '—') }}% — محاكاة QA</td>
+          <td class="td-num">{{ _fmt(data.get('terminal_value', '')) }}</td>
+          <td class="td-num">—</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box" style="font-size:9pt;">يُعدّ تحليل التدفقات النقدية المخصومة (DCF) المنهجَ الأعمق لتقييم العقارات ذات الدخل. يُوظِّف التحليل تقديرات الإيجار المستقبلية لفترة مقدارها {{ data.get('investment_horizon', '5 سنوات') }}، مع خصم التدفقات بمعدل {{ data.get('discount_rate', NA) }}% للحصول على القيمة الحالية الصافية. تشمل المنهجية حساب: الإيجار الإجمالي (GRI)، خصم الشواغر، الدخل الفعلي (EGI)، المصاريف التشغيلية، وصافي دخل التشغيل (NOI) لكل سنة، إضافة إلى القيمة الطرفية باستخدام معدل رسملة طرفي قدره {{ data.get('cap_rate_exit', NA) }}%. البيانات المعروضة إرشادية — محاكاة QA.</div>
+    {% if data.get('dcf_scenarios_brief') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">سيناريوهات DCF الثلاثة (Bear / Base / Bull) — إرشادية:</div>
+    <table>
+      <thead><tr><th>السيناريو</th><th>نمو%</th><th>شواغر%</th><th>خصم%</th><th>القيمة المقدرة (م.ج)</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        {% for sc in data.get('dcf_scenarios_brief', []) %}
+        <tr>
+          <td><strong>{{ sc.get('name', NA) }}</strong></td>
+          <td class="td-num">{{ sc.get('growth', NA) }}%</td>
+          <td class="td-num">{{ sc.get('vacancy', NA) }}%</td>
+          <td class="td-num">{{ sc.get('disc', NA) }}%</td>
+          <td class="td-num">{{ _fmt(sc.get('value', '')) }}</td>
+          <td class="td-na">{{ sc.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     25 — NPV / IRR / Payback
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-npv-irr">
+  <div class="section-title"><span class="sec-num">23</span> NPV / IRR / فترة الاسترداد</div>
+  <div class="section-body">
+    {% if data.get('npv') or data.get('irr') %}
+    <div class="kpi-row">
+      <div class="kpi-card kpi-ok">
+        <span class="kpi-value ltr">{{ _fmt(data.get('npv', '')) }}</span>
+        <span class="kpi-label">صافي القيمة الحالية NPV (م.ج)</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value ltr">{{ data.get('irr', NA) }}%</span>
+        <span class="kpi-label">معدل العائد الداخلي IRR</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card kpi-warn">
+        <span class="kpi-value ltr">{{ data.get('payback_years', NA) }}</span>
+        <span class="kpi-label">فترة الاسترداد (سنة)</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-value ltr">{{ data.get('equity_multiple', NA) }}x</span>
+        <span class="kpi-label">مضاعف حقوق الملكية</span>
+        <span class="kpi-sub">إرشادي</span>
+      </div>
+    </div>
+    {% else %}
+    <div class="missing-data-box">
+      <span class="mdb-label">NPV / IRR / Payback:</span>
+      بيانات التدفقات النقدية للمشروع غير متاحة ضمن بيانات الطلب — {{ NA }}
+    </div>
+    <div class="note-box">محاكاة NPV/IRR تتطلب جدول تدفقات نقدية كاملاً — يُحتسب عند توفر البيانات.</div>
+    {% endif %}
+    <div class="note-box">NPV/IRR/Payback قيم إرشادية تمثيلية — محاكاة داخلية/QA — غير معتمدة.</div>
+    {% if data.get('confidence_factors') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">عوامل درجة الثقة في التقييم:</div>
+    <table>
+      <thead><tr><th>العامل</th><th>الوزن</th><th>الدرجة</th><th>من</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        {% for cf in data.get('confidence_factors', []) %}
+        <tr>
+          <td>{{ cf.get('factor', NA) }}</td>
+          <td class="td-num">{{ cf.get('weight', NA) }}</td>
+          <td class="td-num">{{ cf.get('score', NA) }}</td>
+          <td class="td-num">{{ cf.get('max', NA) }}</td>
+          <td class="td-na">{{ cf.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     26 — Sensitivity Matrix
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-sensitivity">
+  <div class="section-title"><span class="sec-num">24</span> مصفوفة الحساسية</div>
+  <div class="section-body">
+    {% if data.get('sensitivity_matrix') %}
+    <table>
+      <thead>
+        <tr>
+          <th>معدل الخصم \ معدل النمو</th>
+          {% for g in data.get('sensitivity_growth_rates', ['1%','2%','3%','4%','5%']) %}
+          <th>{{ g }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data.get('sensitivity_matrix', []) %}
+        <tr>
+          <td><strong>{{ row.get('disc_rate', NA) }}%</strong></td>
+          {% for val in row.get('values', []) %}
+          <td class="td-num">{{ _fmt(val) }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مصفوفة الحساسية:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">مصفوفة الحساسية تمثيلية — محاكاة داخلية/QA.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     27 — Scenario Analysis
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-scenarios">
+  <div class="section-title"><span class="sec-num">25</span> تحليل السيناريوهات</div>
+  <div class="section-body">
+    {% if data.get('scenarios') %}
+    <table>
+      <thead>
+        <tr><th>السيناريو</th><th>النمو %</th><th>الخصم %</th><th>الشواغر %</th><th>القيمة (م.ج)</th><th>NPV (م.ج)</th></tr>
+      </thead>
+      <tbody>
+        {% for sc in data.get('scenarios', []) %}
+        <tr>
+          <td>
+            {% if sc.get('name') in ['متشائم', 'Bear'] %}<span class="td-nok">{{ sc.get('name') }}</span>
+            {% elif sc.get('name') in ['متفائل', 'Bull'] %}<span class="td-ok">{{ sc.get('name') }}</span>
+            {% else %}<span class="bold">{{ sc.get('name', NA) }}</span>{% endif %}
+          </td>
+          <td class="td-num">{{ sc.get('growth_rate', NA) }}%</td>
+          <td class="td-num">{{ sc.get('discount_rate', NA) }}%</td>
+          <td class="td-num">{{ sc.get('vacancy', NA) }}%</td>
+          <td class="td-num">{{ _fmt(sc.get('value', '')) }}</td>
+          <td class="td-num">{{ _fmt(sc.get('npv', '')) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">السيناريوهات:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box">السيناريوهات تمثيلية — محاكاة داخلية/QA — غير معتمدة.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     28 — Risk Register
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-risk-register">
+  <div class="section-title"><span class="sec-num">26</span> سجل المخاطر</div>
+  <div class="section-body">
+    {% if data.get('risk_register') %}
+    <table>
+      <thead>
+        <tr><th>#</th><th>الخطر</th><th>الفئة</th><th>احتمالية</th><th>أثر</th><th>الدرجة</th><th>الاستجابة</th><th>الحالة</th></tr>
+      </thead>
+      <tbody>
+        {% for r in data.get('risk_register', []) %}
+        <tr>
+          <td>R{{ loop.index }}</td>
+          <td>{{ r.get('risk', NA) }}</td>
+          <td>{{ r.get('category', NA) }}</td>
+          <td class="td-num">{{ r.get('probability', NA) }}/5</td>
+          <td class="td-num">{{ r.get('impact', NA) }}/5</td>
+          <td>
+            {% set score = r.get('score', 0) %}
+            {% if score >= 16 %}<span class="td-nok">{{ score }} — حرج</span>
+            {% elif score >= 9 %}<span class="td-nok">{{ score }} — عالي</span>
+            {% elif score >= 5 %}<span style="color:var(--c-warn);font-weight:700;">{{ score }} — متوسط</span>
+            {% else %}<span class="td-ok">{{ score }} — منخفض</span>{% endif %}
+          </td>
+          <td class="td-na">{{ r.get('response', NA) }}</td>
+          <td class="td-na">{{ r.get('status', '—') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">سجل المخاطر:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     29 — Risk Matrix (5×5)
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-risk-matrix">
+  <div class="section-title"><span class="sec-num">27</span> مصفوفة المخاطر (5×5)</div>
+  <div class="section-body">
+    <div class="chart-placeholder">
+      <div>
+        <strong>مصفوفة المخاطر 5×5 — تمثيلية (محاكاة داخلية/QA)</strong><br>
+        درجة = الاحتمالية × الأثر
+        <table style="margin:10px auto;width:auto;font-size:8pt;">
+          <thead>
+            <tr><th>الاحتمالية \ الأثر</th><th>1-طفيف</th><th>2-محدود</th><th>3-متوسط</th><th>4-كبير</th><th>5-كارثي</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>5-شبه مؤكد</strong></td><td style="background:#f39c12;color:#fff">5</td><td style="background:#f39c12;color:#fff">10</td><td style="background:#e74c3c;color:#fff">15</td><td style="background:#c0392b;color:#fff">20</td><td style="background:#7b241c;color:#fff">25</td></tr>
+            <tr><td><strong>4-محتمل</strong></td><td style="background:#f9e79f">4</td><td style="background:#f39c12;color:#fff">8</td><td style="background:#f39c12;color:#fff">12</td><td style="background:#e74c3c;color:#fff">16</td><td style="background:#c0392b;color:#fff">20</td></tr>
+            <tr><td><strong>3-ممكن</strong></td><td style="background:#d5f5e3">3</td><td style="background:#f9e79f">6</td><td style="background:#f39c12;color:#fff">9</td><td style="background:#f39c12;color:#fff">12</td><td style="background:#e74c3c;color:#fff">15</td></tr>
+            <tr><td><strong>2-نادر</strong></td><td style="background:#d5f5e3">2</td><td style="background:#d5f5e3">4</td><td style="background:#f9e79f">6</td><td style="background:#f9e79f">8</td><td style="background:#f39c12;color:#fff">10</td></tr>
+            <tr><td><strong>1-استثنائي</strong></td><td style="background:#d5f5e3">1</td><td style="background:#d5f5e3">2</td><td style="background:#d5f5e3">3</td><td style="background:#f9e79f">4</td><td style="background:#f9e79f">5</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">ملخص توزيع المخاطر حسب المستوى:</div>
+    <table>
+      <thead><tr><th>مستوى الخطر</th><th>الدرجة</th><th>عدد الأخطار</th><th>الإجراء المطلوب</th><th>الأولوية</th></tr></thead>
+      <tbody>
+        {% set rr = data.get('risk_register', []) %}
+        <tr><td><span class="td-nok">حرج</span></td><td class="td-num">≥ 16</td><td class="td-num">{{ rr|selectattr('score', 'ge', 16)|list|length if rr else 'QA' }}</td><td class="td-na">تدخل فوري قبل الاعتماد</td><td><span class="td-nok">إلزامي</span></td></tr>
+        <tr><td><span class="td-nok">عالٍ</span></td><td class="td-num">9 — 15</td><td class="td-num">{{ rr|selectattr('score', 'ge', 9)|list|length - rr|selectattr('score', 'ge', 16)|list|length if rr else 'QA' }}</td><td class="td-na">خطة معالجة مُوثَّقة مطلوبة</td><td><span class="td-nok">عاجل</span></td></tr>
+        <tr><td><span style="color:var(--c-warn);font-weight:700;">متوسط</span></td><td class="td-num">5 — 8</td><td class="td-num">{{ rr|selectattr('score', 'ge', 5)|list|length - rr|selectattr('score', 'ge', 9)|list|length if rr else 'QA' }}</td><td class="td-na">رصد ومتابعة دورية</td><td><span style="color:var(--c-warn);font-weight:700;">متابعة</span></td></tr>
+        <tr><td><span class="td-ok">منخفض</span></td><td class="td-num">&lt; 5</td><td class="td-num">{{ rr|selectattr('score', 'lt', 5)|list|length if rr else 'QA' }}</td><td class="td-na">قبول واحتواء</td><td><span class="td-ok">منخفض</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note-box">مصفوفة المخاطر تمثيلية — محاكاة داخلية/QA.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     30 — ESG Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-esg">
+  <div class="section-title"><span class="sec-num">28</span> ملخص ESG (البيئي · الاجتماعي · الحوكمة)</div>
+  <div class="section-body">
+    {% set esg = data.get('esg', {}) %}
+    {% if esg %}
+    <table class="kv-table">
+      <tr><td>الدرجة البيئية (E)</td>
+        <td>{% set es = esg.get('environmental_score', 0) %}{% if es >= 70 %}<span class="td-ok">{{ es }}/100</span>{% elif es >= 40 %}<span style="color:var(--c-warn);font-weight:700;">{{ es }}/100</span>{% else %}<span class="td-nok">{{ es }}/100</span>{% endif %}<span class="td-na"> — {{ esg.get('environmental_note', '') }}</span></td>
+      </tr>
+      <tr><td>الدرجة الاجتماعية (S)</td>
+        <td>{% set ss = esg.get('social_score', 0) %}{% if ss >= 70 %}<span class="td-ok">{{ ss }}/100</span>{% elif ss >= 40 %}<span style="color:var(--c-warn);font-weight:700;">{{ ss }}/100</span>{% else %}<span class="td-nok">{{ ss }}/100</span>{% endif %}<span class="td-na"> — {{ esg.get('social_note', '') }}</span></td>
+      </tr>
+      <tr><td>درجة الحوكمة (G)</td>
+        <td>{% set gs = esg.get('governance_score', 0) %}{% if gs >= 70 %}<span class="td-ok">{{ gs }}/100</span>{% elif gs >= 40 %}<span style="color:var(--c-warn);font-weight:700;">{{ gs }}/100</span>{% else %}<span class="td-nok">{{ gs }}/100</span>{% endif %}<span class="td-na"> — {{ esg.get('governance_note', '') }}</span></td>
+      </tr>
+      <tr><td>إجمالي درجة ESG</td>
+        <td>{% set total = esg.get('total_score', 0) %}{% if total >= 70 %}<span class="td-ok">{{ total }}/100</span>{% elif total >= 40 %}<span style="color:var(--c-warn);font-weight:700;">{{ total }}/100</span>{% else %}<span class="td-nok">{{ total }}/100</span>{% endif %}</td>
+      </tr>
+      <tr><td>ملاحظة ESG</td><td class="td-na">{{ esg.get('overall_note', NA) }}</td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box">
+      <span class="mdb-label">ESG:</span>
+      بيانات ESG غير متاحة ضمن بيانات الطلب — {{ NA }}
+      <br>محاكاة ESG تتطلب بيانات بيئية واجتماعية وحوكمية — يُقيَّم عند توفر البيانات.
+    </div>
+    {% endif %}
+    {% set esg = data.get('esg', {}) %}
+    {% if esg.get('breakdown') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">تفصيل مكونات ESG (إرشادي):</div>
+    <table>
+      <thead><tr><th>المحور</th><th>الدرجة</th><th>من</th><th>النسبة</th><th>التقييم والملاحظة</th></tr></thead>
+      <tbody>
+        {% for b in esg.get('breakdown', []) %}
+        <tr>
+          <td>{{ b.get('category', NA) }}</td>
+          <td class="td-num">{{ b.get('score', NA) }}</td>
+          <td class="td-num">{{ b.get('max', NA) }}</td>
+          <td class="td-num">{{ b.get('pct', NA) }}</td>
+          <td class="td-na">{{ b.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box">تقييم ESG إرشادي تمثيلي — محاكاة داخلية/QA — غير معتمد من هيئة رسمية.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     31 — HBU Summary
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-hbu">
+  <div class="section-title"><span class="sec-num">29</span> تحليل أفضل استخدام (HBU) — الاختبارات الأربعة</div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>الاختبار</th><th>الاستخدام الحالي</th><th>الاستخدام الأمثل</th><th>النتيجة</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>1. قانوني</strong></td>
+          <td>{{ data.get('hbu_current', NA) }}</td>
+          <td>{{ data.get('hbu_optimal', NA) }}</td>
+          <td><span class="td-ok">{{ data.get('hbu_legal', NA) }}</span></td>
+          <td class="td-na">مطابقة مع لوائح التخطيط — إرشادي QA</td>
+        </tr>
+        <tr>
+          <td><strong>2. مادي</strong></td>
+          <td>{{ data.get('hbu_current', NA) }}</td>
+          <td>{{ data.get('hbu_optimal', NA) }}</td>
+          <td><span class="td-ok">{{ data.get('hbu_physical', NA) }}</span></td>
+          <td class="td-na">إمكانية التنفيذ — بانتظار فحص ميداني</td>
+        </tr>
+        <tr>
+          <td><strong>3. مالي</strong></td>
+          <td>{{ data.get('hbu_current', NA) }}</td>
+          <td>{{ data.get('hbu_optimal', NA) }}</td>
+          <td><span class="td-ok">{{ data.get('hbu_financial', NA) }}</span></td>
+          <td class="td-na">عائد إيجاري مجدٍ — محاكاة QA</td>
+        </tr>
+        <tr>
+          <td><strong>4. إنتاجية قصوى</strong></td>
+          <td>{{ data.get('hbu_current', NA) }}</td>
+          <td>{{ data.get('hbu_optimal', NA) }}</td>
+          <td><span style="color:var(--c-warn);font-weight:700;">{{ data.get('hbu_productivity', NA) }}</span></td>
+          <td class="td-na">{{ data.get('hbu_conclusion', 'يحتاج تحليل إضافي') }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% if data.get('hbu_notes') %}
+    <div class="note-box">{{ data.get('hbu_notes') }}</div>
+    {% endif %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">الجدوى المالية للاستخدامات البديلة (إرشادي):</div>
+    <table>
+      <thead><tr><th>الاستخدام البديل</th><th>الإيجار السنوي المقدر</th><th>معدل العائد %</th><th>قيمة الرسملة (م.ج)</th><th>الاستنتاج</th></tr></thead>
+      <tbody>
+        <tr><td>سكني حالي</td><td class="td-num">{{ _fmt(data.get('annual_noi','')) }} م.ج</td><td class="td-num">{{ data.get('cap_rate_used',NA) }}%</td><td class="td-num">{{ _fmt(data.get('final_value','')) }}</td><td><span class="td-ok">مجدٍ — مُختار</span></td></tr>
+        <tr><td>تجاري (مكاتب)</td><td class="td-num">محاكاة QA</td><td class="td-num">8.5%</td><td class="td-num">محاكاة QA</td><td><span style="color:var(--c-warn);font-weight:700;">تحليل إضافي مطلوب</span></td></tr>
+        <tr><td>مختلط (سكني + تجاري)</td><td class="td-num">محاكاة QA</td><td class="td-num">9.0%</td><td class="td-num">محاكاة QA</td><td><span class="td-nok">لوائح تخطيط — قيود</span></td></tr>
+        <tr><td>سكني مع تكثيف</td><td class="td-num">محاكاة QA</td><td class="td-num">7.8%</td><td class="td-num">محاكاة QA</td><td><span style="color:var(--c-warn);font-weight:700;">تحقق من اللوائح أولاً</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note-box">تحليل HBU إرشادي — محاكاة QA — تتطلب الاستنتاجات مراجعة قانونية وهندسية مستقلة.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     32 — SWOT Analysis
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-swot">
+  <div class="section-title"><span class="sec-num">30</span> تحليل SWOT</div>
+  <div class="section-body">
+    {% set swot = data.get('swot', {}) %}
+    <table>
+      <thead>
+        <tr><th style="background:#1e8449">نقاط القوة (S)</th><th style="background:#922b21">نقاط الضعف (W)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{% for s in swot.get('strengths', []) %}<div>• {{ s }}</div>{% endfor %}{% if not swot.get('strengths') %}<span class="td-na">{{ NA }}</span>{% endif %}</td>
+          <td>{% for w in swot.get('weaknesses', []) %}<div>• {{ w }}</div>{% endfor %}{% if not swot.get('weaknesses') %}<span class="td-na">{{ NA }}</span>{% endif %}</td>
+        </tr>
+      </tbody>
+      <thead>
+        <tr><th style="background:#1a5276">الفرص (O)</th><th style="background:#b7770d">التهديدات (T)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{% for o in swot.get('opportunities', []) %}<div>• {{ o }}</div>{% endfor %}{% if not swot.get('opportunities') %}<span class="td-na">{{ NA }}</span>{% endif %}</td>
+          <td>{% for t in swot.get('threats', []) %}<div>• {{ t }}</div>{% endfor %}{% if not swot.get('threats') %}<span class="td-na">{{ NA }}</span>{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% if data.get('swot_top_priorities') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">الأولويات الاستراتيجية (SWOT):</div>
+    <table>
+      <thead><tr><th>الأولوية</th><th>البند</th><th>الفئة</th><th>الأثر</th><th>الاحتمالية</th><th>الإجراء المقترح</th></tr></thead>
+      <tbody>
+        {% for p in data.get('swot_top_priorities', [])[:6] %}
+        <tr>
+          <td class="td-num">{{ p.get('priority', '—') }}</td>
+          <td>{{ p.get('item', NA) }}</td>
+          <td>{{ p.get('category', NA) }}</td>
+          <td>{{ p.get('impact', NA) }}</td>
+          <td>{{ p.get('probability', NA) }}</td>
+          <td class="td-na">{{ p.get('action', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     33 — Method Reconciliation
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-reconciliation">
+  <div class="section-title"><span class="sec-num">31</span> مصالحة المناهج التقييمية</div>
+  <div class="section-body">
+    <div class="reconciliation-box">
+      <div class="rec-header">مصالحة المناهج الثلاثة — إرشادية</div>
+      <div class="rec-method-row">
+        <span class="rm-name">مدخل المقارنة السوقية</span>
+        <span class="rm-value">{{ _fmt(data.get('market_value', '')) }} م.ج</span>
+        <span class="rm-weight">{{ data.get('market_weight', '40%') }}</span>
+      </div>
+      <div class="rec-method-row">
+        <span class="rm-name">مدخل التكلفة</span>
+        <span class="rm-value">{{ _fmt(data.get('cost_approach_value', '')) }} م.ج</span>
+        <span class="rm-weight">{{ data.get('cost_weight', '25%') }}</span>
+      </div>
+      <div class="rec-method-row">
+        <span class="rm-name">مدخل الدخل / DCF</span>
+        <span class="rm-value">{{ _fmt(data.get('dcf_value', '')) }} م.ج</span>
+        <span class="rm-weight">{{ data.get('dcf_weight', '35%') }}</span>
+      </div>
+      <div class="rec-final-row">
+        <span>القيمة المُصالَح عليها (إرشادية)</span>
+        <span>{{ _fmt(data.get('final_value', '')) }} م.ج</span>
+      </div>
+    </div>
+    {% if data.get('weighted_recon_rows') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">التوفيق الموزون التفصيلي (أربعة مناهج):</div>
+    <table>
+      <thead><tr><th>المنهج</th><th>القيمة (م.ج)</th><th>الوزن</th><th>المساهمة الموزونة (م.ج)</th></tr></thead>
+      <tbody>
+        {% for wr in data.get('weighted_recon_rows', []) %}
+        <tr>
+          <td>{{ wr.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(wr.get('value', '')) }}</td>
+          <td class="td-num">{{ wr.get('weight', NA) }}</td>
+          <td class="td-num"><strong>{{ _fmt(wr.get('weighted_contribution', '')) }}</strong></td>
+        </tr>
+        {% endfor %}
+        <tr style="background:#f0f4f8;font-weight:700;">
+          <td colspan="3">القيمة الموزونة النهائية (إرشادية)</td>
+          <td class="td-num">{{ _fmt(data.get('final_value', '')) }}</td>
+        </tr>
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="warning-box">
+      <span class="wb-label">⚠ تنبيه:</span>
+      المصالحة إرشادية تمثيلية. الأوزان تمثيلية ولا تستند للمعايير الرسمية.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     34 — Final Value Conclusion
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-conclusion">
+  <div class="section-title"><span class="sec-num">32</span> خلاصة القيمة النهائية</div>
+  <div class="section-body">
+    <div class="value-conclusion-box">
+      <div class="vcb-label">القيمة السوقية الإرشادية المُقدَّرة (تفصيلي)</div>
+      <span class="vcb-amount">{{ _fmt(data.get('final_value', '')) }}</span>
+      <div class="vcb-amount-words">{{ data.get('value_in_words', '') }}</div>
+      <div class="vcb-currency">{{ data.get('currency', 'م.ج') }}</div>
+      <div class="vcb-range">
+        نطاق الثقة: {{ _fmt(data.get('confidence_low', '')) }} — {{ _fmt(data.get('confidence_high', '')) }} م.ج
+        | درجة الثقة: {{ data.get('confidence_score', NA) }}%
+      </div>
+      <div class="vcb-advisory">⚠ قيمة إرشادية — غير معتمدة رسميًا — مسودة غير معتمدة</div>
+    </div>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">نطاق التقييم وحدوده الجوهرية:</div>
+    <table>
+      <thead><tr><th>جانب نطاق العمل</th><th>الوضع الحالي</th><th>المعيار المطلوب للاعتماد</th><th>الأثر على القيمة</th></tr></thead>
+      <tbody>
+        <tr><td>نوع القيمة</td><td><span class="td-ok">القيمة السوقية العادلة — متوافق</span></td><td class="td-na">تحديد أساس القيمة صريحاً</td><td class="td-na">لا أثر — متوافق</td></tr>
+        <tr><td>تاريخ التقييم الفعلي</td><td>{{ data.get('report_date', NA) }}</td><td class="td-na">ضمن 12 شهراً</td><td class="td-na">لا أثر — ساري</td></tr>
+        <tr><td>المعاينة الميدانية</td><td><span class="td-nok">لم تُجرَ</span></td><td class="td-na">معاينة موثقة إلزامية</td><td class="td-na">قد يؤثر ±3-8% على القيمة</td></tr>
+        <tr><td>مراجعة المستندات القانونية</td><td><span class="td-nok">لم تُراجَع</span></td><td class="td-na">مراجعة سند الملكية والقيود</td><td class="td-na">مخاطر قانونية محتملة</td></tr>
+        <tr><td>بيانات السوق المستخدمة</td><td><span class="td-nok">محاكاة QA فقط</span></td><td class="td-na">بيانات سوق حقيقية موثقة</td><td class="td-na">تباين CV مرتفع محتمل</td></tr>
+        <tr><td>التقييم البيئي (ESG)</td><td><span style="color:var(--c-warn);">تمثيلي QA</span></td><td class="td-na">تقرير بيئي ومناخي رسمي</td><td class="td-na">تأثير على Cap Rate ±0.25%</td></tr>
+        <tr><td>مراجعة النظراء الداخلية</td><td><span class="td-nok">لم تُجرَ</span></td><td class="td-na">Peer Review مستقل</td><td class="td-na">ضمان جودة إلزامي</td></tr>
+        <tr><td>التحقق من هوية المالك</td><td><span class="td-nok">لم يُتحقق</span></td><td class="td-na">استعلام رسمي</td><td class="td-na">ضمان مشروعية التصرف</td></tr>
+      </tbody>
+    </table>
+    {% if data.get('assumption_rows') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">الافتراضات والقيود الجوهرية:</div>
+    <table>
+      <thead><tr><th>النوع</th><th>الوصف</th><th>الأثر المحتمل</th><th>يحتاج توثيق</th></tr></thead>
+      <tbody>
+        {% for ar in data.get('assumption_rows', []) %}
+        <tr>
+          <td>{{ ar.get('type', NA) }}</td>
+          <td class="td-na">{{ ar.get('description', NA) }}</td>
+          <td class="td-na">{{ ar.get('impact', NA) }}</td>
+          <td>{% if ar.get('needs_doc') %}<span class="td-nok">نعم</span>{% else %}<span class="td-ok">لا</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     35 — Recommendation
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-recommendation">
+  <div class="section-title"><span class="sec-num">33</span> التوصية التنفيذية</div>
+  <div class="section-body">
+    <div class="reconciliation-box">
+      <div class="rec-header">التوصية الإرشادية النهائية</div>
+      <p style="font-size:10pt;margin-top:8px;line-height:1.8;">{{ data.get('recommendation', NA) }}</p>
+    </div>
+    {% if data.get('recommendation_advisory') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">الإجراءات التوصوية المفصلة:</div>
+    <table>
+      <thead><tr><th>الجانب</th><th>الإجراء المطلوب</th><th>الأولوية</th></tr></thead>
+      <tbody>
+        {% for ra in data.get('recommendation_advisory', []) %}
+        <tr>
+          <td><strong>{{ ra.get('aspect', NA) }}</strong></td>
+          <td class="td-na">{{ ra.get('description', NA) }}</td>
+          <td>
+            {% set pri = ra.get('priority', '') %}
+            {% if pri in ['إلزامي', 'عاجل'] %}<span class="td-nok">{{ pri }}</span>
+            {% elif pri == 'عالي' %}<span style="color:var(--c-warn);font-weight:700;">{{ pri }}</span>
+            {% else %}<span class="td-ok">{{ pri }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     36 — Required Documents / Next Steps
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-nextdocs">
+  <div class="section-title"><span class="sec-num">34</span> الوثائق المطلوبة والخطوات التالية</div>
+  <div class="section-body">
+    {% if data.get('required_docs') %}
+    <table>
+      <thead><tr><th>الوثيقة / الإجراء</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for doc in data.get('required_docs', []) %}
+        {% set doc_name = doc if doc is string else doc.get('name', '') %}
+        <tr>
+          <td>{{ doc_name }}</td>
+          <td>{% if doc_name in data.get('missing_docs', []) %}<span class="td-nok">مطلوب</span>{% else %}<span class="td-ok">متوفر</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">الوثائق المطلوبة:</span> {{ NA }}</div>
+    {% endif %}
+    {% if data.get('compliance_items') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">لوحة الامتثال التقييمي — فحص الجاهزية:</div>
+    <table>
+      <thead><tr><th>#</th><th>بند الامتثال</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for ci in data.get('compliance_items', []) %}
+        <tr>
+          <td class="td-num">{{ loop.index }}</td>
+          <td>{{ ci.get('label', NA) }}</td>
+          <td>
+            {% set cs = ci.get('status', '') %}
+            {% if cs == 'مكتمل' %}<span class="td-ok">✓ {{ cs }}</span>
+            {% elif cs == 'عائق حرج' %}<span class="td-nok">✗ {{ cs }}</span>
+            {% else %}<span class="td-nok">✗ {{ cs }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if data.get('roadmap_steps') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">خارطة طريق الاعتماد:</div>
+    <table>
+      <thead><tr><th>#</th><th>الخطوة</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for rs in data.get('roadmap_steps', []) %}
+        <tr>
+          <td class="td-num">{{ loop.index }}</td>
+          <td>{{ rs.get('step', NA) if rs is mapping else rs }}</td>
+          <td>
+            {% set st = rs.get('status', '') if rs is mapping else '' %}
+            {% if st == 'مكتمل' %}<span class="td-ok">{{ st }}</span>
+            {% elif st == 'معلق' %}<span class="td-nok">{{ st }}</span>
+            {% else %}<span class="td-na">{{ st }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if data.get('cert_risks') %}
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">مخاطر الاعتماد الحرجة:</div>
+    <table>
+      <thead><tr><th>#</th><th>الخطر/العائق</th></tr></thead>
+      <tbody>
+        {% for cr in data.get('cert_risks', []) %}
+        <tr>
+          <td class="td-num">{{ loop.index }}</td>
+          <td class="td-nok">{{ cr if cr is string else cr.get('description', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="warning-box">
+      <span class="wb-label">⚠ تنبيه:</span>
+      لا يُصدر هذا النظام شهادة اعتماد آلية. الاعتماد يتطلب مراجعة خبير مرخّص.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Qdrant Disclaimer
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-qdrant">
+  <div class="section-title"><span class="sec-num">35</span> إخلاء مسؤولية: Qdrant/RAG غير مفعَّل</div>
+  <div class="section-body">
+    <div class="warning-box">
+      <span class="wb-label">⚠ إخلاء مسؤولية:</span>
+      لا يستند هذا التقرير للإنترنت أو قواعد بيانات RAG/Qdrant.
+      جميع البيانات التفصيلية إرشادية تمثيلية — محاكاة داخلية/QA — غير معتمدة.
+      Qdrant/RAG غير مفعَّل — لا scraping — لا بيانات سوقية حقيقية.
+    </div>
+    <div class="section-title" style="font-size:9pt;margin-top:4px;margin-bottom:2px;">حالة المنصة والأدوات الرقمية (Expert Smart PropTech Platform):</div>
+    <table>
+      <thead><tr><th>الأداة/المصدر</th><th>الحالة</th><th>الأثر على التقرير</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        <tr><td>Qdrant Vector DB</td><td><span class="td-nok">غير مفعَّل</span></td><td class="td-na">لا بيانات سوق حقيقية مستردة</td><td class="td-na">يُحسَّن عند تفعيل الاتصال</td></tr>
+        <tr><td>RAG (Retrieval-Augmented Generation)</td><td><span class="td-nok">غير مفعَّل</span></td><td class="td-na">لا استرداد مستندات خارجية</td><td class="td-na">يتطلب اشتراك بيانات</td></tr>
+        <tr><td>Web Scraping / Data Aggregation</td><td><span class="td-nok">مُعطَّل بالسياسة</span></td><td class="td-na">لا بيانات من مواقع خارجية</td><td class="td-na">إخلاء مسؤولية صريح</td></tr>
+        <tr><td>AVM Model (Regression Engine)</td><td><span class="td-warn">محاكاة QA فقط</span></td><td class="td-na">بيانات إدخال وخروج محاكاة</td><td class="td-na">يتطلب بيانات سوق حقيقية</td></tr>
+        <tr><td>PDF Generator (HTML/Playwright)</td><td><span class="td-ok">مفعَّل</span></td><td class="td-na">يُعالج العربية بشكل صحيح</td><td class="td-na">تقنية RTL بدون FPDF</td></tr>
+        <tr><td>Signature/Certification Engine</td><td><span class="td-nok">استشاري — غير معتمد</span></td><td class="td-na">لا توقيعات آلية — لا شهادات</td><td class="td-na">إلزامي بموجب السياسة</td></tr>
+        <tr><td>Excel Internal Builder</td><td><span class="td-nok">لا كشف Excel داخلي</span></td><td class="td-na">الأرقام مُعرَضة فقط لا محسوبة هنا</td><td class="td-na">تُحسَب في محرك منفصل</td></tr>
+        <tr><td>External Market API Integration</td><td><span class="td-nok">غير مفعَّل</span></td><td class="td-na">لا اتصال بمصادر أسعار خارجية</td><td class="td-na">يستلزم اتفاقيات بيانات</td></tr>
+      </tbody>
+    </table>
+    <div class="note-box" style="font-size:9pt;">جميع القيم العددية المعروضة في هذا التقرير تمثيلية إرشادية — مستخرجة من محرك محاكاة داخلي (QA) أو مُدخَلة من بيانات الطلب — ولا تستند لمصادر بيانات سوق حقيقية. هذا التقرير لا يُقبل في الإجراءات الرسمية أو القانونية أو البنكية إلا بعد مراجعة خبير تقييم عقاري مرخص وتوقيعه وختمه الرسمي.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     37 — Signature / Advisory Gate
+     ══════════════════════════════════════════════════════════════════ -->
+<div class="section page-break" id="sec-signature">
+  <div class="section-title"><span class="sec-num">36</span> بوابة التوقيع والاعتماد</div>
+  <div class="section-body">
+    <div class="signature-gate">
+      <span class="sig-gate-label">⚠ بانتظار التوقيع الرسمي من مقيم عقاري مرخص — غير معتمد رسميًا</span>
+      <div class="sig-gate-slot">
+        [ توقيع المقيّم العقاري المرخّص — بانتظار التوقيع الرسمي من مقيم عقاري مرخص ]
+      </div>
+      <div class="sig-gate-note">
+        لا يصدر تقرير معتمد إلا بعد مراجعة وتوقيع خبير تقييم مرخص.<br>
+        لا يُصدر هذا النظام توقيع خبير آلي أو شهادة اعتماد رسمية.<br>
+        بانتظار التوقيع الرسمي من مقيم عقاري مرخص · مراجعة ميدانية · توقيع يدوي · ختم رسمي.
+      </div>
+    </div>
+    <div class="section-title" style="font-size:9pt;margin-top:6px;margin-bottom:2px;">متطلبات الاعتماد الرسمي — قائمة الفحص:</div>
+    <table style="font-size:8pt;">
+      <thead><tr><th>#</th><th>متطلب الاعتماد</th><th>الحالة الحالية</th><th>الإجراء المطلوب</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>توقيع خبير تقييم عقاري مرخص</td><td><span class="td-nok">مفقود</span></td><td>لازم — لا اعتماد بدونه</td></tr>
+        <tr><td>2</td><td>ختم الشركة الرسمي وترخيصها المهني</td><td><span class="td-nok">مفقود</span></td><td>رفع الترخيص المهني مع الختم</td></tr>
+        <tr><td>3</td><td>شهادة إتمام البناء / رخصة البناء</td><td><span class="td-nok">{% if 'رخصة البناء' in data.get('missing_docs', []) %}مطلوبة{% else %}متاحة{% endif %}</span></td><td>استيفاء من الجهة المختصة</td></tr>
+        <tr><td>4</td><td>سند الملكية الأصلي وصحيفة القيد</td><td><span class="td-nok">لم تُراجع</span></td><td>مراجعة مستقلة مطلوبة</td></tr>
+        <tr><td>5</td><td>معاينة ميدانية موثقة مع تقرير مصور</td><td><span class="td-nok">لم تُجرَ</span></td><td>جدولة فحص ميداني رسمي</td></tr>
+        <tr><td>6</td><td>≥3 مقارنات بيع حقيقية موثقة من مصادر رسمية</td><td><span class="td-nok">محاكاة QA فقط</span></td><td>الحصول على صفقات سوقية حقيقية</td></tr>
+        <tr><td>7</td><td>مراجعة النظراء الداخلية (Peer Review)</td><td><span class="td-nok">لم تُجرَ</span></td><td>إجراء مراجعة نظراء داخلية مستقلة</td></tr>
+        <tr><td>8</td><td>التحقق من هوية المالك ومشروعية التصرف</td><td><span class="td-nok">لم يُتحقق</span></td><td>استعلام رسمي من جهة التسجيل</td></tr>
+        <tr><td>9</td><td>إفصاح أي تعارض مصالح بين الخبير والمالك</td><td><span class="td-ok">مُصرَّح بعدم التعارض (QA)</span></td><td>تأكيد من المقيّم المرخص</td></tr>
+        <tr><td>10</td><td>صلاحية التقرير (12 شهراً من تاريخه)</td><td><span class="td-ok">ساري — {{ data.get('report_date', NA) }}</span></td><td>تجديد التقييم سنوياً</td></tr>
+      </tbody>
+    </table>
+    {% if data.get('governance_rows') %}
+    <div class="section-title" style="font-size:9pt;margin-top:6px;margin-bottom:2px;">لوحة متطلبات الحوكمة التفصيلية:</div>
+    <table style="font-size:8pt;">
+      <thead><tr><th>معيار الحوكمة</th><th>القيمة الحالية</th><th>مستوفى؟</th><th>الإجراء المطلوب</th></tr></thead>
+      <tbody>
+        {% for gr in data.get('governance_rows', []) %}
+        <tr>
+          <td>{{ gr.get('param', NA) }}</td>
+          <td class="td-na">{{ gr.get('value', NA) }}</td>
+          <td>{% if gr.get('allowed') %}<span class="td-ok">نعم</span>{% else %}<span class="td-nok">لا</span>{% endif %}</td>
+          <td class="td-na">{{ gr.get('action', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="footer-disclaimer">
+      تقرير آلي استرشادي تفصيلي — غير معتمد رسميًا ·
+      لا يستند للإنترنت · Qdrant/RAG غير مفعَّل ·
+      لا توقيع خبير · لا ختم رسمي · لا رخصة مزيَّفة ·
+      لا يُقبل في الإجراءات البنكية أو القانونية أو الرسمية قبل الاعتماد المناسب.<br>
+      تم إنشاء هذا المستند بواسطة محرك HTML/PDF ·
+      Expert Smart PropTech Platform · Detailed Tier v1.0
+    </div>
+  </div>
+</div>
+
+</div><!-- /.content -->
+</body>
+</html>

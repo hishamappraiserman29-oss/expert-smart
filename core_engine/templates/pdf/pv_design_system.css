@@ -1,0 +1,341 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PV PDF Design System — Expert Smart  v2.0
+   RTL Arabic / English | 18 components | 3 themes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. RESET & RTL LAYOUT ───────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  direction: rtl; text-align: right;
+  font-family: 'Cairo', 'Noto Naskh Arabic', 'Amiri', 'Tahoma', 'Arial', sans-serif;
+  font-size: 9pt; color: #1a1a2e; line-height: 1.62;
+  background: #ffffff;
+}
+@page { size: A4; margin: 22mm 14mm 16mm 14mm; }
+body { padding-top: 12mm; padding-bottom: 10mm; }
+
+/* ── 2. CSS CUSTOM PROPERTIES — TRADITIONAL BLUE (default / preliminary) ── */
+:root {
+  --c-primary:    #1a5276;
+  --c-primary-d:  #1f4e78;
+  --c-accent:     #2e86c1;
+  --c-gold:       #d4af37;
+  --c-danger:     #922b21;
+  --c-warn:       #f39c12;
+  --c-ok:         #1e8449;
+  --c-bg-strip:   #ebf5fb;
+  --c-bg-key:     #eaf4fb;
+  --c-border:     #d0d0d0;
+  --c-text-mute:  #7f8c8d;
+  --c-hdr-bg:     #ffffff;
+  --c-cover-grad: linear-gradient(145deg, #1f4e78 0%, #2e86c1 100%);
+}
+
+/* ── 3. PROFESSIONAL COVER PAGE ─────────────────────────────────────────── */
+.cover-page {
+  page-break-after: always;
+  min-height: 180mm;
+  background: var(--c-cover-grad);
+  color: #fff;
+  padding: 30px 32px 26px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  position: relative; overflow: hidden;
+}
+.cover-page::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 6mm;
+  background: var(--c-gold);
+  opacity: 0.7;
+}
+.cover-badge {
+  font-size: 8pt; font-weight: 700; color: var(--c-gold);
+  letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase;
+}
+.cover-title {
+  font-size: 20pt; font-weight: 700; color: #fff;
+  margin-bottom: 6px; line-height: 1.3;
+}
+.cover-sub     { font-size: 9.5pt; color: rgba(255,255,255,0.80); margin-bottom: 16px; }
+.cover-divider { border: none; border-top: 1px solid rgba(255,255,255,0.22); margin: 14px 0; }
+.cover-meta    {
+  display: flex; flex-wrap: wrap; gap: 7px 26px;
+  font-size: 8.5pt; color: rgba(255,255,255,0.88); margin-bottom: 10px;
+}
+.cover-meta span   { display: flex; gap: 5px; align-items: baseline; }
+.cover-meta strong { color: #fff; }
+.cover-seal {
+  display: inline-block;
+  border: 2px solid var(--c-gold); color: var(--c-gold);
+  background: rgba(212,175,55,0.12);
+  font-weight: 700; font-size: 9.5pt;
+  padding: 5px 24px; border-radius: 20px;
+  margin-top: 12px; align-self: flex-start;
+}
+.cover-seal.draft  { border-color: var(--c-warn); color: var(--c-warn); background: rgba(243,156,18,0.10); }
+.cover-seal.expert { border-color: #a9cce3;      color: #a9cce3;      background: rgba(169,204,227,0.10); }
+.cover-confidential { font-size: 7pt; color: rgba(255,255,255,0.50); margin-top: 10px; }
+.cover-report-id    { font-size: 8.5pt; color: rgba(255,255,255,0.70); }
+
+/* ── 4. FIXED HEADER / FOOTER (every page) ──────────────────────────────── */
+.pv-header {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: 12mm;
+  background: var(--c-hdr-bg);
+  border-bottom: 2px solid var(--c-primary);
+  padding: 0 15mm;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 7.5pt; color: var(--c-primary);
+  z-index: 100;
+}
+.pv-header .hdr-firm   { font-weight: 700; font-size: 8pt; }
+.pv-header .hdr-ref    { color: var(--c-text-mute); }
+.pv-header .hdr-status { font-size: 7pt; color: var(--c-warn); font-weight: 700; padding: 1px 7px; border: 1px solid var(--c-warn); border-radius: 3px; }
+.pv-footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 9mm;
+  background: #fff;
+  border-top: 1px solid #e0e6ef;
+  padding: 0 15mm;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 7pt; color: var(--c-text-mute);
+  z-index: 100;
+}
+.pv-footer .ftr-advisory { color: var(--c-danger); font-weight: 700; font-size: 6.5pt; }
+.pv-footer .ftr-date     { direction: ltr; }
+.pv-footer .ftr-page     { direction: ltr; }
+
+/* ── 5. PAGE NUMBERING ───────────────────────────────────────────────────── */
+@page { counter-increment: page; }
+.page-counter { direction: ltr; display: inline; }
+
+/* ── 6. SECTION TITLE COMPONENT ─────────────────────────────────────────── */
+h1 { font-size: 16pt; color: var(--c-primary); margin-bottom: 6px; }
+h2 { font-size: 11.5pt; color: var(--c-primary); margin: 18px 0 6px; border-bottom: 2px solid var(--c-primary); padding-bottom: 3px; }
+h3 { font-size: 10.5pt; color: var(--c-accent); margin: 12px 0 4px; }
+h4 { font-size: 10pt; color: #444; margin: 8px 0 3px; }
+
+.section-title {
+  font-size: 10pt; font-weight: 700;
+  color: #fff; background: var(--c-primary);
+  padding: 5px 14px;
+  border-right: 4px solid var(--c-gold);
+  margin-bottom: 7px;
+  display: flex; align-items: center; gap: 8px;
+  break-after: avoid; page-break-after: avoid;
+}
+.section-title .sec-num { font-size: 9pt; opacity: 0.75; }
+.section      { margin-bottom: 7px; }
+.section-body { padding: 0 6px; }
+.no-break     { page-break-inside: avoid; }
+table         { page-break-inside: avoid; }
+.page-break   { page-break-before: always; padding-top: 6mm; }
+
+/* ── 7. KPI CARD COMPONENT ──────────────────────────────────────────────── */
+.kpi-row  { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.kpi-card {
+  flex: 1 1 110px; min-width: 95px;
+  background: #f4f8ff;
+  border: 1px solid var(--c-border);
+  border-top: 3px solid var(--c-primary);
+  border-radius: 6px; padding: 8px 12px;
+  text-align: center;
+}
+.kpi-value   { font-size: 15pt; font-weight: 700; color: var(--c-primary); direction: ltr; display: block; }
+.kpi-label   { font-size: 7.5pt; color: #555; display: block; margin-top: 3px; }
+.kpi-sub     { font-size: 7pt; color: var(--c-text-mute); }
+.kpi-ok      { border-top-color: var(--c-ok); }
+.kpi-ok .kpi-value { color: var(--c-ok); }
+.kpi-warn    { border-top-color: var(--c-warn); }
+.kpi-warn .kpi-value { color: #b7770d; }
+
+/* ── 8. VALUE CONCLUSION BOX ────────────────────────────────────────────── */
+.value-conclusion-box {
+  background: #ebf3fb;
+  border: 2px solid var(--c-primary-d);
+  border-radius: 8px; padding: 16px 22px;
+  margin: 12px 0; text-align: center;
+}
+.vcb-label        { font-size: 9pt; color: var(--c-accent); font-weight: 700; margin-bottom: 4px; }
+.vcb-amount       { font-size: 22pt; font-weight: 700; color: var(--c-primary-d); direction: ltr; display: block; }
+.vcb-amount-words { font-size: 10pt; color: var(--c-primary); margin: 4px 0; }
+.vcb-currency     { font-size: 8pt; color: var(--c-text-mute); }
+.vcb-range        { font-size: 8.5pt; color: #666; margin-top: 6px; direction: ltr; }
+.vcb-advisory     { font-size: 7.5pt; color: var(--c-warn); margin-top: 6px; border-top: 1px solid var(--c-border); padding-top: 4px; }
+
+/* ── 9. WARNING BOX ─────────────────────────────────────────────────────── */
+.warning-box {
+  background: #fef9e7; border: 1.5px solid var(--c-warn);
+  border-radius: 5px; padding: 9px 14px;
+  font-size: 8.5pt; color: #7d6608; margin: 6px 0;
+}
+.warning-box .wb-label { font-size: 10pt; color: var(--c-danger); font-weight: 700; display: block; margin-bottom: 4px; }
+
+/* ── 10. MISSING-DATA BOX ───────────────────────────────────────────────── */
+.missing-data-box {
+  background: #fdf2f8; border: 1.5px dashed #c0392b;
+  border-radius: 5px; padding: 9px 14px;
+  font-size: 8.5pt; color: #7b241c; margin: 6px 0;
+}
+.missing-data-box .mdb-label { font-weight: 700; display: block; margin-bottom: 3px; }
+
+/* ── 11. RECONCILIATION BOX ─────────────────────────────────────────────── */
+.reconciliation-box {
+  background: #f0faf5; border: 1.5px solid var(--c-ok);
+  border-right: 4px solid var(--c-ok); border-radius: 5px;
+  padding: 10px 14px; margin: 8px 0;
+}
+.rec-header    { font-weight: 700; color: #145a32; font-size: 10pt; margin-bottom: 7px; }
+.rec-method-row {
+  display: flex; justify-content: space-between;
+  font-size: 9pt; padding: 3px 0;
+  border-bottom: 1px solid #c3e6d3;
+}
+.rec-method-row .rm-name   { font-weight: 700; flex: 2; }
+.rec-method-row .rm-value  { flex: 2; direction: ltr; text-align: left; }
+.rec-method-row .rm-weight { flex: 1; text-align: center; color: var(--c-text-mute); }
+.rec-final-row {
+  display: flex; justify-content: space-between;
+  font-size: 10pt; font-weight: 700;
+  color: var(--c-primary-d); padding: 5px 0 0;
+}
+
+/* ── 12. ZEBRA TABLE ────────────────────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 8.5pt; }
+th { background: var(--c-primary); color: #fff; padding: 5px 8px; font-size: 8.5pt; text-align: right; }
+td { padding: 4px 8px; border: 1px solid var(--c-border); vertical-align: top; }
+tr:nth-child(even) td { background: var(--c-bg-strip); }
+.kv-table td:first-child { font-weight: 700; width: 36%; background: var(--c-bg-key); }
+.td-num   { direction: ltr; text-align: left; }
+.td-ok    { color: var(--c-ok);    font-weight: 700; }
+.td-nok   { color: var(--c-danger); font-weight: 700; }
+.td-na    { color: var(--c-text-mute); font-style: italic; }
+
+/* ── 13. CHART CONTAINER ────────────────────────────────────────────────── */
+.chart-container {
+  background: #f9fbfd; border: 1px solid var(--c-border);
+  border-radius: 6px; padding: 10px; margin: 8px 0;
+  min-height: 55mm; display: flex; align-items: center;
+  justify-content: center; text-align: center;
+  color: var(--c-text-mute); font-size: 9pt;
+}
+.chart-placeholder {
+  background: #f9fbfd; border: 1.5px dashed var(--c-border);
+  border-radius: 6px; padding: 18px; text-align: center;
+  color: var(--c-text-mute); font-size: 8.5pt; margin: 8px 0;
+}
+
+/* ── 14. APPENDIX TABLE ─────────────────────────────────────────────────── */
+.appendix-section { page-break-before: always; padding-top: 8mm; }
+.appendix-title {
+  font-size: 12pt; font-weight: 700; color: var(--c-primary);
+  border-bottom: 2px solid var(--c-primary);
+  padding-bottom: 4px; margin: 0 0 10px;
+}
+.appendix-sub { font-size: 9.5pt; color: var(--c-text-mute); margin-bottom: 8px; }
+.appendix-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin: 6px 0; }
+.appendix-table th { background: #3d566e; color: #fff; padding: 5px 9px; font-size: 8.5pt; }
+.appendix-table td { padding: 4px 9px; border: 1px solid #c5cfe0; }
+.appendix-table tr:nth-child(even) td { background: #f0f5fb; }
+.map-placeholder {
+  background: #f0f4fa; border: 1.5px dashed #a9cce3;
+  border-radius: 6px; padding: 20px;
+  text-align: center; color: #3a5a7a; font-size: 8.5pt;
+  min-height: 40mm; margin: 8px 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.photo-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0; }
+.photo-placeholder {
+  flex: 1 1 80mm; min-height: 50mm;
+  background: #f5f5f5; border: 1px dashed #bbb;
+  border-radius: 4px; display: flex; align-items: center;
+  justify-content: center; color: #999; font-size: 8pt;
+}
+
+/* ── 15. SIGNATURE GATE ─────────────────────────────────────────────────── */
+.signature-gate {
+  border: 1.5px dashed #c0392b; border-radius: 6px;
+  background: #fdf2f8; padding: 12px 16px; margin: 10px 0; text-align: center;
+}
+.sig-gate-label { font-size: 10pt; font-weight: 700; color: #7b241c; display: block; margin-bottom: 6px; }
+.sig-gate-slot  {
+  border: 1px solid #c0392b; border-radius: 4px;
+  height: 18mm; background: #fff9fb;
+  margin: 8px auto; max-width: 75%;
+  display: flex; align-items: center; justify-content: center;
+  color: #c0392b; font-size: 8.5pt;
+}
+.sig-gate-note  { font-size: 7.5pt; color: #7b241c; margin-top: 4px; }
+.signature-block { border: 1.5px solid var(--c-ok); border-radius: 6px; background: #f0faf5; padding: 10px 14px; margin: 8px 0; }
+
+/* ── 16. WORKING DRAFT DISCLAIMER ───────────────────────────────────────── */
+.draft-disclaimer {
+  background: #fef9e7; border: 2px solid var(--c-warn); border-radius: 6px;
+  padding: 12px 16px; margin: 12px 0 18px; text-align: center;
+  font-size: 11pt; font-weight: 700; color: #7d6608;
+}
+.draft-disclaimer .dd-label { font-size: 13pt; color: var(--c-danger); display: block; margin-bottom: 4px; }
+.draft-disclaimer .dd-sub   { font-size: 8.5pt; font-weight: normal; color: #7d6608; }
+.expert-only-banner {
+  background: #fef5e4; border: 1.5px dashed #e67e22; border-radius: 4px;
+  padding: 8px 12px; margin: 8px 0 10px; font-size: 9.5pt; color: #784212;
+}
+.cert-block {
+  border: 1.5px solid var(--c-gold); border-radius: 6px;
+  padding: 12px 16px; background: #fffdf0; margin: 8px 0;
+}
+.cert-text { font-size: 9.5pt; font-weight: 700; color: var(--c-primary-d); margin-bottom: 8px; }
+
+/* ── 17. TRADITIONAL BLUE THEME ─── already set in :root above ─────────── */
+
+/* ── 18. DETAILED GREEN/BRONZE THEME (expert draft) ────────────────────── */
+html[data-theme="detailed"] {
+  --c-primary:    #145a32;
+  --c-primary-d:  #0e4d2b;
+  --c-accent:     #1e8449;
+  --c-gold:       #b7770d;
+  --c-bg-strip:   #eafaf1;
+  --c-bg-key:     #d5f5e3;
+  --c-border:     #a9dfbf;
+  --c-cover-grad: linear-gradient(145deg, #0e4d2b 0%, #1e8449 100%);
+}
+
+/* ── 19. PROFESSIONAL RED/GOLD THEME (certified) ────────────────────────── */
+html[data-theme="professional"] {
+  --c-primary:    #6e2c00;
+  --c-primary-d:  #7b241c;
+  --c-accent:     #ca6f1e;
+  --c-gold:       #d4af37;
+  --c-bg-strip:   #fdf3e7;
+  --c-bg-key:     #fdebd0;
+  --c-border:     #e59866;
+  --c-hdr-bg:     #fffdf8;
+  --c-cover-grad: linear-gradient(145deg, #4a1010 0%, #7b241c 50%, #ca6f1e 100%);
+}
+
+/* ── UTILITY CLASSES ────────────────────────────────────────────────────── */
+.ok   { color: var(--c-ok);    font-weight: 700; }
+.nok  { color: var(--c-danger); font-weight: 700; }
+.na   { color: var(--c-text-mute); font-style: italic; }
+.rtl  { direction: rtl; text-align: right; }
+.ltr  { direction: ltr; text-align: left; display: inline-block; }
+.bold { font-weight: 700; }
+.content  { position: relative; z-index: 1; }
+.watermark {
+  position: fixed; top: 48%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-28deg);
+  font-size: 28px; font-weight: 700;
+  color: rgba(31, 78, 120, 0.055);
+  z-index: 0; white-space: nowrap; pointer-events: none;
+}
+.data-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; margin-bottom: 6px; }
+.data-row    { display: flex; gap: 5px; align-items: baseline; font-size: 9pt; border-bottom: 1px solid #f2f2f2; padding: 2px 0; }
+.data-label  { color: #3a5a7a; font-weight: 700; white-space: nowrap; min-width: 120px; }
+.data-value  { color: #1a1a2e; flex: 1; }
+.note-box    { background: #fff8f0; border: 1px solid #e8c87a; border-radius: 3px; padding: 5px 10px; font-size: 8.5pt; color: #7a5500; margin: 4px 0; }
+.source-box  { background: #f8f9fa; border: 1px solid #e0e6ef; border-right: 3px solid var(--c-accent); border-radius: 4px; padding: 8px 12px; font-size: 8.5pt; color: #555; line-height: 1.75; }
+.footer-disclaimer { font-size: 7.5pt; color: #999; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; padding: 8px 10px; margin-top: 14px; line-height: 1.8; }
+.blockers-list { list-style: none; padding: 0; }
+.blockers-list li { padding: 4px 8px; margin: 3px 0; background: #fef9e7; border-right: 4px solid var(--c-warn); font-size: 9pt; }
+.check-ok  { color: var(--c-ok);    font-weight: 700; text-align: center; }
+.check-nok { color: var(--c-danger); font-weight: 700; text-align: center; }

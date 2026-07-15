@@ -1,0 +1,1435 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>{{ data.get('report_title', 'تقرير التقييم العقاري المبدئي') }}</title>
+  <style>
+{{ font_css }}
+{{ css }}
+/* ── Additional styles for new sections ── */
+.cover-firm   { font-size:13pt; font-weight:700; color:#d4af37; letter-spacing:1px; margin-bottom:6px; }
+.cover-expert { font-size:8.5pt; color:rgba(255,255,255,.80); margin:4px 0; }
+.cover-expert strong { color:#fff; }
+.fact-cards   { display:flex; gap:10px; margin:12px 0; flex-wrap:wrap; }
+.fact-card    { flex:1 1 120px; background:rgba(255,255,255,.13); border:1px solid rgba(255,255,255,.3);
+                border-radius:6px; padding:10px 14px; text-align:center; }
+.fc-value     { font-size:13pt; font-weight:700; color:#fff; display:block; direction:ltr; }
+.fc-label     { font-size:7.5pt; color:rgba(255,255,255,.75); display:block; margin-top:3px; }
+.prop-summary { background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.22);
+                border-radius:5px; padding:10px 14px; margin-top:10px; font-size:8.5pt;
+                color:rgba(255,255,255,.88); line-height:2; }
+.prop-summary strong { color:#fff; }
+.ref-tag      { font-size:7.5pt; color:rgba(255,255,255,.60); margin-top:4px; direction:ltr; text-align:left; }
+.sim-tag      { font-size:7pt; background:rgba(243,156,18,.18); border:1px solid #f39c12;
+                border-radius:3px; color:#f39c12; padding:1px 6px; margin-right:6px; }
+.rel-badge    { display:inline-block; font-size:7pt; padding:1px 7px; border-radius:3px;
+                font-weight:700; margin-right:4px; }
+.rel-ok   { background:#e9f7ef; color:#1e8449; }
+.rel-warn { background:#fef9e7; color:#b7770d; }
+.rel-nok  { background:#fdf2f8; color:#922b21; }
+.kpi-chart-row { display:flex; align-items:flex-end; gap:8px; margin:10px 0; min-height:60px; }
+.kpi-bar-wrap  { flex:1; display:flex; flex-direction:column; align-items:center; }
+.kpi-bar       { width:100%; background:#1f4e78; border-radius:3px 3px 0 0; min-height:8px; }
+.kpi-bar-val   { font-size:7pt; color:#1f4e78; font-weight:700; direction:ltr; margin-top:2px; }
+.kpi-bar-label { font-size:6.5pt; color:#555; text-align:center; }
+.cv-badge      { display:inline-block; padding:2px 10px; border-radius:10px; font-weight:700; font-size:8.5pt; }
+.cv-low  { background:#e9f7ef; color:#1e8449; }
+.cv-mid  { background:#fef9e7; color:#b7770d; }
+.cv-high { background:#fdf2f8; color:#922b21; }
+.risk-row-h { background:#1a5276; color:#fff; font-weight:700; }
+.risk-1  { background:#fdf2f8; } .risk-2 { background:#fef9e7; } .risk-3 { background:#e9f7ef; }
+.compliance-ok   { color:#1e8449; font-weight:700; }
+.compliance-nok  { color:#922b21; font-weight:700; }
+.compliance-warn { color:#b7770d; font-weight:700; }
+.comp-pct-bar    { height:8px; background:#1a5276; border-radius:4px; display:inline-block; }
+.td-ok  { color:#1e8449; font-weight:700; }
+.td-nok { color:#922b21; font-weight:700; }
+.td-na  { color:#7f8c8d; font-style:italic; }
+/* ── Traditional-only compact spacing ── */
+.section       { margin-bottom: 2px; }
+.section-title { margin-bottom: 2px; }
+.section-body  { padding: 0 4px; }
+body           { line-height: 1.52; }
+/* ── Tighter tables and note-boxes (saves ~120mm across the document) ── */
+table          { margin: 3px 0; }
+th             { padding: 3px 7px; }
+td             { padding: 3px 7px; }
+.note-box      { padding: 3px 8px; margin: 2px 0; }
+.source-box    { padding: 5px 10px; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- Fixed Header — every page -->
+<div class="pv-header">
+  <span class="hdr-firm">{{ data.get('firm_name', 'ALHADY FOR REAL PROPERTY') }}</span>
+  <span class="hdr-ref">{{ data.get('report_ref', '') }}</span>
+  <span class="hdr-status">تقرير تقييم آلي مبسط — غير معتمد رسميًا</span>
+</div>
+
+<!-- Fixed Footer — every page -->
+<div class="pv-footer">
+  <span class="ftr-advisory">تقرير آلي استرشادي — غير معتمد رسميًا</span>
+  <span class="ftr-date">{{ data.get('report_date', '') }}</span>
+  <span>تم إنشاء هذا المستند بواسطة محرك HTML/PDF | تقرير آلي استرشادي — غير معتمد رسميًا</span>
+</div>
+
+<!-- Background watermark -->
+<div class="watermark">مسودة غير معتمدة</div>
+
+<div class="content">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 1 — COVER PAGE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="cover-page" id="sec-cover">
+  <div>
+    <div class="cover-firm">{{ data.get('firm_name', 'ALHADY FOR REAL PROPERTY') }}</div>
+    <div class="cover-badge">تقرير تقييم عقاري آلي — النسخة التقليدية المبدئية</div>
+    <div class="cover-title">{{ data.get('report_title', 'تقرير التقييم العقاري المبدئي') }}</div>
+    <div class="cover-sub">{{ data.get('property_address', NA) }}</div>
+    <hr class="cover-divider">
+    <div class="cover-expert">
+      <strong>الخبير المعتمد:</strong> {{ data.get('expert_name', NA) }} &nbsp;|&nbsp;
+      <strong>هاتف:</strong> {{ data.get('expert_phone', NA) }} &nbsp;|&nbsp;
+      <strong>إيميل:</strong> {{ data.get('expert_email', NA) }}
+    </div>
+    <div class="cover-meta" style="margin-top:10px;">
+      <span><strong>تاريخ التقرير:</strong> {{ data.get('report_date', NA) }}</span>
+      <span><strong>تاريخ التقييم:</strong> {{ data.get('valuation_date', data.get('inspection_date', NA)) }}</span>
+      <span><strong>رقم مرجعي:</strong> {{ data.get('report_ref', NA) }}</span>
+      <span><strong>الغرض:</strong> {{ data.get('valuation_purpose', NA) }}</span>
+      <span><strong>أساس التقييم:</strong> {{ data.get('valuation_basis', NA) }}</span>
+    </div>
+    <div class="fact-cards">
+      <div class="fact-card">
+        <span class="fc-value">{{ data.get('property_type', NA) }}</span>
+        <span class="fc-label">نوع العقار</span>
+      </div>
+      <div class="fact-card">
+        <span class="fc-value">{{ data.get('area_sqm', NA) }} م²</span>
+        <span class="fc-label">المساحة</span>
+      </div>
+      <div class="fact-card">
+        <span class="fc-value">{{ _fmt(data.get('final_value', '')) }}</span>
+        <span class="fc-label">القيمة المبدئية (م.ج)</span>
+      </div>
+      <div class="fact-card">
+        <span class="fc-value">{{ data.get('condition', NA) }}</span>
+        <span class="fc-label">حالة الفحص</span>
+      </div>
+    </div>
+    <div class="prop-summary">
+      <strong>نوع العقار:</strong> {{ data.get('property_type', NA) }} &nbsp;&nbsp;
+      <strong>الموقع الجغرافي:</strong> {{ data.get('property_address', NA) }} &nbsp;&nbsp;
+      <strong>المساحة:</strong> {{ data.get('area_sqm', NA) }} م² &nbsp;&nbsp;
+      <strong>حالة العقار:</strong> {{ data.get('condition', NA) }} &nbsp;&nbsp;
+      <strong>مستوى التشطيب:</strong> {{ data.get('finishing_level', NA) }}
+    </div>
+  </div>
+  <div>
+    <div class="cover-seal draft">مسودة غير معتمدة — تقرير آلي استرشادي</div>
+    <div class="cover-confidential">
+      لا يستند هذا التقرير للإنترنت · Qdrant/RAG غير مفعَّل · لا يُستخدم للأغراض الرسمية
+    </div>
+    <div class="ref-tag">{{ data.get('report_ref', 'TRAD-AI-DRAFT') }} | Expert Smart PropTech Platform</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 00 — فهرس محتويات التقرير
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-toc" style="margin-top:0;margin-bottom:2px;">
+  <div class="section-title" style="font-size:9pt;margin-bottom:2px;"><span class="sec-num">00</span> فهرس محتويات التقرير — 36 قسماً</div>
+  <div class="section-body" style="font-size:7pt;line-height:1.4;">
+    <table style="font-size:7pt;line-height:1.4;">
+      <thead><tr><th>رقم</th><th style="width:38%;">القسم</th><th>رقم</th><th style="width:38%;">القسم</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td>تحليل AVM — الانحدار المحاكى</td><td>19</td><td>اختبار اتساق طرق التقييم (CV)</td></tr>
+        <tr><td>02</td><td>مقارنة المبيعات — 6 مقارنات + تسويات</td><td>20</td><td>حالة التوقيع والمراجعة قبل الاعتماد</td></tr>
+        <tr><td>03</td><td>قيمة الأرض — ملخص التقييم</td><td>21</td><td>خريطة مخاطر التقييم الشاملة</td></tr>
+        <tr><td>04</td><td>طريقة التكلفة — جدول BOQ الكميات</td><td>22</td><td>حالة نموذج التقييم الآلي (AVM)</td></tr>
+        <tr><td>04-أ</td><td>الاستهلاك المادي والوظيفي والاقتصادي</td><td>23</td><td>تحليل نقطة التعادل — الإيجار</td></tr>
+        <tr><td>05</td><td>DCF — التدفقات النقدية المخصومة 5 سنوات</td><td>24</td><td>لوحة الامتثال التقييمي المبدئية</td></tr>
+        <tr><td>05-أ</td><td>معدلات الخصم والنمو وسقف الرسملة</td><td>25</td><td>رسملة الدخل المباشر مقابل DCF</td></tr>
+        <tr><td>06</td><td>مخطط القيم — لوحة المؤشرات البيانية</td><td>26</td><td>دعم التعديلات ومعاملات التسوية</td></tr>
+        <tr><td>07</td><td>توفيق النتائج المبدئي (Reconciliation)</td><td>27</td><td>الافتراضات العادية والخاصة وقيود العمل</td></tr>
+        <tr><td>08</td><td>معدل الرسملة — ملخص الأربعة نماذج</td><td>28</td><td>العناية القانونية المبدئية</td></tr>
+        <tr><td>09</td><td>الخطوة التالية والمستندات المطلوبة</td><td>29</td><td>تأثير الاستدامة والمخاطر المناخية ESG</td></tr>
+        <tr><td>10</td><td>ملخص مصادر البيانات وجاهزيتها</td><td>30</td><td>نطاق الثقة وعدم اليقين</td></tr>
+        <tr><td>11</td><td>تحليل أعلى وأفضل استغلال (HBU)</td><td>31</td><td>التوفيق الموزون النهائي</td></tr>
+        <tr><td>12</td><td>تحليل SWOT الرباعي + جدول الأولويات</td><td>32</td><td>تسوية الإيجار في طريقة الدخل</td></tr>
+        <tr><td>13</td><td>توثيق العمر الفعلي ونموذج الإهلاك</td><td>33</td><td>الإفصاحات المهنية — استقلالية المقيِّم</td></tr>
+        <tr><td>14</td><td>مخاطر الاعتماد واكتمال المستندات</td><td>34</td><td>التوصية النهائية للعميل</td></tr>
+        <tr><td>15</td><td>خارطة طريق الاعتماد</td><td>35</td><td>الشروط والافتراضات العامة وإخلاء المسؤولية</td></tr>
+        <tr><td>16</td><td>مصادر الأرض البديلة وحالة التكامل</td><td>36</td><td>بوابة التوقيع والاعتماد</td></tr>
+        <tr><td>17</td><td>جاهزية Qdrant / ربط قاعدة البيانات</td><td colspan="2"></td></tr>
+        <tr><td>18</td><td>حوكمة المعاملات والمراجع المستخدمة</td><td colspan="2"></td></tr>
+      </tbody>
+    </table>
+    <div class="note-box" style="margin-top:4px;font-size:7.5pt;">
+      النسخة التقليدية المبدئية · التقييم العقاري الآلي الاسترشادي · إجمالي الأقسام: 36 · جميع القيم استرشادية QA ما لم يُشَر لخلافه
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 2 — AVM REGRESSION TABLE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-avm">
+  <div class="section-title"><span class="sec-num">01</span> تحليل AVM — جدول الانحدار المحاكى</div>
+  <div class="section-body">
+    <div class="note-box">
+      <span class="sim-tag">محاكاة داخلية/QA — غير معتمدة، لا تستند للإنترنت</span>
+      في هذه النسخة يستخدم محاكاة داخلية/مدخلات النظام لأغراض المراجعة ولا يمثل نموذجاً مدرَّباً على بيانات سوقية حقيقية ما لم يتم تفعيل Qdrant.
+    </div>
+    {% if data.get('avm_regression_rows') %}
+    <table>
+      <thead>
+        <tr>
+          <th>المتغير</th><th>القيمة</th><th>المعامل</th><th>الأثر على القيمة</th><th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data.get('avm_regression_rows', []) %}
+        <tr>
+          <td>{{ row.get('variable', NA) }}</td>
+          <td class="td-num">{{ row.get('value', NA) }}</td>
+          <td class="td-num">{{ row.get('coefficient', NA) }}</td>
+          <td class="td-num">{{ row.get('impact', NA) }}</td>
+          <td class="td-na">{{ row.get('notes', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <table class="kv-table" style="margin-top:8px;">
+      <tr><td>القيمة الآلية النهائية (AVM)</td><td class="td-num">{{ _fmt(data.get('avm_final_value', data.get('final_value', ''))) }} م.ج</td></tr>
+      <tr><td>نطاق الثقة (±10%)</td><td class="td-num td-na">{{ data.get('avm_confidence_range', NA) }}</td></tr>
+    </table>
+    {% elif data.get('avm_results') %}
+    <table>
+      <thead>
+        <tr><th>النموذج</th><th>القيمة التقديرية (م.ج)</th><th>معامل التحديد R²</th><th>ملاحظة</th></tr>
+      </thead>
+      <tbody>
+        {% for row in data.get('avm_results', []) %}
+        <tr>
+          <td>{{ row.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(row.get('value', '')) }}</td>
+          <td class="td-num">{{ row.get('r2', NA) }}</td>
+          <td class="td-na">{{ row.get('note', 'إرشادي — لا يُعتمد') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="note-box" style="margin-top:6px;">
+      الانحدار الإرشادي: Q = β₀ + β₁·المساحة + β₂·الموقع + β₃·العمر + β₄·النوع — المعاملات تمثيلية للأغراض التوضيحية فقط.
+    </div>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">AVM:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 3 — SALES COMPARISON
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-comparables">
+  <div class="section-title"><span class="sec-num">02</span> طريقة مقارنة المبيعات / البيوع — 4 مقارنات مع التسويات</div>
+  <div class="section-body">
+    <div class="note-box">
+      <span class="sim-tag">محاكاة داخلية لا تستند للإنترنت</span>
+      مقارنة المبيعات: جميع المقارنات تمثيلية لأغراض المراجعة الأولية — Qdrant غير مفعَّل
+    </div>
+    {% if data.get('comparables') %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>الموقع</th><th>المساحة م²</th>
+          <th>سعر البيع (م.ج)</th><th>سعر/م²</th>
+          <th>تسوية الموقع</th><th>تسوية الحالة</th><th>صافي تسوية %</th>
+          <th>السعر المعدَّل</th><th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in data.get('comparables', []) %}
+        <tr>
+          <td>{{ c.get('id', loop.index) }}</td>
+          <td>{{ c.get('address', NA) }}</td>
+          <td class="td-num">{{ _fmt(c.get('area', '')) }}</td>
+          <td class="td-num">{{ _fmt(c.get('price', '')) }}</td>
+          <td class="td-num">{{ _fmt(c.get('price_sqm', '')) }}</td>
+          <td class="td-num">{{ c.get('loc_adj', c.get('adj_total', '0')) }}%</td>
+          <td class="td-num">{{ c.get('cond_adj', '0') }}%</td>
+          <td class="td-num">{{ c.get('adj_total', NA) }}%</td>
+          <td class="td-num">{{ _fmt(c.get('adj_value', '')) }}</td>
+          <td>{{ c.get('date', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <table class="kv-table" style="margin-top:6px;">
+      <tr><td>متوسط سعر المتر المربع</td><td class="td-num">{{ _fmt(data.get('avg_price_sqm', data.get('value_per_sqm', ''))) }} م.ج/م²</td></tr>
+      <tr><td>القيمة (المتوسط × المساحة)</td><td class="td-num">{{ _fmt(data.get('market_value', '')) }} م.ج</td></tr>
+    </table>
+    {% if data.get('comparables_stats') %}
+    {% set cs = data.get('comparables_stats', {}) %}
+    <div style="margin-top:8px;">
+      <strong style="font-size:9pt;color:#1a5276;">تحليل نطاق القيمة المعدَّلة — {{ cs.get('count', '—') }} مقارنات (إرشادي):</strong>
+      <table style="margin-top:4px;">
+        <thead><tr><th>المؤشر الإحصائي</th><th>القيمة الإجمالية (م.ج)</th><th>سعر م² (م.ج)</th><th>التفسير</th></tr></thead>
+        <tbody>
+          <tr><td>الحد الأدنى للقيمة المعدَّلة</td><td class="td-num">{{ _fmt(cs.get('min_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('min_psm', '')) }}</td><td class="td-na">الحد الأدنى في العينة</td></tr>
+          <tr><td>الوسيط (Median) المعدَّل</td><td class="td-num">{{ _fmt(cs.get('median_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('median_psm', '')) }}</td><td class="td-na">الوسيط — أقل تأثراً بالشذوذ</td></tr>
+          <tr><td>المتوسط الحسابي المعدَّل</td><td class="td-num">{{ _fmt(cs.get('mean_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('median_psm', '')) }}</td><td class="td-na">المتوسط الحسابي للعينة</td></tr>
+          <tr><td>الحد الأقصى للقيمة المعدَّلة</td><td class="td-num">{{ _fmt(cs.get('max_adj', '')) }}</td><td class="td-num">{{ _fmt(cs.get('max_psm', '')) }}</td><td class="td-na">الحد الأقصى في العينة</td></tr>
+          <tr><td>نطاق التشتت (CV فرعي للمقارنات)</td><td class="td-num" colspan="2">{{ cs.get('range_pct', '—') }}%{% if cs.get('range_pct', 0) < 15 %} — اتساق ممتاز{% elif cs.get('range_pct', 0) < 30 %} — تشتت معقول{% else %} — تشتت مرتفع{% endif %}</td><td class="td-na">معيار جودة العينة</td></tr>
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">مقارنة البيوع:</span> {{ NA }}</div>
+    {% endif %}
+
+    <!-- Land Value Summary embedded -->
+    <div id="sec-land" style="margin-top:14px;">
+      <div class="section-title" style="margin-bottom:7px;"><span class="sec-num">03</span> قيمة الأرض — ملخص</div>
+      <table class="kv-table">
+        <tr><td>مساحة الأرض</td><td class="td-num">{{ data.get('land_area', NA) }} م²</td></tr>
+        <tr><td>سعر المتر المربع (الأرض)</td><td class="td-num">{{ _fmt(data.get('land_price_sqm', '')) }} م.ج/م²</td></tr>
+        <tr><td>القيمة الإجمالية للأرض</td><td class="td-num">{{ _fmt(data.get('land_value', '')) }} م.ج</td></tr>
+        <tr><td>منهجية التقييم</td><td>{{ data.get('land_method', NA) }}</td></tr>
+        <tr><td>مصادر الأرض</td><td class="td-na">{{ data.get('land_sources', NA) }}</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 4 — COST / BOQ TABLE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-boq">
+  <div class="section-title"><span class="sec-num">04</span> طريقة التكلفة — جدول الكميات والتكاليف (BOQ)</div>
+  <div class="section-body">
+    {% if data.get('boq_items') %}
+    <table>
+      <thead>
+        <tr>
+          <th>البند</th><th>الوحدة</th>
+          <th>الكمية</th><th>تكلفة الوحدة (م.ج)</th><th>الإجمالية (م.ج)</th><th>%</th><th>ملاحظات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data.get('boq_items', []) %}
+        <tr>
+          <td>{{ item.get('item', NA) }}</td>
+          <td>{{ item.get('unit', 'م²') }}</td>
+          <td class="td-num">{{ _fmt(item.get('qty', '')) }}</td>
+          <td class="td-num">{{ _fmt(item.get('unit_price', '')) }}</td>
+          <td class="td-num">{{ _fmt(item.get('total', '')) }}</td>
+          <td class="td-num">{{ item.get('pct', item.get('percentage', NA)) }}</td>
+          <td class="td-na">{{ item.get('notes', item.get('note', '—')) }}</td>
+        </tr>
+        {% endfor %}
+        {% if data.get('boq_grand_total') %}
+        <tr style="background:#1a5276;color:#fff;font-weight:700;font-size:8.5pt;">
+          <td colspan="4">الإجمالي الكلي لتكلفة الإنشاء (قبل الاستهلاك)</td>
+          <td class="td-num">{{ _fmt(data.get('boq_grand_total', '')) }}</td>
+          <td colspan="2">100% — محاكاة QA</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">BOQ:</span> {{ NA }}</div>
+    {% endif %}
+
+    <!-- Depreciation sub-section -->
+    <div id="sec-depreciation" style="margin-top:12px;">
+      <div class="section-title" style="margin-bottom:7px;"><span class="sec-num">04-أ</span> الاستهلاك المادي والوظيفي</div>
+      <table class="kv-table">
+        <tr><td>تكلفة الإنشاء كجديد</td><td class="td-num">{{ _fmt(data.get('construction_cost_new', '')) }} م.ج</td></tr>
+        <tr><td>قيمة الأرض</td><td class="td-num">{{ _fmt(data.get('land_value', '')) }} م.ج</td></tr>
+        <tr><td>الاستهلاك المادي</td><td class="td-num">{{ data.get('physical_depreciation', NA) }}%</td></tr>
+        <tr><td>الاستهلاك الوظيفي</td><td class="td-num">{{ data.get('functional_depreciation', NA) }}%</td></tr>
+        <tr><td>الاستهلاك الاقتصادي</td><td class="td-num">{{ data.get('economic_depreciation', '0') }}%</td></tr>
+        <tr><td>إجمالي الاستهلاك</td><td class="td-num">{{ data.get('total_depreciation', NA) }}%</td></tr>
+        <tr><td>قيمة المبنى بعد الاستهلاك</td><td class="td-num">{{ _fmt(data.get('building_value', '')) }} م.ج</td></tr>
+      </table>
+    </div>
+
+    {% if data.get('boq_grand_total') %}
+    <div style="margin-top:8px;">
+      <strong style="font-size:9pt;color:#1a5276;">ملخص التكلفة الاستبدالية الصافية — تفصيل الحساب:</strong>
+      <table class="kv-table" style="margin-top:4px;">
+        <tr><td>تكلفة الإنشاء الاستبدالية (مجموع BOQ)</td><td class="td-num">{{ _fmt(data.get('boq_grand_total', data.get('construction_cost_new', ''))) }} م.ج</td></tr>
+        <tr><td>إجمالي نسبة الاستهلاك (مادي + وظيفي + اقتصادي)</td><td class="td-num">{{ data.get('total_depreciation', '—') }}%</td></tr>
+        <tr><td>قيمة المبنى الصافية بعد الاستهلاك</td><td class="td-num">{{ _fmt(data.get('building_value', '')) }} م.ج</td></tr>
+        <tr><td>إضافة: قيمة الأرض (مقارنة أراضٍ — QA)</td><td class="td-num">{{ _fmt(data.get('land_value', '')) }} م.ج</td></tr>
+        <tr style="font-weight:700;background:#e8f4f8;"><td>مدخل التكلفة الإجمالي (القيمة الاستبدالية الصافية)</td><td class="td-num">{{ _fmt(data.get('cost_approach_value', '')) }} م.ج</td></tr>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Cost approach value -->
+    <div id="sec-cost-value" style="margin-top:10px;">
+      <div class="value-conclusion-box">
+        <div class="vcb-label">قيمة مدخل التكلفة (أرض + إنشاء مستهلك)</div>
+        <span class="vcb-amount">{{ _fmt(data.get('cost_approach_value', '')) }}</span>
+        <div class="vcb-currency">{{ data.get('currency', 'م.ج') }} — تقدير إرشادي</div>
+        <div class="vcb-advisory">⚠ هذه القيمة إرشادية فقط — غير معتمدة رسميًا</div>
+      </div>
+    </div>
+    <div class="note-box" style="margin-top:8px;font-size:8pt;">
+      <strong>منهجية مدخل التكلفة:</strong>
+      تستند طريقة التكلفة إلى منهجية IVSC/IVS 105 وتمر بثلاث خطوات: (1) تقدير تكلفة الإنشاء الاستبدالية كجديد وفق جدول الكميات والأسعار السائدة، (2) تطبيق مصفوفة الاستهلاك المادي (العمر الفعلي/الاقتصادي) والوظيفي (قِدَم التصميم وتقادم التقنية) والاقتصادي (عوامل السوق الخارجية)، (3) إضافة قيمة الأرض المستنبطة بطريقة استخراج السوق أو المقارنة المباشرة. الطريقة الأنسب للعقارات الجديدة أو ذات الاستخدام الخاص التي تشح فيها بيانات الدخل والمبيعات المقارنة.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 5 — DCF TABLE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-dcf">
+  <div class="section-title"><span class="sec-num">05</span> طريقة DCF — جدول التدفقات النقدية المخصومة (5 سنوات)</div>
+  <div class="section-body">
+    {% if data.get('dcf_years') %}
+    <table>
+      <thead>
+        <tr>
+          <th>السنة</th><th>الدخل الإجمالي (م.ج)</th><th>الشواغر %</th>
+          <th>EGI</th><th>المصروفات</th><th>NOI</th>
+          <th>معدل الخصم %</th><th>القيمة الحالية</th><th>PV تراكمي</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for yr in data.get('dcf_years', []) %}
+        <tr>
+          <td>{{ yr.get('year', loop.index) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('rent', '')) }}</td>
+          <td class="td-num">{{ yr.get('vacancy', NA) }}%</td>
+          <td class="td-num">{{ _fmt(yr.get('egi', yr.get('noi', ''))) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('expenses', '')) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('noi', '')) }}</td>
+          <td class="td-num">{{ yr.get('discount', NA) }}%</td>
+          <td class="td-num">{{ _fmt(yr.get('pv', '')) }}</td>
+          <td class="td-num">{{ _fmt(yr.get('cum_pv', '')) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <table class="kv-table" style="margin-top:6px;">
+      <tr><td>القيمة الطرفية (Terminal Value)</td><td class="td-num">{{ _fmt(data.get('terminal_value', '')) }} م.ج</td></tr>
+      <tr><td>إجمالي قيمة DCF</td><td class="td-num">{{ _fmt(data.get('dcf_value', '')) }} م.ج</td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">DCF:</span> {{ NA }}</div>
+    {% endif %}
+
+    <!-- Assumptions -->
+    <div id="sec-assumptions" style="margin-top:10px;">
+      <div class="section-title" style="margin-bottom:7px;"><span class="sec-num">05-أ</span> معدلات الخصم والنمو وسقف الرسملة</div>
+      <table class="kv-table">
+        <tr><td>معدل الخصم</td><td class="td-num">{{ data.get('discount_rate', NA) }}%</td></tr>
+        <tr><td>معدل نمو الإيجار</td><td class="td-num">{{ data.get('growth_rate', NA) }}%</td></tr>
+        <tr><td>معدل سقف الرسملة (Exit)</td><td class="td-num">{{ data.get('cap_rate_exit', data.get('cap_rate_used', NA)) }}%</td></tr>
+        <tr><td>أفق الاستثمار</td><td>{{ data.get('investment_horizon', '5 سنوات') }}</td></tr>
+        <tr><td>مصدر الافتراضات</td><td class="td-na">{{ data.get('assumptions_source', 'تمثيلي — للأغراض الإرشادية فقط') }}</td></tr>
+      </table>
+      <div class="note-box">جميع الافتراضات إرشادية تمثيلية — لا تستند لمصادر رسمية مُتحقَّق منها.</div>
+    </div>
+    <div class="note-box" style="margin-top:8px;font-size:8pt;">
+      <strong>منهجية DCF وحدود التطبيق:</strong>
+      يُطبَّق نموذج التدفقات النقدية المخصومة (DCF) وفق إطار IVSC/IVS 105 للعقارات ذات الدخل المتكرر والقابلة للتوقع. معدل الخصم يعكس معدل العائد على رأس المال المعدَّل بمخاطر السوق العقارية المحلية. القيمة الطرفية تُحتسَب بتطبيق معدل رسملة الخروج على صافي الدخل التشغيلي للسنة الأخيرة. بيانات القيم الإيجارية والمصروفات المستخدمة هنا تمثيلية ولا تُعدّ مصدراً لأرقام رسمية. يُشترط استبدالها ببيانات تعاقدية وبحوث سوقية معتمدة قبل استخدام النتائج لأي غرض استثماري أو تمويلي.
+    </div>
+    {% if data.get('dcf_scenarios_brief') %}
+    <div style="margin-top:10px;">
+      <strong style="font-size:9pt;color:#1a5276;">تحليل السيناريوهات الثلاثة — Bear / Base / Bull (محاكاة QA — غير معتمدة):</strong>
+      <table style="margin-top:4px;">
+        <thead><tr><th>السيناريو</th><th>نمو الإيجار %</th><th>شغور %</th><th>معدل الخصم %</th><th>القيمة التقديرية (م.ج)</th><th>ملاحظة</th></tr></thead>
+        <tbody>
+          {% for sc in data.get('dcf_scenarios_brief', []) %}
+          <tr>
+            <td><strong>{{ sc.get('name', '') }}</strong></td>
+            <td class="td-num">{{ sc.get('growth', '') }}%</td>
+            <td class="td-num">{{ sc.get('vacancy', '') }}%</td>
+            <td class="td-num">{{ sc.get('disc', '') }}%</td>
+            <td class="td-num">{{ _fmt(sc.get('value', '')) }}</td>
+            <td class="td-na">{{ sc.get('note', '') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 6 — VALUE CHART + RECONCILIATION + CAP RATE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-kpi">
+  <div class="section-title"><span class="sec-num">06</span> مخطط القيم — لوحة المؤشرات البيانية</div>
+  <div class="section-body">
+    <div class="note-box">
+      <span class="sim-tag">محاكاة داخلية — غير معتمدة</span>
+      مقارنة قيم طرق التقييم المبدئية (م.ج)
+    </div>
+    <!-- ASCII bar chart -->
+    {% if data.get('value_chart_rows') %}
+    <table>
+      <thead><tr><th>طريقة التقييم</th><th>القيمة (م.ج)</th><th>نسبة المؤشر</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for row in data.get('value_chart_rows', []) %}
+        <tr>
+          <td>{{ row.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(row.get('value', '')) }}</td>
+          <td>
+            {% set bar_w = row.get('bar_pct', 60) %}
+            <div style="background:#1f4e78;height:10px;width:{{ bar_w }}%;border-radius:2px;"></div>
+          </td>
+          <td>{{ row.get('status', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="kpi-row">
+      {% if data.get('avm_final_value') or data.get('avm_results') %}
+      <div class="kpi-card"><span class="kpi-value">{{ _fmt(data.get('avm_final_value', '')) }}</span><span class="kpi-label">AVM</span><span class="kpi-sub">م.ج</span></div>
+      {% endif %}
+      <div class="kpi-card"><span class="kpi-value">{{ _fmt(data.get('market_value', '')) }}</span><span class="kpi-label">مقارنة</span><span class="kpi-sub">م.ج</span></div>
+      <div class="kpi-card kpi-warn"><span class="kpi-value">{{ _fmt(data.get('dcf_value', '')) }}</span><span class="kpi-label">DCF</span><span class="kpi-sub">م.ج</span></div>
+      <div class="kpi-card"><span class="kpi-value">{{ _fmt(data.get('cost_approach_value', '')) }}</span><span class="kpi-label">تكلفة</span><span class="kpi-sub">م.ج</span></div>
+    </div>
+    {% endif %}
+    <div class="note-box" style="margin-top:7px;font-size:8pt;">
+      <strong>مقارنة طرق التقييم — إرشادي:</strong>
+      يُعرض في هذا القسم ملخص مقارن لنتائج الطرق الثلاث الرئيسية. تباين النتائج بين الطرق أمر متوقع ومقبول ضمن نطاق ±15% ويعكس اختلاف الفرضيات والمنهجيات لا اختلاف التقديرات الجوهرية. الوزن المُعطى لكل طريقة في التوفيق النهائي يتناسب مع موثوقية البيانات المتاحة وملاءمة المنهجية لنوع العقار والغرض من التقييم. تُعدّ قيمة AVM مرساةً مبدئية يتم تعديلها بالطرق التقليدية للوصول إلى رأي القيمة النهائي.
+    </div>
+  </div>
+</div>
+
+<!-- Preliminary Reconciliation -->
+<div class="section" id="sec-reconciliation">
+  <div class="section-title"><span class="sec-num">07</span> توفيق النتائج المبدئي</div>
+  <div class="section-body">
+    {% if data.get('recon_rows') %}
+    <table>
+      <thead><tr><th>الطريقة</th><th>القيمة المبدئية (م.ج)</th><th>الوزن %</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for r in data.get('recon_rows', []) %}
+        <tr>
+          <td>{{ r.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(r.get('value', '')) }}</td>
+          <td class="td-num">{{ r.get('weight', NA) }}%</td>
+          <td><span class="rel-badge rel-{{ r.get('status_class', 'warn') }}">{{ r.get('status', NA) }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="reconciliation-box">
+      <div class="rec-header">مصالحة المناهج — إرشادية</div>
+      {% if data.get('avm_final_value') %}
+      <div class="rec-method-row"><span>AVM</span><span>{{ _fmt(data.get('avm_final_value', '')) }} م.ج</span><span>{{ data.get('avm_weight', '—') }}</span></div>
+      {% endif %}
+      <div class="rec-method-row"><span>مدخل المقارنة السوقية</span><span>{{ _fmt(data.get('market_value', '')) }} م.ج</span><span>{{ data.get('market_weight', '40%') }}</span></div>
+      <div class="rec-method-row"><span>مدخل التكلفة</span><span>{{ _fmt(data.get('cost_approach_value', '')) }} م.ج</span><span>{{ data.get('cost_weight', '25%') }}</span></div>
+      <div class="rec-method-row"><span>مدخل الدخل / DCF</span><span>{{ _fmt(data.get('dcf_value', '')) }} م.ج</span><span>{{ data.get('dcf_weight', '35%') }}</span></div>
+      <div class="rec-final-row"><span>القيمة المبدئية الموجَّهة (إرشادية)</span><span>{{ _fmt(data.get('final_value', '')) }} م.ج</span></div>
+    </div>
+    {% endif %}
+    <div class="warning-box">
+      <span class="wb-label">⚠ تنبيه:</span>
+      هذه المصالحة مبدئية وإرشادية فقط. الأوزان تمثيلية ولا تستند للمعايير الرسمية.
+    </div>
+  </div>
+</div>
+
+<!-- Cap Rate 4 Models -->
+<div class="section" id="sec-caprate">
+  <div class="section-title"><span class="sec-num">08</span> معدل الرسملة النهائي — ملخص الأربع نماذج</div>
+  <div class="section-body">
+    {% if data.get('cap_rate_models') %}
+    <table>
+      <thead><tr><th>النموذج</th><th>معدل الرسملة %</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        {% for m in data.get('cap_rate_models', []) %}
+        <tr>
+          <td>{{ m.get('model', NA) }}</td>
+          <td class="td-num">{{ m.get('rate', NA) }}%</td>
+          <td class="td-na">{{ m.get('note', 'إرشادي') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">نماذج معدل الرسملة:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="note-box" style="margin-top:6px;font-size:8pt;">
+      <strong>منهجية نماذج معدل الرسملة الأربعة:</strong>
+      <strong>(١) الاستخلاص المباشر:</strong> يُحتسَب بقسمة صافي الدخل التشغيلي على سعر البيع المستخلص من صفقات سوقية فعلية موثقة.
+      <strong>(٢) حزمة الاستثمار (Band of Investment):</strong> مزيج موزون لتكلفة التمويل المصرفي ومعدل عائد حقوق الملكية وفق نسبة الرفع المالي (LTV).
+      <strong>(٣) نموذج Gordon (نمو ثابت):</strong> المعادلة: Rk = Yn − g، حيث Yn هو معدل العائد الكلي المطلوب وg هو معدل النمو المستدام المتوقع سنوياً في الإيجارات.
+      <strong>(٤) البناء التراكمي (Build-Up):</strong> معدل خالٍ من المخاطر (سندات حكومية) + قسط السيولة + قسط مخاطر العقار + قسط الإدارة والإشراف.
+      جميع النماذج المعروضة محاكاة QA ولا تعكس معدلات سوقية موثقة من صفقات فعلية.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 7 — ADVISORY + NEXT STEPS + DATA SOURCES + HBU
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-advisory">
+  <div class="draft-disclaimer">
+    <span class="dd-label">⚠ تنبيه: القيمة المبدئية استرشادية وليست قيمة سوقية معتمدة</span>
+    <span class="dd-sub">
+      درجة الاعتماد على البيانات: {{ data.get('data_reliability', 'متوسطة — بيانات أساسية متاحة، تحتاج تحقق ميداني ومراجعة خبير') }}<br>
+      هذا التقرير مُنتَج آليًا ولا يُعدّ شهادة تقييم معتمدة. لا يستند للإنترنت أو قواعد بيانات RAG/Qdrant.
+      لا يحمل توقيعًا من خبير مرخّص ولا يُقبل في الإجراءات الرسمية.
+    </span>
+  </div>
+</div>
+
+<div class="section" id="sec-nextdocs">
+  <div class="section-title"><span class="sec-num">09</span> الخطوة التالية والمستندات المطلوبة للمراجعة المهنية</div>
+  <div class="section-body">
+    <p style="margin-bottom:8px;">
+      لتحويل هذه المسودة إلى تقرير تقييم معتمد، يجب مراجعة البيانات والمستندات والمنهجية بواسطة خبير التقييم، ثم إصدار النسخة المعتمدة عند القبول.
+    </p>
+    {% if data.get('required_docs') %}
+    <table>
+      <thead><tr><th>الوثيقة / الإجراء</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for doc in data.get('required_docs', []) %}
+        {% set doc_name = doc if doc is string else doc.get('name', '') %}
+        <tr>
+          <td>{{ doc_name }}</td>
+          <td>
+            {% if doc_name in data.get('missing_docs', []) %}
+            <span class="td-nok">◌ مطلوب</span>
+            {% else %}
+            <span class="td-ok">✓ متوفر</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <ul style="list-style:disc;padding-right:20px;font-size:9pt;line-height:2;">
+      <li>سند الملكية أو عقد البيع</li>
+      <li>كشف مساحة أو رسم كروكي</li>
+      <li>صور العقار</li>
+      <li>رخصة البناء إن وجدت</li>
+      <li>عقود الإيجار إن وجدت</li>
+      <li>أي مستندات تمويل أو نزاع إن وجدت</li>
+    </ul>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-datasources">
+  <div class="section-title"><span class="sec-num">10</span> ملخص مصادر البيانات وجاهزيتها</div>
+  <div class="section-body">
+    <div class="note-box">
+      لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+    </div>
+    <table style="margin-top:8px;">
+      <thead><tr><th>مصدر البيانات</th><th>النوع</th><th>الحالة</th><th>مستوى الثقة</th><th>الأثر على التقييم</th></tr></thead>
+      <tbody>
+        <tr><td>بيانات الطلب المُدخَلة</td><td>مباشرة</td><td><span class="td-ok">مفعَّل</span></td><td class="td-num">70%</td><td class="td-na">المصدر الأساسي للمدخلات</td></tr>
+        <tr><td>محاكاة QA الداخلية</td><td>توليدية</td><td><span class="compliance-warn">مفعَّل — QA فقط</span></td><td class="td-num">55%</td><td class="td-na">مقارنات ومعاملات تمثيلية</td></tr>
+        <tr><td>Qdrant / استرجاع دلالي</td><td>استرجاعية</td><td><span class="td-nok">غير مفعَّل</span></td><td class="td-num">—</td><td class="td-na">يرفع دقة المقارنات عند التفعيل</td></tr>
+        <tr><td>صفقات السوق العقارية الحقيقية</td><td>سوقية</td><td><span class="td-nok">غير متاحة</span></td><td class="td-num">—</td><td class="td-na">إلزامية للاعتماد الرسمي</td></tr>
+        <tr><td>صور العقار وتقرير الفحص الميداني</td><td>ميدانية</td><td><span class="td-nok">غير متاحة</span></td><td class="td-num">—</td><td class="td-na">إلزامية قبل التوقيع</td></tr>
+        <tr><td>عقود الإيجار والتعاقدات الفعلية</td><td>تعاقدية</td><td><span class="td-nok">غير متاحة</span></td><td class="td-num">—</td><td class="td-na">مطلوبة لطريقة الدخل</td></tr>
+        <tr><td>مستندات الملكية والتسجيل الرسمي</td><td>قانونية</td><td><span class="td-nok">غير متاحة</span></td><td class="td-num">—</td><td class="td-na">إلزامية للتحقق القانوني</td></tr>
+        <tr><td>معدلات الرسملة السوقية المرجعية</td><td>إحصائية</td><td><span class="td-nok">غير متاحة</span></td><td class="td-num">—</td><td class="td-na">لتحسين نماذج معدل الرسملة الأربعة</td></tr>
+      </tbody>
+    </table>
+    <div class="warning-box" style="margin-top:6px;">
+      <span class="wb-label">⚠ تحذير جودة المصادر:</span>
+      الاعتماد الحصري على بيانات الطلب والمحاكاة الداخلية (QA) يرفع درجة عدم اليقين في التقييم. يُوصى بتفعيل Qdrant وتوفير مصادر سوقية رسمية قبل أي استخدام رسمي.
+    </div>
+  </div>
+</div>
+
+<!-- HBU Analysis -->
+<div class="section" id="sec-hbu">
+  <div class="section-title"><span class="sec-num">11</span> تحليل أعلى وأفضل استغلال (HBU)</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>الاستخدام الحالي</td><td>{{ data.get('hbu_current', NA) }}</td></tr>
+      <tr><td>الاستخدام المختار (HBU)</td><td>{{ data.get('hbu_optimal', NA) }}</td></tr>
+    </table>
+    <table style="margin-top:6px;">
+      <thead><tr><th>الاختبار</th><th>النتيجة</th></tr></thead>
+      <tbody>
+        <tr><td>قانوني مسموح</td><td>{{ data.get('hbu_legal', NA) }}</td></tr>
+        <tr><td>ممكن فيزيائياً</td><td>{{ data.get('hbu_physical', NA) }}</td></tr>
+        <tr><td>مجدٍ اقتصادياً</td><td>{{ data.get('hbu_financial', NA) }}</td></tr>
+        <tr><td>الإنتاجية القصوى</td><td>{{ data.get('hbu_productivity', NA) }}</td></tr>
+      </tbody>
+    </table>
+    {% if data.get('hbu_notes') %}
+    <div class="note-box" style="margin-top:6px;">{{ data.get('hbu_notes') }}</div>
+    {% endif %}
+    <div class="note-box" style="margin-top:6px;font-size:8pt;">
+      <strong>منهجية HBU وفق IVSC / IVS 105:</strong>
+      يُعدّ تحليل أعلى وأفضل استغلال (Highest and Best Use) ركيزةً أساسية في التقييم العقاري وفق معايير المجلس الدولي لمعايير التقييم (IVSC). يمر التحليل بأربعة اختبارات متتالية ومترابطة:
+      <strong>(أ) قانوني مسموح به:</strong> الاستخدام مسموح به بموجب قوانين التخطيط العمراني والترخيص المحلي، وبدون عوائق قانونية أو تنظيمية.
+      <strong>(ب) ممكن فيزيائياً:</strong> تسمح خصائص الموقع من حيث المساحة والشكل والتربة والمرافق بهذا الاستخدام.
+      <strong>(ج) مجدٍ اقتصادياً:</strong> الاستخدام يولد عائداً اقتصادياً موجباً يُساوي أو يتجاوز تكلفة التطوير.
+      <strong>(د) أقصى إنتاجية:</strong> من بين جميع الاستخدامات المستوفية للاختبارات الثلاثة السابقة، يُعظِّم هذا الاستخدام قيمة العقار بشكل أعلى من أي استخدام آخر.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 8 — SWOT + TOP PRIORITIES TABLE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-swot">
+  <div class="section-title"><span class="sec-num">12</span> تحليل SWOT الرباعي</div>
+  <div class="section-body">
+    {% set swot = data.get('swot', {}) %}
+    <table>
+      <thead>
+        <tr><th style="background:#1e8449">نقاط القوة (S)</th><th style="background:#922b21">نقاط الضعف (W)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            {% for s in swot.get('strengths', []) %}
+            {% set txt = s if s is string else s.get('text', s) %}
+            {% set pri = '' if s is string else (' — أولوية: ' ~ s.get('priority', '')) %}
+            <div>• {{ txt }}{{ pri }}</div>
+            {% endfor %}
+            {% if not swot.get('strengths') %}<span class="td-na">{{ NA }}</span>{% endif %}
+          </td>
+          <td>
+            {% for w in swot.get('weaknesses', []) %}
+            {% set txt = w if w is string else w.get('text', w) %}
+            {% set pri = '' if w is string else (' — أولوية: ' ~ w.get('priority', '')) %}
+            <div>• {{ txt }}{{ pri }}</div>
+            {% endfor %}
+            {% if not swot.get('weaknesses') %}<span class="td-na">{{ NA }}</span>{% endif %}
+          </td>
+        </tr>
+      </thead>
+      <thead>
+        <tr><th style="background:#1a5276">الفرص (O)</th><th style="background:#b7770d">التهديدات (T)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            {% for o in swot.get('opportunities', []) %}
+            {% set txt = o if o is string else o.get('text', o) %}
+            {% set pri = '' if o is string else (' — أولوية: ' ~ o.get('priority', '')) %}
+            <div>• {{ txt }}{{ pri }}</div>
+            {% endfor %}
+            {% if not swot.get('opportunities') %}<span class="td-na">{{ NA }}</span>{% endif %}
+          </td>
+          <td>
+            {% for t in swot.get('threats', []) %}
+            {% set txt = t if t is string else t.get('text', t) %}
+            {% set pri = '' if t is string else (' — أولوية: ' ~ t.get('priority', '')) %}
+            <div>• {{ txt }}{{ pri }}</div>
+            {% endfor %}
+            {% if not swot.get('threats') %}<span class="td-na">{{ NA }}</span>{% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {% if data.get('swot_top_priorities') %}
+    <div style="margin-top:10px;">
+      <strong style="font-size:9.5pt;color:#1a5276;">أعلى الأولويات:</strong>
+      <table style="margin-top:4px;">
+        <thead><tr><th>البند</th><th>الفئة</th><th>التأثير</th><th>الاحتمال</th><th>الأولوية</th><th>الإجراء</th></tr></thead>
+        <tbody>
+          {% for p in data.get('swot_top_priorities', []) %}
+          <tr>
+            <td>{{ p.get('item', NA) }}</td>
+            <td>{{ p.get('category', NA) }}</td>
+            <td class="td-num">{{ p.get('impact', NA) }}</td>
+            <td class="td-num">{{ p.get('probability', NA) }}</td>
+            <td class="td-num"><strong>{{ p.get('priority', NA) }}</strong></td>
+            <td class="td-na" style="font-size:8pt;">{{ p.get('action', NA) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 9 — DEPRECIATION DOC + CERT RISKS + ROADMAP
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-depr-doc">
+  <div class="section-title"><span class="sec-num">13</span> توثيق العمر الفعلي ونموذج الإهلاك</div>
+  <div class="section-body">
+    <p style="font-size:8.5pt;margin-bottom:8px;">
+      العمر الفعلي المستخدم في نموذج الإهلاك يحتاج إلى مستند داعم مثل شهادة إتمام البناء أو خطاب تسليم الوحدة أو تقرير معاينة خبير؛ وإلا قد يتم الطعن في صحة احتساب الإهلاك.
+    </p>
+    <table class="kv-table">
+      <tr><td>العمر الفعلي المستخدم</td><td class="td-num">{{ data.get('age_years', NA) }} سنة</td></tr>
+      <tr><td>العمر الاقتصادي</td><td class="td-num">{{ data.get('economic_life', '50') }} سنة</td></tr>
+      <tr><td>طريقة الإهلاك</td><td class="td-na">{{ data.get('depreciation_method', 'خط مستقيم (إرشادي) — بانتظار توثيق العمر الفعلي') }}</td></tr>
+      <tr><td>دليل العمر الفعلي متوفر؟</td><td><span class="td-nok">{{ data.get('effective_age_doc', 'لا') }}</span></td></tr>
+      <tr><td>الاعتماد على الإهلاك مسموح؟</td><td><span class="td-nok">{{ data.get('depreciation_allowed', 'لا') }}</span></td></tr>
+    </table>
+    <div class="note-box" style="margin-top:6px;">
+      <strong>أنواع الأدلة المقبولة:</strong> شهادة إتمام البناء · خطاب تسليم الوحدة · رخصة البناء · شهادة صلاحية/إشغال · تقرير معاينة خبير مؤرخ ومرفق بالصور · مستند رسمي من المطور أو الجهة الإدارية.
+    </div>
+  </div>
+</div>
+
+<div class="section" id="sec-certrisk">
+  <div class="section-title"><span class="sec-num">14</span> مخاطر الاعتماد واكتمال المستندات</div>
+  <div class="section-body">
+    <div class="warning-box"><span class="wb-label">مستوى المخاطر: {{ data.get('cert_risk_level', 'مرتفع') }}</span>
+      مخاطر اعتماد {{ data.get('cert_risk_level', 'مرتفعة') }} بسبب نقص المستندات الإلزامية. لا يُوصى بالاعتماد الرسمي قبل استكمال هذه المستندات.
+    </div>
+    {% if data.get('cert_risks') %}
+    <div style="margin-top:6px;"><strong style="font-size:9pt;">المستندات الإلزامية المفقودة:</strong></div>
+    <ul class="blockers-list" style="margin-top:4px;">
+      {% for r in data.get('cert_risks', []) %}<li>⚠ {{ r }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-roadmap">
+  <div class="section-title"><span class="sec-num">15</span> خارطة طريق الاعتماد</div>
+  <div class="section-body">
+    {% if data.get('roadmap_steps') %}
+    <table>
+      <thead><tr><th>الخطوة</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for step in data.get('roadmap_steps', []) %}
+        {% set step_name = step if step is string else step.get('step', '') %}
+        {% set step_status = 'معلق' if step is string else step.get('status', 'معلق') %}
+        <tr>
+          <td>{{ step_name }}</td>
+          <td>{% if step_status == 'منجز' %}<span class="td-ok">✓ منجز</span>{% elif step_status == 'مستقبلي' %}<span class="td-na">مستقبلي</span>{% else %}<span class="td-nok">◌ معلق</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">خارطة طريق الاعتماد:</span> {{ NA }}</div>
+    {% endif %}
+    <div class="warning-box" style="margin-top:8px;">
+      <span class="wb-label">⚠ تنبيه:</span>
+      لا يُصدر هذا النظام شهادة اعتماد آلية. الاعتماد يتطلب مراجعة خبير مرخّص وتوقيعه يدويًا.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 10 — LAND SOURCES + QDRANT + GOVERNANCE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-landsources">
+  <div class="section-title"><span class="sec-num">16</span> مصادر الأرض البديلة وحالة التكامل</div>
+  <div class="section-body">
+    <div class="note-box">استبدال سعر الأرض الافتراضي بمتوسط موثق من جهة رسمية أو صفقات سوق فعلية.</div>
+    <table class="kv-table">
+      <tr><td>مصدر بيانات الأرض</td><td class="td-na">{{ data.get('land_data_source', 'غير متاح — مصدر إرشادي') }}</td></tr>
+      <tr><td>مصادر بديلة مقترحة</td><td class="td-na">{{ data.get('alt_land_sources', 'هيئة المجتمعات العمرانية · صفقات أراضٍ فعلية · مقارنات سوقية معتمدة') }}</td></tr>
+      <tr><td>حالة التكامل</td><td class="td-na">{{ data.get('land_integration_status', 'غير مفعَّل — بيانات تمثيلية') }}</td></tr>
+    </table>
+    {% if data.get('land_comparable_rows') %}
+    <div style="margin-top:8px;"><strong style="font-size:9pt;">مقارنات الأراضي المرجعية (محاكاة QA):</strong></div>
+    <table style="margin-top:4px;">
+      <thead><tr><th>المرجع</th><th>الموقع</th><th>المساحة (م²)</th><th>سعر م² (م.ج)</th><th>إجمالي (م.ج)</th><th>التاريخ</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for r in data.get('land_comparable_rows', []) %}
+        <tr>
+          <td>{{ r.get('ref', NA) }}</td>
+          <td class="td-na">{{ r.get('location', NA) }}</td>
+          <td class="td-num">{{ r.get('area', NA) }}</td>
+          <td class="td-num">{{ _fmt(r.get('price_sqm', '')) }}</td>
+          <td class="td-num">{{ _fmt(r.get('total_price', '')) }}</td>
+          <td>{{ r.get('date', NA) }}</td>
+          <td class="td-na">{{ r.get('notes', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-qdrant">
+  <div class="section-title"><span class="sec-num">17</span> جاهزية Qdrant / ربط قاعدة البيانات</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>محرك البحث الدلالي مفعَّل؟</td><td><span class="td-nok">لا</span></td></tr>
+      <tr><td>نظام استرداد المعلومات التلقائي مفعَّل؟</td><td><span class="td-nok">لا</span></td></tr>
+      <tr><td>قاعدة بيانات مباشرة مفعَّلة؟</td><td><span class="td-nok">لا</span></td></tr>
+      <tr><td>حالة التكامل</td><td class="td-na">النظام مهيأ للربط، لكن لم يتم تفعيل قاعدة بيانات مصادر إنتاجية في هذه النسخة</td></tr>
+    </table>
+    <div class="warning-box">
+      <span class="wb-label">⚠ إخلاء مسؤولية:</span>
+      لا يستند هذا التقرير للإنترنت أو قواعد بيانات RAG/Qdrant أو أي بحث مباشر.
+      جميع البيانات الواردة تمثيلية للأغراض التوضيحية والإرشادية فقط.
+    </div>
+  </div>
+</div>
+
+<div class="section" id="sec-governance">
+  <div class="section-title"><span class="sec-num">18</span> حوكمة المعاملات والمراجع المستخدمة</div>
+  <div class="section-body">
+    <div class="note-box">المعاملات المستخدمة تحتاج إلى تحقق مرجعي ومراجعة خبير قبل الاعتماد الرسمي.</div>
+    {% if data.get('governance_rows') %}
+    <table>
+      <thead><tr><th>المعامل</th><th>القيمة</th><th>مسموح للاعتماد؟</th><th>الإجراء</th></tr></thead>
+      <tbody>
+        {% for g in data.get('governance_rows', []) %}
+        <tr>
+          <td>{{ g.get('param', NA) }}</td>
+          <td class="td-num">{{ g.get('value', NA) }}</td>
+          <td>{% if g.get('allowed') %}<span class="td-ok">نعم</span>{% else %}<span class="td-nok">لا</span>{% endif %}</td>
+          <td class="td-na">{{ g.get('action', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="source-box">
+      <strong>معايير التقييم المستخدمة (إرشادي):</strong>
+      RICS Red Book 2022 · IVS 2022 · المعايير المصرية للتقييم العقاري<br>
+      <strong>المعاملات الإحصائية:</strong> تمثيلية للأغراض التوضيحية — لا تستند لبيانات رسمية مُتحقَّق منها.<br>
+      <strong>مصدر البيانات:</strong> {{ data.get('data_source_note', 'بيانات الطلب فقط — لا scraping — لا Qdrant — لا إنترنت') }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 11 — CV CONSISTENCY TEST + SIGNATURE STATUS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-cv">
+  <div class="section-title"><span class="sec-num">19</span> اختبار اتساق طرق التقييم (CV)</div>
+  <div class="section-body">
+    {% if data.get('cv_data') %}
+    {% set cv = data.get('cv_data', {}) %}
+    <table class="kv-table">
+      <tr><td>معامل التباين (CV)</td>
+          <td><span class="cv-badge cv-{{ cv.get('risk_class', 'high') }}">{{ cv.get('cv_pct', NA) }}%</span></td></tr>
+      <tr><td>مستوى خطر التباين</td><td><strong>{{ cv.get('risk_level', NA) }}</strong></td></tr>
+      <tr><td>المتوسط الحسابي</td><td class="td-num">{{ _fmt(cv.get('mean_value', '')) }} م.ج</td></tr>
+      <tr><td>القيمة الموزونة</td><td class="td-num">{{ _fmt(cv.get('weighted_value', '')) }} م.ج</td></tr>
+      <tr><td>الانحراف المعياري</td><td class="td-num">{{ _fmt(cv.get('std_dev', '')) }} م.ج</td></tr>
+    </table>
+    <div class="warning-box" style="margin-top:6px;">{{ cv.get('note', '') }}</div>
+    <div class="note-box" style="margin-top:4px;">
+      الفئات الناقصة: أسعار المبيعات الحقيقية · مقارنات الإيجار · أسعار الأراضي الموثقة · معدلات الرسملة المرجعية.
+    </div>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">اختبار الاتساق:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-sig-review">
+  <div class="section-title"><span class="sec-num">20</span> حالة التوقيع والمراجعة قبل الاعتماد</div>
+  <div class="section-body">
+    <div class="warning-box">
+      <span class="wb-label">مسودة استرشادية — غير صالحة للاعتماد الرسمي</span>
+    </div>
+    <table>
+      <thead><tr><th>البند</th><th>الحالة</th></tr></thead>
+      <tbody>
+        <tr><td>توقيع الخبير</td><td><span class="td-nok">مفقود</span></td></tr>
+        <tr><td>ترخيص الخبير</td><td><span class="td-nok">مفقود</span></td></tr>
+        <tr><td>ختم الشركة</td><td><span class="td-nok">مفقود</span></td></tr>
+        <tr><td>مراجعة النظراء</td><td><span class="td-nok">مفقود</span></td></tr>
+        <tr><td>خريطة المقارنات</td><td><span class="td-nok">غير مرفقة</span></td></tr>
+        <tr><td>الحد الأدنى مستوفى؟</td><td><span class="td-nok">لا</span></td></tr>
+      </tbody>
+    </table>
+    <div class="note-box" style="margin-top:6px;">
+      يلزم إرفاق صورة واجهة واحدة على الأقل وخريطة/إحداثيات الموقع قبل الاعتماد.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 12 — RISK MAP + AVM STATUS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-riskmap">
+  <div class="section-title"><span class="sec-num">21</span> خريطة مخاطر التقييم</div>
+  <div class="section-body">
+    <div class="note-box">المخاطر الكلية: مستوى مرتفع — يُعدّ الأعلى خطورة: {{ data.get('top_risk_category', 'سوقي') }}</div>
+    {% if data.get('risk_map') %}
+    <table>
+      <thead><tr><th>الفئة</th><th>الدرجة (من 5)</th><th>المحرك الرئيسي</th></tr></thead>
+      <tbody>
+        {% for r in data.get('risk_map', []) %}
+        <tr>
+          <td>{{ r.get('category', NA) }}</td>
+          <td class="td-num"><strong>{{ r.get('score', NA) }}/5</strong></td>
+          <td class="td-na">{{ r.get('driver', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <table>
+      <thead><tr><th>الفئة</th><th>الدرجة</th><th>المحرك الرئيسي</th></tr></thead>
+      <tbody>
+        <tr><td>قانوني</td><td class="td-num">4/5</td><td class="td-na">مستندات ملكية / رخص بناء مفقودة</td></tr>
+        <tr><td>مالي</td><td class="td-num">4/5</td><td class="td-na">تباين عالٍ بين الطرق</td></tr>
+        <tr><td>فيزيائي/فني</td><td class="td-num">3/5</td><td class="td-na">صور ميدانية وخرائط مفقودة</td></tr>
+        <tr><td>سوقي</td><td class="td-num">5/5</td><td class="td-na">جميع بيانات السوق محاكاة QA</td></tr>
+        <tr><td>بيانات ومصادر</td><td class="td-num">5/5</td><td class="td-na">5 مصادر QA نشطة</td></tr>
+        <tr><td>اعتماد وتوقيع</td><td class="td-num">5/5</td><td class="td-na">توقيع / ترخيص / مراجعة نظراء مفقودة</td></tr>
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-avm-status">
+  <div class="section-title"><span class="sec-num">22</span> حالة نموذج التقييم الآلي (AVM)</div>
+  <div class="section-body">
+    {% if data.get('avm_model_status') %}
+    {% set ams = data.get('avm_model_status', {}) %}
+    <table class="kv-table">
+      <tr><td>مستخدم؟</td><td>{{ 'نعم' if ams.get('used') else 'لا' }}</td></tr>
+      <tr><td>اكتمال المدخلات</td><td class="td-num">{{ ams.get('input_completeness', NA) }}%</td></tr>
+      <tr><td>قيمة AVM</td><td class="td-num">{{ _fmt(ams.get('avm_value', '')) }} م.ج</td></tr>
+      <tr><td>درجة الثقة</td><td class="td-num">{{ ams.get('confidence', NA) }}%</td></tr>
+      <tr><td>وزن التوفيق</td><td class="td-num">{{ ams.get('weight', 0) }}</td></tr>
+      <tr><td>حالة AVM</td><td class="td-na">{{ ams.get('status_note', 'QA محاكاة') }}</td></tr>
+    </table>
+    {% else %}
+    <table class="kv-table">
+      <tr><td>مستخدم؟</td><td><span class="td-warn">نعم — محاكاة QA</span></td></tr>
+      <tr><td>اكتمال المدخلات</td><td class="td-num">{{ data.get('avm_input_completeness', '70') }}%</td></tr>
+      <tr><td>قيمة AVM</td><td class="td-num">{{ _fmt(data.get('avm_final_value', data.get('final_value', ''))) }} م.ج</td></tr>
+      <tr><td>درجة الثقة</td><td class="td-num">{{ data.get('avm_confidence', data.get('confidence_score', NA)) }}%</td></tr>
+      <tr><td>وزن التوفيق</td><td class="td-num">0.0</td></tr>
+      <tr><td>حالة AVM</td><td class="td-na">QA محاكاة — مستخدم كمرجع استرشادي — لا يُعتمد في التوفيق الرسمي</td></tr>
+    </table>
+    {% endif %}
+    <div class="note-box" style="margin-top:6px;">
+      AVM مستخدم كمرجع استرشادي فقط. لا يُعتمد في التوفيق الرسمي. Qdrant غير مفعَّل.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 13 — BREAK-EVEN + COMPLIANCE BOARD
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-breakeven">
+  <div class="section-title"><span class="sec-num">23</span> تحليل نقطة التعادل — الإيجار</div>
+  <div class="section-body">
+    {% if data.get('breakeven') %}
+    {% set be = data.get('breakeven', {}) %}
+    <table class="kv-table">
+      <tr><td>الإيجار الحالي/المتوقع</td><td class="td-num">{{ _fmt(be.get('current_rent', '')) }} م.ج/شهر</td></tr>
+      <tr><td>نقطة التعادل (الإيجار الضروري)</td><td class="td-num">{{ _fmt(be.get('breakeven_threshold', '')) }} م.ج/شهر</td></tr>
+      <tr><td>الفارق</td><td class="td-num">{{ _fmt(be.get('gap', '')) }} م.ج/شهر</td></tr>
+    </table>
+    <div class="note-box" style="margin-top:6px;">{{ be.get('note', '') }}</div>
+    {% else %}
+    {% if data.get('dcf_years') %}
+    <table class="kv-table">
+      <tr><td>الإيجار السنة الأولى</td><td class="td-num">{{ _fmt(data.get('dcf_years', [{}])[0].get('rent', '')) }} م.ج</td></tr>
+      <tr><td>معدل الرسملة المستخدم</td><td class="td-num">{{ data.get('cap_rate_used', data.get('cap_rate_exit', NA)) }}%</td></tr>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">تحليل نقطة التعادل:</span> {{ NA }}</div>
+    {% endif %}
+    {% endif %}
+    <div class="note-box" style="margin-top:4px;">هذا المؤشر استرشادي فقط لدعم قرار المستثمر — لا يُعدّ نصيحة استثمارية. يُنصح بمراجعة الخبير قبل اتخاذ أي قرار استثماري.</div>
+  </div>
+</div>
+
+<div class="section" id="sec-compliance">
+  <div class="section-title"><span class="sec-num">24</span> لوحة الامتثال التقييمي</div>
+  <div class="section-body">
+    {% if data.get('compliance_items') %}
+    {% set ci = data.get('compliance_items', []) %}
+    {% set done = ci | selectattr('status', 'equalto', 'مكتمل') | list | length %}
+    {% set total = ci | length %}
+    <div style="margin-bottom:8px;">
+      اكتمال: <strong>{{ done }}/{{ total }}</strong> —
+      <div class="comp-pct-bar" style="width:{{ (done/total*100)|int if total > 0 else 0 }}%;"></div>
+      {{ ((done/total*100)|int if total > 0 else 0) }}%
+    </div>
+    <table>
+      <thead><tr><th>البند</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for item in ci %}
+        <tr>
+          <td>{{ item.get('label', NA) }}</td>
+          <td>
+            {% if item.get('status') == 'مكتمل' %}<span class="compliance-ok">✓ مكتمل</span>
+            {% elif item.get('status') == 'عائق حرج' %}<span class="compliance-nok">✗ عائق حرج</span>
+            {% elif item.get('status') == 'مفقود' %}<span class="compliance-nok">✗ مفقود</span>
+            {% else %}<span class="compliance-warn">⚠ {{ item.get('status', 'استرشادي') }}</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="missing-data-box"><span class="mdb-label">لوحة الامتثال:</span> {{ NA }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 14 — INCOME CAP vs DCF + ADJUSTMENTS + ASSUMPTIONS
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-income-cap-dcf">
+  <div class="section-title"><span class="sec-num">25</span> فصل رسملة الدخل المباشر عن DCF</div>
+  <div class="section-body">
+    <div class="note-box">
+      تم فصل طريقة رسملة الدخل المباشر عن طريقة التدفقات النقدية المخصومة لأن كل منهما يعالج نمطاً مختلفاً من المخاطر والنمو. رسملة الدخل المباشر تفترض استقراراً في الدخل، بينما تعالج DCF النمو المتوقع ومتغيرات المخاطر عبر الزمن.
+    </div>
+    <table class="kv-table">
+      <tr><td>رسملة الدخل المباشر (إرشادي)</td><td class="td-num">{{ _fmt(data.get('income_cap_value', '')) }} م.ج</td></tr>
+      <tr><td>قيمة DCF (التدفقات المخصومة)</td><td class="td-num">{{ _fmt(data.get('dcf_value', '')) }} م.ج</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="section" id="sec-adj-support">
+  <div class="section-title"><span class="sec-num">26</span> دعم التعديلات — مصدر معاملات التسوية</div>
+  <div class="section-body">
+    {% if data.get('adj_support_rows') %}
+    <table>
+      <thead><tr><th>نوع التعديل</th><th>المعامل</th><th>مصدر التعديل</th><th>مشاهدات</th><th>مستوى الثقة</th></tr></thead>
+      <tbody>
+        {% for r in data.get('adj_support_rows', []) %}
+        <tr>
+          <td>{{ r.get('type', NA) }}</td>
+          <td class="td-num">{{ r.get('coefficient', NA) }}</td>
+          <td class="td-na">{{ r.get('source', NA) }}</td>
+          <td class="td-num">{{ r.get('observations', NA) }}</td>
+          <td class="td-na">{{ r.get('confidence', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <table>
+      <thead><tr><th>نوع التعديل</th><th>المعامل</th><th>مصدر التعديل</th><th>مستوى الثقة</th></tr></thead>
+      <tbody>
+        <tr><td>موقع</td><td class="td-num">1.05</td><td class="td-na">تحليل الأزواج البيعية (محاكاة QA)</td><td class="td-na">متوسط — بيانات QA</td></tr>
+        <tr><td>مساحة</td><td class="td-num">0.98</td><td class="td-na">انحدار إحصائي (محاكاة QA)</td><td class="td-na">منخفض — QA فقط</td></tr>
+        <tr><td>الطابق والإطلالة</td><td class="td-num">1.02</td><td class="td-na">خبرة السوق (محاكاة QA)</td><td class="td-na">منخفض — رأي خبير استرشادي</td></tr>
+        <tr><td>تشطيب</td><td class="td-num">1.03</td><td class="td-na">تكلفة التشطيب المقدرة</td><td class="td-na">منخفض — تقدير تكلفة فقط</td></tr>
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box" style="margin-top:4px;">
+      <span class="sim-tag">محاكاة QA فقط</span>
+      لا توجد معاملات سوقية حقيقية مُدخَلة. يجب مراجعة أي معاملات مستندة إلى محاكاة QA قبل الاعتماد النهائي.
+    </div>
+  </div>
+</div>
+
+<div class="section" id="sec-assumptions-table">
+  <div class="section-title"><span class="sec-num">27</span> الافتراضات العادية والافتراضات الخاصة وقيود نطاق العمل</div>
+  <div class="section-body">
+    {% if data.get('assumption_rows') %}
+    <table>
+      <thead><tr><th>نوع الافتراض</th><th>الوصف</th><th>الأثر المتوقع لو ثبت خطؤه</th><th>يحتاج مستند؟</th></tr></thead>
+      <tbody>
+        {% for r in data.get('assumption_rows', []) %}
+        <tr>
+          <td>{{ r.get('type', NA) }}</td>
+          <td>{{ r.get('description', NA) }}</td>
+          <td class="td-na">{{ r.get('impact', NA) }}</td>
+          <td>{% if r.get('needs_doc') %}<span class="td-nok">نعم</span>{% else %}<span class="td-ok">لا</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="note-box">
+      الافتراضات العادية: تطبيق منهجية التقييم القياسية وفق IVS/المعايير المصرية.<br>
+      قيود نطاق العمل: عدم توفر بيانات سوقية موثقة · بيانات QA فقط · لا معاينة ميدانية مؤكدة.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 15 — LEGAL DUE DILIGENCE + ESG + CONFIDENCE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-legal">
+  <div class="section-title"><span class="sec-num">28</span> العناية القانونية المبدئية</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>حالة الرهن أو الأعباء</td><td class="td-na">{{ data.get('mortgage_status', 'غير محدد — يلزم الفحص') }}</td></tr>
+      <tr><td>حالة النزاعات القانونية</td><td class="td-na">{{ data.get('dispute_status', 'غير محدد — يلزم الفحص') }}</td></tr>
+      <tr><td>المستندات الناقصة</td><td class="td-na">{{ data.get('missing_legal_docs', 'شهادة تصرفات — رخصة بناء') }}</td></tr>
+    </table>
+    <div class="note-box" style="margin-top:6px;">
+      الفحص القانوني المبدئي محدود ببيانات الطلب. يُوصى بمراجعة قانونية مستقلة قبل استخدام التقرير لأغراض قانونية أو تمويلية.
+      لم يتم إجراء فحص قانوني كامل، ويُعدّ ذلك قيداً على نطاق العمل.
+    </div>
+  </div>
+</div>
+
+<div class="section" id="sec-esg">
+  <div class="section-title"><span class="sec-num">29</span> تأثير الاستدامة والمخاطر المناخية على القيمة</div>
+  <div class="section-body">
+    {% if data.get('esg') %}
+    {% set esg = data.get('esg', {}) %}
+    <table class="kv-table">
+      <tr><td>درجة ESG الإجمالية</td><td class="td-num">{{ esg.get('score', NA) }} / {{ esg.get('out_of', 40) }}</td></tr>
+      <tr><td>تصنيف ESG</td><td><strong>{{ esg.get('grade', NA) }}</strong></td></tr>
+      <tr><td>تعديل معدل الرسملة</td><td class="td-num">{{ esg.get('cap_rate_adj', NA) }}</td></tr>
+      <tr><td>تعديل القيمة الطرفية</td><td class="td-num">{{ esg.get('terminal_adj', NA) }}%</td></tr>
+      <tr><td>درجة المخاط�� المناخية</td><td>{{ esg.get('climate_risk', NA) }}</td></tr>
+    </table>
+    {% if esg.get('breakdown') %}
+    <div style="margin-top:8px;"><strong style="font-size:9pt;">تفصيل مكونات ESG (إرشادي):</strong></div>
+    <table style="margin-top:4px;">
+      <thead><tr><th>المحور</th><th>الدرجة</th><th>من</th><th>النسبة</th><th>التقييم والملاحظة</th></tr></thead>
+      <tbody>
+        {% for b in esg.get('breakdown', []) %}
+        <tr>
+          <td>{{ b.get('category', NA) }}</td>
+          <td class="td-num">{{ b.get('score', NA) }}</td>
+          <td class="td-num">{{ b.get('max', NA) }}</td>
+          <td class="td-num">{{ b.get('pct', NA) }}</td>
+          <td class="td-na">{{ b.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% else %}
+    <table class="kv-table">
+      <tr><td>درجة ESG الإجمالية</td><td class="td-na">{{ data.get('esg_score', NA) }} / 40</td></tr>
+      <tr><td>تصنيف ESG</td><td class="td-na">{{ data.get('esg_grade', 'B — جيد (إرشادي)') }}</td></tr>
+      <tr><td>درجة المخاطر المناخية</td><td class="td-na">{{ data.get('climate_risk', 'منخفض — إرشادي') }}</td></tr>
+    </table>
+    <div class="note-box" style="margin-top:6px;">لا يتضمن هذا الإصدار تقييماً مناخياً رسمياً. يُوصى بتقييم مناخي مستقل للعقارات في مناطق معرضة للفيضانات أو التصحر.</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section" id="sec-confidence">
+  <div class="section-title"><span class="sec-num">30</span> نطاق الثقة وعدم اليقين</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>الحد الأدنى للقيمة</td><td class="td-num">{{ _fmt(data.get('confidence_low', '')) }} م.ج</td></tr>
+      <tr><td>القيمة المركزية</td><td class="td-num">{{ _fmt(data.get('final_value', '')) }} م.ج</td></tr>
+      <tr><td>الحد الأقصى للقيمة</td><td class="td-num">{{ _fmt(data.get('confidence_high', '')) }} م.ج</td></tr>
+      <tr><td>درجة الثقة الكلية</td><td>{{ data.get('confidence_score', NA) }}%</td></tr>
+      <tr><td>مستوى عدم اليقين</td><td>{{ data.get('uncertainty_level', NA) }}</td></tr>
+      <tr><td>أسباب عدم اليقين</td><td>{{ data.get('uncertainty_reasons', NA) }}</td></tr>
+    </table>
+    {% if data.get('cv_data') %}
+    {% set cv = data.get('cv_data', {}) %}
+    <table class="kv-table" style="margin-top:6px;">
+      <tr><td>نطاق عدم اليقين (90%)</td><td class="td-num">{{ _fmt(cv.get('low_90', '')) }} — {{ _fmt(cv.get('high_90', '')) }} م.ج</td></tr>
+      <tr><td>الانحراف المعياري</td><td class="td-num">{{ _fmt(cv.get('std_dev', '')) }} م.ج</td></tr>
+    </table>
+    {% endif %}
+    {% if data.get('confidence_factors') %}
+    <div style="margin-top:8px;"><strong style="font-size:9pt;">عوامل الثقة ومحركات عدم اليقين:</strong></div>
+    <table style="margin-top:4px;">
+      <thead><tr><th>العامل</th><th>الوزن</th><th>التقييم (5)</th><th>الأثر</th></tr></thead>
+      <tbody>
+        {% for f in data.get('confidence_factors', []) %}
+        <tr>
+          <td>{{ f.get('factor', NA) }}</td>
+          <td class="td-num">{{ f.get('weight', NA) }}</td>
+          <td class="td-num">{{ f.get('score', NA) }}/{{ f.get('max', 5) }}</td>
+          <td class="td-na">{{ f.get('note', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box" style="margin-top:8px;font-size:8pt;">
+      <strong>منهجية احتساب نطاق الثقة وتفسيره:</strong>
+      نطاق الثقة هو المدى الإحصائي الذي يقع ضمنه القيمة السوقية المحتملة بدرجة احتمال 90%. يُحتسَب بتطبيق معامل التشتت المتماثل (±%) حول القيمة المركزية المُرجَّحة، مع الأخذ بعين الاعتبار: (أ) جودة بيانات المبيعات المقارنة المتاحة ومدى تمثيلها للسوق الحالية، (ب) حجم العينة المرجعية وتشابه الخصائص، (ج) درجة التقلب في الأسعار السائدة خلال الفترة المرجعية، (د) مدى ملاءمة كل منهجية للعقار وظروف السوق الراهنة. كلما تحسنت جودة البيانات وتعددت الشواهد السوقية المعتمدة، ضاق نطاق الثقة وارتفعت درجة اليقين في القيمة المركزية.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 16 — FINAL RECONCILIATION + RECOMMENDATION + DISCLAIMER
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-final-recon">
+  <div class="section-title"><span class="sec-num">31</span> التوفيق الموزون النهائي</div>
+  <div class="section-body">
+    {% if data.get('weighted_recon_rows') %}
+    <table>
+      <thead><tr><th>طريقة التقييم</th><th>القيمة (م.ج)</th><th>الوزن</th><th>المساهمة الموزونة (م.ج)</th></tr></thead>
+      <tbody>
+        {% for r in data.get('weighted_recon_rows', []) %}
+        <tr>
+          <td>{{ r.get('method', NA) }}</td>
+          <td class="td-num">{{ _fmt(r.get('value', '')) }}</td>
+          <td class="td-num">{{ r.get('weight', NA) }}</td>
+          <td class="td-num">{{ _fmt(r.get('weighted_contribution', '')) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <table class="kv-table" style="margin-top:6px;">
+      <tr><td>القيمة الموصى بها (موزونة)</td><td class="td-num"><strong>{{ _fmt(data.get('final_value', '')) }} م.ج</strong></td></tr>
+      <tr><td>القيمة النهائية المختارة</td><td class="td-num">{{ _fmt(data.get('final_value', '')) }} م.ج</td></tr>
+      <tr><td>نطاق القيمة (90%)</td><td class="td-num">{{ _fmt(data.get('confidence_low', '')) }} — {{ _fmt(data.get('confidence_high', '')) }} م.ج</td></tr>
+      <tr><td>الطريقة المهيمنة</td><td>{{ data.get('dominant_method', 'مقارنة البيوع') }}</td></tr>
+    </table>
+    <div class="note-box" style="margin-top:6px;">
+      القيمة الموصى بها هي المتوسط الموزون للطرق المتاحة. الأوزان تعكس مدى توفر البيانات وملاءمة كل طريقة للغرض والعقار. القيمة النهائية استرشادية وتتطلب تأكيد من الخبير.
+    </div>
+  </div>
+</div>
+
+<!-- Rent reconciliation -->
+<div class="section" id="sec-rent-recon">
+  <div class="section-title"><span class="sec-num">32</span> تسوية الإيجار المستخدم في طريقة الدخل</div>
+  <div class="section-body">
+    <table class="kv-table">
+      <tr><td>إيجار طريقة الدخل</td><td class="td-num">{{ _fmt(data.get('income_method_rent', data.get('annual_rent', ''))) }} م.ج</td></tr>
+      <tr><td>القيمة الإيجارية النهائية</td><td class="td-na">{{ data.get('final_rental_value', NA) }}</td></tr>
+      <tr><td>الفرق</td><td class="td-na">{{ data.get('rent_gap', NA) }}</td></tr>
+    </table>
+    <div class="note-box" style="margin-top:4px;">
+      في حال تباين كبير بين DCF وطريقة المقارنة، قد يعكس ذلك: إيجارات أدنى من السوق، أو افتراضات معدل خصم محافظة، أو ضعف بيانات الدخل.
+    </div>
+  </div>
+</div>
+
+<!-- Fee disclosure -->
+<div class="section" id="sec-fee">
+  <div class="section-title"><span class="sec-num">33</span> الإفصاحات المهنية</div>
+  <div class="section-body">
+    <div class="source-box">
+      أتعاب التقييم لا تعتمد على نتيجة القيمة أو على الوصول إلى رقم محدد. المقيِّم مستقل ولا توجد مصلحة شخصية مرتبطة بنتيجة التقييم.<br>
+      <strong>أساس الأتعاب:</strong> {{ data.get('fee_basis', 'مقطوع / غير مشروط بالنتيجة') }}<br>
+      يُقرّ المقيِّم باستقلاليته التامة وعدم وجود مصلحة مالية أو شخصية في العقار محل التقييم أو في نتيجة التقرير.
+    </div>
+  </div>
+</div>
+
+<!-- Final Recommendation -->
+<div class="section" id="sec-recommendation">
+  <div class="section-title"><span class="sec-num">34</span> التوصية النهائية للعميل</div>
+  <div class="section-body">
+    <div class="value-conclusion-box">
+      <div class="vcb-label">القيمة الموصى بها</div>
+      <span class="vcb-amount">{{ _fmt(data.get('final_value', '')) }}</span>
+      <div class="vcb-amount-words">{{ data.get('value_in_words', '') }}</div>
+      <div class="vcb-currency">{{ data.get('currency', 'م.ج') }}</div>
+      <div class="vcb-range">
+        نطاق القيمة:
+        {{ _fmt(data.get('confidence_low', '')) }} — {{ _fmt(data.get('confidence_high', '')) }} م.ج
+      </div>
+      <div class="vcb-advisory">⚠ قيمة إرشادية — غير معتمدة رسميًا — استرشادي / مراجعة داخلية فقط</div>
+    </div>
+    <div class="reconciliation-box" style="margin-top:10px;">
+      <div class="rec-header">{{ data.get('recommendation', 'يُنصح باستكمال الوثائق المطلوبة قبل الاعتماد الرسمي.') }}</div>
+      <div style="margin-top:6px;font-size:8.5pt;">
+        <strong>الخطوات التالية:</strong><br>
+        • توفير بيانات سوق حقيقية وموثقة بدلاً من محاكاة QA<br>
+        • استكمال الوثائق القانونية للعقار<br>
+        • إرفاق خرائط وصور ميدانية<br>
+        • الحصول على توقيع الخبير المرخص<br>
+        • إجراء مراجعة نظراء مستقلة
+      </div>
+      <div style="margin-top:6px;font-size:8.5pt;">
+        <strong>المخاطر الرئيسية:</strong> تفاوت بين الطرق · بيانات محاكاة QA · توقيع الخبير غير مرفق
+      </div>
+    </div>
+    {% if data.get('recommendation_advisory') %}
+    <table class="kv-table" style="margin-top:8px;">
+      <thead><tr><th>محور التوصية</th><th>الوصف</th><th>الأولوية</th></tr></thead>
+      <tbody>
+        {% for r in data.get('recommendation_advisory', []) %}
+        <tr>
+          <td>{{ r.get('aspect', NA) }}</td>
+          <td class="td-na">{{ r.get('description', NA) }}</td>
+          <td>{{ r.get('priority', NA) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    <div class="note-box" style="margin-top:8px;font-size:8pt;">
+      <strong>إخلاء مسؤولية مهنية:</strong>
+      القيمة الواردة في هذا التقرير استرشادية بحتة وتعتمد على بيانات مدخلات الطلب وبيانات محاكاة داخلية (QA). لا تُعدّ هذه القيمة رأياً مهنياً معتمداً وفق معايير IVSC أو المعايير المصرية للتقييم العقاري. يُشترط لاستخدام هذا التقرير لأي غرض رسمي: (أ) توقيع خبير تقييم مرخص، (ب) إجراء معاينة ميدانية موثقة، (ج) استبدال بيانات QA ببيانات سوقية محققة، (د) مراجعة نظراء مستقلة قبل الإصدار النهائي.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 17 — GENERAL CONDITIONS + SIGNATURE GATE
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-general-conditions">
+  <div class="section-title"><span class="sec-num">35</span> الشروط والافتراضات العامة وإخلاء المسؤولية</div>
+  <div class="section-body">
+    <div class="source-box">
+      <strong>طبيعة التقرير:</strong>
+      هذا التقرير مبدئي وغير معتمد، ولا يُعدّ تقرير خبير معتمداً أو مستنداً صالحاً للاستخدام أمام الجهات الرسمية أو القضائية أو التمويلية قبل مراجعة واعتماد خبير التقييم المختص. لا يُستخدم أمام البنوك أو المحاكم أو أي جهة رسمية قبل إتمام المراجعة المهنية.<br><br>
+      <strong>محدودية البيانات:</strong>
+      القيم والأرقام الواردة في هذا التقرير استرشادية فقط ولا تمثل رأياً مهنياً نهائياً. الطرق المستخدمة هي أدوات تصفية أولية غير مكتملة دون مراجعة ميدانية وتحليل سوقي معتمد من خبير مرخص. جميع البيانات مستمدة من مدخلات الطلب المقدمة من العميل.<br><br>
+      <strong>بيانات السوق:</strong>
+      لا يتضمن هذا التقرير استرجاعاً آلياً من الإنترنت أو Qdrant أو أي مصدر بيانات خارجي. المقارنات السوقية وأسعار المتر محاكاة داخلية لأغراض المراجعة الأولية فقط.<br><br>
+      <strong>المعايير المهنية:</strong>
+      يُعدّ هذا التقرير متوافقاً مع متطلبات الإفصاح الأولي وفق إطار IVSC ومعايير التقييم المصرية، غير أن اعتماده النهائي يستوجب توقيع خبير تقييم مرخص وإجراء الفحص الميداني اللازم.
+    </div>
+  </div>
+</div>
+
+<div class="section no-break" id="sec-signature">
+  <div class="section-title"><span class="sec-num">36</span> بوابة التوقيع والاعتماد</div>
+  <div class="section-body">
+    <div class="signature-gate">
+      <span class="sig-gate-label">⚠ بوابة التوقيع — الاعتماد متوقف — غير معتمد رسميًا</span>
+      <div class="sig-gate-slot">
+        بانتظار التوقيع الرسمي من مقيم عقاري مرخص<br>
+        [ توقيع الخبير المرخّص — غير متاح — يتطلب مراجعة يدوية ]
+      </div>
+      <div class="sig-gate-note">
+        لا يصدر تقرير معتمد إلا بعد مراجعة وتوقيع خبير تقييم مرخص.<br>
+        لا يُصدر هذا النظام توقيع خبير آلي أو شهادة اعتماد رسمية.<br>
+        الاعتماد يتطلب: خبير مرخّص · مراجعة ميدانية · توقيع يدوي · ختم رسمي.
+      </div>
+    </div>
+    <table style="margin-top:6px;font-size:8pt;">
+      <thead><tr><th>متطلب الاعتماد</th><th>الحالة</th><th>ملاحظة</th></tr></thead>
+      <tbody>
+        <tr><td>خبير تقييم مرخّص (RICS / TAQEEM)</td><td class="td-nok">غير متاح</td><td>مطلوب للاعتماد الرسمي</td></tr>
+        <tr><td>مراجعة ميدانية وتفتيش العقار</td><td class="td-nok">غير مُنجزة</td><td>شرط إلزامي للتقرير المعتمد</td></tr>
+        <tr><td>توقيع الخبير يدوياً على النسخة المطبوعة</td><td class="td-nok">غير مُوقَّع</td><td>التوقيع الإلكتروني الآلي محظور</td></tr>
+        <tr><td>ختم المكتب الرسمي</td><td class="td-nok">غير مختوم</td><td>مطلوب من الجهة المرخَّصة</td></tr>
+        <tr><td>سداد رسوم التقييم المعتمد</td><td class="td-na">لم يُحدَّد</td><td>وفق اتفاقية الخدمة المبرمة</td></tr>
+      </tbody>
+    </table>
+    <div class="footer-disclaimer">
+      تقرير آلي استرشادي — غير معتمد رسميًا ·
+      لا يستند للإنترنت · Qdrant/RAG غير مفعَّل ·
+      لا توقيع خبير · لا ختم رسمي · لا رخصة مزيَّفة ·
+      لا يُقبل في الإجراءات البنكية أو القانونية أو الرسمية قبل الاعتماد المناسب.<br>
+      تم إنشاء هذا المستند بواسطة محرك HTML/PDF ·
+      Expert Smart PropTech Platform · Traditional Tier v2.0
+    </div>
+  </div>
+</div>
+
+</div><!-- /.content -->
+</body>
+</html>

@@ -570,6 +570,168 @@ def build_individual_valuation_xlsx(
         # ── DO NOT touch B27:B33 ──────────────────────────────────────────────
         # (formulas recalculate automatically when Excel opens the file)
 
+        # ── Defensive formula overrides: fix template annotation text cells ─────
+        # The .xlsm template stores some formula descriptions as text strings
+        # beginning with '≈' (U+2248).  These text cells are NOT formulas and
+        # produce #VALUE! when downstream cells reference them.  Overwrite the
+        # three affected areas immediately after template load so future
+        # regenerations produce clean workbooks.
+        _UNAVAIL = "لا تتوفر بيانات كافية للحساب"
+        _sheets = {s: s for s in wb.sheetnames}
+
+        # Sheet: رأسمالة الدخل — B11 and B12 were annotation text
+        _s9 = _sheets.get("رأسمالة الدخل")
+        if _s9:
+            _ws9 = wb[_s9]
+            if str(_ws9["B11"].value or "").startswith("≈"):
+                _ws9["B11"].value = "=B9+B10"
+            if str(_ws9["B12"].value or "").startswith("≈"):
+                _ws9["B12"].value = "=B15*B10"
+
+        # Sheet: الخيارات الحقيقية — fix _xludf locale mutation + σ=0 division
+        _s12 = _sheets.get("الخيارات الحقيقية")
+        if _s12:
+            _ws12 = wb[_s12]
+            _ws12["B14"].value = (
+                f'=IF(OR(B7<=0,B5<=0,B6<=0),"{_UNAVAIL}",'
+                f'IFERROR((LN(B5/B6)+(B9+B7^2/2)*B8)/(B7*SQRT(B8)),"{_UNAVAIL}"))'
+            )
+            _ws12["B15"].value = f'=IF(ISNUMBER(B14),B14-B7*SQRT(B8),"{_UNAVAIL}")'
+            _ws12["B16"].value = (
+                f'=IFERROR(IF(ISNUMBER(B14),NORM.S.DIST(B14,TRUE),"{_UNAVAIL}"),"{_UNAVAIL}")'
+            )
+            _ws12["B17"].value = (
+                f'=IFERROR(IF(ISNUMBER(B15),NORM.S.DIST(B15,TRUE),"{_UNAVAIL}"),"{_UNAVAIL}")'
+            )
+            _ws12["B18"].value = (
+                f'=IFERROR(IF(AND(ISNUMBER(B16),ISNUMBER(B17)),'
+                f'B5*B16-B6*EXP(-B9*B8)*B17,"{_UNAVAIL}"),"{_UNAVAIL}")'
+            )
+            _ws12["B22"].value = "=IFERROR(MAX(B18,0),0)"
+
+        # Sheet: الاقتراض والكاش (may have 💰 prefix) — B7 and B8 annotation text
+        _s34 = next((n for n in wb.sheetnames if "الاقتراض والكاش" in n), None)
+        if _s34:
+            _ws34 = wb[_s34]
+            if str(_ws34["B7"].value or "").startswith("≈"):
+                _ws34["B7"].value = "=B5*B6"
+            if str(_ws34["B8"].value or "").startswith("≈"):
+                _ws34["B8"].value = "=B5-B7"
+
+        # ── Global Formula Integrity fixes ────────────────────────────────────
+        # Corrects 5 root-cause defect groups present in the template:
+        #  A. Undefined Arabic named ranges in annotation cells (sheets 4, 8)
+        #  B. Text×number error in cost-approach recommendation row (sheet 8 D13)
+        #  C. External workbook reference + sheet-name typo in DCF summary (sheet 18)
+        #  D. Row-offset header-insertion bug in rent-vs-buy model (sheet 21)
+        #  E. Missing-input division-by-zero guards (sheets 7, 24)
+        _SENT = "غير متاح ضمن بيانات الطلب"
+
+        # Group A+B — الافتراضات والمدخلات annotation column + cost sheet
+        _sn_gfi = set(wb.sheetnames)
+        _ws4_gfi = wb["الافتراضات والمدخلات"] if "الافتراضات والمدخلات" in _sn_gfi else None
+        if _ws4_gfi:
+            _ws4_gfi["C30"].value = "=B4*B5"
+            _ws4_gfi["C32"].value = f'=IF(B7>0,B31/B7,"{_SENT}")'
+            _ws4_gfi["C33"].value = "=B33"
+            _d113 = _ws4_gfi["D113"]
+            if _d113.value and str(_d113.value).strip() == "=WACC":
+                _d113.value = "=B11"
+
+        _ws8_gfi = wb["طريقة التكلفة"] if "طريقة التكلفة" in _sn_gfi else None
+        if _ws8_gfi:
+            _ws8_gfi["C5"].value = "=B5"
+            _ws8_gfi["D13"].value = None  # removes text×number #VALUE! cascade
+
+        # Group C — DCF advisory summary: remove [1] external-ref + fix typo
+        _dcf_name_gfi = next(
+            (n for n in wb.sheetnames if n.startswith("DCF")), None
+        )
+        if _dcf_name_gfi:
+            _ws18_gfi = wb[_dcf_name_gfi]
+            _typo_ref = (
+                "[1]DCF — "
+                "التدقات "
+                "النقدية"
+            )
+            for _addr18 in ("A61", "A62", "A63"):
+                _c18 = _ws18_gfi[_addr18]
+                if (
+                    _c18.value
+                    and isinstance(_c18.value, str)
+                    and _typo_ref in _c18.value
+                ):
+                    _c18.value = _c18.value.replace(_typo_ref, _dcf_name_gfi)
+
+        # Group D — الإيجار مقابل الشراء: fix row-offset from header insertion
+        _ws21_gfi = next(
+            (wb[n] for n in wb.sheetnames if n == "الإيجار مقابل الشراء"), None
+        )
+        if _ws21_gfi:
+            # Row references shifted +1 when header row was inserted at row 5.
+            # Affected cells still reference row-5 header text instead of row-6 values.
+            _ws21_gfi["B7"].value = "=B6*0.2"      # down payment = market_value × 20%
+            _ws21_gfi["B8"].value = "=B6-B7"       # loan = market_value - down_payment
+            _ws21_gfi["C8"].value = "=B6-B7"
+            _ws21_gfi["B20"].value = "=B6*B13"     # opportunity cost of capital
+            # Fix D-column year table: $B$5 (header) → $B$6 (market value)
+            for _r21 in range(29, 39):
+                for _col21 in ("B", "D"):
+                    _fc21 = _ws21_gfi[f"{_col21}{_r21}"]
+                    if (
+                        _fc21.value
+                        and isinstance(_fc21.value, str)
+                        and _fc21.value.startswith("=")
+                        and "$B$5" in _fc21.value
+                    ):
+                        _fc21.value = _fc21.value.replace("$B$5", "$B$6")
+            # PMT at B18: rate=B8→B9, nper=B9→B10, pv=B7→B8 (all shifted by 1)
+            _ws21_gfi["B18"].value = "=IFERROR(PMT(B9/12,B10*12,-B8),0)"
+            # E-column outstanding-loan balance: loan ref B7→B8, rate ref B8→B9
+            for _r21e in range(29, 39):
+                _ec21 = _ws21_gfi[f"E{_r21e}"]
+                if (
+                    _ec21.value
+                    and isinstance(_ec21.value, str)
+                    and _ec21.value.startswith("=")
+                    and "$B$7*" in _ec21.value
+                    and "$B$8/12" in _ec21.value
+                ):
+                    _ec21.value = (
+                        _ec21.value
+                        .replace("$B$7*(", "$B$8*(")
+                        .replace("$B$8/12", "$B$9/12")
+                    )
+
+        # Group E — missing-input division-by-zero guards
+        _ws7_gfi = wb["المقارنات الإيجارية"] if "المقارنات الإيجارية" in _sn_gfi else None
+        if _ws7_gfi:
+            for _addr7 in ("F51", "F52", "F54"):
+                _c7 = _ws7_gfi[_addr7]
+                if (
+                    _c7.value
+                    and isinstance(_c7.value, str)
+                    and _c7.value.startswith("=")
+                    and "IFERROR" not in _c7.value
+                ):
+                    _c7.value = f'=IFERROR({_c7.value[1:]},"{_SENT}")'
+        _ws24_gfi = next(
+            (wb[n] for n in wb.sheetnames if "تحليل الحساسية" in n), None
+        )
+        if _ws24_gfi:
+            for _addr24 in (
+                "C7", "D7", "E7", "F7", "G7",
+                "C8", "D8", "E8", "F8", "G8",
+            ):
+                _c24 = _ws24_gfi[_addr24]
+                if (
+                    _c24.value
+                    and isinstance(_c24.value, str)
+                    and _c24.value.startswith("=")
+                    and "IFERROR" not in _c24.value
+                ):
+                    _c24.value = f'=IFERROR({_c24.value[1:]},"{_SENT}")'
+
         # ── Recalculation properties ──────────────────────────────────────────
         wb.calculation.calcMode = "auto"
         wb.calculation.fullCalcOnLoad = True

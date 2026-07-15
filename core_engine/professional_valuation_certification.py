@@ -48,7 +48,7 @@ for _d in (_PEER_DIR, _PEER_EVENTS_DIR, _SIG_DIR, _GATE_DIR, _CERT_EVENTS_DIR):
 
 # ── ID / regex helpers ─────────────────────────────────────────────────────────
 
-_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 
 
 def _new_pvpr_id() -> str:

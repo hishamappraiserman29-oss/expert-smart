@@ -50,7 +50,7 @@ for _d in (_COMP_DIR, _IMPORT_JOBS_DIR, _IMPORT_FILES_DIR, _SOURCES_DIR):
 
 # ── ID format validators ──────────────────────────────────────────────────────
 
-_PVR_ID_RE  = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE  = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 _PVCO_ID_RE = re.compile(r"^PVCO-[0-9A-F]{8}$")   # comparable
 _PVIJ_ID_RE = re.compile(r"^PVIJ-[0-9A-F]{8}$")   # import job
 _PVS_ID_RE  = re.compile(r"^PVS-[0-9A-F]{8}$")    # source stub

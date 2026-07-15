@@ -42,7 +42,7 @@ for _d in (_ADV_DIR, _ADV_EVENTS_DIR):
 
 # ── ID / regex helpers ────────────────────────────────────────────────────────
 
-_PVR_ID_RE   = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE   = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 _VALID_SECTIONS: frozenset[str] = frozenset({"hbu", "legal", "esg", "swot"})
 
 def _new_pvar_id() -> str:

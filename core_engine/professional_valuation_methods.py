@@ -42,7 +42,7 @@ for _d in (_RUNS_DIR, _RECON_DIR, _COMP_DIR, _PRELIM_DIR):
 
 # ── ID validators ─────────────────────────────────────────────────────────────
 
-_PVR_ID_RE  = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE  = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 _PVMR_ID_RE = re.compile(r"^PVMR-[0-9A-F]{8}$")
 
 def _new_pvmr_id() -> str:

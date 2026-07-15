@@ -141,6 +141,11 @@ def build_professional_valuation_preliminary_output_context(request_id: str) -> 
     }
 
     # ── Request summary ───────────────────────────────────────────────────────
+    _REPORT_TYPE_LABELS: dict = {
+        "traditional_report":  "تقرير تقليدي",
+        "detailed_report":     "تقرير تفصيلي",
+        "professional_report": "تقرير احترافي",
+    }
     req_summary: dict = {
         "request_id":        request_id,
         "request_number":    _NA,
@@ -155,11 +160,14 @@ def build_professional_valuation_preliminary_output_context(request_id: str) -> 
         "inspection_date":   _NA,
         "currency":          "SAR",
         "report_language":   "ar",
+        "report_type":       "professional_report",
+        "report_type_label": "تقرير احترافي",
     }
     try:
         from professional_valuation_routes import _read_pvr as _pvr_read
         pvr = _pvr_read(request_id)
         if pvr:
+            rt = pvr.get("report_type") or "professional_report"
             req_summary.update({
                 "request_number":    pvr.get("request_number") or request_id,
                 "client_name":       pvr.get("client_name") or _NA,
@@ -173,6 +181,8 @@ def build_professional_valuation_preliminary_output_context(request_id: str) -> 
                 "inspection_date":   pvr.get("inspection_date") or _NA,
                 "currency":          pvr.get("currency") or "SAR",
                 "report_language":   pvr.get("report_language") or "ar",
+                "report_type":       rt,
+                "report_type_label": _REPORT_TYPE_LABELS.get(rt, rt),
             })
     except (ImportError, Exception):
         pass
@@ -348,6 +358,25 @@ def build_professional_valuation_preliminary_output_context(request_id: str) -> 
         "priority": "عالية" if len(blockers) > 5 else "متوسطة",
     }
 
+    # ── Output matrix context ─────────────────────────────────────────────────
+    try:
+        from professional_valuation_output_matrix import (
+            get_output_matrix_context, get_output_warnings,
+        )
+        _rt = req_summary.get("report_type", "professional_report")
+        _vp = req_summary.get("valuation_purpose", "")
+        _pt = req_summary.get("property_type", "")
+        if _vp == _NA:
+            _vp = ""
+        if _pt == _NA:
+            _pt = ""
+        ctx["output_matrix"]   = get_output_matrix_context(_rt, _vp, _pt)
+        ctx["output_warnings"] = get_output_warnings(_rt, _vp, advisory_only=True)
+        ctx["report_type"]     = _rt
+    except Exception:
+        ctx["output_matrix"]   = {}
+        ctx["output_warnings"] = []
+
     return ctx
 
 
@@ -434,6 +463,7 @@ def _generate_expert_draft_pdf(
 # ── Workbook generation: Expert Workbook (15 sheets) ──────────────────────────
 
 _EXPERT_WB_SHEETS = [
+    # ── Core (original 15) ──────────────────────────────────────────────────
     "ملخص المسودة",
     "بيانات الطلب",
     "بيانات العقار",
@@ -449,13 +479,46 @@ _EXPERT_WB_SHEETS = [
     "مراجعة الخبير",
     "ملاحظات داخلية",
     "سجل المخرجات",
+    # ── Parity sheets (ported from ordinary valuation, sheets 16–43) ────────
+    "مقدمة ونطاق التقييم",
+    "الافتراضات والقيود",
+    "طريقة مقارنة البيوع",
+    "طريقة الدخل",
+    "التدفقات النقدية DCF",
+    "طريقة التكلفة",
+    "قيمة الأرض",
+    "تفصيل الإهلاك",
+    "القيمة الإيجارية",
+    "مقارنات إيجارية",
+    "توفيق القيمة الإيجارية",
+    "تحليل مخاطر DCF",
+    "سيناريوهات What-If",
+    "شراء أم إيجار",
+    "نطاق الثقة وعدم اليقين",
+    "مصادر الأسعار",
+    "دعم التعديلات",
+    "تحليل الاستدامة ESG",
+    "تقييم الأثر البيئي",
+    "مؤشرات تكلفة البناء",
+    "مصفوفة المخاطر",
+    "بيان الامتثال",
+    "الإفصاحات المهنية",
+    "التوصية النهائية",
+    "اختبار اتساق الطرق",
+    "حوكمة مصادر البيانات",
+    "خارطة طريق الاعتماد",
+    "قائمة فحص الاعتماد",
 ]
 
 
 def _generate_expert_workbook(
     ctx: dict, request_id: str, output_id: str,
 ) -> tuple[bool, str, int, str]:
-    """Generate expert workbook via openpyxl (15 sheets, RTL, Arabic).
+    """Generate expert workbook via openpyxl — RTL Arabic.
+
+    Sheet set is determined by the output matrix (report_type × valuation_purpose
+    × property_type).  All sheets are generated first; sheets not in the active
+    set are removed before save.
 
     Returns (success, error_msg, size_bytes, sha256_hex).
     Does NOT raise.
@@ -463,6 +526,16 @@ def _generate_expert_workbook(
     req_dir = _PRELIM_OUT_DIR / request_id
     req_dir.mkdir(parents=True, exist_ok=True)
     out_path = req_dir / f"{output_id}_expert_workbook.xlsx"
+
+    # ── Determine active sheet set from output matrix ─────────────────────────
+    try:
+        from professional_valuation_output_matrix import get_expert_sheets
+        _rt  = ctx.get("report_type") or ctx.get("request_summary", {}).get("report_type", "professional_report")
+        _vp  = ctx.get("request_summary", {}).get("valuation_purpose", "")
+        _pt  = ctx.get("request_summary", {}).get("property_type", "")
+        _active_sheets = frozenset(get_expert_sheets(_rt, _vp, _pt))
+    except Exception:
+        _active_sheets = None  # fallback: generate all sheets
 
     try:
         import openpyxl
@@ -546,6 +619,7 @@ def _generate_expert_workbook(
             ("نوع المخرج", ctx.get("output_type", _NA)),
             ("رقم التقرير المبدئي", ctx.get("report_number", _NA)),
             ("رقم الطلب", req.get("request_id", _NA)),
+            ("نوع التقرير", req.get("report_type_label", "تقرير احترافي")),
             ("اسم العميل", req.get("client_name", _NA)),
             ("عنوان العقار", req.get("property_address", _NA)),
             ("نوع العقار", req.get("property_type", _NA)),
@@ -568,6 +642,7 @@ def _generate_expert_workbook(
         for k, v in [
             ("رقم الطلب",       req.get("request_id", _NA)),
             ("رقم مرجع الطلب",  req.get("request_number", _NA)),
+            ("نوع التقرير",     req.get("report_type_label", "تقرير احترافي")),
             ("اسم العميل",      req.get("client_name", _NA)),
             ("نوع العميل",      req.get("client_type", _NA)),
             ("غرض التقييم",     req.get("valuation_purpose", _NA)),
@@ -802,6 +877,549 @@ def _generate_expert_workbook(
         except (ImportError, Exception):
             ws.cell(row=row, column=1, value=_NA)
         _col_widths(ws, [25, 20, 18, 18])
+
+        # ════════════════════════════════════════════════════════════════════
+        # Parity sheets 16–43 — ported from ordinary valuation workbook
+        # ════════════════════════════════════════════════════════════════════
+        _src_sum = ctx.get("source_summary", {})
+
+        # ── 16. مقدمة ونطاق التقييم ──────────────────────────────────────────
+        ws = wb.create_sheet("مقدمة ونطاق التقييم")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "مقدمة التقرير ونطاق التقييم")
+        row = 3
+        for k, v in [
+            ("رقم الطلب",           req.get("request_id", _NA)),
+            ("غرض التقييم",         req.get("valuation_purpose", _NA)),
+            ("أساس القيمة",         req.get("basis_of_value", _NA)),
+            ("تاريخ التقييم",       req.get("valuation_date", _NA)),
+            ("تاريخ المعاينة",      req.get("inspection_date", _NA)),
+            ("نطاق الطرق المطلوبة", "مقارنة البيوع — الدخل — التكلفة — DCF"),
+            ("القيود العامة",        "بيانات مبدئية — تخضع للمراجعة"),
+            ("حالة الاعتماد",       "غير معتمد — مرحلة مبدئية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [30, 42, 18])
+
+        # ── 17. الافتراضات والقيود ───────────────────────────────────────────
+        ws = wb.create_sheet("الافتراضات والقيود")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "الافتراضات الخاصة والقيود")
+        row = 3
+        for k, v in [
+            ("الافتراض 1", "تم التحقق من الملكية من خلال المستندات المقدمة فقط"),
+            ("الافتراض 2", "بيانات المقارنات مبنية على معطيات السوق المتاحة"),
+            ("الافتراض 3", "لا عوائق قانونية معلومة تؤثر على القيمة — يخضع للتحقق"),
+            ("الافتراض 4", "الحالة البنائية مبنية على نتيجة المعاينة البصرية"),
+            ("القيد 1",    "هذا التقرير مبدئي وغير صالح للاستخدام الرسمي"),
+            ("القيد 2",    "النتائج تخضع لتحديث عند توافر مزيد من البيانات"),
+            ("القيد 3",    "لم تُجرَ دراسة هندسية أو بيئية متخصصة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [18, 54, 18])
+
+        # ── 18. طريقة مقارنة البيوع ──────────────────────────────────────────
+        ws = wb.create_sheet("طريقة مقارنة البيوع")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "طريقة مقارنة البيوع — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="بيانات مبدئية — يحتاج استكمال من مقارنات إنتاجية معتمدة")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        for k, v in [
+            ("إجمالي المقارنات",             _sv(comp.get("total_count", 0))),
+            ("مقارنات جاهزة إنتاجياً",       _sv(comp.get("production_ready_count", 0))),
+            ("مقارنات في مرحلة التهيئة",      _sv(comp.get("staged_count", 0))),
+            ("متوسط سعر المتر المعدل",        _NA2),
+            ("القيمة المشتقة من المقارنات",   _NA2),
+            ("ملاحظة الخبير",                "يتطلب إدخال معاملات التعديل — بيانات محاكاة داخلية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 19. طريقة الدخل ──────────────────────────────────────────────────
+        ws = wb.create_sheet("طريقة الدخل")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "طريقة الدخل — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="بيانات مبدئية — يحتاج استكمال القيم الإيجارية وبيانات الدخل")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        for k, v in [
+            ("القيمة الإيجارية السنوية",      _NA2),
+            ("معدل الشغور المقدر (%)",         _NA2),
+            ("صافي الدخل التشغيلي (NOI)",      _NA2),
+            ("معدل الرسملة (%)",               _NA2),
+            ("القيمة المشتقة من الدخل",        _NA2),
+            ("الإيجارات المرجعية المستخدمة",   _NA2),
+            ("ملاحظة",                          "يتطلب بيانات سوق إيجارية معتمدة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 20. التدفقات النقدية DCF ──────────────────────────────────────────
+        ws = wb.create_sheet("التدفقات النقدية DCF")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل التدفقات النقدية المخصومة — DCF — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="بيانات مبدئية — يحتاج استكمال بيانات التدفقات ومعدل الخصم")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        for k, v in [
+            ("فترة الاستثمار (سنوات)",           _NA2),
+            ("معدل الخصم (%)",                    _NA2),
+            ("معدل النمو الإيجاري المتوقع (%)",   _NA2),
+            ("معدل الرسملة الطرفي (%)",           _NA2),
+            ("القيمة الحالية الصافية — NPV",       _NA2),
+            ("القيمة التقييمية بـ DCF",            _NA2),
+            ("ملاحظة",                             "للمراجعة الداخلية — يتطلب توقعات مالية مفصلة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 38, 12])
+
+        # ── 21. طريقة التكلفة ────────────────────────────────────────────────
+        ws = wb.create_sheet("طريقة التكلفة")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "طريقة التكلفة — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="بيانات مبدئية — يحتاج استكمال مؤشرات تكلفة البناء والإهلاك")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        for k, v in [
+            ("قيمة الأرض",                     _NA2),
+            ("تكلفة الإنشاء للمتر (ريال/م²)",   _NA2),
+            ("إجمالي تكلفة الإنشاء",             _NA2),
+            ("نسبة الإهلاك (%)",                  _NA2),
+            ("إهلاك مجمع",                        _NA2),
+            ("القيمة المُستبدَلة المخفضة",         _NA2),
+            ("القيمة الإجمالية بطريقة التكلفة",    _NA2),
+            ("ملاحظة",                             "يتطلب مسح ميداني وبيانات تكلفة بناء محدثة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [38, 38, 14])
+
+        # ── 22. قيمة الأرض ───────────────────────────────────────────────────
+        ws = wb.create_sheet("قيمة الأرض")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تقدير قيمة الأرض — مبدئي")
+        row = 3
+        for k, v in [
+            ("المنطقة",                          req.get("property_address", _NA)),
+            ("نوع العقار",                        req.get("property_type", _NA)),
+            ("سعر المتر الأرضي المقدر (ريال)",    _NA2),
+            ("المساحة الإجمالية (م²)",             _NA2),
+            ("القيمة الإجمالية المقدرة للأرض",    _NA2),
+            ("المصدر",                             "مصادر سوقية مبدئية — يحتاج تأكيداً"),
+            ("ملاحظة",                             "تقدير مبدئي — يستلزم مقارنات أرض معتمدة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 23. تفصيل الإهلاك ────────────────────────────────────────────────
+        ws = wb.create_sheet("تفصيل الإهلاك")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تفصيل الإهلاك وعمر المبنى")
+        row = 3
+        for k, v in [
+            ("العمر الفعلي للمبنى (سنة)",         _NA2),
+            ("العمر الاقتصادي المتوقع (سنة)",     _NA2),
+            ("العمر المتبقي (سنة)",                _NA2),
+            ("نسبة الإهلاك المادي (%)",            _NA2),
+            ("الإهلاك الوظيفي (%)",                _NA2),
+            ("الإهلاك الخارجي (%)",                _NA2),
+            ("إجمالي الإهلاك (%)",                 _NA2),
+            ("المصدر",                              "معاينة ميدانية — يحتاج بيانات إضافية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 24. القيمة الإيجارية ─────────────────────────────────────────────
+        ws = wb.create_sheet("القيمة الإيجارية")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل القيمة الإيجارية السوقية — مبدئي")
+        row = 3
+        for k, v in [
+            ("الإيجار السوقي للمتر (ريال/م²/سنة)", _NA2),
+            ("المساحة المؤجرة المقدرة (م²)",          _NA2),
+            ("الإيجار الإجمالي السنوي",               _NA2),
+            ("معدل الشغور المقدر (%)",                 _NA2),
+            ("صافي الإيجار الفعلي",                    _NA2),
+            ("نوع الاستخدام الإيجاري",                 req.get("property_type", _NA)),
+            ("المصدر",                                  "بيانات سوق مبدئية — يحتاج تحقق"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 38, 12])
+
+        # ── 25. مقارنات إيجارية ──────────────────────────────────────────────
+        ws = wb.create_sheet("مقارنات إيجارية")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "مقارنات إيجارية — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="بيانات مبدئية — يحتاج استكمال من مقارنات إيجارية معتمدة")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        ws.cell(row=row, column=1, value="العقار").font = _BOLD
+        ws.cell(row=row, column=2, value="الإيجار (ريال/م²/سنة)").font = _BOLD
+        ws.cell(row=row, column=3, value="ملاحظة").font = _BOLD
+        row += 1
+        for i in range(1, 5):
+            ws.cell(row=row, column=1,
+                value=f"مقارن إيجاري {i}").alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_NA2).fill = _WARN_FILL
+            ws.cell(row=row, column=3, value="يحتاج استكمال").fill = _WARN_FILL
+            row += 1
+        _col_widths(ws, [30, 28, 32])
+
+        # ── 26. توفيق القيمة الإيجارية ────────────────────────────────────────
+        ws = wb.create_sheet("توفيق القيمة الإيجارية")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "توفيق تقديرات القيمة الإيجارية — مبدئي")
+        row = 3
+        for k, v in [
+            ("متوسط إيجار المقارنات",           _NA2),
+            ("إيجار السوق المرجح",               _NA2),
+            ("الإيجار المحدد للعقار",            _NA2),
+            ("نسبة الانحراف عن السوق (%)",       _NA2),
+            ("ملاحظة التوفيق",                   "يتطلب اكتمال بيانات المقارنات الإيجارية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 27. تحليل مخاطر DCF ───────────────────────────────────────────────
+        ws = wb.create_sheet("تحليل مخاطر DCF")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل مخاطر التدفقات النقدية — مبدئي")
+        row = 3
+        for k, v in [
+            ("سيناريو متفائل — معدل الخصم (%)",   _NA2),
+            ("سيناريو متفائل — القيمة",            _NA2),
+            ("سيناريو محايد — معدل الخصم (%)",    _NA2),
+            ("سيناريو محايد — القيمة",             _NA2),
+            ("سيناريو متشائم — معدل الخصم (%)",   _NA2),
+            ("سيناريو متشائم — القيمة",            _NA2),
+            ("نطاق الحساسية",                       _NA2),
+            ("ملاحظة",                               "يتطلب اكتمال تحليل DCF"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 36, 14])
+
+        # ── 28. سيناريوهات What-If ────────────────────────────────────────────
+        ws = wb.create_sheet("سيناريوهات What-If")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "سيناريوهات What-If وتحليل الحساسية — مبدئي", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="المتغير").font = _BOLD
+        ws.cell(row=row, column=2, value="التغيير (-10%)").font = _BOLD
+        ws.cell(row=row, column=3, value="القاعدة").font = _BOLD
+        ws.cell(row=row, column=4, value="التغيير (+10%)").font = _BOLD
+        row += 1
+        for param in ["سعر المتر", "معدل الرسملة", "نسبة الشغور", "معدل الخصم"]:
+            ws.cell(row=row, column=1, value=param).alignment = _RTL_ALIGN
+            for col in [2, 3, 4]:
+                ws.cell(row=row, column=col, value=_NA2).fill = _WARN_FILL
+            row += 1
+        _col_widths(ws, [26, 22, 22, 22])
+
+        # ── 29. شراء أم إيجار ────────────────────────────────────────────────
+        ws = wb.create_sheet("شراء أم إيجار")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل شراء أم إيجار — مبدئي")
+        row = 3
+        for k, v in [
+            ("سعر الشراء المقدر",            _NA2),
+            ("الدفعة الأولى المفترضة (%)",    _NA2),
+            ("معدل التمويل (%)",               _NA2),
+            ("القسط الشهري المقدر",            _NA2),
+            ("إيجار مماثل شهرياً",             _NA2),
+            ("نقطة التعادل (سنوات)",           _NA2),
+            ("التوصية",                         "يتطلب اكتمال البيانات المالية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 30. نطاق الثقة وعدم اليقين ───────────────────────────────────────
+        ws = wb.create_sheet("نطاق الثقة وعدم اليقين")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "نطاق الثقة وعدم اليقين في التقدير")
+        row = 3
+        for k, v in [
+            ("القيمة المركزية المقدرة",         methods.get("reconciliation_value", _NA)),
+            ("الحد الأدنى للتقدير (-10%)",      _NA2),
+            ("الحد الأعلى للتقدير (+10%)",      _NA2),
+            ("مستوى الثقة",                      "متوسط — مبدئي"),
+            ("مصادر عدم اليقين",                "مقارنات — معدل رسملة — بيانات سوق محلي"),
+            ("ملاحظة",                            "نطاق الثقة يضيق عند اكتمال البيانات الإنتاجية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 31. مصادر الأسعار ────────────────────────────────────────────────
+        ws = wb.create_sheet("مصادر الأسعار")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "مصادر بيانات الأسعار — مبدئية")
+        row = 3
+        for k, v in [
+            ("عدد المصادر الإنتاجية",    _sv(_src_sum.get("production_source_count", 0))),
+            ("مصادر QA موجودة",           "نعم — مبدئي" if _src_sum.get("qa_sources_present") else "لا"),
+            ("تصنيف المصادر",             "مصادر سوقية — بيانات حكومية — مقارنات ميدانية"),
+            ("حالة المصادر",              "مبدئية — تخضع للتحقق والاعتماد"),
+            ("ملاحظة",                    _sv(_src_sum.get("advisory_note", _NA))),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 32. دعم التعديلات ────────────────────────────────────────────────
+        ws = wb.create_sheet("دعم التعديلات")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل وتوثيق التعديلات — مبدئي")
+        row = 3
+        ws.cell(row=row, column=1, value="عنصر التعديل").font = _BOLD
+        ws.cell(row=row, column=2, value="المعامل المقترح").font = _BOLD
+        ws.cell(row=row, column=3, value="مبرر التعديل").font = _BOLD
+        row += 1
+        for adj_item in ["الموقع", "المساحة", "العمر", "الحالة", "التشطيب", "الوقت"]:
+            ws.cell(row=row, column=1, value=adj_item).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_NA2).fill = _WARN_FILL
+            ws.cell(row=row, column=3,
+                value="يحتاج تأصيل من بيانات المقارنات").alignment = _RTL_ALIGN
+            row += 1
+        _col_widths(ws, [22, 22, 46])
+
+        # ── 33. تحليل الاستدامة ESG ──────────────────────────────────────────
+        ws = wb.create_sheet("تحليل الاستدامة ESG")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تحليل الاستدامة والمخاطر المناخية — موسع")
+        row = 3
+        for k, v in [
+            ("اكتمال مراجعة ESG",           "نعم" if adv.get("esg_completed") else _NA2),
+            ("تأثير ESG على القيمة",         "استشاري — لا يؤثر تلقائياً"),
+            ("تصنيف الاستدامة",              _NA2),
+            ("خطر الفيضانات",                _NA2),
+            ("كفاءة الطاقة",                 _NA2),
+            ("شهادات الاستدامة",             _NA2),
+            ("التأثير المقدر على القيمة (%)", _NA2),
+            ("ملاحظة",                        "نتائج ESG استشارية — تتطلب تقرير بيئي متخصص"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 34. تقييم الأثر البيئي ───────────────────────────────────────────
+        ws = wb.create_sheet("تقييم الأثر البيئي")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "تقييم الأثر البيئي — مبدئي")
+        row = 3
+        for k, v in [
+            ("حالة التلوث البيئي",          _NA2),
+            ("قرب المنشآت الخطرة",           _NA2),
+            ("استخدامات المنطقة المحيطة",    req.get("property_address", _NA)),
+            ("المخاطر البيئية الجيولوجية",   _NA2),
+            ("التأثير على القيمة",            "لا أثر بيئي معلوم — يخضع للتحقق"),
+            ("ملاحظة",                        "مبدئي — يتطلب تقرير بيئي متخصص للتأكيد"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 35. مؤشرات تكلفة البناء ──────────────────────────────────────────
+        ws = wb.create_sheet("مؤشرات تكلفة البناء")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "مؤشرات تكلفة البناء السوقية — مبدئي")
+        row = 3
+        ws.cell(row=row, column=1, value="تصنيف البناء").font = _BOLD
+        ws.cell(row=row, column=2, value="التكلفة (ريال/م²)").font = _BOLD
+        ws.cell(row=row, column=3, value="المصدر").font = _BOLD
+        row += 1
+        for btype in ["اقتصادي", "متوسط", "فاخر", "فائق الجودة"]:
+            ws.cell(row=row, column=1, value=btype).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_NA2).fill = _WARN_FILL
+            ws.cell(row=row, column=3,
+                value="يحتاج بيانات سوق").alignment = _RTL_ALIGN
+            row += 1
+        _col_widths(ws, [25, 25, 40])
+
+        # ── 36. مصفوفة المخاطر ───────────────────────────────────────────────
+        ws = wb.create_sheet("مصفوفة المخاطر")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "مصفوفة تقييم مخاطر التقييم — مبدئي", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="نوع المخاطرة").font = _BOLD
+        ws.cell(row=row, column=2, value="الاحتمالية").font = _BOLD
+        ws.cell(row=row, column=3, value="الأثر").font = _BOLD
+        ws.cell(row=row, column=4, value="مستوى المخاطرة").font = _BOLD
+        row += 1
+        for risk, prob, impact, level in [
+            ("مخاطر بيانات السوق",      "متوسط", "عالٍ",       "عالٍ"),
+            ("مخاطر قانونية",           "منخفض", "عالٍ",       "متوسط"),
+            ("مخاطر اقتصادية",          "متوسط", "عالٍ",       "عالٍ"),
+            ("مخاطر بيئية",             "منخفض", "متوسط",      "منخفض"),
+            ("مخاطر نزاعات ملكية",      "منخفض", "مرتفع جداً", "متوسط"),
+        ]:
+            ws.cell(row=row, column=1, value=risk).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=prob).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=3, value=impact).alignment = _RTL_ALIGN
+            _lv = ws.cell(row=row, column=4, value=level)
+            _lv.fill = _WARN_FILL if level == "عالٍ" else _OK_FILL
+            row += 1
+        _col_widths(ws, [30, 18, 18, 24])
+
+        # ── 37. بيان الامتثال ────────────────────────────────────────────────
+        ws = wb.create_sheet("بيان الامتثال")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "بيان الامتثال المهني — مبدئي")
+        row = 3
+        for k, v in [
+            ("المعيار المهني المطبق",      "المعيار السعودي للتقييم العقاري"),
+            ("إطار الامتثال",              "IVSC — المعايير الدولية للتقييم"),
+            ("التقييم مستقل ومحايد",       "نعم — لا تضارب مصالح معلوم"),
+            ("لا تعليمات تقييدية",         "نعم"),
+            ("الاستخدام المقصود",          req.get("valuation_purpose", _NA)),
+            ("المستخدم المقصود",           req.get("client_name", _NA)),
+            ("حالة التوقيع",               "غير مكتمل — مبدئي"),
+            ("ملاحظة",                     "هذا البيان مبدئي — يُستبدل بالنسخة المعتمدة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 38. الإفصاحات المهنية ─────────────────────────────────────────────
+        ws = wb.create_sheet("الإفصاحات المهنية")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "الإفصاحات المهنية — مبدئي")
+        row = 3
+        for k, v in [
+            ("استقلالية المقيّم",          "نعم — لا علاقة مالية أو تجارية بالعقار"),
+            ("مصادر البيانات",             "مصادر سوقية مراجعة — غير معتمدة نهائياً"),
+            ("افتراضات البيانات",          "يُفترض صحة المستندات المقدمة"),
+            ("تحفظات القيمة",              "النتائج مبدئية وقابلة للتعديل"),
+            ("إفصاح QA",                   "قد تحتوي البيانات على محاكاة QA — داخلي فقط"),
+            ("حدود الاستخدام",             "للاستخدام الداخلي فقط — لا يُقدم لجهات خارجية"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 50])
+
+        # ── 39. التوصية النهائية ──────────────────────────────────────────────
+        ws = wb.create_sheet("التوصية النهائية")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "التوصية التقييمية — مبدئي")
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=3)
+        c = ws.cell(row=2, column=1,
+            value="توصية مبدئية — لا تُستخدم للأغراض الرسمية أو الائتمانية")
+        c.fill = _WARN_FILL; c.font = _WARN_FONT; c.alignment = _CTR_ALIGN
+        row = 4
+        for k, v in [
+            ("القيمة المشتقة من المقارنات",   _NA2),
+            ("القيمة المشتقة من الدخل",        _NA2),
+            ("القيمة المشتقة من التكلفة",      _NA2),
+            ("القيمة المشتقة من DCF",           _NA2),
+            ("القيمة المُوفَّقة المبدئية",      methods.get("reconciliation_value", _NA)),
+            ("الموافقة المبدئية",               "نعم" if prelim.get("preliminary_approval_ready") else _NA2),
+            ("القيمة الموصى بها",               prelim.get("preliminary_value", _NA2)),
+            ("ثقة التوصية",                     "متوسطة — تتحسن باكتمال البيانات"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [35, 38, 17])
+
+        # ── 40. اختبار اتساق الطرق ───────────────────────────────────────────
+        ws = wb.create_sheet("اختبار اتساق الطرق")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "اختبار اتساق طرق التقييم — مبدئي", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="الطريقة").font = _BOLD
+        ws.cell(row=row, column=2, value="القيمة المؤشرة").font = _BOLD
+        ws.cell(row=row, column=3, value="الانحراف عن المتوسط (%)").font = _BOLD
+        ws.cell(row=row, column=4, value="الحالة").font = _BOLD
+        row += 1
+        _method_list = methods.get("methods", [])
+        if _method_list:
+            for m_row in _method_list:
+                ws.cell(row=row, column=1,
+                    value=_sv(m_row.get("method_type"))).alignment = _RTL_ALIGN
+                ws.cell(row=row, column=2,
+                    value=_sv(m_row.get("indicated_value"))).alignment = _RTL_ALIGN
+                ws.cell(row=row, column=3, value=_NA2).fill = _WARN_FILL
+                ws.cell(row=row, column=4,
+                    value=_sv(m_row.get("status"))).alignment = _RTL_ALIGN
+                row += 1
+        else:
+            ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=4)
+            _nc = ws.cell(row=row, column=1, value="لا طرق مُنجزة — يحتاج استكمال")
+            _nc.fill = _WARN_FILL; _nc.font = _WARN_FONT; _nc.alignment = _CTR_ALIGN
+        _col_widths(ws, [28, 25, 28, 18])
+
+        # ── 41. حوكمة مصادر البيانات ─────────────────────────────────────────
+        ws = wb.create_sheet("حوكمة مصادر البيانات")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "حوكمة وجودة مصادر البيانات")
+        row = 3
+        for k, v in [
+            ("عدد المستندات المعتمدة",       _sv(ev_sum.get("approved_count", 0))),
+            ("جاهزية المستندات الإلزامية",   "نعم" if ev_sum.get("mandatory_document_readiness") else "لا"),
+            ("مصادر QA مستبعدة من الاعتماد", "نعم — مصادر QA لا تُعتمد في التقارير النهائية"),
+            ("تصنيف المصادر",                "حكومية — سوقية — خبراء محليون"),
+            ("حالة مراجعة المصادر",          "مبدئية — تخضع للتحقق"),
+            ("آلية حوكمة البيانات",          "مراجعة الخبير + تقاطع مصادر متعددة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 42])
+
+        # ── 42. خارطة طريق الاعتماد ──────────────────────────────────────────
+        ws = wb.create_sheet("خارطة طريق الاعتماد")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "خارطة طريق الاعتماد — المتطلبات المتبقية", 3)
+        row = 3
+        ws.cell(row=row, column=1, value="المتطلب").font = _BOLD
+        ws.cell(row=row, column=2, value="الحالة").font = _BOLD
+        ws.cell(row=row, column=3, value="الأولوية").font = _BOLD
+        row += 1
+        _roadmap_items = (
+            blockers[:15]
+            if blockers
+            else ["لا موانع معلومة — تحقق من اكتمال بيانات الطلب"]
+        )
+        for _blk in _roadmap_items:
+            ws.cell(row=row, column=1, value=str(_blk)).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=1).fill = _WARN_FILL
+            ws.cell(row=row, column=2, value="معلق").fill = _WARN_FILL
+            ws.cell(row=row, column=3, value="عالية").fill = _WARN_FILL
+            row += 1
+        _col_widths(ws, [52, 18, 15])
+
+        # ── 43. قائمة فحص الاعتماد ───────────────────────────────────────────
+        ws = wb.create_sheet("قائمة فحص الاعتماد")
+        ws.sheet_view.rightToLeft = True
+        _hdr(ws, 1, "قائمة فحص بنود الاعتماد النهائي")
+        row = 3
+        ws.cell(row=row, column=1, value="بند الاعتماد").font = _BOLD
+        ws.cell(row=row, column=2, value="الحالة").font = _BOLD
+        row += 1
+        _cert_items = [
+            ("اكتمال الطرق",              gate.get("methods_completed", False)),
+            ("اكتمال التسوية",             gate.get("reconciliation_completed", False)),
+            ("جاهزية الموافقة المبدئية",   gate.get("preliminary_approval_ready", False)),
+            ("جاهزية المستندات الإلزامية", ev_sum.get("mandatory_document_readiness", False)),
+            ("جاهزية المصادر الإنتاجية",   gate.get("real_sources_ready", False)),
+            ("جاهزية المقارنات",           gate.get("comparables_ready", False)),
+            ("اكتمال HBU",                 adv.get("hbu_completed", False)),
+            ("الفحص القانوني",             adv.get("legal_completed", False)),
+            ("مراجعة ESG",                 adv.get("esg_completed", False)),
+            ("تحليل SWOT",                 adv.get("swot_completed", False)),
+        ]
+        for _clabel, _cval in _cert_items:
+            ws.cell(row=row, column=1, value=_clabel).font = _BOLD
+            ws.cell(row=row, column=1).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=1).border = _THIN_BDR
+            _bool_cell(ws, row, 2, bool(_cval))
+            row += 1
+        _col_widths(ws, [42, 20])
+
+        # ── Apply output matrix: remove sheets not in active set ──────────────
+        if _active_sheets is not None:
+            for _sn in list(wb.sheetnames):
+                if _sn not in _active_sheets:
+                    del wb[_sn]
 
         wb.save(str(out_path))
         data   = out_path.read_bytes()

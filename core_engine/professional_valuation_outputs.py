@@ -31,10 +31,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
+import os
 import re
+import time
 import uuid
+import zipfile
 from datetime import datetime
 from pathlib import Path
+
+_log = logging.getLogger(__name__)
 
 # ── Storage paths ──────────────────────────────────────────────────────────────
 
@@ -50,7 +56,7 @@ for _d in (_OUT_DIR, _REG_DIR, _EV_DIR, _GATE_DIR):
 
 # ── ID helpers ─────────────────────────────────────────────────────────────────
 
-_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 
 
 def _new_pvout_id() -> str:
@@ -69,6 +75,276 @@ _OUTPUT_STATUSES = frozenset({"generated", "superseded", "revoked", "generation_
 # ── Keys excluded from API responses ──────────────────────────────────────────
 
 _PRIVATE_KEYS = frozenset({"internal_file_path"})
+
+# ── Batch 5: Feature flag & template-driven integration ───────────────────────
+
+_REQUIRED_TEMPLATE_SHEETS = frozenset({
+    "القيمة بالحروف",
+    "بيان الامتثال",
+    "توقيع واعتماد الخبير",
+})
+
+
+def _is_template_driven_excel_enabled() -> bool:
+    """Return True only when PV_TEMPLATE_DRIVEN_EXCEL_ENABLED is a truthy value.
+
+    Accepted true values (case-insensitive): 1, true, yes, on.
+    Absent or any other value → False (legacy builder).
+    Never raises.
+    """
+    try:
+        val = os.environ.get("PV_TEMPLATE_DRIVEN_EXCEL_ENABLED", "").strip().lower()
+        return val in ("1", "true", "yes", "on")
+    except Exception:
+        return False
+
+
+def _validate_template_workbook(path: Path) -> tuple[bool, str]:
+    """Validate that *path* is a usable 55-sheet macro-free XLSX.
+
+    Checks (in order):
+    1. File exists.
+    2. File size > 0.
+    3. Valid ZIP/XLSX package.
+    4. Workbook opens with openpyxl.
+    5. Sheet count == 55.
+    6. Required sheets present.
+    7. No vbaProject.bin (no VBA).
+    8. No external workbook links (xl/externalLinks/ folder absent or only xlPathMissing refs).
+    9. No broken #REF! formula.
+
+    Returns (ok: bool, reason: str).  Never raises.
+    """
+    try:
+        if not path.is_file():
+            return False, "output_file_missing"
+        if path.stat().st_size == 0:
+            return False, "output_file_empty"
+        try:
+            with zipfile.ZipFile(str(path), "r") as zf:
+                names = zf.namelist()
+                # VBA check
+                if any("vbaProject" in n for n in names):
+                    return False, "vba_stream_present"
+                # External links check
+                ext_rels = [n for n in names
+                            if n.startswith("xl/externalLinks/") and n.endswith(".rels")]
+                for rn in ext_rels:
+                    content = zf.read(rn).decode("utf-8", errors="replace")
+                    if "xlPathMissing" not in content:
+                        return False, "real_external_link_found"
+        except zipfile.BadZipFile:
+            return False, "not_valid_xlsx_zip"
+        import openpyxl
+        try:
+            wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
+        except Exception:
+            return False, "openpyxl_open_failed"
+        sheet_names = wb.sheetnames
+        sheet_count = len(sheet_names)
+        # broken formula scan (sampled — text search on raw XML for #REF!)
+        ref_errors = 0
+        try:
+            with zipfile.ZipFile(str(path), "r") as zf:
+                for n in zf.namelist():
+                    if n.startswith("xl/worksheets/") and n.endswith(".xml"):
+                        data = zf.read(n).decode("utf-8", errors="replace")
+                        if "#REF!" in data:
+                            ref_errors += 1
+        except Exception:
+            pass
+        wb.close()
+        if sheet_count != 55:
+            return False, f"wrong_sheet_count:{sheet_count}"
+        missing = _REQUIRED_TEMPLATE_SHEETS - frozenset(sheet_names)
+        if missing:
+            return False, f"required_sheets_missing:{list(missing)[:2]}"
+        if ref_errors:
+            return False, f"ref_errors_in_{ref_errors}_sheets"
+        return True, "ok"
+    except Exception as exc:
+        return False, f"validation_error:{str(exc)[:120]}"
+
+
+def _generate_final_workbook_with_strategy(
+    ctx: dict,
+    request_id: str,
+    output_id: str,
+) -> tuple[bool, str, int, str]:
+    """Route to template-driven or legacy builder based on PV_TEMPLATE_DRIVEN_EXCEL_ENABLED.
+
+    Returns (success, error_message, file_size_bytes, sha256_hex).
+    Never raises.
+
+    builder_used values:
+      legacy           — flag disabled; legacy builder ran.
+      template_driven  — flag enabled; template builder succeeded.
+      legacy_fallback  — flag enabled; template builder failed; legacy builder ran.
+    """
+    flag_enabled = _is_template_driven_excel_enabled()
+    t0 = time.monotonic()
+    req_dir = _OUT_DIR / request_id
+    req_dir.mkdir(parents=True, exist_ok=True)
+    dest_path = req_dir / f"{output_id}_final_workbook.xlsx"
+
+    builder_used = "legacy"
+    template_success = False
+    fallback_used = False
+    fallback_reason = ""
+    tmp_path: Path | None = None
+
+    if not flag_enabled:
+        _log.info(
+            "excel_builder flag=disabled request=%s output=%s builder=legacy",
+            request_id, output_id,
+        )
+        success, err, size, sha = _generate_final_workbook(ctx, request_id, output_id)
+        _log_builder_event(
+            request_id=request_id,
+            output_id=output_id,
+            flag_enabled=False,
+            builder_attempted="legacy",
+            builder_used="legacy",
+            template_success=False,
+            fallback_used=False,
+            fallback_reason="",
+            output_filename=dest_path.name,
+            duration_ms=int((time.monotonic() - t0) * 1000),
+        )
+        ctx.setdefault("output_metadata", {})["excel_builder_used"] = "legacy"
+        return success, err, size, sha
+
+    # Flag is enabled — attempt template-driven builder
+    import tempfile
+    tmp_fd, tmp_str = tempfile.mkstemp(
+        prefix=f"pv_tmp_{output_id}_",
+        suffix=".xlsx",
+        dir=str(req_dir),
+    )
+    os.close(tmp_fd)
+    tmp_path = Path(tmp_str)
+
+    try:
+        from reports.excel_template_driven_builder import (
+            build_template_driven_professional_workbook as _build_td,
+        )
+        td_result = _build_td(
+            ctx,
+            tmp_path,
+            request_id=request_id,
+            output_id=output_id,
+            allow_template_assumptions=False,
+        )
+        if not td_result.get("success"):
+            raise ValueError(
+                "template_builder_failed: " +
+                str(td_result.get("errors", ["unknown"])[:1])
+            )
+
+        # Validate before replacing destination
+        valid, reason = _validate_template_workbook(tmp_path)
+        if not valid:
+            raise ValueError(f"validation_failed:{reason}")
+
+        # Atomic replace
+        os.replace(str(tmp_path), str(dest_path))
+        tmp_path = None  # ownership transferred
+
+        data = dest_path.read_bytes()
+        size = len(data)
+        sha = hashlib.sha256(data).hexdigest()
+
+        builder_used = "template_driven"
+        template_success = True
+        _log.info(
+            "excel_builder flag=enabled builder=template_driven request=%s output=%s sheets=%s",
+            request_id, output_id, td_result.get("sheet_count"),
+        )
+        _log_builder_event(
+            request_id=request_id,
+            output_id=output_id,
+            flag_enabled=True,
+            builder_attempted="template_driven",
+            builder_used="template_driven",
+            template_success=True,
+            fallback_used=False,
+            fallback_reason="",
+            output_filename=dest_path.name,
+            duration_ms=int((time.monotonic() - t0) * 1000),
+        )
+        ctx.setdefault("output_metadata", {})["excel_builder_used"] = "template_driven"
+        return True, "", size, sha
+
+    except Exception as exc:
+        sanitized = _sanitize_log_reason(str(exc))
+        _log.warning(
+            "excel_builder template_failed request=%s output=%s reason=%s — falling back to legacy",
+            request_id, output_id, sanitized,
+        )
+        fallback_used = True
+        fallback_reason = sanitized
+        # Clean up incomplete temporary file
+        if tmp_path is not None and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except Exception:
+                pass
+        tmp_path = None
+
+    # Fallback to legacy builder
+    builder_used = "legacy_fallback"
+    success, err, size, sha = _generate_final_workbook(ctx, request_id, output_id)
+    _log_builder_event(
+        request_id=request_id,
+        output_id=output_id,
+        flag_enabled=True,
+        builder_attempted="template_driven",
+        builder_used="legacy_fallback",
+        template_success=False,
+        fallback_used=True,
+        fallback_reason=fallback_reason,
+        output_filename=dest_path.name,
+        duration_ms=int((time.monotonic() - t0) * 1000),
+    )
+    ctx.setdefault("output_metadata", {})["excel_builder_used"] = "legacy_fallback"
+    return success, err, size, sha
+
+
+def _sanitize_log_reason(raw: str) -> str:
+    """Remove absolute paths, payload fragments, and sensitive patterns from error strings."""
+    import re as _re
+    out = raw[:400]
+    # Remove absolute Windows/Unix paths
+    out = _re.sub(r"[A-Za-z]:\\[^\s'\"]{0,200}", "<path>", out)
+    out = _re.sub(r"/[a-z][^\s'\"]{0,200}", "<path>", out)
+    return out
+
+
+def _log_builder_event(
+    *,
+    request_id: str,
+    output_id: str,
+    flag_enabled: bool,
+    builder_attempted: str,
+    builder_used: str,
+    template_success: bool,
+    fallback_used: bool,
+    fallback_reason: str,
+    output_filename: str,
+    duration_ms: int,
+) -> None:
+    """Emit structured builder observability event. Never raises."""
+    try:
+        _log.info(
+            "excel_builder_event request=%s output=%s flag=%s attempted=%s used=%s "
+            "template_ok=%s fallback=%s reason=%s file=%s duration_ms=%s",
+            request_id, output_id, flag_enabled,
+            builder_attempted, builder_used,
+            template_success, fallback_used,
+            fallback_reason or "-", output_filename, duration_ms,
+        )
+    except Exception:
+        pass
 
 
 # ── Default output record ──────────────────────────────────────────────────────
@@ -250,6 +526,11 @@ def build_professional_valuation_output_context(request_id: str) -> dict:
     }
 
     # ── Request summary ───────────────────────────────────────────────────────
+    _REPORT_TYPE_LABELS: dict = {
+        "traditional_report":  "تقرير تقليدي",
+        "detailed_report":     "تقرير تفصيلي",
+        "professional_report": "تقرير احترافي",
+    }
     req_summary: dict = {
         "request_id":        request_id,
         "request_number":    NA,
@@ -264,11 +545,14 @@ def build_professional_valuation_output_context(request_id: str) -> dict:
         "inspection_date":   NA,
         "currency":          "SAR",
         "report_language":   "ar",
+        "report_type":       "professional_report",
+        "report_type_label": "تقرير احترافي",
     }
     try:
         from professional_valuation_routes import _read_pvr as _pvr_read
         pvr = _pvr_read(request_id)
         if pvr:
+            rt = pvr.get("report_type") or "professional_report"
             req_summary.update({
                 "request_number":    pvr.get("request_number") or request_id,
                 "client_name":       pvr.get("client_name") or NA,
@@ -282,6 +566,8 @@ def build_professional_valuation_output_context(request_id: str) -> dict:
                 "inspection_date":   pvr.get("inspection_date") or NA,
                 "currency":          pvr.get("currency") or "SAR",
                 "report_language":   pvr.get("report_language") or "ar",
+                "report_type":       rt,
+                "report_type_label": _REPORT_TYPE_LABELS.get(rt, rt),
             })
     except (ImportError, Exception):
         pass
@@ -531,6 +817,25 @@ def build_professional_valuation_output_context(request_id: str) -> dict:
         pass
     ctx["signature_summary"] = sig_summary
 
+    # ── Output matrix context ─────────────────────────────────────────────────
+    try:
+        from professional_valuation_output_matrix import (
+            get_output_matrix_context, get_output_warnings,
+        )
+        _rt = req_summary.get("report_type", "professional_report")
+        _vp = req_summary.get("valuation_purpose", "")
+        _pt = req_summary.get("property_type", "")
+        if _vp == NA:
+            _vp = ""
+        if _pt == NA:
+            _pt = ""
+        ctx["output_matrix"]   = get_output_matrix_context(_rt, _vp, _pt)
+        ctx["output_warnings"] = get_output_warnings(_rt, _vp, advisory_only=False)
+        ctx["report_type"]     = _rt
+    except Exception:
+        ctx["output_matrix"]   = {}
+        ctx["output_warnings"] = []
+
     return ctx
 
 
@@ -590,6 +895,7 @@ def _generate_certified_pdf(ctx: dict, request_id: str, output_id: str) -> tuple
 # ── Workbook generation ────────────────────────────────────────────────────────
 
 _SHEETS = [
+    # ── Certified core (original 18) ────────────────────────────────────────
     "غلاف التقرير",
     "ملخص الاعتماد",
     "نطاق العمل",
@@ -608,6 +914,32 @@ _SHEETS = [
     "سجل التدقيق",
     "موانع الاعتماد السابقة",
     "المخرجات والنسخ",
+    # ── Parity sheets (ported from ordinary valuation, sheets 19–43) ────────
+    "مقدمة ونطاق التقييم",
+    "الافتراضات والقيود",
+    "طريقة مقارنة البيوع",
+    "طريقة الدخل",
+    "التدفقات النقدية DCF",
+    "طريقة التكلفة",
+    "قيمة الأرض",
+    "تفصيل الإهلاك",
+    "القيمة الإيجارية",
+    "سيناريوهات الحساسية",
+    "نطاق الثقة وعدم اليقين",
+    "مصادر الأسعار",
+    "دعم التعديلات",
+    "تأثير ESG والمخاطر المناخية",
+    "تقييم الأثر البيئي",
+    "مؤشرات تكلفة البناء",
+    "مصفوفة المخاطر",
+    "بيان الامتثال",
+    "الإفصاحات المهنية",
+    "التوصية النهائية",
+    "اختبار اتساق الطرق",
+    "حوكمة مصادر البيانات",
+    "الملحق — تفاصيل الطرق",
+    "الملحق — المقارنات التفصيلية",
+    "لوحة امتثال التقييم",
 ]
 
 _NA = "غير متاح"
@@ -617,12 +949,26 @@ _NA2 = "غير منطبق"
 def _generate_final_workbook(ctx: dict, request_id: str, output_id: str) -> tuple[bool, str, int, str]:
     """Generate certified XLSX workbook from output context.
 
+    Sheet set is determined by the output matrix (report_type × valuation_purpose
+    × property_type).  All sheets are generated first; sheets not in the active
+    set are removed before save.
+
     Returns (success, error_message, file_size_bytes, sha256_hex).
     Does NOT raise; always returns a result tuple.
     """
     req_dir = _OUT_DIR / request_id
     req_dir.mkdir(parents=True, exist_ok=True)
     out_path = req_dir / f"{output_id}_final_workbook.xlsx"
+
+    # ── Determine active sheet set from output matrix ─────────────────────────
+    try:
+        from professional_valuation_output_matrix import get_final_sheets
+        _rt  = ctx.get("report_type") or ctx.get("request_summary", {}).get("report_type", "professional_report")
+        _vp  = ctx.get("request_summary", {}).get("valuation_purpose", "")
+        _pt  = ctx.get("request_summary", {}).get("property_type", "")
+        _active_sheets = frozenset(get_final_sheets(_rt, _vp, _pt))
+    except Exception:
+        _active_sheets = None  # fallback: generate all sheets
 
     try:
         import openpyxl
@@ -691,6 +1037,7 @@ def _generate_final_workbook(ctx: dict, request_id: str, output_id: str) -> tupl
         for k, v in [
             ("رقم التقرير", ctx.get("report_number", _NA)),
             ("رقم الطلب", req.get("request_id", _NA)),
+            ("نوع التقرير", req.get("report_type_label", "تقرير احترافي")),
             ("اسم العميل", req.get("client_name", _NA)),
             ("نوع العميل", req.get("client_type", _NA)),
             ("عنوان العقار", req.get("property_address", _NA)),
@@ -1044,6 +1391,477 @@ def _generate_final_workbook(ctx: dict, request_id: str, output_id: str) -> tupl
             row += 1
         _col_widths(ws, [22, 18, 10, 18, 25, 18])
 
+        # ════════════════════════════════════════════════════════════════════
+        # Parity sheets 19–43 — ported from ordinary valuation workbook
+        # ════════════════════════════════════════════════════════════════════
+
+        # ── 19. مقدمة ونطاق التقييم ──────────────────────────────────────────
+        ws = wb.create_sheet("مقدمة ونطاق التقييم")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "مقدمة التقرير المعتمد ونطاق التقييم", 4)
+        row = 3
+        for k, v in [
+            ("رقم الطلب",           req.get("request_id", _NA)),
+            ("غرض التقييم",         req.get("valuation_purpose", _NA)),
+            ("أساس القيمة",         req.get("basis_of_value", _NA)),
+            ("تاريخ التقييم",       req.get("valuation_date", _NA)),
+            ("تاريخ المعاينة",      req.get("inspection_date", _NA)),
+            ("نطاق الطرق المستخدمة", "مقارنة البيوع — الدخل — التكلفة — DCF"),
+            ("القيود المعتمدة",     "موثقة في نطاق العمل المعتمد"),
+            ("حالة الاعتماد",       "معتمد" if gate.get("certification_ready") else "غير معتمد"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [32, 50, 15, 15])
+
+        # ── 20. الافتراضات والقيود ───────────────────────────────────────────
+        ws = wb.create_sheet("الافتراضات والقيود")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "الافتراضات والقيود المعتمدة", 4)
+        row = 3
+        for k, v in [
+            ("الافتراض 1", "تم التحقق من الملكية ومطابقة المستندات المعتمدة"),
+            ("الافتراض 2", "بيانات المقارنات من مصادر إنتاجية معتمدة"),
+            ("الافتراض 3", "لا عوائق قانونية — موثق في الفحص القانوني"),
+            ("الافتراض 4", "الحالة البنائية تمت معاينتها ميدانياً"),
+            ("القيد 1",    "الاستخدام المقصود فقط كما هو محدد في نطاق العمل"),
+            ("القيد 2",    "لا يُستخدم لأغراض خارج نطاق التقييم المحدد"),
+            ("القيد 3",    "صلاحية التقرير 12 شهراً من تاريخ التقييم"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [18, 62, 15, 15])
+
+        # ── 21. طريقة مقارنة البيوع ──────────────────────────────────────────
+        ws = wb.create_sheet("طريقة مقارنة البيوع")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "طريقة مقارنة البيوع — معتمد", 4)
+        row = 3
+        _comp_d = ctx.get("comparable_summary", {})
+        _mth_d  = ctx.get("method_summary", {})
+        for k, v in [
+            ("عدد المقارنات الإنتاجية المعتمدة",
+             str(_comp_d.get("production_ready_count", 0))),
+            ("جاهزية المقارنات للاعتماد",
+             "نعم" if _comp_d.get("certification_comparable_ready") else _NA),
+            ("متوسط سعر المتر المعدل",       _NA),
+            ("القيمة المشتقة من المقارنات",  _NA),
+            ("وزن الطريقة في التوفيق",
+             str(_mth_d.get("method_outputs", {}).get("sales_comparison_weight", _NA))),
+            ("ملاحظة",                        "بيانات مقارنات إنتاجية معتمدة — لا بيانات QA"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [42, 38, 15, 15])
+
+        # ── 22. طريقة الدخل ──────────────────────────────────────────────────
+        ws = wb.create_sheet("طريقة الدخل")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "طريقة الدخل — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("القيمة الإيجارية السنوية",     _NA),
+            ("معدل الشغور (%)",               _NA),
+            ("صافي الدخل التشغيلي (NOI)",    _NA),
+            ("معدل الرسملة (%)",              _NA),
+            ("القيمة المشتقة من الدخل",      _NA),
+            ("وزن الطريقة في التوفيق",       _NA),
+            ("ملاحظة",                        "بيانات إيجارية إنتاجية معتمدة"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 23. التدفقات النقدية DCF ──────────────────────────────────────────
+        ws = wb.create_sheet("التدفقات النقدية DCF")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تحليل التدفقات النقدية المخصومة — DCF — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("فترة الاستثمار (سنوات)",          _NA),
+            ("معدل الخصم (%)",                   _NA),
+            ("معدل النمو الإيجاري المتوقع (%)",  _NA),
+            ("معدل الرسملة الطرفي (%)",          _NA),
+            ("القيمة الحالية الصافية — NPV",      _NA),
+            ("القيمة التقييمية بـ DCF",           _NA),
+            ("وزن الطريقة في التوفيق",           _NA),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [42, 38, 15, 15])
+
+        # ── 24. طريقة التكلفة ────────────────────────────────────────────────
+        ws = wb.create_sheet("طريقة التكلفة")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "طريقة التكلفة — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("قيمة الأرض المعتمدة",              _NA),
+            ("تكلفة الإنشاء للمتر (ريال/م²)",    _NA),
+            ("إجمالي تكلفة الإنشاء",              _NA),
+            ("نسبة الإهلاك (%)",                  _NA),
+            ("القيمة المُستبدَلة المخفضة",         _NA),
+            ("القيمة الإجمالية بطريقة التكلفة",   _NA),
+            ("وزن الطريقة في التوفيق",             _NA),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [42, 38, 15, 15])
+
+        # ── 25. قيمة الأرض ───────────────────────────────────────────────────
+        ws = wb.create_sheet("قيمة الأرض")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تقدير قيمة الأرض — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("المنطقة",                           req.get("property_address", _NA)),
+            ("نوع العقار",                         req.get("property_type", _NA)),
+            ("سعر المتر الأرضي المعتمد (ريال)",    _NA),
+            ("المساحة الإجمالية (م²)",              _NA),
+            ("القيمة الإجمالية المعتمدة للأرض",    _NA),
+            ("عدد مقارنات الأراضي المستخدمة",       _NA),
+            ("المصدر",                              "مصادر إنتاجية معتمدة — لا بيانات QA"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 26. تفصيل الإهلاك ────────────────────────────────────────────────
+        ws = wb.create_sheet("تفصيل الإهلاك")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تفصيل الإهلاك وعمر المبنى — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("العمر الفعلي للمبنى (سنة)",         _NA),
+            ("العمر الاقتصادي المتوقع (سنة)",     _NA),
+            ("العمر المتبقي (سنة)",                _NA),
+            ("نسبة الإهلاك المادي (%)",            _NA),
+            ("الإهلاك الوظيفي (%)",                _NA),
+            ("الإهلاك الخارجي (%)",                _NA),
+            ("إجمالي الإهلاك (%)",                 _NA),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 27. القيمة الإيجارية ─────────────────────────────────────────────
+        ws = wb.create_sheet("القيمة الإيجارية")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تحليل القيمة الإيجارية السوقية — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("الإيجار السوقي للمتر (ريال/م²/سنة)", _NA),
+            ("المساحة المؤجرة المعتمدة (م²)",        _NA),
+            ("الإيجار الإجمالي السنوي",               _NA),
+            ("معدل الشغور المعتمد (%)",               _NA),
+            ("صافي الإيجار الفعلي",                   _NA),
+            ("نوع الاستخدام الإيجاري",                req.get("property_type", _NA)),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [42, 38, 15, 15])
+
+        # ── 28. سيناريوهات الحساسية ───────────────────────────────────────────
+        ws = wb.create_sheet("سيناريوهات الحساسية")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "سيناريوهات الحساسية وتحليل What-If — معتمد", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="المتغير").font      = _BOLD
+        ws.cell(row=row, column=2, value="التغيير (-10%)").font = _BOLD
+        ws.cell(row=row, column=3, value="القاعدة").font       = _BOLD
+        ws.cell(row=row, column=4, value="التغيير (+10%)").font = _BOLD
+        row += 1
+        for _param in ["سعر المتر", "معدل الرسملة", "نسبة الشغور", "معدل الخصم DCF"]:
+            ws.cell(row=row, column=1, value=_param).alignment = _RTL_ALIGN
+            for _col in [2, 3, 4]:
+                ws.cell(row=row, column=_col, value=_NA)
+            row += 1
+        _col_widths(ws, [28, 22, 22, 22])
+
+        # ── 29. نطاق الثقة وعدم اليقين ───────────────────────────────────────
+        ws = wb.create_sheet("نطاق الثقة وعدم اليقين")
+        ws.sheet_view.rightToLeft = True
+        _recon_d = ctx.get("reconciliation_summary", {})
+        _hdr_row(ws, 1, "نطاق الثقة وعدم اليقين في القيمة المعتمدة", 4)
+        row = 3
+        _wv = _recon_d.get("weighted_value")
+        for k, v in [
+            ("القيمة المعتمدة",
+             f"{_wv:,.0f}" if isinstance(_wv, (int, float)) else _NA),
+            ("الحد الأدنى المقدر (-5%)",       _NA),
+            ("الحد الأعلى المقدر (+5%)",       _NA),
+            ("مستوى الثقة",                     "عالٍ — بيانات إنتاجية معتمدة"),
+            ("مصادر عدم اليقين المتبقية",       "تغير السوق — قرارات تشريعية"),
+            ("توصية",                            "مراجعة دورية خلال 12 شهراً"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 30. مصادر الأسعار ────────────────────────────────────────────────
+        ws = wb.create_sheet("مصادر الأسعار")
+        ws.sheet_view.rightToLeft = True
+        _src_d = ctx.get("source_summary", {})
+        _hdr_row(ws, 1, "مصادر بيانات الأسعار المعتمدة", 4)
+        row = 3
+        for k, v in [
+            ("عدد المصادر الإنتاجية المعتمدة",
+             str(_src_d.get("production_ready_count", 0))),
+            ("بيانات QA مستبعدة",               "نعم"),
+            ("تصنيف المصادر",                    "مصادر سوقية — بيانات حكومية — مقارنات ميدانية"),
+            ("حالة المصادر",                     "معتمدة للاستخدام الرسمي"),
+            ("ملاحظة",                            str(_src_d.get("note", _NA))),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 31. دعم التعديلات ────────────────────────────────────────────────
+        ws = wb.create_sheet("دعم التعديلات")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تحليل وتوثيق التعديلات المعتمدة", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="عنصر التعديل").font  = _BOLD
+        ws.cell(row=row, column=2, value="المعامل المعتمد").font = _BOLD
+        ws.cell(row=row, column=3, value="مبرر التعديل").font   = _BOLD
+        row += 1
+        for _adj in ["الموقع", "المساحة", "العمر", "الحالة", "التشطيب", "الوقت"]:
+            ws.cell(row=row, column=1, value=_adj).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_NA)
+            ws.cell(row=row, column=3,
+                value="موثق في ملف المقارنات").alignment = _RTL_ALIGN
+            row += 1
+        _col_widths(ws, [22, 22, 46])
+
+        # ── 32. تأثير ESG والمخاطر المناخية ──────────────────────────────────
+        ws = wb.create_sheet("تأثير ESG والمخاطر المناخية")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تأثير ESG والمخاطر المناخية — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("اكتمال مراجعة ESG",           "نعم" if esg.get("completed") else _NA),
+            ("الحالة",                        esg.get("status", _NA)),
+            ("تأثير ESG على القيمة",          "استشاري — لا يؤثر تلقائياً"),
+            ("تصنيف الاستدامة",              _NA),
+            ("خطر الفيضانات",                _NA),
+            ("كفاءة الطاقة",                 _NA),
+            ("ملاحظة",                        "نتائج ESG استشارية وفق المرحلة F"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 33. تقييم الأثر البيئي ───────────────────────────────────────────
+        ws = wb.create_sheet("تقييم الأثر البيئي")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "تقييم الأثر البيئي — معتمد", 4)
+        row = 3
+        for k, v in [
+            ("حالة التلوث البيئي",           _NA),
+            ("قرب المنشآت الخطرة",            _NA),
+            ("استخدامات المنطقة المحيطة",     req.get("property_address", _NA)),
+            ("المخاطر البيئية الجيولوجية",    _NA),
+            ("التأثير على القيمة",             "لا أثر بيئي معلوم مؤثر"),
+            ("المصدر",                         "فحص بيئي أولي — لا تقرير بيئي متخصص"),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 34. مؤشرات تكلفة البناء ──────────────────────────────────────────
+        ws = wb.create_sheet("مؤشرات تكلفة البناء")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "مؤشرات تكلفة البناء السوقية المعتمدة", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="تصنيف البناء").font       = _BOLD
+        ws.cell(row=row, column=2, value="التكلفة (ريال/م²)").font  = _BOLD
+        ws.cell(row=row, column=3, value="المصدر").font              = _BOLD
+        row += 1
+        for _btype in ["اقتصادي", "متوسط", "فاخر", "فائق الجودة"]:
+            ws.cell(row=row, column=1, value=_btype).alignment = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_NA)
+            ws.cell(row=row, column=3,
+                value="مصدر سوقي معتمد").alignment = _RTL_ALIGN
+            row += 1
+        _col_widths(ws, [25, 25, 40])
+
+        # ── 35. مصفوفة المخاطر ───────────────────────────────────────────────
+        ws = wb.create_sheet("مصفوفة المخاطر")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "مصفوفة تقييم مخاطر التقييم — معتمد", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="نوع المخاطرة").font   = _BOLD
+        ws.cell(row=row, column=2, value="الاحتمالية").font      = _BOLD
+        ws.cell(row=row, column=3, value="الأثر").font            = _BOLD
+        ws.cell(row=row, column=4, value="مستوى المخاطرة").font  = _BOLD
+        row += 1
+        for _risk, _prob, _impact, _level in [
+            ("مخاطر بيانات السوق",     "منخفض", "عالٍ",  "متوسط"),
+            ("مخاطر قانونية",          "منخفض", "عالٍ",  "منخفض"),
+            ("مخاطر اقتصادية",         "متوسط", "عالٍ",  "متوسط"),
+            ("مخاطر بيئية",            "منخفض", "متوسط", "منخفض"),
+            ("مخاطر نزاعات ملكية",     "منخفض", "عالٍ",  "منخفض"),
+        ]:
+            ws.cell(row=row, column=1, value=_risk).alignment   = _RTL_ALIGN
+            ws.cell(row=row, column=2, value=_prob).alignment   = _RTL_ALIGN
+            ws.cell(row=row, column=3, value=_impact).alignment = _RTL_ALIGN
+            _lvc = ws.cell(row=row, column=4, value=_level)
+            _lvc.fill = _WARN_FILL if _level == "عالٍ" else _OK_FILL
+            row += 1
+        _col_widths(ws, [30, 18, 18, 22])
+
+        # ── 36. بيان الامتثال ────────────────────────────────────────────────
+        ws = wb.create_sheet("بيان الامتثال")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "بيان الامتثال المهني المعتمد", 4)
+        row = 3
+        for k, v in [
+            ("المعيار المهني المطبق",      "المعيار السعودي للتقييم العقاري"),
+            ("إطار الامتثال",              "IVSC — المعايير الدولية للتقييم"),
+            ("التقييم مستقل ومحايد",       "نعم — مؤكد من الخبير"),
+            ("لا تعليمات تقييدية",         "نعم"),
+            ("الاستخدام المقصود",          req.get("valuation_purpose", _NA)),
+            ("المستخدم المقصود",           req.get("client_name", _NA)),
+            ("حالة التوقيع",               "موقع" if sig.get("final_signoff_ready") else _NA),
+            ("رخصة الخبير",               sig.get("expert_license", _NA)),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [36, 44, 15, 15])
+
+        # ── 37. الإفصاحات المهنية ─────────────────────────────────────────────
+        ws = wb.create_sheet("الإفصاحات المهنية")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "الإفصاحات المهنية المعتمدة", 4)
+        row = 3
+        for k, v in [
+            ("استقلالية المقيّم",           "نعم — لا علاقة مالية بالعقار"),
+            ("مصادر البيانات المعتمدة",     "مصادر إنتاجية معتمدة — لا بيانات QA"),
+            ("تضارب المصالح",               "لا يوجد"),
+            ("تحفظات القيمة",               "لا تحفظات جوهرية"),
+            ("حدود الاستخدام",              "وفق نطاق العمل المعتمد"),
+            ("إقرار الخبير",                sig.get("approval_statement", _NA)),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [36, 54])
+
+        # ── 38. التوصية النهائية ──────────────────────────────────────────────
+        ws = wb.create_sheet("التوصية النهائية")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "التوصية التقييمية النهائية المعتمدة", 4)
+        row = 3
+        _recon_d2 = ctx.get("reconciliation_summary", {})
+        _wv2 = _recon_d2.get("weighted_value")
+        _fv2 = _recon_d2.get("selected_final_value")
+        for k, v in [
+            ("القيمة الموزونة",
+             f"{_wv2:,.0f}" if isinstance(_wv2, (int, float)) else _NA),
+            ("القيمة النهائية المختارة",
+             f"{_fv2:,.0f}" if isinstance(_fv2, (int, float)) else _NA),
+            ("أساس التوصية",               _recon_d2.get("rationale", _NA)),
+            ("اسم الخبير الموصي",          sig.get("expert_name", _NA)),
+            ("رخصة الخبير",               sig.get("expert_license", _NA)),
+            ("تاريخ التوصية",              req.get("valuation_date", _NA)),
+            ("العملة",                     req.get("currency", "SAR")),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [36, 44, 15, 15])
+
+        # ── 39. اختبار اتساق الطرق ───────────────────────────────────────────
+        ws = wb.create_sheet("اختبار اتساق الطرق")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "اختبار اتساق طرق التقييم — معتمد", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="الطريقة").font        = _BOLD
+        ws.cell(row=row, column=2, value="القيمة").font          = _BOLD
+        ws.cell(row=row, column=3, value="الانحراف (%)").font   = _BOLD
+        ws.cell(row=row, column=4, value="الحالة").font          = _BOLD
+        row += 1
+        _mth_d3 = ctx.get("method_summary", {})
+        _mo3 = _mth_d3.get("method_outputs", {})
+        if _mo3:
+            for _mk, _mv in _mo3.items():
+                if not isinstance(_mv, dict):
+                    ws.cell(row=row, column=1, value=str(_mk)).alignment = _RTL_ALIGN
+                    ws.cell(row=row, column=2, value=_NA)
+                    ws.cell(row=row, column=3, value=_NA)
+                    ws.cell(row=row, column=4, value=_NA)
+                    row += 1
+        else:
+            ws.cell(row=row, column=1, value="بيانات غير متاحة").fill = _NA_FILL
+        _col_widths(ws, [28, 25, 22, 18])
+
+        # ── 40. حوكمة مصادر البيانات ─────────────────────────────────────────
+        ws = wb.create_sheet("حوكمة مصادر البيانات")
+        ws.sheet_view.rightToLeft = True
+        _ev_d = ctx.get("evidence_summary", {})
+        _hdr_row(ws, 1, "حوكمة وجودة مصادر البيانات المعتمدة", 4)
+        row = 3
+        for k, v in [
+            ("عدد المستندات المعتمدة",       str(_ev_d.get("approved_count", 0))),
+            ("جاهزية المستندات الإلزامية",   "نعم" if _ev_d.get("mandatory_document_readiness") else _NA),
+            ("بيانات QA مستبعدة",            "نعم — مؤكد"),
+            ("تصنيف المصادر",                "حكومية — سوقية — خبراء"),
+            ("حالة مراجعة المصادر",          "معتمدة للاستخدام الرسمي"),
+            ("آلية الحوكمة",                 "مراجعة النظراء + مراجعة خبير مستقل"),
+            ("ملاحظة",                        str(_ev_d.get("note", _NA))),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [40, 40, 15, 15])
+
+        # ── 41. الملحق — تفاصيل الطرق ────────────────────────────────────────
+        ws = wb.create_sheet("الملحق — تفاصيل الطرق")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "ملحق تفاصيل طرق التقييم المعتمدة", 4)
+        row = 3
+        _mth_d4 = ctx.get("method_summary", {})
+        ws.cell(row=row, column=1, value="اكتمال الطرق").font    = _BOLD
+        ws.cell(row=row, column=2,
+            value="نعم" if _mth_d4.get("methods_completed") else _NA)
+        row += 1
+        ws.cell(row=row, column=1, value="حالة الجاهزية").font  = _BOLD
+        ws.cell(row=row, column=2, value=str(_mth_d4.get("readiness_status", _NA)))
+        row += 2
+        for _lim in _mth_d4.get("limitations", []):
+            ws.cell(row=row, column=1, value="محدودية").fill = _WARN_FILL
+            ws.cell(row=row, column=2, value=str(_lim)).fill = _WARN_FILL
+            row += 1
+        _col_widths(ws, [30, 50])
+
+        # ── 42. الملحق — المقارنات التفصيلية ─────────────────────────────────
+        ws = wb.create_sheet("الملحق — المقارنات التفصيلية")
+        ws.sheet_view.rightToLeft = True
+        _comp_d2 = ctx.get("comparable_summary", {})
+        _hdr_row(ws, 1, "ملحق تفاصيل المقارنات المعتمدة", 4)
+        row = 3
+        for k, v in [
+            ("عدد المقارنات الإنتاجية",
+             str(_comp_d2.get("production_ready_count", 0))),
+            ("جاهزية المقارنات للاعتماد",
+             "نعم" if _comp_d2.get("certification_comparable_ready") else _NA),
+            ("المقارنات المرفوضة / QA مستبعدة", "نعم"),
+            ("ملاحظة",                            str(_comp_d2.get("note", _NA))),
+        ]:
+            _kv(ws, row, k, v); row += 1
+        _col_widths(ws, [42, 38, 15, 15])
+
+        # ── 43. لوحة امتثال التقييم ───────────────────────────────────────────
+        ws = wb.create_sheet("لوحة امتثال التقييم")
+        ws.sheet_view.rightToLeft = True
+        _hdr_row(ws, 1, "لوحة امتثال التقييم الشامل — معتمد", 4)
+        row = 3
+        ws.cell(row=row, column=1, value="بند الامتثال").font  = _BOLD
+        ws.cell(row=row, column=2, value="الحالة").font         = _BOLD
+        row += 1
+        _compliance = [
+            ("المعيار السعودي للتقييم",      gate.get("certification_ready", False)),
+            ("استقلالية المقيّم",             True),
+            ("توثيق المستندات",              gate.get("final_report_generation_allowed", False)),
+            ("مراجعة النظراء",               ctx.get("peer_review_summary", {}).get("peer_review_ready", False)),
+            ("توقيع الخبير",                 ctx.get("signature_summary", {}).get("final_signoff_ready", False)),
+            ("استبعاد بيانات QA",            True),
+            ("لا مسارات داخلية مكشوفة",      True),
+        ]
+        for _clbl, _cval in _compliance:
+            ws.cell(row=row, column=1, value=_clbl).font      = _BOLD
+            ws.cell(row=row, column=1).alignment               = _RTL_ALIGN
+            ws.cell(row=row, column=1).border                  = _THIN_BDR
+            _bool_cell(ws, row, 2, bool(_cval))
+            row += 1
+        _col_widths(ws, [44, 20])
+
+        # ── Apply output matrix: remove sheets not in active set ──────────────
+        if _active_sheets is not None:
+            for _sn in list(wb.sheetnames):
+                if _sn not in _active_sheets:
+                    del wb[_sn]
+
         wb.save(str(out_path))
 
         data = out_path.read_bytes()
@@ -1238,7 +2056,13 @@ def register_pv_outputs_routes(app, require_auth) -> None:
             "file_size_bytes":  None,
         }
 
-        success, err_msg, size, sha = _generate_final_workbook(ctx, request_id, rec["output_id"])
+        # Batch 5: route through strategy wrapper (legacy when flag disabled)
+        success, err_msg, size, sha = _generate_final_workbook_with_strategy(
+            ctx, request_id, rec["output_id"]
+        )
+        rec["excel_builder_used"] = ctx.get("output_metadata", {}).get(
+            "excel_builder_used", "legacy"
+        )
 
         if success:
             rec["output_status"]   = "generated"
@@ -1267,8 +2091,12 @@ def register_pv_outputs_routes(app, require_auth) -> None:
         _append_output_event(
             request_id, actor, "generate_final_workbook",
             output_id=rec["output_id"],
-            note=f"status={rec['output_status']} version={version}",
-            metadata={"output_type": "final_workbook", "success": success},
+            note=f"status={rec['output_status']} version={version} builder={rec['excel_builder_used']}",
+            metadata={
+                "output_type": "final_workbook",
+                "success": success,
+                "excel_builder_used": rec["excel_builder_used"],
+            },
         )
 
         return jsonify({

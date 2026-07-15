@@ -47,7 +47,7 @@ for _d in (_EVIDENCE_DIR, _SOURCES_DIR, _FILES_DIR):
 
 # ── ID format validators ──────────────────────────────────────────────────────
 
-_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4}$")
+_PVR_ID_RE = re.compile(r"^PVR-\d{8}-[0-9A-F]{4,8}$")
 _PVE_ID_RE = re.compile(r"^PVE-[0-9A-F]{8}$")
 _PVS_ID_RE = re.compile(r"^PVS-[0-9A-F]{8}$")
 

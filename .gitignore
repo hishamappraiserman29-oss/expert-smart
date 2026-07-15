@@ -102,3 +102,4 @@ node_modules/
 # Runtime storage for generated leads/uploads/reports
 core_engine/tax_appeal/
 core_engine/instance/
+core_engine/core_engine/

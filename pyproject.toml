@@ -33,6 +33,9 @@ testpaths = ["core_engine/tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "live_server: requires a running local server and Playwright browser",
+]
 
 [tool.mypy]
 python_version = "3.11"

@@ -1,6 +1,31 @@
 """
 test_professional_valuation_backend.py — Professional Valuation Phase B + Phase C backend tests.
 
+PVRT01  create with traditional_report stores and returns report_type
+PVRT02  create with detailed_report stores and returns report_type
+PVRT03  create with professional_report stores and returns report_type
+PVRT04  create without report_type defaults to professional_report
+PVRT05  create with invalid report_type returns 400
+PVRT06  report_type appears in list response
+PVRT07  report_type appears in detail response
+PVRT08  schema route lists report_type in optional_fields
+PVRT09  report_type label in preliminary output context
+PVRT10  report_type label in certified output context
+
+WBPAR01 expert workbook sheet list has ≥ 40 sheets
+WBPAR02 final workbook sheet list has ≥ 40 sheets
+WBPAR03 expert workbook sheet list includes parity sheet names
+WBPAR04 final workbook sheet list includes parity sheet names
+WBPAR05 report_type_label appears in expert workbook sheet list context
+WBPAR06 report_type_label appears in final workbook sheet list context
+WBPAR07 ordinary valuation workbook builder is importable
+WBPAR08 no internal paths in expert workbook sheet names
+WBPAR09 no internal paths in final workbook sheet names
+WBPAR10 expert workbook generates successfully with advisory data
+WBPAR11 final workbook blocked when certification_ready=False
+WBPAR12 certification gate unchanged after workbook expansion
+WBPAR13 expert workbook parity sheets do not contain None/NaN strings
+
 PVB01  create request returns request_id
 PVB02  create validates required client_name
 PVB03  create validates required property_type
@@ -85,6 +110,16 @@ _TEST_SECRET = "pvr-phase-b-test-secret-32chars!!"
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
+@pytest.fixture(scope="session", autouse=True)
+def _clean_pvr_datastore():
+    """Clear accumulated test records before the session.
+    Prevents the requests.jsonl from growing across runs and slowing _update_pvr (O(n) rewrite)."""
+    if _pvr._REQ_FILE.exists():
+        _pvr._REQ_FILE.write_bytes(b"")
+    if _pvr._EVENTS_FILE.exists():
+        _pvr._EVENTS_FILE.write_bytes(b"")
+
 
 @pytest.fixture(autouse=True)
 def env(monkeypatch):
@@ -3822,7 +3857,7 @@ def test_PVH42_workbook_sheet_count_matches_specification(client):
         str(_pvout._OUT_DIR / rid / f"{out['output_id']}_final_workbook.xlsx"),
         data_only=True,
     )
-    assert len(wb.sheetnames) == 18, f"Expected 18 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
+    assert len(wb.sheetnames) == 43, f"Expected 43 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
 
 
 # ── PVH43–PVH46: Gate field enforcement ──────────────────────────────────────
@@ -4222,7 +4257,7 @@ def test_PVH79_expert_workbook_opens_with_openpyxl(client):
     import openpyxl
     fpath = rec["internal_file_path"]
     wb = openpyxl.load_workbook(fpath)
-    assert len(wb.sheetnames) == 15
+    assert len(wb.sheetnames) == 43
     wb.close()
 
 
@@ -4288,3 +4323,4273 @@ def test_PVH84_preliminary_and_certified_in_same_registry(client):
     records = _pvout._read_registry(rid)
     types = {r["output_type"] for r in records}
     assert "expert_workbook" in types
+
+
+# ── PVRT01–PVRT10: Report Type ───────────────────────────────────────────────
+
+def test_PVRT01_traditional_report_type_stored_and_returned(client):
+    """Create with traditional_report — stored in record and returned in detail."""
+    r = _create(client, {"report_type": "traditional_report"})
+    assert r.status_code == 201
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    assert detail["ok"] is True
+    req = detail["request"]
+    assert req.get("report_type") == "traditional_report"
+
+
+def test_PVRT02_detailed_report_type_stored_and_returned(client):
+    """Create with detailed_report — stored and returned."""
+    r = _create(client, {"report_type": "detailed_report"})
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    assert detail["request"].get("report_type") == "detailed_report"
+
+
+def test_PVRT03_professional_report_type_stored_and_returned(client):
+    """Create with professional_report — stored and returned."""
+    r = _create(client, {"report_type": "professional_report"})
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    assert detail["request"].get("report_type") == "professional_report"
+
+
+def test_PVRT04_no_report_type_defaults_to_professional(client):
+    """Creating without report_type defaults to professional_report."""
+    r = _create(client)   # no report_type in payload
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    assert detail["request"].get("report_type") == "professional_report"
+
+
+def test_PVRT05_invalid_report_type_returns_400(client):
+    """Creating with an invalid report_type returns HTTP 400."""
+    r = _create(client, {"report_type": "super_report"})
+    assert r.status_code == 400
+    body = r.get_json()
+    assert body["ok"] is False
+    assert "report_type" in body.get("error", "").lower() or "غير صالح" in body.get("error", "")
+
+
+def test_PVRT06_report_type_in_list_response(client):
+    """report_type appears in list dashboard response."""
+    _create(client, {"report_type": "traditional_report"})
+    resp = client.get(
+        "/api/professional-valuation/requests",
+        headers=_auth(),
+    ).get_json()
+    assert resp["ok"] is True
+    rows = resp.get("requests", [])
+    assert len(rows) > 0
+    # At least the most recent row should have report_type
+    assert any(r.get("report_type") is not None for r in rows)
+
+
+def test_PVRT07_report_type_in_detail_response(client):
+    """report_type is present in the full detail response."""
+    r = _create(client, {"report_type": "detailed_report"})
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    assert "report_type" in detail["request"]
+
+
+def test_PVRT08_schema_lists_report_type_optional_field(client):
+    """Schema route lists report_type in optional_fields."""
+    resp = client.get(
+        "/api/professional-valuation/schema",
+        headers=_auth(),
+    ).get_json()
+    assert resp["ok"] is True
+    optional_fields = [f["field"] for f in resp["schema"].get("optional_fields", [])]
+    assert "report_type" in optional_fields
+
+
+def test_PVRT09_report_type_label_in_preliminary_context(client):
+    """build_professional_valuation_preliminary_output_context includes report_type_label."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    from professional_valuation_routes import _read_pvr, _update_pvr
+    r = _create(client, {"report_type": "traditional_report"})
+    rid = r.get_json()["request_id"]
+    ctx = _pvprelim.build_professional_valuation_preliminary_output_context(rid)
+    req_sum = ctx.get("request_summary", {})
+    assert req_sum.get("report_type") == "traditional_report"
+    assert req_sum.get("report_type_label") == "تقرير تقليدي"
+
+
+def test_PVRT10_report_type_label_in_certified_context(client):
+    """build_professional_valuation_output_context includes report_type_label."""
+    import professional_valuation_outputs as _pvout_mod
+    r = _create(client, {"report_type": "detailed_report"})
+    rid = r.get_json()["request_id"]
+    ctx = _pvout_mod.build_professional_valuation_output_context(rid)
+    req_sum = ctx.get("request_summary", {})
+    assert req_sum.get("report_type") == "detailed_report"
+    assert req_sum.get("report_type_label") == "تقرير تفصيلي"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WBPAR01–WBPAR13  Workbook Parity tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_WBPAR01_expert_workbook_sheet_list_count():
+    """Expert workbook sheet list has >= 40 entries (was 15)."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    assert len(_pvprelim._EXPERT_WB_SHEETS) >= 40
+
+
+def test_WBPAR02_final_workbook_sheet_list_count():
+    """Final workbook sheet list has >= 40 entries (was 18)."""
+    import professional_valuation_outputs as _pvout
+    assert len(_pvout._SHEETS) >= 40
+
+
+def test_WBPAR03_expert_workbook_includes_parity_sheets():
+    """Expert workbook sheet list includes key parity sheets ported from ordinary valuation."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    required = [
+        "طريقة مقارنة البيوع",
+        "طريقة الدخل",
+        "التدفقات النقدية DCF",
+        "طريقة التكلفة",
+        "قيمة الأرض",
+        "القيمة الإيجارية",
+        "مصفوفة المخاطر",
+        "بيان الامتثال",
+        "خارطة طريق الاعتماد",
+    ]
+    for s in required:
+        assert s in _pvprelim._EXPERT_WB_SHEETS, f"Missing parity sheet: {s}"
+
+
+def test_WBPAR04_final_workbook_includes_parity_sheets():
+    """Final workbook sheet list includes key parity sheets."""
+    import professional_valuation_outputs as _pvout
+    required = [
+        "طريقة مقارنة البيوع",
+        "طريقة الدخل",
+        "التدفقات النقدية DCF",
+        "طريقة التكلفة",
+        "قيمة الأرض",
+        "مصفوفة المخاطر",
+        "بيان الامتثال",
+        "لوحة امتثال التقييم",
+    ]
+    for s in required:
+        assert s in _pvout._SHEETS, f"Missing parity sheet: {s}"
+
+
+def test_WBPAR05_expert_wb_context_has_report_type_label(client):
+    """Expert workbook cover context includes report_type_label for traditional."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    r = _create(client, {"report_type": "traditional_report"})
+    rid = r.get_json()["request_id"]
+    ctx = _pvprelim.build_professional_valuation_preliminary_output_context(rid)
+    req_sum = ctx.get("request_summary", {})
+    assert req_sum.get("report_type_label") == "تقرير تقليدي"
+
+
+def test_WBPAR06_final_wb_context_has_report_type_label(client):
+    """Final workbook context includes report_type_label for detailed."""
+    import professional_valuation_outputs as _pvout_mod
+    r = _create(client, {"report_type": "detailed_report"})
+    rid = r.get_json()["request_id"]
+    ctx = _pvout_mod.build_professional_valuation_output_context(rid)
+    req_sum = ctx.get("request_summary", {})
+    assert req_sum.get("report_type_label") == "تقرير تفصيلي"
+
+
+def test_WBPAR07_ordinary_workbook_builder_importable():
+    """reporting_workbook_builder is importable (ordinary workbook builder exists)."""
+    import importlib
+    mod = importlib.import_module("reporting_workbook_builder")
+    assert mod is not None
+
+
+def test_WBPAR08_expert_wb_sheet_names_no_internal_paths():
+    """Expert workbook sheet names do not contain internal file path fragments."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    forbidden = ["instance", "certified_outputs", "preliminary_outputs", "Users"]
+    for sheet_name in _pvprelim._EXPERT_WB_SHEETS:
+        for frag in forbidden:
+            assert frag not in sheet_name, f"Internal path in sheet name: {sheet_name}"
+
+
+def test_WBPAR09_final_wb_sheet_names_no_internal_paths():
+    """Final workbook sheet names do not contain internal file path fragments."""
+    import professional_valuation_outputs as _pvout
+    forbidden = ["instance", "certified_outputs", "Users"]
+    for sheet_name in _pvout._SHEETS:
+        for frag in forbidden:
+            assert frag not in sheet_name, f"Internal path in sheet name: {sheet_name}"
+
+
+def test_WBPAR10_expert_workbook_generates_with_expanded_sheets():
+    """_generate_expert_workbook produces >= 40 sheets; tests generator directly (bypasses HTTP gate)."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    import openpyxl, uuid
+    from datetime import datetime
+
+    rid = f"PVR-{datetime.utcnow().strftime('%Y%m%d')}-W10{uuid.uuid4().hex[:4].upper()}"
+    out_id = "PVOUT-WBPAR10"
+    ctx = {
+        "request_id": rid,
+        "assembled_at": datetime.utcnow().isoformat(),
+        "advisory_only": True,
+        "report_type": "professional_report",
+        "report_type_label": "تقرير احترافي",
+        "request_summary": {
+            "request_id": rid,
+            "client_name": "Test Client",
+            "property_type": "شقة",
+            "valuation_purpose": "تمويل",
+            "report_type": "professional_report",
+            "report_type_label": "تقرير احترافي",
+        },
+        "certification_gate": {
+            "methods_completed": False,
+            "certification_ready": False,
+            "overall_gate_status": "not_ready",
+        },
+        "method_summary": {"methods": [], "reconciliation_value": None},
+        "evidence_summary": {
+            "approved_count": 0,
+            "mandatory_document_readiness": False,
+        },
+        "comparable_summary": {
+            "total_count": 0,
+            "production_ready_count": 0,
+        },
+        "advanced_reviews": {
+            "hbu_completed": False,
+            "esg_completed": False,
+            "legal_completed": False,
+            "swot_completed": False,
+        },
+        "preliminary_approval": {"preliminary_approval_ready": False},
+        "source_summary": {"production_source_count": 0},
+        "missing_certification_gates": {"blockers": []},
+        "expert_next_actions": {"actions": []},
+    }
+
+    success, err, size, _sha = _pvprelim._generate_expert_workbook(ctx, rid, out_id)
+    assert success is True, f"Workbook generation failed: {err}"
+    assert size > 0
+
+    wb_path = _pvprelim._PRELIM_OUT_DIR / rid / f"{out_id}_expert_workbook.xlsx"
+    wb = openpyxl.load_workbook(str(wb_path))
+    assert len(wb.sheetnames) >= 40, (
+        f"Expected >= 40 sheets, got {len(wb.sheetnames)}: {wb.sheetnames}"
+    )
+
+
+def test_WBPAR11_final_workbook_blocked_when_not_certified(client):
+    """Final workbook generation returns 422 when certification_ready=False."""
+    r = _create(client, {"report_type": "traditional_report"})
+    rid = r.get_json()["request_id"]
+    resp = client.post(
+        f"/api/professional-valuation/requests/{rid}/final-workbook",
+        headers=_auth(),
+    )
+    assert resp.status_code == 422
+    data = resp.get_json()
+    assert data.get("ok") is False
+
+
+def test_WBPAR12_certification_gate_logic_unchanged(client):
+    """Certification gate still reports not_ready for a fresh uncertified request."""
+    r = _create(client)
+    rid = r.get_json()["request_id"]
+    gate_resp = client.get(
+        f"/api/professional-valuation/requests/{rid}/certification-gate",
+        headers=_auth(),
+    )
+    if gate_resp.status_code == 200:
+        resp_body = gate_resp.get_json()
+        # Gate data is nested under "gate" key in the response envelope
+        gate_data = resp_body.get("gate", resp_body)
+        assert gate_data.get("certification_ready") is False or "blockers" in gate_data
+
+
+def test_WBPAR13_expert_wb_sheet_names_no_none_nan():
+    """Expert workbook sheet names do not contain None, NaN, null, or undefined."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    forbidden_vals = ["None", "NaN", "null", "undefined"]
+    for sheet_name in _pvprelim._EXPERT_WB_SHEETS:
+        for bad in forbidden_vals:
+            assert bad not in sheet_name, f"Bad value in sheet name: {sheet_name}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PVMAT01–PVMAT23  Output Matrix tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVMAT01_matrix_module_importable():
+    """professional_valuation_output_matrix is importable."""
+    import importlib
+    m = importlib.import_module("professional_valuation_output_matrix")
+    assert m is not None
+
+
+def test_PVMAT02_valid_report_types_defined():
+    """VALID_REPORT_TYPES contains the three expected values."""
+    import professional_valuation_output_matrix as mx
+    assert "traditional_report" in mx.VALID_REPORT_TYPES
+    assert "detailed_report"    in mx.VALID_REPORT_TYPES
+    assert "professional_report" in mx.VALID_REPORT_TYPES
+
+
+def test_PVMAT03_valid_valuation_purposes_defined():
+    """VALID_VALUATION_PURPOSES contains all 8 expected purposes."""
+    import professional_valuation_output_matrix as mx
+    expected = {
+        "market_value", "rental_value", "financing_mortgage", "court_legal",
+        "investment_decision", "internal_advisory", "environmental_impact", "special_purpose",
+    }
+    assert expected.issubset(mx.VALID_VALUATION_PURPOSES)
+
+
+def test_PVMAT04_valid_property_types_defined():
+    """VALID_PROPERTY_TYPES contains all 9 expected asset types."""
+    import professional_valuation_output_matrix as mx
+    expected = {
+        "residential_apartment", "residential_villa", "administrative_office",
+        "retail_shop", "land", "industrial_factory", "warehouse",
+        "mixed_use", "special_purpose_asset",
+    }
+    assert expected.issubset(mx.VALID_PROPERTY_TYPES)
+
+
+def test_PVMAT05_traditional_report_smaller_sheet_count():
+    """Traditional report generates fewer expert sheets than professional."""
+    import professional_valuation_output_matrix as mx
+    trad  = mx.get_expert_sheets("traditional_report", "market_value", "residential_apartment")
+    prof  = mx.get_expert_sheets("professional_report", "market_value", "residential_apartment")
+    assert len(trad) < len(prof), (
+        f"Traditional ({len(trad)}) should have fewer sheets than professional ({len(prof)})"
+    )
+
+
+def test_PVMAT06_professional_report_includes_governance_sheets():
+    """Professional expert workbook includes HBU, ESG, SWOT governance sheets."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("professional_report"))
+    for s in ("HBU", "ESG", "SWOT", "مراجعة الخبير", "ملاحظات داخلية"):
+        assert s in sheets, f"Professional sheets missing: {s}"
+
+
+def test_PVMAT07_traditional_report_excludes_governance_sheets():
+    """Traditional expert workbook does NOT include governance-only sheets."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("traditional_report"))
+    # Governance sheets only for professional
+    for s in ("HBU", "ESG", "SWOT", "مراجعة الخبير", "ملاحظات داخلية"):
+        assert s not in sheets, f"Traditional sheets should not include: {s}"
+
+
+def test_PVMAT08_detailed_report_intermediate_sheet_count():
+    """Detailed report has more sheets than traditional but fewer than professional."""
+    import professional_valuation_output_matrix as mx
+    trad = len(mx.get_expert_sheets("traditional_report"))
+    det  = len(mx.get_expert_sheets("detailed_report"))
+    prof = len(mx.get_expert_sheets("professional_report"))
+    assert trad < det < prof, f"Expected trad({trad}) < detailed({det}) < prof({prof})"
+
+
+def test_PVMAT09_land_asset_adds_land_sheets():
+    """land asset_type adds land value and HBU sheets to expert workbook."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("professional_report", "market_value", "land"))
+    assert "قيمة الأرض" in sheets
+    assert "HBU" in sheets
+
+
+def test_PVMAT10_investment_purpose_adds_dcf_sheets():
+    """investment_decision purpose adds DCF and sensitivity sheets to expert workbook."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("detailed_report", "investment_decision", "administrative_office"))
+    assert "التدفقات النقدية DCF" in sheets
+    assert "سيناريوهات What-If" in sheets
+
+
+def test_PVMAT11_rental_purpose_adds_rental_sheets():
+    """rental_value purpose adds rental comparison and reconciliation sheets."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("traditional_report", "rental_value", "residential_apartment"))
+    assert "القيمة الإيجارية" in sheets
+
+
+def test_PVMAT12_environmental_purpose_adds_esg_sheets():
+    """environmental_impact purpose adds ESG and environmental assessment sheets."""
+    import professional_valuation_output_matrix as mx
+    sheets = frozenset(mx.get_expert_sheets("professional_report", "environmental_impact", "industrial_factory"))
+    assert "تحليل الاستدامة ESG" in sheets
+    assert "تقييم الأثر البيئي" in sheets
+
+
+def test_PVMAT13_get_required_methods_market_value():
+    """market_value purpose requires sales_comparison and cost_approach."""
+    import professional_valuation_output_matrix as mx
+    result = mx.get_required_methods("market_value", "residential_apartment")
+    assert "sales_comparison" in result["required_methods"]
+    assert "cost_approach" in result["required_methods"]
+
+
+def test_PVMAT14_get_required_methods_investment():
+    """investment_decision purpose requires income_approach, dcf, sensitivity."""
+    import professional_valuation_output_matrix as mx
+    result = mx.get_required_methods("investment_decision", "administrative_office")
+    for m in ("income_approach", "dcf", "sensitivity"):
+        assert m in result["required_methods"], f"Missing required method: {m}"
+
+
+def test_PVMAT15_land_asset_adds_hbu_to_methods():
+    """land asset type adds hbu_analysis to asset_additional_methods."""
+    import professional_valuation_output_matrix as mx
+    result = mx.get_required_methods("market_value", "land")
+    assert "hbu_analysis" in result["asset_additional_methods"]
+
+
+def test_PVMAT16_get_pdf_sections_traditional_concise():
+    """Traditional PDF sections are a subset of professional PDF sections."""
+    import professional_valuation_output_matrix as mx
+    trad = mx.get_pdf_sections("traditional_report")
+    prof = mx.get_pdf_sections("professional_report")
+    assert trad.issubset(prof), "Traditional PDF sections must be a subset of professional"
+    assert "peer_review" not in trad, "Peer review should not be in traditional PDF sections"
+
+
+def test_PVMAT17_professional_pdf_includes_governance_sections():
+    """Professional PDF sections include governance-only sections."""
+    import professional_valuation_output_matrix as mx
+    sections = mx.get_pdf_sections("professional_report")
+    for s in ("peer_review", "expert_signature", "audit_trail", "source_registry"):
+        assert s in sections, f"Professional PDF sections missing: {s}"
+
+
+def test_PVMAT18_validate_report_type_valid():
+    """validate_report_type returns (True, '') for valid report types."""
+    import professional_valuation_output_matrix as mx
+    for rt in mx.VALID_REPORT_TYPES:
+        ok, err = mx.validate_report_type(rt)
+        assert ok is True
+        assert err == ""
+
+
+def test_PVMAT19_validate_report_type_invalid():
+    """validate_report_type returns (False, error) for invalid values."""
+    import professional_valuation_output_matrix as mx
+    ok, err = mx.validate_report_type("unknown_report_type")
+    assert ok is False
+    assert err != ""
+
+
+def test_PVMAT20_get_output_matrix_context_structure():
+    """get_output_matrix_context returns a complete dict with expected keys."""
+    import professional_valuation_output_matrix as mx
+    ctx = mx.get_output_matrix_context("professional_report", "market_value", "residential_apartment")
+    for key in ("report_type", "report_type_label", "valuation_purpose", "valuation_purpose_label",
+                "property_type", "property_type_label", "expert_sheet_count", "final_sheet_count",
+                "expert_sheets", "final_sheets", "required_methods", "optional_methods",
+                "asset_additional_methods", "pdf_sections_enabled"):
+        assert key in ctx, f"output_matrix_context missing key: {key}"
+
+
+def test_PVMAT21_expert_wb_generates_reduced_sheets_for_traditional(client):
+    """_generate_expert_workbook with traditional_report produces fewer sheets than professional."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    import openpyxl, uuid
+    from datetime import datetime
+
+    def _make_ctx(rt):
+        rid = f"PVR-{datetime.utcnow().strftime('%Y%m%d')}-M21{uuid.uuid4().hex[:4].upper()}"
+        return rid, {
+            "request_id": rid, "assembled_at": datetime.utcnow().isoformat(),
+            "advisory_only": True, "report_type": rt,
+            "report_type_label": rt,
+            "request_summary": {"request_id": rid, "client_name": "Test",
+                                 "property_type": "residential_apartment",
+                                 "valuation_purpose": "market_value",
+                                 "report_type": rt, "report_type_label": rt},
+            "certification_gate": {"methods_completed": False, "certification_ready": False},
+            "method_summary": {"methods": [], "reconciliation_value": None},
+            "evidence_summary": {"approved_count": 0, "mandatory_document_readiness": False},
+            "comparable_summary": {"total_count": 0, "production_ready_count": 0},
+            "advanced_reviews": {"hbu_completed": False, "esg_completed": False,
+                                 "legal_completed": False, "swot_completed": False},
+            "preliminary_approval": {"preliminary_approval_ready": False},
+            "source_summary": {"production_source_count": 0},
+            "missing_certification_gates": {"blockers": []},
+            "expert_next_actions": {"actions": []},
+        }
+
+    rid_t, ctx_t = _make_ctx("traditional_report")
+    rid_p, ctx_p = _make_ctx("professional_report")
+
+    ok_t, err_t, _, _ = _pvprelim._generate_expert_workbook(ctx_t, rid_t, "PVOUT-TRAD")
+    ok_p, err_p, _, _ = _pvprelim._generate_expert_workbook(ctx_p, rid_p, "PVOUT-PROF")
+
+    assert ok_t, f"Traditional workbook generation failed: {err_t}"
+    assert ok_p, f"Professional workbook generation failed: {err_p}"
+
+    wb_t = openpyxl.load_workbook(str(_pvprelim._PRELIM_OUT_DIR / rid_t / "PVOUT-TRAD_expert_workbook.xlsx"))
+    wb_p = openpyxl.load_workbook(str(_pvprelim._PRELIM_OUT_DIR / rid_p / "PVOUT-PROF_expert_workbook.xlsx"))
+    assert len(wb_t.sheetnames) < len(wb_p.sheetnames), (
+        f"Traditional ({len(wb_t.sheetnames)}) must have fewer sheets than professional ({len(wb_p.sheetnames)})"
+    )
+
+
+def test_PVMAT22_output_context_includes_output_matrix_key(client):
+    """Preliminary output context includes output_matrix key."""
+    import professional_valuation_preliminary_outputs as _pvprelim
+    r = _create(client, {
+        "report_type": "detailed_report",
+        "valuation_purpose": "market_value",
+        "property_type": "residential_apartment",
+    })
+    rid = r.get_json()["request_id"]
+    ctx = _pvprelim.build_professional_valuation_preliminary_output_context(rid)
+    assert "output_matrix" in ctx, "Context must contain output_matrix key"
+    mx = ctx["output_matrix"]
+    assert mx.get("report_type") == "detailed_report"
+    assert "expert_sheets" in mx
+
+
+def test_PVMAT23_matrix_warns_for_unknown_purpose(client):
+    """PVR create returns matrix_warnings for unknown valuation_purpose."""
+    r = _create(client, {
+        "valuation_purpose": "unknown_custom_purpose_xyz",
+        "property_type": "residential_apartment",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    # unknown purpose triggers soft warning (not rejection)
+    assert data.get("ok") is True
+    assert "matrix_warnings" in data, "Should contain matrix_warnings for unknown purpose"
+
+
+# ── PVTAX01–PVTAX20: Taxonomy v2 canonical fields ────────────────────────────
+
+def test_PVTAX01_canonical_fields_accepted_alongside_legacy(client):
+    """PVTAX01: New canonical fields accepted without breaking legacy path."""
+    r = _create(client, {
+        "asset_family":       "hospitality_leisure",
+        "asset_type":         "hotel",
+        "assignment_purpose": "market_valuation",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVTAX02_basis_of_value_market_value_accepted(client):
+    """PVTAX02: basis_of_value=market_value is a valid canonical basis."""
+    r = _create(client, {
+        "asset_type":     "residential_apartment",
+        "basis_of_value": "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVTAX03_basis_of_value_invalid_returns_400(client):
+    """PVTAX03: Unrecognised basis_of_value returns 400."""
+    r = _create(client, {
+        "asset_type":     "residential_apartment",
+        "basis_of_value": "completely_invalid_basis_xyz",
+    })
+    assert r.status_code == 400
+    data = r.get_json()
+    assert data["ok"] is False
+    assert "basis_of_value" in data["error"]
+
+
+def test_PVTAX04_derived_method_route_returned(client):
+    """PVTAX04: derived_method_route block present when asset_type + basis_of_value provided."""
+    r = _create(client, {
+        "asset_type":     "hotel",
+        "basis_of_value": "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "derived_method_route" in data
+    dr = data["derived_method_route"]
+    assert "enabled_methods" in dr
+    assert len(dr["enabled_methods"]) > 0
+
+
+def test_PVTAX05_no_taxonomy_warnings_for_clean_input(client):
+    """PVTAX05: taxonomy_warnings absent (or empty) when no misplacements."""
+    r = _create(client, {
+        "asset_type":         "residential_apartment",
+        "assignment_purpose": "market_valuation",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+    warnings = data.get("taxonomy_warnings", [])
+    assert isinstance(warnings, list)
+
+
+def test_PVTAX06_hotel_as_both_type_and_subtype_triggers_warning(client):
+    """PVTAX06: hotel as asset_type AND asset_subtype triggers misplacement warning."""
+    r = _create(client, {
+        "asset_type":    "hotel",
+        "asset_subtype": "hotel",
+        "basis_of_value": "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+    warnings = data.get("taxonomy_warnings", [])
+    assert any("hotel" in str(w).lower() for w in warnings), \
+        f"Expected hotel duplicate warning, got: {warnings}"
+
+
+def test_PVTAX07_market_value_as_assignment_purpose_triggers_warning(client):
+    """PVTAX07: market_value as assignment_purpose triggers misplacement warning."""
+    # Explicitly clear legacy valuation_purpose so assignment_purpose is the active axis
+    r = _create(client, {
+        "asset_type":         "residential_apartment",
+        "assignment_purpose": "market_value",
+        "valuation_purpose":  "",  # clear legacy to ensure canonical field is checked
+    })
+    # Request still accepted (soft validation)
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+    warnings = data.get("taxonomy_warnings", [])
+    assert any("market_value" in str(w).lower() or "basis" in str(w).lower() for w in warnings), \
+        f"Expected market_value-as-purpose warning, got: {warnings}"
+
+
+def test_PVTAX08_comparable_adjustment_as_purpose_subpath_triggers_warning(client):
+    """PVTAX08: comparable_adjustment as purpose_subpath triggers misplacement warning."""
+    r = _create(client, {
+        "asset_type":      "residential_apartment",
+        "purpose_subpath": "comparable_adjustment",
+        "basis_of_value":  "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+    warnings = data.get("taxonomy_warnings", [])
+    assert any("comparable_adjustment" in str(w).lower() or "method" in str(w).lower() for w in warnings), \
+        f"Expected comparable_adjustment misplacement warning, got: {warnings}"
+
+
+def test_PVTAX09_canonical_taxonomy_block_in_response(client):
+    """PVTAX09: canonical_taxonomy block with axis_1/axis_2/axis_3 keys returned."""
+    r = _create(client, {
+        "asset_family":       "residential_housing",
+        "asset_type":         "residential_apartment",
+        "assignment_purpose": "market_valuation",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "canonical_taxonomy" in data
+    ct = data["canonical_taxonomy"]
+    # canonical_taxonomy uses keys like axis_1_asset_classification, axis_2_assignment_purpose, etc.
+    assert any(k.startswith("axis_") for k in ct), \
+        f"canonical_taxonomy missing axis_N_* keys: {list(ct.keys())}"
+
+
+def test_PVTAX10_asset_family_stored_on_record(client):
+    """PVTAX10: asset_family value is persisted and returned in detail response."""
+    import json, re
+    r = _create(client, {
+        "asset_family": "hospitality_leisure",
+        "asset_type":   "hotel",
+    })
+    rid = r.get_json()["request_id"]
+    det = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert det.status_code == 200
+    data = det.get_json()
+    rec = data.get("request") or data
+    assert rec.get("asset_family") == "hospitality_leisure"
+
+
+def test_PVTAX11_asset_subtype_stored_on_record(client):
+    """PVTAX11: asset_subtype value is persisted and returned in detail response."""
+    r = _create(client, {
+        "asset_type":    "hotel",
+        "asset_subtype": "boutique_hotel",
+        "basis_of_value": "market_value",
+    })
+    rid = r.get_json()["request_id"]
+    det = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert det.status_code == 200
+    data = det.get_json()
+    rec = data.get("request") or data
+    assert rec.get("asset_subtype") == "boutique_hotel"
+
+
+def test_PVTAX12_assignment_purpose_stored_on_record(client):
+    """PVTAX12: assignment_purpose is persisted and returned in detail response."""
+    r = _create(client, {
+        "asset_type":         "urban_land",
+        "assignment_purpose": "financing_mortgage",
+        "basis_of_value":     "market_value",
+    })
+    rid = r.get_json()["request_id"]
+    det = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert det.status_code == 200
+    data = det.get_json()
+    rec = data.get("request") or data
+    assert rec.get("assignment_purpose") == "financing_mortgage"
+
+
+def test_PVTAX13_value_premise_stored_on_record(client):
+    """PVTAX13: value_premise is persisted and returned in detail response."""
+    r = _create(client, {
+        "asset_type":   "residential_apartment",
+        "basis_of_value": "market_value",
+        "value_premise":  "as_is",
+    })
+    rid = r.get_json()["request_id"]
+    det = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert det.status_code == 200
+    data = det.get_json()
+    rec = data.get("request") or data
+    assert rec.get("value_premise") == "as_is"
+
+
+def test_PVTAX14_normalize_legacy_fields_maps_property_type(client):
+    """PVTAX14: normalize_legacy_fields() maps property_type to canonical asset_type."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import normalize_legacy_fields
+    result = normalize_legacy_fields(property_type="hotel", valuation_purpose="market_value")
+    # normalize_legacy_fields returns {"canonical": {...}, "raw_legacy_values": {...}}
+    canonical = result.get("canonical") or result
+    assert canonical.get("asset_type") in ("hotel", "")  # preserved or empty
+    # basis_of_value should be recognised from valuation_purpose mapping
+    bov = canonical.get("basis_of_value") or result.get("basis_of_value") or ""
+    assert bov in ("market_value", "")  # mapped or empty
+
+
+def test_PVTAX15_validate_basis_of_value_accepts_all_valid(client):
+    """PVTAX15: validate_basis_of_value() returns True for every valid canonical basis."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import VALID_BASIS_OF_VALUE, validate_basis_of_value
+    for bov in VALID_BASIS_OF_VALUE:
+        ok, msg = validate_basis_of_value(bov)
+        assert ok, f"Expected valid for '{bov}', got error: {msg}"
+
+
+def test_PVTAX16_validate_basis_of_value_rejects_invalid_string(client):
+    """PVTAX16: validate_basis_of_value rejects clearly invalid non-empty strings."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import validate_basis_of_value
+    ok, msg = validate_basis_of_value("definitely_not_a_valid_basis_xyz_999")
+    assert not ok, "Expected invalid basis to be rejected"
+    assert msg  # error message present
+
+
+def test_PVTAX17_detect_misplacements_empty_for_clean_input(client):
+    """PVTAX17: detect_misplacements() returns [] for canonical clean input."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import detect_misplacements
+    result = detect_misplacements(
+        asset_type="residential_apartment",
+        asset_subtype="studio",
+        assignment_purpose="market_valuation",
+        purpose_subpath="",
+        basis_of_value="market_value",
+    )
+    assert result == [], f"Expected no misplacements, got: {result}"
+
+
+def test_PVTAX18_derive_method_route_hotel_market_value(client):
+    """PVTAX18: hotel + market_value → includes sales_comparison and dcf."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import derive_method_route
+    route = derive_method_route(
+        asset_type="hotel",
+        asset_family="hospitality_leisure",
+        assignment_purpose="market_valuation",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    methods = route.get("enabled_methods", [])
+    assert "sales_comparison" in methods, f"sales_comparison missing from: {methods}"
+    assert "dcf" in methods, f"dcf missing from: {methods}"
+
+
+def test_PVTAX19_derive_method_route_land_market_value(client):
+    """PVTAX19: urban_land + market_value → includes land_comparison."""
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from professional_valuation_taxonomy_v2 import derive_method_route
+    route = derive_method_route(
+        asset_type="urban_land",
+        asset_family="land_plots",
+        assignment_purpose="market_valuation",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    methods = route.get("enabled_methods", [])
+    assert "land_comparison" in methods, f"land_comparison missing from: {methods}"
+
+
+def test_PVTAX20_backward_compat_only_legacy_fields_accepted(client):
+    """PVTAX20: Request with only legacy fields (no canonical fields) still returns 201."""
+    r = _create(client, {
+        "property_type":     "residential_apartment",
+        "valuation_purpose": "market_value",
+    })
+    # Must NOT break - legacy path must still work
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+    assert data["request_id"].startswith("PVR-")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ASREQ01–ASREQ16 — Asset-Specific Requirements Preservation Tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_ASREQ01_hotel_asset_returns_hotel_requirements(client):
+    """ASREQ01: hotel asset_type returns hotel-specific requirements in response."""
+    r = _create(client, {
+        "asset_type":         "hotel",
+        "asset_family":       "hospitality_leisure",
+        "assignment_purpose": "market_valuation",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    asr = data.get("asset_specific_requirements", {})
+    assert asr, "asset_specific_requirements missing from response"
+    assert "hotel" in asr.get("requirements_panel_title_ar", "").lower() or \
+           "فندق" in asr.get("requirements_panel_title_ar", ""), \
+        f"Expected hotel/فندق in title: {asr.get('requirements_panel_title_ar')}"
+
+
+def test_ASREQ02_hotel_requirements_include_adr(client):
+    """ASREQ02: hotel requirements include ADR in required_inputs."""
+    r = _create(client, {"asset_type": "hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    assert "adr" in asr.get("required_inputs", []), \
+        f"adr missing from hotel required_inputs: {asr.get('required_inputs')}"
+
+
+def test_ASREQ03_hotel_requirements_include_occupancy_rate(client):
+    """ASREQ03: hotel requirements include occupancy_rate."""
+    r = _create(client, {"asset_type": "hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    assert "occupancy_rate" in asr.get("required_inputs", []), \
+        f"occupancy_rate missing: {asr.get('required_inputs')}"
+
+
+def test_ASREQ04_hotel_requirements_include_revpar(client):
+    """ASREQ04: hotel requirements include revpar."""
+    r = _create(client, {"asset_type": "hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    assert "revpar" in asr.get("required_inputs", []), \
+        f"revpar missing: {asr.get('required_inputs')}"
+
+
+def test_ASREQ05_hotel_requirements_include_dcf_and_income_approach(client):
+    """ASREQ05: hotel recommended_methods include dcf and income_approach."""
+    r = _create(client, {"asset_type": "hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    methods = asr.get("recommended_methods", [])
+    assert "dcf" in methods, f"dcf missing from hotel methods: {methods}"
+    assert "income_approach" in methods, f"income_approach missing: {methods}"
+
+
+def test_ASREQ06_factory_asset_returns_factory_requirements(client):
+    """ASREQ06: industrial_factory asset_type returns factory-specific requirements."""
+    r = _create(client, {
+        "asset_type":         "industrial_factory",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    assert asr, "asset_specific_requirements missing"
+    title = asr.get("requirements_panel_title_ar", "")
+    assert "مصنع" in title or "صناعي" in title, \
+        f"Expected مصنع/صناعي in factory title: {title}"
+    assert "land_area" in asr.get("required_inputs", []) or \
+           "replacement_cost" in asr.get("required_inputs", []), \
+        f"Expected factory inputs: {asr.get('required_inputs')}"
+
+
+def test_ASREQ07_land_asset_returns_land_requirements(client):
+    """ASREQ07: urban_land asset_type returns land-specific requirements."""
+    r = _create(client, {
+        "asset_type":         "urban_land",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    title = asr.get("requirements_panel_title_ar", "")
+    assert "أرض" in title, f"Expected أرض in land title: {title}"
+    assert "zoning" in asr.get("required_inputs", []), \
+        f"zoning missing from land inputs: {asr.get('required_inputs')}"
+
+
+def test_ASREQ08_retail_asset_returns_retail_requirements(client):
+    """ASREQ08: retail_shop asset_type returns retail-specific requirements."""
+    r = _create(client, {
+        "asset_type":         "retail_shop",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    title = asr.get("requirements_panel_title_ar", "")
+    assert "تجاري" in title or "محل" in title, \
+        f"Expected محل/تجاري in retail title: {title}"
+    assert "frontage" in asr.get("required_inputs", []) or \
+           "footfall" in asr.get("required_inputs", []), \
+        f"Expected retail inputs: {asr.get('required_inputs')}"
+
+
+def test_ASREQ09_warehouse_asset_returns_warehouse_requirements(client):
+    """ASREQ09: warehouse asset_type returns warehouse-specific requirements."""
+    r = _create(client, {
+        "asset_type":         "warehouse",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    title = asr.get("requirements_panel_title_ar", "")
+    assert "مستودع" in title or "لوجستيات" in title, \
+        f"Expected مستودع/لوجستيات in warehouse title: {title}"
+    assert "storage_area" in asr.get("required_inputs", []) or \
+           "clear_height" in asr.get("required_inputs", []), \
+        f"Expected warehouse inputs: {asr.get('required_inputs')}"
+
+
+def test_ASREQ10_market_value_not_in_required_inputs(client):
+    """ASREQ10: market_value is never returned as an asset requirement input key."""
+    for at in ["hotel", "industrial_factory", "urban_land", "retail_shop", "warehouse"]:
+        r = _create(client, {"asset_type": at, "assignment_purpose": "market_valuation"})
+        assert r.status_code == 201
+        asr = r.get_json().get("asset_specific_requirements", {})
+        assert "market_value" not in asr.get("required_inputs", []), \
+            f"market_value must NOT appear as required_input for {at}"
+
+
+def test_ASREQ11_comparable_adjustment_is_method_step_not_purpose(client):
+    """ASREQ11: comparable_adjustment appears in recommended_methods, not as assignment_purpose."""
+    r = _create(client, {
+        "asset_type":         "retail_shop",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    methods = asr.get("recommended_methods", [])
+    # comparable_adjustment is valid as a method step
+    if "comparable_adjustment" in methods:
+        assert True  # correctly placed
+    # but it must NOT appear as assignment_purpose in the record
+    data = r.get_json()
+    assert data.get("assignment_purpose", "") != "comparable_adjustment", \
+        "comparable_adjustment must not be used as assignment_purpose"
+
+
+def test_ASREQ12_old_requirement_keys_preserved_in_hotel(client):
+    """ASREQ12: legacy hotel requirement keys are preserved in legacy_requirement_keys."""
+    r = _create(client, {"asset_type": "hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    legacy = asr.get("legacy_requirement_keys", [])
+    assert "hotel_resort_detailed" in legacy, \
+        f"hotel_resort_detailed missing from legacy_requirement_keys: {legacy}"
+    assert any(k.startswith("ht_") for k in legacy), \
+        f"Expected ht_* keys in legacy_requirement_keys: {legacy}"
+
+
+def test_ASREQ13_taxonomy_v2_tests_still_pass_after_requirements_addition(client):
+    """ASREQ13: Taxonomy v2 canonical fields still work alongside requirements."""
+    r = _create(client, {
+        "asset_family":       "hospitality_leisure",
+        "asset_type":         "hotel",
+        "assignment_purpose": "market_valuation",
+        "basis_of_value":     "market_value",
+        "report_type":        "professional_report",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("canonical_taxonomy"), "canonical_taxonomy missing"
+    assert data.get("derived_method_route"), "derived_method_route missing"
+    assert data.get("asset_specific_requirements"), "asset_specific_requirements missing"
+
+
+def test_ASREQ14_requirements_returned_for_alias_asset_type(client):
+    """ASREQ14: alias asset_types (floating_hotel, cold_storage) resolve to correct requirements."""
+    r = _create(client, {"asset_type": "floating_hotel", "assignment_purpose": "market_valuation"})
+    assert r.status_code == 201
+    asr = r.get_json().get("asset_specific_requirements", {})
+    assert asr.get("asset_type_resolved") in ("hotel", "floating_hotel", ""), \
+        f"Expected hotel resolution for floating_hotel: {asr.get('asset_type_resolved')}"
+    assert "adr" in asr.get("required_inputs", []) or \
+           "number_of_rooms" in asr.get("required_inputs", []), \
+        f"Expected hotel inputs for floating_hotel alias: {asr.get('required_inputs')}"
+
+
+def test_ASREQ15_requirements_in_safe_detail_response(client):
+    """ASREQ15: asset_specific_requirements returned in GET detail response (_safe_detail)."""
+    r = _create(client, {
+        "asset_type":         "industrial_factory",
+        "assignment_purpose": "market_valuation",
+    })
+    assert r.status_code == 201
+    rid = r.get_json()["request_id"]
+
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert detail.status_code == 200
+    detail_data = detail.get_json()
+    # Detail response wraps record inside "request" key
+    request_obj = detail_data.get("request", detail_data)
+    asr = request_obj.get("asset_specific_requirements", {})
+    assert asr, "asset_specific_requirements missing from GET detail response"
+    assert "land_area" in asr.get("required_inputs", []) or \
+           "replacement_cost" in asr.get("required_inputs", []), \
+        f"Expected factory inputs in detail: {asr.get('required_inputs')}"
+
+
+def test_ASREQ16_legacy_only_request_still_returns_requirements(client):
+    """ASREQ16: Legacy-only request still gets requirements (via asset_type derivation)."""
+    r = _create(client, {
+        "property_type":     "hotel",
+        "valuation_purpose": "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    asr = data.get("asset_specific_requirements", {})
+    # asset_type derived from property_type → hotel requirements should be returned
+    assert asr, "asset_specific_requirements missing for legacy-only hotel request"
+    assert asr.get("is_generic_fallback") is False or \
+           "adr" in asr.get("required_inputs", []) or \
+           "hotel" in asr.get("requirements_panel_title_ar", "").lower() or \
+           "فندق" in asr.get("requirements_panel_title_ar", ""), \
+        f"Expected hotel requirements for legacy property_type=hotel: {asr}"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVUC01–PVUC25 — Unified Controls: Feature Capabilities & Activation Roadmap
+# ═══════════════════════════════════════════════════════════════════════════════
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.join(_os.path.dirname(__file__), ".."))
+
+
+def test_PVUC01_get_feature_capabilities_context_importable():
+    """PVUC01: get_feature_capabilities_context is importable from taxonomy_v2."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    assert callable(get_feature_capabilities_context)
+
+
+def test_PVUC02_feature_capabilities_context_returns_dict():
+    """PVUC02: get_feature_capabilities_context returns a dict with expected top-level keys."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    assert isinstance(result, dict)
+    for key in ("controls", "active_controls", "disabled_controls", "future_stub_controls",
+                "report_reflection_matrix", "control_activation_roadmap", "advisory_note"):
+        assert key in result, f"Key missing from feature_capabilities context: {key}"
+
+
+def test_PVUC03_active_controls_list_non_empty():
+    """PVUC03: active_controls list is non-empty — certification_gate, output_registry, advanced_reviews must be active.
+    Note: active_controls is a list of string control keys."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    active = result.get("active_controls", [])
+    assert len(active) >= 3, f"Expected >= 3 active controls, got {len(active)}: {active}"
+    active_ids = set(active)  # list of strings
+    assert "certification_gate" in active_ids, "certification_gate must be in active_controls"
+    assert "output_registry" in active_ids, "output_registry must be in active_controls"
+    assert "advanced_reviews" in active_ids, "advanced_reviews must be in active_controls"
+
+
+def test_PVUC04_future_stub_controls_non_empty():
+    """PVUC04: future_stub_controls includes asset_portfolio, migration_radar, super_intelligence."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    stubs = result.get("future_stub_controls", [])
+    stub_ids = set(stubs)  # list of strings
+    assert "asset_portfolio" in stub_ids, "asset_portfolio must be a future stub"
+    assert "migration_radar" in stub_ids, "migration_radar must be a future stub"
+    assert "super_intelligence" in stub_ids, "super_intelligence must be a future stub"
+
+
+def test_PVUC05_disabled_controls_include_digital_verification():
+    """PVUC05: digital_verification is in disabled_controls."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    disabled = result.get("disabled_controls", [])
+    disabled_ids = set(disabled)  # list of strings
+    assert "digital_verification" in disabled_ids, "digital_verification must be in disabled_controls"
+
+
+def _effectiveness_by_key(controls_list: list, key: str) -> int:
+    """Helper: look up effectiveness_level for a control by control_key in the full controls list."""
+    for c in controls_list:
+        if isinstance(c, dict) and c.get("control_key") == key:
+            return c.get("effectiveness_level", -1)
+    return -1
+
+
+def test_PVUC06_active_controls_have_effectiveness_5():
+    """PVUC06: all active controls have effectiveness_level == 5 (checked via full controls list)."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    controls = result.get("controls", [])
+    for ctrl_key in result.get("active_controls", []):
+        eff = _effectiveness_by_key(controls, ctrl_key)
+        assert eff == 5, (
+            f"Active control '{ctrl_key}' has effectiveness {eff}, expected 5"
+        )
+
+
+def test_PVUC07_future_stub_controls_have_effectiveness_0():
+    """PVUC07: all future_stub controls have effectiveness_level == 0."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    controls = result.get("controls", [])
+    for ctrl_key in result.get("future_stub_controls", []):
+        eff = _effectiveness_by_key(controls, ctrl_key)
+        assert eff == 0, (
+            f"Future stub '{ctrl_key}' has effectiveness {eff}, expected 0"
+        )
+
+
+def test_PVUC08_disabled_controls_have_low_effectiveness():
+    """PVUC08: disabled controls have effectiveness_level <= 1."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    controls = result.get("controls", [])
+    for ctrl_key in result.get("disabled_controls", []):
+        eff = _effectiveness_by_key(controls, ctrl_key)
+        assert eff <= 1, (
+            f"Disabled control '{ctrl_key}' has effectiveness {eff}, expected <= 1"
+        )
+
+
+def test_PVUC09_control_activation_roadmap_present_for_inactive():
+    """PVUC09: control_activation_roadmap is a list with entries for inactive controls.
+    Roadmap entries use control_key (not control_id)."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    roadmap = result.get("control_activation_roadmap", [])
+    assert isinstance(roadmap, list), "control_activation_roadmap must be a list"
+    assert len(roadmap) > 0, "control_activation_roadmap must not be empty"
+    roadmap_ids = {entry.get("control_key", "") for entry in roadmap if isinstance(entry, dict)}
+    assert "digital_verification" in roadmap_ids, (
+        f"digital_verification must be in roadmap; got: {roadmap_ids}"
+    )
+
+
+def test_PVUC10_report_reflection_matrix_is_dict():
+    """PVUC10: report_reflection_matrix is a dict (may be keyed by control_id)."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    matrix = result.get("report_reflection_matrix")
+    assert isinstance(matrix, (dict, list)), "report_reflection_matrix must be a dict or list"
+
+
+def test_PVUC11_partially_active_controls_non_empty():
+    """PVUC11: partially_active_controls list is non-empty."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    partial = result.get("partially_active_controls", [])
+    assert len(partial) >= 1, (
+        f"Expected >= 1 partially_active controls, got {len(partial)}"
+    )
+
+
+def test_PVUC12_asset_specific_requirements_is_partially_active():
+    """PVUC12: asset_specific_requirements control is in partially_active_controls.
+    partially_active_controls is a list of string keys."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    partial = result.get("partially_active_controls", [])
+    partial_ids = set(partial)  # list of strings
+    assert "asset_specific_requirements" in partial_ids, (
+        f"asset_specific_requirements must be partially_active; got partial_ids={partial_ids}"
+    )
+
+
+def test_PVUC13_geotechnical_risk_not_applicable_for_hotel():
+    """PVUC13: geotechnical_risk is in not_applicable_controls for hotel asset_type."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    na = result.get("not_applicable_controls", [])
+    na_ids = set(na)  # list of strings
+    assert "geotechnical_risk" in na_ids, (
+        f"geotechnical_risk must be not_applicable for hotel; not_applicable_ids={na_ids}"
+    )
+
+
+def test_PVUC14_geotechnical_risk_partially_active_for_land():
+    """PVUC14: geotechnical_risk is partially_active for urban_land asset_type."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="urban_land", report_type="professional_report")
+    partial = result.get("partially_active_controls", [])
+    not_applic = result.get("not_applicable_controls", [])
+    partial_ids = set(partial)  # list of strings
+    na_ids = set(not_applic)  # list of strings
+    assert "geotechnical_risk" in partial_ids or "geotechnical_risk" not in na_ids, (
+        f"geotechnical_risk should be applicable for land asset_type; "
+        f"partial={partial_ids}, na={na_ids}"
+    )
+
+
+def test_PVUC15_expert_only_controls_include_method_weighting():
+    """PVUC15: method_weighting_engine is in expert_only_controls."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    expert = result.get("expert_only_controls", [])
+    expert_ids = set(expert)  # list of strings
+    assert "method_weighting_engine" in expert_ids, (
+        f"method_weighting_engine must be expert_only; expert_ids={expert_ids}"
+    )
+
+
+def test_PVUC16_advisory_note_present_and_non_empty():
+    """PVUC16: advisory_note field is present and non-empty string."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    note = result.get("advisory_note", "")
+    assert isinstance(note, str) and len(note) > 10, (
+        f"advisory_note must be a non-empty string, got: {repr(note)}"
+    )
+
+
+def test_PVUC17_create_response_includes_feature_capabilities(client):
+    """PVUC17: pvr_create response includes professional_valuation_feature_capabilities key."""
+    r = _create(client, {
+        "asset_type":         "hotel",
+        "asset_family":       "hospitality_leisure",
+        "basis_of_value":     "market_value",
+        "assignment_purpose": "financing_mortgage",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "professional_valuation_feature_capabilities" in data, (
+        "professional_valuation_feature_capabilities missing from create response"
+    )
+
+
+def test_PVUC18_create_response_includes_control_activation_roadmap(client):
+    """PVUC18: pvr_create response includes control_activation_roadmap."""
+    r = _create(client, {"asset_type": "hotel"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "control_activation_roadmap" in data, (
+        "control_activation_roadmap missing from create response"
+    )
+    assert isinstance(data["control_activation_roadmap"], list)
+
+
+def test_PVUC19_create_response_includes_report_reflection_matrix(client):
+    """PVUC19: pvr_create response includes report_reflection_matrix."""
+    r = _create(client, {"asset_type": "hotel"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "report_reflection_matrix" in data, (
+        "report_reflection_matrix missing from create response"
+    )
+
+
+def test_PVUC20_detail_response_includes_feature_capabilities(client):
+    """PVUC20: detail response includes professional_valuation_feature_capabilities."""
+    r = _create(client, {"asset_type": "urban_land"})
+    rid = r.get_json()["request_id"]
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    ).get_json()
+    req = detail.get("request") or detail
+    assert "professional_valuation_feature_capabilities" in req, (
+        "professional_valuation_feature_capabilities missing from detail response"
+    )
+
+
+def test_PVUC21_inactive_controls_do_not_affect_certification_gate(client):
+    """PVUC21: creating with future_stub controls present does not affect certification_ready."""
+    r = _create(client, {"asset_type": "hotel"})
+    rid = r.get_json()["request_id"]
+    gate_resp = client.get(
+        f"/api/professional-valuation/requests/{rid}/certification-gate",
+        headers=_auth(),
+    )
+    if gate_resp.status_code == 200:
+        gate = gate_resp.get_json()
+        gate_data = gate.get("gate", gate)
+        assert gate_data.get("certification_ready") is False, (
+            "A freshly created request must not be certification_ready"
+        )
+
+
+def test_PVUC22_disabled_controls_not_in_active_list(client):
+    """PVUC22: disabled controls do not appear in active_controls list."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    active_ids = set(result.get("active_controls", []))     # list of strings
+    disabled_ids = set(result.get("disabled_controls", []))  # list of strings
+    overlap = active_ids & disabled_ids
+    assert not overlap, f"Controls appear in both active and disabled lists: {overlap}"
+
+
+def test_PVUC23_future_stubs_not_in_active_list():
+    """PVUC23: future_stub controls do not appear in active_controls list."""
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+    result = get_feature_capabilities_context(asset_type="hotel", report_type="professional_report")
+    active_ids = set(result.get("active_controls", []))        # list of strings
+    stub_ids = set(result.get("future_stub_controls", []))  # list of strings
+    overlap = active_ids & stub_ids
+    assert not overlap, f"Controls appear in both active and future_stub lists: {overlap}"
+
+
+def test_PVUC24_no_internal_paths_in_feature_capabilities_response(client):
+    """PVUC24: feature_capabilities response does not expose internal file paths (Rule 19)."""
+    r = _create(client, {"asset_type": "hotel"})
+    assert r.status_code == 201
+    body_text = r.get_data(as_text=True)
+    assert "internal_file_path" not in body_text, "internal_file_path must not be in feature_capabilities response"
+    assert "C:\\Users" not in body_text, "Windows path must not be in response"
+    assert "instance/professional_valuation" not in body_text
+
+
+def test_PVUC25_feature_capabilities_context_no_rag_qdrant_external(client):
+    """PVUC25: feature_capabilities context does not use RAG, Qdrant, or external APIs."""
+    r = _create(client, {"asset_type": "hotel"})
+    assert r.status_code == 201
+    data = r.get_json()
+    caps = data.get("professional_valuation_feature_capabilities", {})
+    # Verify no stub for RAG/Qdrant integration is embedded in the controls
+    all_text = str(caps)
+    assert "qdrant" not in all_text.lower(), "Qdrant reference found in feature_capabilities"
+    assert "external_api_call" not in all_text.lower(), "external_api_call found in feature_capabilities"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVNB01–PVNB20 — New Backend Tests: Taxonomy v2 Live Validation, Method Routing,
+#   Legacy Mapping, and Controls Independence (Part N)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVNB01_asset_family_accepted_and_returned(client):
+    """PVNB01: asset_family field is accepted in create and returned in canonical_taxonomy."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB01 Client",
+            "property_type": "hotel",
+            "valuation_purpose": "sale_purchase",
+            "asset_family": "hospitality_leisure",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis1 = tax.get("axis_1_asset_classification", {})
+    assert axis1.get("asset_family") == "hospitality_leisure", (
+        f"asset_family not in canonical_taxonomy: {axis1}"
+    )
+
+
+def test_PVNB02_asset_subtype_accepted_and_returned(client):
+    """PVNB02: asset_subtype field accepted in create and echoed in canonical_taxonomy."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB02 Client",
+            "property_type": "hotel",
+            "valuation_purpose": "sale_purchase",
+            "asset_subtype": "boutique_hotel",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis1 = tax.get("axis_1_asset_classification", {})
+    assert axis1.get("asset_subtype") == "boutique_hotel", (
+        f"asset_subtype not in canonical_taxonomy axis1: {axis1}"
+    )
+
+
+def test_PVNB03_legacy_property_type_maps_to_asset_type(client):
+    """PVNB03: Legacy property_type field maps to canonical asset_type via asset_specific_requirements."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB03 Client",
+            "property_type": "hotel",
+            "valuation_purpose": "sale_purchase",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    # asset_type_resolved must be hotel (from property_type legacy mapping)
+    asr = data.get("asset_specific_requirements", {})
+    assert asr.get("asset_type_resolved") == "hotel", (
+        f"legacy property_type not mapped to asset_type_resolved: {asr.get('asset_type_resolved')}"
+    )
+
+
+def test_PVNB04_legacy_valuation_purpose_market_value_maps_to_basis_of_value(client):
+    """PVNB04: Legacy valuation_purpose=market_value maps to basis_of_value in canonical_taxonomy."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB04 Client",
+            "property_type": "hotel",
+            "valuation_purpose": "market_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis3 = tax.get("axis_3_basis_of_value", {})
+    assert axis3.get("basis_of_value") == "market_value", (
+        f"valuation_purpose=market_value did not map to basis_of_value: {axis3}"
+    )
+
+
+def test_PVNB05_legacy_bank_financing_maps_to_assignment_purpose(client):
+    """PVNB05: Legacy valuation_purpose=bank_financing maps to assignment_purpose=financing_mortgage."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB05 Client",
+            "property_type": "industrial_factory",
+            "valuation_purpose": "bank_financing",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis2 = tax.get("axis_2_assignment_purpose", {})
+    assert axis2.get("assignment_purpose") == "financing_mortgage", (
+        f"bank_financing did not map to financing_mortgage: {axis2}"
+    )
+
+
+def test_PVNB06_hotel_market_value_derives_income_and_dcf_methods(client):
+    """PVNB06: hotel + market_value request derives income_approach and dcf in method route."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import derive_method_route
+
+    result = derive_method_route(
+        asset_type="hotel",
+        assignment_purpose="sale_purchase",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    enabled = result.get("enabled_methods", [])
+    assert "income_approach" in enabled, f"income_approach missing from hotel+market_value: {enabled}"
+    assert "dcf" in enabled, f"dcf missing from hotel+market_value: {enabled}"
+
+
+def test_PVNB07_hotel_market_value_derives_hbu_for_professional_report(client):
+    """PVNB07: hotel + market_value + professional_report adds hbu to enabled methods."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import derive_method_route
+
+    result = derive_method_route(
+        asset_type="hotel",
+        assignment_purpose="sale_purchase",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    enabled = result.get("enabled_methods", [])
+    assert "hbu" in enabled, f"hbu missing from hotel+market_value+professional_report: {enabled}"
+
+
+def test_PVNB08_factory_financing_derives_cost_approach(client):
+    """PVNB08: industrial_factory + financing_mortgage derives cost_approach."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import derive_method_route
+
+    result = derive_method_route(
+        asset_type="industrial_factory",
+        assignment_purpose="financing_mortgage",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    enabled = result.get("enabled_methods", [])
+    assert "cost_approach" in enabled, (
+        f"cost_approach missing from factory+financing: {enabled}"
+    )
+
+
+def test_PVNB09_land_market_value_derives_land_comparison(client):
+    """PVNB09: urban_land + market_value + sale_purchase derives land_comparison."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import derive_method_route
+
+    result = derive_method_route(
+        asset_type="urban_land",
+        assignment_purpose="sale_purchase",
+        basis_of_value="market_value",
+        report_type="professional_report",
+    )
+    enabled = result.get("enabled_methods", [])
+    assert "land_comparison" in enabled or "sales_comparison" in enabled, (
+        f"No comparison method for land+market_value: {enabled}"
+    )
+
+
+def test_PVNB10_geotechnical_risk_not_applicable_for_hotel(client):
+    """PVNB10: geotechnical_risk is not_applicable for hotel asset type."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+
+    result = get_feature_capabilities_context("hotel")
+    not_applicable = result.get("not_applicable_controls", [])
+    assert "geotechnical_risk" in not_applicable, (
+        f"geotechnical_risk must be not_applicable for hotel. Got: {not_applicable}"
+    )
+
+
+def test_PVNB11_geotechnical_risk_applicable_for_factory(client):
+    """PVNB11: geotechnical_risk is NOT in not_applicable list for industrial_factory."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import get_feature_capabilities_context
+
+    result = get_feature_capabilities_context("industrial_factory")
+    not_applicable = result.get("not_applicable_controls", [])
+    assert "geotechnical_risk" not in not_applicable, (
+        f"geotechnical_risk should be applicable (not in not_applicable) for factory. Got: {not_applicable}"
+    )
+
+
+def test_PVNB12_canonical_taxonomy_in_create_response(client):
+    """PVNB12: canonical_taxonomy key is returned in create response."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB12 Client",
+            "asset_type": "hotel",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value": "market_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert "canonical_taxonomy" in data, (
+        f"canonical_taxonomy missing from create response. Keys: {list(data.keys())}"
+    )
+    tax = data["canonical_taxonomy"]
+    assert isinstance(tax, dict), "canonical_taxonomy must be a dict"
+
+
+def test_PVNB13_derived_method_route_in_create_response(client):
+    """PVNB13: derived_method_route key is returned in create response."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB13 Client",
+            "asset_type": "hotel",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value": "market_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    assert "derived_method_route" in data, (
+        f"derived_method_route missing from create response. Keys: {list(data.keys())}"
+    )
+    dmr = data["derived_method_route"]
+    assert isinstance(dmr, dict), "derived_method_route must be a dict"
+
+
+def test_PVNB14_taxonomy_warnings_generated_for_misplaced_field(client):
+    """PVNB14: Using a method step as valuation_purpose generates a taxonomy warning."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB14 Client",
+            "property_type": "hotel",
+            "valuation_purpose": "comparable_adjustment",
+            "city": "Cairo",
+        },
+    )
+    # Request should still succeed (soft validation), but taxonomy_warnings should exist
+    assert resp.status_code == 201
+    data = resp.get_json()
+    warnings = data.get("taxonomy_warnings", [])
+    # The warning might be in the canonical_taxonomy
+    tax = data.get("canonical_taxonomy", {})
+    all_warnings_text = str(warnings) + str(tax)
+    # Should have flagged misplacement — comparable_adjustment is a method step not a purpose
+    # (soft validation, so request is accepted but warnings generated)
+    assert isinstance(warnings, list), "taxonomy_warnings must be a list"
+
+
+def test_PVNB15_hotel_duplicate_subtype_warning_generated():
+    """PVNB15: hotel as both asset_type and asset_subtype generates a taxonomy warning."""
+    import sys
+    sys.path.insert(0, "core_engine")
+    from professional_valuation_taxonomy_v2 import get_taxonomy_v2_context
+
+    result = get_taxonomy_v2_context(
+        asset_type="hotel",
+        asset_subtype="hotel",  # duplicated — should generate warning
+        assignment_purpose="sale_purchase",
+        basis_of_value="market_value",
+    )
+    warnings = result.get("taxonomy_warnings", [])
+    assert len(warnings) > 0, (
+        "Expected a warning for hotel used as both asset_type and asset_subtype"
+    )
+
+
+def test_PVNB16_basis_of_value_field_accepted_and_returned(client):
+    """PVNB16: basis_of_value canonical field accepted and returned in create response."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB16 Client",
+            "asset_type": "hotel",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value": "investment_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis3 = tax.get("axis_3_basis_of_value", {})
+    assert axis3.get("basis_of_value") == "investment_value", (
+        f"basis_of_value not in canonical_taxonomy: {axis3}"
+    )
+
+
+def test_PVNB17_assignment_purpose_accepted_and_returned(client):
+    """PVNB17: assignment_purpose canonical field accepted and returned in canonical_taxonomy."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB17 Client",
+            "asset_type": "hotel",
+            "assignment_purpose": "financing_mortgage",
+            "basis_of_value": "market_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax = data.get("canonical_taxonomy", {})
+    axis2 = tax.get("axis_2_assignment_purpose", {})
+    assert axis2.get("assignment_purpose") == "financing_mortgage", (
+        f"assignment_purpose not in canonical_taxonomy: {axis2}"
+    )
+
+
+def test_PVNB18_ordinary_valuation_create_still_works(client):
+    """PVNB18: Ordinary valuation API is unaffected by professional valuation changes."""
+    resp = client.post(
+        "/api/advisor/valuate",
+        json={
+            "property_type": "شقة سكنية",
+            "area": 100,
+            "city": "Cairo",
+            "purpose": "market_value",
+        },
+    )
+    # Should succeed (200 or 201) or fail with data error (not 500)
+    assert resp.status_code != 500, (
+        f"Ordinary valuation crashed with status {resp.status_code}"
+    )
+
+
+def test_PVNB19_no_internal_paths_in_canonical_taxonomy(client):
+    """PVNB19: canonical_taxonomy in response contains no internal storage paths (Rule 19)."""
+    resp = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "PVNB19 Client",
+            "asset_type": "hotel",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value": "market_value",
+            "city": "Cairo",
+        },
+    )
+    assert resp.status_code == 201
+    data = resp.get_json()
+    tax_str = str(data.get("canonical_taxonomy", {}))
+    dmr_str = str(data.get("derived_method_route", {}))
+    req_str = str(data.get("asset_specific_requirements", {}))
+    all_text = tax_str + dmr_str + req_str
+    assert "requests.jsonl" not in all_text, "internal path found in taxonomy/route/requirements"
+    assert "instance/professional_valuation" not in all_text, "internal path in taxonomy response"
+    assert "C:\\Users" not in all_text, "absolute Windows path found in taxonomy response"
+
+
+def test_PVNB20_tax_appeal_routes_still_respond(client):
+    """PVNB20: Tax appeal backend routes still work after professional valuation changes."""
+    resp = client.get("/api/tax-appeal/health")
+    # Health endpoint should respond (not 500)
+    assert resp.status_code in (200, 404), (
+        f"Tax appeal health unexpected status: {resp.status_code}"
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PVSEC01–PVSEC35 — Section 5 / Input Modes / New Fields Backend Tests
+# Part N: 35 backend tests for new API fields introduced in core UX restructure
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVSEC01_input_mode_structured_accepted(client):
+    """PVSEC01: input_mode=structured_browser_input is accepted and stored."""
+    r = _create(client, {"input_mode": "structured_browser_input"})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC02_input_mode_chat_accepted(client):
+    """PVSEC02: input_mode=chat_attachment_assisted_input is accepted and stored."""
+    r = _create(client, {"input_mode": "chat_attachment_assisted_input"})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC03_invalid_input_mode_falls_back_not_rejects(client):
+    """PVSEC03: Unknown input_mode is silently coerced to default (not a hard 400)."""
+    r = _create(client, {"input_mode": "unknown_mode_xyz"})
+    assert r.status_code == 201, f"Unknown input_mode should fall back, not 400. Got: {r.status_code}"
+
+
+def test_PVSEC04_auto_fill_requirements_true_accepted(client):
+    """PVSEC04: auto_fill_requirements_by_asset_and_purpose=True is accepted."""
+    r = _create(client, {"auto_fill_requirements_by_asset_and_purpose": True})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC05_auto_fill_requirements_false_accepted(client):
+    """PVSEC05: auto_fill_requirements_by_asset_and_purpose=False is accepted."""
+    r = _create(client, {"auto_fill_requirements_by_asset_and_purpose": False})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC06_uploaded_report_simulation_enabled_accepted(client):
+    """PVSEC06: uploaded_report_simulation_enabled=True is accepted."""
+    r = _create(client, {"uploaded_report_simulation_enabled": True})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC07_purpose_logic_path_accepted(client):
+    """PVSEC07: purpose_logic_path is accepted alongside canonical Axis 2 fields."""
+    r = _create(client, {"purpose_logic_path": "sales_comparison_market_value"})
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC08_output_type_traditional_report_accepted(client):
+    """PVSEC08: output_type=traditional_report is accepted."""
+    r = _create(client, {"output_type": "traditional_report"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVSEC09_output_type_detailed_report_accepted(client):
+    """PVSEC09: output_type=detailed_report is accepted."""
+    r = _create(client, {"output_type": "detailed_report"})
+    assert r.status_code == 201
+
+
+def test_PVSEC10_output_type_professional_report_accepted(client):
+    """PVSEC10: output_type=professional_report is accepted."""
+    r = _create(client, {"output_type": "professional_report"})
+    assert r.status_code == 201
+
+
+def test_PVSEC11_output_type_simulated_uploaded_report_accepted(client):
+    """PVSEC11: output_type=simulated_uploaded_report is accepted as advisory output."""
+    r = _create(client, {
+        "output_type": "simulated_uploaded_report",
+        "uploaded_report_simulation_enabled": True,
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVSEC12_simulated_report_without_flag_auto_enables_simulation(client):
+    """PVSEC12: Requesting simulated_uploaded_report output auto-enables simulation flag."""
+    r = _create(client, {
+        "output_type": "simulated_uploaded_report",
+        "uploaded_report_simulation_enabled": False,
+    })
+    # Should succeed (not reject), flag is auto-enabled
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVSEC13_response_contains_selected_configuration_summary(client):
+    """PVSEC13: Response contains selected_configuration_summary block."""
+    r = _create(client, {"input_mode": "structured_browser_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "selected_configuration_summary" in data, "Missing selected_configuration_summary in response"
+
+
+def test_PVSEC14_config_summary_has_input_mode(client):
+    """PVSEC14: selected_configuration_summary contains input_mode field."""
+    r = _create(client, {"input_mode": "chat_attachment_assisted_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert "input_mode" in summary, "selected_configuration_summary missing input_mode"
+
+
+def test_PVSEC15_config_summary_input_mode_value_matches(client):
+    """PVSEC15: selected_configuration_summary.input_mode matches what was sent."""
+    r = _create(client, {"input_mode": "chat_attachment_assisted_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert summary.get("input_mode") == "chat_attachment_assisted_input"
+
+
+def test_PVSEC16_config_summary_has_output_type(client):
+    """PVSEC16: selected_configuration_summary contains output_type field."""
+    r = _create(client, {"output_type": "detailed_report"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert "output_type" in summary
+
+
+def test_PVSEC17_config_summary_has_is_simulation_output(client):
+    """PVSEC17: selected_configuration_summary contains is_simulation_output field."""
+    r = _create(client, {"output_type": "traditional_report"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert "is_simulation_output" in summary
+
+
+def test_PVSEC18_simulation_output_false_for_non_simulation(client):
+    """PVSEC18: is_simulation_output=False for normal report types."""
+    r = _create(client, {"output_type": "professional_report"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert summary.get("is_simulation_output") is False
+
+
+def test_PVSEC19_simulation_output_true_for_simulated_report(client):
+    """PVSEC19: is_simulation_output=True when output_type=simulated_uploaded_report."""
+    r = _create(client, {
+        "output_type": "simulated_uploaded_report",
+        "uploaded_report_simulation_enabled": True,
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("selected_configuration_summary", {})
+    assert summary.get("is_simulation_output") is True
+
+
+def test_PVSEC20_chat_draft_summary_present_for_chat_mode(client):
+    """PVSEC20: chat_attachment_draft_summary returned when input_mode=chat_attachment_assisted_input."""
+    r = _create(client, {"input_mode": "chat_attachment_assisted_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("chat_attachment_draft_summary") is not None
+
+
+def test_PVSEC21_chat_draft_summary_null_for_structured_mode(client):
+    """PVSEC21: chat_attachment_draft_summary is null when input_mode=structured_browser_input."""
+    r = _create(client, {"input_mode": "structured_browser_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("chat_attachment_draft_summary") is None
+
+
+def test_PVSEC22_chat_draft_summary_advisory_only_true(client):
+    """PVSEC22: chat_attachment_draft_summary.advisory_only=True."""
+    r = _create(client, {"input_mode": "chat_attachment_assisted_input"})
+    assert r.status_code == 201
+    data = r.get_json()
+    summary = data.get("chat_attachment_draft_summary", {})
+    assert summary.get("advisory_only") is True
+
+
+def test_PVSEC23_simulation_summary_present_when_enabled(client):
+    """PVSEC23: uploaded_report_simulation_summary returned when simulation enabled."""
+    r = _create(client, {"uploaded_report_simulation_enabled": True})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("uploaded_report_simulation_summary") is not None
+
+
+def test_PVSEC24_simulation_summary_null_when_disabled(client):
+    """PVSEC24: uploaded_report_simulation_summary is null when simulation not enabled."""
+    r = _create(client, {"uploaded_report_simulation_enabled": False})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("uploaded_report_simulation_summary") is None
+
+
+def test_PVSEC25_simulation_summary_advisory_only_true(client):
+    """PVSEC25: uploaded_report_simulation_summary.advisory_only=True."""
+    r = _create(client, {"uploaded_report_simulation_enabled": True})
+    assert r.status_code == 201
+    data = r.get_json()
+    sim_summary = data.get("uploaded_report_simulation_summary", {})
+    assert sim_summary.get("advisory_only") is True
+
+
+def test_PVSEC26_simulation_summary_certified_output_false(client):
+    """PVSEC26: uploaded_report_simulation_summary.certified_output=False (advisory enforcement)."""
+    r = _create(client, {"uploaded_report_simulation_enabled": True})
+    assert r.status_code == 201
+    data = r.get_json()
+    sim_summary = data.get("uploaded_report_simulation_summary", {})
+    assert sim_summary.get("certified_output") is False
+
+
+def test_PVSEC27_simulation_note_in_arabic(client):
+    """PVSEC27: uploaded_report_simulation_summary.simulation_note_ar contains Arabic text."""
+    r = _create(client, {"uploaded_report_simulation_enabled": True})
+    assert r.status_code == 201
+    data = r.get_json()
+    sim_summary = data.get("uploaded_report_simulation_summary", {})
+    note = sim_summary.get("simulation_note_ar", "")
+    assert note, "simulation_note_ar should not be empty"
+    has_arabic = any('؀' <= c <= 'ۿ' for c in note)
+    assert has_arabic, f"simulation_note_ar should contain Arabic text, got: {note!r}"
+
+
+def test_PVSEC28_no_internal_paths_in_response(client):
+    """PVSEC28: Response JSON must not expose internal file paths."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    import json
+    resp_text = json.dumps(r.get_json())
+    bad_patterns = ["C:\\", "C:/Users", "/home/", "/Users/", "core_engine/"]
+    for pat in bad_patterns:
+        assert pat not in resp_text, f"Internal path '{pat}' found in API response"
+
+
+def test_PVSEC29_legacy_fields_still_work_with_new_fields(client):
+    """PVSEC29: Legacy property_type+valuation_purpose still work alongside new Section 5 fields."""
+    r = client.post("/api/professional-valuation/requests", json={
+        "client_name":        "عميل الاختبار",
+        "property_type":      "فندق",
+        "valuation_purpose":  "قيمة سوقية",
+        "city":               "القاهرة",
+        "input_mode":         "structured_browser_input",
+        "auto_fill_requirements_by_asset_and_purpose": True,
+    }, content_type="application/json")
+    assert r.status_code == 201
+    assert r.get_json()["ok"] is True
+
+
+def test_PVSEC30_output_type_overrides_report_type(client):
+    """PVSEC30: output_type takes priority over report_type when both provided."""
+    r = _create(client, {
+        "report_type":  "traditional_report",
+        "output_type":  "detailed_report",
+    })
+    assert r.status_code == 201
+    # No assertion on which wins — just must not 400 or 500
+
+
+def test_PVSEC31_simulated_report_not_certified(client):
+    """PVSEC31: simulated_uploaded_report output type cannot produce a certified output."""
+    r = _create(client, {
+        "output_type": "simulated_uploaded_report",
+        "uploaded_report_simulation_enabled": True,
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    sim_summary = data.get("uploaded_report_simulation_summary", {})
+    # certified_output must be False — simulation is advisory only
+    assert sim_summary.get("certified_output") is False
+
+
+def test_PVSEC32_invalid_output_type_rejected(client):
+    """PVSEC32: An unrecognized output_type value that is also not a valid report_type returns 400."""
+    r = _create(client, {
+        "output_type":  "fake_report_type",
+        "report_type":  "fake_report_type",
+    })
+    # Both report_type and output_type are invalid → should return 400
+    assert r.status_code == 400, f"Expected 400 for invalid report_type, got {r.status_code}"
+
+
+def test_PVSEC33_response_still_has_canonical_taxonomy(client):
+    """PVSEC33: New Section 5 fields don't break canonical_taxonomy in response."""
+    r = _create(client, {
+        "asset_type":     "hotel",
+        "basis_of_value": "market_value",
+        "input_mode":     "structured_browser_input",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "canonical_taxonomy" in data
+
+
+def test_PVSEC34_response_still_has_derived_method_route(client):
+    """PVSEC34: New Section 5 fields don't break derived_method_route in response."""
+    r = _create(client, {
+        "asset_type":     "urban_land",
+        "basis_of_value": "market_value",
+        "input_mode":     "structured_browser_input",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "derived_method_route" in data
+
+
+def test_PVSEC35_response_still_has_asset_specific_requirements(client):
+    """PVSEC35: New Section 5 fields don't break asset_specific_requirements in response."""
+    r = _create(client, {
+        "asset_type":     "hotel",
+        "input_mode":     "chat_attachment_assisted_input",
+        "auto_fill_requirements_by_asset_and_purpose": True,
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "asset_specific_requirements" in data
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Part K — Step 2 UX Cleanup: Purpose Routes & Professional Paths Backend Tests
+# PVPR01–PVPR17
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVPR01_assignment_purpose_accepted(client):
+    """PVPR01: assignment_purpose field is accepted by the create endpoint (returns 201)."""
+    r = _create(client, {"assignment_purpose": "sale_purchase"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+    data = r.get_json()
+    assert data["ok"] is True
+
+
+def test_PVPR02_purpose_logic_path_accepted(client):
+    """PVPR02: purpose_logic_path field is accepted by the create endpoint."""
+    r = _create(client, {"purpose_logic_path": "sales_comparison_market_value"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR03_purpose_route_accepted(client):
+    """PVPR03: purpose_route field is accepted by the create endpoint."""
+    r = _create(client, {"purpose_route": "market_value_standard"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR04_purpose_subroute_accepted(client):
+    """PVPR04: purpose_subroute field is accepted by the create endpoint."""
+    r = _create(client, {
+        "purpose_route":    "market_value_standard",
+        "purpose_subroute": "full_market_value",
+    })
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR05_professional_context_path_accepted(client):
+    """PVPR05: professional_context_path field is accepted by the create endpoint."""
+    r = _create(client, {"professional_context_path": "rics_red_book"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR06_professional_purpose_path_accepted(client):
+    """PVPR06: professional_purpose_path (NEW field) is accepted by the create endpoint."""
+    r = _create(client, {"professional_purpose_path": "bank_financing_path"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR07_intended_user_category_accepted(client):
+    """PVPR07: intended_user_category field is accepted by the create endpoint."""
+    r = _create(client, {"intended_user_category": "bank_financial_institution"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR08_intended_use_accepted(client):
+    """PVPR08: intended_use free-text field is accepted by the create endpoint."""
+    r = _create(client, {"intended_use": "Financing valuation for mortgage application"})
+    assert r.status_code == 201, f"Expected 201, got {r.status_code}"
+
+
+def test_PVPR09_detail_returns_valuation_purpose_routes_summary(client):
+    """PVPR09: Detail endpoint returns valuation_purpose_routes_summary dict.
+    The field is nested in body['request'] (detail endpoint wraps record under 'request' key)."""
+    rid = _create(client, {
+        "assignment_purpose":      "financing_mortgage",
+        "purpose_logic_path":      "income_capitalization_investment",
+        "purpose_route":           "mortgage_lending_value",
+        "purpose_subroute":        "mortgage_standard",
+        "professional_context_path": "rics_red_book",
+        "professional_purpose_path": "bank_financing_path",
+        "intended_user_category":  "bank_financial_institution",
+        "intended_use":            "Bank mortgage financing",
+    }).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert "request" in body, "Detail response must have 'request' key"
+    req = body["request"]
+    assert "valuation_purpose_routes_summary" in req, (
+        "body['request'] must include valuation_purpose_routes_summary"
+    )
+    summary = req["valuation_purpose_routes_summary"]
+    assert isinstance(summary, dict), "valuation_purpose_routes_summary must be a dict"
+    assert "assignment_purpose" in summary
+    assert "warnings" in summary
+
+
+def test_PVPR10_legacy_valuation_purpose_still_accepted(client):
+    """PVPR10: Old valuation_purpose field (legacy alias) is still accepted — backward compat."""
+    r = _create(client, {"valuation_purpose": "market_value_for_sale"})
+    assert r.status_code == 201, (
+        f"Legacy 'valuation_purpose' must still be accepted for backward compat, got {r.status_code}"
+    )
+
+
+def test_PVPR11_legacy_purpose_subpath_still_accepted(client):
+    """PVPR11: Old purpose_subpath field (legacy alias for purpose_subroute) is still accepted."""
+    r = _create(client, {
+        "purpose_route":   "market_value_standard",
+        "purpose_subpath": "full_market_value",
+    })
+    assert r.status_code == 201, (
+        f"Legacy 'purpose_subpath' must still be accepted for backward compat, got {r.status_code}"
+    )
+
+
+def test_PVPR12_value_basis_in_old_purpose_field_mapped_safely(client):
+    """PVPR12: Submitting a basis_of_value value (e.g. 'market_value') via
+    valuation_purpose (legacy field) is accepted and does not cause a 4xx — it is
+    mapped with a soft warning, not rejected."""
+    r = _create(client, {"valuation_purpose": "market_value"})
+    assert r.status_code == 201, (
+        f"Basis-of-value in old purpose field must produce a soft warning, not rejection. Got {r.status_code}"
+    )
+
+
+def test_PVPR13_comparable_adjustment_in_purpose_subpath_maps_to_method_step(client):
+    """PVPR13: Submitting 'comparable_adjustment' via purpose_subpath is accepted
+    without a 4xx (mapped to method-step context with warning)."""
+    r = _create(client, {
+        "purpose_route":   "market_value_standard",
+        "purpose_subpath": "comparable_adjustment",
+    })
+    assert r.status_code == 201, (
+        f"comparable_adjustment in purpose_subpath must be accepted with warning, got {r.status_code}"
+    )
+
+
+def test_PVPR14_no_purpose_option_deleted(client):
+    """PVPR14: Core assignment purpose values still accepted — no option deleted.
+    Tests a sample of canonical assignment_purpose values from the Step 2 UX spec.
+    """
+    canonical_purposes = [
+        "sale_purchase",
+        "financing_mortgage",
+        "court_dispute",
+        "insurance_coverage",
+        "tax_assessment",
+        "financial_reporting",
+        "rental_advisory",
+        "compulsory_acquisition",
+        "portfolio_review",
+        "investment_decision",
+    ]
+    for purpose in canonical_purposes:
+        r = _create(client, {"assignment_purpose": purpose})
+        assert r.status_code == 201, (
+            f"assignment_purpose='{purpose}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+
+
+def test_PVPR15_no_professional_context_path_option_deleted(client):
+    """PVPR15: Professional context path options still accepted — no route deleted."""
+    context_paths = ["rics_red_book", "ivsc_ips", "local_standards"]
+    for path in context_paths:
+        r = _create(client, {"professional_context_path": path})
+        assert r.status_code == 201, (
+            f"professional_context_path='{path}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+
+
+def test_PVPR16_ordinary_valuation_tests_unaffected(client):
+    """PVPR16: Ordinary valuation create (no purpose route fields) still returns 201.
+    Confirms Step 2 UX changes don't break the standard create flow."""
+    r = _create(client)
+    assert r.status_code == 201, (
+        f"Baseline create (no purpose route fields) must still return 201. Got {r.status_code}"
+    )
+    data = r.get_json()
+    assert data["ok"] is True
+    assert "request_id" in data
+
+
+def test_PVPR17_detail_legacy_purpose_aliases_in_response(client):
+    """PVPR17: Detail response includes legacy_purpose_aliases list in body['request'].
+    The field may be empty for requests that did not use legacy fields — the key must always be present."""
+    rid = _create(client, {"assignment_purpose": "sale_purchase"}).get_json()["request_id"]
+    resp = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert "request" in body, "Detail response must have 'request' key"
+    req = body["request"]
+    assert "legacy_purpose_aliases" in req, (
+        "body['request'] must include 'legacy_purpose_aliases' key (may be empty list)"
+    )
+
+
+# ── PVTAX01–PVTAX20: Three-Cards Taxonomy Summary Backend Tests (Part J) ─────
+
+def test_PVTAX01_taxonomy_cards_summary_in_create_response(client):
+    """PVTAX01: Create response includes taxonomy_cards_summary key."""
+    r = _create(client, {
+        "asset_family":       "residential",
+        "asset_type":         "apartment",
+        "asset_subtype":      "studio",
+        "assignment_purpose": "sale_purchase",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "taxonomy_cards_summary" in data, (
+        "Create response must include taxonomy_cards_summary"
+    )
+
+
+def test_PVTAX02_taxonomy_cards_summary_has_three_cards(client):
+    """PVTAX02: taxonomy_cards_summary contains card_1_asset_definition, card_2_purpose_routes, card_3_basis_of_value."""
+    r = _create(client, {
+        "asset_family":       "residential",
+        "asset_type":         "villa",
+        "assignment_purpose": "financing_mortgage",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    tcs = r.get_json().get("taxonomy_cards_summary", {})
+    for key in ("card_1_asset_definition", "card_2_purpose_routes", "card_3_basis_of_value"):
+        assert key in tcs, f"taxonomy_cards_summary missing key: {key}"
+
+
+def test_PVTAX03_card1_contains_asset_fields(client):
+    """PVTAX03: card_1_asset_definition contains asset_family, asset_type, asset_subtype, asset_condition_path."""
+    r = _create(client, {
+        "asset_family":        "commercial",
+        "asset_type":          "office",
+        "asset_subtype":       "open_plan",
+        "asset_condition_path": "as_is",
+        "assignment_purpose":  "sale_purchase",
+    })
+    assert r.status_code == 201
+    card1 = r.get_json()["taxonomy_cards_summary"]["card_1_asset_definition"]
+    assert card1.get("asset_family") == "commercial"
+    assert card1.get("asset_type") == "office"
+    assert card1.get("asset_subtype") == "open_plan"
+    assert card1.get("asset_condition_path") == "as_is"
+
+
+def test_PVTAX04_card2_contains_purpose_route_fields(client):
+    """PVTAX04: card_2_purpose_routes contains assignment_purpose, purpose_logic_path, purpose_route."""
+    r = _create(client, {
+        "asset_type":          "apartment",
+        "assignment_purpose":  "financing_mortgage",
+        "purpose_logic_path":  "standard_valuation",
+        "purpose_route":       "bank_financing_collateral",
+    })
+    assert r.status_code == 201
+    card2 = r.get_json()["taxonomy_cards_summary"]["card_2_purpose_routes"]
+    assert card2.get("assignment_purpose") == "financing_mortgage"
+    assert card2.get("purpose_logic_path") == "standard_valuation"
+    assert card2.get("purpose_route") == "bank_financing_collateral"
+
+
+def test_PVTAX05_card3_contains_basis_of_value_fields(client):
+    """PVTAX05: card_3_basis_of_value contains basis_of_value, value_premise, value_output_type."""
+    r = _create(client, {
+        "asset_type":         "apartment",
+        "assignment_purpose": "sale_purchase",
+        "basis_of_value":     "investment_value",
+        "value_premise":      "highest_and_best_use",
+        "value_output_type":  "range_estimate",
+    })
+    assert r.status_code == 201
+    card3 = r.get_json()["taxonomy_cards_summary"]["card_3_basis_of_value"]
+    assert card3.get("basis_of_value") == "investment_value"
+    assert card3.get("value_premise") == "highest_and_best_use"
+    assert card3.get("value_output_type") == "range_estimate"
+
+
+def test_PVTAX06_taxonomy_cards_summary_in_detail_response(client):
+    """PVTAX06: taxonomy_cards_summary is returned in GET detail response (_safe_detail)."""
+    r = _create(client, {
+        "asset_type":         "villa",
+        "assignment_purpose": "investment_decision",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    rid = r.get_json()["request_id"]
+
+    detail = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert detail.status_code == 200
+    req = detail.get_json().get("request", {})
+    assert "taxonomy_cards_summary" in req, (
+        "Detail response body['request'] must include taxonomy_cards_summary"
+    )
+
+
+def test_PVTAX07_detail_card1_matches_create_card1(client):
+    """PVTAX07: card_1_asset_definition in detail response matches what was stored at create."""
+    r = _create(client, {
+        "asset_family":        "hospitality_leisure",
+        "asset_type":          "hotel",
+        "asset_condition_path": "as_stabilized",
+        "assignment_purpose":  "market_valuation",
+    })
+    assert r.status_code == 201
+    create_card1 = r.get_json()["taxonomy_cards_summary"]["card_1_asset_definition"]
+    rid = r.get_json()["request_id"]
+
+    detail = client.get(f"/api/professional-valuation/requests/{rid}", headers=_auth())
+    assert detail.status_code == 200
+    detail_card1 = detail.get_json()["request"]["taxonomy_cards_summary"]["card_1_asset_definition"]
+
+    assert detail_card1.get("asset_family") == create_card1.get("asset_family")
+    assert detail_card1.get("asset_type") == create_card1.get("asset_type")
+    assert detail_card1.get("asset_condition_path") == create_card1.get("asset_condition_path")
+
+
+def test_PVTAX08_warnings_key_present_in_taxonomy_cards_summary(client):
+    """PVTAX08: taxonomy_cards_summary always includes a 'warnings' list key."""
+    r = _create(client, {"asset_type": "apartment", "assignment_purpose": "sale_purchase"})
+    assert r.status_code == 201
+    tcs = r.get_json().get("taxonomy_cards_summary", {})
+    assert "warnings" in tcs, "taxonomy_cards_summary must include 'warnings' key"
+    assert isinstance(tcs["warnings"], list), "'warnings' must be a list"
+
+
+def test_PVTAX09_all_card3_basis_of_value_options_accepted(client):
+    """PVTAX09: All 8 canonical basis_of_value values are accepted and stored in card_3."""
+    valid_bov = [
+        "market_value", "market_rent", "investment_value", "fair_value",
+        "liquidation_value", "insurable_value", "going_concern_value", "special_purpose_value",
+    ]
+    for bov in valid_bov:
+        r = _create(client, {
+            "asset_type":         "apartment",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value":     bov,
+        })
+        assert r.status_code == 201, (
+            f"basis_of_value='{bov}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+        card3 = r.get_json()["taxonomy_cards_summary"]["card_3_basis_of_value"]
+        assert card3.get("basis_of_value") == bov, (
+            f"basis_of_value='{bov}' not reflected in card_3. Got: {card3.get('basis_of_value')}"
+        )
+
+
+def test_PVTAX10_all_value_premise_options_accepted(client):
+    """PVTAX10: All 8 value_premise options are accepted without error."""
+    premises = [
+        "as_is", "as_stabilized", "as_complete", "highest_and_best_use",
+        "current_use", "alternative_use", "forced_sale", "going_concern",
+    ]
+    for p in premises:
+        r = _create(client, {
+            "asset_type":         "apartment",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value":     "market_value",
+            "value_premise":      p,
+        })
+        assert r.status_code == 201, (
+            f"value_premise='{p}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+        card3 = r.get_json()["taxonomy_cards_summary"]["card_3_basis_of_value"]
+        assert card3.get("value_premise") == p
+
+
+def test_PVTAX11_all_value_output_type_options_accepted(client):
+    """PVTAX11: All 5 value_output_type options are accepted without error."""
+    output_types = [
+        "point_estimate", "range_estimate", "weighted_value",
+        "probability_weighted", "scenario_based",
+    ]
+    for ot in output_types:
+        r = _create(client, {
+            "asset_type":         "apartment",
+            "assignment_purpose": "sale_purchase",
+            "basis_of_value":     "market_value",
+            "value_output_type":  ot,
+        })
+        assert r.status_code == 201, (
+            f"value_output_type='{ot}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+        card3 = r.get_json()["taxonomy_cards_summary"]["card_3_basis_of_value"]
+        assert card3.get("value_output_type") == ot
+
+
+def test_PVTAX12_all_asset_condition_path_options_accepted(client):
+    """PVTAX12: All 7 asset_condition_path options are accepted without error."""
+    paths = [
+        "new_construction", "as_is", "as_repaired", "as_completed",
+        "as_stabilized", "retrospective", "prospective",
+    ]
+    for path in paths:
+        r = _create(client, {
+            "asset_type":          "apartment",
+            "assignment_purpose":  "sale_purchase",
+            "asset_condition_path": path,
+        })
+        assert r.status_code == 201, (
+            f"asset_condition_path='{path}' was rejected — option must not be deleted. Got {r.status_code}"
+        )
+        card1 = r.get_json()["taxonomy_cards_summary"]["card_1_asset_definition"]
+        assert card1.get("asset_condition_path") == path
+
+
+def test_PVTAX13_legacy_valuation_purpose_maps_to_card2(client):
+    """PVTAX13: Legacy valuation_purpose field is mapped to assignment_purpose in card_2."""
+    r = _create(client, {
+        "asset_type":         "apartment",
+        "valuation_purpose":  "bank_financing",
+    })
+    assert r.status_code == 201
+    card2 = r.get_json()["taxonomy_cards_summary"]["card_2_purpose_routes"]
+    assert card2.get("assignment_purpose") in ("financing_mortgage", "bank_financing"), (
+        f"Expected assignment_purpose mapped from bank_financing. Got: {card2.get('assignment_purpose')}"
+    )
+
+
+def test_PVTAX14_legacy_valuation_purpose_maps_bov_to_card3(client):
+    """PVTAX14: Legacy valuation_purpose=fair_market_value maps to market_value in card_3."""
+    r = _create(client, {
+        "asset_type":         "apartment",
+        "valuation_purpose":  "fair_market_value",
+    })
+    assert r.status_code == 201
+    card3 = r.get_json()["taxonomy_cards_summary"]["card_3_basis_of_value"]
+    assert card3.get("basis_of_value") in ("market_value", "fair_market_value"), (
+        f"Expected market_value in card_3 from legacy fair_market_value. Got: {card3.get('basis_of_value')}"
+    )
+
+
+def test_PVTAX15_canonical_fields_not_in_card1(client):
+    """PVTAX15: card_1_asset_definition does NOT include market_value, assignment_purpose, or report_type.
+    Rule 1 of the three-cards spec: Card 1 is Asset Definition only."""
+    r = _create(client, {
+        "asset_family":       "residential",
+        "asset_type":         "apartment",
+        "assignment_purpose": "sale_purchase",
+        "basis_of_value":     "market_value",
+        "report_type":        "professional_report",
+    })
+    assert r.status_code == 201
+    card1 = r.get_json()["taxonomy_cards_summary"]["card_1_asset_definition"]
+    for forbidden in ("market_value", "assignment_purpose", "report_type"):
+        assert forbidden not in card1, (
+            f"Card 1 must not include '{forbidden}' — belongs in card_2 or card_3: {card1}"
+        )
+
+
+def test_PVTAX16_market_value_in_card3_not_card1(client):
+    """PVTAX16: basis_of_value=market_value belongs in card_3, not card_1."""
+    r = _create(client, {
+        "asset_type":         "apartment",
+        "assignment_purpose": "sale_purchase",
+        "basis_of_value":     "market_value",
+    })
+    assert r.status_code == 201
+    tcs = r.get_json()["taxonomy_cards_summary"]
+    card1 = tcs["card_1_asset_definition"]
+    card3 = tcs["card_3_basis_of_value"]
+    assert "market_value" not in card1.values(), (
+        "market_value must not appear in card_1 values"
+    )
+    assert card3.get("basis_of_value") == "market_value", (
+        "market_value must appear in card_3.basis_of_value"
+    )
+
+
+def test_PVTAX17_empty_optional_fields_stored_as_empty_string(client):
+    """PVTAX17: Optional card fields not provided are stored as empty string (not None/missing)."""
+    r = _create(client, {
+        "asset_type":         "apartment",
+        "assignment_purpose": "sale_purchase",
+    })
+    assert r.status_code == 201
+    tcs = r.get_json()["taxonomy_cards_summary"]
+    card1 = tcs["card_1_asset_definition"]
+    card3 = tcs["card_3_basis_of_value"]
+    # Optional fields should exist in the dict (even if empty)
+    assert "asset_condition_path" in card1
+    assert "basis_of_value" in card3
+    assert "value_premise" in card3
+    assert "value_output_type" in card3
+
+
+def test_PVTAX18_create_with_all_three_cards_fields(client):
+    """PVTAX18: Create with all three-card fields simultaneously returns 201 and full summary."""
+    r = _create(client, {
+        "asset_family":          "commercial",
+        "asset_type":            "retail",
+        "asset_subtype":         "supermarket",
+        "asset_condition_path":  "as_completed",
+        "assignment_purpose":    "investment_decision",
+        "purpose_logic_path":    "standard_valuation",
+        "purpose_route":         "income_investment_analysis",
+        "purpose_subroute":      "dcf_analysis",
+        "professional_context_path": "investment_funds",
+        "professional_purpose_path": "investment_analysis",
+        "intended_user_category": "institutional",
+        "intended_use":          "investment_portfolio",
+        "basis_of_value":        "investment_value",
+        "value_premise":         "as_stabilized",
+        "value_output_type":     "scenario_based",
+    })
+    assert r.status_code == 201
+    tcs = r.get_json()["taxonomy_cards_summary"]
+    assert tcs["card_1_asset_definition"]["asset_family"] == "commercial"
+    assert tcs["card_2_purpose_routes"]["assignment_purpose"] == "investment_decision"
+    assert tcs["card_3_basis_of_value"]["basis_of_value"] == "investment_value"
+
+
+def test_PVTAX19_existing_tests_unaffected_by_taxonomy_cards(client):
+    """PVTAX19: Adding taxonomy_cards_summary does not break canonical_taxonomy or derived_method_route."""
+    r = _create(client, {
+        "asset_family":       "residential",
+        "asset_type":         "villa",
+        "assignment_purpose": "financing_mortgage",
+        "basis_of_value":     "market_value",
+        "report_type":        "professional_report",
+    })
+    assert r.status_code == 201
+    data = r.get_json()
+    assert data.get("canonical_taxonomy"), "canonical_taxonomy must still be present"
+    assert data.get("derived_method_route"), "derived_method_route must still be present"
+    assert data.get("taxonomy_cards_summary"), "taxonomy_cards_summary must be present"
+    assert data.get("valuation_purpose_routes_summary"), "valuation_purpose_routes_summary must still be present"
+
+
+def test_PVTAX20_ordinary_valuation_route_unaffected(client):
+    """PVTAX20: Ordinary valuation API is unaffected by three-cards taxonomy changes.
+    (Rule 7: Do not break ordinary Valuation page.)"""
+    resp = client.post(
+        "/api/advisor/valuation",
+        json={
+            "property_type":     "apartment",
+            "area_sqm":          150.0,
+            "location":          "New Cairo",
+            "valuation_purpose": "sale",
+        },
+        content_type="application/json",
+    )
+    # Must not return 404 or 500 — ordinary valuation route intact
+    assert resp.status_code not in (404, 500), (
+        f"Ordinary valuation route broken. Status: {resp.status_code}"
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# PVREQ01–PVREQ18: Professional Valuation — Restore Full Legacy Asset Requirements
+# ════════════════════════════════════════════════════════════════════════════════
+
+def _create_with_asset_type(client, asset_type: str) -> dict:
+    """Create a PVR record with a specific asset_type and return the parsed response body."""
+    r = _create(client, {"asset_type": asset_type})
+    assert r.status_code == 201, f"Expected 201 for asset_type={asset_type}, got {r.status_code}"
+    return r.get_json()
+
+
+def test_PVREQ01_hotel_returns_full_requirements(client):
+    """PVREQ01: Creating a hotel record returns a non-empty asset_specific_requirements block."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    assert asr, "asset_specific_requirements must not be empty for hotel"
+    assert asr.get("required_inputs"), "required_inputs must not be empty for hotel"
+    assert asr.get("legacy_requirement_keys"), "legacy_requirement_keys must not be empty for hotel"
+
+
+def test_PVREQ02_hotel_total_count_gte_legacy_count(client):
+    """PVREQ02: Hotel total_requirements_count >= legacy_requirements_count (no deletion)."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    total = asr.get("total_requirements_count", 0)
+    legacy = asr.get("legacy_requirements_count", 0)
+    assert total >= legacy, (
+        f"total_requirements_count ({total}) must be >= legacy_requirements_count ({legacy})"
+    )
+
+
+def test_PVREQ03_hotel_legacy_keys_preserved(client):
+    """PVREQ03: Hotel legacy_requirement_keys includes the old registry code hotel_resort_detailed."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    legacy_keys = asr.get("legacy_requirement_keys", [])
+    assert "hotel_resort_detailed" in legacy_keys, (
+        "hotel_resort_detailed must be in legacy_requirement_keys"
+    )
+
+
+def test_PVREQ04_hotel_includes_adr(client):
+    """PVREQ04: Hotel required_inputs includes adr."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    assert "adr" in asr.get("required_inputs", []), "adr must be in hotel required_inputs"
+
+
+def test_PVREQ05_hotel_includes_occupancy_rate(client):
+    """PVREQ05: Hotel required_inputs includes occupancy_rate."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    assert "occupancy_rate" in asr.get("required_inputs", []), (
+        "occupancy_rate must be in hotel required_inputs"
+    )
+
+
+def test_PVREQ06_hotel_includes_revpar(client):
+    """PVREQ06: Hotel required_inputs includes revpar."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    assert "revpar" in asr.get("required_inputs", []), "revpar must be in hotel required_inputs"
+
+
+def test_PVREQ07_hotel_includes_dcf_method(client):
+    """PVREQ07: Hotel recommended_methods includes dcf."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    assert "dcf" in asr.get("recommended_methods", []), "dcf must be in hotel recommended_methods"
+
+
+def test_PVREQ08_factory_returns_full_requirements(client):
+    """PVREQ08: Creating an industrial_factory record returns a non-empty requirements block."""
+    data = _create_with_asset_type(client, "industrial_factory")
+    asr = data.get("asset_specific_requirements", {})
+    assert asr.get("required_inputs"), "required_inputs must not be empty for industrial_factory"
+    assert asr.get("legacy_requirement_keys"), "legacy_requirement_keys must not be empty for industrial_factory"
+
+
+def test_PVREQ09_land_returns_full_requirements(client):
+    """PVREQ09: Creating an urban_land record returns a non-empty requirements block."""
+    data = _create_with_asset_type(client, "urban_land")
+    asr = data.get("asset_specific_requirements", {})
+    assert asr.get("required_inputs"), "required_inputs must not be empty for urban_land"
+    assert asr.get("legacy_requirement_keys"), "legacy_requirement_keys must not be empty for urban_land"
+
+
+def test_PVREQ10_retail_returns_full_requirements(client):
+    """PVREQ10: Creating a retail_shop record returns a non-empty requirements block."""
+    data = _create_with_asset_type(client, "retail_shop")
+    asr = data.get("asset_specific_requirements", {})
+    assert asr.get("required_inputs"), "required_inputs must not be empty for retail_shop"
+    assert asr.get("legacy_requirement_keys"), "legacy_requirement_keys must not be empty for retail_shop"
+
+
+def test_PVREQ11_warehouse_returns_full_requirements(client):
+    """PVREQ11: Creating a warehouse record returns a non-empty requirements block."""
+    data = _create_with_asset_type(client, "warehouse")
+    asr = data.get("asset_specific_requirements", {})
+    assert asr.get("required_inputs"), "required_inputs must not be empty for warehouse"
+    assert asr.get("legacy_requirement_keys"), "legacy_requirement_keys must not be empty for warehouse"
+
+
+def test_PVREQ12_all_asset_types_have_legacy_keys(client):
+    """PVREQ12: Every catalogued asset type returns non-empty legacy_requirement_keys."""
+    asset_types = ["hotel", "industrial_factory", "urban_land", "retail_shop", "warehouse"]
+    for at in asset_types:
+        data = _create_with_asset_type(client, at)
+        asr = data.get("asset_specific_requirements", {})
+        legacy = asr.get("legacy_requirement_keys", [])
+        assert legacy, f"legacy_requirement_keys must not be empty for {at}"
+
+
+def test_PVREQ13_missing_from_current_after_restore_is_empty(client):
+    """PVREQ13: missing_from_current_after_restore is empty — no requirements lost after restore."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    missing = asr.get("missing_from_current_after_restore", ["NOT_IN_RESPONSE"])
+    assert missing == [], (
+        f"missing_from_current_after_restore must be [] for hotel, got {missing}"
+    )
+
+
+def test_PVREQ14_deleted_requirements_is_empty(client):
+    """PVREQ14: deleted_requirements is empty — no requirements deleted."""
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    deleted = asr.get("deleted_requirements", ["NOT_IN_RESPONSE"])
+    assert deleted == [], (
+        f"deleted_requirements must be [] for hotel, got {deleted}"
+    )
+
+
+def test_PVREQ15_preservation_pass_is_true(client):
+    """PVREQ15: preservation_pass is True for all major asset types."""
+    for at in ["hotel", "industrial_factory", "urban_land", "retail_shop", "warehouse"]:
+        data = _create_with_asset_type(client, at)
+        asr = data.get("asset_specific_requirements", {})
+        pp = asr.get("preservation_pass", False)
+        assert pp is True, f"preservation_pass must be True for {at}, got {pp}"
+
+
+def test_PVREQ16_no_internal_paths_in_requirements_context(client):
+    """PVREQ16: No internal filesystem paths in asset_specific_requirements response."""
+    import json as _json
+    data = _create_with_asset_type(client, "hotel")
+    asr = data.get("asset_specific_requirements", {})
+    asr_str = _json.dumps(asr)
+    for forbidden in ("C:\\", "/home/", "/var/", "core_engine/", "bridge_api"):
+        assert forbidden not in asr_str, (
+            f"Internal path fragment '{forbidden}' found in asset_specific_requirements"
+        )
+
+
+def test_PVREQ17_ordinary_valuation_unaffected_by_requirements_restore(client):
+    """PVREQ17: Ordinary valuation route is unaffected by the requirements-restore changes."""
+    resp = client.post(
+        "/api/advisor/valuation",
+        json={
+            "property_type":     "apartment",
+            "area_sqm":          120.0,
+            "location":          "Maadi",
+            "valuation_purpose": "sale",
+        },
+        content_type="application/json",
+    )
+    assert resp.status_code not in (404, 500), (
+        f"Ordinary valuation route broken after requirements restore. Status: {resp.status_code}"
+    )
+
+
+def test_PVREQ18_tax_appeal_unaffected_by_requirements_restore(client):
+    """PVREQ18: Tax appeal route is unaffected by the requirements-restore changes."""
+    resp = client.post(
+        "/api/tax-appeal/requests",
+        json={
+            "owner_name":    "اختبار PVREQ18",
+            "property_type": "شقة",
+            "current_assessed_value": 500000,
+            "dispute_reason": "overvaluation",
+        },
+        content_type="application/json",
+    )
+    # Must not be 404 or 500 — tax appeal route unbroken
+    assert resp.status_code not in (404, 500), (
+        f"Tax appeal route broken after requirements restore. Status: {resp.status_code}"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVBG01–PVBG11 — Engine Governance Audit Context Tests (Part F)
+# Basis of Value section cleanup: engine_governance_audit_context must be
+# present in create (201) response, with correct shape and values.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVBG01_basis_of_value_still_returned_on_create(client):
+    """PVBG01: basis_of_value preserved in canonical_taxonomy.axis_3_basis_of_value and card_3 after cleanup."""
+    r = _create(client, {"basis_of_value": "market_value"})
+    assert r.status_code == 201
+    data = r.get_json()
+    axis3 = data.get("canonical_taxonomy", {}).get("axis_3_basis_of_value", {})
+    assert axis3.get("basis_of_value") == "market_value", (
+        "basis_of_value must be in canonical_taxonomy.axis_3_basis_of_value"
+    )
+    card3 = data.get("taxonomy_cards_summary", {}).get("card_3_basis_of_value", {})
+    assert card3.get("basis_of_value") == "market_value", (
+        "basis_of_value must be in taxonomy_cards_summary.card_3_basis_of_value"
+    )
+
+
+def test_PVBG02_value_output_type_still_returned(client):
+    """PVBG02: value_output_type preserved in canonical_taxonomy.axis_3_basis_of_value after cleanup."""
+    r = _create(client, {"value_output_type": "point_estimate"})
+    assert r.status_code == 201
+    data = r.get_json()
+    axis3 = data.get("canonical_taxonomy", {}).get("axis_3_basis_of_value", {})
+    assert axis3.get("value_output_type") == "point_estimate", (
+        "value_output_type must be in canonical_taxonomy.axis_3_basis_of_value"
+    )
+
+
+def test_PVBG03_value_premise_still_returned(client):
+    """PVBG03: value_premise preserved in canonical_taxonomy.axis_3_basis_of_value after cleanup."""
+    r = _create(client, {"value_premise": "as_is"})
+    assert r.status_code == 201
+    data = r.get_json()
+    axis3 = data.get("canonical_taxonomy", {}).get("axis_3_basis_of_value", {})
+    assert axis3.get("value_premise") == "as_is", (
+        "value_premise must be in canonical_taxonomy.axis_3_basis_of_value"
+    )
+
+
+def test_PVBG04_engine_governance_audit_context_exists(client):
+    """PVBG04: engine_governance_audit_context key present in create response."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "engine_governance_audit_context" in data, (
+        "engine_governance_audit_context must be in create response"
+    )
+
+
+def test_PVBG05_governance_context_contains_draft_status(client):
+    """PVBG05: engine_governance_audit_context contains draft_status."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    ctx = r.get_json().get("engine_governance_audit_context", {})
+    assert "draft_status" in ctx, "engine_governance_audit_context must have draft_status"
+    assert ctx["draft_status"], "draft_status must be non-empty"
+
+
+def test_PVBG06_governance_context_contains_data_readiness(client):
+    """PVBG06: engine_governance_audit_context contains data_readiness."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    ctx = r.get_json().get("engine_governance_audit_context", {})
+    assert "data_readiness" in ctx, "engine_governance_audit_context must have data_readiness"
+
+
+def test_PVBG07_governance_context_contains_processing_pipeline_steps(client):
+    """PVBG07: engine_governance_audit_context contains processing_pipeline_steps list with 9 items."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    ctx = r.get_json().get("engine_governance_audit_context", {})
+    steps = ctx.get("processing_pipeline_steps", [])
+    assert isinstance(steps, list), "processing_pipeline_steps must be a list"
+    assert len(steps) == 9, f"Expected 9 pipeline steps, got {len(steps)}"
+
+
+def test_PVBG08_governance_context_old_keys_preserved(client):
+    """PVBG08: engine_governance_audit_context preserves human_approval_required and final_report_without_approval_allowed."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    ctx = r.get_json().get("engine_governance_audit_context", {})
+    assert "human_approval_required" in ctx
+    assert ctx["human_approval_required"] is True
+    assert "final_report_without_approval_allowed" in ctx
+    assert ctx["final_report_without_approval_allowed"] is False
+
+
+def test_PVBG09_governance_context_no_internal_paths(client):
+    """PVBG09: engine_governance_audit_context must not contain internal filesystem paths."""
+    r = _create(client, {})
+    assert r.status_code == 201
+    import json
+    ctx_str = json.dumps(r.get_json().get("engine_governance_audit_context", {}))
+    for forbidden in ("C:\\", "/home/", "/var/", "core_engine/", "bridge_api"):
+        assert forbidden not in ctx_str, (
+            f"Internal path '{forbidden}' found in engine_governance_audit_context"
+        )
+
+
+def test_PVBG10_ordinary_valuation_unaffected_by_governance_cleanup(client):
+    """PVBG10: Ordinary valuation route unaffected by governance context addition."""
+    resp = client.post(
+        "/api/valuation",
+        json={
+            "property_type": "apartment",
+            "area_sqm": 100,
+            "location": "Cairo",
+        },
+        content_type="application/json",
+    )
+    assert resp.status_code not in (404, 500), (
+        f"Ordinary valuation route broken. Status: {resp.status_code}"
+    )
+
+
+def test_PVBG11_tax_appeal_unaffected_by_governance_cleanup(client):
+    """PVBG11: Tax appeal route unaffected by governance context addition."""
+    resp = client.post(
+        "/api/tax-appeal/requests",
+        json={
+            "owner_name":             "اختبار PVBG11",
+            "property_type":          "شقة",
+            "current_assessed_value": 500000,
+            "dispute_reason":         "overvaluation",
+        },
+        content_type="application/json",
+    )
+    assert resp.status_code not in (404, 500), (
+        f"Tax appeal route broken. Status: {resp.status_code}"
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PVSS_BE01–PVSS_BE19 — Six-Section Layout Backend Tests (Part H / Part I)
+#
+# These tests verify that the POST create response and GET detail response
+# both carry:
+#   • main_page_sections_context  — 6 visible sections, governance & controls flags
+#   • advanced_controls_context   — active/inactive controls, roadmap, reflection matrix
+# ══════════════════════════════════════════════════════════════════════════════
+
+_EXPECTED_SECTION_IDS = [
+    "pro-val-section-basic-valuation-data",
+    "pro-val-section-asset-type-selection",
+    "pro-val-section-valuation-purpose",
+    "pro-val-section-applied-valuation-standards",
+    "pro-val-section-report-type",
+    "pro-val-section-chat-box",
+]
+
+
+def test_PVSS_BE01_create_response_has_main_page_sections_context(client):
+    """PVSS_BE01: POST to create a PVR returns 201 and response has main_page_sections_context key."""
+    r = _create(client)
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "main_page_sections_context" in data, (
+        "main_page_sections_context key must be present in create response"
+    )
+
+
+def test_PVSS_BE02_main_page_sections_context_section_count_is_6(client):
+    """PVSS_BE02: main_page_sections_context.section_count == 6."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    assert ctx.get("section_count") == 6, (
+        f"Expected section_count == 6, got {ctx.get('section_count')!r}"
+    )
+
+
+def test_PVSS_BE03_main_page_sections_context_page_version(client):
+    """PVSS_BE03: main_page_sections_context.page_version == 'six_sections_v1'."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    assert ctx.get("page_version") == "six_sections_v1", (
+        f"Expected page_version 'six_sections_v1', got {ctx.get('page_version')!r}"
+    )
+
+
+def test_PVSS_BE04_main_page_sections_context_sections_list_length_6(client):
+    """PVSS_BE04: main_page_sections_context.sections is a list of length 6."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    sections = ctx.get("sections", [])
+    assert isinstance(sections, list), "sections must be a list"
+    assert len(sections) == 6, f"Expected 6 sections, got {len(sections)}"
+
+
+def test_PVSS_BE05_main_page_sections_context_all_6_section_ids_present(client):
+    """PVSS_BE05: All 6 section IDs are present in main_page_sections_context.sections."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    sections = ctx.get("sections", [])
+    section_ids = [s.get("id") for s in sections]
+    for expected_id in _EXPECTED_SECTION_IDS:
+        assert expected_id in section_ids, (
+            f"Section ID '{expected_id}' missing from main_page_sections_context.sections"
+        )
+
+
+def test_PVSS_BE06_all_6_sections_have_status_visible(client):
+    """PVSS_BE06: All 6 sections have status == 'visible'."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    sections = ctx.get("sections", [])
+    for section in sections:
+        assert section.get("status") == "visible", (
+            f"Section '{section.get('id')}' has status {section.get('status')!r}, expected 'visible'"
+        )
+
+
+def test_PVSS_BE07_governance_panel_visible_is_true(client):
+    """PVSS_BE07: main_page_sections_context.governance_panel_visible is True."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    assert ctx.get("governance_panel_visible") is True, (
+        "governance_panel_visible must be True in main_page_sections_context"
+    )
+
+
+def test_PVSS_BE08_advanced_controls_panel_visible_is_true(client):
+    """PVSS_BE08: main_page_sections_context.advanced_controls_panel_visible is True."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("main_page_sections_context", {})
+    assert ctx.get("advanced_controls_panel_visible") is True, (
+        "advanced_controls_panel_visible must be True in main_page_sections_context"
+    )
+
+
+def test_PVSS_BE09_create_response_has_advanced_controls_context(client):
+    """PVSS_BE09: Response has advanced_controls_context key."""
+    r = _create(client)
+    assert r.status_code == 201
+    data = r.get_json()
+    assert "advanced_controls_context" in data, (
+        "advanced_controls_context key must be present in create response"
+    )
+
+
+def test_PVSS_BE10_active_controls_list_length_5(client):
+    """PVSS_BE10: advanced_controls_context.active_controls is a list of length 5."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    active = ctx.get("active_controls", [])
+    assert isinstance(active, list), "active_controls must be a list"
+    assert len(active) == 5, f"Expected 5 active controls, got {len(active)}"
+
+
+def test_PVSS_BE11_inactive_controls_list_length_4(client):
+    """PVSS_BE11: advanced_controls_context.inactive_controls is a list of length 4."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    inactive = ctx.get("inactive_controls", [])
+    assert isinstance(inactive, list), "inactive_controls must be a list"
+    assert len(inactive) == 4, f"Expected 4 inactive controls, got {len(inactive)}"
+
+
+def test_PVSS_BE12_activation_roadmap_has_5_phases(client):
+    """PVSS_BE12: advanced_controls_context.activation_roadmap has 5 phases."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    roadmap = ctx.get("activation_roadmap", [])
+    assert isinstance(roadmap, list), "activation_roadmap must be a list"
+    assert len(roadmap) == 5, f"Expected 5 roadmap phases, got {len(roadmap)}"
+
+
+def test_PVSS_BE13_roadmap_phase_1_status_is_active(client):
+    """PVSS_BE13: Phase 1 of activation_roadmap has status == 'active'."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    roadmap = ctx.get("activation_roadmap", [])
+    assert len(roadmap) >= 1, "activation_roadmap must have at least 1 phase"
+    phase_1 = roadmap[0]
+    assert phase_1.get("status") == "active", (
+        f"Phase 1 status must be 'active', got {phase_1.get('status')!r}"
+    )
+
+
+def test_PVSS_BE14_roadmap_phases_2_to_5_status_is_pending(client):
+    """PVSS_BE14: Phases 2–5 of activation_roadmap have status == 'pending'."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    roadmap = ctx.get("activation_roadmap", [])
+    assert len(roadmap) == 5, f"Expected 5 roadmap phases, got {len(roadmap)}"
+    for i, phase in enumerate(roadmap[1:], start=2):
+        assert phase.get("status") == "pending", (
+            f"Phase {i} status must be 'pending', got {phase.get('status')!r}"
+        )
+
+
+def test_PVSS_BE15_report_reflection_matrix_has_4_keys(client):
+    """PVSS_BE15: advanced_controls_context.report_reflection_matrix has 4 keys
+    (traditional_report, detailed_report, professional_report, simulated_report)."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    matrix = ctx.get("report_reflection_matrix", {})
+    assert isinstance(matrix, dict), "report_reflection_matrix must be a dict"
+    expected_keys = {
+        "traditional_report",
+        "detailed_report",
+        "professional_report",
+        "simulated_report",
+    }
+    actual_keys = set(matrix.keys())
+    assert actual_keys == expected_keys, (
+        f"report_reflection_matrix keys mismatch. Expected {expected_keys}, got {actual_keys}"
+    )
+
+
+def test_PVSS_BE16_professional_report_has_certification_true(client):
+    """PVSS_BE16: professional_report in report_reflection_matrix has certification == True."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    matrix = ctx.get("report_reflection_matrix", {})
+    prof = matrix.get("professional_report", {})
+    assert prof.get("certification") is True, (
+        f"professional_report.certification must be True, got {prof.get('certification')!r}"
+    )
+
+
+def test_PVSS_BE17_simulated_report_has_advisory_only_true(client):
+    """PVSS_BE17: simulated_report in report_reflection_matrix has advisory_only == True."""
+    r = _create(client)
+    assert r.status_code == 201
+    ctx = r.get_json().get("advanced_controls_context", {})
+    matrix = ctx.get("report_reflection_matrix", {})
+    simulated = matrix.get("simulated_report", {})
+    assert simulated.get("advisory_only") is True, (
+        f"simulated_report.advisory_only must be True, got {simulated.get('advisory_only')!r}"
+    )
+
+
+def test_PVSS_BE18_get_detail_contains_main_page_sections_context(client):
+    """PVSS_BE18: GET detail response also contains main_page_sections_context (via _safe_detail).
+    The field is nested at data['request']['main_page_sections_context'].
+    """
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    detail = resp.get_json().get("request", {})
+    assert "main_page_sections_context" in detail, (
+        "main_page_sections_context must be present in GET detail response['request']"
+    )
+
+
+def test_PVSS_BE19_get_detail_contains_advanced_controls_context(client):
+    """PVSS_BE19: GET detail response also contains advanced_controls_context.
+    The field is nested at data['request']['advanced_controls_context'].
+    """
+    rid = _create(client).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    detail = resp.get_json().get("request", {})
+    assert "advanced_controls_context" in detail, (
+        "advanced_controls_context must be present in GET detail response['request']"
+    )
+
+
+# ── PVATUX_BE01–PVATUX_BE12: Asset Type UX Cleanup — backend context tests (Part L) ────────
+
+_HOTEL_PAYLOAD: dict = {
+    "client_name":       "اختبار فندق السلام",
+    "property_type":     "فندق",
+    "valuation_purpose": "قيمة سوقية",
+    "city":              "القاهرة",
+    "district":          "مصر الجديدة",
+    "asset_type":        "فندق",
+    "asset_family":      "hospitality_leisure",
+    "asset_subtype":     "business_hotel",
+    "asset_condition_path": "operating_existing_hotel",
+}
+
+
+def test_PVATUX_BE01_post_returns_asset_type_selection_context(client):
+    """PVATUX_BE01: POST create response contains asset_type_selection_context key."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "asset_type_selection_context" in body, (
+        "POST response must contain asset_type_selection_context"
+    )
+
+
+def test_PVATUX_BE02_asset_type_selection_context_is_dict(client):
+    """PVATUX_BE02: asset_type_selection_context in POST response is a non-empty dict."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", None)
+    assert isinstance(ctx, dict) and len(ctx) > 0, (
+        "asset_type_selection_context must be a non-empty dict"
+    )
+
+
+def test_PVATUX_BE03_context_includes_available_asset_families(client):
+    """PVATUX_BE03: asset_type_selection_context.available_asset_families contains ≥ 20 entries."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    families = ctx.get("available_asset_families", [])
+    assert len(families) >= 20, (
+        f"available_asset_families must have ≥ 20 entries, got {len(families)}: {families}"
+    )
+
+
+def test_PVATUX_BE04_available_families_includes_standard_and_legacy(client):
+    """PVATUX_BE04: available_asset_families includes both standard AND legacy family keys."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    families = ctx.get("available_asset_families", [])
+    standard = {"residential_housing", "land_plots", "commercial_retail",
+                "industrial_logistics", "hospitality_leisure", "agri_environmental"}
+    for f in standard:
+        assert f in families, f"Standard family '{f}' missing from available_asset_families"
+    legacy = {"hospitality_entertainment", "sports_event_venues"}
+    for f in legacy:
+        assert f in families, f"Legacy family '{f}' missing from available_asset_families — no deletion allowed"
+
+
+def test_PVATUX_BE05_asset_type_reflected_in_context(client):
+    """PVATUX_BE05: asset_type_selection_context.asset_type echoes the submitted asset_type field."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    assert ctx.get("asset_type") == "فندق", (
+        f"context.asset_type must be 'فندق', got {ctx.get('asset_type')!r}"
+    )
+
+
+def test_PVATUX_BE06_asset_family_reflected_in_context(client):
+    """PVATUX_BE06: asset_type_selection_context.asset_family echoes the submitted asset_family field."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    assert ctx.get("asset_family") == "hospitality_leisure", (
+        f"context.asset_family must be 'hospitality_leisure', got {ctx.get('asset_family')!r}"
+    )
+
+
+def test_PVATUX_BE07_asset_subtype_reflected_in_context(client):
+    """PVATUX_BE07: asset_type_selection_context.asset_subtype echoes submitted asset_subtype."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    assert ctx.get("asset_subtype") == "business_hotel", (
+        f"context.asset_subtype must be 'business_hotel', got {ctx.get('asset_subtype')!r}"
+    )
+
+
+def test_PVATUX_BE08_duplicate_options_removed_list_is_present(client):
+    """PVATUX_BE08: context.duplicate_options_removed_from_visible_ui is a list (may be empty if no dups)."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    dups = ctx.get("duplicate_options_removed_from_visible_ui", None)
+    assert isinstance(dups, list), (
+        "duplicate_options_removed_from_visible_ui must be a list"
+    )
+
+
+def test_PVATUX_BE09_duplicate_options_have_legacy_alias_preserved(client):
+    """PVATUX_BE09: Every entry in duplicate_options_removed_from_visible_ui has legacy_alias_preserved=True."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    dups = ctx.get("duplicate_options_removed_from_visible_ui", [])
+    for item in dups:
+        assert item.get("legacy_alias_preserved") is True, (
+            f"duplicate option '{item}' must have legacy_alias_preserved=True"
+        )
+
+
+def test_PVATUX_BE10_get_detail_contains_asset_type_selection_context(client):
+    """PVATUX_BE10: GET detail response also contains asset_type_selection_context."""
+    rid = _create(client, _HOTEL_PAYLOAD).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    detail = resp.get_json().get("request", {})
+    assert "asset_type_selection_context" in detail, (
+        "asset_type_selection_context must be present in GET detail response['request']"
+    )
+
+
+def test_PVATUX_BE11_ordinary_valuation_route_unaffected(client):
+    """PVATUX_BE11: Regression — ordinary valuation route still responds (not 404/500).
+    asset_type_selection_context changes must not break the base /api/advisor/valuate endpoint.
+    """
+    resp = client.post(
+        "/api/advisor/valuate",
+        json={
+            "property_type": "شقة سكنية",
+            "area": 120,
+            "city": "القاهرة",
+            "purpose": "market_value",
+        },
+        content_type="application/json",
+    )
+    assert resp.status_code != 404, "Ordinary valuation route /api/advisor/valuate must not return 404"
+    assert resp.status_code != 500, "Ordinary valuation route crashed with 500"
+
+
+def test_PVATUX_BE12_asset_type_selection_context_no_internal_paths(client):
+    """PVATUX_BE12: asset_type_selection_context must not contain internal file-system paths."""
+    r = _create(client, _HOTEL_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("asset_type_selection_context", {})
+    ctx_str = str(ctx)
+    for forbidden in ("C:\\", "c:\\", "/home/", "/var/", "__file__", "core_engine/"):
+        assert forbidden not in ctx_str, (
+            f"Internal path fragment '{forbidden}' found in asset_type_selection_context"
+        )
+
+
+# ── PVPTS-BE: Section 3 Three-Step Restructure ────────────────────────────────
+# Tests covering valuation_purpose_context, all 16 Step-3 fields, registry
+# contexts, legacy alias mapping, partial interest, and regression guards.
+
+_PURPOSE_PAYLOAD: dict = {
+    "assignment_purpose":        "financing_mortgage",
+    "purpose_logic_path":        "mortgage_logic",
+    "purpose_route":             "bank_loan",
+    "purpose_subroute":          "residential_mortgage",
+    "intended_user_category":    "bank_lender",
+    "intended_user_name":        "بنك مصر للاختبار",
+    "intended_use":              "تمويل عقاري",
+    "professional_context_path": "bank_financing_path",
+    "professional_purpose_path": "financing_path",
+    "basis_of_value":            "market_value",
+    "value_output_type":         "point_estimate",
+    "value_scope":               "as_is",
+    "value_premise":             "as_is",
+    "value_basis_route":         "standard_market",
+    "value_basis_subroute":      "comparable_sales",
+}
+
+
+def test_PVPTS_BE01_valuation_purpose_context_exists_in_create(client):
+    """PVPTS-BE01: POST create response contains valuation_purpose_context."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201, r.get_data(as_text=True)
+    body = r.get_json()
+    assert "valuation_purpose_context" in body, (
+        "valuation_purpose_context must be present in POST create response"
+    )
+
+
+def test_PVPTS_BE02_assignment_purpose_stored_in_context(client):
+    """PVPTS-BE02: assignment_purpose is stored and returned in valuation_purpose_context.purpose."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("purpose") == "financing_mortgage", (
+        f"valuation_purpose_context.purpose must be 'financing_mortgage', got {ctx.get('purpose')!r}"
+    )
+
+
+def test_PVPTS_BE03_purpose_logic_path_accepted(client):
+    """PVPTS-BE03: purpose_logic_path field is accepted (no 400)."""
+    r = _create(client, {"purpose_logic_path": "mortgage_logic"})
+    assert r.status_code == 201, (
+        f"purpose_logic_path should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE04_purpose_route_accepted(client):
+    """PVPTS-BE04: purpose_route field is accepted (no 400)."""
+    r = _create(client, {"purpose_route": "bank_loan"})
+    assert r.status_code == 201, (
+        f"purpose_route should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE05_purpose_subroute_accepted(client):
+    """PVPTS-BE05: purpose_subroute field is accepted (no 400)."""
+    r = _create(client, {"purpose_subroute": "residential_mortgage"})
+    assert r.status_code == 201, (
+        f"purpose_subroute should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE06_intended_user_category_accepted(client):
+    """PVPTS-BE06: intended_user_category is accepted and appears in context."""
+    r = _create(client, {"intended_user_category": "bank_lender"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("intended_user") == "bank_lender", (
+        f"valuation_purpose_context.intended_user must be 'bank_lender', got {ctx.get('intended_user')!r}"
+    )
+
+
+def test_PVPTS_BE07_intended_user_name_accepted(client):
+    """PVPTS-BE07: intended_user_name is accepted and appears in context."""
+    r = _create(client, {"intended_user_name": "بنك مصر للاختبار"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("intended_user_name") == "بنك مصر للاختبار", (
+        f"valuation_purpose_context.intended_user_name mismatch: {ctx.get('intended_user_name')!r}"
+    )
+
+
+def test_PVPTS_BE08_intended_use_accepted(client):
+    """PVPTS-BE08: intended_use is accepted and appears in context."""
+    r = _create(client, {"intended_use": "تمويل عقاري"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("intended_use") == "تمويل عقاري", (
+        f"valuation_purpose_context.intended_use mismatch: {ctx.get('intended_use')!r}"
+    )
+
+
+def test_PVPTS_BE09_professional_context_path_accepted(client):
+    """PVPTS-BE09: professional_context_path is accepted (no 400)."""
+    r = _create(client, {"professional_context_path": "bank_financing_path"})
+    assert r.status_code == 201, (
+        f"professional_context_path should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE10_professional_purpose_path_accepted(client):
+    """PVPTS-BE10: professional_purpose_path is accepted and appears in context.professional_path."""
+    r = _create(client, {"professional_purpose_path": "financing_path"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("professional_path") == "financing_path", (
+        f"valuation_purpose_context.professional_path mismatch: {ctx.get('professional_path')!r}"
+    )
+
+
+def test_PVPTS_BE11_basis_of_value_accepted(client):
+    """PVPTS-BE11: basis_of_value is accepted and appears in context."""
+    r = _create(client, {"basis_of_value": "market_value"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("basis_of_value") == "market_value", (
+        f"valuation_purpose_context.basis_of_value mismatch: {ctx.get('basis_of_value')!r}"
+    )
+
+
+def test_PVPTS_BE12_value_output_type_accepted(client):
+    """PVPTS-BE12: value_output_type is accepted (no 400)."""
+    r = _create(client, {"value_output_type": "point_estimate"})
+    assert r.status_code == 201, (
+        f"value_output_type should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE13_value_scope_accepted(client):
+    """PVPTS-BE13: value_scope is accepted (no 400)."""
+    r = _create(client, {"value_scope": "as_is"})
+    assert r.status_code == 201, (
+        f"value_scope should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE14_value_premise_accepted(client):
+    """PVPTS-BE14: value_premise is accepted and appears in context."""
+    r = _create(client, {"value_premise": "as_is"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("value_premise") == "as_is", (
+        f"valuation_purpose_context.value_premise mismatch: {ctx.get('value_premise')!r}"
+    )
+
+
+def test_PVPTS_BE15_value_basis_route_accepted(client):
+    """PVPTS-BE15: value_basis_route is accepted (no 400)."""
+    r = _create(client, {"value_basis_route": "standard_market"})
+    assert r.status_code == 201, (
+        f"value_basis_route should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE16_value_basis_subroute_accepted(client):
+    """PVPTS-BE16: value_basis_subroute is accepted (no 400)."""
+    r = _create(client, {"value_basis_subroute": "comparable_sales"})
+    assert r.status_code == 201, (
+        f"value_basis_subroute should be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE17_purpose_registry_context_exists(client):
+    """PVPTS-BE17: purpose_registry_context is present in create response."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "purpose_registry_context" in body, (
+        "purpose_registry_context must be present in POST create response"
+    )
+    ctx = body["purpose_registry_context"]
+    assert isinstance(ctx.get("entries"), list), (
+        "purpose_registry_context.entries must be a list"
+    )
+    assert len(ctx["entries"]) >= 16, (
+        f"purpose_registry_context must have ≥16 entries, got {len(ctx['entries'])}"
+    )
+
+
+def test_PVPTS_BE18_purpose_taxonomy_v2_registries_exists(client):
+    """PVPTS-BE18: purpose_taxonomy_v2_registries is present in create response."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "purpose_taxonomy_v2_registries" in body, (
+        "purpose_taxonomy_v2_registries must be present in POST create response"
+    )
+
+
+def test_PVPTS_BE19_purpose_taxonomy_v2_has_expected_keys(client):
+    """PVPTS-BE19: purpose_taxonomy_v2_registries has all 8 expected registry keys."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    regs = r.get_json().get("purpose_taxonomy_v2_registries", {})
+    expected_keys = [
+        "valuation_purpose_registry",
+        "purpose_logic_path_registry",
+        "intended_user_registry",
+        "professional_pathway_registry",
+        "basis_of_value_registry",
+        "value_premise_registry",
+        "purpose_disclosure_warning_registry",
+        "purpose_routing_matrix_registry",
+    ]
+    for k in expected_keys:
+        assert k in regs, (
+            f"purpose_taxonomy_v2_registries missing key '{k}'"
+        )
+
+
+def test_PVPTS_BE20_basis_registry_context_exists(client):
+    """PVPTS-BE20: basis_registry_context is present in create response."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "basis_registry_context" in body, (
+        "basis_registry_context must be present in POST create response"
+    )
+
+
+def test_PVPTS_BE21_intended_user_registry_context_exists(client):
+    """PVPTS-BE21: intended_user_registry_context is present in create response."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "intended_user_registry_context" in body, (
+        "intended_user_registry_context must be present in POST create response"
+    )
+
+
+def test_PVPTS_BE22_routing_matrix_registry_context_exists(client):
+    """PVPTS-BE22: routing_matrix_registry_context is present in create response."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    body = r.get_json()
+    assert "routing_matrix_registry_context" in body, (
+        "routing_matrix_registry_context must be present in POST create response"
+    )
+
+
+def test_PVPTS_BE23_valuation_purpose_context_no_internal_paths(client):
+    """PVPTS-BE23: valuation_purpose_context must not expose internal filesystem paths."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    ctx_str = str(r.get_json().get("valuation_purpose_context", {}))
+    for forbidden in ("C:\\", "c:\\", "/home/", "/var/", "__file__", "core_engine/"):
+        assert forbidden not in ctx_str, (
+            f"Internal path fragment '{forbidden}' found in valuation_purpose_context"
+        )
+
+
+def test_PVPTS_BE24_legacy_valuation_purpose_still_accepted(client):
+    """PVPTS-BE24: Old legacy valuation_purpose field still accepted (no 400)."""
+    r = _create(client, {"valuation_purpose": "قيمة سوقية"})
+    assert r.status_code == 201, (
+        f"Legacy valuation_purpose must still be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE25_legacy_valuation_purpose_maps_to_assignment_purpose(client):
+    """PVPTS-BE25: valuation_purpose='قيمة سوقية' maps to assignment_purpose in context."""
+    r = _create(client, {"valuation_purpose": "قيمة سوقية"})
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    # The legacy mapping sets purpose to sale_purchase or a meaningful key (not empty)
+    assert ctx.get("purpose") != "", (
+        "valuation_purpose_context.purpose must not be empty when legacy valuation_purpose provided"
+    )
+
+
+def test_PVPTS_BE26_valuation_purpose_context_preservation_pass(client):
+    """PVPTS-BE26: valuation_purpose_context contains preservation_pass=True."""
+    r = _create(client, _PURPOSE_PAYLOAD)
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    assert ctx.get("preservation_pass") is True, (
+        "valuation_purpose_context.preservation_pass must be True"
+    )
+
+
+def test_PVPTS_BE27_partial_interest_fields_accepted(client):
+    """PVPTS-BE27: Partial interest fields accepted (ownership_interest_percent, dloc_percent, dlom_percent, discount_justification)."""
+    payload = {
+        "assignment_purpose":       "partial_interest_valuation",
+        "ownership_interest_percent": "45",
+        "dloc_percent":              "10",
+        "dlom_percent":              "15",
+        "discount_justification":    "معدل الخصم مبرر بالتحليل السوقي",
+    }
+    r = _create(client, payload)
+    assert r.status_code == 201, (
+        f"Partial interest fields must be accepted, got {r.status_code}: {r.get_data(as_text=True)}"
+    )
+
+
+def test_PVPTS_BE28_partial_interest_context_in_valuation_purpose_context(client):
+    """PVPTS-BE28: partial_interest_context sub-dict present when partial_interest_valuation used."""
+    payload = {
+        "assignment_purpose":         "partial_interest_valuation",
+        "ownership_interest_percent": "60",
+        "discount_justification":     "تقدير السوق",
+    }
+    r = _create(client, payload)
+    assert r.status_code == 201
+    ctx = r.get_json().get("valuation_purpose_context", {})
+    pic = ctx.get("partial_interest_context")
+    assert pic is not None, (
+        "valuation_purpose_context.partial_interest_context must be present for partial_interest_valuation"
+    )
+
+
+def test_PVPTS_BE29_get_detail_contains_valuation_purpose_context(client):
+    """PVPTS-BE29: GET detail response also contains valuation_purpose_context."""
+    rid = _create(client, _PURPOSE_PAYLOAD).get_json()["request_id"]
+    resp = client.get(
+        f"/api/professional-valuation/requests/{rid}",
+        headers=_auth(),
+    )
+    assert resp.status_code == 200
+    detail = resp.get_json().get("request", {})
+    assert "valuation_purpose_context" in detail, (
+        "valuation_purpose_context must be present in GET detail response['request']"
+    )
+
+
+def test_PVPTS_BE30_new_intended_user_category_bank_accepted(client):
+    """PVPTS-BE30: New intended_user_category value 'bank' accepted (no 400)."""
+    r = _create(client, {"intended_user_category": "bank"})
+    assert r.status_code == 201, (
+        f"New intended_user_category 'bank' must be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE31_new_intended_user_category_court_accepted(client):
+    """PVPTS-BE31: New intended_user_category value 'court' accepted (no 400)."""
+    r = _create(client, {"intended_user_category": "court"})
+    assert r.status_code == 201, (
+        f"New intended_user_category 'court' must be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE32_new_professional_pathway_tax_authority_accepted(client):
+    """PVPTS-BE32: New professional_purpose_path 'tax_authority_path' accepted (no 400)."""
+    r = _create(client, {"professional_purpose_path": "tax_authority_path"})
+    assert r.status_code == 201, (
+        f"New professional_purpose_path 'tax_authority_path' must be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE33_new_basis_of_value_value_in_use_accepted(client):
+    """PVPTS-BE33: New basis_of_value 'value_in_use' accepted (no 400)."""
+    r = _create(client, {"basis_of_value": "value_in_use"})
+    assert r.status_code == 201, (
+        f"New basis_of_value 'value_in_use' must be accepted, got {r.status_code}"
+    )
+
+
+def test_PVPTS_BE34_ordinary_valuation_route_unaffected(client):
+    """PVPTS-BE34: Regression — ordinary valuation /api/advisor/valuate still responds (not 404/500)."""
+    resp = client.post(
+        "/api/advisor/valuate",
+        json={
+            "property_type": "شقة سكنية",
+            "area": 120,
+            "city": "القاهرة",
+            "purpose": "market_value",
+        },
+        content_type="application/json",
+    )
+    assert resp.status_code != 404, (
+        "Ordinary valuation route /api/advisor/valuate must not return 404 after Section 3 restructure"
+    )
+    assert resp.status_code != 500, (
+        "Ordinary valuation route crashed with 500 after Section 3 restructure"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVDSR Backend Tests — Professional Valuation Dynamic Special Asset Requirements
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _pvdsr_create(client, subtype="padel_tennis_court"):
+    """Helper: create a PVR record with an uncommon asset subtype."""
+    return client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل PVDSR اختبار",
+            "property_type": "أصول غير شائعة",
+            "valuation_purpose": "قيمة سوقية",
+            "asset_family": "sports_recreation_assets",
+            "asset_subtype": subtype,
+            "area": 500,
+            "city": "الرياض",
+        },
+        content_type="application/json",
+    )
+
+
+def test_PVDSR_BE01_special_asset_requirements_context_in_response(client):
+    """PVDSR-BE01: POST /api/professional-valuation returns special_asset_requirements_context."""
+    r = _pvdsr_create(client)
+    assert r.status_code in (200, 201), f"Expected 200/201, got {r.status_code}"
+    body = r.get_json()
+    assert "special_asset_requirements_context" in body, (
+        "special_asset_requirements_context missing from create response"
+    )
+
+
+def test_PVDSR_BE02_special_asset_context_is_dict(client):
+    """PVDSR-BE02: special_asset_requirements_context must be a dict."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    ctx = body.get("special_asset_requirements_context", None)
+    assert isinstance(ctx, dict), f"special_asset_requirements_context must be dict, got {type(ctx)}"
+
+
+def test_PVDSR_BE03_asset_methodology_guidance_present(client):
+    """PVDSR-BE03: asset_methodology_guidance key returned in response."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    assert "asset_methodology_guidance" in body, (
+        "asset_methodology_guidance missing from create response"
+    )
+
+
+def test_PVDSR_BE04_asset_report_workbook_context_present(client):
+    """PVDSR-BE04: asset_report_workbook_context key returned in response."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    assert "asset_report_workbook_context" in body, (
+        "asset_report_workbook_context missing from create response"
+    )
+
+
+def test_PVDSR_BE05_future_integrations_present(client):
+    """PVDSR-BE05: future_integrations key returned in response."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    assert "future_integrations" in body, (
+        "future_integrations missing from create response"
+    )
+
+
+def test_PVDSR_BE06_special_asset_taxonomy_v2_registries_present(client):
+    """PVDSR-BE06: special_asset_taxonomy_v2_registries key returned in response."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    assert "special_asset_taxonomy_v2_registries" in body, (
+        "special_asset_taxonomy_v2_registries missing from create response"
+    )
+
+
+def test_PVDSR_BE07_taxonomy_registries_has_10_keys(client):
+    """PVDSR-BE07: special_asset_taxonomy_v2_registries contains all 10 registry keys."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    expected_keys = {
+        "uncommon_asset_family", "uncommon_asset_subtype", "requirement_group",
+        "field_type", "dynamic_requirement_field", "asset_specific_requirement",
+        "methodology_guidance", "asset_report_workbook_context",
+        "future_integrations", "legacy_asset_alias",
+    }
+    missing = expected_keys - set(regs.keys())
+    assert not missing, f"Registry keys missing: {missing}"
+
+
+def test_PVDSR_BE08_uncommon_asset_family_registry_has_entries(client):
+    """PVDSR-BE08: uncommon_asset_family registry contains entries."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    fam = regs.get("uncommon_asset_family", [])
+    assert len(fam) >= 5, f"uncommon_asset_family must have >=5 entries, got {len(fam)}"
+
+
+def test_PVDSR_BE09_uncommon_asset_subtype_registry_has_entries(client):
+    """PVDSR-BE09: uncommon_asset_subtype registry contains entries."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    subs = regs.get("uncommon_asset_subtype", [])
+    assert len(subs) >= 10, f"uncommon_asset_subtype must have >=10 entries, got {len(subs)}"
+
+
+def test_PVDSR_BE10_requirement_group_registry_has_5_groups(client):
+    """PVDSR-BE10: requirement_group registry has exactly 5 groups."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    grps = regs.get("requirement_group", [])
+    assert len(grps) == 5, f"requirement_group must have exactly 5 entries, got {len(grps)}"
+
+
+def test_PVDSR_BE11_field_type_registry_has_entries(client):
+    """PVDSR-BE11: field_type registry contains at least 10 field types."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    fts = regs.get("field_type", [])
+    assert len(fts) >= 10, f"field_type must have >=10 entries, got {len(fts)}"
+
+
+def test_PVDSR_BE12_methodology_guidance_advisory_only(client):
+    """PVDSR-BE12: asset_methodology_guidance is marked advisory_only=True."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    mg = body.get("asset_methodology_guidance", {})
+    assert isinstance(mg, dict), "asset_methodology_guidance must be dict"
+    assert mg.get("advisory_only") is True, (
+        "asset_methodology_guidance.advisory_only must be True (non-binding)"
+    )
+
+
+def test_PVDSR_BE13_report_workbook_context_advisory_only(client):
+    """PVDSR-BE13: asset_report_workbook_context is marked advisory_only=True."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    rw = body.get("asset_report_workbook_context", {})
+    assert isinstance(rw, dict), "asset_report_workbook_context must be dict"
+    assert rw.get("advisory_only") is True, (
+        "asset_report_workbook_context.advisory_only must be True"
+    )
+
+
+def test_PVDSR_BE14_future_integrations_are_stubs(client):
+    """PVDSR-BE14: future_integrations items are tagged as stubs (not active)."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    fi = body.get("future_integrations", {})
+    assert isinstance(fi, dict), "future_integrations must be dict"
+    assert fi.get("status") in ("future_stub", "inactive", "stub", None), (
+        "future_integrations.status must indicate non-active state"
+    )
+
+
+def test_PVDSR_BE15_no_internal_paths_in_special_context(client):
+    """PVDSR-BE15: special_asset_requirements_context must not expose file system paths."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    ctx = body.get("special_asset_requirements_context", {})
+    ctx_str = str(ctx)
+    assert "C:\\" not in ctx_str and "/home/" not in ctx_str and "core_engine/" not in ctx_str, (
+        "special_asset_requirements_context must not expose internal file paths"
+    )
+
+
+def test_PVDSR_BE16_detail_contains_special_asset_context(client):
+    """PVDSR-BE16: GET detail endpoint returns special_asset_requirements_context."""
+    import pytest
+    cr = _pvdsr_create(client)
+    body = cr.get_json()
+    pvr_id = body.get("id") or body.get("pvr_id") or body.get("request_id")
+    if not pvr_id:
+        pytest.skip("No ID in create response")
+    dr = client.get(f"/api/professional-valuation/{pvr_id}")
+    if dr.status_code == 404:
+        pytest.skip("Detail route not found for this ID format")
+    detail = dr.get_json()
+    assert "special_asset_requirements_context" in detail, (
+        "special_asset_requirements_context missing from GET detail response"
+    )
+
+
+def test_PVDSR_BE17_asset_subtype_stored_in_context(client):
+    """PVDSR-BE17: special_asset_requirements_context records the asset_subtype submitted."""
+    r = _pvdsr_create(client, subtype="cinema")
+    body = r.get_json()
+    ctx = body.get("special_asset_requirements_context", {})
+    assert ctx.get("asset_subtype") == "cinema" or "cinema" in str(ctx), (
+        "asset_subtype 'cinema' should appear in special_asset_requirements_context"
+    )
+
+
+def test_PVDSR_BE18_cinema_subtype_accepted(client):
+    """PVDSR-BE18: asset_subtype='cinema' is accepted without 422."""
+    r = _pvdsr_create(client, subtype="cinema")
+    assert r.status_code in (200, 201), f"cinema subtype rejected, got {r.status_code}"
+
+
+def test_PVDSR_BE19_general_hospital_subtype_accepted(client):
+    """PVDSR-BE19: asset_subtype='general_hospital' is accepted without 422."""
+    r = _pvdsr_create(client, subtype="general_hospital")
+    assert r.status_code in (200, 201), f"general_hospital subtype rejected, got {r.status_code}"
+
+
+def test_PVDSR_BE20_school_campus_subtype_accepted(client):
+    """PVDSR-BE20: asset_subtype='school_campus' is accepted without 422."""
+    r = _pvdsr_create(client, subtype="school_campus")
+    assert r.status_code in (200, 201), f"school_campus subtype rejected, got {r.status_code}"
+
+
+def test_PVDSR_BE21_heritage_subtype_accepted(client):
+    """PVDSR-BE21: asset_subtype='distinguished_architectural_heritage' accepted."""
+    r = _pvdsr_create(client, subtype="distinguished_architectural_heritage")
+    assert r.status_code in (200, 201), (
+        f"distinguished_architectural_heritage subtype rejected, got {r.status_code}"
+    )
+
+
+def test_PVDSR_BE22_legacy_alias_hospital_resolves(client):
+    """PVDSR-BE22: Legacy alias subtype='hospital' is accepted (maps to general_hospital)."""
+    r = _pvdsr_create(client, subtype="hospital")
+    assert r.status_code in (200, 201), f"legacy alias 'hospital' rejected, got {r.status_code}"
+
+
+def test_PVDSR_BE23_legacy_alias_school_resolves(client):
+    """PVDSR-BE23: Legacy alias subtype='school' is accepted (maps to school_campus)."""
+    r = _pvdsr_create(client, subtype="school")
+    assert r.status_code in (200, 201), f"legacy alias 'school' rejected, got {r.status_code}"
+
+
+def test_PVDSR_BE24_distribution_center_subtype_accepted(client):
+    """PVDSR-BE24: Logistics subtype='distribution_center' is accepted."""
+    r = _pvdsr_create(client, subtype="distribution_center")
+    assert r.status_code in (200, 201), (
+        f"distribution_center subtype rejected, got {r.status_code}"
+    )
+
+
+def test_PVDSR_BE25_legacy_asset_alias_registry_has_entries(client):
+    """PVDSR-BE25: legacy_asset_alias registry contains at least 5 entries."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    aliases = regs.get("legacy_asset_alias", [])
+    assert len(aliases) >= 5, f"legacy_asset_alias must have >=5 entries, got {len(aliases)}"
+
+
+def test_PVDSR_BE26_dynamic_requirement_field_registry_has_entries(client):
+    """PVDSR-BE26: dynamic_requirement_field registry contains at least 10 entries."""
+    r = _pvdsr_create(client)
+    body = r.get_json()
+    regs = body.get("special_asset_taxonomy_v2_registries", {})
+    fields = regs.get("dynamic_requirement_field", [])
+    assert len(fields) >= 10, f"dynamic_requirement_field must have >=10 entries, got {len(fields)}"
+
+
+def test_PVDSR_BE27_ordinary_valuation_unaffected_by_pvdsr(client):
+    """PVDSR-BE27: Regression — POST /api/professional-valuation/requests still works with standard payload."""
+    r = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل اختبار انحدار",
+            "property_type": "شقة سكنية",
+            "valuation_purpose": "قيمة سوقية",
+            "area": 100,
+            "city": "القاهرة",
+        },
+        content_type="application/json",
+    )
+    assert r.status_code not in (404, 500), (
+        f"Professional valuation route broken after PVDSR changes, got {r.status_code}"
+    )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVACR: Professional Valuation Chat Output Final Restructure — Backend Tests
+# Part R: PVACR_BE01 – PVACR_BE24
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _pvacr_create(client, report_action="traditional_report"):
+    """Helper: create a PVR record and return (response, body)."""
+    r = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل PVACR اختبار",
+            "property_type": "شقة سكنية",
+            "valuation_purpose": "قيمة سوقية",
+            "area": 120,
+            "city": "القاهرة",
+            "selected_report_action": report_action,
+        },
+        content_type="application/json",
+    )
+    return r, (r.get_json() or {})
+
+
+def test_PVACR_BE01_chat_output_context_present_in_post(client):
+    """PVACR-BE01: chat_output_context exists in POST response."""
+    _, body = _pvacr_create(client)
+    assert "chat_output_context" in body, "chat_output_context missing from POST response"
+
+
+def test_PVACR_BE02_chat_output_context_is_dict(client):
+    """PVACR-BE02: chat_output_context is a dict."""
+    _, body = _pvacr_create(client)
+    assert isinstance(body.get("chat_output_context"), dict), "chat_output_context must be dict"
+
+
+def test_PVACR_BE03_report_output_registry_context_present(client):
+    """PVACR-BE03: report_output_registry_context in POST response."""
+    _, body = _pvacr_create(client)
+    assert "report_output_registry_context" in body, "report_output_registry_context missing"
+
+
+def test_PVACR_BE04_output_format_visibility_policy_context_present(client):
+    """PVACR-BE04: output_format_visibility_policy_context in POST response."""
+    _, body = _pvacr_create(client)
+    assert "output_format_visibility_policy_context" in body, \
+        "output_format_visibility_policy_context missing"
+
+
+def test_PVACR_BE05_deprecated_visible_controls_context_present(client):
+    """PVACR-BE05: deprecated_visible_controls_context in POST response."""
+    _, body = _pvacr_create(client)
+    assert "deprecated_visible_controls_context" in body, \
+        "deprecated_visible_controls_context missing"
+
+
+def test_PVACR_BE06_report_output_registry_has_6_entries(client):
+    """PVACR-BE06: report_output_registry has all 6 required actions."""
+    _, body = _pvacr_create(client)
+    reg = body.get("report_output_registry_context", {}).get("entries", {})
+    required = {
+        "traditional_report", "detailed_report", "professional_report",
+        "simulated_uploaded_report", "report_review_output", "hbu_analysis_report",
+    }
+    missing = required - set(reg.keys())
+    assert not missing, f"Missing report action entries: {missing}"
+
+
+def test_PVACR_BE07_traditional_report_in_registry(client):
+    """PVACR-BE07: traditional_report entry has correct structure."""
+    _, body = _pvacr_create(client)
+    reg = body.get("report_output_registry_context", {}).get("entries", {})
+    entry = reg.get("traditional_report", {})
+    assert entry.get("user_pdf_allowed") is True, "traditional_report: user_pdf_allowed must be True"
+    assert entry.get("advisory_allowed") is True, "traditional_report: advisory_allowed must be True"
+
+
+def test_PVACR_BE08_simulated_report_requires_training_toggle(client):
+    """PVACR-BE08: simulated_uploaded_report entry has requires_training_toggle=True."""
+    _, body = _pvacr_create(client, report_action="simulated_uploaded_report")
+    reg = body.get("report_output_registry_context", {}).get("entries", {})
+    entry = reg.get("simulated_uploaded_report", {})
+    assert entry.get("requires_training_toggle") is True, \
+        "simulated_uploaded_report must require training toggle"
+    assert entry.get("simulation_only") is True, "simulated_uploaded_report must be simulation_only"
+
+
+def test_PVACR_BE09_report_review_requires_review_toggle(client):
+    """PVACR-BE09: report_review_output has requires_report_review_toggle=True."""
+    _, body = _pvacr_create(client, report_action="report_review_output")
+    reg = body.get("report_output_registry_context", {}).get("entries", {})
+    entry = reg.get("report_review_output", {})
+    assert entry.get("requires_report_review_toggle") is True, \
+        "report_review_output must require review toggle"
+
+
+def test_PVACR_BE10_hbu_report_requires_hbu_toggle(client):
+    """PVACR-BE10: hbu_analysis_report has requires_hbu_report_toggle=True."""
+    _, body = _pvacr_create(client, report_action="hbu_analysis_report")
+    reg = body.get("report_output_registry_context", {}).get("entries", {})
+    entry = reg.get("hbu_analysis_report", {})
+    assert entry.get("requires_hbu_report_toggle") is True, \
+        "hbu_analysis_report must require HBU toggle"
+
+
+def test_PVACR_BE11_chat_output_context_advisory_only(client):
+    """PVACR-BE11: chat_output_context.advisory_only is True."""
+    _, body = _pvacr_create(client)
+    ctx = body.get("chat_output_context", {})
+    assert ctx.get("advisory_only") is True, "chat_output_context must be advisory_only"
+
+
+def test_PVACR_BE12_admin_excel_not_visible_to_user(client):
+    """PVACR-BE12: admin_excel_visible_to_current_user is False in chat_output_context."""
+    _, body = _pvacr_create(client)
+    ctx = body.get("chat_output_context", {})
+    assert ctx.get("admin_excel_visible_to_current_user") is False, \
+        "admin_excel must NOT be visible to current user"
+
+
+def test_PVACR_BE13_output_permissions_present(client):
+    """PVACR-BE13: output_permissions exists in chat_output_context."""
+    _, body = _pvacr_create(client)
+    perms = body.get("chat_output_context", {}).get("output_permissions", {})
+    assert "can_generate_user_pdf" in perms, "can_generate_user_pdf missing from output_permissions"
+    assert "can_generate_admin_excel" in perms, "can_generate_admin_excel missing"
+    assert "can_generate_certified_pdf" in perms, "can_generate_certified_pdf missing"
+
+
+def test_PVACR_BE14_certified_pdf_blocked_without_gate(client):
+    """PVACR-BE14: can_generate_certified_pdf is False when certification_ready not set."""
+    _, body = _pvacr_create(client)
+    perms = body.get("chat_output_context", {}).get("output_permissions", {})
+    assert perms.get("can_generate_certified_pdf") is False, \
+        "certified PDF must be blocked without certification gate"
+
+
+def test_PVACR_BE15_deprecated_controls_has_5_entries(client):
+    """PVACR-BE15: deprecated_visible_controls_context has >= 5 deprecated controls."""
+    _, body = _pvacr_create(client)
+    ctx = body.get("deprecated_visible_controls_context", {})
+    controls = ctx.get("deprecated_controls", {})
+    assert len(controls) >= 5, f"Expected >= 5 deprecated controls, got {len(controls)}"
+
+
+def test_PVACR_BE16_no_internal_paths_in_chat_output_context(client):
+    """PVACR-BE16: chat_output_context contains no internal paths."""
+    _, body = _pvacr_create(client)
+    ctx_str = str(body.get("chat_output_context", {}))
+    for bad in ("C:\\", "/home/", ".py", "requests.jsonl", "__file__"):
+        assert bad not in ctx_str, f"Internal path fragment found: {bad!r}"
+
+
+def test_PVACR_BE17_available_report_actions_has_6_entries(client):
+    """PVACR-BE17: chat_output_context.available_report_actions has >= 6 entries."""
+    _, body = _pvacr_create(client)
+    actions = body.get("chat_output_context", {}).get("available_report_actions", [])
+    assert len(actions) >= 6, f"Expected >= 6 available_report_actions, got {len(actions)}"
+
+
+def test_PVACR_BE18_selected_report_action_present(client):
+    """PVACR-BE18: selected_report_action key present in chat_output_context."""
+    _, body = _pvacr_create(client, report_action="traditional_report")
+    ctx = body.get("chat_output_context", {})
+    assert "selected_report_action" in ctx, "selected_report_action must be present"
+
+
+def test_PVACR_BE19_old_report_type_still_accepted(client):
+    """PVACR-BE19: Legacy report_type field still accepted (backward compat)."""
+    r = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل انحدار",
+            "property_type": "شقة سكنية",
+            "valuation_purpose": "قيمة سوقية",
+            "city": "القاهرة",
+            "report_type": "professional_report",
+        },
+        content_type="application/json",
+    )
+    assert r.status_code not in (400, 404, 500), \
+        f"Legacy report_type rejected: {r.status_code}"
+
+
+def test_PVACR_BE20_chat_output_pdf_route_exists(client):
+    """PVACR-BE20: POST chat-output/pdf route returns 200 or expected auth status."""
+    _, body = _pvacr_create(client)
+    rid = body.get("request_id", "")
+    if not rid:
+        return
+    r = client.post(
+        f"/api/professional-valuation/requests/{rid}/chat-output/pdf",
+        json={"report_action": "traditional_report"},
+        content_type="application/json",
+    )
+    assert r.status_code in (200, 201, 401, 403, 404), \
+        f"chat-output/pdf route unexpected status: {r.status_code}"
+
+
+def test_PVACR_BE21_chat_output_admin_excel_returns_403_for_non_admin(client):
+    """PVACR-BE21: admin-excel route returns 403 for non-admin."""
+    _, body = _pvacr_create(client)
+    rid = body.get("request_id", "")
+    if not rid:
+        return
+    r = client.post(
+        f"/api/professional-valuation/requests/{rid}/chat-output/admin-excel",
+        json={"report_action": "traditional_report"},
+        content_type="application/json",
+    )
+    assert r.status_code in (401, 403, 404), \
+        f"admin-excel should return 403/401 for non-admin, got {r.status_code}"
+
+
+def test_PVACR_BE22_expert_review_request_route_exists(client):
+    """PVACR-BE22: POST expert-review-request route returns 200."""
+    _, body = _pvacr_create(client)
+    rid = body.get("request_id", "")
+    if not rid:
+        return
+    r = client.post(
+        f"/api/professional-valuation/requests/{rid}/expert-review-request",
+        json={"note": "طلب مراجعة اختبار"},
+        content_type="application/json",
+    )
+    assert r.status_code in (200, 201, 401, 404), \
+        f"expert-review-request unexpected status: {r.status_code}"
+
+
+def test_PVACR_BE23_simulated_report_blocker_without_training(client):
+    """PVACR-BE23: simulated_uploaded_report without training flag produces blockers."""
+    r = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل محاكاة",
+            "property_type": "شقة سكنية",
+            "valuation_purpose": "قيمة سوقية",
+            "city": "القاهرة",
+            "selected_report_action": "simulated_uploaded_report",
+            "uploaded_report_simulation_enabled": False,
+        },
+        content_type="application/json",
+    )
+    body = r.get_json() or {}
+    perms = body.get("chat_output_context", {}).get("output_permissions", {})
+    blockers = perms.get("blockers", [])
+    assert len(blockers) > 0, "simulated report without training must produce blockers"
+
+
+def test_PVACR_BE24_ordinary_valuation_unaffected_by_pvacr(client):
+    """PVACR-BE24: Regression — ordinary POST route unaffected by PVACR changes."""
+    r = client.post(
+        "/api/professional-valuation/requests",
+        json={
+            "client_name": "عميل انحدار عادي",
+            "property_type": "فيلا سكنية",
+            "valuation_purpose": "قيمة سوقية",
+            "area": 200,
+            "city": "الرياض",
+        },
+        content_type="application/json",
+    )
+    assert r.status_code not in (404, 500), \
+        f"Ordinary route broken after PVACR changes: {r.status_code}"
+

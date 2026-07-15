@@ -13,6 +13,13 @@ Phase C tests (PVP19–PVP30):
   Phase C UI elements — evidence section, source section, document completeness panel,
   source quality panel, certification blockers list, advisory-only warning.
   Regression: certified button remains disabled.
+
+Report type tests (PVP143–PVP147):
+  PVP143 report-type-select exists in new-request-form
+  PVP144 traditional_report option is present
+  PVP145 detailed_report option is present
+  PVP146 professional_report option is present
+  PVP147 pro-val-report-type-status element exists in summary panel
 """
 from __future__ import annotations
 
@@ -1397,3 +1404,1349 @@ def test_PVP142_prior_phase_sections_still_visible(page: Page, live_server: str)
     ]:
         el = page.locator(f'[data-testid="{tid}"]')
         expect(el).to_have_count(1)
+
+
+# ── PVP143–PVP147: Report type selector ─────────────────────────────────────
+
+def test_PVP143_report_type_select_in_dom_as_compat_span(page: Page, live_server: str) -> None:
+    """PVP143: pro-val-report-type-select exists in DOM as backward-compat hidden span (upper selector removed).
+    Unified selector exists in DOM (may be inside a collapsed section at initial load)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-report-type-select"]')
+    expect(sel).to_have_count(1)
+    # Unified selector must exist in DOM (chat section may be collapsed at initial load)
+    unified = page.locator('[data-testid="pro-val-unified-analyze-generate-reports-select"]')
+    expect(unified).to_have_count(1)
+
+
+def test_PVP144_traditional_option_present(page: Page, live_server: str) -> None:
+    """PVP144: traditional_report option exists in unified report action selector."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    opt = page.locator('[data-testid="pro-val-unified-analyze-generate-reports-select"] option[value="traditional_report"]')
+    expect(opt).to_have_count(1)
+
+
+def test_PVP145_detailed_option_present(page: Page, live_server: str) -> None:
+    """PVP145: detailed_report option exists in unified report action selector."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    opt = page.locator('[data-testid="pro-val-unified-analyze-generate-reports-select"] option[value="detailed_report"]')
+    expect(opt).to_have_count(1)
+
+
+def test_PVP146_professional_option_present(page: Page, live_server: str) -> None:
+    """PVP146: professional_report option exists in unified report action selector."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    opt = page.locator('[data-testid="pro-val-unified-analyze-generate-reports-select"] option[value="professional_report"]')
+    expect(opt).to_have_count(1)
+
+
+def test_PVP147_report_type_status_element_in_summary(page: Page, live_server: str) -> None:
+    """PVP147: pro-val-report-type-status element exists in summary panel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-report-type-status"]')
+    expect(el).to_have_count(1)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Taxonomy v2 E2E Tests — PVPE01–PVPE15
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVPE01_asset_classification_section_visible(page: Page, live_server: str) -> None:
+    """PVPE01: Asset Classification (Axis 1) section is present in the form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-classification-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE02_asset_family_select_present(page: Page, live_server: str) -> None:
+    """PVPE02: Asset Family select element is present.
+    Count is 2: one wrapper div in ws-professional (Card 1), one select in ws-professional-valuation."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-family-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE03_asset_type_select_present(page: Page, live_server: str) -> None:
+    """PVPE03: Asset Type select element is present.
+    Count is 2: one in ws-professional (Card 1, id=asset-type), one in ws-professional-valuation (pvr-asset-type)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-type-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE04_asset_subtype_select_present(page: Page, live_server: str) -> None:
+    """PVPE04: Asset Subtype select element is present.
+    Count is 2: one wrapper div in ws-professional (Card 1), one select in ws-professional-valuation."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-subtype-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE05_assignment_purpose_section_visible(page: Page, live_server: str) -> None:
+    """PVPE05: Assignment Purpose (Axis 2) inner section div is present in the backoffice workspace.
+    pro-val-assignment-purpose-section is only in ws-professional-valuation (hidden workspace) — count=1.
+    Note: the OUTER wrapper pro-val-section-assignment-purpose appears in both workspaces (count=2)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-assignment-purpose-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE06_assignment_purpose_select_present(page: Page, live_server: str) -> None:
+    """PVPE06: Assignment Purpose select element is present.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible, Step 2 UX)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-assignment-purpose-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE07_basis_of_value_section_visible(page: Page, live_server: str) -> None:
+    """PVPE07: Basis of Value (Axis 3) section is present.
+    Count is 2: one in ws-professional (Card 3), one in ws-professional-valuation."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-basis-of-value-section"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE08_basis_of_value_select_present(page: Page, live_server: str) -> None:
+    """PVPE08: Basis of Value select element is present.
+    Count is 2: one in ws-professional (Card 3, id=prof-basis-of-value), one in ws-professional-valuation (pvr-basis-of-value)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-basis-of-value-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE09_report_type_section_present(page: Page, live_server: str) -> None:
+    """PVPE09: Report Type (Axis 4) section wrapper is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-report-type-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE10_analysis_output_section_present(page: Page, live_server: str) -> None:
+    """PVPE10: Analysis Output section (config summary + method route) is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-analysis-output-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE11_config_summary_element_present(page: Page, live_server: str) -> None:
+    """PVPE11: Configuration summary element (pro-val-config-summary) is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-selected-configuration-summary"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE12_method_route_summary_element_present(page: Page, live_server: str) -> None:
+    """PVPE12: Derived method route summary element is present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-derived-method-route-summary"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE13_intended_use_input_present(page: Page, live_server: str) -> None:
+    """PVPE13: Intended Use input is present.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible Step 2 UX)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-intended-use-input"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE14_old_pvr_property_type_removed_from_form(page: Page, live_server: str) -> None:
+    """PVPE14: Legacy pvr-property-type text input no longer present in the form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('#pvr-property-type')
+    expect(el).to_have_count(0)
+
+
+def test_PVPE15_old_pvr_valuation_purpose_removed_from_form(page: Page, live_server: str) -> None:
+    """PVPE15: Legacy pvr-valuation-purpose text input no longer present in the form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('#pvr-valuation-purpose')
+    expect(el).to_have_count(0)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PVPE-REQ01–PVPE-REQ10 — Asset Requirements Panel E2E Tests
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def test_PVPE_REQ01_asset_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ01: Asset requirements panel elements exist in the DOM.
+    Count == 2: one in ws-professional (visible workspace, Section 2),
+    one in ws-professional-valuation (backoffice workspace).
+    """
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-requirements-panel"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_REQ02_hotel_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ02: Hotel requirements sub-panel element exists in DOM (may be hidden)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ03_factory_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ03: Factory requirements sub-panel element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-factory-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ04_land_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ04: Land requirements sub-panel element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-land-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ05_retail_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ05: Retail requirements sub-panel element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-retail-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ06_warehouse_requirements_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ06: Warehouse requirements sub-panel element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-warehouse-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ07_requirements_title_element_exists(page: Page, live_server: str) -> None:
+    """PVPE-REQ07: Asset requirements title element exists inside backoffice workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    el = ws.locator('[data-testid="pro-val-asset-requirements-title"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ08_requirements_helper_text_visible(page: Page, live_server: str) -> None:
+    """PVPE-REQ08: Helper text element describing derived nature of requirements exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-requirements-helper-text"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_REQ09_requirements_lists_exist_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-REQ09: Required inputs and recommended methods list elements exist."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    inputs_els = page.locator('[data-testid="pro-val-asset-required-inputs-list"]')
+    methods_els = page.locator('[data-testid="pro-val-asset-recommended-methods-list"]')
+    # Each sub-panel has these testids — expect at least one occurrence each
+    expect(inputs_els).not_to_have_count(0)
+    expect(methods_els).not_to_have_count(0)
+
+
+def test_PVPE_REQ10_asset_classification_section_still_visible(page: Page, live_server: str) -> None:
+    """PVPE-REQ10: Asset classification section still visible after requirements panel added."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    # Axis 1 section must still be there (regression check)
+    el = page.locator('[data-testid="pro-val-asset-classification-section"]')
+    expect(el).to_have_count(1)
+    # Assignment purpose section must still be there (regression check)
+    # pro-val-assignment-purpose-section is only in ws-professional-valuation (count=1)
+    el2 = page.locator('[data-testid="pro-val-assignment-purpose-section"]')
+    expect(el2).to_have_count(1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVPE-CTRL01–PVPE-CTRL25 — Feature Capabilities & Controls Inventory E2E Tests
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def test_PVPE_CTRL01_feature_capabilities_panel_exists_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-CTRL01: The feature capabilities panel exists in the DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-feature-capabilities-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL02_active_controls_list_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL02: Active controls list exists in DOM.
+    Count == 2: ws-professional (Advanced Controls Panel) + ws-professional-valuation (backoffice).
+    """
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-active-controls-list"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL03_inactive_controls_list_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL03: Inactive controls list exists in DOM.
+    Count == 2: ws-professional (Advanced Controls Panel) + ws-professional-valuation (backoffice).
+    """
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-inactive-controls-list"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL04_report_reflection_matrix_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL04: Report reflection matrix exists in DOM.
+    Count == 2: ws-professional (Advanced Controls Panel) + ws-professional-valuation (backoffice).
+    """
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-report-reflection-matrix"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL05_activation_roadmap_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL05: Activation roadmap exists in DOM.
+    Count == 2: ws-professional (Advanced Controls Panel) + ws-professional-valuation (backoffice).
+    """
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-control-activation-roadmap"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL06_disabled_controls_show_reason(page: Page, live_server: str) -> None:
+    """PVPE-CTRL06: Inactive controls have disabled-reason label elements."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    els = page.locator('[data-testid="pro-val-control-disabled-reason"]')
+    # At least one disabled/future_stub reason label must exist
+    expect(els).not_to_have_count(0)
+
+
+def test_PVPE_CTRL07_active_controls_show_report_impact(page: Page, live_server: str) -> None:
+    """PVPE-CTRL07: Active control items have report-impact label elements."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    els = page.locator('[data-testid="pro-val-control-report-impact"]')
+    expect(els).not_to_have_count(0)
+
+
+def test_PVPE_CTRL08_active_control_asset_requirements_item_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL08: The asset-requirements active control item exists in the DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-active-control-asset-requirements"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL09_no_internal_paths_in_dom(page: Page, live_server: str) -> None:
+    """PVPE-CTRL09: Professional valuation workspace DOM contains no internal file paths (Rule 19)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    html_content = ws.inner_html()
+    assert "internal_file_path" not in html_content, "internal_file_path found in workspace DOM"
+    assert "C:\\Users" not in html_content, "Windows absolute path found in workspace DOM"
+    assert "instance/professional_valuation" not in html_content, "Instance path found in DOM"
+
+
+def test_PVPE_CTRL10_feature_panel_is_collapsible(page: Page, live_server: str) -> None:
+    """PVPE-CTRL10: Feature capabilities panel is a <details> element (collapsible)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-feature-capabilities-panel"]')
+    tag = el.evaluate("el => el.tagName.toLowerCase()")
+    assert tag == "details", (
+        f"Feature capabilities panel must be a <details> element, got <{tag}>"
+    )
+
+
+def test_PVPE_CTRL11_section_1_asset_classification_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL11: Regression — Section 1 asset classification still present (count=2 after Card 1 added to visible workspace)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-asset-family-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL12_section_2_assignment_purpose_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL12: Regression — Section 2 assignment purpose inner div still present.
+    pro-val-assignment-purpose-section is only in ws-professional-valuation (count=1)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-assignment-purpose-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL13_section_3_basis_of_value_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL13: Regression — Section 3 basis of value still present (count=2 after Card 3 added to visible workspace)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-basis-of-value-section"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVPE_CTRL14_section_4_report_type_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL14: Regression — Section 4 report type select still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-report-type-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL15_hotel_requirements_panel_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL15: Regression — Hotel requirements panel still present after controls panel added."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL16_factory_requirements_panel_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL16: Regression — Factory requirements panel still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-factory-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL17_land_requirements_panel_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL17: Regression — Land requirements panel still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-land-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL18_ordinary_valuation_tab_still_exists(page: Page, live_server: str) -> None:
+    """PVPE-CTRL18: Regression — Ordinary valuation workspace not broken."""
+    _block_api(page)
+    page.goto(live_server, wait_until="domcontentloaded")
+    tab_btn = page.locator('#es-tab-valuation')
+    tab_btn.click()
+    ws = page.locator('[data-testid="simple-valuation-tab"]')
+    ws.wait_for(state="visible", timeout=10_000)
+    expect(ws).to_be_visible()
+
+
+def test_PVPE_CTRL19_no_duplicate_feature_panel_testids(page: Page, live_server: str) -> None:
+    """PVPE-CTRL19: No duplicate testids for feature capabilities panel elements inside backoffice workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    unique_testids = [
+        "pro-val-feature-capabilities-panel",
+        "pro-val-active-controls-list",
+        "pro-val-inactive-controls-list",
+        "pro-val-report-reflection-matrix",
+        "pro-val-control-activation-roadmap",
+    ]
+    for tid in unique_testids:
+        count = ws.locator(f'[data-testid="{tid}"]').count()
+        assert count == 1, (
+            f"Expected exactly 1 element with data-testid='{tid}' inside pro-val-workspace, found {count}"
+        )
+
+
+def test_PVPE_CTRL20_reflection_matrix_has_table_element(page: Page, live_server: str) -> None:
+    """PVPE-CTRL20: Report reflection matrix contains a <table> element."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    matrix_el = page.locator('[data-testid="pro-val-report-reflection-matrix"]')
+    # Open the details panel first so content is visible
+    panel = page.locator('[data-testid="pro-val-feature-capabilities-panel"]')
+    panel.evaluate("el => el.setAttribute('open', '')")
+    table = matrix_el.locator("table")
+    # Table must exist in the structure
+    expect(table).to_have_count(1)
+
+
+def test_PVPE_CTRL21_section_5_analysis_output_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL21: Regression — Section 5 analysis output section still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-analysis-output-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL22_configuration_summary_still_present(page: Page, live_server: str) -> None:
+    """PVPE-CTRL22: Regression — pro-val-selected-configuration-summary still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-selected-configuration-summary"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL23_derived_method_route_summary_still_present(page: Page, live_server: str) -> None:
+    """PVPE-CTRL23: Regression — pro-val-derived-method-route-summary still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-derived-method-route-summary"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL24_warehouse_requirements_panel_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL24: Regression — Warehouse requirements panel still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-warehouse-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVPE_CTRL25_retail_requirements_panel_unaffected(page: Page, live_server: str) -> None:
+    """PVPE-CTRL25: Regression — Retail requirements panel still present."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-retail-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PVLV01–PVLV30 — Live Visibility & Browser Interaction Tests (Part M)
+#
+# These tests prove actual browser behavior — they use selectOption() to trigger
+# the panel update and toBeVisible() / not_to_be_visible() to verify live state.
+# They do NOT merely check DOM existence (to_have_count).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _open_new_request_form(page: Page) -> None:
+    """Click the '+ New Request' button to reveal the taxonomy form, wait for it."""
+    btn = page.locator('[data-testid="pro-val-new-request-button"]')
+    btn.click()
+    page.locator('[data-testid="pro-val-new-request-form"]').wait_for(
+        state="visible", timeout=5_000
+    )
+
+
+def _select_asset_type(page: Page, value: str) -> None:
+    """Select an asset type and wait for the requirements panel update.
+    Uses .nth(1) because pro-val-asset-type-select now appears in both workspaces (count=2);
+    nth(1) = ws-professional-valuation (the active workspace when navigated via _go_to_pro_val)."""
+    sel = page.locator('[data-testid="pro-val-asset-type-select"]')
+    sel.nth(1).select_option(value)
+
+
+# ── Hotel panel visibility ────────────────────────────────────────────────────
+
+def test_PVLV01_hotel_selection_shows_requirements_panel(page: Page, live_server: str) -> None:
+    """PVLV01: Selecting hotel makes the outer asset requirements panel VISIBLE (not just present)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    panel = ws.locator('[data-testid="pro-val-asset-requirements-panel"]')
+    expect(panel).to_be_visible()
+
+
+def test_PVLV02_hotel_selection_shows_hotel_sub_panel(page: Page, live_server: str) -> None:
+    """PVLV02: Selecting hotel makes the hotel-specific requirements sub-panel VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).to_be_visible()
+
+
+def test_PVLV03_hotel_panel_contains_adr(page: Page, live_server: str) -> None:
+    """PVLV03: Hotel requirements panel contains ADR text."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).to_contain_text("ADR")
+
+
+def test_PVLV04_hotel_panel_contains_occupancy_rate(page: Page, live_server: str) -> None:
+    """PVLV04: Hotel requirements panel contains occupancy rate (معدل الإشغال) text."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).to_contain_text("الإشغال")
+
+
+def test_PVLV05_hotel_panel_contains_revpar(page: Page, live_server: str) -> None:
+    """PVLV05: Hotel requirements panel contains RevPAR text."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).to_contain_text("RevPAR")
+
+
+def test_PVLV06_hotel_panel_contains_dcf_method(page: Page, live_server: str) -> None:
+    """PVLV06: Hotel requirements panel recommended methods include DCF."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).to_contain_text("dcf")
+
+
+# ── Land panel visibility after hotel → land switch ──────────────────────────
+
+def test_PVLV07_land_selection_shows_land_panel(page: Page, live_server: str) -> None:
+    """PVLV07: Selecting urban_land makes the land requirements panel VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "urban_land")
+    land_panel = page.locator('[data-testid="pro-val-land-requirements-panel"]')
+    expect(land_panel).to_be_visible()
+
+
+def test_PVLV08_land_selection_hides_hotel_panel(page: Page, live_server: str) -> None:
+    """PVLV08: After selecting hotel then urban_land, hotel panel is NOT visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    _select_asset_type(page, "urban_land")
+    hotel_panel = page.locator('[data-testid="pro-val-hotel-requirements-panel"]')
+    expect(hotel_panel).not_to_be_visible()
+
+
+# ── Factory, Retail, Warehouse panel visibility ───────────────────────────────
+
+def test_PVLV09_factory_selection_shows_factory_panel(page: Page, live_server: str) -> None:
+    """PVLV09: Selecting industrial_factory shows the factory requirements panel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "industrial_factory")
+    factory_panel = page.locator('[data-testid="pro-val-factory-requirements-panel"]')
+    expect(factory_panel).to_be_visible()
+
+
+def test_PVLV10_retail_selection_shows_retail_panel(page: Page, live_server: str) -> None:
+    """PVLV10: Selecting retail_shop shows the retail requirements panel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "retail_shop")
+    retail_panel = page.locator('[data-testid="pro-val-retail-requirements-panel"]')
+    expect(retail_panel).to_be_visible()
+
+
+def test_PVLV11_warehouse_selection_shows_warehouse_panel(page: Page, live_server: str) -> None:
+    """PVLV11: Selecting warehouse shows the warehouse requirements panel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "warehouse")
+    warehouse_panel = page.locator('[data-testid="pro-val-warehouse-requirements-panel"]')
+    expect(warehouse_panel).to_be_visible()
+
+
+# ── Market value / comparable_adjustment not misplaced ───────────────────────
+
+def test_PVLV12_market_value_not_in_asset_type_options(page: Page, live_server: str) -> None:
+    """PVLV12: market_value is NOT an option in the asset type select (Rule: market_value belongs in Basis of Value).
+    Uses .nth(1) — pro-val-asset-type-select now count=2; nth(1) = ws-professional-valuation (active workspace)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    asset_select = page.locator('[data-testid="pro-val-asset-type-select"]')
+    options_html = asset_select.nth(1).inner_html()
+    assert 'value="market_value"' not in options_html, (
+        "market_value must not appear as an asset_type option — it belongs in Basis of Value"
+    )
+
+
+def test_PVLV13_comparable_adjustment_not_in_purpose_options(page: Page, live_server: str) -> None:
+    """PVLV13: comparable_adjustment is NOT an option in assignment purpose select (it is a method step, not a purpose)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    purpose_select = page.locator('[data-testid="pro-val-assignment-purpose-select"]')
+    options_html = purpose_select.first.inner_html()
+    assert 'value="comparable_adjustment"' not in options_html, (
+        "comparable_adjustment must not appear as an assignment_purpose — it is a method step"
+    )
+
+
+# ── Configuration summary live update ────────────────────────────────────────
+
+def test_PVLV14_config_summary_visible(page: Page, live_server: str) -> None:
+    """PVLV14: The selected configuration summary element is visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    summary = page.locator('[data-testid="pro-val-selected-configuration-summary"]')
+    expect(summary).to_be_visible()
+
+
+def test_PVLV15_config_summary_updates_after_hotel_selection(page: Page, live_server: str) -> None:
+    """PVLV15: Config summary reflects asset type after hotel selection."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    summary = page.locator('[data-testid="pro-val-selected-configuration-summary"]')
+    # Should contain the Arabic hotel label or the asset family label
+    summary_text = summary.inner_text()
+    assert len(summary_text.strip()) > 0, "Config summary must not be empty after hotel selection"
+
+
+# ── Feature capabilities panel — live visibility after expand ─────────────────
+
+def test_PVLV16_feature_capabilities_panel_can_expand(page: Page, live_server: str) -> None:
+    """PVLV16: Feature capabilities <details> panel can be opened via JS and content becomes visible."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    panel = ws.locator('[data-testid="pro-val-feature-capabilities-panel"]')
+    # Open the details element via JavaScript
+    panel.evaluate("el => el.setAttribute('open', '')")
+    active_list = ws.locator('[data-testid="pro-val-active-controls-list"]')
+    expect(active_list).to_be_visible()
+
+
+def test_PVLV17_active_controls_list_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV17: After expanding feature panel, active controls list is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    expect(ws.locator('[data-testid="pro-val-active-controls-list"]')).to_be_visible()
+
+
+def test_PVLV18_inactive_controls_list_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV18: After expanding feature panel, inactive controls list is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    expect(ws.locator('[data-testid="pro-val-inactive-controls-list"]')).to_be_visible()
+
+
+def test_PVLV19_report_reflection_matrix_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV19: After expanding feature panel, report reflection matrix table is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    expect(ws.locator('[data-testid="pro-val-report-reflection-matrix"]')).to_be_visible()
+
+
+def test_PVLV20_activation_roadmap_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV20: After expanding feature panel, activation roadmap is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    expect(ws.locator('[data-testid="pro-val-control-activation-roadmap"]')).to_be_visible()
+
+
+def test_PVLV21_disabled_reason_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV21: After expanding feature panel, at least one disabled-reason label is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    page.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    reasons = page.locator('[data-testid="pro-val-control-disabled-reason"]')
+    # At least the first disabled reason must be visible
+    expect(reasons.first).to_be_visible()
+
+
+def test_PVLV22_active_control_report_impact_visible_after_expand(page: Page, live_server: str) -> None:
+    """PVLV22: After expanding feature panel, at least one active control report-impact label is VISIBLE."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    page.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    impacts = page.locator('[data-testid="pro-val-control-report-impact"]')
+    expect(impacts.first).to_be_visible()
+
+
+def test_PVLV23_digital_verification_text_in_inactive_list(page: Page, live_server: str) -> None:
+    """PVLV23: After expanding feature panel, inactive controls list mentions digital verification."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    ws.locator('[data-testid="pro-val-feature-capabilities-panel"]').evaluate(
+        "el => el.setAttribute('open', '')"
+    )
+    inactive_list = ws.locator('[data-testid="pro-val-inactive-controls-list"]')
+    expect(inactive_list).to_contain_text("التحقق الرقمي")
+
+
+# ── Security / no internal paths ─────────────────────────────────────────────
+
+def test_PVLV24_no_internal_paths_in_workspace_dom(page: Page, live_server: str) -> None:
+    """PVLV24: The professional valuation workspace DOM contains no internal storage paths (Rule 19)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    html = ws.inner_html()
+    assert "internal_file_path" not in html
+    assert "requests.jsonl" not in html
+    assert "events.jsonl" not in html
+
+
+# ── Regression: other tabs and existing buttons ───────────────────────────────
+
+def test_PVLV25_ordinary_valuation_tab_still_works(page: Page, live_server: str) -> None:
+    """PVLV25: Regression — Ordinary valuation tab is still visible and accessible."""
+    _block_api(page)
+    page.goto(live_server, wait_until="domcontentloaded")
+    tab_btn = page.locator('#es-tab-valuation')
+    expect(tab_btn).to_have_count(1)
+    tab_btn.click()
+    page.locator('[data-testid="simple-valuation-tab"]').wait_for(state="visible", timeout=10_000)
+    expect(page.locator('[data-testid="simple-valuation-tab"]')).to_be_visible()
+
+
+def test_PVLV26_tax_appeal_tab_still_accessible(page: Page, live_server: str) -> None:
+    """PVLV26: Regression — Tax appeal tab is still accessible."""
+    _block_api(page)
+    page.goto(live_server, wait_until="domcontentloaded")
+    tax_btn = page.locator('[data-testid="tax-tab"]')
+    expect(tax_btn).to_have_count(1)
+    tax_btn.click()
+    page.locator('[data-testid="tax-page"]').wait_for(state="visible", timeout=10_000)
+    expect(page.locator('[data-testid="tax-page"]')).to_be_visible()
+
+
+def test_PVLV27_create_request_button_still_visible(page: Page, live_server: str) -> None:
+    """PVLV27: Regression — pro-val-create-request-button still exists in the form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    btn = page.locator('[data-testid="pro-val-create-request-button"]')
+    expect(btn).to_have_count(1)
+
+
+def test_PVLV28_basis_of_value_has_market_value_option(page: Page, live_server: str) -> None:
+    """PVLV28: Basis of value select contains market_value option (Axis 3 correct placement).
+    Uses .nth(1) — pro-val-basis-of-value-select now count=2; nth(1) = ws-professional-valuation (active workspace)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    bov_select = page.locator('[data-testid="pro-val-basis-of-value-select"]')
+    options_html = bov_select.nth(1).inner_html()
+    assert 'value="market_value"' in options_html, (
+        "market_value must be an option in basis_of_value select (Axis 3)"
+    )
+
+
+def test_PVLV29_hotel_requirements_title_contains_hotel(page: Page, live_server: str) -> None:
+    """PVLV29: After selecting hotel, the requirements panel title mentions فندق."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    title = ws.locator('[data-testid="pro-val-asset-requirements-title"]')
+    expect(title).to_contain_text("فندق")
+
+
+def test_PVLV30_no_duplicate_workspace_testids(page: Page, live_server: str) -> None:
+    """PVLV30: No critical testid appears more than once inside the pro-val workspace."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    critical_unique_testids = [
+        "pro-val-feature-capabilities-panel",
+        "pro-val-active-controls-list",
+        "pro-val-inactive-controls-list",
+        "pro-val-report-reflection-matrix",
+        "pro-val-control-activation-roadmap",
+        "pro-val-selected-configuration-summary",
+        "pro-val-derived-method-route-summary",
+    ]
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    for testid in critical_unique_testids:
+        count = ws.locator(f'[data-testid="{testid}"]').count()
+        assert count == 1, (
+            f"Expected exactly 1 element with data-testid='{testid}', found {count}"
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PVSERV01–PVSERV10 — Served Browser Visibility Fix Tests
+# Proves that the real served page (not just DOM collection) shows content
+# without relying on manual browser inspection.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_PVSERV01_version_marker_visible_without_interaction(page: Page, live_server: str) -> None:
+    """PVSERV01: UI version marker is VISIBLE as soon as the PV workspace loads — no clicks needed."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    marker = page.locator('[data-testid="pro-val-ui-version-marker"]')
+    expect(marker).to_be_visible()
+
+
+def test_PVSERV02_version_marker_text_contains_taxonomy_v2(page: Page, live_server: str) -> None:
+    """PVSERV02: Version marker text contains 'Taxonomy v2'."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    marker = page.locator('[data-testid="pro-val-ui-version-marker"]')
+    expect(marker).to_contain_text("Taxonomy v2")
+
+
+def test_PVSERV03_feature_capabilities_panel_visible_on_load(page: Page, live_server: str) -> None:
+    """PVSERV03: Feature capabilities panel is VISIBLE on page load without clicking expand."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    panel = page.locator('[data-testid="pro-val-feature-capabilities-panel"]')
+    expect(panel).to_be_visible()
+
+
+def test_PVSERV04_active_controls_visible_without_expand_click(page: Page, live_server: str) -> None:
+    """PVSERV04: Active controls list is visible on load — panel is auto-expanded (open attribute)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    expect(ws.locator('[data-testid="pro-val-active-controls-list"]')).to_be_visible()
+
+
+def test_PVSERV05_inactive_controls_visible_without_expand_click(page: Page, live_server: str) -> None:
+    """PVSERV05: Inactive controls list is visible on load — panel is auto-expanded."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    expect(ws.locator('[data-testid="pro-val-inactive-controls-list"]')).to_be_visible()
+
+
+def test_PVSERV06_asset_requirements_panel_visible_after_hotel_selection(
+    page: Page, live_server: str
+) -> None:
+    """PVSERV06: Asset requirements panel becomes VISIBLE after opening form and selecting hotel."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    expect(ws.locator('[data-testid="pro-val-asset-requirements-panel"]')).to_be_visible()
+
+
+def test_PVSERV07_config_summary_visible_after_form_open(page: Page, live_server: str) -> None:
+    """PVSERV07: Config summary panel is VISIBLE after opening the new request form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    expect(page.locator('[data-testid="pro-val-selected-configuration-summary"]')).to_be_visible()
+
+
+def test_PVSERV08_arabic_requirements_text_present_after_hotel_selection(
+    page: Page, live_server: str
+) -> None:
+    """PVSERV08: Arabic text 'متطلبات تقييم' is present in page after hotel selection."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    _open_new_request_form(page)
+    _select_asset_type(page, "hotel")
+    ws = page.locator('[data-testid="pro-val-workspace"]')
+    panel = ws.locator('[data-testid="pro-val-asset-requirements-panel"]')
+    expect(panel).to_be_visible()
+    content = panel.inner_text()
+    assert "متطلبات" in content, f"Arabic requirements text not found in panel: {content[:200]}"
+
+
+def test_PVSERV09_no_js_console_errors(page: Page, live_server: str) -> None:
+    """PVSERV09: No JavaScript console errors when navigating to PV workspace."""
+    console_errors: list[str] = []
+    page.on("console", lambda msg: console_errors.append(msg.text) if msg.type == "error" else None)
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    page.wait_for_timeout(800)
+    assert console_errors == [], f"JS console errors found: {console_errors}"
+
+
+def test_PVSERV10_version_marker_not_inside_form_wrap(page: Page, live_server: str) -> None:
+    """PVSERV10: Version marker is outside the new-request-form-wrap (visible before any form click)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    # Form wrap is display:none by default; marker must still be visible
+    form_wrap = page.locator('[data-testid="pro-val-new-request-form"]')
+    # Confirm form is not visible (hasn't been opened)
+    expect(form_wrap).not_to_be_visible()
+    # Marker must still be visible even though form is hidden
+    marker = page.locator('[data-testid="pro-val-ui-version-marker"]')
+    expect(marker).to_be_visible()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PVNEW01–PVNEW40 — Core UX Restructure / Input Modes / Report Types
+# Part M: 40 browser visibility checks (all use real Playwright assertions)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _open_pv_form(page: Page, live_server: str) -> None:
+    """Navigate to PV workspace and open the new-request form."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    page.locator('[data-testid="pro-val-new-request-button"]').click()
+    page.locator('[data-testid="pro-val-new-request-form"]').wait_for(state="visible", timeout=5_000)
+
+
+def test_PVNEW01_section_asset_definition_wrapper_exists(page: Page, live_server: str) -> None:
+    """PVNEW01: pro-val-section-asset-definition wrapper exists in DOM.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible default)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-section-asset-definition"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW02_section_assignment_purpose_wrapper_exists(page: Page, live_server: str) -> None:
+    """PVNEW02: pro-val-section-assignment-purpose wrapper exists in DOM.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible default)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-section-assignment-purpose"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW03_section_basis_of_value_wrapper_exists(page: Page, live_server: str) -> None:
+    """PVNEW03: pro-val-section-basis-of-value wrapper exists in DOM.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible default)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-section-basis-of-value"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW04_section_report_type_wrapper_exists(page: Page, live_server: str) -> None:
+    """PVNEW04: pro-val-section-report-type wrapper exists in DOM.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible default)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-section-report-type"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW05_purpose_logic_path_select_exists(page: Page, live_server: str) -> None:
+    """PVNEW05: pro-val-purpose-logic-path-select select element exists in DOM.
+    Count is 2: ws-professional-valuation (backoffice) + ws-professional (Step 2 UX visible)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-purpose-logic-path-select"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW06_purpose_logic_path_has_options(page: Page, live_server: str) -> None:
+    """PVNEW06: purpose_logic_path select has at least 5 options including default blank."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-purpose-logic-path-select"]')
+    count = sel.locator('option').count()
+    assert count >= 5, f"Expected >=5 options in purpose_logic_path, got {count}"
+
+
+def test_PVNEW07_input_generation_section_exists(page: Page, live_server: str) -> None:
+    """PVNEW07: pro-val-input-generation-section wrapper exists in DOM.
+    Count is 2: one in ws-professional-valuation (backoffice), one in ws-professional (visible default)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-input-generation-section"]')
+    expect(el).to_have_count(2)
+
+
+def test_PVNEW08_analysis_output_section_legacy_testid_preserved(page: Page, live_server: str) -> None:
+    """PVNEW08: Old pro-val-analysis-output-section testid is still present (backward compat)."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-analysis-output-section"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW09_input_mode_select_exists(page: Page, live_server: str) -> None:
+    """PVNEW09: pro-val-input-mode-select select element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-input-mode-select"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW10_input_mode_has_structured_option(page: Page, live_server: str) -> None:
+    """PVNEW10: Input mode select has option for structured_browser_input."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-input-mode-select"]')
+    opt = sel.locator('option[value="structured_browser_input"]')
+    expect(opt).to_have_count(1)
+
+
+def test_PVNEW11_input_mode_has_chat_attachments_option(page: Page, live_server: str) -> None:
+    """PVNEW11: Input mode select has option for chat_attachment_assisted_input."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    sel = page.locator('[data-testid="pro-val-input-mode-select"]')
+    opt = sel.locator('option[value="chat_attachment_assisted_input"]')
+    expect(opt).to_have_count(1)
+
+
+def test_PVNEW12_structured_panel_exists(page: Page, live_server: str) -> None:
+    """PVNEW12: pro-val-structured-input-panel exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-structured-input-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW13_chat_attachment_panel_exists(page: Page, live_server: str) -> None:
+    """PVNEW13: pro-val-chat-attachment-input-panel exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-chat-attachment-input-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW14_structured_panel_visible_by_default(page: Page, live_server: str) -> None:
+    """PVNEW14: Structured input panel is visible when mode=structured_browser_input (default)."""
+    _open_pv_form(page, live_server)
+    panel = page.locator('[data-testid="pro-val-structured-input-panel"]')
+    expect(panel).to_be_visible()
+
+
+def test_PVNEW15_chat_panel_hidden_by_default(page: Page, live_server: str) -> None:
+    """PVNEW15: Chat attachment panel is hidden when mode=structured_browser_input (default)."""
+    _open_pv_form(page, live_server)
+    panel = page.locator('[data-testid="pro-val-chat-attachment-input-panel"]')
+    expect(panel).not_to_be_visible()
+
+
+def test_PVNEW16_switch_to_chat_mode_shows_chat_panel(page: Page, live_server: str) -> None:
+    """PVNEW16: Selecting chat_attachment_assisted_input shows the chat panel."""
+    _open_pv_form(page, live_server)
+    sel = page.locator('[data-testid="pro-val-input-mode-select"]')
+    sel.select_option("chat_attachment_assisted_input")
+    panel = page.locator('[data-testid="pro-val-chat-attachment-input-panel"]')
+    expect(panel).to_be_visible()
+
+
+def test_PVNEW17_switch_to_chat_mode_hides_structured_panel(page: Page, live_server: str) -> None:
+    """PVNEW17: Selecting chat_attachment_assisted_input hides the structured panel."""
+    _open_pv_form(page, live_server)
+    sel = page.locator('[data-testid="pro-val-input-mode-select"]')
+    sel.select_option("chat_attachment_assisted_input")
+    panel = page.locator('[data-testid="pro-val-structured-input-panel"]')
+    expect(panel).not_to_be_visible()
+
+
+def test_PVNEW18_upload_evidence_control_exists(page: Page, live_server: str) -> None:
+    """PVNEW18: pro-val-upload-evidence-control container exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-upload-evidence-control"]')
+    assert el.count() >= 1, "Expected at least one pro-val-upload-evidence-control"
+
+
+def test_PVNEW19_upload_photos_control_exists(page: Page, live_server: str) -> None:
+    """PVNEW19: pro-val-upload-photos-control container exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-upload-photos-control"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW20_upload_aerial_map_control_exists(page: Page, live_server: str) -> None:
+    """PVNEW20: pro-val-upload-aerial-map-control container exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-upload-aerial-map-control"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW21_upload_prior_report_control_exists(page: Page, live_server: str) -> None:
+    """PVNEW21: pro-val-upload-prior-report-control container exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-upload-prior-report-control"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW22_report_simulation_toggle_exists(page: Page, live_server: str) -> None:
+    """PVNEW22: pro-val-report-simulation-toggle checkbox exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-report-simulation-toggle"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW23_simulation_option_hidden_when_not_enabled(page: Page, live_server: str) -> None:
+    """PVNEW23: pro-val-simulated-uploaded-report-option is hidden when simulation not enabled."""
+    _open_pv_form(page, live_server)
+    opt_div = page.locator('[data-testid="pro-val-simulated-uploaded-report-option"]')
+    expect(opt_div).not_to_be_visible()
+
+
+def test_PVNEW24_simulation_option_visible_when_enabled(page: Page, live_server: str) -> None:
+    """PVNEW24: pro-val-simulated-uploaded-report-option appears after enabling simulation toggle."""
+    _open_pv_form(page, live_server)
+    toggle = page.locator('[data-testid="pro-val-report-simulation-toggle"]')
+    toggle.check()
+    opt_div = page.locator('[data-testid="pro-val-simulated-uploaded-report-option"]')
+    expect(opt_div).to_be_visible()
+
+
+def test_PVNEW25_generated_output_type_select_exists(page: Page, live_server: str) -> None:
+    """PVNEW25: pro-val-generated-output-type-select exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generated-output-type-select"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW26_generate_traditional_button_exists(page: Page, live_server: str) -> None:
+    """PVNEW26: pro-val-generate-traditional-report button exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-traditional-report"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW27_generate_detailed_button_exists(page: Page, live_server: str) -> None:
+    """PVNEW27: pro-val-generate-detailed-report button exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-detailed-report"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW28_generate_professional_button_exists(page: Page, live_server: str) -> None:
+    """PVNEW28: pro-val-generate-professional-report button exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-professional-report"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW29_generate_simulated_button_exists(page: Page, live_server: str) -> None:
+    """PVNEW29: pro-val-generate-simulated-uploaded-report button exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-generate-simulated-uploaded-report"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW30_simulated_button_disabled_by_default(page: Page, live_server: str) -> None:
+    """PVNEW30: Simulated report button is disabled until simulation toggle is enabled."""
+    _open_pv_form(page, live_server)
+    btn = page.locator('[data-testid="pro-val-generate-simulated-uploaded-report"]')
+    assert btn.is_disabled(), "Simulated report button must be disabled before enabling simulation"
+
+
+def test_PVNEW31_simulated_button_enabled_after_toggle(page: Page, live_server: str) -> None:
+    """PVNEW31: Simulated report button becomes enabled after enabling simulation toggle."""
+    _open_pv_form(page, live_server)
+    page.locator('[data-testid="pro-val-report-simulation-toggle"]').check()
+    btn = page.locator('[data-testid="pro-val-generate-simulated-uploaded-report"]')
+    assert not btn.is_disabled(), "Simulated report button must be enabled after simulation toggle"
+
+
+def test_PVNEW32_auto_fill_toggle_exists(page: Page, live_server: str) -> None:
+    """PVNEW32: pro-val-auto-fill-requirements-toggle checkbox exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-auto-fill-requirements-toggle"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW33_auto_fill_help_text_exists(page: Page, live_server: str) -> None:
+    """PVNEW33: pro-val-auto-fill-requirements-help paragraph exists."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-auto-fill-requirements-help"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW34_derived_requirements_preview_hidden_by_default(page: Page, live_server: str) -> None:
+    """PVNEW34: pro-val-derived-requirements-preview is hidden before auto-fill is enabled."""
+    _open_pv_form(page, live_server)
+    panel = page.locator('[data-testid="pro-val-derived-requirements-preview"]')
+    expect(panel).not_to_be_visible()
+
+
+def test_PVNEW35_derived_requirements_preview_visible_after_auto_fill(page: Page, live_server: str) -> None:
+    """PVNEW35: Enabling auto-fill toggle shows the derived requirements preview panel."""
+    _open_pv_form(page, live_server)
+    page.locator('[data-testid="pro-val-auto-fill-requirements-toggle"]').check()
+    panel = page.locator('[data-testid="pro-val-derived-requirements-preview"]')
+    expect(panel).to_be_visible()
+
+
+def test_PVNEW36_derived_requirements_panel_inner_exists(page: Page, live_server: str) -> None:
+    """PVNEW36: pro-val-derived-requirements-panel inner div exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-derived-requirements-panel"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW37_derived_requirements_list_elements_exist(page: Page, live_server: str) -> None:
+    """PVNEW37: All 5 derived requirements list testids exist in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    for tid in [
+        "pro-val-derived-required-inputs-list",
+        "pro-val-derived-required-evidence-list",
+        "pro-val-derived-recommended-methods-list",
+        "pro-val-derived-workbook-sheets-list",
+        "pro-val-derived-pdf-sections-list",
+    ]:
+        el = page.locator(f'[data-testid="{tid}"]')
+        expect(el).to_have_count(1), f"Missing: {tid}"
+
+
+def test_PVNEW38_simulation_warning_text_present(page: Page, live_server: str) -> None:
+    """PVNEW38: pro-val-simulation-warning text element exists in DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    el = page.locator('[data-testid="pro-val-simulation-warning"]')
+    expect(el).to_have_count(1)
+
+
+def test_PVNEW39_market_value_not_in_asset_type_dropdown(page: Page, live_server: str) -> None:
+    """PVNEW39: 'market_value' must NOT appear as an option in asset-type select (it belongs in basis-of-value)."""
+    _open_pv_form(page, live_server)
+    bad_opt = page.locator('[data-testid="pro-val-asset-type-select"] option[value="market_value"]')
+    assert bad_opt.count() == 0, "market_value must not appear in asset_type dropdown — it belongs in basis_of_value"
+
+
+def test_PVNEW40_no_internal_paths_in_dom(page: Page, live_server: str) -> None:
+    """PVNEW40: No Windows-style internal paths (C:\\, /Users/) should appear anywhere in page DOM."""
+    _block_api(page)
+    _go_to_pro_val(page, live_server)
+    body_text = page.locator("body").inner_text()
+    bad_patterns = ["C:\\", "C:/Users", "/Users/", "/home/", "core_engine/"]
+    for pat in bad_patterns:
+        assert pat not in body_text, f"Internal path pattern found in page DOM: '{pat}'"

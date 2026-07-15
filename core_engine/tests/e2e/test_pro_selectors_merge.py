@@ -41,9 +41,13 @@ def test_PSM03_asset_type_visible(page, live_server):
 
 
 def test_PSM04_val_purpose_visible(page, live_server):
-    """PSM04: #val-purpose (quick/common purpose selector) is visible."""
+    """PSM04: #val-purpose (purpose selector) is present in DOM for JS use.
+    Element is kept hidden in the restructured 6-section layout for backward
+    JS compatibility (runSimulatedConsole, togglePurposeInputs, fieldsToSave).
+    The visual purpose selection is now in Section 3 (pro-val-section-valuation-purpose)."""
     _goto(page, live_server)
-    assert page.is_visible("#val-purpose"), "#val-purpose must be visible"
+    count = page.locator("#val-purpose").count()
+    assert count >= 1, "#val-purpose must be present in DOM"
 
 
 # ── PSM05-06: Group 2 professional selectors are visible ─────────────────────

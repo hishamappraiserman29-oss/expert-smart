@@ -5558,6 +5558,55 @@ def handle_valuation():
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
 
+        # ── Three-tier HTML + PDF report generation ────────────────────────────
+        _ura = (payload.get("unified_report_action") or
+                payload.get("selected_report_action") or "").strip()
+        _VALID_TIER_TYPES = {"traditional_report", "detailed_report", "professional_report"}
+        _html_filename: "str | None" = None
+        _pdf_filename: "str | None" = None
+
+        if _ura in _VALID_TIER_TYPES:
+            try:
+                try:
+                    from reports.html_report_builder import generate_html_report as _gen_html
+                except ImportError:
+                    from core_engine.reports.html_report_builder import generate_html_report as _gen_html  # type: ignore
+                _html_name = f"Report_{rid}_{ts}_{_ura}.html"
+                _html_out = os.path.join(OUTPUTS, _html_name)
+                _gen_html(full, _ura, _html_out)
+                _html_filename = _html_name
+                print(f"{_ts()} [HTML-REPORT] generated: {_html_name}")
+            except Exception as _html_err:
+                print(f"{_ts()} [HTML-REPORT] generation failed: {_html_err}")
+
+            try:
+                try:
+                    from reports.pv_three_tier_pdf_builder import (
+                        render_traditional_pdf as _rtp,
+                        render_detailed_pdf as _rdp,
+                        render_professional_pdf as _rpp,
+                    )
+                except ImportError:
+                    from core_engine.reports.pv_three_tier_pdf_builder import (  # type: ignore
+                        render_traditional_pdf as _rtp,
+                        render_detailed_pdf as _rdp,
+                        render_professional_pdf as _rpp,
+                    )
+                _tier_renderers = {
+                    "traditional_report": _rtp,
+                    "detailed_report": _rdp,
+                    "professional_report": _rpp,
+                }
+                _tier_renderer = _tier_renderers.get(_ura)
+                if _tier_renderer:
+                    _pdf_name = f"Report_{rid}_{ts}_{_ura}.pdf"
+                    _pdf_out = os.path.join(OUTPUTS, _pdf_name)
+                    _tier_renderer(full, output_path=_pdf_out)
+                    _pdf_filename = _pdf_name
+                    print(f"{_ts()} [PDF-REPORT] generated: {_pdf_name}")
+            except Exception as _pdf_err:
+                print(f"{_ts()} [PDF-REPORT] generation failed: {_pdf_err}")
+
         # ── (Wave 2) تقرير Word مخصص لكل غرض ولكل نوع أصل ────────────────────
         # نُولِّد التقرير إذا كان هناك غرض محدد، أو إذا كان هناك نوع أصل متخصص
         # (حتى لو لم يُحدِّد المستخدم غرضاً، فيُعتمد fair_market_value افتراضياً).
@@ -5636,6 +5685,12 @@ def handle_valuation():
                 print(f"{_ts()} [ASSET-TYPE-EXCEL] skipped: {_ax_err}")
         if purpose_report_url:
             resp["purpose_report_url"] = purpose_report_url
+        if _html_filename:
+            resp["html_view_url"]     = f"http://127.0.0.1:5000/api/report/html-view/{_html_filename}"
+            resp["html_download_url"] = f"http://127.0.0.1:5000/api/download/{_html_filename}"
+            resp["report_type"]       = _ura
+        if _pdf_filename:
+            resp["pdf_url"] = f"http://127.0.0.1:5000/api/download/{_pdf_filename}"
         # إفصاحات إضافية للأغراض المتخصصة
         if _vp == "uncertainty_valuation":
             spread = float(payload.get("uncertainty_spread_pct", 0.15))
@@ -5672,6 +5727,45 @@ def download(filename: str):
     if not os.path.isfile(filepath):
         return jsonify({"status": "error", "message": "File not found"}), 404
     return send_file(filepath, as_attachment=True)
+
+
+@app.route("/api/report/html-view/<filename>")
+@require_auth
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
+def html_view(filename: str):
+    """Serve a generated HTML report inline (for browser viewing).
+
+    Applies security headers: X-Content-Type-Options, Referrer-Policy, CSP.
+    Only .html files from the OUTPUTS directory are served.
+    """
+    if "/" in filename or "\\" in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not safe_name.endswith(".html"):
+        return jsonify({"status": "error", "message": "Invalid file type"}), 400
+    abs_outputs = os.path.realpath(OUTPUTS)
+    filepath = os.path.realpath(os.path.join(OUTPUTS, safe_name))
+    if not filepath.startswith(abs_outputs + os.sep):
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not os.path.isfile(filepath):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+    try:
+        content = open(filepath, encoding="utf-8").read()
+    except Exception as _read_err:
+        return jsonify({"status": "error", "message": "Read error"}), 500
+    from flask import make_response
+    resp_obj = make_response(content)
+    resp_obj.headers["Content-Type"] = "text/html; charset=utf-8"
+    resp_obj.headers["Content-Disposition"] = f'inline; filename="{safe_name}"'
+    resp_obj.headers["X-Content-Type-Options"] = "nosniff"
+    resp_obj.headers["Referrer-Policy"] = "no-referrer"
+    resp_obj.headers["Content-Security-Policy"] = (
+        "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:;"
+    )
+    return resp_obj
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: Market Feed — استقبال وعرض البيانات الخارجية

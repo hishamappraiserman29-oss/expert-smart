@@ -533,7 +533,8 @@ def _enrich_traditional_data(data: dict) -> dict:
             parts.append(f"{_tho} ألف")
         if _hun:
             parts.append(f"{_hun}")
-        d["value_in_words"] = " و".join(parts) + " جنيه مصري — إرشادي" if parts else "غير محدد"
+        _currency_label = d.get("currency_label") or d.get("currency", "جنيه مصري")
+        d["value_in_words"] = " و".join(parts) + f" {_currency_label} — إرشادي" if parts else "غير محدد"
 
     # ── income_cap_value / dcf_value for sec-income-cap-dcf ──────────────
     if not d.get("income_cap_value"):

@@ -158,6 +158,18 @@ def test_10_traditional_governance_verified():
     assert "مسودة غري معتمدة" not in builder_src, \
         "PDF builder: misspelled governance phrase 'مسودة غري معتمدة' found in source — must not exist"
 
+    # SAUDI_RIYADH_CANONICAL geography: Saudi location must be present, Cairo markers must be absent
+    assert "النخيل" in text or "الرياض" in text, (
+        "Traditional PDF: Saudi canonical location (النخيل/الرياض) not found — "
+        "PDF must be generated with Riyadh/Al-Nakheel fixture (SAUDI_RIYADH_CANONICAL)"
+    )
+    assert "الرياض — QA" not in text, \
+        "Traditional PDF: internal QA suffix '— QA' present in address — use clean professional address"
+    assert "التحرير" not in text, \
+        "Traditional PDF: Cairo location marker 'التحرير' (Tahrir) present — SAUDI_RIYADH_CANONICAL violated"
+    assert "الدقي" not in text, \
+        "Traditional PDF: Cairo location marker 'الدقي' (Dokki) present — not canonical geography"
+
 
 def test_11_detailed_pages_18():
     """Detailed PDF must have exactly 18 pages."""
@@ -197,6 +209,18 @@ def test_12_detailed_governance_verified():
         "PDF builder: correctly spelled governance phrase 'مسودة غير معتمدة' absent from source"
     assert "مسودة غري معتمدة" not in builder_src, \
         "PDF builder: misspelled governance phrase 'مسودة غري معتمدة' found in source"
+
+    # SAUDI_RIYADH_CANONICAL geography: Saudi location must be present, Cairo markers must be absent
+    assert "النخيل" in text or "الرياض" in text, (
+        "Detailed PDF: Saudi canonical location (النخيل/الرياض) not found — "
+        "PDF must be generated with Riyadh/Al-Nakheel fixture (SAUDI_RIYADH_CANONICAL)"
+    )
+    assert "الرياض — QA" not in text, \
+        "Detailed PDF: internal QA suffix '— QA' present in address — use clean professional address"
+    assert "التحرير" not in text, \
+        "Detailed PDF: Cairo location marker 'التحرير' (Tahrir) present — SAUDI_RIYADH_CANONICAL violated"
+    assert "الدقي" not in text, \
+        "Detailed PDF: Cairo location marker 'الدقي' (Dokki) present — not canonical geography"
 
 
 def test_13_professional_pages_28():

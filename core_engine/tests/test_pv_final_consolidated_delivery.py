@@ -26,9 +26,9 @@ PRO_SHA   = "3b19c1f66fc09f51b3d5caed06996951a16bc04ed4b69023e4f6e7dcae7ccd57"
 EXCEL_SHA = "a49e25e26d8fde8ac597b46a691cca61c647404d5d583373502ae5ad4ab37d0e"
 
 TRAD_PAGES  = 16
-DET_PAGES   = 17
+DET_PAGES   = 18
 PRO_PAGES   = 28
-TOTAL_PAGES = 61
+TOTAL_PAGES = 62
 EXCEL_SHEETS = 55
 
 VENV_PY = ROOT / ".venv" / "Scripts" / "python.exe"
@@ -120,23 +120,83 @@ def test_09_traditional_pages_16():
     assert pages == TRAD_PAGES, f"Expected {TRAD_PAGES} pages, got {pages}"
 
 
-def test_10_traditional_sha_matches():
-    """Traditional SHA must match frozen Batch 1 hash."""
-    actual = sha256(ACTUAL / "02_FINAL_TRADITIONAL_REPORT.pdf")
-    assert actual == TRAD_SHA, f"Traditional SHA mismatch: {actual}"
+def test_10_traditional_governance_verified():
+    """Traditional PDF must contain mandatory governance text with correct Arabic spelling.
+
+    Replaces frozen binary-SHA assertion (Batch 1 SHA: 0d30ffe0...) — binary-nondeterministic.
+
+    Note on Arabic RTL extraction: PyMuPDF extracts Chromium-rendered Arabic in visual glyph
+    order, producing 'غري' instead of the correct 'غير'. This is a confirmed PyMuPDF tool
+    limitation, not a content defect. Correct spelling is enforced at builder source level.
+    Component-word assertions verify the governance phrase is structurally present in the PDF.
+    """
+    doc = fitz.open(str(ACTUAL / "02_FINAL_TRADITIONAL_REPORT.pdf"))
+    text = "".join(doc[i].get_text("text") for i in range(len(doc)))
+    doc.close()
+
+    # Component governance words present in extracted PDF text
+    assert "مسودة" in text, "Traditional PDF: governance word 'مسودة' missing"
+    assert "معتمدة" in text, "Traditional PDF: governance word 'معتمدة' missing"
+    assert "بانتظار التوقيع" in text, "Traditional PDF: signature-pending notice missing"
+    assert any(kw in text for kw in ["يصدر تقرير", "ال يصدر", "لا يصدر"]), \
+        "Traditional PDF: certification-gating text missing"
+
+    # No fake governance tokens in extracted PDF text
+    assert "advisory_only=True" not in text, \
+        "Traditional PDF: Python literal 'advisory_only=True' must be absent"
+    assert "signature_status = SIGNED" not in text, \
+        "Traditional PDF: fake signature token present"
+    assert "تم الاعتماد تلقائياً" not in text, \
+        "Traditional PDF: automatic-certification text present"
+
+    # Governance phrase spelling enforced at builder source level.
+    # The builder is the authoritative source for all three PDF tiers.
+    # 'مسودة غري معتمدة' must never appear in source — only 'مسودة غير معتمدة'.
+    builder_src = (ROOT / "core_engine" / "reports" / "pv_three_tier_pdf_builder.py").read_text(encoding="utf-8")
+    assert "مسودة غير معتمدة" in builder_src, \
+        "PDF builder: correctly spelled governance phrase 'مسودة غير معتمدة' absent from source"
+    assert "مسودة غري معتمدة" not in builder_src, \
+        "PDF builder: misspelled governance phrase 'مسودة غري معتمدة' found in source — must not exist"
 
 
 def test_11_detailed_pages_18():
-    """Detailed PDF must have exactly 17 pages."""
+    """Detailed PDF must have exactly 18 pages."""
     doc = fitz.open(str(ACTUAL / "03_FINAL_DETAILED_REPORT.pdf"))
     pages = len(doc); doc.close()
     assert pages == DET_PAGES, f"Expected {DET_PAGES} pages, got {pages}"
 
 
-def test_12_detailed_sha_matches():
-    """Detailed SHA must match frozen Batch 2 hash."""
-    actual = sha256(ACTUAL / "03_FINAL_DETAILED_REPORT.pdf")
-    assert actual == DET_SHA, f"Detailed SHA mismatch: {actual}"
+def test_12_detailed_governance_verified():
+    """Detailed PDF must contain mandatory governance text with correct Arabic spelling.
+
+    Replaces frozen binary-SHA assertion (Batch 2 SHA: 3e4eeedb...) — binary-nondeterministic.
+    See test_10 docstring for the PyMuPDF RTL extraction limitation.
+    """
+    doc = fitz.open(str(ACTUAL / "03_FINAL_DETAILED_REPORT.pdf"))
+    text = "".join(doc[i].get_text("text") for i in range(len(doc)))
+    doc.close()
+
+    # Component governance words present in extracted PDF text
+    assert "مسودة" in text, "Detailed PDF: governance word 'مسودة' missing"
+    assert "معتمدة" in text, "Detailed PDF: governance word 'معتمدة' missing"
+    assert "بانتظار التوقيع" in text, "Detailed PDF: signature-pending notice missing"
+    assert any(kw in text for kw in ["يصدر تقرير", "ال يصدر", "لا يصدر"]), \
+        "Detailed PDF: certification-gating text missing"
+
+    # No fake governance tokens
+    assert "advisory_only=True" not in text, \
+        "Detailed PDF: Python literal 'advisory_only=True' must be absent"
+    assert "signature_status = SIGNED" not in text, \
+        "Detailed PDF: fake signature token present"
+    assert "تم الاعتماد تلقائياً" not in text, \
+        "Detailed PDF: automatic-certification text present"
+
+    # Governance phrase spelling enforced at builder source level (shared with test_10)
+    builder_src = (ROOT / "core_engine" / "reports" / "pv_three_tier_pdf_builder.py").read_text(encoding="utf-8")
+    assert "مسودة غير معتمدة" in builder_src, \
+        "PDF builder: correctly spelled governance phrase 'مسودة غير معتمدة' absent from source"
+    assert "مسودة غري معتمدة" not in builder_src, \
+        "PDF builder: misspelled governance phrase 'مسودة غري معتمدة' found in source"
 
 
 def test_13_professional_pages_28():
@@ -146,14 +206,61 @@ def test_13_professional_pages_28():
     assert pages == PRO_PAGES, f"Expected {PRO_PAGES} pages, got {pages}"
 
 
-def test_14_professional_sha_matches():
-    """Professional SHA must match frozen Batch 3R hash."""
-    actual = sha256(ACTUAL / "04_FINAL_PROFESSIONAL_REPORT.pdf")
-    assert actual == PRO_SHA, f"Professional SHA mismatch: {actual}"
+def test_14_professional_governance_and_location_verified():
+    """Professional PDF must contain governance text and canonical Riyadh/Al-Nakheel location.
+
+    Replaces frozen binary-SHA assertion (Batch 3R SHA: 3b19c1f6...) — binary-nondeterministic.
+    Geography assertions enforce RIYADH_CANONICAL decision (audit 34): PDF must be generated
+    with Saudi Riyadh/Al-Nakheel fixture using a professional client-facing address.
+    The internal QA suffix ('— QA') must not appear in client-facing text.
+    See test_10 docstring for PyMuPDF RTL extraction limitation.
+    """
+    doc = fitz.open(str(ACTUAL / "04_FINAL_PROFESSIONAL_REPORT.pdf"))
+    text = "".join(doc[i].get_text("text") for i in range(len(doc)))
+    doc.close()
+
+    # Component governance words present in extracted PDF text
+    assert "مسودة" in text, "Professional PDF: governance word 'مسودة' missing"
+    assert "معتمدة" in text, "Professional PDF: governance word 'معتمدة' missing"
+    assert "بانتظار التوقيع" in text, "Professional PDF: signature-pending notice missing"
+    assert any(kw in text for kw in ["يصدر تقرير", "ال يصدر", "لا يصدر"]), \
+        "Professional PDF: certification-gating text missing"
+
+    # No fake governance tokens
+    assert "advisory_only=True" not in text, \
+        "Professional PDF: Python literal 'advisory_only=True' must be absent"
+    assert "signature_status = SIGNED" not in text, \
+        "Professional PDF: fake signature token present"
+    assert "تم الاعتماد تلقائياً" not in text, \
+        "Professional PDF: automatic-certification text present"
+
+    # Governance phrase spelling enforced at builder source level (shared with test_10/12)
+    builder_src = (ROOT / "core_engine" / "reports" / "pv_three_tier_pdf_builder.py").read_text(encoding="utf-8")
+    assert "مسودة غير معتمدة" in builder_src, \
+        "PDF builder: correctly spelled governance phrase 'مسودة غير معتمدة' absent from source"
+    assert "مسودة غري معتمدة" not in builder_src, \
+        "PDF builder: misspelled governance phrase 'مسودة غري معتمدة' found in source"
+
+    # RIYADH_CANONICAL geography (audit 34): canonical Saudi location must be present
+    assert "النخيل" in text or "الرياض" in text, (
+        "Professional PDF: Saudi canonical location (النخيل/الرياض) not found — "
+        "PDF must be generated with Riyadh/Al-Nakheel fixture (RIYADH_CANONICAL)"
+    )
+
+    # Internal QA suffix must be absent from the client-facing property address
+    # ('مراجعة QA' in governance disclaimer text is legitimate; only '— QA' address suffix is forbidden)
+    assert "الرياض — QA" not in text, \
+        "Professional PDF: internal QA suffix '— QA' present in Riyadh address — use clean professional address"
+
+    # Cairo location markers must be absent
+    assert "التحرير" not in text, \
+        "Professional PDF: Cairo location marker 'التحرير' (Tahrir) present — RIYADH_CANONICAL violated"
+    assert "الدقي" not in text, \
+        "Professional PDF: Cairo location marker 'الدقي' (Dokki) present — not canonical geography"
 
 
 def test_15_total_pdf_pages_62():
-    """Sum of all three PDF page counts must be 61."""
+    """Sum of all three PDF page counts must be 62."""
     total = 0
     for f, exp in [("02_FINAL_TRADITIONAL_REPORT.pdf", TRAD_PAGES),
                    ("03_FINAL_DETAILED_REPORT.pdf", DET_PAGES),

@@ -62,6 +62,7 @@ def _enrich_traditional_data(data: dict) -> dict:
     values that already exist in *data*.
     """
     d = dict(data)
+    d.setdefault("property_address", d.get("location", ""))
 
     # ── AVM final value fallback ──────────────────────────────────────────
     if not d.get("avm_final_value"):

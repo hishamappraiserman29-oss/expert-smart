@@ -5564,6 +5564,7 @@ def handle_valuation():
         _VALID_TIER_TYPES = {"traditional_report", "detailed_report", "professional_report"}
         _html_filename: "str | None" = None
         _pdf_filename: "str | None" = None
+        _html_generation_error: "str | None" = None
 
         if _ura in _VALID_TIER_TYPES:
             try:
@@ -5577,6 +5578,7 @@ def handle_valuation():
                 _html_filename = _html_name
                 print(f"{_ts()} [HTML-REPORT] generated: {_html_name}")
             except Exception as _html_err:
+                _html_generation_error = str(_html_err)
                 print(f"{_ts()} [HTML-REPORT] generation failed: {_html_err}")
 
             try:
@@ -5626,6 +5628,7 @@ def handle_valuation():
             print(f"{_ts()} [PURPOSE-REPORT] skipped: {_pr_err}")
 
         resp = {"status":"success",
+                "report_id": rid,
                 "market_value": res["market_value"],
                 "valuation_purpose": _vp,
                 "excel_url": f"http://127.0.0.1:5000/api/download/{name}",
@@ -5689,8 +5692,25 @@ def handle_valuation():
             resp["html_view_url"]     = f"http://127.0.0.1:5000/api/report/html-view/{_html_filename}"
             resp["html_download_url"] = f"http://127.0.0.1:5000/api/download/{_html_filename}"
             resp["report_type"]       = _ura
+        if _html_generation_error:
+            resp["html_generation_error"] = _html_generation_error
         if _pdf_filename:
             resp["pdf_url"] = f"http://127.0.0.1:5000/api/download/{_pdf_filename}"
+        if _ura in _VALID_TIER_TYPES:
+            resp["formats"] = {
+                "html": {
+                    "filename":    _html_filename,
+                    "viewUrl":     resp.get("html_view_url"),
+                    "downloadUrl": resp.get("html_download_url"),
+                    "generated":   _html_filename is not None,
+                    "error":       _html_generation_error,
+                },
+                "pdf": {
+                    "filename":    _pdf_filename,
+                    "downloadUrl": resp.get("pdf_url"),
+                    "generated":   _pdf_filename is not None,
+                },
+            }
         # إفصاحات إضافية للأغراض المتخصصة
         if _vp == "uncertainty_valuation":
             spread = float(payload.get("uncertainty_spread_pct", 0.15))

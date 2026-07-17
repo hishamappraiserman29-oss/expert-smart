@@ -4082,10 +4082,11 @@ def _b4_render_via_com(
                     pix = page.get_pixmap(matrix=mat)
                     png_out = pathlib.Path(f"{png_prefix}_page_{p_idx + 1:02d}.png")
                     pix.save(str(png_out))
+                page_count = doc.page_count
                 doc.close()
                 results.append({
                     "sheet": sname, "index": idx + 1,
-                    "pdf": str(pdf_file), "pages": doc.page_count,
+                    "pdf": str(pdf_file), "pages": page_count,
                     "rendered": True, "method": "excel_com_pymupdf",
                 })
             except Exception as exc:

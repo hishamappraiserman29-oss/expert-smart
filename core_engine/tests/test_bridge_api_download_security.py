@@ -55,14 +55,16 @@ class TestDownloadAuth:
         assert resp.status_code == 401
 
     def test_missing_file_returns_404(self, client, auth_headers, tmp_path, monkeypatch):
+        # Use .docx — xlsx/xlsm are admin-only; this test covers generic file-not-found logic
         monkeypatch.setattr("bridge_api.OUTPUTS", str(tmp_path))
-        resp = client.get("/api/download/nonexistent.xlsx", headers=auth_headers)
+        resp = client.get("/api/download/nonexistent.docx", headers=auth_headers)
         assert resp.status_code == 404
 
     def test_existing_file_returns_200(self, client, auth_headers, tmp_path, monkeypatch):
+        # Use .docx — xlsx/xlsm are admin-only; this test covers generic file-serving logic
         monkeypatch.setattr("bridge_api.OUTPUTS", str(tmp_path))
-        (tmp_path / "report.xlsx").write_bytes(b"PK\x03\x04fake xlsx")
-        resp = client.get("/api/download/report.xlsx", headers=auth_headers)
+        (tmp_path / "report.docx").write_bytes(b"PK\x03\x04fake docx")
+        resp = client.get("/api/download/report.docx", headers=auth_headers)
         assert resp.status_code == 200
 
 

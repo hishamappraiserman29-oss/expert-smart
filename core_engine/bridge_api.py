@@ -5498,63 +5498,65 @@ def handle_valuation():
         _tpl_used    = False
         _fallback    = False
         _fb_reason   = ""
+        name         = None  # Excel filename — only set for admin users
 
-        if report_style == "professional_template":
-            # ── Attempt individual_valuation_professional_template.xlsm ───────
-            try:
+        if _is_admin(g.user_id):
+            if report_style == "professional_template":
+                # ── Attempt individual_valuation_professional_template.xlsm ───────
                 try:
-                    from reports.excel_template_renderer import (
-                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                        build_individual_valuation_report as _build_iv,
-                    )
-                except ImportError:
-                    from core_engine.reports.excel_template_renderer import (  # type: ignore
-                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                        build_individual_valuation_report as _build_iv,
-                    )
-                if _IVTPL.is_file():
-                    _tpl_name = f"Report_{rid}_{ts}.xlsm"
-                    _tpl_path = os.path.join(OUTPUTS, _tpl_name)
-                    _iv_ctx = {
-                        "report_date":       full.get("report_date", datetime.now().strftime("%d/%m/%Y")),
-                        "valuation_date":    full.get("date", ""),
-                        "client_name":       full.get("client_name", full.get("expert", "N/A")),
-                        "property_type":     full.get("property_type", ""),
-                        "location":          full.get("location", ""),
-                        "area":              full.get("area", ""),
-                        "valuation_purpose": full.get("valuation_purpose", ""),
-                        "market_value":      float(full.get("market_value") or 0),
-                        "final_value":       float(full.get("market_value") or 0),
-                        "confidence":        full.get("confidence", ""),
-                        "reviewer_name":     full.get("expert", "N/A"),
-                        "report_id":         rid,
-                    }
-                    _iv_out = _build_iv(output_path=_tpl_path, context=_iv_ctx, tables={})
-                    if _iv_out is not None and os.path.isfile(_tpl_path):
-                        name      = _tpl_name
-                        _tpl_used = True
+                    try:
+                        from reports.excel_template_renderer import (
+                            INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
+                            build_individual_valuation_report as _build_iv,
+                        )
+                    except ImportError:
+                        from core_engine.reports.excel_template_renderer import (  # type: ignore
+                            INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
+                            build_individual_valuation_report as _build_iv,
+                        )
+                    if _IVTPL.is_file():
+                        _tpl_name = f"Report_{rid}_{ts}.xlsm"
+                        _tpl_path = os.path.join(OUTPUTS, _tpl_name)
+                        _iv_ctx = {
+                            "report_date":       full.get("report_date", datetime.now().strftime("%d/%m/%Y")),
+                            "valuation_date":    full.get("date", ""),
+                            "client_name":       full.get("client_name", full.get("expert", "N/A")),
+                            "property_type":     full.get("property_type", ""),
+                            "location":          full.get("location", ""),
+                            "area":              full.get("area", ""),
+                            "valuation_purpose": full.get("valuation_purpose", ""),
+                            "market_value":      float(full.get("market_value") or 0),
+                            "final_value":       float(full.get("market_value") or 0),
+                            "confidence":        full.get("confidence", ""),
+                            "reviewer_name":     full.get("expert", "N/A"),
+                            "report_id":         rid,
+                        }
+                        _iv_out = _build_iv(output_path=_tpl_path, context=_iv_ctx, tables={})
+                        if _iv_out is not None and os.path.isfile(_tpl_path):
+                            name      = _tpl_name
+                            _tpl_used = True
+                        else:
+                            raise RuntimeError("template render returned None")
                     else:
-                        raise RuntimeError("template render returned None")
-                else:
-                    raise FileNotFoundError("individual_valuation_professional_template.xlsm not found")
-            except Exception as _iv_err:
-                _fallback  = True
-                _fb_reason = str(_iv_err)
-                _style_used = "legacy"
+                        raise FileNotFoundError("individual_valuation_professional_template.xlsm not found")
+                except Exception as _iv_err:
+                    _fallback   = True
+                    _fb_reason  = str(_iv_err)
+                    _style_used = "legacy"
+                    ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
+                    name = f"Report_{rid}_{ts}{ext}"
+                    path = os.path.join(OUTPUTS, name)
+                    write_to_excel_template(full, path)
+            else:
+                # legacy / detailed — write_to_excel_template fills all template sheets.
+                # For legacy, advanced analytics sheets are stripped from the saved file.
                 ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
                 name = f"Report_{rid}_{ts}{ext}"
                 path = os.path.join(OUTPUTS, name)
                 write_to_excel_template(full, path)
-        else:
-            # legacy / detailed — write_to_excel_template fills all template sheets.
-            # For legacy, advanced analytics sheets are stripped from the saved file.
-            ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-            name = f"Report_{rid}_{ts}{ext}"
-            path = os.path.join(OUTPUTS, name)
-            write_to_excel_template(full, path)
-            print(f"{_ts()} [REPORT-STYLE] requested={report_style} used={_style_used} path={path}")
-            if report_style == "legacy" or _style_used == "legacy":
-                _remove_legacy_advanced_sheets(path)
+                print(f"{_ts()} [REPORT-STYLE] requested={report_style} used={_style_used} path={path}")
+                if report_style == "legacy" or _style_used == "legacy":
+                    _remove_legacy_advanced_sheets(path)
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
 
@@ -5631,12 +5633,13 @@ def handle_valuation():
                 "report_id": rid,
                 "market_value": res["market_value"],
                 "valuation_purpose": _vp,
-                "excel_url": f"http://127.0.0.1:5000/api/download/{name}",
                 "report_style_requested": report_style,
                 "report_style_used":      _style_used,
                 "template_used":          _tpl_used,
                 "fallback_used":          _fallback,
                 "fallback_reason":        _fb_reason if _fallback else ""}
+        if _is_admin(g.user_id):
+            resp["excel_url"] = f"http://127.0.0.1:5000/api/download/{name}"
         if _validation_result:
             resp["validation"] = _validation_result
         # ── Persist Gate — opt-in via "persist": true in payload (Wave BA.3) ──
@@ -5711,6 +5714,13 @@ def handle_valuation():
                     "generated":   _pdf_filename is not None,
                 },
             }
+            if _is_admin(g.user_id):
+                resp["formats"]["excel"] = {
+                    "filename":    name,
+                    "downloadUrl": f"http://127.0.0.1:5000/api/download/{name}",
+                    "sheetCount":  55,
+                    "generated":   True,
+                }
         # إفصاحات إضافية للأغراض المتخصصة
         if _vp == "uncertainty_valuation":
             spread = float(payload.get("uncertainty_spread_pct", 0.15))
@@ -5739,6 +5749,13 @@ def download(filename: str):
     safe_name = os.path.basename(filename)
     if not safe_name or safe_name != filename:
         return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 2b — Excel workbooks are administrator-only downloads
+    if safe_name.endswith(".xlsx") or safe_name.endswith(".xlsm"):
+        if not _is_admin(getattr(g, "user_id", None)):
+            return jsonify({
+                "status": "forbidden",
+                "message": "Excel workbook downloads require administrator access",
+            }), 403
     # Layer 3 — realpath containment (absolute guarantee against traversal)
     abs_outputs = os.path.realpath(OUTPUTS)
     filepath = os.path.realpath(os.path.join(OUTPUTS, safe_name))

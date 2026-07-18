@@ -7457,7 +7457,13 @@
             </div>
             <div data-testid="pv-core-report-helper-text"
                  style="font-size:0.75rem;color:#9ca3af;">
-                اضغط على نوع التقرير لإصدار نسخة PDF للمستخدم وشيت Excel للأدمن تلقائياً.
+                يمكن إصدار تقرير التقييم بصيغتي <strong style="color:#93c5fd;">PDF</strong> و<strong style="color:#86efac;">HTML</strong>.
+                تتيح صيغة HTML عرض التقرير مباشرةً داخل المتصفح أو تنزيله، بينما تتيح صيغة PDF نسخةً رسمية قابلة للطباعة.
+            </div>
+            <div data-testid="pv-core-report-admin-helper-text"
+                 id="pv-core-report-admin-helper"
+                 style="font-size:0.72rem;color:#86efac;margin-top:3px;display:none;">
+                &#128274; للمسؤولين فقط: يُصدر أيضاً ملف Excel تفصيلي يحتوي على أوراق العمل والحسابات الداعمة للتقييم.
             </div>
         </div>
 
@@ -7512,7 +7518,7 @@
                           style="font-size:0.65rem;background:rgba(34,197,94,0.15);
                                  color:#86efac;padding:1px 6px;border-radius:8px;
                                  font-weight:600;white-space:nowrap;">
-                        22 صفحة تقريباً
+                        18 صفحة تقريباً
                     </span>
                 </div>
                 <div data-testid="pv-core-desc-detailed"
@@ -7540,7 +7546,7 @@
                           style="font-size:0.65rem;background:rgba(212,175,55,0.15);
                                  color:#fde68a;padding:1px 6px;border-radius:8px;
                                  font-weight:600;white-space:nowrap;">
-                        33 صفحة تقريباً
+                        28 صفحة تقريباً
                     </span>
                 </div>
                 <div data-testid="pv-core-desc-professional"
@@ -7583,26 +7589,30 @@
             <div id="pv-bundle-pdf-status"
                  data-testid="pv-bundle-pdf-status"
                  style="color:#93c5fd;margin-bottom:4px;"></div>
+            <div id="pv-bundle-html-status"
+                 data-testid="pv-bundle-html-status"
+                 style="color:#86efac;margin-bottom:4px;"></div>
             <div id="pv-bundle-excel-status"
                  data-testid="pv-bundle-excel-status"
-                 style="color:#86efac;"></div>
+                 style="color:#a3e635;"></div>
         </div>
 
-        <!-- Internal Excel Card — single admin/expert output -->
+        <!-- Internal Excel Card — administrator-only output -->
         <div data-testid="pv-core-internal-excel-card"
              id="pv-core-internal-excel-card"
              style="margin-bottom:10px;padding:10px 12px;border-radius:8px;
-                    background:rgba(30,123,52,0.08);border:1px solid rgba(30,123,52,0.35);">
+                    background:rgba(30,123,52,0.08);border:1px solid rgba(30,123,52,0.35);
+                    display:none;">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
                 <div>
                     <div style="font-weight:700;font-size:0.88rem;color:#86efac;">
-                        &#128202; ملف Excel الداخلي للخبير / الإدارة
+                        &#128202; تنزيل ملف Excel التفص��لي
                     </div>
                     <div style="font-size:0.72rem;color:#6b7280;margin-top:2px;">
-                        Excel Workbook (Internal &mdash; Expert/Admin Only)
+                        Excel Workbook — للمسؤولين فقط (Admin Only)
                     </div>
                     <div style="font-size:0.7rem;color:#9ca3af;font-style:italic;margin-top:2px;">
-                        &#9888; للاستخدام الداخلي فقط &mdash; غير معتمد قبل مراجعة الخبير
+                        &#128274; للمسؤولين فقط &mdash; يحتوي على أوراق العمل والحسابات الداعمة
                     </div>
                 </div>
                 <button data-testid="pv-core-download-internal-excel"
@@ -7612,7 +7622,7 @@
                                background:rgba(30,123,52,0.2);color:#86efac;
                                font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
                                white-space:nowrap;transition:all 0.2s;">
-                    &#11015; تحميل ملف Excel الداخلي
+                    &#11015; تنزيل ملف Excel التفصيلي
                 </button>
             </div>
         </div>
@@ -12371,9 +12381,11 @@
         }
 
         // ── Download buttons ────────────────────────────────────────────
-        const excelBtnHtml = excelUrl
-            ? `<a href="${excelUrl}" class="btn-main" style="background:#217346; color:#fff; text-decoration:none; margin:0 6px;" download>
-                   <i class="fas fa-file-excel"></i> تحميل التقرير الفني (Excel)
+        const _sess       = (typeof esGetSession === 'function') ? esGetSession() : null;
+        const _isAdmin    = _sess && _sess.is_admin === true;
+        const excelBtnHtml = (excelUrl && _isAdmin)
+            ? `<a href="${excelUrl}" class="btn-main" style="background:#217346; color:#fff; text-decoration:none; margin:0 6px;" download data-testid="pv-excel-download-btn">
+                   <i class="fas fa-file-excel"></i> تنزيل ملف Excel التفصيلي
                </a>`
             : '';
         const wordBtnHtml = purposeReportUrl
@@ -12387,7 +12399,7 @@
         const _htmlGenError    = apiResult && apiResult.html_generation_error ? apiResult.html_generation_error : null;
         const htmlViewBtnHtml = _htmlViewUrl
             ? `<a href="${_htmlViewUrl}" class="btn-main" style="background:#1a5276; color:#fff; text-decoration:none; margin:0 6px;" target="_blank" rel="noopener noreferrer" data-testid="pv-html-view-btn">
-                   <i class="fas fa-eye"></i> عرض التقرير على المتصفح
+                   <i class="fas fa-eye"></i> عرض التقرير بصيغة HTML
                </a>`
             : '';
         const htmlDownloadBtnHtml = _htmlDownloadUrl
@@ -12856,12 +12868,22 @@ function pvGenerateUnifiedAdminExcel() {
     if (status) status.textContent = 'إصدار Excel للأدمن — يتطلب صلاحية المشرف.';
 }
 
+function pvInitCoreReportIssuanceSection() {
+    var sess    = (typeof esGetSession === 'function') ? esGetSession() : null;
+    var isAdmin = sess && sess.is_admin === true;
+    var excelCard    = document.getElementById('pv-core-internal-excel-card');
+    var adminHelper  = document.getElementById('pv-core-report-admin-helper');
+    if (excelCard)   excelCard.style.display   = isAdmin ? 'block' : 'none';
+    if (adminHelper) adminHelper.style.display = isAdmin ? 'block' : 'none';
+}
+
 function pvInitChatCommandCenter() {
     pvUpdateChatReportAction('traditional_report');
     const adminBtn = document.getElementById('pv-admin-excel-btn');
     if (adminBtn) adminBtn.style.display = 'none';
     pvInitUnifiedProfessionalValuationPageContext();
     pvSelectCoreValuationReportType('traditional_report');
+    pvInitCoreReportIssuanceSection();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -12925,27 +12947,42 @@ function pvGenerateCoreValuationAdminExcel() {
     pvSyncSplitReportIssuanceContext();
 }
 
-// ── Core Report Bundle — Click generates both PDF + Excel ────────────────────
+// ── Core Report Bundle — Click generates PDF + HTML; Excel for admin only ─────
 // separate_user_pdf_button_removed=true | separate_admin_excel_button_removed=true
 function pvGenerateCoreReportBundle(reportType) {
     pvSelectCoreValuationReportType(reportType);
     var bundleArea  = document.getElementById('pv-core-bundle-status');
     var pdfStatus   = document.getElementById('pv-bundle-pdf-status');
+    var htmlStatus  = document.getElementById('pv-bundle-html-status');
     var excelStatus = document.getElementById('pv-bundle-excel-status');
     if (bundleArea) bundleArea.style.display = 'block';
-    var label = (_PV_CORE_LABELS && _PV_CORE_LABELS[reportType]) || reportType;
-    if (pdfStatus) { pdfStatus.textContent = '⏳ جاري إصدار PDF للمستخدم — ' + label + '...'; pdfStatus.style.color = '#93c5fd'; }
+    var label   = (_PV_CORE_LABELS && _PV_CORE_LABELS[reportType]) || reportType;
+    var sess    = (typeof esGetSession === 'function') ? esGetSession() : null;
+    var isAdmin = sess && sess.is_admin === true;
+    if (pdfStatus)  { pdfStatus.textContent  = '⏳ جاري إصدار التقرير — ' + label + '...'; pdfStatus.style.color = '#93c5fd'; }
+    if (htmlStatus) { htmlStatus.textContent = '⏳ جاري إصدار HTML — ' + label + '...';    htmlStatus.style.color = '#86efac'; }
+    if (excelStatus) {
+        excelStatus.textContent = isAdmin ? ('⏳ جاري إصدار Excel للمسؤول — ' + label + '...') : '';
+        if (isAdmin) excelStatus.style.color = '#a3e635';
+    }
     pvGenerateCoreReportUserPdf(reportType, function(ok, fileName, blocker) {
         if (pdfStatus) {
-            pdfStatus.textContent = ok ? '✓ تم إنشاء PDF المستخدم — ' + (fileName || label) : '⚠ لم يكتمل PDF — ' + (blocker || 'يتطلب استيفاء المدخلات');
-            pdfStatus.style.color = ok ? '#86efac' : '#fca5a5';
+            pdfStatus.textContent = ok
+                ? '✓ تم إنشاء PDF — ' + (fileName || label)
+                : '⚠ لم يكتمل PDF — ' + (blocker || 'يتطلب استيفاء المدخلات');
+            pdfStatus.style.color = ok ? '#93c5fd' : '#fca5a5';
         }
-    });
-    if (excelStatus) { excelStatus.textContent = '⏳ جاري إصدار شيت Excel للأدمن — ' + label + '...'; excelStatus.style.color = '#86efac'; }
-    pvGenerateCoreReportAdminExcel(reportType, function(ok, fileName, blocker) {
-        if (excelStatus) {
-            excelStatus.textContent = ok ? '✓ تم إنشاء شيت Excel للأدمن — ' + (fileName || label) : '⚠ لم يكتمل Excel — ' + (blocker || 'يتطلب صلاحية المشرف');
-            excelStatus.style.color = ok ? '#86efac' : '#fca5a5';
+        if (htmlStatus) {
+            htmlStatus.textContent = ok
+                ? '✓ تم إنشاء HTML — يمكن العرض والتنزيل من نتيجة التقرير'
+                : '⚠ HTML — يتوفر عند نجاح الإصدار';
+            htmlStatus.style.color = ok ? '#86efac' : '#9ca3af';
+        }
+        if (excelStatus && isAdmin) {
+            excelStatus.textContent = ok
+                ? '✓ تم إنشاء Excel التفصيلي للمسؤول — ' + (fileName || label)
+                : '⚠ لم يكتمل Excel — ' + (blocker || 'يتطلب صلاحية المشرف');
+            excelStatus.style.color = ok ? '#a3e635' : '#fca5a5';
         }
     });
     pvSyncCoreReportOutputBundleContext(reportType);

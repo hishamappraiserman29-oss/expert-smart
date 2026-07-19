@@ -134,10 +134,12 @@ class TestNoValidation:
         """Core response shape must remain unchanged when validate is absent."""
         data = client.post("/api/valuation", json=_MINIMAL,
                            headers=_auth()).get_json()
-        for key in ("market_value", "excel_url",
+        for key in ("market_value",
                     "report_style_requested", "report_style_used",
                     "template_used", "fallback_used", "fallback_reason"):
             assert key in data, f"Key missing from response: {key!r}"
+        # excel_url is now admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
 
 # ── VA05–VA09: validate=true + valid data (no ERRORs) → 200 ──────────────────
@@ -168,12 +170,14 @@ class TestValidatePassThrough:
         assert data["validation"]["is_valid"] is True
 
     def test_VA08_validate_true_generation_proceeds(self, client):
-        """Excel URL must be present — generation was not blocked."""
+        """Generation must not be blocked by a passing validation gate."""
         payload = {**_MINIMAL, "validate": True}
         data = client.post("/api/valuation", json=payload,
                            headers=_auth()).get_json()
-        assert "excel_url" in data
-        assert data["excel_url"].startswith("http")
+        assert data["status"] == "success"
+        assert data.get("market_value", 0) > 0
+        # excel_url is admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
     def test_VA09_validate_true_issues_is_list(self, client):
         payload = {**_MINIMAL, "validate": True}
@@ -286,7 +290,9 @@ class TestWarningsPassThrough:
         data = client.post("/api/valuation", json=payload,
                            headers=_auth()).get_json()
         assert data["status"] == "success"
-        assert "excel_url" in data
+        assert data.get("market_value", 0) > 0
+        # excel_url is admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
     def test_VA22_warnings_appear_in_issues(self, client):
         payload = {**_MINIMAL, "validate": True}

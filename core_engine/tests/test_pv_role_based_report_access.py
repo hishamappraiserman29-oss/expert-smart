@@ -78,9 +78,11 @@ class TestBackendRoleContract:
 
     def test_03_admin_check_precedes_excel_url_assignment(self):
         """The _is_admin check must appear before the resp["excel_url"] assignment."""
+        import re as _re
         src = _bridge_src()
-        admin_pos  = src.find('if _is_admin(g.user_id):\n            resp["excel_url"]')
-        assert admin_pos != -1, (
+        # Allow for 'and name is not None' or other extra conditions on the guard
+        pattern = r'if _is_admin\(g\.user_id\)[^:]*:\s+resp\["excel_url"\]'
+        assert _re.search(pattern, src), (
             "The gated resp[\"excel_url\"] assignment pattern not found in bridge_api.py"
         )
 
@@ -159,10 +161,16 @@ class TestBackendRoleContract:
         )
 
     def test_13_formats_excel_includes_sheet_count(self):
-        """formats.excel must include sheetCount for administrator users."""
+        """formats.excel must include a sheetCount field derived from the actual workbook."""
+        import re as _re
         src = _bridge_src()
-        assert '"sheetCount":  55' in src, (
-            "bridge_api.py formats.excel does not include sheetCount: 55"
+        # sheetCount must be present and must NOT be the hardcoded integer 55
+        assert '"sheetCount":' in src, (
+            "bridge_api.py formats.excel does not include a sheetCount field"
+        )
+        assert '"sheetCount":  55' not in src and '"sheetCount": 55' not in src, (
+            "bridge_api.py formats.excel sheetCount is hardcoded as 55 — "
+            "must be derived from the actual workbook sheet count"
         )
 
 

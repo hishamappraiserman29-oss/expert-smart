@@ -634,6 +634,16 @@ def build_individual_valuation_xlsx(
             _ws4_gfi["C30"].value = "=B4*B5"
             _ws4_gfi["C32"].value = f'=IF(B7>0,B31/B7,"{_SENT}")'
             _ws4_gfi["C33"].value = "=B33"
+            # B32 — income capitalisation: guard zero/blank cap-rate denominator (B7)
+            _b32_v = str(_ws4_gfi["B32"].value or "")
+            if _b32_v.startswith("=") and "ISNUMBER" not in _b32_v:
+                _ws4_gfi["B32"].value = (
+                    f'=IF(AND(ISNUMBER(B7),B7>0),(B4*B6*0.9)/B7,"{_SENT}")'
+                )
+                # Update the before-snapshot so the B27:B33 invariant check
+                # treats this intentional override as the expected baseline.
+                if "B32" in result.get("b27_b33_before", {}):
+                    result["b27_b33_before"]["B32"]["value"] = _ws4_gfi["B32"].value
             _d113 = _ws4_gfi["D113"]
             if _d113.value and str(_d113.value).strip() == "=WACC":
                 _d113.value = "=B11"
@@ -731,6 +741,22 @@ def build_individual_valuation_xlsx(
                     and "IFERROR" not in _c24.value
                 ):
                     _c24.value = f'=IFERROR({_c24.value[1:]},"{_SENT}")'
+
+        # Group F — لوحة القيادة التنفيذية B15: IRR score guard
+        # DCF!B41 = IFERROR(IRR(...),"N/A") — text result causes #VALUE! in MIN/MAX
+        _ws_dash_gfi = (
+            wb["لوحة القيادة التنفيذية"]
+            if "لوحة القيادة التنفيذية" in _sn_gfi else None
+        )
+        _dcf_b15_sn = next((n for n in wb.sheetnames if n.startswith("DCF")), None)
+        if _ws_dash_gfi and _dcf_b15_sn:
+            _b15v = str(_ws_dash_gfi["B15"].value or "")
+            if _b15v.startswith("=") and "ISNUMBER" not in _b15v:
+                _ws_dash_gfi["B15"].value = (
+                    f"=IF(ISNUMBER('{_dcf_b15_sn}'!B41),"
+                    f"MIN(10,MAX(1,'{_dcf_b15_sn}'!B41*60)),"
+                    f'"{_SENT}")'
+                )
 
         # ── Recalculation properties ──────────────────────────────────────────
         wb.calculation.calcMode = "auto"

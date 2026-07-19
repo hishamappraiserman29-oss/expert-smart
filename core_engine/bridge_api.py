@@ -99,6 +99,14 @@ try:
 except ImportError:
     ResidentialAdapter = CommercialAdapter = None  # type: ignore[assignment,misc]
 from reports.excel_builder import ExcelReportBuilder
+try:
+    from reports.excel_template_driven_builder import (
+        build_template_driven_professional_workbook as _build_55_sheet,
+    )
+    _EXCEL_55_BUILDER_AVAILABLE = True
+except Exception:
+    _build_55_sheet = None  # type: ignore[assignment]
+    _EXCEL_55_BUILDER_AVAILABLE = False
 
 # ── Phase 7 land adapter + quality auditor ────────────────────────────────────
 try:
@@ -5498,65 +5506,330 @@ def handle_valuation():
         _tpl_used    = False
         _fallback    = False
         _fb_reason   = ""
-        name         = None  # Excel filename — only set for admin users
+        name               = None  # Excel filename — only set for admin users
+        _excel_sheet_count = 0     # actual sheet count; set from workbook after generation
 
         if _is_admin(g.user_id):
-            if report_style == "professional_template":
-                # ── Attempt individual_valuation_professional_template.xlsm ───────
+            import pathlib as _pathlib
+            if _build_55_sheet is not None:
                 try:
-                    try:
-                        from reports.excel_template_renderer import (
-                            INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                            build_individual_valuation_report as _build_iv,
-                        )
-                    except ImportError:
-                        from core_engine.reports.excel_template_renderer import (  # type: ignore
-                            INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                            build_individual_valuation_report as _build_iv,
-                        )
-                    if _IVTPL.is_file():
-                        _tpl_name = f"Report_{rid}_{ts}.xlsm"
-                        _tpl_path = os.path.join(OUTPUTS, _tpl_name)
-                        _iv_ctx = {
-                            "report_date":       full.get("report_date", datetime.now().strftime("%d/%m/%Y")),
-                            "valuation_date":    full.get("date", ""),
-                            "client_name":       full.get("client_name", full.get("expert", "N/A")),
-                            "property_type":     full.get("property_type", ""),
-                            "location":          full.get("location", ""),
-                            "area":              full.get("area", ""),
-                            "valuation_purpose": full.get("valuation_purpose", ""),
-                            "market_value":      float(full.get("market_value") or 0),
-                            "final_value":       float(full.get("market_value") or 0),
-                            "confidence":        full.get("confidence", ""),
-                            "reviewer_name":     full.get("expert", "N/A"),
+                    _55_name = f"Report_{rid}_{ts}_admin.xlsx"
+                    _55_path = os.path.join(OUTPUTS, _55_name)
+                    _mv_for_excel = float(
+                        res.get("market_value") or full.get("market_value") or 0
+                    )
+                    _55_ctx = {
+                        "request_summary": {
+                            "area":              full.get("area"),
+                            "area_sqm":          full.get("area"),
+                            "property_type":     full.get("property_type"),
+                            "property_address":  full.get("location"),
+                            "location":          full.get("location"),
+                            "client_name":       full.get("client_name") or full.get("expert"),
+                            "construction_year": full.get("construction_year"),
+                            "floor_number":      full.get("floor_number"),
+                            "building_age":      full.get("building_age"),
+                            "price_per_sqm":     full.get("price_per_meter"),
+                            "valuation_date":    full.get("report_date") or datetime.now().strftime("%d/%m/%Y"),
                             "report_id":         rid,
-                        }
-                        _iv_out = _build_iv(output_path=_tpl_path, context=_iv_ctx, tables={})
-                        if _iv_out is not None and os.path.isfile(_tpl_path):
-                            name      = _tpl_name
-                            _tpl_used = True
-                        else:
-                            raise RuntimeError("template render returned None")
+                            "final_value":       _mv_for_excel,
+                            "currency":          payload.get("currency", "SAR"),
+                            "vacancy_rate":      full.get("vacancy_rate"),
+                            "opex_ratio":        full.get("opex_ratio"),
+                            "holding_period":    full.get("holding_period"),
+                        },
+                        "method_summary": {
+                            "price_per_sqm":          full.get("price_per_meter"),
+                            "market_price_per_sqm":   full.get("price_per_meter"),
+                            "cap_rate":               full.get("cap_rate"),
+                            "annual_rent_per_sqm":    full.get("annual_rent_per_sqm"),
+                            "wacc":                   full.get("wacc"),
+                            "growth_rate":            full.get("growth_rate"),
+                            "final_value":            _mv_for_excel,
+                            "market_value":           _mv_for_excel,
+                            "sigma":                  full.get("sigma"),
+                            "vacancy_rate":           full.get("vacancy_rate"),
+                            "opex_ratio":             full.get("opex_ratio"),
+                            "holding_period":         full.get("holding_period"),
+                            "excavation_rate":        full.get("excavation_rate"),
+                            "concrete_rate":          full.get("concrete_rate"),
+                            "steel_rate":             full.get("steel_rate"),
+                            "wacc_construction":      full.get("wacc_construction"),
+                            "facade_rate":            full.get("facade_rate"),
+                        },
+                        "comparable_summary": {
+                            "price_per_sqm":  full.get("price_per_meter"),
+                            "rental_per_sqm": full.get("annual_rent_per_sqm"),
+                        },
+                    }
+                    _55_result = _build_55_sheet(
+                        _55_ctx,
+                        _pathlib.Path(_55_path),
+                        request_id=rid,
+                    )
+                    if _55_result.get("success"):
+                        # Saudi jurisdiction localization + physical validation
+                        try:
+                            import openpyxl as _opx_val
+                            # ── Saudi localization: overwrite Egyptian template content ──
+                            _loc = _55_ctx["request_summary"].get("location") or "المملكة العربية السعودية"
+                            _cur = _55_ctx["request_summary"].get("currency") or "SAR"
+                            _pty = _55_ctx["request_summary"].get("property_type") or "العقار"
+                            _lwb = _opx_val.load_workbook(_55_path)
+                            def _sw(_sn, _cel, _val):
+                                if _sn in _lwb.sheetnames:
+                                    _lwb[_sn][_cel] = _val
+                            # Location cells — injected from request
+                            _sw("الافتراضات والمدخلات", "B57", _loc)
+                            _sw("التقرير", "H8", _loc)
+                            _sw("المقارنات الإيجارية", "B5", _loc)
+                            # Market / institution references
+                            _sw("الافتراضات والمدخلات", "D48", "Tadawul (Saudi Exchange)")
+                            _sw("الافتراضات والمدخلات", "A147", "التضخم السنوي")
+                            _sw("التقرير", "A16",
+                                f"العقار موضوع التقييم عبارة عن {_pty} وفق بيانات الطلب. "
+                                "بناءً على الدراسة الميدانية وتحليل السوق، يُعتبر الاستخدام "
+                                "الحالي هو أعلى وأفضل استخدام للعقار، إذ يحقق أقصى قدر من "
+                                "العائد المادي ويتوافق مع الاستخدامات السائدة في المنطقة المحيطة.")
+                            _sw("مقارنات البيوع", "A47", "مقارنات البيوع")
+                            for _sn55, _cel55, _old55, _new55 in [
+                                ("المقارنات الإيجارية", "A37", "المصري", "السعودي"),
+                                ("محددات التقييم",       "A32", "المصري", "السعودي"),
+                            ]:
+                                if _sn55 in _lwb.sheetnames:
+                                    _v55 = _lwb[_sn55][_cel55].value
+                                    if _v55 and _old55 in str(_v55):
+                                        _lwb[_sn55][_cel55] = str(_v55).replace(_old55, _new55)
+                            if "توفيق النتائج" in _lwb.sheetnames:
+                                _v18 = _lwb["توفيق النتائج"]["A18"].value
+                                if _v18 and ("القاهرة" in str(_v18) or "شقة سكنية" in str(_v18)):
+                                    _lwb["توفيق النتائج"]["A18"] = (
+                                        str(_v18)
+                                        .replace("شقة سكنية", _pty)
+                                        .replace("القاهرة", _loc))
+                            if "شهادة" in _lwb.sheetnames:
+                                _v26 = _lwb["شهادة"]["A26"].value
+                                if _v26:
+                                    import re as _re55
+                                    _tashkeel_re = _re55.compile(r'[ً-ٟؐ-ؚ]')
+                                    _v26_clean = _tashkeel_re.sub('', str(_v26))
+                                    if "مصري" in _v26_clean:
+                                        _lwb["شهادة"]["A26"] = _v26_clean.replace(
+                                            "جمعية المقيمين المصريين",
+                                            "الهيئة السعودية للمقيمين المعتمدين (TAQEEM)")
+                            if "لوحة القيادة التنفيذية" in _lwb.sheetnames:
+                                _v22 = _lwb["لوحة القيادة التنفيذية"]["A22"].value
+                                if _v22 and ("المصري" in str(_v22) or "EGP" in str(_v22)):
+                                    _lwb["لوحة القيادة التنفيذية"]["A22"] = (
+                                        "📊  • مؤشرات الاقتصاد الكلي — يُرجى تحديث القيم "
+                                        "من مصادر البنك المركزي السعودي (ساما)")
+                            # Data sources — Saudi portals and institutions
+                            if "مصادر البيانات والمنهجية" in _lwb.sheetnames:
+                                _ds = _lwb["مصادر البيانات والمنهجية"]
+                                _ds["A6"]  = "عقار السعودية (Aqar.sa)"
+                                _ds["B6"]  = "https://sa.aqar.fm"
+                                _ds["C6"]  = "أسعار عقارات سعودية — بيانات مباشرة"
+                                _ds["A7"]  = "بروبرتي فايندر السعودية (Property Finder SA)"
+                                _ds["B7"]  = "https://www.propertyfinder.com.sa"
+                                _ds["C7"]  = "صفقات مُنقضية ومُعروضة — المملكة العربية السعودية"
+                                _ds["A8"]  = "بيوت السعودية (Bayut.sa)"
+                                _ds["B8"]  = "https://www.bayut.sa"
+                                _ds["A9"]  = "مسكن السعودية (Msaken.com)"
+                                _ds["B9"]  = "https://www.msaken.com"
+                                _ds["C9"]  = "بيانات المطورين والوحدات السكنية"
+                                _ds["A10"] = "واحة السعودية (Wahet.com.sa)"
+                                _ds["B10"] = "https://www.wahet.com.sa"
+                                _ds["C10"] = "منصة عقارية سعودية شاملة"
+                                # Update hyperlinks on B cells to new Saudi URLs
+                                for _bcel, _burl in [
+                                    ("B6",  "https://sa.aqar.fm"),
+                                    ("B7",  "https://www.propertyfinder.com.sa"),
+                                    ("B8",  "https://www.bayut.sa"),
+                                    ("B9",  "https://www.msaken.com"),
+                                    ("B10", "https://www.wahet.com.sa"),
+                                ]:
+                                    _ds[_bcel].hyperlink = _burl
+                                _ds["A14"] = "البنك المركزي السعودي (ساما) — SAMA"
+                                _ds["B14"] = "https://www.sama.gov.sa"
+                                _ds["C14"] = "معدل اتفاقيات إعادة الشراء (REPO) — بيانات ساما"
+                                _ds["A15"] = "الهيئة العامة للإحصاء السعودية (GASTAT)"
+                                _ds["B15"] = "https://www.stats.gov.sa"
+                                _ds["C15"] = "معدل التضخم السنوي — مؤشر أسعار المستهلك"
+                                _ds["A16"] = "وزارة الاستثمار السعودية"
+                                _ds["B16"] = "https://invest.gov.sa/ar"
+                                _ds["C16"] = "معايير التقييم العقاري السعودي والفرص الاستثمارية"
+                                _ds["A17"] = "مؤشر MSCI للعقارات في دول الخليج"
+                                _ds["C17"] = "علاوة مخاطر السوق العقاري الخليجي"
+                                _c24 = _ds["C24"].value
+                                if _c24 and "المصري" in str(_c24):
+                                    _ds["C24"] = str(_c24).replace("المصري", "السعودي")
+                            # Compliance standards — replace Egyptian with IVS/REGA
+                            if "بيان الامتثال" in _lwb.sheetnames:
+                                _cs = _lwb["بيان الامتثال"]
+                                _cs["D3"] = "معايير التقييم الدولية (IVS) — مبادئ HBU"
+                                _cs["D4"] = "IVS 410"
+                                _cs["D5"] = "IVS 105 — طريقة السوق"
+                                _cs["D6"] = "IVS 105 — طريقة الدخل"
+                                _cs["D7"] = "IVS 105 — DCF"
+                                _cs["D8"] = "IVS — الإفصاح والشفافية"
+                                for _cr55 in ["D9", "D10"]:
+                                    _cv55 = _cs[_cr55].value
+                                    if _cv55 and "FRA" in str(_cv55):
+                                        _cs[_cr55] = str(_cv55).replace("FRA", "REGA")
+                                # D2 column header: "مرجع FRA" → "المرجع التنظيمي (REGA)"
+                                _d2_cv55 = _cs["D2"].value
+                                if _d2_cv55 and "FRA" in str(_d2_cv55):
+                                    _cs["D2"] = "المرجع التنظيمي (REGA)"
+                                _b12 = _cs["B12"].value
+                                if _b12 and "المصرية" in str(_b12):
+                                    _cs["B12"] = str(_b12).replace(
+                                        "والمعايير المصرية للتقييم",
+                                        "ومعايير التقييم السعودية والدولية (IVS)")
+                            # نطاق العمل A1 — scope heading: FRA → REGA
+                            if "نطاق العمل" in _lwb.sheetnames:
+                                _nw55 = _lwb["نطاق العمل"]
+                                _nw_a1v = _nw55["A1"].value
+                                if _nw_a1v and "FRA" in str(_nw_a1v):
+                                    _nw55["A1"] = (
+                                        str(_nw_a1v)
+                                        .replace("/ FRA", "/ REGA")
+                                        .replace("/FRA", "/REGA")
+                                    )
+                            # Value in words — currency label and Arabic number words
+                            if "القيمة بالحروف" in _lwb.sheetnames:
+                                _vw = _lwb["القيمة بالحروف"]
+                                _vw["A3"] = f"الوحدة الحسابية: ريال سعودي ({_cur})"
+                                _a5v = _vw["A5"].value
+                                if _a5v:
+                                    _vw["A5"] = str(_a5v).replace("EGP", _cur)
+                                for _vcel in ["C5", "A9"]:
+                                    _vval = _vw[_vcel].value
+                                    if _vval and "جنيهاً مصرياً" in str(_vval):
+                                        _vw[_vcel] = (str(_vval)
+                                            .replace("جنيهاً مصرياً", "ريالاً سعودياً")
+                                            .replace("قرشاً", "هللةً"))
+                                for _vr in range(15, 25):
+                                    for _vc in ["B", "D", "E"]:
+                                        _hcell = _vw[f"{_vc}{_vr}"]
+                                        if _hcell.value and "EGP" in str(_hcell.value):
+                                            _hcell.value = str(_hcell.value).replace("EGP", _cur)
+                            # Global sweep: replace remaining EGP currency markers
+                            _egp_replaced = 0
+                            for _sng in _lwb.sheetnames:
+                                for _rwg in _lwb[_sng].iter_rows():
+                                    for _cg in _rwg:
+                                        if _cg.value is None:
+                                            continue
+                                        _vg = str(_cg.value)
+                                        if "EGP" in _vg:
+                                            _cg.value = _vg.replace("EGP", _cur)
+                                            _egp_replaced += 1
+                            if _egp_replaced:
+                                print(f"{_ts()} [EXCEL-55] global EGP→{_cur}: {_egp_replaced} cells")
+                            # QA annotation sweep: replace محاكاة QA with production wording
+                            _qa_replaced = 0
+                            for _sn_qa in _lwb.sheetnames:
+                                for _rw_qa in _lwb[_sn_qa].iter_rows():
+                                    for _c_qa in _rw_qa:
+                                        if (_c_qa.value
+                                                and isinstance(_c_qa.value, str)
+                                                and "محاكاة QA" in str(_c_qa.value)):
+                                            _c_qa.value = str(_c_qa.value).replace(
+                                                "محاكاة QA", "قيد المراجعة")
+                                            _qa_replaced += 1
+                            if "بيان الامتثال" in _lwb.sheetnames:
+                                _cs_qa55 = _lwb["بيان الامتثال"]
+                                if (_cs_qa55["F5"].value
+                                        and "قيد المراجعة" in str(_cs_qa55["F5"].value)):
+                                    _cs_qa55["F5"] = "مقارنات السوق"
+                            if "حوكمة مصادر البيانات" in _lwb.sheetnames:
+                                _hg_qa55 = _lwb["حوكمة مصادر البيانات"]
+                                if (_hg_qa55["B6"].value
+                                        and "قيد المراجعة" in str(_hg_qa55["B6"].value)):
+                                    _hg_qa55["B6"] = "قيد التحقق من المصادر"
+                            if _qa_replaced:
+                                print(f"{_ts()} [EXCEL-55] QA annotation sweep: {_qa_replaced} cells")
+                            # Sweep number_format strings: replace EGP with _cur
+                            _fmt_fixed = 0
+                            for _snf in _lwb.sheetnames:
+                                for _rwf in _lwb[_snf].iter_rows():
+                                    for _cf in _rwf:
+                                        if _cf.number_format and "EGP" in str(_cf.number_format):
+                                            _cf.number_format = str(_cf.number_format).replace("EGP", _cur)
+                                            _fmt_fixed += 1
+                            if _fmt_fixed:
+                                print(f"{_ts()} [EXCEL-55] number_format EGP→{_cur}: {_fmt_fixed} cells")
+                            # Fix chart title text runs containing EGP
+                            _chart_fixed = 0
+                            for _snc in _lwb.sheetnames:
+                                for _chrt in getattr(_lwb[_snc], '_charts', []):
+                                    if isinstance(getattr(_chrt, 'title', None), str):
+                                        if "EGP" in _chrt.title:
+                                            _chrt.title = _chrt.title.replace("EGP", _cur)
+                                            _chart_fixed += 1
+                                    elif getattr(_chrt, 'title', None) is not None:
+                                        try:
+                                            for _pp in _chrt.title.tx.rich.p:
+                                                for _rr in _pp.r:
+                                                    if _rr.t and "EGP" in _rr.t:
+                                                        _rr.t = _rr.t.replace("EGP", _cur)
+                                                        _chart_fixed += 1
+                                        except AttributeError:
+                                            pass
+                            if _chart_fixed:
+                                print(f"{_ts()} [EXCEL-55] chart EGP→{_cur}: {_chart_fixed} text runs")
+                            # Safety sweep: remove any residual hyperlinks to .com.eg / .org.eg
+                            import re as _re_hyp
+                            _eg_dom = _re_hyp.compile(r'\.(?:com|org|net|gov)\.eg\b', _re_hyp.IGNORECASE)
+                            _hyp_fixed = 0
+                            for _snl in _lwb.sheetnames:
+                                for _rwl in _lwb[_snl].iter_rows():
+                                    for _cl in _rwl:
+                                        _hl = getattr(_cl, 'hyperlink', None)
+                                        _ht = getattr(_hl, 'target', '') or ''
+                                        if _hl and _eg_dom.search(_ht):
+                                            _cl.hyperlink = None
+                                            _hyp_fixed += 1
+                            if _hyp_fixed:
+                                print(f"{_ts()} [EXCEL-55] removed {_hyp_fixed} Egyptian hyperlinks")
+                            _lwb.save(_55_path)
+                            _lwb.close()
+                            del _lwb
+                            print(f"{_ts()} [EXCEL-55] Saudi localization applied → {_55_name}")
+                            # Physical validation (belt-and-suspenders)
+                            _vwb = _opx_val.load_workbook(
+                                _55_path, read_only=True, data_only=True
+                            )
+                            _vsheets = len(_vwb.sheetnames)
+                            _vwb.close()
+                            if _vsheets == 55:
+                                name               = _55_name
+                                _excel_sheet_count = _vsheets
+                                _tpl_used          = True
+                                print(f"{_ts()} [EXCEL-55] validated {_vsheets} sheets → {_55_name}")
+                            else:
+                                raise ValueError(f"physical sheet count {_vsheets} ≠ 55")
+                        except Exception as _val_err:
+                            # Remove partial/invalid artifact; do not expose download URL
+                            try:
+                                os.remove(_55_path)
+                            except OSError:
+                                pass
+                            _fallback  = True
+                            _fb_reason = f"post-generation validation failed: {str(_val_err)[:200]}"
+                            print(f"{_ts()} [EXCEL-55] validation FAILED — {_fb_reason}")
                     else:
-                        raise FileNotFoundError("individual_valuation_professional_template.xlsm not found")
-                except Exception as _iv_err:
-                    _fallback   = True
-                    _fb_reason  = str(_iv_err)
-                    _style_used = "legacy"
-                    ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-                    name = f"Report_{rid}_{ts}{ext}"
-                    path = os.path.join(OUTPUTS, name)
-                    write_to_excel_template(full, path)
+                        _fallback  = True
+                        _fb_reason = f"55-sheet builder: {_55_result.get('errors', [])[:1]}"
+                        print(f"{_ts()} [EXCEL-55] FAILED — {_fb_reason}")
+                except Exception as _55_err:
+                    _fallback  = True
+                    _fb_reason = f"55-sheet builder exception: {str(_55_err)[:200]}"
+                    print(f"{_ts()} [EXCEL-55] exception: {_55_err}")
             else:
-                # legacy / detailed — write_to_excel_template fills all template sheets.
-                # For legacy, advanced analytics sheets are stripped from the saved file.
-                ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-                name = f"Report_{rid}_{ts}{ext}"
-                path = os.path.join(OUTPUTS, name)
-                write_to_excel_template(full, path)
-                print(f"{_ts()} [REPORT-STYLE] requested={report_style} used={_style_used} path={path}")
-                if report_style == "legacy" or _style_used == "legacy":
-                    _remove_legacy_advanced_sheets(path)
+                _fallback  = True
+                _fb_reason = "55-sheet builder not available at import time"
+                print(f"{_ts()} [EXCEL-55] builder unavailable — skipping Excel generation")
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
 
@@ -5638,7 +5911,7 @@ def handle_valuation():
                 "template_used":          _tpl_used,
                 "fallback_used":          _fallback,
                 "fallback_reason":        _fb_reason if _fallback else ""}
-        if _is_admin(g.user_id):
+        if _is_admin(g.user_id) and name is not None:
             resp["excel_url"] = f"http://127.0.0.1:5000/api/download/{name}"
         if _validation_result:
             resp["validation"] = _validation_result
@@ -5715,12 +5988,21 @@ def handle_valuation():
                 },
             }
             if _is_admin(g.user_id):
-                resp["formats"]["excel"] = {
-                    "filename":    name,
-                    "downloadUrl": f"http://127.0.0.1:5000/api/download/{name}",
-                    "sheetCount":  55,
-                    "generated":   True,
-                }
+                if name is not None:
+                    resp["formats"]["excel"] = {
+                        "filename":    name,
+                        "downloadUrl": f"http://127.0.0.1:5000/api/download/{name}",
+                        "sheetCount":  _excel_sheet_count,
+                        "generated":   True,
+                    }
+                else:
+                    resp["formats"]["excel"] = {
+                        "filename":    None,
+                        "downloadUrl": None,
+                        "sheetCount":  0,
+                        "generated":   False,
+                        "error":       _fb_reason,
+                    }
         # إفصاحات إضافية للأغراض المتخصصة
         if _vp == "uncertainty_valuation":
             spread = float(payload.get("uncertainty_spread_pct", 0.15))

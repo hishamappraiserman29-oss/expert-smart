@@ -52,8 +52,12 @@ class TestAuthAvailableFlag:
 
     def test_IP03_auth_available_is_true(self):
         _ensure_paths()
-        os.chdir(str(_CORE))
-        import bridge_api
+        _orig = os.getcwd()
+        try:
+            os.chdir(str(_CORE))
+            import bridge_api
+        finally:
+            os.chdir(_orig)
         assert bridge_api._AUTH_AVAILABLE is True, (
             "_AUTH_AVAILABLE is False — SEC-011 fix not applied or auth import failed"
         )
@@ -70,8 +74,12 @@ def jwt_env(monkeypatch):
 @pytest.fixture()
 def client():
     _ensure_paths()
-    os.chdir(str(_CORE))
-    from bridge_api import app
+    _orig = os.getcwd()
+    try:
+        os.chdir(str(_CORE))
+        from bridge_api import app
+    finally:
+        os.chdir(_orig)
     app.config["TESTING"] = True
     with app.test_client() as c:
         yield c
@@ -113,3 +121,20 @@ def test_IP07_middleware_sets_user_id_for_valid_token(client):
         from bridge_api import _attach_user_from_token
         _attach_user_from_token()
         assert g.user_id == "owner-007"
+
+
+def test_IP08_cwd_restored_on_import_exception():
+    """try/finally CWD pattern restores CWD even when the guarded import raises."""
+    _ensure_paths()
+    orig = os.getcwd()
+    _saved = os.getcwd()
+    try:
+        os.chdir(str(_CORE))
+        import _nonexistent_ip08_sentinel_module_  # noqa: F401
+    except ModuleNotFoundError:
+        pass
+    finally:
+        os.chdir(_saved)
+    assert os.getcwd() == orig, (
+        f"CWD not restored after failed import: {os.getcwd()!r} != {orig!r}"
+    )

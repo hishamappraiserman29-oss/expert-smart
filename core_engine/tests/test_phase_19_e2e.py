@@ -26,15 +26,19 @@ from unittest.mock import MagicMock
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from agents.supervised_agent import (
-    ExecutionMode, ActionType,
-    ActionRecord, BackupInfo, BackupManager, SupervisedAgent,
-    _WRITE_ACTIONS, _RISKY_ACTIONS,
-)
-from agents.workspace_manager import WorkspaceManager
-from mcp_bridge import APIResponse
+    from agents.supervised_agent import (
+        ExecutionMode, ActionType,
+        ActionRecord, BackupInfo, BackupManager, SupervisedAgent,
+        _WRITE_ACTIONS, _RISKY_ACTIONS,
+    )
+    from agents.workspace_manager import WorkspaceManager
+    from mcp_bridge import APIResponse
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

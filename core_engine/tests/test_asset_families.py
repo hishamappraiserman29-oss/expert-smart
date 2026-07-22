@@ -41,23 +41,27 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.asset_families import (  # noqa: E402
-    ASSET_FAMILIES_REGISTRY,
-    ASSET_SUBTYPES_INDEX,
-    LEGACY_CORE_ASSET_TYPES,
-    AssetFamily,
-    AssetSubtype,
-    ValuationProfileSpec,
-    get_asset_family,
-    get_asset_subtype_profile,
-    is_supported_asset_family,
-    is_supported_asset_subtype,
-    list_asset_families,
-    list_asset_subtypes,
-    resolve_asset_family_for_subtype,
-)
+    from adapters.asset_families import (  # noqa: E402
+        ASSET_FAMILIES_REGISTRY,
+        ASSET_SUBTYPES_INDEX,
+        LEGACY_CORE_ASSET_TYPES,
+        AssetFamily,
+        AssetSubtype,
+        ValuationProfileSpec,
+        get_asset_family,
+        get_asset_subtype_profile,
+        is_supported_asset_family,
+        is_supported_asset_subtype,
+        list_asset_families,
+        list_asset_subtypes,
+        resolve_asset_family_for_subtype,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 _REQUIRED_FAMILY_IDS: frozenset[str] = frozenset({
     "hospitality_entertainment",

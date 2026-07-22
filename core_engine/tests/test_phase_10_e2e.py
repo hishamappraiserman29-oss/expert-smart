@@ -26,9 +26,13 @@ from adapters.dcf_sensitivity import DCFSensitivityAnalysis
 # Import Flask app (bridge_api.py lives directly in core_engine/)
 import os
 os.environ.setdefault("JWT_SECRET", "test-secret-e2e-bundle")
-os.chdir(str(_CORE))   # bridge_api.py imports adapters via relative names
-from bridge_api import app
-from auth.tokens import generate_token as _gen_token
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))   # bridge_api.py imports adapters via relative names
+    from bridge_api import app
+    from auth.tokens import generate_token as _gen_token
+finally:
+    os.chdir(_ORIG_CWD)
 _AUTH_HDR = {"Authorization": f"Bearer {_gen_token('test-user-e2e')}"}
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -19,14 +19,18 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.purpose_adapter import AdjustedValuation
-from valuation_engines.composite_reporter import (
-    _IAAO_NOTE,
-    _USPAP_NOTE,
-    build_reporting_blocks,
-)
+    from adapters.purpose_adapter import AdjustedValuation
+    from valuation_engines.composite_reporter import (
+        _IAAO_NOTE,
+        _USPAP_NOTE,
+        build_reporting_blocks,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ─────────────────────────────────────────────────────────────────────

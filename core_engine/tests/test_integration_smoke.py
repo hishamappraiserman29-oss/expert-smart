@@ -25,17 +25,21 @@ _CORE = Path(__file__).resolve().parents[1]    # core_engine/
 _TESTS = Path(__file__).resolve().parent       # core_engine/tests/
 sys.path.insert(0, str(_CORE))
 sys.path.insert(0, str(_TESTS))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.db import (  # noqa: E402
-    ReportRecord,
-    get_report,
-    list_reports,
-    save_report,
-)
-from reports.pdf import generate_pdf  # noqa: E402
-from reports.validation import validate_report  # noqa: E402
-from _sample_reports import all_profiles, sample_report_data  # noqa: E402
+    from reports.db import (  # noqa: E402
+        ReportRecord,
+        get_report,
+        list_reports,
+        save_report,
+    )
+    from reports.pdf import generate_pdf  # noqa: E402
+    from reports.validation import validate_report  # noqa: E402
+    from _sample_reports import all_profiles, sample_report_data  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── 1. Validation Engine ─────────────────────────────────────────────

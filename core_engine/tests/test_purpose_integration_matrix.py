@@ -48,29 +48,33 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.purpose_integration_matrix import (  # noqa: E402
-    APPROVAL_STATUSES,
-    REPORT_STATUSES,
-    AgenticEnrichmentSpec,
-    DBFieldSpec,
-    EngineInputSpec,
-    HumanApprovalSpec,
-    MarketComparableSpec,
-    OutputContractSpec,
-    PurposeIntegrationMatrix,
-    ReportDisclosureSpec,
-    UIFieldSpec,
-    ValidationRule,
-    get_market_value_habu_matrix,
-    get_purpose_matrix,
-    list_available_matrices,
-    list_fields_by_layer,
-    list_matrix_fields,
-    requires_human_approval,
-    validate_matrix_definition,
-)
+    from adapters.purpose_integration_matrix import (  # noqa: E402
+        APPROVAL_STATUSES,
+        REPORT_STATUSES,
+        AgenticEnrichmentSpec,
+        DBFieldSpec,
+        EngineInputSpec,
+        HumanApprovalSpec,
+        MarketComparableSpec,
+        OutputContractSpec,
+        PurposeIntegrationMatrix,
+        ReportDisclosureSpec,
+        UIFieldSpec,
+        ValidationRule,
+        get_market_value_habu_matrix,
+        get_purpose_matrix,
+        list_available_matrices,
+        list_fields_by_layer,
+        list_matrix_fields,
+        requires_human_approval,
+        validate_matrix_definition,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 _NINE_LAYERS = (
     "ui_fields",

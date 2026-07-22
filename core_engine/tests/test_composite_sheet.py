@@ -30,18 +30,22 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-# ── imports under test ────────────────────────────────────────────────
-from openpyxl import Workbook
+    # ── imports under test ────────────────────────────────────────────────
+    from openpyxl import Workbook
 
-from reports.sheets.composite_sheet import build_composite_sheet, _SHEET_NAME
-from adapters.purpose_adapter import AdjustedValuation
-from validation.composite_rules import (
-    CompositeValidationReport,
-    Severity,
-    ValidationIssue,
-)
+    from reports.sheets.composite_sheet import build_composite_sheet, _SHEET_NAME
+    from adapters.purpose_adapter import AdjustedValuation
+    from validation.composite_rules import (
+        CompositeValidationReport,
+        Severity,
+        ValidationIssue,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ─────────────────────────────────────────────────────────────────────

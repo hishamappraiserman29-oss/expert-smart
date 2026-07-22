@@ -25,9 +25,13 @@ _ROOT = _CORE.parent
 for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app as _app
+    from bridge_api import app as _app
+finally:
+    os.chdir(_ORIG_CWD)
 
 _TEST_SECRET = "pvr-phase-b-test-secret-32chars!!"
 _UAT_BASE    = _CORE / "instance" / "manual_review_outputs" / "professional_valuation_full_uat_outputs"

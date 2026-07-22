@@ -15,10 +15,14 @@ for _p in (str(_CORE), str(_ROOT)):
         sys.path.insert(0, _p)
 
 import os
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from audit_log import fetch_audit_logs, is_enabled, log_access  # noqa: E402
-from reports.db.migrations import migrate  # noqa: E402
+    from audit_log import fetch_audit_logs, is_enabled, log_access  # noqa: E402
+    from reports.db.migrations import migrate  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

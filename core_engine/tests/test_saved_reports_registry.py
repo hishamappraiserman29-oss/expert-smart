@@ -62,19 +62,23 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.saved_reports_registry import (  # noqa: E402
-    SavedReportRecord,
-    classify_report_output,
-    create_saved_report_record,
-    get_saved_report,
-    is_external_pdf_output,
-    is_internal_excel_output,
-    list_saved_reports,
-    load_saved_report_registry,
-    save_report_registry_entry,
-)
+    from reports.saved_reports_registry import (  # noqa: E402
+        SavedReportRecord,
+        classify_report_output,
+        create_saved_report_record,
+        get_saved_report,
+        is_external_pdf_output,
+        is_internal_excel_output,
+        list_saved_reports,
+        load_saved_report_registry,
+        save_report_registry_entry,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Common fixtures ───────────────────────────────────────────────────────────

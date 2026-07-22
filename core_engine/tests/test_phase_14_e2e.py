@@ -29,12 +29,16 @@ from pathlib import Path
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
 os.environ.setdefault("JWT_SECRET", "test-secret-e2e-bundle")
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.webhook_dispatcher import WebhookDelivery, WebhookDispatcher
-from database.webhook_log import WebhookLog
-import bridge_api as _bridge_api
-from auth.tokens import generate_token as _gen_token
+    from adapters.webhook_dispatcher import WebhookDelivery, WebhookDispatcher
+    from database.webhook_log import WebhookLog
+    import bridge_api as _bridge_api
+    from auth.tokens import generate_token as _gen_token
+finally:
+    os.chdir(_ORIG_CWD)
 _AUTH_HDR = {"Authorization": f"Bearer {_gen_token('test-user-e2e')}"}
 
 

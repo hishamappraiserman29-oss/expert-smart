@@ -18,13 +18,17 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-import pytest
-from fpdf import FPDF
+    import pytest
+    from fpdf import FPDF
 
-from reports.pdf.pdf_components import register_fonts
-from reports.pdf.sections.sales_comparison_pdf import render_sales_comparison
+    from reports.pdf.pdf_components import register_fonts
+    from reports.pdf.sections.sales_comparison_pdf import render_sales_comparison
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 def _new_pdf():

@@ -17,17 +17,21 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-import pytest
+    import pytest
 
-from reports.pdf.pdf_arabic import (
-    is_rtl,
-    reshape_arabic,
-    prepare_text,
-    find_font,
-    fonts_available,
-)
+    from reports.pdf.pdf_arabic import (
+        is_rtl,
+        reshape_arabic,
+        prepare_text,
+        find_font,
+        fonts_available,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── is_rtl ────────────────────────────────────────────────────────────────────

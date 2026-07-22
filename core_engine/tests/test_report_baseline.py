@@ -31,11 +31,15 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.asset import AssetValuationResult  # noqa: E402
-from engines.base import AuditEntry              # noqa: E402
-from reports.excel_builder import ExcelReportBuilder  # noqa: E402
+    from adapters.asset import AssetValuationResult  # noqa: E402
+    from engines.base import AuditEntry              # noqa: E402
+    from reports.excel_builder import ExcelReportBuilder  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 # ── constants ─────────────────────────────────────────────────────────────────
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"

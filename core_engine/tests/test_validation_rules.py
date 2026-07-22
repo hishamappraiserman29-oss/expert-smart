@@ -20,19 +20,23 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.validation.result import Severity, ValidationIssue
-from reports.validation.rules import (
-    _parse_numeric,
-    check_lte,
-    check_nonneg,
-    check_not_nan_inf,
-    check_positive,
-    check_range,
-    check_weights_sum,
-    require,
-)
+    from reports.validation.result import Severity, ValidationIssue
+    from reports.validation.rules import (
+        _parse_numeric,
+        check_lte,
+        check_nonneg,
+        check_not_nan_inf,
+        check_positive,
+        check_range,
+        check_weights_sum,
+        require,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 # ── Shared kwargs helpers ─────────────────────────────────────────────────────
 

@@ -23,12 +23,16 @@ _CORE = (
 _CORE = __import__("pathlib").Path(__file__).resolve().parents[2]
 
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-os.environ.setdefault("JWT_SECRET", "pvs35dw-test-secret-32chars-xxxxx")
+    os.environ.setdefault("JWT_SECRET", "pvs35dw-test-secret-32chars-xxxxx")
 
-from bridge_api import app  # noqa: E402
-from auth.tokens import generate_token  # noqa: E402
+    from bridge_api import app  # noqa: E402
+    from auth.tokens import generate_token  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 app.config["TESTING"] = True
 

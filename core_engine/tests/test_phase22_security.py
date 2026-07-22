@@ -34,7 +34,11 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
+finally:
+    os.chdir(_ORIG_CWD)
 
 # ── constants ─────────────────────────────────────────────────────────────────
 _STRONG_SECRET = "phase22-security-test-secret-32b!!"   # 34 bytes — well above minimum
@@ -211,7 +215,7 @@ def test_SEC22_13_missing_report_returns_safe_404(client, auth_headers, tmp_path
     """SEC22-13: A missing file at /api/download returns 404, not a traceback."""
     import bridge_api
     monkeypatch.setattr(bridge_api, "OUTPUTS", str(tmp_path))
-    resp = client.get("/api/download/nonexistent_report.xlsx", headers=auth_headers)
+    resp = client.get("/api/download/nonexistent_report.docx", headers=auth_headers)
     assert resp.status_code == 404
     # Response must be JSON (safe error), not an HTML traceback
     data = resp.get_json()

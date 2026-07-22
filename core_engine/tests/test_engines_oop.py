@@ -33,13 +33,17 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from engines.base import AuditEntry, EngineResult, ValidationIssue, ValuationEngine
-from engines.comparative import ComparativeEngine
-from engines.cost import CostEngine
-from engines.income import IncomeEngine
-from engines.comparable_search import ComparableSearchEngine
+    from engines.base import AuditEntry, EngineResult, ValidationIssue, ValuationEngine
+    from engines.comparative import ComparativeEngine
+    from engines.cost import CostEngine
+    from engines.income import IncomeEngine
+    from engines.comparable_search import ComparableSearchEngine
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

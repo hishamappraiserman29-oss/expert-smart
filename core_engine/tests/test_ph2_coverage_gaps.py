@@ -23,15 +23,19 @@ from unittest.mock import MagicMock, patch
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from agents.chat_agent import ChatAgent, ChatResponse
-from agents.command_parser import CommandIntent
-from agents.file_watcher import WatcherManager
-from agents.pipeline_orchestrator import ValuationPipelineOrchestrator
-from agents.supervised_agent import BackupManager, ExecutionMode, SupervisedAgent
-from agents.workspace_manager import WorkspaceManager
-from mcp_bridge import APIResponse, ExpertSmartBridge
+    from agents.chat_agent import ChatAgent, ChatResponse
+    from agents.command_parser import CommandIntent
+    from agents.file_watcher import WatcherManager
+    from agents.pipeline_orchestrator import ValuationPipelineOrchestrator
+    from agents.supervised_agent import BackupManager, ExecutionMode, SupervisedAgent
+    from agents.workspace_manager import WorkspaceManager
+    from mcp_bridge import APIResponse, ExpertSmartBridge
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

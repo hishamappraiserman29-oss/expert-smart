@@ -15,11 +15,15 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-import pytest
+    import pytest
 
-from reports.validation.result import Severity, ValidationIssue, ValidationResult
+    from reports.validation.result import Severity, ValidationIssue, ValidationResult
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

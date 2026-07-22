@@ -24,10 +24,14 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from agents.workspace_manager import WorkspaceManager, WorkspaceStatus
-from agents.file_scanner import FileScanner, FileType
+    from agents.workspace_manager import WorkspaceManager, WorkspaceStatus
+    from agents.file_scanner import FileScanner, FileType
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

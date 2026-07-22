@@ -45,17 +45,21 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.approval_rules import (  # noqa: E402
-    APPROVAL_STATUSES,
-    REPORT_STATUSES,
-    can_generate_final_report,
-    get_report_status_from_approval,
-    normalize_approval_status,
-    requires_human_approval,
-    validate_auto_enrichment_metadata,
-)
+    from adapters.approval_rules import (  # noqa: E402
+        APPROVAL_STATUSES,
+        REPORT_STATUSES,
+        can_generate_final_report,
+        get_report_status_from_approval,
+        normalize_approval_status,
+        requires_human_approval,
+        validate_auto_enrichment_metadata,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── AR01 ─────────────────────────────────────────────────────────────────────

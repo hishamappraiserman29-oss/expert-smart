@@ -46,26 +46,30 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.purpose_routes import (  # noqa: E402
-    LEGACY_ADAPTER_ROUTE_TO_PHASE7_ROUTE,
-    LEGACY_PURPOSE_LABEL_TO_GROUP,
-    LEGACY_SNAKE_PURPOSE_TO_GROUP,
-    PURPOSE_GROUPS_REGISTRY,
-    PURPOSE_ROUTES_INDEX,
-    PurposeGroup,
-    PurposeRoute,
-    PurposeSubRoute,
-    get_purpose_group,
-    is_supported_purpose_group,
-    is_supported_purpose_route,
-    list_purpose_groups,
-    list_purpose_routes,
-    list_purpose_sub_routes,
-    resolve_purpose_group_for_route,
-    resolve_route_for_legacy_purpose,
-)
+    from adapters.purpose_routes import (  # noqa: E402
+        LEGACY_ADAPTER_ROUTE_TO_PHASE7_ROUTE,
+        LEGACY_PURPOSE_LABEL_TO_GROUP,
+        LEGACY_SNAKE_PURPOSE_TO_GROUP,
+        PURPOSE_GROUPS_REGISTRY,
+        PURPOSE_ROUTES_INDEX,
+        PurposeGroup,
+        PurposeRoute,
+        PurposeSubRoute,
+        get_purpose_group,
+        is_supported_purpose_group,
+        is_supported_purpose_route,
+        list_purpose_groups,
+        list_purpose_routes,
+        list_purpose_sub_routes,
+        resolve_purpose_group_for_route,
+        resolve_route_for_legacy_purpose,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 _REQUIRED_GROUP_IDS: frozenset[str] = frozenset({
     "market_value",

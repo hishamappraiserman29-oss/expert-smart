@@ -33,9 +33,17 @@ import pytest
 # ── Builder import ─────────────────────────────────────────────────────────────
 CORE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(CORE))
-os.chdir(str(CORE))
 
 _UNAVAIL = "لا تتوفر بيانات كافية للحساب"
+
+
+@pytest.fixture(autouse=True, scope="module")
+def _core_cwd():
+    """Change working directory to CORE for this module's tests, then restore."""
+    _orig = os.getcwd()
+    os.chdir(str(CORE))
+    yield
+    os.chdir(_orig)
 
 
 @pytest.fixture(scope="module")

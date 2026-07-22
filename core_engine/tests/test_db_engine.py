@@ -12,17 +12,21 @@ import pytest
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.db import (  # noqa: E402
-    ReportRecord,
-    count_reports,
-    delete_report,
-    get_report,
-    list_reports,
-    save_report,
-    update_report,
-)
+    from reports.db import (  # noqa: E402
+        ReportRecord,
+        count_reports,
+        delete_report,
+        get_report,
+        list_reports,
+        save_report,
+        update_report,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 @pytest.fixture()

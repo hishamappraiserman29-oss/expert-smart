@@ -26,9 +26,13 @@ from unittest.mock import MagicMock, patch
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from mcp_bridge import APIResponse, ExpertSmartBridge, mcp
+    from mcp_bridge import APIResponse, ExpertSmartBridge, mcp
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Mock helpers ──────────────────────────────────────────────────────────────

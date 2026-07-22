@@ -20,14 +20,18 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.purpose_adapter import AdjustedValuation
-from valuation_engines.composite_aggregator import (
-    AggregationResult,
-    CompositeAggregatorError,
-    aggregate,
-)
+    from adapters.purpose_adapter import AdjustedValuation
+    from valuation_engines.composite_aggregator import (
+        AggregationResult,
+        CompositeAggregatorError,
+        aggregate,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 # ─────────────────────────────────────────────────────────────────────
 # Helpers

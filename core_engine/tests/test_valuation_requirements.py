@@ -30,22 +30,26 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from adapters.valuation_requirements import (  # noqa: E402
-    ASSET_TYPE_TO_FAMILY_ID,
-    REQUIREMENTS_MATRIX,
-    SUPPORTED_ASSET_TYPES,
-    SUPPORTED_PURPOSES,
-    SUPPORTED_PURPOSES_BY_ASSET_TYPE,
-    FieldSpec,
-    RequirementsViolation,
-    ValuationRequirements,
-    get_requirements,
-    list_supported_asset_types,
-    list_supported_purposes,
-    validate_result,
-)
+    from adapters.valuation_requirements import (  # noqa: E402
+        ASSET_TYPE_TO_FAMILY_ID,
+        REQUIREMENTS_MATRIX,
+        SUPPORTED_ASSET_TYPES,
+        SUPPORTED_PURPOSES,
+        SUPPORTED_PURPOSES_BY_ASSET_TYPE,
+        FieldSpec,
+        RequirementsViolation,
+        ValuationRequirements,
+        get_requirements,
+        list_supported_asset_types,
+        list_supported_purposes,
+        validate_result,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Minimal stub for AssetValuationResult ─────────────────────────────────────

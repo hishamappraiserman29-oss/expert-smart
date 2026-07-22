@@ -27,10 +27,14 @@ for _p in (str(_CORE), str(_ROOT)):
         sys.path.insert(0, _p)
 
 os.environ.setdefault("JWT_SECRET", "test-secret-e2e-bundle")
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app
-from auth.tokens import generate_token as _gen_token
+    from bridge_api import app
+    from auth.tokens import generate_token as _gen_token
+finally:
+    os.chdir(_ORIG_CWD)
 _AUTH_HDR = {"Authorization": f"Bearer {_gen_token('test-user-e2e')}"}
 from database.batch_store import BatchStore
 

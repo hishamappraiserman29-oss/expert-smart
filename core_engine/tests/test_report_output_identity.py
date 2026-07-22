@@ -61,34 +61,38 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.report_identity import (  # noqa: E402
-    APPRAISER_EMAIL,
-    APPRAISER_NAME,
-    APPRAISER_TEL,
-    FIRM_NAME,
-    OUTPUT_AUDIENCES,
-    FILE_FORMATS,
-    ReportOutputMetadata,
-    build_report_metadata,
-    is_excel_allowed_for_audience,
-    normalize_audience,
-)
-from reports.report_profiles import (  # noqa: E402
-    get_report_profile,
-    normalize_report_style,
-)
-from reports.pdf.pdf_engine import _FOOTER_TEXT, generate_pdf  # noqa: E402
-from reports.pdf.sections.main_report_pdf import render_main_report  # noqa: E402
-from reports.sheets.cover_metadata_sheet import apply_cover_metadata_sheet  # noqa: E402
-from reports.sheets.formula_library_sheet import apply_formula_library_sheet  # noqa: E402
-from reports.sheets.source_log_sheet import apply_source_log_sheet  # noqa: E402
-from reports.sheets.human_approval_log_sheet import apply_human_approval_log_sheet  # noqa: E402
+    from reports.report_identity import (  # noqa: E402
+        APPRAISER_EMAIL,
+        APPRAISER_NAME,
+        APPRAISER_TEL,
+        FIRM_NAME,
+        OUTPUT_AUDIENCES,
+        FILE_FORMATS,
+        ReportOutputMetadata,
+        build_report_metadata,
+        is_excel_allowed_for_audience,
+        normalize_audience,
+    )
+    from reports.report_profiles import (  # noqa: E402
+        get_report_profile,
+        normalize_report_style,
+    )
+    from reports.pdf.pdf_engine import _FOOTER_TEXT, generate_pdf  # noqa: E402
+    from reports.pdf.sections.main_report_pdf import render_main_report  # noqa: E402
+    from reports.sheets.cover_metadata_sheet import apply_cover_metadata_sheet  # noqa: E402
+    from reports.sheets.formula_library_sheet import apply_formula_library_sheet  # noqa: E402
+    from reports.sheets.source_log_sheet import apply_source_log_sheet  # noqa: E402
+    from reports.sheets.human_approval_log_sheet import apply_human_approval_log_sheet  # noqa: E402
 
-from fpdf import FPDF  # noqa: E402
-from openpyxl import Workbook  # noqa: E402
-from reports.pdf.pdf_components import register_fonts  # noqa: E402
+    from fpdf import FPDF  # noqa: E402
+    from openpyxl import Workbook  # noqa: E402
+    from reports.pdf.pdf_components import register_fonts  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

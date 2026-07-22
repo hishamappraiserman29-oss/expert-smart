@@ -24,13 +24,17 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-os.environ.setdefault("JWT_SECRET", "test-secret-saas-suite")
-os.environ.setdefault("ADMIN_USER_IDS", "test-admin-saas")
+    os.environ.setdefault("JWT_SECRET", "test-secret-saas-suite")
+    os.environ.setdefault("ADMIN_USER_IDS", "test-admin-saas")
 
-import bridge_api
-from auth.tokens import generate_token as _gen_token
+    import bridge_api
+    from auth.tokens import generate_token as _gen_token
+finally:
+    os.chdir(_ORIG_CWD)
 
 _client = bridge_api.app.test_client()
 _ADMIN_HDR = {"Authorization": f"Bearer {_gen_token('test-admin-saas')}"}

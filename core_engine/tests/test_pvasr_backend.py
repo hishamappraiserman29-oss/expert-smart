@@ -14,10 +14,14 @@ _ROOT = _CORE.parent
 for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app
-import professional_valuation_routes as _pvr
+    from bridge_api import app
+    import professional_valuation_routes as _pvr
+finally:
+    os.chdir(_ORIG_CWD)
 
 _BASE: dict = {
     "client_name":        "PVASR Test",

@@ -3,6 +3,7 @@ import importlib.util
 import json
 import os
 import pathlib
+import shutil
 
 import pytest
 
@@ -723,27 +724,106 @@ _generate_tax_appeal_archetypes_artifacts()
 _generate_all_tax_appeal_qa_dirs()
 
 
+def _clear_dir_contents(d: pathlib.Path) -> None:
+    """Delete all items inside *d*, keeping *d* itself.
+
+    Windows-safe: item deletions are individually wrapped in try/except so a
+    brief file lock (Defender scan, indexer) never propagates as an error.
+    Directories are removed with ignore_errors=True for the same reason.
+    """
+    d.mkdir(parents=True, exist_ok=True)
+    for _item in list(d.iterdir()):
+        try:
+            if _item.is_dir():
+                shutil.rmtree(_item, ignore_errors=True)
+            else:
+                _item.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+# Per-request subdirs cleared between every test (function-scoped).
+# Excludes certified_outputs/ — C's session-scoped fixture builds multi-batch
+# workbooks there and batch2 depends on batch1 persisting within the same session.
+_PV_SUBDIRS_BETWEEN_TESTS: tuple = (
+    "comparables", "evidence", "evidence_files", "method_runs",
+    "peer_reviews", "peer_review_events", "advanced_reviews",
+    "advanced_review_events", "output_registry",
+    "output_events", "preliminary_outputs", "preliminary_approvals",
+    "certification_gate", "certification_events", "reconciliation",
+    "comparable_import_files", "import_jobs", "sources",
+)
+
+# certified_outputs/ is only cleared once at session start so that
+# test_pv_excel_template_driven_canary_runtime's session-scoped fixtures
+# can accumulate batch outputs across test function invocations.
+_PV_SUBDIRS_SESSION_ONLY: tuple = ("certified_outputs",)
+
+# Tax-appeal per-request directories that accumulate stale entries across sessions.
+_TAX_PER_REQ_DIRS: tuple = (
+    _ROOT / "core_engine" / "instance" / "tax_appeal_evidence",
+    _ROOT / "core_engine" / "instance" / "tax_appeal_field_mappings",
+    _ROOT / "core_engine" / "instance" / "tax_appeal_source_registry",
+)
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _clean_per_req_dirs_at_session_start():
+    """Clear ALL per-request subdirectory contents ONCE at session start.
+
+    Removes stale files from prior sessions.  All subdirs — including
+    certified_outputs/ — are cleared here so each new session begins clean.
+    Within a session, certified_outputs/ is intentionally NOT cleared between
+    individual tests (see _reset_pvr_store), allowing C's session-scoped
+    fixtures to accumulate batch workbook files across test function calls.
+
+    The JSONL flat-file stores are NOT cleared here; they are truncated before
+    every test by _reset_pvr_store.
+    """
+    _pvr_base  = _ROOT / "core_engine" / "instance" / "professional_valuation"
+    _pvr_base.mkdir(parents=True, exist_ok=True)
+    for _sub in _PV_SUBDIRS_BETWEEN_TESTS + _PV_SUBDIRS_SESSION_ONLY:
+        _clear_dir_contents(_pvr_base / _sub)
+    for _d in _TAX_PER_REQ_DIRS:
+        _clear_dir_contents(_d)
+    yield
+
+
 @pytest.fixture(autouse=True)
 def _reset_pvr_store():
-    """Truncate requests.jsonl before every test so the file never grows large
-    enough to slow down _update_pvr or cause _read_pvr to return None."""
-    _pvr_base = _ROOT / "core_engine" / "instance" / "professional_valuation"
+    """Truncate flat JSONL request stores and clear PV per-request subdirs before every test.
+
+    Flat JSONL files (requests.jsonl, events.jsonl, leads.jsonl) are truncated.
+    Per-request subdirectories in professional_valuation/ — EXCEPT certified_outputs/
+    — are cleared item-by-item so each test starts with a clean slate.
+    certified_outputs/ is excluded because C's session-scoped fixtures build
+    multi-batch workbooks there and later batches depend on earlier ones persisting.
+    Tax-appeal per-request directories are NOT cleared between tests — B's tests
+    intentionally share evidence/mapping data across consecutive test functions;
+    they are cleared only once at session start via _clean_per_req_dirs_at_session_start.
+    """
+    _pvr_base  = _ROOT / "core_engine" / "instance" / "professional_valuation"
+    _inst_base = _ROOT / "core_engine" / "instance"
+
+    # Truncate flat JSONL stores.
     _pvr_base.mkdir(parents=True, exist_ok=True)
     for _fname in ("requests.jsonl", "events.jsonl"):
-        _fp = _pvr_base / _fname
-        _fp.write_text("", encoding="utf-8")
+        (_pvr_base / _fname).write_text("", encoding="utf-8")
 
-    # Also truncate all shared backend stores to prevent state contamination
-    # across the full test suite (the SRB, TAB, and shared-request stores grow
-    # unboundedly between test runs and cause spurious 404 / ordering failures).
     _store_pairs = [
-        (_ROOT / "core_engine" / "instance" / "requests",       "requests.jsonl"),
-        (_ROOT / "core_engine" / "instance" / "tax_appeal_requests", "requests.jsonl"),
-        (_ROOT / "core_engine" / "tax_appeal",                  "leads.jsonl"),
+        (_inst_base / "requests",              "requests.jsonl"),
+        (_inst_base / "tax_appeal_requests",   "requests.jsonl"),
+        (_ROOT / "core_engine" / "tax_appeal", "leads.jsonl"),
     ]
     for _base_dir, _fname in _store_pairs:
         _base_dir.mkdir(parents=True, exist_ok=True)
         (_base_dir / _fname).write_text("", encoding="utf-8")
+
+    # Clear PV per-request subdirs (all except certified_outputs/).
+    # Tax-appeal per-request dirs are only cleared at session start — B's tests
+    # intentionally share evidence/mapping data across consecutive test functions.
+    for _sub in _PV_SUBDIRS_BETWEEN_TESTS:
+        _clear_dir_contents(_pvr_base / _sub)
 
     yield
 

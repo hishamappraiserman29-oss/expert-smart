@@ -2146,6 +2146,36 @@ def _approve_prelim(client, rid, section):
     ).get_json()
 
 
+# ── PVORD: Order-independence regression (cross-contamination fix) ────────────
+def test_PVORD01_write_per_request_sentinel_for_cleanup_verification():
+    """Write a sentinel file to comparables/ so the next test can verify it is
+    cleaned by _reset_pvr_store.  Do not assert anything here; the sentinel's
+    presence is the precondition that makes PVORD02 a meaningful regression test."""
+    _pv_base = _CORE / "instance" / "professional_valuation"
+    (_pv_base / "comparables").mkdir(parents=True, exist_ok=True)
+    (_pv_base / "comparables" / "_pvord_sentinel.jsonl").write_text(
+        '{"sentinel": true}', encoding="utf-8"
+    )
+
+
+def test_PVORD02_per_request_dirs_clean_before_each_test():
+    """Order-independence regression: per-request dirs must be empty at test start.
+
+    PVORD01 writes a sentinel file into comparables/.  _reset_pvr_store (with the
+    per-request-dir wipe fix) removes it before this test runs.  If the fix is
+    reverted, the sentinel survives and this assertion fails, proving that stale
+    per-request files accumulate and contaminate subsequent tests.
+    """
+    _pv_base = _CORE / "instance" / "professional_valuation"
+    for _sub in ("comparables", "evidence", "method_runs", "peer_reviews", "sources"):
+        _d = _pv_base / _sub
+        stale = list(_d.glob("*")) if _d.exists() else []
+        assert not stale, (
+            f"Stale per-request files in {_sub}/ at test start "
+            f"(fix reverted?): {[f.name for f in stale[:5]]}"
+        )
+
+
 # ── PVF01: schema requires auth ───────────────────────────────────────────────
 def test_PVF01_schema_requires_auth(client):
     resp = client.get(_schema_url())

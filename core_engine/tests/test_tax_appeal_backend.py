@@ -42,11 +42,13 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+_ORIG_CWD = os.getcwd()
 os.chdir(str(_CORE))
 
 from bridge_api import app                   # noqa: E402
 from auth.tokens import generate_token       # noqa: E402
 import tax_appeal_routes as _tar            # noqa: E402
+os.chdir(_ORIG_CWD)
 
 _TEST_SECRET = "tax-appeal-test-secret-strong-32chars"
 
@@ -5744,7 +5746,7 @@ def test_TAB393_no_internal_paths_in_safe_response(client):
 # TAB394 — QA visual mapping output files exist
 def test_TAB394_visual_mapping_qa_outputs_exist(client):
     from pathlib import Path
-    qa_dir = Path("instance/manual_review_outputs/tax_appeal_evidence_visual_mapping")
+    qa_dir = Path(__file__).resolve().parents[1] / "instance" / "manual_review_outputs" / "tax_appeal_evidence_visual_mapping"
     assert qa_dir.exists(), f"QA output dir missing: {qa_dir}"
     required = [
         "09_evidence_visual_mapping_summary.json",

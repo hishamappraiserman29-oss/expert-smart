@@ -8,7 +8,8 @@ Run: python -m pytest core_engine/tests/test_pv_restore_common_assets_3weeks.py 
 """
 import pathlib, re, json, pytest
 
-HTML = pathlib.Path("frontend/index.html").read_text(encoding="utf-8")
+_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+HTML = (_ROOT / "frontend/index.html").read_text(encoding="utf-8")
 
 # ─── helpers ───────────────────────────────────────────────────────────────────
 

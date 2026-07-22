@@ -74,13 +74,13 @@ def test_FT10_no_fake_ann_output():
 
 # ── Workbook content ──────────────────────────────────────────────────────────
 
-def test_FT11_workbook_has_50_sheets():
+def test_FT11_workbook_has_73_sheets():
     try:
         import openpyxl
     except ImportError:
         pytest.skip("openpyxl not installed")
     wb = openpyxl.load_workbook(_WB, read_only=True, data_only=True)
-    assert len(wb.sheetnames) == 50, f"Expected 50 sheets, got {len(wb.sheetnames)}"
+    assert len(wb.sheetnames) == 73, f"Expected 73 sheets, got {len(wb.sheetnames)}"
     wb.close()
 
 def test_FT12_required_sheets_present():

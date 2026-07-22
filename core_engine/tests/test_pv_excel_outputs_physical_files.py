@@ -6,10 +6,9 @@ import json
 import pathlib
 import pytest
 
-QA     = pathlib.Path(
-    "core_engine/instance/manual_review_outputs/"
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent.parent
+QA     = _PROJECT_ROOT / "core_engine" / "instance" / "manual_review_outputs" / \
     "professional_valuation_full_page_uat_legacy_excel_visual_review"
-)
 EXCEL_OUT   = QA / "excel_outputs"
 AUDIT_JSON  = EXCEL_OUT / "00_excel_outputs_filesystem_audit.json"
 FINAL_RPT   = QA / "final_report" / "final_professional_valuation_full_page_uat_report.txt"

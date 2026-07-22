@@ -8,7 +8,7 @@ import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent.parent))
 
-HTML = pathlib.Path("frontend/index.html")
+HTML = pathlib.Path(__file__).resolve().parents[2] / "frontend" / "index.html"
 
 CORE_TYPES = ["traditional_report", "detailed_report", "professional_report"]
 

@@ -12,3 +12,8 @@ nest-asyncio>=1.6.0,<2.0
 # MCP bridge tests (test_ph2_coverage_gaps, test_phase_16/18/19/21_e2e)
 # import mcp_bridge.py which depends on fastmcp at the top level.
 fastmcp>=3.0.0,<4.0
+
+# PDF text extraction — required by 4 tests in test_pdf_certification,
+# test_pdf_cost_income_reconciliation, test_pdf_engine, test_pdf_sales_comparison
+# that use pytest.importorskip("pdfplumber") to validate PDF content.
+pdfplumber>=0.11.10,<0.12

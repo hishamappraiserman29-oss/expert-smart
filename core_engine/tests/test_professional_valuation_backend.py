@@ -100,11 +100,13 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
+_ORIG_CWD = os.getcwd()
 os.chdir(str(_CORE))
 
 from bridge_api import app                           # noqa: E402
 from auth.tokens import generate_token               # noqa: E402
 import professional_valuation_routes as _pvr        # noqa: E402
+os.chdir(_ORIG_CWD)
 
 _TEST_SECRET = "pvr-phase-b-test-secret-32chars!!"
 
@@ -8222,16 +8224,16 @@ def test_PVDSR_BE15_no_internal_paths_in_special_context(client):
 
 
 def test_PVDSR_BE16_detail_contains_special_asset_context(client):
-    """PVDSR-BE16: GET detail endpoint returns special_asset_requirements_context."""
-    import pytest
+    """PVDSR-BE16: GET /api/professional-valuation/requests/<id> returns special_asset_requirements_context."""
     cr = _pvdsr_create(client)
     body = cr.get_json()
     pvr_id = body.get("id") or body.get("pvr_id") or body.get("request_id")
-    if not pvr_id:
-        pytest.skip("No ID in create response")
-    dr = client.get(f"/api/professional-valuation/{pvr_id}")
-    if dr.status_code == 404:
-        pytest.skip("Detail route not found for this ID format")
+    assert pvr_id, f"No request_id in create response: {body}"
+    dr = client.get(
+        f"/api/professional-valuation/requests/{pvr_id}",
+        headers=_auth(),
+    )
+    assert dr.status_code == 200, f"Detail endpoint returned {dr.status_code}"
     detail = dr.get_json()
     assert "special_asset_requirements_context" in detail, (
         "special_asset_requirements_context missing from GET detail response"

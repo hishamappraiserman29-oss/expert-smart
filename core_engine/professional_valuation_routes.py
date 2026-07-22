@@ -3173,6 +3173,22 @@ def register(app, require_auth, limiter=None) -> None:
             "chat_upload_policy_context":            _pvcc_upload_policy,
             # PVS6 unified page context
             "unified_professional_valuation_page_context": _unified_pv_page_context,
+            # PVS3-REMOVE-35-DW: removed visible advisory sections context
+            "removed_visible_advisory_sections_context": {
+                "preliminary_method_weighting": {
+                    "visible_in_ui": False,
+                    "backend_data_preserved": True,
+                    "note_ar": "الأوزان المبدئية مخفية من الواجهة — البيانات محفوظة في الخلفية",
+                },
+                "dynamic_inline_disclosures": {
+                    "visible_in_ui": False,
+                    "backend_data_preserved": True,
+                    "note_ar": "الإفصاحات الديناميكية مخفية من الواجهة — محفوظة في الخلفية",
+                },
+                "certification_gates_preserved": True,
+                "removal_scope": "visible_advisory_sections_only",
+                "backend_integrity": "unaffected",
+            },
         }
         if _matrix_warnings:
             resp_body["matrix_warnings"] = _matrix_warnings
@@ -3366,6 +3382,7 @@ def register(app, require_auth, limiter=None) -> None:
                 _ALLOWED_TRANSITIONS.get(rec.get("status", ""), set())
                 - {"certified_report_generated"}
             ),
+            "special_asset_requirements_context": rec.get("special_asset_requirements_context", {}),
         }), 200
 
     # ── POST /api/professional-valuation/requests/<id>/transition ──────────

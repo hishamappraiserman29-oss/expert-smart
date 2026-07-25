@@ -39,10 +39,10 @@ DET_SRC  = ROOT / "core_engine" / "instance" / "manual_review_outputs" / "profes
 PRO_SRC  = ROOT / "core_engine" / "instance" / "manual_review_outputs" / "professional_valuation_professional_density_upgrade" / "actual_file" / "FINAL_PROFESSIONAL_REPORT.pdf"
 EXCEL_SRC = ROOT / "core_engine" / "instance" / "professional_valuation" / "certified_outputs" / "PVR-20260713-B11CTRL" / "PVOUT-B11508B41_final_workbook.xlsx"
 
-TRAD_SHA_EXP = "0d30ffe0973ec24fd6da141b272be82fda8b6ac30ea2e74c5941ac278e38110c"
-DET_SHA_EXP  = "3e4eeedb160f5f88f2ec7f1817d221d41d4129c00fdfbb8bf4d166e400d3bc61"
-PRO_SHA_EXP  = "3b19c1f66fc09f51b3d5caed06996951a16bc04ed4b69023e4f6e7dcae7ccd57"
-EXCEL_SHA_EXP = "a49e25e26d8fde8ac597b46a691cca61c647404d5d583373502ae5ad4ab37d0e"
+TRAD_SHA_EXP = "bfad1882f45e3484528a2e150bdec7d972df367ca71b492a4bbcab3d4801e362"
+DET_SHA_EXP  = "19cc2c07ac1107397fe86efda39c28f11d63a2d4d26a4627a9b8c2043bf039a7"
+PRO_SHA_EXP  = "5ab01f75d275e6d9f6426f2cfdbbf42cbce4498d282c6d78e841831ecc6a4c0a"
+EXCEL_SHA_EXP = "d8cc0efa65cecfc8bc9184ad0dde83d6d69c284b25eea8b1520905d417bf0e48"
 
 TRAD_PAGES = 16
 DET_PAGES  = 18
@@ -122,9 +122,16 @@ def step1_runtime_source_gate(cp: dict) -> dict:
     py_ver = sys.version.split()[0]
     fitz_ver = fitz.version[0]
 
-    # Check COM
+    # Check COM — purge stale gencache entries before dispatch to avoid CLSIDToClassMap error
     try:
         import win32com.client
+        import win32com.client.gencache as _gc
+        import sys as _sys
+        for _mod_key in list(_sys.modules.keys()):
+            if _mod_key.startswith("win32com.gen_py"):
+                del _sys.modules[_mod_key]
+        _gc.is_readonly = True
+        _gc.__dict__.pop("__build_cache", None)
         app = win32com.client.DispatchEx("Excel.Application")
         excel_ver = app.Version
         app.Quit()

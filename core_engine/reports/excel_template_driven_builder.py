@@ -4079,8 +4079,24 @@ def _b4_render_via_com(
     sheet_names: List[str],
 ) -> List[Dict[str, Any]]:
     """Render via Excel COM + PyMuPDF (called only when both are available)."""
+    import sys as _sys
     import win32com.client  # type: ignore
+    import win32com.client.gencache as _gc  # type: ignore
     import fitz  # type: ignore
+
+    # Purge any corrupt Excel typelib entries from the in-memory gencache so
+    # that Dispatch falls back to late-bound (CDispatch) for all Excel objects.
+    # The gen_py directory may contain a partial/corrupt module for Excel's
+    # typelib (CLSID 00020813-...) which causes AttributeError on CLSIDToClassMap
+    # or CLSIDToPackageMap.  Clearing these entries forces every subsequent
+    # __WrapDispatch call for Excel CLSIDs to return a plain CDispatch instead.
+    _EXCEL_TYPELIB_ID = "00020813-0000-0000-C000-000000000046"
+    for _clsid in [k for k, v in list(_gc.clsidToTypelib.items())
+                   if v and _EXCEL_TYPELIB_ID.upper() in str(v[0]).upper()]:
+        del _gc.clsidToTypelib[_clsid]
+    for _mod_key in [k for k in list(_sys.modules)
+                     if _EXCEL_TYPELIB_ID.upper() in k.upper()]:
+        del _sys.modules[_mod_key]
 
     results: List[Dict[str, Any]] = []
     xl = win32com.client.Dispatch("Excel.Application")

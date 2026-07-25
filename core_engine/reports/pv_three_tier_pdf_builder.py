@@ -62,6 +62,9 @@ def _enrich_traditional_data(data: dict) -> dict:
     values that already exist in *data*.
     """
     d = dict(data)
+    # Normalise area: API sends "area", templates expect "area_sqm"
+    if not d.get("area_sqm") and d.get("area"):
+        d["area_sqm"] = d["area"]
     d.setdefault("property_address", d.get("location", ""))
 
     # ── AVM final value fallback ──────────────────────────────────────────
@@ -534,7 +537,7 @@ def _enrich_traditional_data(data: dict) -> dict:
             parts.append(f"{_tho} ألف")
         if _hun:
             parts.append(f"{_hun}")
-        _currency_label = d.get("currency_label") or d.get("currency", "جنيه مصري")
+        _currency_label = d.get("currency_label") or d.get("currency") or "QAR"
         d["value_in_words"] = " و".join(parts) + f" {_currency_label} — إرشادي" if parts else "غير محدد"
 
     # ── income_cap_value / dcf_value for sec-income-cap-dcf ──────────────

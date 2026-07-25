@@ -173,17 +173,21 @@ def ensure_collection(
     Creates it if absent.  Returns True on success, False on any error.
     """
     try:
-        from qdrant_client.models import Distance, VectorParams  # type: ignore
-
         try:
             client.get_collection(collection_name)
             return True   # already exists — nothing to do
         except Exception:
             pass          # not found — proceed to create
 
+        try:
+            from qdrant_client.models import Distance, VectorParams  # type: ignore
+            vectors_config = VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE)
+        except ImportError:
+            vectors_config = None   # mock/fallback client doesn't need this
+
         client.create_collection(
             collection_name=collection_name,
-            vectors_config=VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE),
+            vectors_config=vectors_config,
         )
         return True
 
@@ -268,7 +272,15 @@ def seed_knowledge_base(
 
     # -- Build points and upsert ----------------------------------------------
     try:
-        from qdrant_client.models import PointStruct  # type: ignore
+        try:
+            from qdrant_client.models import PointStruct  # type: ignore
+        except ImportError:
+            class PointStruct:  # type: ignore[no-redef]
+                """Minimal fallback used when qdrant_client is unavailable (e.g. unit tests)."""
+                def __init__(self, id, vector, payload):  # noqa: A002
+                    self.id = id
+                    self.vector = vector
+                    self.payload = payload
 
         points = []
         for entry, vector in zip(entries, vectors):

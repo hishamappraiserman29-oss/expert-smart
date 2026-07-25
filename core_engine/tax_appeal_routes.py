@@ -856,13 +856,24 @@ def register(app, require_auth, limiter=None) -> None:
             pdf_path = pdf_dir / "tax_appeal_expert_draft.pdf"
             pdf_path.write_bytes(pdf_bytes)
 
-            # Advance status to appeal_report_generated
-            _update_er(request_id, {
-                "approval_status":           "appeal_report_generated",
-                "appeal_report_available":   True,
+            # Advance status to appeal_report_generated.
+            # Playwright's sync API can interact with nest_asyncio and cause the
+            # JSONL store to be zeroed out during PDF generation.  If _read_er
+            # no longer finds the record after rendering, re-persist it directly
+            # rather than silently losing the update.
+            _er_updates = {
+                "approval_status":            "appeal_report_generated",
+                "appeal_report_available":    True,
                 "appeal_report_generated_at": datetime.utcnow().isoformat(),
-                "updated_at":               datetime.utcnow().isoformat(),
-            })
+                "updated_at":                datetime.utcnow().isoformat(),
+            }
+            if _read_er(request_id) is None:
+                # Store was wiped during PDF rendering — re-persist with updates.
+                rec.update(_er_updates)
+                _ER_BASE.mkdir(parents=True, exist_ok=True)
+                _persist_er(rec)
+            else:
+                _update_er(request_id, _er_updates)
 
             return jsonify({
                 "status":     "ok",

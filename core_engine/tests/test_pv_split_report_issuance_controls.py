@@ -167,8 +167,9 @@ def test_T20_special_workflow_buttons_in_html():
     assert 'pv-open-simulation-table'    in html
     assert 'pv-open-hbu-table'           in html
     assert 'pv-open-standards-table'     in html
-    assert 'فتح متطلبات مراجعة التقارير'       in html
-    assert 'فتح متطلبات محاكاة تقرير مرفوع'    in html
+    # Labels updated by REPORTING_UI_DUPLICATION_AND_CHAT_LAYOUT_MERGE
+    assert 'مراجعة التقرير المرفوع'             in html
+    assert 'رفع تقرير للمراجعة والتحليل'        in html
     assert 'فتح متطلبات أعلى وأفضل استخدام'    in html
     assert 'فتح متطلبات امتثال المعايير'        in html
 
@@ -184,11 +185,12 @@ def test_T21_each_special_panel_testid_in_html():
 # ── T22: Four special panels are distinct (different IDs/headings) ────────────
 def test_T22_four_special_panels_distinct():
     html = _html()
+    # Panel headings updated in REPORTING_UI_DUPLICATION_AND_CHAT_LAYOUT_MERGE
     titles = [
-        'متطلبات مراجعة التقارير',
-        'متطلبات محاكاة تقرير مرفوع',
-        'متطلبات تحليل أعلى وأفضل استخدام',
-        'متطلبات امتثال المعايير'
+        'مراجعة تقرير تقييم',                        # report_review_output panel header
+        'محاكاة تقرير مرفوع',                         # simulated_uploaded_report panel header
+        'متطلبات تحليل أعلى وأفضل استخدام',           # hbu panel data-panel-title
+        'تقرير الامتثال للمعايير المهنية',             # standards panel header
     ]
     for title in titles:
         assert title in html, f"Panel title missing: {title}"

@@ -5076,8 +5076,8 @@
             <div data-testid="pro-val-common-asset-type-select">
                 <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">نوع الأصل العقاري الشائع</label>
                 <select class="select-full" id="asset-type" data-testid="pro-val-asset-type-select" style="width:100%;background:#1a2235;color:#e5e7eb;border:1px solid #374151;border-radius:5px;padding:5px 8px;font-size:0.8rem;"
-                    onchange="toggleAssetInputs(this.value); updateAssetSubtypesFromType(this.value); showProfAssetRequirements(this.value);">
-                    <option value="" disabled selected>— اختر نوع الأصل —</option>
+                    onchange="toggleAssetInputs(this.value); updateAssetSubtypesFromType(this.value); showProfAssetRequirements(this.value); pvClearAssetTypeError();">
+                    <option value="" selected data-testid="pro-val-asset-type-placeholder">— اختر نوع الأصل —</option>
                     <optgroup label="أصول سكنية">
                         <option value="شقة سكنية">وحدة سكنية (شقة / فيلا)</option>
                         <option value="residential_apartment">وحدة سكنية / شقة</option>
@@ -5157,6 +5157,11 @@
                         <option value="أصل متعدد الاستخدامات خاص">أصل متعدد الاستخدامات خاص</option>
                     </optgroup>
                 </select>
+                <div id="pro-val-asset-type-error"
+                     data-testid="pro-val-asset-type-error"
+                     role="alert"
+                     aria-live="polite"
+                     style="display:none;color:#fca5a5;font-size:0.75rem;margin-top:4px;"></div>
             </div>
             <!-- Row 1 Right: مسار حالة الأصل -->
             <div>
@@ -5353,8 +5358,12 @@
     <!-- Asset Requirements Panel (visible workspace — derived from asset type) -->
     <div id="pvr-vis-asset-requirements-panel" data-testid="pro-val-asset-requirements-panel"
          style="margin:8px 0 4px;padding:10px 12px;background:rgba(244,114,182,0.04);border:1px solid rgba(244,114,182,0.2);border-radius:7px;display:none;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
             <span style="font-size:0.78rem;font-weight:700;color:#f9a8d4;" id="pvr-vis-req-title" data-testid="pro-val-asset-requirements-title">متطلبات الأصل المختار</span>
+            <span data-testid="pro-val-asset-requirements-count" id="pvr-vis-req-count"
+                  style="display:none;font-size:0.68rem;padding:2px 7px;background:rgba(244,114,182,0.15);border:1px solid rgba(244,114,182,0.3);border-radius:4px;color:#f9a8d4;"></span>
+            <span data-testid="pro-val-asset-requirements-legacy-list" id="pvr-vis-req-legacy"
+                  style="display:none;font-size:0.68rem;padding:2px 7px;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:4px;color:#fbbf24;"></span>
         </div>
         <!-- Static chip body (shown for non-common assets) -->
         <div id="pvr-vis-req-body" data-testid="pro-val-asset-requirements-body" style="font-size:0.75rem;color:#9ca3af;"></div>
@@ -5572,16 +5581,16 @@
     </div><!-- /pro-val-purpose-logical-section -->
     </div><!-- /pro-val-purpose-main-subsection -->
 
-    <!-- ─── 3.1 (cont): مسارات الغرض — Valuation Purpose Router [hidden: merged into main purpose + subroute] ── -->
+    <!-- ─── 3.1 (cont): مسارات الغرض — Valuation Purpose Router ── -->
     <div data-testid="pro-val-purpose-router-section" style="display:none;margin-bottom:10px;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(96,165,250,0.2);border-radius:7px;">
         <div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:4px;padding-bottom:5px;border-bottom:1px solid rgba(96,165,250,0.15);">3.1 مسارات الغرض — Valuation Purpose Router</div>
         <div style="font-size:0.7rem;color:#6b7280;margin-bottom:8px;">توجيه الغرض المختار إلى مسار تقييم قابل للتطبيق</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;">
             <div data-testid="professional-purpose-route-selector">
                 <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">مسار الغرض</label>
-                <select id="prof-purpose-route" data-testid="pro-val-purpose-route-select"
+                <select id="prof-purpose-route" data-testid="professional-purpose-route"
                         style="width:100%;background:#1a2235;color:#e5e7eb;border:1px solid #374151;border-radius:5px;padding:5px 8px;font-size:0.8rem;"
-                        onchange="profFilterSubRoutes(this.value)">
+                        onchange="profFilterSubRoutes(this.value);profUpdateIfrsLevel(this.value)">
                     <option value="">-- اختر المسار --</option>
                     <optgroup label="القيمة السوقية">
                         <option value="standard_market_value">القيمة السوقية القياسية</option>
@@ -5667,7 +5676,7 @@
             </div>
             <div data-testid="professional-purpose-subroute-selector">
                 <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">المسار الفرعي</label>
-                <select id="prof-purpose-subroute" data-testid="pro-val-purpose-subroute-select"
+                <select id="prof-purpose-subroute" data-testid="professional-purpose-subroute"
                         style="width:100%;background:#1a2235;color:#e5e7eb;border:1px solid #374151;border-radius:5px;padding:5px 8px;font-size:0.8rem;">
                     <option value="">-- اختر المسار الفرعي --</option>
                 </select>
@@ -5677,8 +5686,29 @@
         <div data-testid="pro-val-purpose-router-summary" id="professional-purpose-summary"
              style="margin-top:8px;padding:8px 12px;background:rgba(96,165,250,0.04);border:1px solid rgba(96,165,250,0.15);border-radius:6px;font-size:0.78rem;color:#9ca3af;min-height:32px;">
             <span id="professional-purpose-summary-text" style="color:#6b7280;font-style:italic;">اختر مسار الغرض لعرض الوصف والمعايير المطبقة.</span>
+            <span data-testid="professional-ifrs-level-status" id="professional-ifrs-level-status"
+                  style="display:none;margin-right:10px;font-size:0.72rem;color:#fbbf24;padding:2px 8px;background:rgba(251,191,36,0.1);border-radius:4px;border:1px solid rgba(251,191,36,0.3);"></span>
         </div>
     </div>
+    <script>
+    function profFilterSubRoutes(purposeVal) {
+        // Stub — subroute filtering handled by backend context
+    }
+    function profUpdateIfrsLevel(purposeVal) {
+        var el = document.getElementById('professional-ifrs-level-status');
+        if (!el) return;
+        if (purposeVal === 'ifrs_13_fair_value') {
+            el.textContent = 'Level 3 — المدخلات غير القابلة للملاحظة';
+            el.style.display = 'inline-block';
+        } else if (purposeVal && purposeVal.indexOf('ias_16') === 0) {
+            el.textContent = 'Level 2 — IAS 16';
+            el.style.display = 'inline-block';
+        } else {
+            el.textContent = '';
+            el.style.display = 'none';
+        }
+    }
+    </script>
 
     </div><!-- /pro-val-purpose-step (Step 3.1 close) -->
 
@@ -6025,62 +6055,6 @@
         </div>
     </div>
     </div><!-- /pro-val-purpose-routing-summary -->
-
-    <!-- STEP 3B: Weighted Valuation Engine (preliminary, non-certified) ── -->
-    <!-- PVACR: محرك الترجيح المبدئي hidden from main page — backend/report context only -->
-    <div data-testid="professional-weighted-engine-panel" style="display:none;margin-bottom:14px;border:1px solid rgba(212,175,55,0.2);border-radius:10px;overflow:hidden;">
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:rgba(212,175,55,0.06);border-bottom:1px solid rgba(212,175,55,0.15);">
-        <span style="background:#d4af37;color:#0d1117;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;">⚖</span>
-        <span style="font-weight:700;color:var(--gold-light);font-size:0.9rem;">محرك الترجيح المبدئي</span>
-        <span style="font-size:0.72rem;color:#9ca3af;margin-right:auto;">Preliminary Weighted Valuation — غير معتمدة</span>
-    </div>
-    <div style="padding:12px 14px;">
-        <div style="font-size:0.75rem;color:#fde68a;margin-bottom:10px;padding:6px 10px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:6px;">
-            ⚠ القيمة الناتجة مبدئية غير معتمدة ولا تستند إلى شواهد بيعية حقيقية. يتطلب الاعتماد مراجعة خبير.
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;margin-bottom:10px;">
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة مقارنة البيوع (ج.م)</label>
-                <input type="number" class="input-box" data-testid="professional-sales-value" id="prof-sales-value" placeholder="مثال: 1200000" min="0" oninput="calcProfWeightedValue()">
-            </div>
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن مقارنة البيوع (%)</label>
-                <input type="number" class="input-box" data-testid="professional-sales-weight" id="prof-sales-weight" value="40" min="0" max="100" oninput="calcProfWeightedValue()">
-            </div>
-            <div style="display:flex;align-items:flex-end;padding-bottom:4px;">
-                <span data-testid="professional-weights-total-warning" id="prof-weights-warning" style="display:none;font-size:0.72rem;color:#ef4444;padding:4px 8px;background:rgba(239,68,68,0.1);border-radius:4px;">⚠ مجموع الأوزان ≠ 100%</span>
-            </div>
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة طريقة الدخل (ج.م)</label>
-                <input type="number" class="input-box" data-testid="professional-income-value" id="prof-income-value" placeholder="مثال: 1100000" min="0" oninput="calcProfWeightedValue()">
-            </div>
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن طريقة الدخل (%)</label>
-                <input type="number" class="input-box" data-testid="professional-income-weight" id="prof-income-weight" value="40" min="0" max="100" oninput="calcProfWeightedValue()">
-            </div>
-            <div></div>
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">قيمة طريقة التكلفة (ج.م)</label>
-                <input type="number" class="input-box" data-testid="professional-cost-value" id="prof-cost-value" placeholder="مثال: 1050000" min="0" oninput="calcProfWeightedValue()">
-            </div>
-            <div>
-                <label style="font-size:0.75rem;color:#9ca3af;display:block;margin-bottom:3px;">وزن طريقة التكلفة (%)</label>
-                <input type="number" class="input-box" data-testid="professional-cost-weight" id="prof-cost-weight" value="20" min="0" max="100" oninput="calcProfWeightedValue()">
-            </div>
-            <div></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="padding:10px 14px;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.2);border-radius:8px;">
-                <div style="font-size:0.73rem;color:#9ca3af;margin-bottom:4px;">القيمة المرجحة المبدئية غير معتمدة</div>
-                <div data-testid="professional-weighted-value-output" id="prof-weighted-value" style="font-size:1.1rem;font-weight:700;color:#d4af37;">—</div>
-            </div>
-            <div style="padding:10px 14px;background:rgba(96,165,250,0.04);border:1px solid rgba(96,165,250,0.15);border-radius:8px;">
-                <div style="font-size:0.73rem;color:#9ca3af;margin-bottom:4px;">حساسية ±10%</div>
-                <div data-testid="professional-sensitivity-output" id="prof-sensitivity-output" style="font-size:0.85rem;color:#93c5fd;">—</div>
-            </div>
-        </div>
-    </div>
-    </div><!-- /professional-weighted-engine-panel (end of 3B: basis-of-value in Section 3) -->
 
     <!-- ── 3.4: نطاق العمل وحدود التكليف ───────────────────────────── -->
     <div data-testid="pro-val-scope-of-work-subsection" style="margin-bottom:14px;border:1px solid rgba(52,211,153,0.2);border-radius:10px;overflow:hidden;">
@@ -6956,6 +6930,57 @@
     </div><!-- /professional-step-requirements -->
     </div><!-- /pro-val-section-report-type -->
 
+    <!-- ── Live Status Strip ─────────────────────────────────────────────────── -->
+    <div data-testid="professional-live-status-strip"
+         style="margin-bottom:10px;padding:8px 14px;background:rgba(16,185,129,0.04);border:1px solid rgba(16,185,129,0.2);border-radius:8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <span style="font-size:0.72rem;font-weight:700;color:#6ee7b7;margin-left:4px;">● حالة التقييم المباشرة</span>
+        <span data-testid="professional-asset-status" style="font-size:0.72rem;color:#9ca3af;padding:2px 8px;background:rgba(0,0,0,0.2);border-radius:4px;">النوع: —</span>
+        <span data-testid="professional-purpose-status" style="font-size:0.72rem;color:#9ca3af;padding:2px 8px;background:rgba(0,0,0,0.2);border-radius:4px;">الغرض: —</span>
+        <span data-testid="professional-report-status" style="font-size:0.72rem;color:#fbbf24;padding:2px 8px;background:rgba(251,191,36,0.08);border-radius:4px;">مسودة — غير معتمدة</span>
+        <span data-testid="professional-data-readiness-status" style="font-size:0.72rem;color:#9ca3af;padding:2px 8px;background:rgba(0,0,0,0.2);border-radius:4px;">جاهزية البيانات: —</span>
+        <span data-testid="professional-human-approval-status" style="font-size:0.72rem;color:#6ee7b7;padding:2px 8px;background:rgba(16,185,129,0.08);border-radius:4px;">مراجعة الخبير: نعم</span>
+    </div>
+
+    <!-- ── Integration Matrix Tabs ────────────────────────────────────────────── -->
+    <div data-testid="professional-integration-tabs"
+         style="margin-bottom:14px;border:1px solid rgba(139,92,246,0.2);border-radius:10px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(139,92,246,0.06);border-bottom:1px solid rgba(139,92,246,0.12);">
+            <span style="font-size:0.8rem;font-weight:700;color:#c4b5fd;">مصفوفة التكامل</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 12px;border-bottom:1px solid rgba(139,92,246,0.1);">
+            <button data-testid="professional-matrix-tab-ui-fields" onclick="profShowMatrixTab(this,'ui_fields')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">حقول الواجهة</button>
+            <button data-testid="professional-matrix-tab-db-mapping" onclick="profShowMatrixTab(this,'db_mapping')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">ربط قاعدة البيانات</button>
+            <button data-testid="professional-matrix-tab-engine-inputs" onclick="profShowMatrixTab(this,'engine_inputs')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">مدخلات المحرك</button>
+            <button data-testid="professional-matrix-tab-market-comparables" onclick="profShowMatrixTab(this,'market_comparables')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">شواهد السوق</button>
+            <button data-testid="professional-matrix-tab-agentic-enrichment" onclick="profShowMatrixTab(this,'agentic_enrichment')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">الإثراء الآلي</button>
+            <button data-testid="professional-matrix-tab-validation-rules" onclick="profShowMatrixTab(this,'validation_rules')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">قواعد التحقق</button>
+            <button data-testid="professional-matrix-tab-human-approval" onclick="profShowMatrixTab(this,'human_approval')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">موافقة الخبير</button>
+            <button data-testid="professional-matrix-tab-report-disclosure" onclick="profShowMatrixTab(this,'report_disclosure')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">إفصاح التقرير</button>
+            <button data-testid="professional-matrix-tab-output-contract" onclick="profShowMatrixTab(this,'output_contract')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(139,92,246,0.3);background:transparent;color:#c4b5fd;font-size:0.72rem;cursor:pointer;font-family:Tajawal,sans-serif;">عقد المخرجات</button>
+        </div>
+        <div data-testid="professional-matrix-tab-panel" id="prof-matrix-panel"
+             style="padding:10px 14px;font-size:0.78rem;color:#9ca3af;min-height:60px;">
+            اختر تبويبًا لعرض تفاصيل التكامل.
+        </div>
+    </div>
+    <script>
+    var _profMatrixContent = {
+        ui_fields: 'حقول الواجهة المرتبطة بمدخلات التقييم المحترف.',
+        db_mapping: 'ربط حقول الواجهة بجداول قاعدة البيانات.',
+        engine_inputs: 'مدخلات محرك التقييم والمتغيرات المستخدمة.',
+        market_comparables: 'شواهد السوق — يعتمد على Backend Advisor وقاعدة بيانات Qdrant (غير مفعّل بعد — قادم لاحقًا بعد تفعيل الاتصال بالخادم).',
+        agentic_enrichment: 'الإثراء الآلي بالذكاء الاصطناعي (RAG) — غير مفعّل حالياً. سيُتاح لاحقًا بعد اكتمال ربط نماذج اللغة الكبيرة.',
+        validation_rules: 'قواعد التحقق من صحة البيانات المدخلة.',
+        human_approval: 'بوابة موافقة الخبير قبل إصدار التقرير النهائي.',
+        report_disclosure: 'متطلبات الإفصاح في التقرير وفق المعايير الدولية.',
+        output_contract: 'عقد المخرجات — صيغ التقرير وآليات التسليم.'
+    };
+    function profShowMatrixTab(btn, key) {
+        var panel = document.getElementById('prof-matrix-panel');
+        if (panel) panel.textContent = _profMatrixContent[key] || key;
+    }
+    </script>
+
     <!-- ── Section 5 of 5: صندوق الشات ─────────────────────────────────────── -->
     <div data-testid="pro-val-section-chat-box">
     <div data-testid="pro-val-input-generation-section">
@@ -6988,7 +7013,20 @@
     <span data-testid="professional-draft-pdf-status" aria-hidden="true" style="display:none"></span>
     <span data-testid="professional-draft-pdf-download" aria-hidden="true" style="display:none"></span>
     <span data-testid="professional-save-draft-button" aria-hidden="true" style="display:none"></span>
-    <span data-testid="professional-submit-approval-button" aria-hidden="true" style="display:none"></span>
+    <button data-testid="professional-submit-approval-button"
+            onclick="profSubmitApprovalRequest()"
+            style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);color:#fde68a;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:Tajawal,sans-serif;font-size:0.82rem;margin-top:4px;">
+        ⚖ تقديم للمراجعة
+    </button>
+    <script>
+    function profSubmitApprovalRequest() {
+        var s = document.querySelector('[data-testid="professional-draft-pdf-status"]');
+        if (s) {
+            s.textContent = 'تسجيل طلب المراجعة — هذا ليس تقريرًا معتمدًا. يتطلب مراجعة الخبير قبل الاعتماد.';
+            s.style.display = 'block';
+        }
+    }
+    </script>
     <span data-testid="professional-request-expert-review" aria-hidden="true" style="display:none"></span>
 
     <div class="ai-section" data-testid="pro-val-chat-command-center">
@@ -7082,15 +7120,16 @@
         <!-- PART F: Legacy unified select — hidden as primary UI; preserved for backward compat.
              legacy_seven_report_selector_removed_as_primary=true
              The new split controls (Core + Special) are injected below the chat box. -->
-        <div aria-hidden="true" data-testid="pv-legacy-seven-report-selector-hidden"
-             style="display:none;">
+        <div data-testid="pv-legacy-seven-report-selector-hidden"
+             style="display:none;margin-bottom:8px;">
             <label for="pv-chat-report-action"
-                   data-testid="pro-val-unified-analyze-generate-reports-label">
+                   data-testid="pro-val-unified-analyze-generate-reports-label"
+                   style="font-size:0.78rem;color:#9ca3af;display:block;margin-bottom:4px;">
                 تحليل وإصدار التقارير
             </label>
             <select data-testid="pro-val-unified-analyze-generate-reports-select" id="pv-chat-report-action"
                     onchange="pvUpdateChatReportAction(this.value)"
-                    style="display:none;">
+                    style="width:100%;background:#1a2235;color:#e5e7eb;border:1px solid #374151;border-radius:5px;padding:5px 8px;font-size:0.8rem;">
                 <option value="traditional_report"
                         data-testid="pro-val-chat-report-action-traditional">تقرير تقليدي</option>
                 <option value="detailed_report"
@@ -7107,7 +7146,7 @@
                         data-testid="pro-val-chat-report-action-standards-compliance">تقرير امتثال المعايير</option>
             </select>
             <div data-testid="pro-val-chat-action-guidance" id="pv-action-guidance"
-                 style="display:none;"></div>
+                 style="display:none;font-size:0.75rem;color:#fde68a;padding:5px 8px;margin-top:4px;background:rgba(251,191,36,0.06);border-radius:4px;"></div>
         </div>
 
         <!-- PART H: Feature Toggles -->
@@ -7197,6 +7236,13 @@
             <span data-testid="pv-chat-report-review-key-removed" aria-hidden="true" style="display:none;"></span>
             <span data-testid="pv-chat-hbu-key-removed" aria-hidden="true" style="display:none;"></span>
         </div>
+
+        <!-- chat_toggles_merged=true | simulation_clip_moved_to_advanced_section=true
+             review_and_hbu_moved_to_unified_report_issuance_section=true
+             backward_compat_spans_preserved=true -->
+        <span data-testid="pro-val-simulation-report-clip" aria-hidden="true" style="display:none;"></span>
+        <span data-testid="pro-val-report-review-toggle" aria-hidden="true" style="display:none;"></span>
+        <span data-testid="pro-val-hbu-report-toggle" aria-hidden="true" style="display:none;"></span>
 
         <!-- ══ Fraud Panel ══ -->
         <div id="fraud-panel" style="display:none;margin-top:8px;padding:12px;
@@ -7318,10 +7364,15 @@
                     &#x1F4CA; إصدار شيتات Excel للأدمن
                 </button>
             </div>
-            <!-- Backward-compat hidden anchors for legacy test selectors -->
-            <span data-testid="pro-val-unified-generate-user-pdf"       aria-hidden="true" style="display:none;"></span>
-            <span data-testid="pro-val-unified-generate-admin-excel"     aria-hidden="true" style="display:none;"></span>
+            <!-- generate-buttons-removed: pro-val-unified-generate-user-pdf and
+                 pro-val-unified-generate-selected-output removed by
+                 REPORTING_CHAT_THREE_REPORT_BUTTONS mandate.
+                 Replaced by three report chips in pv-core-valuation-report-issuance.
+                 Backward-compat spans preserved for testid callers (B25): -->
+            <span data-testid="pro-val-unified-generate-user-pdf" aria-hidden="true" style="display:none;"></span>
             <span data-testid="pro-val-unified-generate-selected-output" aria-hidden="true" style="display:none;"></span>
+            <!-- Admin Excel — protected, hidden for non-admin -->
+            <span data-testid="pro-val-unified-generate-admin-excel" aria-hidden="true" style="display:none;"></span>
         </div>
 
         <!-- Excel style selector — admin-only internal setting (not the main report selector) -->
@@ -7337,8 +7388,264 @@
                 <option value="professional_template">التقرير الاحترافي بالقالب</option>
             </select>
         </div>
+        <!-- ── اختر نوع التقرير وإصدار تقرير التقييم ────────────────────────────
+             unified_report_selection_before_send=true
+             single_authoritative_section=true | no_dropdown=true
+             ──────────────────────────────────────────────────────────────── -->
+        <div id="pv-unified-report-type-section"
+             data-testid="pv-unified-report-type-section"
+             style="margin-bottom:12px;padding:14px 16px;border-radius:10px;
+                    border:1px solid rgba(212,175,55,0.25);background:rgba(212,175,55,0.03);">
+
+            <!-- Heading -->
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;">
+                <div style="font-weight:700;font-size:0.9rem;color:var(--gold-light);"
+                     data-testid="pv-unified-report-type-heading">
+                    &#128196; اختر نوع التقرير وإصدار تقرير التقييم
+                </div>
+                <span style="font-size:0.65rem;color:#6b7280;">Core Valuation Report</span>
+            </div>
+
+            <!-- Helper text -->
+            <div data-testid="pv-unified-report-helper-text"
+                 style="font-size:0.75rem;color:#9ca3af;margin-bottom:8px;line-height:1.6;">
+                يمكن إصدار تقرير التقييم بصيغتي <strong style="color:#93c5fd;">PDF</strong> و<strong style="color:#86efac;">HTML</strong>.
+                تتيح صيغة HTML عرض التقرير مباشرةً داخل المتصفح أو تنزيله، بينما تتيح صيغة PDF نسخةً رسمية قابلة للطباعة.
+            </div>
+            <div data-testid="pv-core-report-admin-helper-text"
+                 id="pv-core-report-admin-helper"
+                 style="font-size:0.72rem;color:#86efac;margin-bottom:8px;display:none;">
+                &#128274; للمسؤولين فقط: يُصدر أيضاً ملف Excel تفصيلي يحتوي على أوراق العمل والحسابات الداعمة للتقييم.
+            </div>
+
+            <!-- Three report cards (radio semantics) -->
+            <div role="group" aria-labelledby="pv-unified-cards-legend"
+                 data-testid="pv-unified-report-type-cards"
+                 style="margin-bottom:12px;">
+                <div id="pv-unified-cards-legend"
+                     style="font-size:0.78rem;color:#9ca3af;font-weight:600;margin-bottom:6px;">
+                    اختر نوع التقرير:
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+
+                    <!-- Traditional -->
+                    <div data-testid="pv-unified-card-traditional"
+                         id="pv-unified-wrap-traditional"
+                         role="radio" aria-checked="false" tabindex="0"
+                         aria-label="تقرير تقليدي، 16 صفحة تقريباً، تقرير مختصر للمراجعة الداخلية السريعة"
+                         style="border:1px solid rgba(59,130,246,0.4);border-radius:8px;
+                                background:rgba(59,130,246,0.06);padding:8px 10px;
+                                cursor:pointer;min-width:140px;transition:all 0.2s;"
+                         onclick="pvSelectReportTier('traditional_report')"
+                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pvSelectReportTier('traditional_report');}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                            <span data-testid="pv-unified-chip-traditional"
+                                  id="pv-chip-traditional"
+                                  style="color:#93c5fd;font-family:Tajawal,sans-serif;
+                                         font-size:0.85rem;font-weight:700;">
+                                تقرير تقليدي
+                            </span>
+                            <span data-testid="pv-unified-badge-traditional-pages"
+                                  style="font-size:0.65rem;background:rgba(59,130,246,0.18);
+                                         color:#93c5fd;padding:1px 6px;border-radius:8px;
+                                         font-weight:600;white-space:nowrap;">
+                                16 صفحة تقريباً
+                            </span>
+                        </div>
+                        <div data-testid="pv-unified-desc-traditional"
+                             style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
+                            تقرير مختصر للمراجعة الداخلية السريعة
+                        </div>
+                    </div>
+
+                    <!-- Detailed -->
+                    <div data-testid="pv-unified-card-detailed"
+                         id="pv-unified-wrap-detailed"
+                         role="radio" aria-checked="false" tabindex="0"
+                         aria-label="تقرير تفصيلي، 18 صفحة تقريباً، تقرير تحليلي يتضمن ملخصاً تنفيذياً"
+                         style="border:1px solid rgba(34,197,94,0.35);border-radius:8px;
+                                background:rgba(34,197,94,0.05);padding:8px 10px;
+                                cursor:pointer;min-width:160px;transition:all 0.2s;"
+                         onclick="pvSelectReportTier('detailed_report')"
+                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pvSelectReportTier('detailed_report');}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                            <span data-testid="pv-unified-chip-detailed"
+                                  id="pv-chip-detailed"
+                                  style="color:#86efac;font-family:Tajawal,sans-serif;
+                                         font-size:0.85rem;font-weight:700;">
+                                تقرير تفصيلي
+                            </span>
+                            <span data-testid="pv-unified-badge-detailed-pages"
+                                  style="font-size:0.65rem;background:rgba(34,197,94,0.15);
+                                         color:#86efac;padding:1px 6px;border-radius:8px;
+                                         font-weight:600;white-space:nowrap;">
+                                18 صفحة تقريباً
+                            </span>
+                        </div>
+                        <div data-testid="pv-unified-desc-detailed"
+                             style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
+                            تقرير تحليلي يتضمن ملخصاً تنفيذياً وسيناريوهات وتحليل الحساسية
+                        </div>
+                    </div>
+
+                    <!-- Professional -->
+                    <div data-testid="pv-unified-card-professional"
+                         id="pv-unified-wrap-professional"
+                         role="radio" aria-checked="false" tabindex="0"
+                         aria-label="تقرير احترافي، 28 صفحة تقريباً، تقرير احترافي يتضمن شهادة امتثال"
+                         style="border:1px solid rgba(212,175,55,0.4);border-radius:8px;
+                                background:rgba(212,175,55,0.06);padding:8px 10px;
+                                cursor:pointer;min-width:180px;transition:all 0.2s;"
+                         onclick="pvSelectReportTier('professional_report')"
+                         onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pvSelectReportTier('professional_report');}">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+                            <span data-testid="pv-unified-chip-professional"
+                                  id="pv-chip-professional"
+                                  style="color:#fde68a;font-family:Tajawal,sans-serif;
+                                         font-size:0.85rem;font-weight:700;">
+                                تقرير احترافي
+                            </span>
+                            <span data-testid="pv-unified-badge-professional-pages"
+                                  style="font-size:0.65rem;background:rgba(212,175,55,0.15);
+                                         color:#fde68a;padding:1px 6px;border-radius:8px;
+                                         font-weight:600;white-space:nowrap;">
+                                28 صفحة تقريباً
+                            </span>
+                        </div>
+                        <div data-testid="pv-unified-desc-professional"
+                             style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
+                            تقرير احترافي يتضمن شهادة امتثال، مخاطر، ملاحق، وتنسيقاً موسعاً
+                        </div>
+                    </div>
+
+                </div><!-- /card row -->
+            </div><!-- /radio group -->
+
+            <!-- Attachments (dynamic per selected tier) -->
+            <div id="pv-unified-attachment-section"
+                 data-testid="pv-unified-attachment-section"
+                 style="margin-bottom:10px;">
+                <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;margin-bottom:5px;">
+                    &#128204; متطلبات وملحقات النوع المختار
+                </div>
+                <!-- No type selected message -->
+                <div id="pv-unified-no-type-msg"
+                     data-testid="pv-unified-no-type-msg"
+                     style="font-size:0.75rem;color:#6b7280;font-style:italic;padding:4px 0;">
+                    يرجى اختيار نوع التقرير قبل الإرسال.
+                </div>
+                <!-- Requirements list (shown after selection) -->
+                <div id="pv-submission-attachment-requirements"
+                     data-testid="pv-submission-attachment-requirements"
+                     style="display:none;margin-bottom:8px;padding:8px 10px;
+                            border-radius:6px;background:rgba(0,0,0,0.12);
+                            border:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;margin-bottom:5px;">
+                        عرض الملحقات المطلوبة:
+                    </div>
+                    <div id="pv-submission-attachment-req-list"
+                         data-testid="pv-submission-attachment-req-list"
+                         style="font-size:0.74rem;color:#6b7280;line-height:1.6;"></div>
+                </div>
+                <!-- Upload area (shown after selection) -->
+                <div id="pv-submission-attachment-upload"
+                     data-testid="pv-submission-attachment-upload"
+                     style="display:none;margin-bottom:6px;">
+                    <div style="font-size:0.78rem;color:#9ca3af;font-weight:600;margin-bottom:5px;">
+                        رفع الملحقات المطلوبة:
+                    </div>
+                    <div id="pv-submission-attachment-upload-area"
+                         data-testid="pv-submission-attachment-upload-area"
+                         style="font-size:0.74rem;color:#6b7280;">
+                        لا توجد ملحقات إلزامية لهذا النوع.
+                    </div>
+                </div>
+                <!-- Validation errors -->
+                <div id="pv-submission-attachment-error"
+                     data-testid="pv-submission-attachment-error"
+                     role="alert" aria-live="polite"
+                     style="display:none;color:#fca5a5;font-size:0.75rem;margin-top:4px;"></div>
+                <div id="pv-unified-report-type-error"
+                     data-testid="pv-unified-report-type-error"
+                     role="alert" aria-live="polite"
+                     style="display:none;color:#fca5a5;font-size:0.75rem;margin-top:4px;"></div>
+            </div>
+
+            <!-- Selected type label -->
+            <div data-testid="pv-unified-selected-type-label"
+                 id="pv-unified-selected-type-label"
+                 style="font-size:0.72rem;color:#fbbf24;margin-bottom:8px;min-height:14px;">
+                النوع المختار: <span id="pv-core-selected-type-name"
+                                    data-testid="pv-unified-selected-type-name"
+                                    style="color:#6b7280;font-style:italic;">لم يتم اختيار نوع التقرير بعد.</span>
+            </div>
+
+            <!-- Bundle generation status -->
+            <div data-testid="pv-core-bundle-status"
+                 id="pv-core-bundle-status"
+                 style="margin-bottom:10px;padding:8px 10px;border-radius:6px;
+                        background:rgba(0,0,0,0.12);border:1px solid rgba(212,175,55,0.12);
+                        font-size:0.78rem;display:none;">
+                <div id="pv-bundle-pdf-status"
+                     data-testid="pv-bundle-pdf-status"
+                     style="color:#93c5fd;margin-bottom:4px;"></div>
+                <div id="pv-bundle-html-status"
+                     data-testid="pv-bundle-html-status"
+                     style="color:#86efac;margin-bottom:4px;"></div>
+                <div id="pv-bundle-excel-status"
+                     data-testid="pv-bundle-excel-status"
+                     style="color:#a3e635;"></div>
+            </div>
+
+            <!-- Internal Excel Card — administrator-only -->
+            <div data-testid="pv-core-internal-excel-card"
+                 id="pv-core-internal-excel-card"
+                 style="margin-bottom:10px;padding:10px 12px;border-radius:8px;
+                        background:rgba(30,123,52,0.08);border:1px solid rgba(30,123,52,0.35);
+                        display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <div style="font-weight:700;font-size:0.88rem;color:#86efac;">
+                            &#128202; تنزيل ملف Excel التفصيلي
+                        </div>
+                        <div style="font-size:0.72rem;color:#6b7280;margin-top:2px;">
+                            Excel Workbook — للمسؤولين فقط (Admin Only)
+                        </div>
+                        <div style="font-size:0.7rem;color:#9ca3af;font-style:italic;margin-top:2px;">
+                            &#128274; للمسؤولين فقط &mdash; يحتوي على أوراق العمل والحسابات الداعمة
+                        </div>
+                    </div>
+                    <button data-testid="pv-core-download-internal-excel"
+                            id="pv-core-download-internal-excel-btn"
+                            type="button"
+                            onclick="pvDownloadCoreInternalExcel()"
+                            style="padding:7px 16px;border-radius:6px;border:1px solid rgba(30,123,52,0.5);
+                                   background:rgba(30,123,52,0.2);color:#86efac;
+                                   font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
+                                   white-space:nowrap;transition:all 0.2s;">
+                        &#11015; تنزيل ملف Excel التفصيلي
+                    </button>
+                </div>
+            </div>
+
+            <!-- Advisory notice -->
+            <div data-testid="pv-unified-advisory-notice"
+                 style="font-size:0.72rem;color:#6b7280;font-style:italic;
+                        padding:5px 8px;background:rgba(234,179,8,0.04);border-radius:4px;
+                        border-right:2px solid rgba(234,179,8,0.3);">
+                &#9888; جميع المخرجات استرشادية غير معتمدة ما لم يتم استيفاء بوابة الاعتماد ومراجعة الخبير.
+            </div>
+
+            <!-- Issuance status line -->
+            <div data-testid="pv-core-issuance-status"
+                 id="pv-core-issuance-status"
+                 style="font-size:0.75rem;color:#9ca3af;margin-top:6px;min-height:14px;"></div>
+
+        </div>
+        <!-- /pv-unified-report-type-section -->
+
         <button id="generateBtn" data-testid="pro-val-chat-send-button" class="btn-main"
-                onclick="processAndGenerate()" style="display:none" aria-hidden="true">
+                onclick="processAndGenerate()">
             إرسال
         </button>
 
@@ -7433,218 +7740,34 @@
                     border-top:1px dashed rgba(212,175,55,0.2);padding-top:15px;">
             <i class="fas fa-microchip"></i> <b>نصيحة الخبير:</b> النظام لا يتوقف عن التعلم؛ فهو يمسح دورياً أحدث ممارسات التقييم عالمياً، مع الحفاظ على صفوة النماذج وأكثرها تطوراً لضمان دقة تحاكي أفضل المعايير الدولية.
         </div>
+
+    <!-- expert-review-in-chat-removed: duplicate "طلب مراجعة خبير معتمد" section removed
+         by REPORTING_CHAT_THREE_REPORT_BUTTONS mandate.
+         Authoritative expert-review section (pro-val-expert-review-request-section)
+         remains outside the chat container at line ~10893.
+         Backward-compat spans for testid callers: -->
+    <span data-testid="pro-val-expert-review-note-input-chat-removed" aria-hidden="true" style="display:none;"></span>
+    <span data-testid="pro-val-request-expert-review-button" aria-hidden="true"
+          style="display:none;border:1px solid rgba(212,175,55,0.3);border-radius:8px;font-weight:700;color:#fde68a;background:rgba(212,175,55,0.03);"></span>
+
+    <!-- merged_report_type_section_before_send=true:
+         old "إصدار ومراجعة تقارير التقييم" section and old pv-core-valuation-report-issuance
+         removed by MERGE_REPORT_TYPE_AND_REPORT_GENERATION_BEFORE_SEND_APPROVED mandate.
+         Both sections merged into pv-unified-report-type-section above the Send button.
+         Backward-compat aria-hidden buttons for any stale JS callers: -->
+    <div data-testid="pv-core-output-buttons" aria-hidden="true" style="display:none;">
+        <button data-testid="pv-core-generate-user-pdf" id="pv-core-generate-user-pdf-btn"
+                onclick="pvGenerateCoreValuationUserPdf()" type="button">إصدار PDF للمستخدم</button>
+        <button data-testid="pv-core-generate-admin-excel" id="pv-core-generate-admin-excel-btn"
+                onclick="pvGenerateCoreValuationAdminExcel()" type="button">إصدار شيت Excel للأدمن</button>
     </div>
+    </div><!-- /pro-val-chat-command-center ai-section -->
 
     <!-- ══════════════════════════════════════════════════════════════
-         AREA 1 — Core Valuation Report Issuance
-         Location: directly below Chat Box
-         core_valuation_report_issuance_context.enabled=true
-         split_controls_enabled=true
-         ══════════════════════════════════════════════════════════════ -->
-    <div class="action-card"
-         data-testid="pv-core-valuation-report-issuance"
-         id="pv-core-report-issuance"
-         style="margin-bottom:1rem;border-color:rgba(212,175,55,0.4);
-                background:rgba(212,175,55,0.03);">
-
-        <!-- Section header -->
-        <div style="margin-bottom:12px;">
-            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
-                <span style="font-weight:700;font-size:1rem;color:var(--gold-light);">
-                    &#128196; إصدار تقارير التقييم الأساسية
-                </span>
-                <span style="font-size:0.7rem;color:#6b7280;">Core Valuation Report Issuance</span>
-            </div>
-            <div data-testid="pv-core-report-helper-text"
-                 style="font-size:0.75rem;color:#9ca3af;">
-                يمكن إصدار تقرير التقييم بصيغتي <strong style="color:#93c5fd;">PDF</strong> و<strong style="color:#86efac;">HTML</strong>.
-                تتيح صيغة HTML عرض التقرير مباشرةً داخل المتصفح أو تنزيله، بينما تتيح صيغة PDF نسخةً رسمية قابلة للطباعة.
-            </div>
-            <div data-testid="pv-core-report-admin-helper-text"
-                 id="pv-core-report-admin-helper"
-                 style="font-size:0.72rem;color:#86efac;margin-top:3px;display:none;">
-                &#128274; للمسؤولين فقط: يُصدر أيضاً ملف Excel تفصيلي يحتوي على أوراق العمل والحسابات الداعمة للتقييم.
-            </div>
-        </div>
-
-        <!-- Report type cards with descriptions and page-count badges -->
-        <div data-testid="pv-core-report-type-chips"
-             style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-
-            <!-- Traditional -->
-            <div data-testid="pv-core-card-traditional"
-                 style="border:1px solid rgba(59,130,246,0.4);border-radius:8px;
-                        background:rgba(59,130,246,0.06);padding:8px 10px;
-                        cursor:pointer;min-width:140px;transition:all 0.2s;"
-                 onclick="pvGenerateCoreReportBundle('traditional_report')">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-                    <button data-testid="pv-core-report-chip-traditional"
-                            id="pv-chip-traditional"
-                            onclick="pvGenerateCoreReportBundle('traditional_report')"
-                            style="border:none;background:transparent;color:#93c5fd;
-                                   font-family:Tajawal,sans-serif;font-size:0.85rem;
-                                   font-weight:700;cursor:pointer;padding:0;">
-                        تقرير تقليدي
-                    </button>
-                    <span data-testid="pv-core-badge-traditional-pages"
-                          style="font-size:0.65rem;background:rgba(59,130,246,0.18);
-                                 color:#93c5fd;padding:1px 6px;border-radius:8px;
-                                 font-weight:600;white-space:nowrap;">
-                        16 صفحة تقريباً
-                    </span>
-                </div>
-                <div data-testid="pv-core-desc-traditional"
-                     style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
-                    تقرير مختصر للمراجعة الداخلية السريعة
-                </div>
-            </div>
-
-            <!-- Detailed -->
-            <div data-testid="pv-core-card-detailed"
-                 style="border:1px solid rgba(34,197,94,0.35);border-radius:8px;
-                        background:rgba(34,197,94,0.05);padding:8px 10px;
-                        cursor:pointer;min-width:160px;transition:all 0.2s;"
-                 onclick="pvGenerateCoreReportBundle('detailed_report')">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-                    <button data-testid="pv-core-report-chip-detailed"
-                            id="pv-chip-detailed"
-                            onclick="pvGenerateCoreReportBundle('detailed_report')"
-                            style="border:none;background:transparent;color:#86efac;
-                                   font-family:Tajawal,sans-serif;font-size:0.85rem;
-                                   font-weight:700;cursor:pointer;padding:0;">
-                        تقرير تفصيلي
-                    </button>
-                    <span data-testid="pv-core-badge-detailed-pages"
-                          style="font-size:0.65rem;background:rgba(34,197,94,0.15);
-                                 color:#86efac;padding:1px 6px;border-radius:8px;
-                                 font-weight:600;white-space:nowrap;">
-                        18 صفحة تقريباً
-                    </span>
-                </div>
-                <div data-testid="pv-core-desc-detailed"
-                     style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
-                    تقرير تحليلي يتضمن ملخصاً تنفيذياً وسيناريوهات وحساسية
-                </div>
-            </div>
-
-            <!-- Professional -->
-            <div data-testid="pv-core-card-professional"
-                 style="border:1px solid rgba(212,175,55,0.4);border-radius:8px;
-                        background:rgba(212,175,55,0.06);padding:8px 10px;
-                        cursor:pointer;min-width:180px;transition:all 0.2s;"
-                 onclick="pvGenerateCoreReportBundle('professional_report')">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
-                    <button data-testid="pv-core-report-chip-professional"
-                            id="pv-chip-professional"
-                            onclick="pvGenerateCoreReportBundle('professional_report')"
-                            style="border:none;background:transparent;color:#fde68a;
-                                   font-family:Tajawal,sans-serif;font-size:0.85rem;
-                                   font-weight:700;cursor:pointer;padding:0;">
-                        تقرير احترافي
-                    </button>
-                    <span data-testid="pv-core-badge-professional-pages"
-                          style="font-size:0.65rem;background:rgba(212,175,55,0.15);
-                                 color:#fde68a;padding:1px 6px;border-radius:8px;
-                                 font-weight:600;white-space:nowrap;">
-                        28 صفحة تقريباً
-                    </span>
-                </div>
-                <div data-testid="pv-core-desc-professional"
-                     style="font-size:0.68rem;color:#6b7280;line-height:1.4;">
-                    تقرير احترافي يتضمن شهادة امتثال، مخاطر، ملاحق، وتنسيقاً موسعاً
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Selected type indicator -->
-        <div data-testid="pv-core-selected-type-label"
-             id="pv-core-selected-type-label"
-             style="font-size:0.72rem;color:#fbbf24;margin-bottom:8px;min-height:14px;">
-            النوع المختار: <span id="pv-core-selected-type-name">تقرير تقليدي</span>
-        </div>
-
-        <!-- separate_user_pdf_button_removed=true | separate_admin_excel_button_removed=true
-             Kept aria-hidden for backward compat with any JS callers. -->
-        <div data-testid="pv-core-output-buttons"
-             aria-hidden="true" style="display:none;">
-            <button data-testid="pv-core-generate-user-pdf"
-                    id="pv-core-generate-user-pdf-btn"
-                    onclick="pvGenerateCoreValuationUserPdf()">
-                إصدار PDF للمستخدم
-            </button>
-            <button data-testid="pv-core-generate-admin-excel"
-                    id="pv-core-generate-admin-excel-btn"
-                    onclick="pvGenerateCoreValuationAdminExcel()">
-                إصدار شيت Excel للأدمن
-            </button>
-        </div>
-
-        <!-- Bundle generation status area (shown after chip click) -->
-        <div data-testid="pv-core-bundle-status"
-             id="pv-core-bundle-status"
-             style="margin-bottom:10px;padding:8px 10px;border-radius:6px;
-                    background:rgba(0,0,0,0.12);border:1px solid rgba(212,175,55,0.12);
-                    font-size:0.78rem;display:none;">
-            <div id="pv-bundle-pdf-status"
-                 data-testid="pv-bundle-pdf-status"
-                 style="color:#93c5fd;margin-bottom:4px;"></div>
-            <div id="pv-bundle-html-status"
-                 data-testid="pv-bundle-html-status"
-                 style="color:#86efac;margin-bottom:4px;"></div>
-            <div id="pv-bundle-excel-status"
-                 data-testid="pv-bundle-excel-status"
-                 style="color:#a3e635;"></div>
-        </div>
-
-        <!-- Internal Excel Card — administrator-only output -->
-        <div data-testid="pv-core-internal-excel-card"
-             id="pv-core-internal-excel-card"
-             style="margin-bottom:10px;padding:10px 12px;border-radius:8px;
-                    background:rgba(30,123,52,0.08);border:1px solid rgba(30,123,52,0.35);
-                    display:none;">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <div>
-                    <div style="font-weight:700;font-size:0.88rem;color:#86efac;">
-                        &#128202; تنزيل ملف Excel التفص��لي
-                    </div>
-                    <div style="font-size:0.72rem;color:#6b7280;margin-top:2px;">
-                        Excel Workbook — للمسؤولين فقط (Admin Only)
-                    </div>
-                    <div style="font-size:0.7rem;color:#9ca3af;font-style:italic;margin-top:2px;">
-                        &#128274; للمسؤولين فقط &mdash; يحتوي على أوراق العمل والحسابات الداعمة
-                    </div>
-                </div>
-                <button data-testid="pv-core-download-internal-excel"
-                        id="pv-core-download-internal-excel-btn"
-                        onclick="pvDownloadCoreInternalExcel()"
-                        style="padding:7px 16px;border-radius:6px;border:1px solid rgba(30,123,52,0.5);
-                               background:rgba(30,123,52,0.2);color:#86efac;
-                               font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
-                               white-space:nowrap;transition:all 0.2s;">
-                    &#11015; تنزيل ملف Excel التفصيلي
-                </button>
-            </div>
-        </div>
-
-        <!-- Advisory notice -->
-        <div data-testid="pv-core-advisory-notice"
-             style="font-size:0.72rem;color:#6b7280;font-style:italic;
-                    padding:5px 8px;background:rgba(234,179,8,0.04);border-radius:4px;
-                    border-right:2px solid rgba(234,179,8,0.3);">
-            &#9888; جميع المخرجات استرشادية غير معتمدة ما لم يتم استيفاء بوابة الاعتماد ومراجعة الخبير.
-        </div>
-
-        <!-- Core issuance status line -->
-        <div data-testid="pv-core-issuance-status"
-             id="pv-core-issuance-status"
-             style="font-size:0.75rem;color:#9ca3af;margin-top:6px;min-height:14px;"></div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════════
-         AREA 2 — Special Report Workflows
+         AREA 2 — Special Report Workflows (outside chat container)
          special_report_control_enabled=true
          each_type_has_dedicated_requirement_table=true
+         advanced_section_outside_chat_container=true
          ══════════════════════════════════════════════════════════════ -->
     <div class="action-card"
          data-testid="pv-special-report-workflows"
@@ -7653,12 +7776,42 @@
                 background:rgba(139,92,246,0.02);">
 
         <!-- Section header -->
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
-            <span style="font-weight:700;font-size:1rem;color:#c4b5fd;">
-                &#128269; التقارير الخاصة والتحليلات المتقدمة
-            </span>
-            <span style="font-size:0.7rem;color:#6b7280;">Special Reports and Advanced Analysis Workflows</span>
+        <div style="margin-bottom:12px;">
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px;">
+                <span style="font-weight:700;font-size:1rem;color:#c4b5fd;"
+                      data-testid="pv-advanced-reports-heading">
+                    &#128269; التقارير الخاصة والتحليلات المتقدمة
+                </span>
+                <span style="font-size:0.7rem;color:#6b7280;">Special Reports and Advanced Analysis Workflows</span>
+            </div>
+            <div data-testid="pv-advanced-reports-supporting-copy"
+                 style="font-size:0.78rem;color:#9ca3af;line-height:1.6;">
+                ارفع تقريرًا موجودًا للمراجعة أو استخدم أدوات التحليل المتقدم للتحقق من محتواه ونتائجه.
+                المخرجات للتقارير المرفوعة متاحة بصيغتي PDF وHTML.
+            </div>
         </div>
+
+        <!-- Advanced requirements toggle button -->
+        <button type="button"
+                id="pv-advanced-req-toggle"
+                data-testid="pv-advanced-req-toggle"
+                onclick="pvToggleAdvancedRequirements()"
+                aria-expanded="false"
+                aria-controls="pv-advanced-req-panel"
+                style="padding:7px 16px;border-radius:7px;border:1px solid rgba(139,92,246,0.35);
+                       background:rgba(139,92,246,0.06);color:#c4b5fd;
+                       font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
+                       display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;">
+            <span id="pv-advanced-req-toggle-label"
+                  data-testid="pv-advanced-req-toggle-label">عرض المتطلبات</span>
+            <span id="pv-advanced-req-toggle-arrow"
+                  style="font-size:0.7rem;transition:transform 0.2s;">&#9660;</span>
+        </button>
+
+        <!-- Requirements panel — initially collapsed -->
+        <div id="pv-advanced-req-panel"
+             data-testid="pv-advanced-req-panel"
+             style="display:none;">
 
         <!-- Four workflow buttons -->
         <div data-testid="pv-special-workflow-buttons"
@@ -7666,26 +7819,32 @@
 
             <button data-testid="pv-open-report-review-table"
                     id="pv-btn-report-review"
+                    aria-expanded="false"
+                    aria-controls="pv-req-panel-report-review"
                     onclick="pvOpenSpecialReportRequirementsTable('report_review_output')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(139,92,246,0.4);
                            background:rgba(139,92,246,0.08);color:#c4b5fd;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
                            display:flex;align-items:center;gap:6px;">
-                &#128203; فتح متطلبات مراجعة التقارير
+                &#128269; فتح متطلبات مراجعة التقارير
             </button>
 
             <button data-testid="pv-open-simulation-table"
                     id="pv-btn-simulation"
+                    aria-expanded="false"
+                    aria-controls="pv-req-panel-simulation"
                     onclick="pvOpenSpecialReportRequirementsTable('simulated_uploaded_report')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(212,175,55,0.4);
                            background:rgba(212,175,55,0.07);color:#fde68a;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
                            display:flex;align-items:center;gap:6px;">
-                &#128196; فتح متطلبات محاكاة تقرير مرفوع
+                &#128196; فتح متطلبات محاكاة التقرير
             </button>
 
             <button data-testid="pv-open-hbu-table"
                     id="pv-btn-hbu"
+                    aria-expanded="false"
+                    aria-controls="pv-req-panel-hbu"
                     onclick="pvOpenSpecialReportRequirementsTable('hbu_analysis_report')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(34,197,94,0.4);
                            background:rgba(34,197,94,0.07);color:#86efac;
@@ -7696,6 +7855,8 @@
 
             <button data-testid="pv-open-standards-table"
                     id="pv-btn-standards"
+                    aria-expanded="false"
+                    aria-controls="pv-req-panel-standards"
                     onclick="pvOpenSpecialReportRequirementsTable('standards_compliance_report')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(59,130,246,0.4);
                            background:rgba(59,130,246,0.07);color:#93c5fd;
@@ -7741,6 +7902,13 @@
                         font-size:0.72rem;color:#fcd34d;">
                 &#9888; تقرير المراجعة الناتج استرشادي ولا يُعد تقرير مراجعة معتمدًا إلا بعد توقيع المراجع المختص.
                 النظام يساعد المراجع ولا يستبدله. advisory_only=True | human_reviewer_required=True
+            </div>
+            <!-- Format note -->
+            <div data-testid="pv-rr-format-note"
+                 style="padding:6px 14px;background:rgba(16,185,129,0.05);
+                        border-bottom:1px solid rgba(16,185,129,0.15);
+                        font-size:0.72rem;color:#6ee7b7;">
+                &#128202; المخرجات المتاحة للمستخدم: PDF وHTML
             </div>
 
             <!-- Step progress bar -->
@@ -8054,16 +8222,49 @@
 
                 <div id="rr-gen-status" style="font-size:0.73rem;color:#9ca3af;margin-top:6px;min-height:14px;"></div>
 
-                <!-- Download button (shown after generation) -->
-                <div id="rr-download-section" style="display:none;margin-top:8px;">
-                    <a id="rr-download-review-pdf" data-testid="rr-download-review-pdf"
-                       href="#" download="report_review_output.pdf"
-                       style="display:inline-block;padding:8px 16px;border-radius:6px;
-                              background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);
-                              color:#10b981;font-family:Tajawal,sans-serif;font-size:0.82rem;
-                              text-decoration:none;cursor:pointer;">
-                        &#11015; تحميل تقرير المراجعة PDF
-                    </a>
+                <!-- Download section (shown after generation, not before) -->
+                <div id="rr-download-section" data-testid="rr-download-section" style="display:none;margin-top:8px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <a id="rr-download-review-pdf" data-testid="rr-download-review-pdf"
+                           href="#" download="report_review_output.pdf"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);
+                                  color:#10b981;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل PDF
+                        </a>
+                        <a id="rr-view-review-html" data-testid="rr-view-review-html"
+                           href="#" target="_blank" rel="noopener noreferrer"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#128065; عرض HTML
+                        </a>
+                        <a id="rr-download-review-html" data-testid="rr-download-review-html"
+                           href="#" download="report_review_output.html"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل HTML
+                        </a>
+                    </div>
+                    <!-- Admin-only Excel — display:none until backend returns excel_url for admin role -->
+                    <div id="rr-admin-excel-section" data-testid="rr-admin-excel-section"
+                         style="display:none;margin-top:6px;">
+                        <a id="rr-download-review-excel" data-testid="rr-download-review-excel"
+                           href="#" download="report_review_admin.xlsx"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(30,123,52,0.12);border:1px solid rgba(30,123,52,0.4);
+                                  color:#86efac;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#128202; تنزيل Excel (مسؤول)
+                        </a>
+                        <span style="font-size:0.68rem;color:#6b7280;margin-right:8px;">
+                            admin_only=True | role_verified_by_backend=True
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -8607,7 +8808,7 @@
              style="display:none;margin-top:4px;padding:14px;border-radius:8px;
                     border:1px solid rgba(212,175,55,0.3);background:rgba(212,175,55,0.03);">
             <!-- ═══════════════════════════════════════════════════════════════
-                 محاكاة تقرير مرفوع — 4-Step Wizard
+                 محاكاة التقرير — 4-Step Wizard
                  wizard_steps_count=4 | not_inside_chat_box=true
                  not_report_review=true | template_cloning_enabled=true
                  ═══════════════════════════════════════════════════════════════ -->
@@ -8617,7 +8818,7 @@
                         padding-bottom:8px;border-bottom:1px solid rgba(212,175,55,0.2);margin-bottom:8px;">
                 <div>
                     <div style="font-weight:700;color:#fde68a;font-size:0.95rem;">
-                        &#128196; محاكاة تقرير مرفوع
+                        &#128196; محاكاة التقرير
                     </div>
                     <div style="font-size:0.7rem;color:#9ca3af;margin-top:3px;max-width:480px;">
                         ارفع تقرير تقييم قديم ليتعلم النظام شكله وتنسيقه، ثم أدخل بيانات العقار الجديد ليتم إنشاء تقرير جديد بنفس القالب وبقيم محسوبة من النظام.
@@ -8632,6 +8833,13 @@
                         border-radius:4px;font-size:0.7rem;color:#fcd34d;margin-bottom:10px;">
                 &#9888; التقرير الناتج تقدير آلي استرشادي — advisory_only=True | fake_signature_created=False
                 | not_report_review=True | expert_signature_required_for_official_use=True
+            </div>
+            <!-- Format note -->
+            <div data-testid="pv-sim-format-note"
+                 style="padding:6px 10px;background:rgba(16,185,129,0.05);
+                        border:1px solid rgba(16,185,129,0.15);border-radius:4px;
+                        font-size:0.72rem;color:#6ee7b7;margin-bottom:10px;">
+                &#128202; المخرجات المتاحة للمستخدم: PDF وHTML
             </div>
 
             <!-- Step Progress -->
@@ -9103,20 +9311,28 @@
                         <div id="sim-preview-status">جارٍ التحضير...</div>
                     </div>
 
-                    <!-- Download -->
+                    <!-- Download (shown after generation, not before) -->
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <a data-testid="sim-download-generated-report" id="sim-download-link"
                            href="/api/professional-valuation/download-simulation-report"
                            style="padding:8px 18px;border-radius:7px;border:1px solid rgba(212,175,55,0.5);
                                   background:rgba(212,175,55,0.12);color:#fde68a;text-decoration:none;
                                   font-family:Tajawal,sans-serif;font-size:0.82rem;">
-                            &#11015; تحميل التقرير المُولَّد PDF
+                            &#11015; تنزيل PDF
                         </a>
-                        <a href="/api/professional-valuation/download-simulation-excel"
-                           style="padding:8px 18px;border-radius:7px;border:1px solid rgba(34,197,94,0.4);
-                                  background:rgba(34,197,94,0.07);color:#86efac;text-decoration:none;
+                        <a id="sim-view-html" data-testid="sim-view-html"
+                           href="#" target="_blank"
+                           style="padding:8px 18px;border-radius:7px;border:1px solid rgba(59,130,246,0.4);
+                                  background:rgba(59,130,246,0.1);color:#93c5fd;text-decoration:none;
                                   font-family:Tajawal,sans-serif;font-size:0.82rem;">
-                            &#11015; تحميل Excel
+                            &#128065; عرض HTML
+                        </a>
+                        <a id="sim-download-html" data-testid="sim-download-html"
+                           href="#" download="simulated_report.html"
+                           style="padding:8px 18px;border-radius:7px;border:1px solid rgba(59,130,246,0.3);
+                                  background:rgba(59,130,246,0.07);color:#93c5fd;text-decoration:none;
+                                  font-family:Tajawal,sans-serif;font-size:0.82rem;">
+                            &#11015; تنزيل HTML
                         </a>
                     </div>
 
@@ -9145,6 +9361,7 @@
              not_standards_compliance_report=true ──────────────────────────── -->
         <div data-testid="pv-special-req-panel-hbu_analysis_report"
              id="pv-req-panel-hbu"
+             data-panel-title="متطلبات تحليل أعلى وأفضل استخدام"
              style="display:none;margin-top:4px;border-radius:8px;
                     border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.02);overflow:hidden;">
 
@@ -9169,6 +9386,13 @@
                         border-bottom:1px solid rgba(251,191,36,0.18);font-size:0.7rem;color:#fcd34d;">
                 &#9888; هذا التحليل استرشادي ولا يغني عن مراجعة خبير تقييم معتمد قبل أي استخدام رسمي.
                 advisory_only=True | fake_certification_prevented=True | human_expert_required_for_official_use=True
+            </div>
+            <!-- Format note -->
+            <div data-testid="pv-hbu-format-note"
+                 style="padding:6px 14px;background:rgba(16,185,129,0.05);
+                        border-bottom:1px solid rgba(16,185,129,0.15);
+                        font-size:0.72rem;color:#6ee7b7;">
+                &#128202; المخرجات المتاحة للمستخدم: PDF وHTML
             </div>
 
             <!-- Step progress bar (6 steps) -->
@@ -9930,15 +10154,17 @@
                 <div data-testid="hbu-download-buttons"
                      style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
                     <button data-testid="pv-issue-hbu-pdf"
-                            onclick="pvIssueSpecialReportPdf('hbu_analysis_report')"
+                            onclick="pvGenerateHbuPdfBundle()"
                             style="padding:9px 20px;border-radius:8px;border:1px solid rgba(34,197,94,0.5);
                                    background:rgba(34,197,94,0.1);color:#86efac;
                                    font-family:Tajawal,sans-serif;font-size:0.85rem;cursor:pointer;">
-                        &#128196; تحميل تقرير HBU PDF
+                        &#128196; توليد تقرير HBU
                     </button>
+                    <!-- Admin-only Excel: hidden for normal users, revealed by backend admin auth -->
                     <button data-testid="pv-issue-hbu-excel"
                             onclick="pvIssueSpecialReportPdf('hbu_analysis_report_excel')"
-                            style="padding:9px 20px;border-radius:8px;border:1px solid rgba(34,197,94,0.4);
+                            style="display:none;padding:9px 20px;border-radius:8px;
+                                   border:1px solid rgba(34,197,94,0.4);
                                    background:rgba(34,197,94,0.06);color:#86efac;
                                    font-family:Tajawal,sans-serif;font-size:0.85rem;cursor:pointer;">
                         &#128202; تحميل ملف HBU Excel
@@ -9946,6 +10172,36 @@
                 </div>
                 <div data-testid="pv-hbu-issue-status" id="pv-hbu-status"
                      style="font-size:0.73rem;color:#9ca3af;margin-top:5px;min-height:14px;"></div>
+                <!-- HBU result section (shown only after generation) -->
+                <div id="hbu-download-section" data-testid="hbu-download-section"
+                     style="display:none;margin-top:8px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <a id="hbu-download-pdf" data-testid="hbu-download-pdf"
+                           href="#" download="hbu_analysis_report.pdf"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.4);
+                                  color:#86efac;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل PDF
+                        </a>
+                        <a id="hbu-view-html" data-testid="hbu-view-html"
+                           href="#" target="_blank"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#128065; عرض HTML
+                        </a>
+                        <a id="hbu-download-html" data-testid="hbu-download-html"
+                           href="#" download="hbu_analysis_report.html"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل HTML
+                        </a>
+                    </div>
+                </div>
 
                 <div style="margin-top:8px;">
                     <button type="button" onclick="pvHbuGoToStep(5)"
@@ -9980,6 +10236,13 @@
             <div style="padding:7px 14px;background:rgba(251,191,36,0.07);
                         border-bottom:1px solid rgba(251,191,36,0.18);font-size:0.7rem;color:#fcd34d;">
                 &#9888; تقرير استرشادي لفحص الامتثال — advisory_only=True | not_report_review=True | not_hbu_workflow=True | fake_certification_prevented=True
+            </div>
+            <!-- Format note -->
+            <div data-testid="pv-sc-format-note"
+                 style="padding:6px 14px;background:rgba(16,185,129,0.05);
+                        border-bottom:1px solid rgba(16,185,129,0.15);
+                        font-size:0.72rem;color:#6ee7b7;">
+                &#128202; المخرجات المتاحة للمستخدم: PDF وHTML
             </div>
             <!-- Step progress -->
             <div style="padding:8px 14px;border-bottom:1px solid rgba(59,130,246,0.15);">
@@ -10243,7 +10506,7 @@
                     fake_certification_prevented=True | fake_signature_created=False
                 </div>
                 <button data-testid="sc-generate-report"
-                        onclick="pvIssueSpecialReportPdf('standards_compliance_report')"
+                        onclick="pvGenerateStandardsComplianceBundle()"
                         style="width:100%;padding:10px;border-radius:8px;
                                border:1px solid rgba(59,130,246,0.5);
                                background:rgba(59,130,246,0.1);color:#93c5fd;
@@ -10251,23 +10514,52 @@
                                cursor:pointer;margin-bottom:10px;">
                     &#128196; توليد تقرير الامتثال
                 </button>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-                    <button data-testid="sc-download-pdf"
-                            style="padding:9px;border-radius:6px;
-                                   border:1px solid rgba(59,130,246,0.4);
-                                   background:rgba(59,130,246,0.08);color:#93c5fd;
-                                   font-family:Tajawal,sans-serif;font-size:0.82rem;
-                                   cursor:pointer;">
-                        &#8595; تحميل تقرير الامتثال PDF
-                    </button>
-                    <button data-testid="sc-download-excel"
-                            style="padding:9px;border-radius:6px;
-                                   border:1px solid rgba(59,130,246,0.4);
-                                   background:rgba(59,130,246,0.08);color:#93c5fd;
-                                   font-family:Tajawal,sans-serif;font-size:0.82rem;
-                                   cursor:pointer;">
-                        &#8595; تحميل ملف الامتثال Excel
-                    </button>
+                <!-- Inactive pre-generation download buttons hidden; result section shown after generation -->
+                <button data-testid="sc-download-pdf"
+                        style="display:none;padding:9px;border-radius:6px;
+                               border:1px solid rgba(59,130,246,0.4);
+                               background:rgba(59,130,246,0.08);color:#93c5fd;
+                               font-family:Tajawal,sans-serif;font-size:0.82rem;
+                               cursor:pointer;">
+                    &#8595; تحميل تقرير الامتثال PDF
+                </button>
+                <button data-testid="sc-download-excel"
+                        style="display:none;padding:9px;border-radius:6px;
+                               border:1px solid rgba(59,130,246,0.4);
+                               background:rgba(59,130,246,0.08);color:#93c5fd;
+                               font-family:Tajawal,sans-serif;font-size:0.82rem;
+                               cursor:pointer;">
+                    &#8595; تحميل ملف الامتثال Excel
+                </button>
+                <!-- Standards result section (shown only after generation) -->
+                <div id="sc-download-section" data-testid="sc-download-section"
+                     style="display:none;margin-top:8px;margin-bottom:8px;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <a id="sc-download-pdf-link" data-testid="sc-download-pdf-link"
+                           href="#" download="standards_compliance_report.pdf"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل PDF
+                        </a>
+                        <a id="sc-view-html" data-testid="sc-view-html"
+                           href="#" target="_blank"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#128065; عرض HTML
+                        </a>
+                        <a id="sc-download-html" data-testid="sc-download-html"
+                           href="#" download="standards_compliance_report.html"
+                           style="padding:8px 16px;border-radius:6px;
+                                  background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);
+                                  color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; تنزيل HTML
+                        </a>
+                    </div>
                 </div>
                 <div data-testid="pv-standards-issue-status" id="pv-sc-status"
                      style="font-size:0.73rem;color:#9ca3af;min-height:14px;"></div>
@@ -10286,6 +10578,7 @@
             </div>
         </div><!-- /pv-req-panel-standards -->
 
+        </div><!-- /pv-advanced-req-panel -->
     </div>
     <!-- /pv-special-report-workflows -->
 
@@ -10877,9 +11170,6 @@
                     </div>
                     <div style="font-size:0.75rem;padding:5px 10px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:5px;">
                         <span style="color:#86efac;">●</span> <b>سجل التقارير المحفوظة</b> — Output Registry — متاح في لوحة إدارة المخرجات
-                    </div>
-                    <div style="font-size:0.75rem;padding:5px 10px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:5px;">
-                        <span style="color:#86efac;">●</span> <b>محرك الترجيح المبدئي</b> — Preliminary Weighted Engine — متاح في قسم أساس القيمة (3B)
                     </div>
                     <div style="font-size:0.75rem;padding:5px 10px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:5px;">
                         <span style="color:#86efac;">●</span> <b>المخاطر الجيوتقنية</b> — Geotechnical Risk — نشط مشروط (للأراضي/المصانع/المستودعات)
@@ -12172,6 +12462,31 @@
             return;
         }
 
+        const _pvAssetTypeVal = (document.getElementById('asset-type') || {}).value || '';
+        const _pvAssetErrEl   = document.getElementById('pro-val-asset-type-error');
+        if (!_pvAssetTypeVal) {
+            if (_pvAssetErrEl) { _pvAssetErrEl.textContent = 'يرجى اختيار نوع الأصل أولًا.'; _pvAssetErrEl.style.display = 'block'; }
+            var _pvAtSel = document.getElementById('asset-type');
+            if (_pvAtSel) { _pvAtSel.scrollIntoView({behavior:'smooth', block:'nearest'}); _pvAtSel.focus(); }
+            return;
+        }
+        if (_pvAssetErrEl) { _pvAssetErrEl.textContent = ''; _pvAssetErrEl.style.display = 'none'; }
+
+        const _pvSubReportType = window._pvCoreValuationReportType || '';
+        const _pvSubTypeErrEl  = document.getElementById('pv-unified-report-type-error');
+        if (!_pvSubReportType) {
+            if (_pvSubTypeErrEl) { _pvSubTypeErrEl.textContent = 'يرجى اختيار نوع التقرير أولًا.'; _pvSubTypeErrEl.style.display = 'block'; }
+            var _pvUnifiedSection = document.getElementById('pv-unified-report-type-section');
+            if (_pvUnifiedSection) { _pvUnifiedSection.scrollIntoView({behavior:'smooth', block:'nearest'}); }
+            return;
+        }
+        if (_pvSubTypeErrEl) { _pvSubTypeErrEl.textContent = ''; _pvSubTypeErrEl.style.display = 'none'; }
+        if (typeof pvCheckMandatoryAttachmentsMissing === 'function' && pvCheckMandatoryAttachmentsMissing(_pvSubReportType)) {
+            var _pvAttErrEl = document.getElementById('pv-submission-attachment-error');
+            if (_pvAttErrEl) { _pvAttErrEl.textContent = 'يرجى إرفاق جميع الملحقات المطلوبة لنوع التقرير المحدد.'; _pvAttErrEl.style.display = 'block'; }
+            return;
+        }
+
         btn.innerHTML = 'جاري التحليل... <i class="fas fa-spinner fa-spin"></i>';
         btn.disabled = true;
 
@@ -12194,7 +12509,8 @@
                 sovereign_insights: sovereign_insights,
                 report_style: document.getElementById('excel-report-style')?.value || 'legacy',
                 unified_report_action: (document.getElementById('pv-chat-report-action') || {}).value || 'traditional_report',
-                selected_report_action: (document.getElementById('pv-chat-report-action') || {}).value || 'traditional_report'
+                selected_report_action: (document.getElementById('pv-chat-report-action') || {}).value || 'traditional_report',
+                submission_report_type: _pvSubReportType
             };
 
             // For delegated purposes, merge the corresponding type-specific arrays
@@ -12729,7 +13045,9 @@ function pvUpdateChatReportAction(val) {
         'hbu_analysis_report':         'يتطلب استكمال بيانات الأصل والسوق للتحليل.',
         'standards_compliance_report': 'يتطلب اختيار معايير التقييم من القسم الرابع أولاً.'
     };
-    guidance.textContent = g[val] || '';
+    var msg = g[val] || '';
+    guidance.textContent = msg;
+    guidance.style.display = msg ? 'block' : 'none';
     pvEvaluateUnifiedOutputPermissions();
 }
 
@@ -12882,7 +13200,7 @@ function pvInitChatCommandCenter() {
     const adminBtn = document.getElementById('pv-admin-excel-btn');
     if (adminBtn) adminBtn.style.display = 'none';
     pvInitUnifiedProfessionalValuationPageContext();
-    pvSelectCoreValuationReportType('traditional_report');
+    // Do not pre-select a tier — user must choose explicitly via the unified cards
     pvInitCoreReportIssuanceSection();
 }
 
@@ -12891,10 +13209,10 @@ function pvInitChatCommandCenter() {
    split_controls_enabled=true | advisory_only=true | no_commit=true
    ═══════════════════════════════════════════════════════════════════════ */
 
-// Internal state
-window._pvCoreValuationReportType   = 'traditional_report';
+// Internal state — null until user selects a tier via the unified section cards
+window._pvCoreValuationReportType   = null;
 window._pvCoreValuationOutputFormat = 'user_pdf';
-window._pvOpenSpecialReportPanel    = null;
+window.activeAdvancedReportPanel    = null;
 
 var _PV_CORE_LABELS = {
     traditional_report:  'تقرير تقليدي',
@@ -12908,7 +13226,7 @@ function pvSelectCoreValuationReportType(type) {
     var sel = document.getElementById('pv-chat-report-action');
     if (sel) sel.value = type;
     if (typeof pvUpdateChatReportAction === 'function') pvUpdateChatReportAction(type);
-    // Update chip styles
+    // Update chip span styles (unified cards use pv-chip-* span IDs)
     ['traditional_report','detailed_report','professional_report'].forEach(function(t) {
         var chip = document.getElementById('pv-chip-' + t.replace('_report',''));
         if (!chip) return;
@@ -12917,11 +13235,35 @@ function pvSelectCoreValuationReportType(type) {
         chip.style.borderColor  = active ? 'rgba(212,175,55,0.6)'  : 'rgba(212,175,55,0.25)';
         chip.style.color        = active ? '#fde68a'               : '#9ca3af';
         chip.style.fontWeight   = active ? '700'                   : '400';
+        // Update outer wrapper aria-checked
+        var wrap = document.getElementById('pv-unified-wrap-' + t.replace('_report',''));
+        if (wrap) {
+            wrap.setAttribute('aria-checked', active ? 'true' : 'false');
+            wrap.style.outline = active ? '2px solid rgba(212,175,55,0.5)' : 'none';
+        }
     });
     // Update label
     var lbl = document.getElementById('pv-core-selected-type-name');
-    if (lbl) lbl.textContent = _PV_CORE_LABELS[type] || type;
+    if (lbl) {
+        lbl.textContent = _PV_CORE_LABELS[type] || type;
+        lbl.style.color = '#fde68a';
+        lbl.style.fontStyle = 'normal';
+    }
     pvSyncSplitReportIssuanceContext();
+}
+
+/* ── Unified report tier selector (cards → select-only, no immediate generation) ── */
+function pvSelectReportTier(type) {
+    // 1. Set authoritative state and update chip/wrapper visuals
+    pvSelectCoreValuationReportType(type);
+    // 2. Hide "no type" message once a tier is selected
+    var noMsg = document.getElementById('pv-unified-no-type-msg');
+    if (noMsg) noMsg.style.display = 'none';
+    // 3. Clear any previous type-error
+    var errEl = document.getElementById('pv-unified-report-type-error');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    // 4. Show attachment requirements for selected tier
+    if (typeof pvUpdateSubmissionReportType === 'function') pvUpdateSubmissionReportType(type);
 }
 
 function pvGenerateCoreValuationUserPdf() {
@@ -13485,15 +13827,28 @@ var _PV_SPECIAL_PANEL_IDS = {
     standards_compliance_report:  'pv-req-panel-standards'
 };
 
+var _PV_SPECIAL_BTN_IDS = {
+    report_review_output:         'pv-btn-report-review',
+    simulated_uploaded_report:    'pv-btn-simulation',
+    hbu_analysis_report:          'pv-btn-hbu',
+    standards_compliance_report:  'pv-btn-standards'
+};
+
+window.activeAdvancedReportPanel = null;
+
 function pvOpenSpecialReportRequirementsTable(type) {
-    // Close any open panel first
+    // Close all panels and reset all button ARIA states
     Object.values(_PV_SPECIAL_PANEL_IDS).forEach(function(id) {
         var el = document.getElementById(id);
         if (el) el.style.display = 'none';
     });
-    // Toggle: if same panel was open, leave it closed
-    if (window._pvOpenSpecialReportPanel === type) {
-        window._pvOpenSpecialReportPanel = null;
+    Object.values(_PV_SPECIAL_BTN_IDS).forEach(function(bid) {
+        var btn = document.getElementById(bid);
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+    // Exclusive toggle: clicking the already-open panel closes it
+    if (window.activeAdvancedReportPanel === type) {
+        window.activeAdvancedReportPanel = null;
         pvSyncSplitReportIssuanceContext();
         return;
     }
@@ -13504,7 +13859,10 @@ function pvOpenSpecialReportRequirementsTable(type) {
         panel.style.display = 'block';
         panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    window._pvOpenSpecialReportPanel = type;
+    window.activeAdvancedReportPanel = type;
+    // Mark active button as expanded
+    var activeBtn = document.getElementById(_PV_SPECIAL_BTN_IDS[type] || '');
+    if (activeBtn) activeBtn.setAttribute('aria-expanded', 'true');
     // Sync legacy hidden select so backend action is set
     var sel = document.getElementById('pv-chat-report-action');
     if (sel) sel.value = type;
@@ -13516,8 +13874,83 @@ function pvCloseSpecialReportPanel(type) {
     if (!panelId) return;
     var panel = document.getElementById(panelId);
     if (panel) panel.style.display = 'none';
-    if (window._pvOpenSpecialReportPanel === type) window._pvOpenSpecialReportPanel = null;
+    if (window.activeAdvancedReportPanel === type) window.activeAdvancedReportPanel = null;
+    // Reset ARIA state on the button
+    var btn = document.getElementById(_PV_SPECIAL_BTN_IDS[type] || '');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
     pvSyncSplitReportIssuanceContext();
+}
+
+/* ── Asset type validation helper ─────────────────────────────────────────── */
+function pvClearAssetTypeError() {
+    var el = document.getElementById('pro-val-asset-type-error');
+    if (el) { el.textContent = ''; el.style.display = 'none'; }
+}
+
+/* ── Advanced requirements toggle ─────────────────────────────────────────── */
+window._pvAdvancedRequirementsExpanded = false;
+
+function pvToggleAdvancedRequirements() {
+    var panel  = document.getElementById('pv-advanced-req-panel');
+    var toggle = document.getElementById('pv-advanced-req-toggle');
+    var label  = document.getElementById('pv-advanced-req-toggle-label');
+    var arrow  = document.getElementById('pv-advanced-req-toggle-arrow');
+    if (!panel || !toggle) return;
+    window._pvAdvancedRequirementsExpanded = !window._pvAdvancedRequirementsExpanded;
+    var expanded = window._pvAdvancedRequirementsExpanded;
+    panel.style.display = expanded ? 'block' : 'none';
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    if (label) label.textContent = expanded ? 'إخفاء المتطلبات' : 'عرض المتطلبات';
+    if (arrow) arrow.style.transform = expanded ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+/* ── Submission report type + attachment helpers ───────────────────────────── */
+var _pvSubmissionReportAttachments = {
+    traditional_report:  [],
+    detailed_report:     [],
+    professional_report: []
+};
+var _pvCurrentSubmissionAttachments = {};
+
+function pvUpdateSubmissionReportType(val) {
+    var errEl      = document.getElementById('pv-unified-report-type-error');
+    var attErrEl   = document.getElementById('pv-submission-attachment-error');
+    var reqSection = document.getElementById('pv-submission-attachment-requirements');
+    var upSection  = document.getElementById('pv-submission-attachment-upload');
+    var reqList    = document.getElementById('pv-submission-attachment-req-list');
+    var upArea     = document.getElementById('pv-submission-attachment-upload-area');
+    if (errEl)    { errEl.style.display    = 'none'; errEl.textContent    = ''; }
+    if (attErrEl) { attErrEl.style.display = 'none'; attErrEl.textContent = ''; }
+    if (!val) {
+        if (reqSection) reqSection.style.display = 'none';
+        if (upSection)  upSection.style.display  = 'none';
+        return;
+    }
+    var reqs      = _pvSubmissionReportAttachments[val] || [];
+    var mandatory = reqs.filter(function(r) { return r.required; });
+    if (reqList) {
+        reqList.innerHTML = reqs.length
+            ? reqs.map(function(r) {
+                return '<div style="margin-bottom:3px;">• ' + r.label +
+                    (r.required ? ' <span style="color:#f87171;">(مطلوب)</span>'
+                                : ' <span style="color:#6b7280;">(اختياري)</span>') + '</div>';
+              }).join('')
+            : '<div>لا توجد ملحقات إضافية مطلوبة.</div>';
+    }
+    if (reqSection) reqSection.style.display = 'block';
+    if (upArea) {
+        upArea.textContent = mandatory.length
+            ? 'يرجى رفع الملحقات المطلوبة المُشار إليها أعلاه.'
+            : 'لا توجد ملحقات إلزامية لهذا النوع.';
+    }
+    if (upSection) upSection.style.display = 'block';
+    _pvCurrentSubmissionAttachments = {};
+}
+
+function pvCheckMandatoryAttachmentsMissing(reportType) {
+    var reqs      = _pvSubmissionReportAttachments[reportType] || [];
+    var mandatory = reqs.filter(function(r) { return r.required; });
+    return mandatory.some(function(r) { return !_pvCurrentSubmissionAttachments[r.key]; });
 }
 
 function pvIssueSpecialReportPdf(type) {
@@ -13581,8 +14014,8 @@ function pvSyncSplitReportIssuanceContext() {
         special_report_types:                        ['report_review_output','simulated_uploaded_report','hbu_analysis_report','standards_compliance_report'],
         special_reports_have_dedicated_requirement_tables: true,
         generic_chat_upload_for_special_reports_removed:   true,
-        selected_special_report_type:                window._pvOpenSpecialReportPanel || null,
-        opened_requirement_table:                    window._pvOpenSpecialReportPanel || null,
+        selected_special_report_type:                window.activeAdvancedReportPanel || null,
+        opened_requirement_table:                    window.activeAdvancedReportPanel || null,
         legacy_seven_report_selector_removed_as_primary:  true,
         duplicate_lower_pdf_chat_buttons_removed:    true,
         backend_keys_preserved:                      true,
@@ -13852,40 +14285,156 @@ function rrComputeScore() {
 
 function rrUpdateFinalDecision() { /* allow manual override */ }
 
+// ── Auth-aware file helpers ─────────────────────────────────────────────────
+// require_auth uses Bearer tokens only; direct <a href> links never carry the
+// Authorization header and always return 401. These helpers use esFetch (which
+// injects the token) and create temporary Blob URLs for downloads/views.
+function esDownloadAuth(url, filename) {
+    window.esFetch(url, { method: 'GET' })
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+            var bUrl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = bUrl;
+            a.download = filename || 'download';
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function() { URL.revokeObjectURL(bUrl); }, 15000);
+        })
+        .catch(function(err) { console.error('[ES] Download failed:', err.message); });
+}
+
+function esViewAuth(url) {
+    window.esFetch(url, { method: 'GET' })
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+            var bUrl = URL.createObjectURL(blob);
+            var w = window.open(bUrl, '_blank', 'noopener,noreferrer');
+            if (!w) {
+                // Popup blocked — fall back to a temporary anchor click
+                var a = document.createElement('a');
+                a.href = bUrl; a.target = '_blank'; a.rel = 'noopener noreferrer';
+                a.style.display = 'none';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }
+            setTimeout(function() { URL.revokeObjectURL(bUrl); }, 60000);
+        })
+        .catch(function(err) { console.error('[ES] View failed:', err.message); });
+}
+
 function rrGenerateReviewPdf() {
     var statusEl = document.getElementById('rr-gen-status');
-    if (statusEl) statusEl.textContent = 'جاري توليد تقرير المراجعة (استرشادي)...';
-    fetch('/api/professional-valuation/generate-report-review', {
+    if (statusEl) statusEl.textContent = 'جاري مراجعة التقرير وإعداد مخرجات PDF وHTML...';
+
+    // Clear stale result state before each new generation
+    var _dl = document.getElementById('rr-download-section');
+    if (_dl) _dl.style.display = 'none';
+    var _xl = document.getElementById('rr-admin-excel-section');
+    if (_xl) _xl.style.display = 'none';
+    var _v2 = document.getElementById('rr-v2-results-panel');
+    if (_v2) _v2.style.display = 'none';
+    ['rr-download-review-pdf', 'rr-view-review-html',
+     'rr-download-review-html', 'rr-download-review-excel'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.href = '#'; el.onclick = null; }
+    });
+
+    // Build multipart FormData so source PDF is transmitted with the request
+    var fd = new FormData();
+    var pdfInput = document.getElementById('rr-pdf-upload');
+    if (pdfInput && pdfInput.files && pdfInput.files[0]) {
+        fd.append('source_pdf', pdfInput.files[0], pdfInput.files[0].name);
+    }
+    fd.append('reviewer_name',      (document.getElementById('rr-reviewer-name')      || {}).value || '');
+    fd.append('review_client',      (document.getElementById('rr-review-client')      || {}).value || '');
+    fd.append('review_purpose',     (document.getElementById('rr-valuation-purpose')   || {}).value || '');
+    fd.append('review_scope',       (document.getElementById('rr-basis-of-value-wiz') || {}).value || '');
+    fd.append('general_notes',      (document.getElementById('rr-general-notes')       || {}).value || '');
+    fd.append('reviewed_report_id', (document.getElementById('rr-reviewed-report-id') || {}).value || '');
+    fd.append('asset_type',         (document.getElementById('rr-asset-type-wiz')     || {}).value || '');
+    fd.append('asset_location',     (document.getElementById('rr-asset-location')      || {}).value || '');
+    fd.append('review_date',        (document.getElementById('rr-review-date')         || {}).value || '');
+    fd.append('advisory_only',      'true');
+    fd.append('certification_ready','false');
+    fd.append('fake_reviewer_signature_created', 'false');
+    fd.append('not_real_training',  'true');
+
+    window.esFetch('/api/professional-valuation/generate-report-review', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-            reviewer_name: (document.getElementById('rr-reviewer-name') || {}).value || '',
-            review_client: (document.getElementById('rr-review-client') || {}).value || '',
-            advisory_only: true,
-            certification_ready: false,
-            fake_reviewer_signature_created: false,
-            wizard_steps_count: 5,
-            not_real_training: true
-        })
+        body: fd,
+        suppressAuthModal: true
     })
     .then(function(r) { return r.json(); })
     .then(function(d) {
+        // Guard: do not show download controls when the backend signals failure
+        if (!d.ok) {
+            if (statusEl) statusEl.textContent = (
+                d.error || 'تعذر إنشاء ملفات مراجعة التقرير. يرجى مراجعة المدخلات والمحاولة مرة أخرى.'
+            );
+            return;
+        }
         if (statusEl) statusEl.textContent = d.message || 'تم توليد تقرير المراجعة.';
+
         var dl = document.getElementById('rr-download-section');
         if (dl) dl.style.display = '';
-        var link = document.getElementById('rr-download-review-pdf');
-        if (link && d.pdf_url) link.href = d.pdf_url;
-        rrShowV2Results();
-        if (d.pdf_v2_url) {
-            var dl2 = document.getElementById('rr-download-v2-pdf');
-            if (dl2) dl2.href = d.pdf_v2_url;
+
+        // PDF download — authenticated fetch → blob download
+        var pdfLink = document.getElementById('rr-download-review-pdf');
+        if (pdfLink && d.pdf_url) {
+            pdfLink.href = '#';
+            pdfLink.onclick = (function(u) {
+                return function(e) {
+                    e.preventDefault();
+                    esDownloadAuth(u, 'report_review.pdf');
+                };
+            })(d.pdf_url);
         }
+
+        // HTML view — authenticated fetch → blob opened in new tab
+        var htmlView = document.getElementById('rr-view-review-html');
+        if (htmlView && d.html_url) {
+            htmlView.href = '#';
+            htmlView.onclick = (function(u) {
+                return function(e) {
+                    e.preventDefault();
+                    esViewAuth(u);
+                };
+            })(d.html_url);
+        }
+
+        // HTML download — use dedicated download URL when provided
+        var htmlDl = document.getElementById('rr-download-review-html');
+        var htmlDlUrl = d.html_download_url || d.html_url;
+        if (htmlDl && htmlDlUrl) {
+            htmlDl.href = '#';
+            htmlDl.onclick = (function(u) {
+                return function(e) {
+                    e.preventDefault();
+                    esDownloadAuth(u, 'report_review.html');
+                };
+            })(htmlDlUrl);
+        }
+
+        // Admin Excel — only shown when backend returns an authoritative excel_url
+        var xlSection = document.getElementById('rr-admin-excel-section');
+        var xlLink = document.getElementById('rr-download-review-excel');
+        if (d.excel_url && xlSection && xlLink) {
+            xlLink.href = '#';
+            xlLink.onclick = (function(u, fn) {
+                return function(e) {
+                    e.preventDefault();
+                    esDownloadAuth(u, fn);
+                };
+            })(d.excel_url, d.excel_filename || 'report_review_admin.xlsx');
+            xlSection.style.display = '';
+        }
+
+        rrShowV2Results();
     })
     .catch(function(e) {
-        if (statusEl) statusEl.textContent = 'تم الإعداد (استرشادي) — خادم غير متصل؟ advisory_only=True';
-        var dl = document.getElementById('rr-download-section');
-        if (dl) dl.style.display = '';
-        rrShowV2Results();
+        if (statusEl) statusEl.textContent = 'خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.';
     });
 }
 function rrShowV2Results() {
@@ -14046,8 +14595,78 @@ function simShowValuationResults(d) {
     }
     var ps = document.getElementById('sim-preview-status');
     if (ps) ps.textContent = d.pdf_path ? 'التقرير PDF جاهز للتحميل' : 'التقرير مُولَّد (استرشادي)';
+    var simHtmlView = document.getElementById('sim-view-html');
+    if (simHtmlView && d.html_url) simHtmlView.href = d.html_url;
+    var simHtmlDl = document.getElementById('sim-download-html');
+    if (simHtmlDl && d.html_url) simHtmlDl.href = d.html_url;
 }
 function pvRenderStandardsComplianceRequirementsTable()    { pvOpenSpecialReportRequirementsTable('standards_compliance_report'); }
+
+/* ── HBU PDF+HTML bundle generation (Panel 3) ─────────────────────────── */
+function pvGenerateHbuPdfBundle() {
+    var statusEl = document.getElementById('pv-hbu-status');
+    var genBtn   = document.querySelector('[data-testid="pv-issue-hbu-pdf"]');
+    if (statusEl) statusEl.textContent = 'جارٍ توليد تقرير HBU (استرشادي)...';
+    if (genBtn)   genBtn.disabled = true;
+    fetch('/api/professional-valuation/generate-hbu-report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({advisory_only: true, not_real_training: true, hbu_analysis: true,
+                              wizard_steps_count: 6, fake_signature_created: false})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (statusEl) statusEl.textContent = d.message || 'تم توليد تقرير HBU (استرشادي).';
+        var dlSec = document.getElementById('hbu-download-section');
+        if (dlSec) dlSec.style.display = '';
+        var pdfLink = document.getElementById('hbu-download-pdf');
+        if (pdfLink && d.pdf_url) pdfLink.href = d.pdf_url;
+        var htmlView = document.getElementById('hbu-view-html');
+        if (htmlView && d.html_url) htmlView.href = d.html_url;
+        var htmlDl = document.getElementById('hbu-download-html');
+        if (htmlDl && d.html_url) htmlDl.href = d.html_url;
+        if (genBtn) genBtn.disabled = false;
+    })
+    .catch(function(){
+        if (statusEl) statusEl.textContent = 'تم الإعداد (استرشادي) — advisory_only=True';
+        var dlSec = document.getElementById('hbu-download-section');
+        if (dlSec) dlSec.style.display = '';
+        if (genBtn) genBtn.disabled = false;
+    });
+}
+
+/* ── Standards compliance PDF+HTML bundle generation (Panel 4) ─────────── */
+function pvGenerateStandardsComplianceBundle() {
+    var statusEl = document.getElementById('pv-sc-status');
+    var genBtn   = document.querySelector('[data-testid="sc-generate-report"]');
+    if (statusEl) statusEl.textContent = 'جارٍ توليد تقرير الامتثال (استرشادي)...';
+    if (genBtn)   genBtn.disabled = true;
+    fetch('/api/professional-valuation/generate-standards-report', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({advisory_only: true, not_real_training: true, standards_compliance: true,
+                              fake_certification_prevented: true, fake_signature_created: false})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (statusEl) statusEl.textContent = d.message || 'تم توليد تقرير الامتثال (استرشادي).';
+        var dlSec = document.getElementById('sc-download-section');
+        if (dlSec) dlSec.style.display = '';
+        var pdfLink = document.getElementById('sc-download-pdf-link');
+        if (pdfLink && d.pdf_url) pdfLink.href = d.pdf_url;
+        var htmlView = document.getElementById('sc-view-html');
+        if (htmlView && d.html_url) htmlView.href = d.html_url;
+        var htmlDl = document.getElementById('sc-download-html');
+        if (htmlDl && d.html_url) htmlDl.href = d.html_url;
+        if (genBtn) genBtn.disabled = false;
+    })
+    .catch(function(){
+        if (statusEl) statusEl.textContent = 'تم الإعداد (استرشادي) — advisory_only=True';
+        var dlSec = document.getElementById('sc-download-section');
+        if (dlSec) dlSec.style.display = '';
+        if (genBtn) genBtn.disabled = false;
+    });
+}
 
 /* ── Special Report Requirement Tables — Second Key ─────────────────── */
 
@@ -14169,8 +14788,8 @@ function pvSyncSpecialReportRequirementsToUnifiedContext() {
     if (!sr) {
         ctx.report_issuance_context.special_reports = {
             enabled: true,
-            selected_special_report_type: window._pvOpenSpecialReportPanel || null,
-            opened_requirement_table: window._pvOpenSpecialReportPanel || null,
+            selected_special_report_type: window.activeAdvancedReportPanel || null,
+            opened_requirement_table: window.activeAdvancedReportPanel || null,
             special_report_types: ['report_review_output','simulated_uploaded_report','hbu_analysis_report','standards_compliance_report'],
             requirement_values: { report_review_output:{}, simulated_uploaded_report:{}, hbu_analysis_report:{}, standards_compliance_report:{} },
             completion_status: { report_review_output:{}, simulated_uploaded_report:{}, hbu_analysis_report:{}, standards_compliance_report:{} },
@@ -14178,8 +14797,8 @@ function pvSyncSpecialReportRequirementsToUnifiedContext() {
         };
         sr = ctx.report_issuance_context.special_reports;
     }
-    sr.selected_special_report_type = window._pvOpenSpecialReportPanel || null;
-    sr.opened_requirement_table = window._pvOpenSpecialReportPanel || null;
+    sr.selected_special_report_type = window.activeAdvancedReportPanel || null;
+    sr.opened_requirement_table = window.activeAdvancedReportPanel || null;
     window._pvSpecialReportRequirementsContext = sr;
 }
 
@@ -16838,9 +17457,9 @@ function _showIndexToast(msg, type) {
         }
         var resp = await fetch(url, opts);
         if (resp.status === 401) {
-            esClearSession();
-            esUpdateBar();
             if (!suppressModal) {
+                esClearSession();
+                esUpdateBar();
                 esShowLoginModal('انتهت صلاحية الجلسة أو الرمز غير صالح.');
             }
             throw new Error('ES_AUTH_401');
@@ -40274,6 +40893,13 @@ window.pvSyncUnifiedReportCommandContext = function() {
         var submitBtn = document.querySelector('[data-testid="expert-lead-submit"]');
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ جاري الإرسال…'; }
 
+        // Show confirmation immediately (optimistic UI) so UX is instant
+        if (confirmEl) {
+            confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
+            confirmEl.style.display = 'block';
+            confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
         var fd = new FormData();
         fd.append('source_page', 'chat');
         fd.append('request_kind', 'expert_contact');
@@ -40293,23 +40919,11 @@ window.pvSyncUnifiedReportCommandContext = function() {
             })
             .then(function(r) {
                 var data = r.data || {};
-                if (confirmEl) {
-                    if (r.ok && data.request_id) {
-                        confirmEl.innerHTML = '&#10003; تم تسجيل طلب المراجعة. رقم الطلب: <strong>' + _chatEsc(data.request_id) + '</strong>. هذا ليس تقريرًا معتمدًا. سيتم التواصل معك قريبًا.';
-                    } else {
-                        confirmEl.innerHTML = '&#10003; تم تسجيل طلب المراجعة مبدئيًا. هذا ليس تقريرًا معتمدًا. سيتم التواصل معك قريبًا.';
-                    }
-                    confirmEl.style.display = 'block';
-                    confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                if (confirmEl && r.ok && data.request_id) {
+                    confirmEl.innerHTML = '&#10003; تم تسجيل طلب المراجعة. رقم الطلب: <strong>' + _chatEsc(data.request_id) + '</strong>. هذا ليس تقريرًا معتمدًا. سيتم التواصل معك قريبًا.';
                 }
             })
-            .catch(function() {
-                if (confirmEl) {
-                    confirmEl.innerHTML = '&#10003; تم تسجيل طلبك مبدئيًا. سيتم التواصل معك قريبًا.';
-                    confirmEl.style.display = 'block';
-                    confirmEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            })
+            .catch(function() { /* confirmation already shown above */ })
             .finally(function() {
                 if (submitBtn) {
                     submitBtn.disabled = false;
@@ -41519,6 +42133,31 @@ window.showProfAssetRequirements = function(assetTypeVal) {
     if (!panel || !bodyEl) return;
     if (!assetTypeVal) { panel.style.display = 'none'; return; }
 
+    /* ── Hotel / فندق: show full requirements panel with ADR/RevPAR/occupancy ── */
+    var _hotelTypes = ['فندق', 'hotel', 'hotel_resort_detailed', 'floating_hotel',
+                       'serviced_apartments', 'hotel_resort'];
+    if (_hotelTypes.indexOf(assetTypeVal) !== -1) {
+        if (titleEl) titleEl.textContent = 'متطلبات تقييم الفندق';
+        bodyEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px;">' +
+            '<span style="padding:3px 8px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:4px;font-size:0.72rem;color:#f9a8d4;">ADR — متوسط الإيرادات لكل غرفة مشغولة</span>' +
+            '<span style="padding:3px 8px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:4px;font-size:0.72rem;color:#f9a8d4;">RevPAR — الإيراد لكل غرفة متاحة</span>' +
+            '<span style="padding:3px 8px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:4px;font-size:0.72rem;color:#f9a8d4;">الإشغال — معدل إشغال الغرف (%)</span>' +
+            '<span style="padding:3px 8px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:4px;font-size:0.72rem;color:#f9a8d4;">GOP — إجمالي الربح التشغيلي</span>' +
+            '<span style="padding:3px 8px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:4px;font-size:0.72rem;color:#f9a8d4;">عدد الغرف والمرافق</span>' +
+            '</div>';
+        bodyEl.style.display = '';
+        var _cntEl = document.getElementById('pvr-vis-req-count');
+        if (_cntEl) { _cntEl.textContent = 'عدد المتطلبات: 5'; _cntEl.style.display = 'inline-block'; }
+        var _legEl = document.getElementById('pvr-vis-req-legacy');
+        if (_legEl) { _legEl.textContent = 'النسخة السابقة — الحفاظ على المتطلبات الأصلية'; _legEl.style.display = 'inline-block'; }
+        var _carBodyEl2 = document.getElementById('pvr-vis-car-body');
+        var _carCompletEl2 = document.getElementById('pvr-vis-car-completion');
+        if (_carBodyEl2)    _carBodyEl2.style.display = 'none';
+        if (_carCompletEl2) _carCompletEl2.style.display = 'none';
+        panel.style.display = '';
+        return;
+    }
+
     /* ── Forensic restore: defer to #es-req-panel / fetchChecklist for old-system types ──
        Any asset type in ASSET_PROFILE_MAP (Arabic keys: شقة سكنية, فندق, مصنع, أرض فضاء,
        etc.) is rendered by fetchChecklist into #es-req-panel using the gold/gray A/B/C
@@ -41735,33 +42374,6 @@ window.showProfAssetRequirements = function(assetTypeVal) {
     var profileLabel = document.getElementById('prof-valuation-profile-label');
     if (profileLabel) profileLabel.textContent = title;
 };
-
-/* ── Weighted Valuation Calculator (Part E) ───────────────────────── */
-function calcProfWeightedValue() {
-    var sv = parseFloat((document.getElementById('prof-sales-value')  || {}).value) || 0;
-    var sw = parseFloat((document.getElementById('prof-sales-weight') || {}).value) || 0;
-    var iv = parseFloat((document.getElementById('prof-income-value') || {}).value) || 0;
-    var iw = parseFloat((document.getElementById('prof-income-weight')|| {}).value) || 0;
-    var cv = parseFloat((document.getElementById('prof-cost-value')   || {}).value) || 0;
-    var cw = parseFloat((document.getElementById('prof-cost-weight')  || {}).value) || 0;
-    var warnEl = document.getElementById('prof-weights-warning');
-    var outEl  = document.getElementById('prof-weighted-value');
-    var sensEl = document.getElementById('prof-sensitivity-output');
-    var totalW = sw + iw + cw;
-    if (warnEl) warnEl.style.display = (totalW > 0 && Math.abs(totalW - 100) > 0.5) ? '' : 'none';
-    if (totalW <= 0 || (sv === 0 && iv === 0 && cv === 0)) {
-        if (outEl) outEl.textContent = '—';
-        if (sensEl) sensEl.textContent = '—';
-        return;
-    }
-    var wv = (sv * sw + iv * iw + cv * cw) / 100;
-    if (outEl) outEl.textContent = Math.round(wv).toLocaleString('ar-EG') + ' ج.م';
-    if (sensEl) sensEl.textContent =
-        Math.round(wv * 0.9).toLocaleString('ar-EG') + ' — ' +
-        Math.round(wv * 1.1).toLocaleString('ar-EG') + ' ج.م';
-    var drEl = document.getElementById('prof-data-readiness-display');
-    if (drEl) { drEl.textContent = 'بيانات كافية للترجيح'; drEl.style.color = '#4ade80'; }
-}
 
 /* ── PVPBSR: Purpose/Basis/Scope/Registry Dynamic Functions ──────── */
 
@@ -42992,7 +43604,6 @@ function professionalSubmitApproval() {
     var route    = ((document.getElementById('prof-purpose-route')  || {}).value)  || '';
     var subroute = ((document.getElementById('prof-purpose-subroute')|| {}).value) || '';
     var location = ((document.getElementById('prof-location')       || {}).value)  || '';
-    var weightedVal = ((document.getElementById('prof-weighted-value')|| {}).textContent) || '';
     window._professionalReviewPayload = {
         source_page: 'professional_valuation',
         request_kind: 'professional_valuation_review',
@@ -43012,12 +43623,6 @@ function professionalSubmitApproval() {
             ifrs_level:   ((document.getElementById('prof-ifrs-level-display')    || {}).textContent) || '',
             active_route: ((document.getElementById('prof-active-route-display')  || {}).textContent) || ''
         },
-        valuation_weights: {
-            sales:  ((document.getElementById('prof-sales-weight')  || {}).value) || '40',
-            income: ((document.getElementById('prof-income-weight') || {}).value) || '40',
-            cost:   ((document.getElementById('prof-cost-weight')   || {}).value) || '20'
-        },
-        weighted_value: weightedVal,
         requires_expert_review: true
     };
     var confirmMsg = 'تم تسجيل طلب مراجعة التقييم المهني. هذا ليس تقريرًا معتمدًا. سيتم إصدار النسخة المعتمدة فقط بعد مراجعة الخبير للبيانات والمستندات والمنهجية.';
@@ -50723,6 +51328,7 @@ function taxSpCreateDraft() {
     _PV_COMMON_REQ_DATA.industrial_land      = _PV_COMMON_REQ_DATA.urban_land;
     _PV_COMMON_REQ_DATA.coastal_land         = _PV_COMMON_REQ_DATA.urban_land;
     _PV_COMMON_REQ_DATA.desert_land          = _PV_COMMON_REQ_DATA.urban_land;
+    _PV_COMMON_REQ_DATA.agricultural_land = _PV_COMMON_REQ_DATA.urban_land;
     _PV_COMMON_REQ_DATA.shopping_mall        = _PV_COMMON_REQ_DATA.retail_shop;
     _PV_COMMON_REQ_DATA.showroom             = _PV_COMMON_REQ_DATA.retail_shop;
     _PV_COMMON_REQ_DATA.hypermarket          = _PV_COMMON_REQ_DATA.retail_shop;

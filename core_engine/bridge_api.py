@@ -12608,6 +12608,13 @@ _register_pv_outputs(app, require_auth)
 from professional_valuation_preliminary_outputs import register_pv_preliminary_routes as _register_pv_preliminary  # Phase H Addendum
 _register_pv_preliminary(app, require_auth)
 
+# ── Report Review endpoint (minimum fix 2026-07-24) ───────────────────────────
+try:
+    from pv_report_review_endpoint import register_review_endpoint as _register_rr
+    _register_rr(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _rr_import_err:
+    print(f"[WARN] pv_report_review_endpoint not loaded: {_rr_import_err}")
+
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:
     from dev_auth import register as _register_dev_auth   # DEV ONLY — see dev_auth.py

@@ -7714,6 +7714,67 @@ def handle_hbu_analyze():
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Endpoint: HBU Enhanced Report — تقرير HBU المُحسَّن (محاور A-F) (ADDITIVE)
+# ═══════════════════════════════════════════════════════════════════════════
+@app.route("/api/hbu/enhanced-report", methods=["POST", "OPTIONS"])
+def handle_hbu_enhanced_report():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        import pathlib as _pathlib
+        try:
+            from reports.hbu_enhanced_report import generate_enhanced_hbu_report
+        except ImportError:
+            try:
+                from core_engine.reports.hbu_enhanced_report import generate_enhanced_hbu_report  # type: ignore
+            except ImportError as imp_err:
+                return jsonify({"status": "error",
+                                "message": f"hbu_enhanced_report غير متاح: {imp_err}"}), 500
+
+        payload  = request.get_json(silent=True) or {}
+        case_id  = payload.get("case_id") or "HBU-ENHANCED-API"
+        out_dir  = _pathlib.Path(OUTPUTS) / "enhanced_hbu" / case_id
+
+        manifest = generate_enhanced_hbu_report(
+            payload=payload,
+            out_dir=out_dir,
+            case_id=case_id,
+        )
+
+        # Convert file paths → download URLs (user-facing only)
+        BASE_URL = "http://127.0.0.1:5000/api/download"
+        arts_raw = manifest.get("artifacts", {})
+        artifacts_urls: dict = {}
+        for key, fpath in arts_raw.items():
+            if fpath and _pathlib.Path(fpath).exists():
+                fname = _pathlib.Path(fpath).name
+                # Only expose user-facing artifacts to the API caller
+                if key in ("user_html", "user_pdf"):
+                    artifacts_urls[key] = f"{BASE_URL}/{fname}"
+                # Admin artifacts: path returned for internal use only
+                elif key in ("admin_html", "admin_pdf", "admin_xlsx"):
+                    artifacts_urls[key] = None  # not exposed to user
+
+        return jsonify({
+            "status":          "success",
+            "case_id":         case_id,
+            "artifacts":       artifacts_urls,
+            "financial_depth": manifest.get("financial_depth", {}),
+            "recommended_use": manifest.get("hbu_result", {}).get("recommended_use"),
+            "recommended_npv": manifest.get("hbu_result", {}).get("recommended_npv"),
+            "governance":      manifest.get("governance", {}),
+            "errors":          manifest.get("errors", []),
+            "warnings":        manifest.get("warnings", []),
+            "report_date":     datetime.now().strftime("%d/%m/%Y"),
+        })
+    except ValueError as ve:
+        return jsonify({"status": "error", "message": str(ve)}), 400
+    except Exception as e:
+        print(traceback.format_exc())
+        return _safe_err(e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: REIT NAV Engine (ADDITIVE)
 # ═══════════════════════════════════════════════════════════════════════════
 @app.route("/api/reit/nav", methods=["POST", "OPTIONS"])
@@ -12614,6 +12675,20 @@ try:
     _register_rr(app, require_auth, _is_admin, OUTPUTS)
 except Exception as _rr_import_err:
     print(f"[WARN] pv_report_review_endpoint not loaded: {_rr_import_err}")
+
+# ── Report Simulation endpoint (2026-07-25) ───────────────────────────────────
+try:
+    from pv_report_simulation_endpoint import register_simulation_endpoint as _register_sim
+    _register_sim(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sim_import_err:
+    print(f"[WARN] pv_report_simulation_endpoint not loaded: {_sim_import_err}")
+
+# ── Simulation Market Research endpoints (Phase 6 — server-side only) ─────────
+try:
+    from valuation_market_research import register_research_endpoint as _register_research
+    _register_research(app, require_auth, _is_admin)
+except Exception as _research_import_err:
+    print(f"[WARN] valuation_market_research not loaded: {_research_import_err}")
 
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:

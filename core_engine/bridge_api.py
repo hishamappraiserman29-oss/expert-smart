@@ -12697,6 +12697,20 @@ try:
 except ImportError:
     pass  # dev_auth.py absent in production deploys — silently skip
 
+# ── Standards Compliance Visual QA endpoint (2026-07-27) ─────────────────────
+try:
+    from pv_standards_compliance_endpoint import register_standards_compliance as _register_sc
+    _register_sc(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sc_import_err:
+    print(f"[WARN] pv_standards_compliance_endpoint not loaded: {_sc_import_err}")
+
+# ── Standards Compliance v2 endpoint (2026-07-27) ─────────────────────────────
+try:
+    from pv_standards_compliance_v2_endpoint import register_standards_compliance_v2 as _register_sc2
+    _register_sc2(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sc2_import_err:
+    print(f"[WARN] pv_standards_compliance_v2_endpoint not loaded: {_sc2_import_err}")
+
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")
     print(f"Outputs  : {OUTPUTS}")

@@ -10,7 +10,7 @@ import hashlib
 import json
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from core_engine.mass_valuation.contract.schema_validator import (
     BatchValidationResult,
@@ -18,6 +18,14 @@ from core_engine.mass_valuation.contract.schema_validator import (
     ValidationResult,
 )
 from core_engine.mass_appraisal import run_mass_appraisal
+
+try:
+    from core_engine.mass_valuation.ood_detector import detect_ood as _detect_ood
+    _OOD_AVAILABLE = True
+except ImportError:
+    _OOD_AVAILABLE = False
+    def _detect_ood(units, random_seed=42):  # type: ignore[misc]
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -58,16 +66,134 @@ def _sha256_of(obj: Any) -> str:
 
 
 # ---------------------------------------------------------------------------
+# P5 — Interpretability helpers (I-01, I-02, I-03)
+# ---------------------------------------------------------------------------
+
+def _median_of(values: List[float]) -> float:
+    """Compute median of a non-empty list (pure Python, no deps)."""
+    if not values:
+        return 0.0
+    s = sorted(values)
+    n = len(s)
+    mid = n // 2
+    return (s[mid - 1] + s[mid]) / 2.0 if n % 2 == 0 else s[mid]
+
+
+def _compute_batch_stats(units: List[Dict[str, Any]]) -> Dict[str, float]:
+    """Batch-level median statistics used by the SHAP proxy."""
+    if not units:
+        return {}
+    return {
+        "median_area":  _median_of([float(u.get("area", 100))       for u in units]),
+        "median_ppm":   _median_of([float(u.get("final_ppm", 0))    for u in units]),
+        "median_year":  _median_of([float(u.get("year_built", 2010)) for u in units]),
+        "n_units":      float(len(units)),
+    }
+
+
+def _derive_confidence(
+    ood_status: str,
+    ood_score: float,
+    unit_value: float,
+) -> str:
+    """I-03: Derive confidence from OOD status and score (not hardcoded)."""
+    if unit_value <= 0:
+        return "insufficient"
+    if ood_status == "out_of_distribution":
+        return "low"
+    # ood_score ≥ -0.2  ↔  max robust Z < 1.0 (clearly within distribution)
+    if ood_score >= -0.2:
+        return "high"
+    return "medium"
+
+
+def _build_limitations(
+    ood_status: str,
+    ood_score: float,
+    unit_value: float,
+    unit: Dict[str, Any],
+) -> List[str]:
+    """I-02: Human-readable limitation strings free of technical jargon (I-04)."""
+    if unit_value <= 0:
+        return ["insufficient_evidence: no positive value produced by model"]
+
+    lims: List[str] = []
+
+    if ood_status == "out_of_distribution":
+        lims.append(
+            "Property characteristics fall outside the range of comparable properties "
+            "used in this analysis; estimate reliability may be reduced."
+        )
+    elif ood_score < -0.3:
+        lims.append(
+            "Some property characteristics are less common than typical properties "
+            "in this area."
+        )
+
+    if float(unit.get("final_ppm", 0)) == 0:
+        lims.append(
+            "No comparable market transactions were available for this property "
+            "type and location; value is based on regional defaults only."
+        )
+
+    return lims
+
+
+def _compute_shap_proxy(
+    unit: Dict[str, Any],
+    batch_stats: Dict[str, float],
+    unit_value: float,
+) -> Dict[str, Any]:
+    """
+    I-01: Linear decomposition proxy for value attribution.
+    Signed additive decomposition relative to the batch median property.
+    NOT SHAP — an approximation for analyst/admin diagnostic use only.
+    """
+    if unit_value <= 0 or not batch_stats:
+        return {}
+
+    area       = float(unit.get("area", 100))
+    final_ppm  = float(unit.get("final_ppm", 0))
+    year_built = float(unit.get("year_built", 2010))
+
+    med_area = batch_stats.get("median_area", area)
+    med_ppm  = batch_stats.get("median_ppm",  final_ppm)
+    med_year = batch_stats.get("median_year", year_built)
+
+    return {
+        "area_contribution":         round((area - med_area) * med_ppm, 0),
+        "market_price_contribution": round(med_area * (final_ppm - med_ppm), 0),
+        "age_contribution":          round((year_built - med_year) * 200.0, 0),
+        "method":                    "linear_decomposition_proxy",
+        "advisory_note":             "Approximate attribution only — not SHAP.",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Prediction builder
 # ---------------------------------------------------------------------------
 
-def _build_predictions(units: List[Dict], run_id: str) -> List[Dict]:
-    """Convert mass_appraisal per-unit results to PropertyPrediction records."""
+def _build_predictions(
+    units: List[Dict],
+    run_id: str,
+    ood_results: Optional[List[Tuple[float, str]]] = None,
+    batch_stats: Optional[Dict[str, Any]] = None,
+) -> List[Dict]:
+    """Convert mass_appraisal per-unit results to PropertyPrediction records.
+    ood_results : (ood_score, distribution_status) parallel to units.
+    batch_stats : median statistics for SHAP proxy (I-01).
+    """
     predictions: List[Dict] = []
-    for u in units:
+    for i, u in enumerate(units):
         unit_value  = float(u.get("unit_value", 0) or 0)
         area        = float(u.get("area", 1) or 1)
         unit_per_m2 = round(unit_value / area, 0) if area > 0 else None
+
+        # OOD result for this unit (M-06)
+        if ood_results and i < len(ood_results):
+            ood_score, ood_status = ood_results[i]
+        else:
+            ood_score, ood_status = 0.0, "in_distribution"
 
         if unit_value <= 0:
             dist_status = "insufficient_evidence"
@@ -77,12 +203,12 @@ def _build_predictions(units: List[Dict], run_id: str) -> List[Dict]:
             pi_high     = None
             limitations = ["insufficient_evidence: no positive value produced by model"]
         else:
-            dist_status = "in_distribution"
-            confidence  = "medium"
+            dist_status = ood_status   # real OOD status (M-06)
+            confidence  = _derive_confidence(ood_status, ood_score, unit_value)
             estimated   = round(unit_value, 0)
             pi_low      = round(unit_value * 0.85, 0)
             pi_high     = round(unit_value * 1.15, 0)
-            limitations = []
+            limitations = _build_limitations(ood_status, ood_score, unit_value, u)
 
         predictions.append({
             "prediction_id":            str(uuid.uuid4()),
@@ -94,16 +220,56 @@ def _build_predictions(units: List[Dict], run_id: str) -> List[Dict]:
             "prediction_interval_high": pi_high,
             "confidence":               confidence,
             "distribution_status":      dist_status,
+            "ood_score":                ood_score,
             "review_status":            "manual_review_required",
             "quality_flags":            [],
             "comparable_ids":           [],
-            "shap_values":              {},
+            "shap_values":              _compute_shap_proxy(u, batch_stats or {}, unit_value),
             "model_version":            "hedonic-v1",
             "limitations":              limitations,
             "advisory_only":            True,
         })
 
     return predictions
+
+
+def _compute_pi_coverage(
+    appraisal_units: List[Dict],
+    predictions: List[Dict],
+) -> Dict[str, Any]:
+    """
+    M-05: Verify PI 85%/115% bounds on sold units (sale_price > 0).
+    Returns a coverage report dict added to iaao_summary.
+    """
+    sold_pairs: List[Tuple[float, float, float]] = []
+    for unit, pred in zip(appraisal_units, predictions):
+        sale = float(unit.get("sale_price", 0) or 0)
+        if sale <= 0:
+            continue
+        pi_low  = pred.get("prediction_interval_low")
+        pi_high = pred.get("prediction_interval_high")
+        if pi_low is None or pi_high is None:
+            continue
+        sold_pairs.append((sale, float(pi_low), float(pi_high)))
+
+    n_sold = len(sold_pairs)
+    if n_sold < 5:
+        return {
+            "n_sold_units":                        n_sold,
+            "coverage_fraction":                   None,
+            "meets_90pct_threshold":               None,
+            "insufficient_sales_for_coverage_check": True,
+        }
+
+    covered = sum(1 for sale, lo, hi in sold_pairs if lo <= sale <= hi)
+    fraction = round(covered / n_sold, 4)
+    return {
+        "n_sold_units":                        n_sold,
+        "coverage_fraction":                   fraction,
+        "meets_90pct_threshold":               fraction >= 0.90,
+        "insufficient_sales_for_coverage_check": False,
+        "pi_bounds": {"lower_multiplier": 0.85, "upper_multiplier": 1.15},
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -191,12 +357,28 @@ class MassValuationRunner:
                 "units": [],
             }
 
-        # ── 4. Build predictions ──────────────────────────────────────────
-        predictions = _build_predictions(appraisal.get("units", []), run_id)
+        # ── 4. OOD detection (M-06) ──────────────────────────────────────
+        appraisal_units = appraisal.get("units", [])
+        ood_results     = _detect_ood(appraisal_units, random_seed=self.random_seed)
 
-        # ── 5. Assemble run record ────────────────────────────────────────
+        # ── 4b. Batch statistics for SHAP proxy (I-01) ────────────────────
+        batch_stats = _compute_batch_stats(appraisal_units)
+
+        # ── 5. Build predictions ──────────────────────────────────────────
+        predictions = _build_predictions(appraisal_units, run_id, ood_results, batch_stats)
+
+        # ── 6. PI coverage validation (M-05) ─────────────────────────────
+        pi_coverage  = _compute_pi_coverage(appraisal_units, predictions)
+        iaao_summary = dict(appraisal.get("ratio_study") or {})
+        iaao_summary["pi_coverage"] = pi_coverage
+
+        ood_count = sum(
+            1 for p in predictions
+            if p.get("distribution_status") == "out_of_distribution"
+        )
+
+        # ── 7. Assemble run record ────────────────────────────────────────
         dataset_hash = _sha256_of(records)
-        iaao_summary = appraisal.get("ratio_study", {})
 
         return {
             "run_id":                       run_id,
@@ -210,7 +392,7 @@ class MassValuationRunner:
             "n_flagged":                    batch.flagged,
             "n_training_records":           len(units),
             "n_predicted_properties":       len(predictions),
-            "ood_property_count":           0,
+            "ood_property_count":           ood_count,
             "manual_review_required_count": batch.flagged,
             "dataset_hash":                 dataset_hash,
             "random_seed":                  self.random_seed,

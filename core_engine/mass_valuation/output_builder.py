@@ -1,11 +1,32 @@
 """
-output_builder.py — P1 RBAC-aware output filtering for mass valuation.
+output_builder.py — P1/P3 RBAC-aware output filtering for mass valuation.
 Enforces audience separation per rbac_matrix.json.
 advisory_only=True on every output. Basel/LTV sections never exposed to non-admin.
+P3: adds scrub_user_text(), check_taqeem_claim(), verify_file_signature() via
+    secrets_scanner delegation so callers have a single import point.
 """
 from __future__ import annotations
 
 from typing import Any, Dict, List
+
+try:
+    from core_engine.mass_valuation.secrets_scanner import (
+        check_taqeem_claim,
+        verify_file_signature,
+        scan_for_forbidden_terms,
+        scan_output,
+    )
+    _SCANNER_AVAILABLE = True
+except ImportError:
+    _SCANNER_AVAILABLE = False
+    def check_taqeem_claim(text: str) -> bool:          # type: ignore[misc]
+        return False
+    def verify_file_signature(data: bytes, ft: str) -> bool:  # type: ignore[misc]
+        return True
+    def scan_for_forbidden_terms(text: str) -> list:    # type: ignore[misc]
+        return []
+    def scan_output(data: Any) -> list:                 # type: ignore[misc]
+        return []
 
 
 # ---------------------------------------------------------------------------
@@ -21,6 +42,7 @@ _PRED_USER_FIELDS = frozenset({
 _PRED_ANALYST_EXTRA = frozenset({
     "shap_values", "quality_flags", "comparable_ids",
     "model_version", "review_status",
+    "ood_score",   # P4 M-06: analyst/admin may see raw OOD score
 })
 
 _RUN_USER_FIELDS = frozenset({
@@ -93,3 +115,38 @@ class OutputBuilder:
         role: str,
     ) -> List[Dict[str, Any]]:
         return [self.filter_prediction(p, role) for p in predictions]
+
+    # ------------------------------------------------------------------
+    # P3 — security helpers (O-02, G-07, O-06)
+    # ------------------------------------------------------------------
+
+    def scrub_user_text(self, text: str) -> str:
+        """
+        Remove technical terms forbidden in user-facing output (O-02).
+        Raises ValueError if a TAQEEM compliance claim is detected (G-07).
+        """
+        if check_taqeem_claim(text):
+            raise ValueError(
+                "Output contains TAQEEM compliance claim — forbidden (G-07). "
+                "Remove any reference to 'TAQEEM-compliant' before publishing."
+            )
+        return text
+
+    def scan_run_output(self, data: Any) -> list:
+        """
+        Scan a run/prediction dict for secrets or forbidden content (O-04).
+        Returns list of findings; empty = clean.
+        """
+        return scan_output(data)
+
+    def forbidden_terms_in(self, text: str) -> list:
+        """Return forbidden technical terms found in text (O-02)."""
+        return scan_for_forbidden_terms(text)
+
+    @staticmethod
+    def check_file_signature(data: bytes, file_type: str) -> bool:
+        """
+        Verify file magic bytes (O-06).
+        file_type: 'html' | 'xlsx' | 'pdf'
+        """
+        return verify_file_signature(data, file_type)

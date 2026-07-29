@@ -196,6 +196,29 @@ def _compute_prb(ratios: List[float], sale_prices: List[float]) -> Optional[floa
     return round(slope, 4)
 
 
+def _compute_r_squared(
+    appraised_values: List[float],
+    sale_prices: List[float],
+) -> Optional[float]:
+    """M-04: Squared Pearson correlation (AVM vs. sale price). Diagnostic only — no pass/fail."""
+    pairs = [(a, s) for a, s in zip(appraised_values, sale_prices) if s > 0 and a > 0]
+    n = len(pairs)
+    if n < 2:
+        return None
+    x = [a for a, _ in pairs]
+    y = [s for _, s in pairs]
+    x_bar = sum(x) / n
+    y_bar = sum(y) / n
+    ss_xy = sum((xi - x_bar) * (yi - y_bar) for xi, yi in zip(x, y))
+    ss_xx = sum((xi - x_bar) ** 2 for xi in x)
+    ss_yy = sum((yi - y_bar) ** 2 for yi in y)
+    denom = math.sqrt(ss_xx * ss_yy)
+    if denom < 1e-10:
+        return None
+    r = ss_xy / denom
+    return round(r * r, 4)
+
+
 def _ratio_study(sold_units: List[Dict], thresholds: Optional[Dict] = None) -> Dict:
     """IAAO ratio study: COD, PRD, PRB (configurable thresholds)."""
     _th           = thresholds or {}
@@ -216,17 +239,24 @@ def _ratio_study(sold_units: List[Dict], thresholds: Optional[Dict] = None) -> D
     prb      = _compute_prb(ratios, [r["sale_price"] for r in sold_units])
     prb_pass = (prb_lo <= prb <= prb_hi) if prb is not None else None
 
+    # M-04: R² — diagnostic only, never used as acceptance condition
+    appraised = [r["unit_value"] for r in sold_units]
+    sale_p    = [r["sale_price"] for r in sold_units]
+    r_squared = _compute_r_squared(appraised, sale_p)
+
     return {
-        "n_sales":     n,
-        "median_ratio":round(med, 3),
-        "mean_ratio":  round(mean, 3),
-        "cod":         round(cod, 2),
-        "prd":         round(prd, 3),
-        "prb":         prb,
-        "cod_pass":    cod <= cod_max,
-        "prd_pass":    prd_lo <= prd <= prd_hi,
-        "prb_pass":    prb_pass,
-        "uniformity":  "ممتاز" if cod <= 10 else ("جيد" if cod <= 15 else "يحتاج مراجعة"),
+        "n_sales":                  n,
+        "median_ratio":             round(med, 3),
+        "mean_ratio":               round(mean, 3),
+        "cod":                      round(cod, 2),
+        "prd":                      round(prd, 3),
+        "prb":                      prb,
+        "cod_pass":                 cod <= cod_max,
+        "prd_pass":                 prd_lo <= prd <= prd_hi,
+        "prb_pass":                 prb_pass,
+        "uniformity":               "ممتاز" if cod <= 10 else ("جيد" if cod <= 15 else "يحتاج مراجعة"),
+        "r_squared":                r_squared,
+        "r_squared_diagnostic_only": True,
     }
 
 

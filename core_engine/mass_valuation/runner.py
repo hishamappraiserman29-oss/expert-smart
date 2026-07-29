@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -26,6 +27,17 @@ except ImportError:
     _OOD_AVAILABLE = False
     def _detect_ood(units, random_seed=42):  # type: ignore[misc]
         return []
+
+try:
+    from core_engine.mass_valuation.data_splitter import (
+        temporal_split  as _temporal_split,
+        geographic_split as _geographic_split,
+    )
+except ImportError:
+    def _temporal_split(records, cutoff_date):   # type: ignore[misc]
+        return records, []
+    def _geographic_split(records, holdout_cities):  # type: ignore[misc]
+        return records, []
 
 
 # ---------------------------------------------------------------------------
@@ -63,6 +75,52 @@ def _sha256_of(obj: Any) -> str:
     """SHA-256 of the canonical JSON representation of an object."""
     canonical = json.dumps(obj, sort_keys=True, ensure_ascii=False, default=str)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def _compute_model_hash(
+    training_data_hash: str,
+    random_seed: int,
+    method: str,
+) -> str:
+    """R-02: Deterministic model identifier — same inputs → same hash across runs."""
+    return _sha256_of({
+        "training_data_hash": training_data_hash,
+        "random_seed":        random_seed,
+        "method":             method,
+    })
+
+
+def _get_code_commit() -> str:
+    """M-08: Current git commit SHA — enables exact codebase reproduction."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _check_leakage(
+    train_records: List[Dict[str, Any]],
+    val_records: List[Dict[str, Any]],
+    holdout_records: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """D-08: Verify no property_id overlaps between training and test buckets."""
+    train_ids   = {str(r.get("property_id", "")) for r in train_records}
+    val_ids     = {str(r.get("property_id", "")) for r in val_records}
+    holdout_ids = {str(r.get("property_id", "")) for r in holdout_records}
+    leaked_ids  = (train_ids & val_ids) | (train_ids & holdout_ids)
+    return {
+        "leakage_check":        True,
+        "leakage_check_method": "property_id_intersection",
+        "leakage_found":        bool(leaked_ids),
+        "leakage_count":        len(leaked_ids),
+        "leakage_ids":          sorted(leaked_ids)[:10],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -309,6 +367,8 @@ class MassValuationRunner:
         records: List[Dict[str, Any]],
         base_market_ppm: float = 0.0,
         location: str = "Riyadh",
+        cutoff_date: Optional[str] = None,           # D-06: "YYYY-MM-DD"
+        holdout_cities: Optional[List[str]] = None,  # D-07: cities excluded from training
     ) -> Dict[str, Any]:
         """
         Execute a mass valuation run.
@@ -333,8 +393,22 @@ class MassValuationRunner:
             if r.is_valid
         ]
 
+        # ── 1b. Data splits (D-06, D-07) ─────────────────────────────────
+        if cutoff_date:
+            train_records, val_records = _temporal_split(valid_records, cutoff_date)
+        else:
+            train_records, val_records = valid_records, []
+
+        if holdout_cities:
+            train_records, holdout_records = _geographic_split(train_records, holdout_cities)
+        else:
+            holdout_records = []
+
+        # ── 1c. Leakage check (D-08) ──────────────────────────────────────
+        leakage_info = _check_leakage(train_records, val_records, holdout_records)
+
         # ── 2. Convert ────────────────────────────────────────────────────
-        units = [_to_appraisal_unit(r) for r in valid_records]
+        units = [_to_appraisal_unit(r) for r in train_records]
 
         # ── 3. Appraise ───────────────────────────────────────────────────
         region = "SA" if self.jurisdiction.upper().startswith("SA") else "EG"
@@ -364,6 +438,13 @@ class MassValuationRunner:
         # ── 4b. Batch statistics for SHAP proxy (I-01) ────────────────────
         batch_stats = _compute_batch_stats(appraisal_units)
 
+        # ── 4c. Model hash (R-02) ─────────────────────────────────────────
+        training_hash = _sha256_of(train_records)
+        model_hash    = _compute_model_hash(training_hash, self.random_seed, self.method)
+
+        # ── 4d. Code commit (M-08) ────────────────────────────────────────
+        code_commit = _get_code_commit()
+
         # ── 5. Build predictions ──────────────────────────────────────────
         predictions = _build_predictions(appraisal_units, run_id, ood_results, batch_stats)
 
@@ -391,11 +472,34 @@ class MassValuationRunner:
             "n_rejected":                   batch.rejected,
             "n_flagged":                    batch.flagged,
             "n_training_records":           len(units),
+            "n_validation_records":         len(val_records),
+            "n_holdout_records":            len(holdout_records),
             "n_predicted_properties":       len(predictions),
             "ood_property_count":           ood_count,
             "manual_review_required_count": batch.flagged,
             "dataset_hash":                 dataset_hash,
+            "model_hash":                   model_hash,
+            "code_commit":                  code_commit,
+            "split_cutoff_date":            cutoff_date,
+            "holdout_cities":               holdout_cities or [],
             "random_seed":                  self.random_seed,
+            "leakage_check":                leakage_info["leakage_check"],
+            "leakage_check_method":         leakage_info["leakage_check_method"],
+            "leakage_found":                leakage_info["leakage_found"],
+            "validation_strategy": {
+                "type": (
+                    "temporal_and_spatial" if (cutoff_date and holdout_cities) else
+                    "temporal_split"        if cutoff_date else
+                    "spatial_split"         if holdout_cities else
+                    "none"
+                ),
+                "temporal_holdout":  {"cutoff_date": cutoff_date} if cutoff_date else None,
+                "geographic_holdout": {"cities_excluded": holdout_cities or []},
+                "leakage_check":        leakage_info["leakage_check"],
+                "leakage_check_method": leakage_info["leakage_check_method"],
+                "leakage_found":        leakage_info["leakage_found"],
+                "leakage_count":        leakage_info["leakage_count"],
+            },
             "iaao_summary":                 iaao_summary,
             "started_at":                   started,
             "completed_at":                 datetime.now(timezone.utc).isoformat(),

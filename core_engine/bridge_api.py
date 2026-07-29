@@ -12718,16 +12718,17 @@ except Exception as _ru_import_err:
     print(f"[WARN] pv_report_update_endpoint not loaded: {_ru_import_err}")
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Mass Valuation P1 — MVP endpoints
+# Mass Valuation P1/P2 — MVP endpoints + DB persistence
 # advisory_only=True on all responses; Basel/LTV never exposed to non-admin.
 # ─────────────────────────────────────────────────────────────────────────────
 try:
     from mass_valuation.runner import MassValuationRunner as _MVRunner
     from mass_valuation.audit_recorder import build_audit_record as _mv_build_audit
     from mass_valuation.output_builder import OutputBuilder as _MVOutputBuilder
+    import mass_valuation.db_writer as _mv_db
     _MV_AVAILABLE = True
 except Exception as _mv_import_err:
-    print(f"[WARN] mass_valuation P1 not loaded: {_mv_import_err}")
+    print(f"[WARN] mass_valuation P1/P2 not loaded: {_mv_import_err}")
     _MV_AVAILABLE = False
 
 
@@ -12761,6 +12762,22 @@ def mv_run():
     run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
     audit_record = _mv_build_audit(run_result, code_commit="HEAD")
 
+    # P2 — persist to DB (graceful: run still succeeds if DB unavailable)
+    db_saved_run_id = None
+    if _DB_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                db_saved_run_id = _mv_db.save_run(run_result, _db)
+                if db_saved_run_id:
+                    _mv_db.save_predictions(
+                        run_result.get("predictions", []),
+                        db_saved_run_id,
+                        _db,
+                    )
+        except Exception as _db_err:
+            print(f"[WARN] mass-valuation DB persist failed: {_db_err}")
+
     return jsonify({
         "run_id":              run_result["run_id"],
         "status":              run_result["status"],
@@ -12769,6 +12786,7 @@ def mv_run():
         "n_predicted":         run_result["n_predicted_properties"],
         "iaao_summary":        run_result["iaao_summary"],
         "audit_trail_id":      audit_record["audit_id"],
+        "db_persisted":        db_saved_run_id is not None,
         "advisory_only":       True,
         "certification_ready": False,
     }), 200
@@ -12777,40 +12795,131 @@ def mv_run():
 @app.route("/api/mass-valuation/runs", methods=["GET"])
 @require_auth
 def mv_list_runs():
-    """GET /api/mass-valuation/runs — Run history stub (analyst/admin)."""
+    """GET /api/mass-valuation/runs — Recent runs (analyst/admin), RBAC-filtered."""
+    role  = "admin" if _is_admin(g.user_id) else "analyst"
+    limit = min(int(request.args.get("limit", 50)), 200)
+
+    if _DB_AVAILABLE and _MV_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                runs = _mv_db.list_runs(_db, role=role, limit=limit)
+            return jsonify({"runs": runs, "count": len(runs), "advisory_only": True}), 200
+        except Exception as _e:
+            print(f"[WARN] mv_list_runs DB error: {_e}")
+
     return jsonify({
-        "message":      "Run history stored in audit_logs.details_json — query via DB.",
+        "runs": [], "count": 0,
         "advisory_only": True,
+        "message": "DB unavailable — runs not persisted yet.",
     }), 200
 
 
-@app.route("/api/mass-valuation/predictions/<run_id>", methods=["POST"])
+@app.route("/api/mass-valuation/predictions/<run_id>", methods=["GET"])
 @require_auth
 def mv_get_predictions(run_id: str):
     """
-    POST /api/mass-valuation/predictions/<run_id>
-    Body: {"records": [...], "role": "user"|"analyst"|"admin"}
-    Re-runs appraisal and returns predictions filtered to the caller's role.
+    GET /api/mass-valuation/predictions/<run_id>
+    Returns predictions for a run, filtered to the caller's role.
+    P2: reads from property_predictions table.
     """
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body    = request.get_json(silent=True) or {}
-    records = body.get("records", [])
-    role    = body.get("role", "user")
-
+    role = "admin" if _is_admin(g.user_id) else request.args.get("role", "user")
     if role not in {"user", "analyst", "admin"}:
         role = "user"
-    if role == "admin" and not _is_admin():
+    if role == "admin" and not _is_admin(g.user_id):
         return jsonify({"error": "admin role required for admin-level output"}), 403
-    if not isinstance(records, list) or not records:
-        return jsonify({"error": "records must be a non-empty list"}), 400
 
-    runner     = _MVRunner()
-    run_result = runner.run(records)
-    filtered   = _MVOutputBuilder().filter_run(run_result, role)
+    if _DB_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                preds = _mv_db.get_predictions_for_run(run_id, _db)
+            if preds:
+                filtered = _MVOutputBuilder().filter_predictions_list(preds, role)
+                return jsonify({
+                    "run_id":      run_id,
+                    "predictions": filtered,
+                    "count":       len(filtered),
+                    "advisory_only": True,
+                }), 200
+        except Exception as _e:
+            print(f"[WARN] mv_get_predictions DB error: {_e}")
 
-    return jsonify(filtered), 200
+    return jsonify({
+        "run_id":        run_id,
+        "predictions":   [],
+        "count":         0,
+        "advisory_only": True,
+        "message":       "Run not found or DB unavailable.",
+    }), 200
+
+
+@app.route("/api/mass-valuation/review/<prediction_id>", methods=["POST"])
+@require_auth
+def mv_review_prediction(prediction_id: str):
+    """
+    POST /api/mass-valuation/review/<prediction_id>
+    Body: {run_id, decision, reason, property_id?, model_value?, reviewed_value?}
+    Admin only. reviewed_by is set to g.user_id (never 'system').
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    body        = request.get_json(silent=True) or {}
+    run_id      = body.get("run_id", "")
+    decision    = body.get("decision", "")
+    reason      = body.get("reason", "")
+    property_id = body.get("property_id", "")
+    model_value     = body.get("model_value")
+    reviewed_value  = body.get("reviewed_value")
+    reviewed_by = g.user_id or ""
+
+    if not run_id:
+        return jsonify({"error": "run_id is required"}), 400
+
+    try:
+        decision_id = None
+        if _DB_AVAILABLE:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                decision_id = _mv_db.save_review_decision(
+                    prediction_id=prediction_id,
+                    run_id=run_id,
+                    decision=decision,
+                    reason=reason,
+                    reviewed_by=reviewed_by,
+                    db=_db,
+                    property_id=property_id,
+                    model_value=float(model_value) if model_value is not None else None,
+                    reviewed_value=float(reviewed_value) if reviewed_value is not None else None,
+                )
+        else:
+            # Validate even without DB so callers get correct errors
+            _mv_db.save_review_decision.__module__  # module exists
+            from mass_valuation.db_writer import (
+                _validate_reviewed_by as _vr,
+                _validate_decision    as _vd,
+                _validate_reason      as _vrn,
+            )
+            _vr(reviewed_by)
+            _vd(decision)
+            _vrn(reason)
+
+        return jsonify({
+            "decision_id":   decision_id,
+            "prediction_id": prediction_id,
+            "decision":      decision,
+            "db_persisted":  decision_id is not None,
+            "advisory_only": True,
+        }), 200
+
+    except ValueError as _ve:
+        return jsonify({"error": str(_ve)}), 400
 
 
 if __name__ == "__main__":

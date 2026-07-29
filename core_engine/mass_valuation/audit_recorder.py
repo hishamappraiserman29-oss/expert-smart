@@ -28,12 +28,18 @@ _DEFAULT_FEATURE_SCHEMA: Dict[str, Any] = {
 }
 
 
+def compute_artifact_hashes(artifacts: Dict[str, bytes]) -> Dict[str, str]:
+    """O-05: SHA-256 each artifact. Returns {filename: 64-char hex digest}."""
+    return {name: hashlib.sha256(data).hexdigest() for name, data in artifacts.items()}
+
+
 def build_audit_record(
     run_result: Dict[str, Any],
     code_commit: str = "unknown",
     standard_version_id: str = "IAAO-2023",
     hyperparameters: Optional[Dict] = None,
     feature_schema: Optional[Dict] = None,
+    artifact_hashes: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
     Build an AuditTrailRecord from a completed run result dict.
@@ -88,7 +94,7 @@ def build_audit_record(
         },
         "user_overrides":      [],
         "approval_events":     [],
-        "artifact_hashes":     {},
+        "artifact_hashes":     artifact_hashes or {},
         "created_at":          datetime.now(timezone.utc).isoformat(),
         "advisory_only":       True,
         "certification_ready": False,

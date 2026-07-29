@@ -124,6 +124,65 @@ def _check_leakage(
 
 
 # ---------------------------------------------------------------------------
+# P9 — Governance helpers (G-02, G-03, G-08)
+# ---------------------------------------------------------------------------
+
+def make_review_decision(
+    prediction_id: str,
+    reviewed_by: str,
+    decision: str,
+    notes: str = "",
+) -> Dict[str, Any]:
+    """G-02: Create a human ReviewDecision. Raises ValueError if reviewed_by='system'."""
+    if reviewed_by.lower() == "system":
+        raise ValueError(
+            "G-02: reviewed_by cannot be 'system' — ReviewDecision requires a human reviewer."
+        )
+    _valid = {"accepted", "modified", "excluded"}
+    if decision not in _valid:
+        raise ValueError(f"decision must be one of {_valid}, got {decision!r}")
+    return {
+        "prediction_id": prediction_id,
+        "reviewed_by":   reviewed_by,
+        "decision":      decision,
+        "notes":         notes,
+        "timestamp":     datetime.now(timezone.utc).isoformat(),
+    }
+
+
+_REQUIRED_AUDIT_FIELDS: frozenset = frozenset({
+    "run_id", "dataset_hash", "model_hash", "code_commit",
+    "random_seed", "leakage_check", "started_at",
+    "advisory_only", "certification_ready",
+})
+
+
+def _audit_trail_complete(run_record: Dict[str, Any]) -> bool:
+    """G-03: True only when all required audit fields are present and non-None."""
+    return all(run_record.get(f) is not None for f in _REQUIRED_AUDIT_FIELDS)
+
+
+_BASEL_LTV_KEYS: frozenset = frozenset({
+    "ltv", "ltv_ratio", "ltv_band", "ltv_threshold",
+    "basel_tier", "basel_weight", "capital_requirement",
+    "ecl", "pd", "lgd", "ead",
+})
+
+
+def filter_output_for_role(run_record: Dict[str, Any], role: str) -> Dict[str, Any]:
+    """G-08: Strip Basel/LTV sections from output when role is not 'admin'."""
+    if role.lower() == "admin":
+        return run_record
+    filtered = {k: v for k, v in run_record.items() if k not in _BASEL_LTV_KEYS}
+    if "predictions" in filtered:
+        filtered["predictions"] = [
+            {k: v for k, v in p.items() if k not in _BASEL_LTV_KEYS}
+            for p in filtered["predictions"]
+        ]
+    return filtered
+
+
+# ---------------------------------------------------------------------------
 # P5 — Interpretability helpers (I-01, I-02, I-03)
 # ---------------------------------------------------------------------------
 
@@ -286,6 +345,14 @@ def _build_predictions(
             "model_version":            "hedonic-v1",
             "limitations":              limitations,
             "advisory_only":            True,
+            "property_lifecycle": {
+                "stage_ingestion":  "completed",
+                "stage_quality":    "completed",
+                "stage_exceptions": "completed",
+                "stage_review":     "manual_review_required",
+                "stage_decision":   None,
+                "stage_issuance":   None,
+            },
         })
 
     return predictions
@@ -461,12 +528,12 @@ class MassValuationRunner:
         # ── 7. Assemble run record ────────────────────────────────────────
         dataset_hash = _sha256_of(records)
 
-        return {
+        run_record = {
             "run_id":                       run_id,
             "run_name":                     self.run_name,
             "property_type":                self.property_type,
             "jurisdiction":                 self.jurisdiction,
-            "status":                       "validated",
+            "status":                       "validated",   # G-01: never "active" without human approval_event
             "method":                       self.method,
             "n_input_records":              len(records),
             "n_rejected":                   batch.rejected,
@@ -505,6 +572,10 @@ class MassValuationRunner:
             "completed_at":                 datetime.now(timezone.utc).isoformat(),
             "advisory_only":                True,
             "certification_ready":          False,
+            "approval_events":              [],   # G-01: empty — state transitions require human action
             "predictions":                  predictions,
             "validation_report":            batch.to_dict(),
         }
+        # G-03: compute audit completeness after the record is fully assembled
+        run_record["audit_trail_complete"] = _audit_trail_complete(run_record)
+        return run_record

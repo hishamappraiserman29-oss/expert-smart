@@ -150,3 +150,71 @@ class OutputBuilder:
         file_type: 'html' | 'xlsx' | 'pdf'
         """
         return verify_file_signature(data, file_type)
+
+    # ------------------------------------------------------------------
+    # P10 — Export methods (O-01, O-03, O-06)
+    # ------------------------------------------------------------------
+
+    def export_excel(self, run_record: Dict[str, Any], role: str) -> bytes:
+        """
+        O-01: Excel export is admin-only.
+        Raises PermissionError for any non-admin role.
+        Returns minimal XLSX bytes (ZIP magic PK) for admin.
+        """
+        if role.lower() != "admin":
+            raise PermissionError(
+                f"O-01: export_excel is restricted to admin role. "
+                f"Role '{role}' is not authorized."
+            )
+        import io
+        import zipfile
+
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+            content_types = (
+                '<?xml version="1.0" encoding="UTF-8"?>'
+                '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+                '<Default Extension="rels" ContentType='
+                '"application/vnd.openxmlformats-package.relationships+xml"/>'
+                '<Default Extension="xml" ContentType="application/xml"/>'
+                '</Types>'
+            )
+            zf.writestr("[Content_Types].xml", content_types)
+            run_id = run_record.get("run_id", "unknown")
+            zf.writestr("run_id.txt", run_id)
+        return buf.getvalue()
+
+    def export_html(self, run_record: Dict[str, Any], role: str) -> bytes:
+        """
+        O-03: Produce HTML output.
+        Admin HTML wraps admin-only sections in <div class="adm-marker">.
+        All roles: output starts with <!DOCTYPE html> (O-06 signature).
+        """
+        filtered = self.filter_run(run_record, role)
+        lines = [
+            "<!DOCTYPE html>",
+            '<html lang="en">',
+            "<head>",
+            '<meta charset="UTF-8">',
+            "<title>Mass Valuation Report</title>",
+            "</head>",
+            "<body>",
+            "<h1>Mass Valuation Report</h1>",
+            f"<p>Run: {filtered.get('run_id', '')}</p>",
+            f"<p>Status: {filtered.get('status', '')}</p>",
+            f"<p>Properties: {filtered.get('n_predicted_properties', 0)}</p>",
+        ]
+
+        if role == "admin":
+            lines += [
+                '<div class="adm-marker">',
+                "<h2>Admin Details</h2>",
+                f"<p>Dataset hash: {filtered.get('dataset_hash', '')}</p>",
+                f"<p>Random seed: {filtered.get('random_seed', '')}</p>",
+                f"<p>advisory_only: {filtered.get('advisory_only', True)}</p>",
+                f"<p>certification_ready: {filtered.get('certification_ready', False)}</p>",
+                "</div>",
+            ]
+
+        lines += ["</body>", "</html>"]
+        return "\n".join(lines).encode("utf-8")

@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_id": "MASS_VAL_AUDIT_TRAIL_SCHEMA_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "Every mass valuation run must produce a complete, immutable audit trail record. The audit trail is the governance backbone — without it, no run transitions to 'active'.",
+
+  "AuditTrailRecord": {
+    "type": "object",
+    "required": [
+      "audit_id", "run_id", "dataset_id", "model_id",
+      "run_hash", "dataset_hash", "model_hash",
+      "code_commit", "feature_schema_hash",
+      "hyperparameters", "random_seed",
+      "training_period", "validation_strategy",
+      "standard_version_id", "created_at"
+    ],
+    "properties": {
+
+      "audit_id": {
+        "type": "string",
+        "description": "Unique identifier for this audit trail record (UUID).",
+        "format": "uuid"
+      },
+
+      "run_id": {
+        "type": "string",
+        "description": "Identifier of the MassValuationRun this record covers.",
+        "format": "uuid"
+      },
+
+      "dataset_id": {
+        "type": "string",
+        "description": "Identifier of the dataset used for training/validation.",
+        "format": "uuid"
+      },
+
+      "model_id": {
+        "type": "string",
+        "description": "Identifier from ml/model_registry.py ModelMetadata.model_id.",
+        "format": "string"
+      },
+
+      "run_hash": {
+        "type": "string",
+        "description": "SHA-256 of the full run configuration (hyperparameters + data + model + seed).",
+        "pattern": "^[a-fA-F0-9]{64}$"
+      },
+
+      "dataset_hash": {
+        "type": "string",
+        "description": "SHA-256 of the training + validation dataset files at run time.",
+        "pattern": "^[a-fA-F0-9]{64}$"
+      },
+
+      "model_hash": {
+        "type": "string",
+        "description": "SHA-256 of the serialised model artifact (e.g., .joblib file).",
+        "pattern": "^[a-fA-F0-9]{64}$"
+      },
+
+      "code_commit": {
+        "type": "string",
+        "description": "Git commit hash of the codebase at time of training. Enables exact reproduction.",
+        "pattern": "^[a-fA-F0-9]{7,40}$"
+      },
+
+      "feature_schema": {
+        "type": "object",
+        "description": "Exact feature list with types used during training. Enables drift detection.",
+        "properties": {
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "dtype"],
+              "properties": {
+                "name":  {"type": "string"},
+                "dtype": {"type": "string"},
+                "source_field": {"type": "string"}
+              }
+            }
+          },
+          "schema_version": {"type": "string"}
+        },
+        "required": ["features", "schema_version"]
+      },
+
+      "feature_schema_hash": {
+        "type": "string",
+        "description": "SHA-256 of the serialised feature_schema for compact comparison.",
+        "pattern": "^[a-fA-F0-9]{64}$"
+      },
+
+      "hyperparameters": {
+        "type": "object",
+        "description": "Complete set of hyperparameters used for training. No defaults hidden.",
+        "additionalProperties": true,
+        "examples": [
+          {
+            "algorithm": "gradient_boosting",
+            "n_estimators": 300,
+            "max_depth": 5,
+            "learning_rate": 0.05,
+            "subsample": 0.8,
+            "min_samples_leaf": 10
+          }
+        ]
+      },
+
+      "random_seed": {
+        "type": "integer",
+        "description": "Random seed used for all stochastic operations (train/test split, model init, bootstrap). Required for full reproducibility.",
+        "minimum": 0
+      },
+
+      "training_period": {
+        "type": "object",
+        "required": ["start_date", "end_date"],
+        "properties": {
+          "start_date": {"type": "string", "format": "ISO8601_date"},
+          "end_date":   {"type": "string", "format": "ISO8601_date"}
+        },
+        "description": "Date range of training data. Used to validate temporal test independence."
+      },
+
+      "validation_strategy": {
+        "type": "object",
+        "required": ["type", "temporal_holdout", "geographic_holdout"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["temporal_split", "spatial_split", "temporal_and_spatial", "k_fold_temporal"],
+            "description": "Validation strategy type. k-fold without temporal ordering is not permitted."
+          },
+          "temporal_holdout": {
+            "type": "object",
+            "required": ["start_date", "end_date"],
+            "description": "Hold-out period for temporal validation — must be strictly after training_period.end_date.",
+            "properties": {
+              "start_date": {"type": "string", "format": "ISO8601_date"},
+              "end_date":   {"type": "string", "format": "ISO8601_date"}
+            }
+          },
+          "geographic_holdout": {
+            "type": "object",
+            "description": "Hold-out geographic stratum for spatial validation.",
+            "properties": {
+              "cities_excluded":    {"type": "array", "items": {"type": "string"}},
+              "districts_excluded": {"type": "array", "items": {"type": "string"}}
+            }
+          },
+          "leakage_check": {
+            "type": "boolean",
+            "description": "Whether a train/test leakage check was performed. Must be true for active runs."
+          },
+          "leakage_check_method": {"type": "string"}
+        }
+      },
+
+      "standard_version_id": {
+        "type": "string",
+        "description": "ID from standard_version.schema.json registered_standards — e.g. 'IAAO-2023'.",
+        "examples": ["IAAO-2023", "IVS-300-2022"]
+      },
+
+      "iaao_metrics": {
+        "type": "object",
+        "description": "Computed IAAO ratio study metrics for this run.",
+        "properties": {
+          "n_sales":        {"type": "integer"},
+          "median_ratio":   {"type": "number"},
+          "mean_ratio":     {"type": "number"},
+          "cod":            {"type": "number"},
+          "cod_threshold":  {"type": "number", "description": "Configured threshold for this run (not hardcoded)"},
+          "cod_pass":       {"type": "boolean"},
+          "prd":            {"type": "number"},
+          "prd_range":      {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "prd_pass":       {"type": "boolean"},
+          "prb":            {"type": "number", "description": "Price-Related Bias — absent in current mass_appraisal.py; added in P1"},
+          "prb_range":      {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+          "prb_pass":       {"type": "boolean"},
+          "r_squared":      {"type": "number", "description": "Diagnostic only — not a pass/fail criterion"}
+        }
+      },
+
+      "user_overrides": {
+        "type": "array",
+        "description": "List of any manual overrides applied by a human reviewer during this run.",
+        "items": {
+          "type": "object",
+          "required": ["property_id", "field", "original_value", "overridden_value", "override_by", "override_at", "reason"],
+          "properties": {
+            "property_id":       {"type": "string"},
+            "field":             {"type": "string"},
+            "original_value":    {},
+            "overridden_value":  {},
+            "override_by":       {"type": "string"},
+            "override_at":       {"type": "string", "format": "ISO8601_datetime"},
+            "reason":            {"type": "string"}
+          }
+        }
+      },
+
+      "approval_events": {
+        "type": "array",
+        "description": "Chronological list of all human approval/rejection events for this run.",
+        "items": {
+          "type": "object",
+          "required": ["event_type", "actor", "at", "from_state", "to_state"],
+          "properties": {
+            "event_type":  {"type": "string", "enum": ["approved", "rejected", "returned_for_review", "escalated"]},
+            "actor":       {"type": "string"},
+            "at":          {"type": "string", "format": "ISO8601_datetime"},
+            "from_state":  {"type": "string"},
+            "to_state":    {"type": "string"},
+            "notes":       {"type": "string"}
+          }
+        }
+      },
+
+      "artifact_hashes": {
+        "type": "object",
+        "description": "SHA-256 of each output artifact produced by this run.",
+        "additionalProperties": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "examples": [
+          {
+            "report_user.html":    "abc123...64hex",
+            "report_admin.html":   "def456...64hex",
+            "report_admin.xlsx":   "ghi789...64hex",
+            "predictions.jsonl":   "jkl012...64hex"
+          }
+        ]
+      },
+
+      "created_at": {
+        "type": "string",
+        "format": "ISO8601_datetime",
+        "description": "Timestamp when this audit trail record was created."
+      },
+
+      "advisory_only": {
+        "type": "boolean",
+        "const": true,
+        "description": "Always true. Mass valuation outputs are advisory only — no automated certification."
+      },
+
+      "certification_ready": {
+        "type": "boolean",
+        "const": false,
+        "description": "Always false in P0/P1. Certification requires TAQEEM integration contract."
+      }
+    }
+  },
+
+  "db_alignment": {
+    "existing_table": "audit_logs",
+    "mapping": {
+      "audit_logs.action":       "AuditTrailRecord.approval_events[].event_type",
+      "audit_logs.entity_type":  "'mass_valuation_run'",
+      "audit_logs.entity_id":    "AuditTrailRecord.run_id",
+      "audit_logs.actor":        "AuditTrailRecord.approval_events[].actor",
+      "audit_logs.details_json": "AuditTrailRecord (full record as JSONB)"
+    },
+    "new_fields_in_p1": [
+      "dataset_hash", "model_hash", "code_commit", "feature_schema_hash",
+      "random_seed", "validation_strategy", "iaao_metrics", "artifact_hashes"
+    ],
+    "note": "In P0, AuditTrailRecord is stored as JSON. P1 adds a dedicated mass_valuation_audit table."
+  }
+}

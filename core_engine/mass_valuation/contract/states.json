@@ -1,0 +1,164 @@
+{
+  "contract_id": "MASS_VAL_STATES_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "All state transitions require logged events. No automated approval transitions — human_in_the_loop required at every gate.",
+
+  "run_states": {
+    "description": "Lifecycle of a Mass Valuation Run from creation to archive.",
+    "states": {
+      "draft": {
+        "label":        "مسودة",
+        "description":  "Run created; parameters configured; no training initiated.",
+        "terminal":     false,
+        "allowed_next": ["training", "rejected"],
+        "audit_required": false,
+        "human_gate":   false
+      },
+      "training": {
+        "label":        "قيد التدريب",
+        "description":  "Model training in progress; data locked for reproducibility.",
+        "terminal":     false,
+        "allowed_next": ["validated", "rejected"],
+        "audit_required": true,
+        "human_gate":   false,
+        "reproducibility_lock": ["dataset_hash", "random_seed", "hyperparameters", "code_commit"]
+      },
+      "validated": {
+        "label":        "مُتحقَّق منه",
+        "description":  "Automated validation passed (schema, IAAO metrics computed, OOD identified). Awaiting human review.",
+        "terminal":     false,
+        "allowed_next": ["approved_for_internal_use", "rejected"],
+        "audit_required": true,
+        "human_gate":   true,
+        "validation_checks": ["cod_computed", "prd_computed", "prb_computed", "ood_flagged", "no_train_test_leakage", "pi_computed"]
+      },
+      "approved_for_internal_use": {
+        "label":        "معتمد للاستخدام الداخلي",
+        "description":  "Human reviewer approved for internal advisory use only. Not for external disclosure.",
+        "terminal":     false,
+        "allowed_next": ["active", "deprecated", "rejected"],
+        "audit_required": true,
+        "human_gate":   true,
+        "advisory_only": true,
+        "certification_ready": false
+      },
+      "active": {
+        "label":        "نشط",
+        "description":  "Run is the current production run for internal advisory outputs.",
+        "terminal":     false,
+        "allowed_next": ["challenger", "deprecated"],
+        "audit_required": true,
+        "human_gate":   true,
+        "notes":        "Only one run per property_type × jurisdiction can be 'active' simultaneously."
+      },
+      "challenger": {
+        "label":        "مُقارِن",
+        "description":  "A newer run being tested in parallel with the active run. Used for A/B comparison.",
+        "terminal":     false,
+        "allowed_next": ["active", "deprecated", "rejected"],
+        "audit_required": true,
+        "human_gate":   true
+      },
+      "deprecated": {
+        "label":        "مُهمَل",
+        "description":  "Run superseded by a newer active run. Outputs preserved for audit trail.",
+        "terminal":     false,
+        "allowed_next": ["archived"],
+        "audit_required": false,
+        "human_gate":   false
+      },
+      "rejected": {
+        "label":        "مرفوض",
+        "description":  "Run failed validation or human review. Cannot be reactivated.",
+        "terminal":     false,
+        "allowed_next": ["archived"],
+        "audit_required": true,
+        "human_gate":   false
+      },
+      "archived": {
+        "label":        "مُؤرشَف",
+        "description":  "Run and all its outputs archived. Read-only. Required retention period: 7 years (Saudi regulations).",
+        "terminal":     true,
+        "allowed_next": [],
+        "audit_required": false,
+        "retention_years": 7
+      }
+    },
+    "initial_state": "draft",
+    "terminal_states": ["archived"],
+    "state_count": 9,
+    "audit_trail_event_required": ["training→validated", "validated→approved_for_internal_use", "approved_for_internal_use→active", "active→challenger", "challenger→active", "any→rejected"]
+  },
+
+  "property_states": {
+    "description": "Status of an individual property prediction within a mass valuation run.",
+    "states": {
+      "in_distribution": {
+        "label":        "ضمن نطاق النموذج",
+        "description":  "Property falls within the training distribution; model prediction is applicable.",
+        "usable_in_output": true,
+        "review_required":  false,
+        "notes":        "Prediction confidence applies normally."
+      },
+      "out_of_distribution": {
+        "label":        "خارج نطاق النموذج",
+        "description":  "Property characteristics fall outside the training distribution (OOD). Prediction retained with OOD flag and increased uncertainty.",
+        "usable_in_output": true,
+        "review_required":  true,
+        "output_label":  "تنبيه: خارج نطاق النموذج — مراجعة مطلوبة",
+        "notes":        "Prediction interval widens automatically. Human review required before any advisory use."
+      },
+      "insufficient_evidence": {
+        "label":        "أدلة غير كافية",
+        "description":  "Missing required input fields (price, location, area) prevent reliable prediction. No value assigned.",
+        "usable_in_output": false,
+        "review_required":  true,
+        "estimated_value":  null,
+        "notes":        "GOVERNANCE: No imputed value is assigned. Record documented as insufficient_evidence."
+      },
+      "manual_review_required": {
+        "label":        "يتطلّب مراجعة يدوية",
+        "description":  "Quality flags (anomaly, near-duplicate, currency ambiguity, OOD, missing location) triggered. Human reviewer must inspect before output is released.",
+        "usable_in_output": false,
+        "review_required":  true,
+        "notes":        "Prediction may be computed but is withheld until human review complete."
+      },
+      "reviewed": {
+        "label":        "مُراجَع",
+        "description":  "Human reviewer has inspected the prediction and either accepted the model value or assigned an override value.",
+        "usable_in_output": true,
+        "review_required":  false,
+        "notes":        "Review decision captured in ReviewDecision data model."
+      },
+      "approved_for_release": {
+        "label":        "معتمد للإصدار",
+        "description":  "Prediction reviewed and approved for inclusion in the advisory output. Final state before reporting.",
+        "usable_in_output": true,
+        "review_required":  false,
+        "notes":        "Approval logged with reviewer ID and timestamp."
+      },
+      "rejected": {
+        "label":        "مرفوض",
+        "description":  "Prediction rejected by human reviewer. Reason documented. Excluded from all outputs.",
+        "usable_in_output": false,
+        "review_required":  false,
+        "notes":        "Rejection reason required. Record retained in audit trail."
+      }
+    },
+    "initial_state": "in_distribution",
+    "property_state_count": 7,
+    "states_excluded_from_output": ["insufficient_evidence", "manual_review_required", "rejected"]
+  },
+
+  "transition_log_schema": {
+    "run_id":        {"type": "string"},
+    "property_id":   {"type": "string", "nullable": true},
+    "from_state":    {"type": "string"},
+    "to_state":      {"type": "string"},
+    "transition_at": {"type": "string", "format": "ISO8601_datetime"},
+    "actor":         {"type": "string", "description": "User ID or 'system' for automated transitions"},
+    "reason":        {"type": "string", "nullable": true},
+    "notes":         {"type": "string", "nullable": true}
+  }
+}

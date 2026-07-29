@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_id": "MASS_VAL_STANDARD_VERSION_SCHEMA_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "All thresholds are configurable per property_type_category × market_segment × standard_edition. No hardcoded limits. R² is diagnostic only, never a pass/fail criterion.",
+
+  "schema": {
+    "type": "object",
+    "required": ["standard_id", "name", "edition", "effective_date", "jurisdiction", "applicability"],
+    "properties": {
+      "standard_id":      {"type": "string"},
+      "name":             {"type": "string"},
+      "edition":          {"type": "string"},
+      "effective_date":   {"type": "string", "format": "ISO8601_date"},
+      "jurisdiction":     {"type": "string"},
+      "clauses":          {"type": "array", "items": {"type": "string"}},
+      "applicability":    {"type": "array", "items": {"type": "string"}},
+      "assessment_date":  {"type": "string", "format": "ISO8601_date"},
+      "calculation_impact": {"type": "boolean"},
+      "audience":         {"type": "array", "items": {"type": "string", "enum": ["user", "analyst", "admin", "system", "admin_only"]}},
+      "thresholds":       {"type": "object"},
+      "integration_status": {"type": "string"}
+    }
+  },
+
+  "registered_standards": {
+
+    "IVS_300": {
+      "standard_id":    "IVS-300-2022",
+      "name":           "IVS 300 — Valuations for Financial Reporting",
+      "edition":        "2022",
+      "effective_date": "2022-01-31",
+      "jurisdiction":   "International",
+      "clauses":        ["300.1", "300.2", "300.3", "300.4"],
+      "applicability":  ["mass_valuation", "portfolio_reporting", "financial_statements"],
+      "calculation_impact": false,
+      "audience":       ["analyst", "admin"],
+      "role_in_platform": "interpretation_and_audit",
+      "notes":          "IVS 300 governs disclosure and reporting requirements for mass valuation outputs used in financial statements. Does not prescribe model type or statistical thresholds."
+    },
+
+    "IAAO": {
+      "standard_id":    "IAAO-2023",
+      "name":           "IAAO Standard on Ratio Studies",
+      "edition":        "2023",
+      "effective_date": "2023-01-01",
+      "jurisdiction":   "International / Saudi Arabia",
+      "clauses":        ["Section 2", "Section 3", "Section 4 COD", "Section 5 PRD", "Section 6 PRB"],
+      "applicability":  ["mass_valuation", "ratio_study", "uniformity_analysis"],
+      "calculation_impact": false,
+      "audience":       ["analyst", "admin"],
+
+      "thresholds": {
+        "governance_note": "All IAAO thresholds are configurable by property_type_category and market_segment. Values below are defaults only; each run records its applied thresholds in the audit trail.",
+
+        "COD": {
+          "metric":      "Coefficient of Dispersion",
+          "formula":     "(sum|ratio_i - median_ratio| / n) / median_ratio × 100",
+          "interpretation": "Measures uniformity of assessment ratios",
+          "configurable_by": ["property_type_category", "market_segment", "standard_edition"],
+          "defaults_by_category": {
+            "single_family_residential": {"max": 15.0, "target": 10.0},
+            "income_producing":          {"max": 20.0, "target": 15.0},
+            "vacant_land":               {"max": 25.0, "target": 20.0},
+            "industrial_warehouse":      {"max": 20.0, "target": 15.0}
+          },
+          "action_on_breach": "flag_for_review — not automatic rejection",
+          "db_alignment": "mass_appraisal.IAAO_COD_MAX (hardcoded 15.0 — configurable in P1 per this schema)"
+        },
+
+        "PRD": {
+          "metric":      "Price-Related Differential",
+          "formula":     "mean_ratio / (sum(price_i × ratio_i) / sum(price_i))",
+          "interpretation": "Measures vertical equity; > 1.03 = regressivity; < 0.98 = progressivity",
+          "configurable_by": ["property_type_category", "market_segment"],
+          "defaults_by_category": {
+            "all": {"min": 0.98, "max": 1.03, "target_range": "[0.98, 1.03]"}
+          },
+          "action_on_breach": "flag_for_review",
+          "db_alignment": "mass_appraisal.IAAO_PRD_RANGE (hardcoded [0.98,1.03] — configurable in P1 per this schema)"
+        },
+
+        "PRB": {
+          "metric":      "Price-Related Bias",
+          "formula":     "coefficient from regression: (ratio - 1) ~ ln(price/2)",
+          "interpretation": "PRB ≈ 0 = no price-related bias; > 0.05 = regressivity; < -0.05 = progressivity",
+          "configurable_by": ["property_type_category"],
+          "defaults_by_category": {
+            "all": {"target": 0.0, "acceptable_range": [-0.05, 0.05]}
+          },
+          "action_on_breach": "flag_for_review",
+          "db_alignment": "mass_appraisal._ratio_study — PRB computed but NOT currently in output dict; added to P1 output per this contract",
+          "p1_gap": "PRB result must be added to ratio_study output in P1 implementation"
+        },
+
+        "R_squared": {
+          "metric":      "Coefficient of Determination",
+          "role":        "diagnostic_only",
+          "diagnostic_only": true,
+          "pass_fail_criterion": false,
+          "notes":       "R² is NOT a pass/fail threshold. It is reported for diagnostic purposes alongside COD/PRD/PRB. A high R² does not substitute for good IAAO metrics."
+        }
+      }
+    },
+
+    "TAQEEM": {
+      "standard_id":    "TAQEEM-KSA-PENDING",
+      "name":           "TAQEEM — Saudi Authority for Accredited Valuers",
+      "edition":        "Pending Official Integration",
+      "effective_date": null,
+      "jurisdiction":   "Saudi Arabia",
+      "clauses":        [],
+      "applicability":  ["professional_valuation", "advisory"],
+      "calculation_impact": false,
+      "audience":       ["admin"],
+      "integration_status": "Pending Official Integration Contract",
+      "advisory_only":  true,
+      "certification_ready": false,
+      "notes":          "TAQEEM compliance for automated/mass valuations requires a formal integration agreement. This contract does not claim TAQEEM compliance. Any TAQEEM-branded output requires separate human certified appraiser sign-off."
+    },
+
+    "BASEL_INTERNAL": {
+      "standard_id":    "BASEL-III-IV-INTERNAL",
+      "name":           "Basel III/IV — Internal Prudent Value Framework",
+      "edition":        "Internal — aligned with BCBS 2023",
+      "effective_date": "2023-01-01",
+      "jurisdiction":   "Internal (Saudi bank lending context)",
+      "clauses":        ["Basel III Art. 164", "Basel IV CRR3", "SAMA Prudential Guidelines"],
+      "applicability":  ["bank_lending", "ltv_analysis", "collateral_review"],
+      "calculation_impact": false,
+      "audience":       ["admin_only"],
+      "integration_status": "Active — internal advisory tool only",
+      "advisory_only":  true,
+      "thresholds": {
+        "prudent_value_haircut_default_pct": 5.0,
+        "ltv_residential_max_pct":           80.0,
+        "ltv_commercial_max_pct":            70.0,
+        "ltv_land_max_pct":                  50.0,
+        "revaluation_trigger_years":         3,
+        "governance_note": "LTV thresholds are not modified by automated systems. Changes require SAMA alignment and explicit admin override."
+      },
+      "notes":          "Basel section is admin_only — never exposed to user role. No automated LTV decision-making. Output is advisory for human credit officers only."
+    }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "contract_id": "MASS_VAL_QUALITY_RULES_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "All rules produce flag_for_review or exclude actions only. No auto-delete. Isolation Forest and Z-score anomaly detection are review flags, not deletion triggers.",
+
+  "gate_actions": {
+    "reject":                 "Record rejected at intake; not stored; error logged with reason.",
+    "exclude":                "Record stored but excluded from model training and ratio study; exclusion_reason logged.",
+    "flag_for_review":        "Record included but marked review_required=true; human must approve before release.",
+    "flag_out_of_window":     "Record included for spatial reference but excluded from temporal analysis.",
+    "warn":                   "Record passes; warning appended to quality_log; no blocking action.",
+    "normalise_and_continue": "Value normalised in place; original preserved in raw_value field; logged."
+  },
+
+  "rules": [
+    {
+      "rule_id":    "QR-001",
+      "category":   "completeness",
+      "name":       "missing_required_field",
+      "description": "Required fields: property_id, property_type, transaction_date, transaction_price, land_area_m2",
+      "check":      "any required field is null or empty string",
+      "action":     "reject",
+      "fields_affected": ["property_id", "property_type", "transaction_date", "transaction_price", "land_area_m2"],
+      "notes": "Record cannot enter the pipeline without its anchor fields."
+    },
+    {
+      "rule_id":    "QR-002",
+      "category":   "duplicate",
+      "name":       "duplicate_property_id",
+      "description": "Same property_id appears more than once in the import batch or already exists in the database",
+      "check":      "property_id count > 1 within batch or matches existing record",
+      "action":     "flag_for_review",
+      "fields_affected": ["property_id"],
+      "notes": "Deduplication strategy: keep latest transaction_date; flag earlier as duplicate_candidate. Human review required."
+    },
+    {
+      "rule_id":    "QR-003",
+      "category":   "duplicate",
+      "name":       "near_duplicate_transaction",
+      "description": "Same (city + district + land_area_m2 ± 5% + transaction_date ± 30 days) appears more than once with different property_ids",
+      "check":      "spatial-temporal near-duplicate detection",
+      "action":     "flag_for_review",
+      "fields_affected": ["city", "district", "land_area_m2", "transaction_date", "transaction_price"],
+      "notes": "Flags potential data entry duplication; not auto-merged."
+    },
+    {
+      "rule_id":    "QR-004",
+      "category":   "logical",
+      "name":       "zero_or_negative_price",
+      "description": "Transaction price is zero, negative, or clearly nominal (< 1000 SAR for any property type)",
+      "check":      "transaction_price <= 0 OR transaction_price < 1000",
+      "action":     "reject",
+      "fields_affected": ["transaction_price"],
+      "notes": "CRITICAL: Zero price is never imputed. Record is rejected with reason code PRICE_INVALID."
+    },
+    {
+      "rule_id":    "QR-005",
+      "category":   "logical",
+      "name":       "zero_or_negative_area",
+      "description": "Land area or built-up area is zero, negative, or below 0.1 m²",
+      "check":      "land_area_m2 <= 0 OR built_up_area_m2 <= 0 (if present)",
+      "action":     "reject",
+      "fields_affected": ["land_area_m2", "built_up_area_m2"],
+      "notes": "Minimum area 0.1 m² aligned with input_validator._MIN_AREA_SQM."
+    },
+    {
+      "rule_id":    "QR-006",
+      "category":   "logical",
+      "name":       "future_transaction_date",
+      "description": "Transaction date is after the import date",
+      "check":      "transaction_date > today",
+      "action":     "reject",
+      "fields_affected": ["transaction_date"],
+      "notes": "Future-dated records indicate data entry errors. Rejected, not flagged."
+    },
+    {
+      "rule_id":    "QR-007",
+      "category":   "temporal",
+      "name":       "outside_lookback_window",
+      "description": "Transaction date is outside the configured analysis window (default 36 months for SA residential)",
+      "check":      "transaction_date < (today - lookback_months) where lookback_months from standard_version config",
+      "action":     "flag_out_of_window",
+      "fields_affected": ["transaction_date"],
+      "notes": "Lookback window is configurable per property_type and market in standard_version.schema.json. Record retained for spatial context only."
+    },
+    {
+      "rule_id":    "QR-008",
+      "category":   "spatial",
+      "name":       "coordinates_outside_jurisdiction",
+      "description": "Coordinates fall outside Saudi Arabia bounding box (lat 16.3–32.2, lon 34.5–55.7)",
+      "check":      "latitude < 16.3 OR latitude > 32.2 OR longitude < 34.5 OR longitude > 55.7",
+      "action":     "reject",
+      "fields_affected": ["coordinates"],
+      "notes": "Coordinates outside jurisdiction rejected. City/district used for spatial reference if coordinates absent."
+    },
+    {
+      "rule_id":    "QR-009",
+      "category":   "spatial",
+      "name":       "partial_coordinates",
+      "description": "Only one of latitude/longitude is provided",
+      "check":      "(latitude IS NULL) XOR (longitude IS NULL)",
+      "action":     "reject",
+      "fields_affected": ["coordinates"],
+      "notes": "Partial coordinates are unusable. Both required or both null."
+    },
+    {
+      "rule_id":    "QR-010",
+      "category":   "logical",
+      "name":       "built_area_exceeds_land_area_beyond_threshold",
+      "description": "Built-up area exceeds land_area × max_floors_threshold (default: 10 for mixed-use, 4 for residential)",
+      "check":      "built_up_area_m2 > land_area_m2 × max_floor_ratio[property_type]",
+      "action":     "flag_for_review",
+      "fields_affected": ["built_up_area_m2", "land_area_m2", "property_type"],
+      "notes": "Configurable by property type. Flags implausible GFA-to-plot ratios."
+    },
+    {
+      "rule_id":    "QR-011",
+      "category":   "logical",
+      "name":       "rentable_area_exceeds_built_area",
+      "description": "Rentable area exceeds built-up area",
+      "check":      "rentable_area_m2 > built_up_area_m2 (if both present)",
+      "action":     "flag_for_review",
+      "fields_affected": ["rentable_area_m2", "built_up_area_m2"],
+      "notes": "Logical constraint: rentable ≤ built. Flag for data correction."
+    },
+    {
+      "rule_id":    "QR-012",
+      "category":   "anomaly",
+      "name":       "price_per_sqm_outlier_isolation_forest",
+      "description": "Unit price (transaction_price / land_area_m2) flagged as anomaly by Isolation Forest within the same property_type × city stratum",
+      "check":      "isolation_forest_score < contamination_threshold (default 0.05)",
+      "action":     "flag_for_review",
+      "fields_affected": ["transaction_price", "land_area_m2", "property_type", "city"],
+      "notes": "GOVERNANCE: Isolation Forest = review flag ONLY, never auto-delete. Human must approve exclusion. Score logged in quality_record."
+    },
+    {
+      "rule_id":    "QR-013",
+      "category":   "anomaly",
+      "name":       "price_per_sqm_outlier_zscore",
+      "description": "Unit price Z-score > 3.0 within the same property_type × city stratum",
+      "check":      "abs(z_score) > 3.0",
+      "action":     "flag_for_review",
+      "fields_affected": ["transaction_price", "land_area_m2"],
+      "notes": "Complementary to QR-012. Both flags can apply to same record. Z-score logged."
+    },
+    {
+      "rule_id":    "QR-014",
+      "category":   "currency",
+      "name":       "currency_unit_ambiguity",
+      "description": "Price value plausible in USD/EGP but not in SAR — possible currency unit mismatch",
+      "check":      "transaction_price < min_plausible_SAR[property_type] AND transaction_price > 0",
+      "action":     "flag_for_review",
+      "fields_affected": ["transaction_price"],
+      "notes": "SA platform is SAR-only. Suspiciously low prices flagged for currency verification. Minimum plausible SAR thresholds configurable by property_type."
+    },
+    {
+      "rule_id":    "QR-015",
+      "category":   "completeness",
+      "name":       "location_fields_both_missing",
+      "description": "Both city and coordinates are absent",
+      "check":      "city IS NULL AND (latitude IS NULL OR longitude IS NULL)",
+      "action":     "flag_for_review",
+      "fields_affected": ["city", "coordinates"],
+      "notes": "GOVERNANCE: Location is NEVER statistically imputed. Record flagged for manual location assignment."
+    },
+    {
+      "rule_id":    "QR-016",
+      "category":   "transaction_validity",
+      "name":       "non_arms_length_indicator",
+      "description": "Evidence type is manual_entry or unknown with no source documentation",
+      "check":      "evidence_type IN ('manual_entry', 'unknown') AND source_documentation IS NULL",
+      "action":     "flag_for_review",
+      "fields_affected": ["evidence_type"],
+      "notes": "Non-arms-length transactions should be excluded from ratio studies per IAAO guidance."
+    }
+  ],
+
+  "missing_value_policy": {
+    "property_id":        {"policy": "reject",                         "imputation_permitted": false},
+    "property_type":      {"policy": "reject",                         "imputation_permitted": false},
+    "city":               {"policy": "flag_for_review — no imputation", "imputation_permitted": false, "reason": "Location identity cannot be statistically imputed"},
+    "district":           {"policy": "flag_for_review — geocoding from verified coordinates permitted with source log", "imputation_permitted": false},
+    "address":            {"policy": "allow_null — documented absence", "imputation_permitted": false},
+    "coordinates":        {"policy": "allow_null — documented absence; geocoding from verified address with source log", "imputation_permitted": false},
+    "land_area_m2":       {"policy": "exclude_or_manual_review",        "imputation_permitted": false, "reason": "Primary valuation input — missing = insufficient_evidence"},
+    "built_up_area_m2":   {"policy": "allow_null for land; flag_for_review for built assets", "imputation_permitted": false},
+    "rentable_area_m2":   {"policy": "allow_null — income method marked insufficient_evidence if needed and absent", "imputation_permitted": false},
+    "age":                {"policy": "optional_sector_median_imputation with quality_flag='age_imputed_sector_median'", "imputation_permitted": true, "conditions": ["explicit quality flag set", "sector stratum size >= 30", "imputation logged in audit trail"]},
+    "condition":          {"policy": "default_to_unknown — documented in record", "imputation_permitted": false},
+    "use":                {"policy": "default_to_unknown — documented in record", "imputation_permitted": false},
+    "transaction_date":   {"policy": "reject",                          "imputation_permitted": false},
+    "transaction_price":  {"policy": "exclude_from_ratio_study — record retained for spatial context only; NEVER imputed", "imputation_permitted": false, "reason": "CRITICAL: price imputation is prohibited under all circumstances"},
+    "evidence_type":      {"policy": "default_to_unknown — confidence reduced in provenance", "imputation_permitted": false},
+    "occupancy":          {"policy": "allow_null — income method marked insufficient_evidence if needed and absent", "imputation_permitted": false},
+    "quality_finish":     {"policy": "default_to_unknown — documented in record", "imputation_permitted": false}
+  },
+
+  "anomaly_detection_governance": {
+    "isolation_forest": {
+      "action":   "flag_for_review_only",
+      "auto_delete": false,
+      "contamination_default": 0.05,
+      "configurable": true,
+      "stratum":  "property_type × city",
+      "minimum_stratum_size": 20
+    },
+    "z_score": {
+      "action":   "flag_for_review_only",
+      "auto_delete": false,
+      "threshold_default": 3.0,
+      "configurable": true,
+      "stratum":  "property_type × city"
+    },
+    "combined_flag": {
+      "notes": "Record flagged by both Isolation Forest AND Z-score receives combined_anomaly=true; priority review recommended but still not auto-deleted"
+    }
+  }
+}

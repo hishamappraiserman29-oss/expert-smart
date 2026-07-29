@@ -12711,6 +12711,108 @@ try:
 except Exception as _sc2_import_err:
     print(f"[WARN] pv_standards_compliance_v2_endpoint not loaded: {_sc2_import_err}")
 
+try:
+    from pv_report_update_endpoint import register_report_update_endpoint as _register_ru
+    _register_ru(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _ru_import_err:
+    print(f"[WARN] pv_report_update_endpoint not loaded: {_ru_import_err}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mass Valuation P1 — MVP endpoints
+# advisory_only=True on all responses; Basel/LTV never exposed to non-admin.
+# ─────────────────────────────────────────────────────────────────────────────
+try:
+    from mass_valuation.runner import MassValuationRunner as _MVRunner
+    from mass_valuation.audit_recorder import build_audit_record as _mv_build_audit
+    from mass_valuation.output_builder import OutputBuilder as _MVOutputBuilder
+    _MV_AVAILABLE = True
+except Exception as _mv_import_err:
+    print(f"[WARN] mass_valuation P1 not loaded: {_mv_import_err}")
+    _MV_AVAILABLE = False
+
+
+@app.route("/api/mass-valuation/run", methods=["POST"])
+@require_auth
+def mv_run():
+    """POST /api/mass-valuation/run — Execute a mass valuation run. Admin only."""
+    if not _is_admin():
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    body            = request.get_json(silent=True) or {}
+    records         = body.get("records", [])
+    run_name        = body.get("run_name", "P1 Run")
+    property_type   = body.get("property_type", "residential")
+    jurisdiction    = body.get("jurisdiction", "SA")
+    method          = body.get("method", "avm")
+    base_market_ppm = float(body.get("base_market_ppm", 0))
+    location        = body.get("location", "Riyadh")
+    iaao_thresholds = body.get("iaao_thresholds")
+
+    if not isinstance(records, list) or not records:
+        return jsonify({"error": "records must be a non-empty list"}), 400
+
+    runner     = _MVRunner(
+        run_name=run_name, property_type=property_type,
+        jurisdiction=jurisdiction, method=method,
+        iaao_thresholds=iaao_thresholds,
+    )
+    run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
+    audit_record = _mv_build_audit(run_result, code_commit="HEAD")
+
+    return jsonify({
+        "run_id":              run_result["run_id"],
+        "status":              run_result["status"],
+        "n_input_records":     run_result["n_input_records"],
+        "n_rejected":          run_result["n_rejected"],
+        "n_predicted":         run_result["n_predicted_properties"],
+        "iaao_summary":        run_result["iaao_summary"],
+        "audit_trail_id":      audit_record["audit_id"],
+        "advisory_only":       True,
+        "certification_ready": False,
+    }), 200
+
+
+@app.route("/api/mass-valuation/runs", methods=["GET"])
+@require_auth
+def mv_list_runs():
+    """GET /api/mass-valuation/runs — Run history stub (analyst/admin)."""
+    return jsonify({
+        "message":      "Run history stored in audit_logs.details_json — query via DB.",
+        "advisory_only": True,
+    }), 200
+
+
+@app.route("/api/mass-valuation/predictions/<run_id>", methods=["POST"])
+@require_auth
+def mv_get_predictions(run_id: str):
+    """
+    POST /api/mass-valuation/predictions/<run_id>
+    Body: {"records": [...], "role": "user"|"analyst"|"admin"}
+    Re-runs appraisal and returns predictions filtered to the caller's role.
+    """
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    body    = request.get_json(silent=True) or {}
+    records = body.get("records", [])
+    role    = body.get("role", "user")
+
+    if role not in {"user", "analyst", "admin"}:
+        role = "user"
+    if role == "admin" and not _is_admin():
+        return jsonify({"error": "admin role required for admin-level output"}), 403
+    if not isinstance(records, list) or not records:
+        return jsonify({"error": "records must be a non-empty list"}), 400
+
+    runner     = _MVRunner()
+    run_result = runner.run(records)
+    filtered   = _MVOutputBuilder().filter_run(run_result, role)
+
+    return jsonify(filtered), 200
+
+
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")
     print(f"Outputs  : {OUTPUTS}")

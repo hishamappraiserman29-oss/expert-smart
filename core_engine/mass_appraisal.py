@@ -66,6 +66,7 @@ def run_mass_appraisal(
     method: str = "avm",        # "avm" | "comparable" | "both"
     purpose: str = "fair_market",
     output_dir: str = "",
+    iaao_thresholds: Optional[Dict] = None,
 ) -> Dict:
     """
     Mass appraisal for a portfolio of properties.
@@ -138,7 +139,7 @@ def run_mass_appraisal(
 
     # ── Ratio Study (IAAO) ────────────────────────────────────────────────────
     sold_units = [r for r in results if r["sale_price"] > 0]
-    ratio_study = _ratio_study(sold_units) if sold_units else {"n_sales": 0}
+    ratio_study = _ratio_study(sold_units, thresholds=iaao_thresholds) if sold_units else {"n_sales": 0}
 
     # ── Statistics ────────────────────────────────────────────────────────────
     values = [r["unit_value"] for r in results]
@@ -172,8 +173,36 @@ def run_mass_appraisal(
     }
 
 
-def _ratio_study(sold_units: List[Dict]) -> Dict:
-    """IAAO ratio study: COD, PRD, PRB."""
+def _compute_prb(ratios: List[float], sale_prices: List[float]) -> Optional[float]:
+    """IAAO PRB: OLS slope of (ratio−median)/median on ln(sale_price). None if n < 3."""
+    n = len(ratios)
+    if n < 3:
+        return None
+    med = sorted(ratios)[n // 2]
+    if med <= 0:
+        return None
+    pairs = [(r, p) for r, p in zip(ratios, sale_prices) if p > 0]
+    if len(pairs) < 3:
+        return None
+    y     = [(r - med) / med for r, _ in pairs]
+    x     = [math.log(p) for _, p in pairs]
+    n_v   = len(pairs)
+    x_bar = sum(x) / n_v
+    y_bar = sum(y) / n_v
+    denom = sum((xi - x_bar) ** 2 for xi in x)
+    if denom < 1e-10:
+        return None
+    slope = sum((xi - x_bar) * (yi - y_bar) for xi, yi in zip(x, y)) / denom
+    return round(slope, 4)
+
+
+def _ratio_study(sold_units: List[Dict], thresholds: Optional[Dict] = None) -> Dict:
+    """IAAO ratio study: COD, PRD, PRB (configurable thresholds)."""
+    _th           = thresholds or {}
+    cod_max       = float(_th.get("cod_max", IAAO_COD_MAX))
+    prd_lo, prd_hi = _th.get("prd_range", IAAO_PRD_RANGE)
+    prb_lo, prb_hi = _th.get("prb_range", (-0.05, 0.05))
+
     ratios = [r["unit_value"] / r["sale_price"] for r in sold_units if r["sale_price"] > 0]
     if not ratios:
         return {"n_sales": 0}
@@ -184,6 +213,8 @@ def _ratio_study(sold_units: List[Dict]) -> Dict:
     cod   = (sum(abs(r - med) for r in ratios) / n / med) * 100 if med > 0 else 0
     prd   = mean / (sum(r["sale_price"] * ra for r, ra in zip(sold_units, ratios)) /
                     sum(r["sale_price"] for r in sold_units)) if sold_units else 1.0
+    prb      = _compute_prb(ratios, [r["sale_price"] for r in sold_units])
+    prb_pass = (prb_lo <= prb <= prb_hi) if prb is not None else None
 
     return {
         "n_sales":     n,
@@ -191,8 +222,10 @@ def _ratio_study(sold_units: List[Dict]) -> Dict:
         "mean_ratio":  round(mean, 3),
         "cod":         round(cod, 2),
         "prd":         round(prd, 3),
-        "cod_pass":    cod <= IAAO_COD_MAX,
-        "prd_pass":    IAAO_PRD_RANGE[0] <= prd <= IAAO_PRD_RANGE[1],
+        "prb":         prb,
+        "cod_pass":    cod <= cod_max,
+        "prd_pass":    prd_lo <= prd <= prd_hi,
+        "prb_pass":    prb_pass,
         "uniformity":  "ممتاز" if cod <= 10 else ("جيد" if cod <= 15 else "يحتاج مراجعة"),
     }
 

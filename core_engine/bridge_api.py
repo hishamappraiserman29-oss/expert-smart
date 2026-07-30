@@ -12731,6 +12731,14 @@ except Exception as _mv_import_err:
     print(f"[WARN] mass_valuation P1/P2 not loaded: {_mv_import_err}")
     _MV_AVAILABLE = False
 
+# P12 — column mapping + quality check pipeline (independent of runner)
+try:
+    from mass_valuation.pipeline import run_pipeline as _mv_run_pipeline
+    _MV_PIPELINE_AVAILABLE = True
+except Exception as _mvp_import_err:
+    print(f"[WARN] mass_valuation pipeline (P12) not loaded: {_mvp_import_err}")
+    _MV_PIPELINE_AVAILABLE = False
+
 
 @app.route("/api/mass-valuation/run", methods=["POST"])
 @require_auth
@@ -12920,6 +12928,101 @@ def mv_review_prediction(prediction_id: str):
 
     except ValueError as _ve:
         return jsonify({"error": str(_ve)}), 400
+
+
+@app.route("/api/mass-valuation/runs/<run_id>/export", methods=["GET"])
+@require_auth
+def mv_export_run(run_id: str):
+    """
+    GET /api/mass-valuation/runs/<run_id>/export
+    Admin only — returns 403 for any non-admin role (O-01).
+    Returns a stub JSON payload; Excel generation wired in P5.
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({
+            "error":   "Excel export is restricted to admin role only.",
+            "hint":    "Request an admin user to perform this export.",
+            "run_id":  run_id,
+        }), 403
+
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    return jsonify({
+        "run_id":        run_id,
+        "export_format": "xlsx",
+        "status":        "not_generated",
+        "message":       "Excel generation will be available in a future release.",
+        "advisory_only": True,
+    }), 200
+
+
+@app.route("/api/mass-valuation/import", methods=["POST"])
+@require_auth
+def mv_import():
+    """
+    POST /api/mass-valuation/import — Pipeline: raw records → mapper → quality check → optional run.
+    Admin only. Wires D-02 (column_mapper) + D-03/D-04/D-05 (quality_checker).
+    Body: {records, source?, lookback_months?, execute?, run_name?, property_type?,
+           jurisdiction?, method?, base_market_ppm?, location?}
+    If execute=true, passes eligible (non-rejected) records to MassValuationRunner.
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_PIPELINE_AVAILABLE:
+        return jsonify({"error": "mass_valuation pipeline unavailable"}), 503
+
+    body            = request.get_json(silent=True) or {}
+    raw_records     = body.get("records", [])
+    source          = body.get("source", "csv")
+    lookback_months = int(body.get("lookback_months", 36))
+    execute         = bool(body.get("execute", False))
+
+    if not isinstance(raw_records, list) or not raw_records:
+        return jsonify({"error": "records must be a non-empty list"}), 400
+
+    # Stage 1+2: column mapping (D-02) + quality check (D-03/D-04/D-05)
+    pipeline = _mv_run_pipeline(raw_records, source=source, lookback_months=lookback_months)
+
+    # Stage 3 (optional): run eligible records through MassValuationRunner
+    run_result_summary = None
+    if execute and pipeline.eligible_records:
+        if not _MV_AVAILABLE:
+            run_result_summary = {"error": "mass_valuation runner unavailable"}
+        else:
+            try:
+                runner  = _MVRunner(
+                    run_name=body.get("run_name", "Import Run"),
+                    property_type=body.get("property_type", "residential"),
+                    jurisdiction=body.get("jurisdiction", "SA"),
+                    method=body.get("method", "avm"),
+                )
+                run_out = runner.run(
+                    pipeline.eligible_records,
+                    base_market_ppm=float(body.get("base_market_ppm", 0)),
+                    location=body.get("location", "Riyadh"),
+                )
+                run_result_summary = {
+                    "run_id":          run_out["run_id"],
+                    "status":          run_out["status"],
+                    "n_input_records": run_out["n_input_records"],
+                    "n_predicted":     run_out["n_predicted_properties"],
+                    "iaao_summary":    run_out["iaao_summary"],
+                }
+            except Exception as _run_err:
+                run_result_summary = {"error": str(_run_err)}
+
+    return jsonify({
+        "n_input":              pipeline.n_input,
+        "n_eligible":           pipeline.n_eligible,
+        "n_flagged":            pipeline.n_flagged,
+        "n_rejected":           pipeline.n_rejected,
+        "unmapped_field_names": pipeline.unmapped_field_names,
+        "pipeline_report":      pipeline.pipeline_report(),
+        "run_result":           run_result_summary,
+        "advisory_only":        True,
+        "certification_ready":  False,
+    }), 200
 
 
 if __name__ == "__main__":

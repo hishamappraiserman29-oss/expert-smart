@@ -4,7 +4,7 @@
 #
 # Mandate: PROFESSIONAL_VALUATION_REPORT_TYPE_ORDER_AND_REPORTING_SECTION_CLEANUP_APPROVED
 # Verifies:
-#   Part 1: "اختر نوع التقرير وملحقاته" section exists before the submit button;
+#   Part 1: "اختر نوع التقرير وإصدار تقرير التقييم" section exists before the submit button;
 #            report-type selector uses canonical values; submission blocked without type;
 #            attachment requirements update; stale state cleared on type change.
 #   Part 2: "إصدار ومراجعة التقارير" section contains ONLY the 3 approved chips;
@@ -26,11 +26,11 @@ def _html() -> str:
     return HTML.read_text(encoding="utf-8", errors="replace")
 
 
-# Helper: find the combined reporting section (pv-unified-report-issuance-in-chat
+# Helper: find the combined reporting section (pv-unified-report-type-section
 # through /pv-report-issuance-combined comment)
 def _reporting_section(html: str) -> str:
-    start = html.index('data-testid="pv-unified-report-issuance-in-chat"')
-    end   = html.index('<!-- /pv-report-issuance-combined -->')
+    start = html.index('data-testid="pv-unified-report-type-section"')
+    end   = html.index('<!-- /pv-unified-report-type-section -->')
     return html[start:end]
 
 
@@ -42,25 +42,25 @@ def _reporting_section(html: str) -> str:
 def test_PVORD01_report_type_section_heading_exists_once():
     html = _html()
     # Check the data-testid (uniquely identifies the heading element, not comment text)
-    count = html.count('data-testid="pv-report-type-attachments-heading"')
+    count = html.count('data-testid="pv-unified-report-type-heading"')
     assert count == 1, (
-        f"data-testid='pv-report-type-attachments-heading' must appear exactly once; got {count}"
+        f"data-testid='pv-unified-report-type-heading' must appear exactly once; got {count}"
     )
     # The Arabic heading text must be present (may appear in comment + element = >=1)
-    assert 'اختر نوع التقرير وملحقاته' in html
+    assert 'اختر نوع التقرير وإصدار تقرير التقييم' in html
 
 
 # ── PVORD02: Report-type section testid exists exactly once ──────────────────
 def test_PVORD02_report_type_section_testid_exists_once():
     html = _html()
     # data-testid appears once; id= also once; closing comment makes 3 total
-    assert html.count('data-testid="pv-report-type-attachments-section"') == 1
+    assert html.count('data-testid="pv-unified-report-type-section"') == 1
 
 
 # ── PVORD03: Report-type section appears BEFORE the submit button ─────────────
 def test_PVORD03_report_type_section_before_submit_button():
     html = _html()
-    idx_section = html.index('data-testid="pv-report-type-attachments-section"')
+    idx_section = html.index('data-testid="pv-unified-report-type-section"')
     idx_btn     = html.index('id="generateBtn"')
     assert idx_section < idx_btn, (
         "Report-type section must appear before the generateBtn submit button in the DOM"
@@ -77,15 +77,15 @@ def test_PVORD04_submit_button_exists_once():
 # ── PVORD05: Report type selector uses canonical values ───────────────────────
 def test_PVORD05_report_selector_uses_canonical_values():
     html = _html()
-    idx = html.index('data-testid="pv-submission-report-type-select"')
-    # Find the enclosing <select ... </select>
-    sel_start = html.rindex('<select', 0, idx)
-    sel_end   = html.index('</select>', sel_start)
-    select_block = html[sel_start:sel_end]
-    for canonical in ['traditional_report', 'detailed_report', 'professional_report']:
-        assert f'value="{canonical}"' in select_block, (
-            f"Canonical value '{canonical}' must appear as option value in submission selector"
-        )
+    mapping = {
+        "pv-unified-card-traditional": "traditional_report",
+        "pv-unified-card-detailed": "detailed_report",
+        "pv-unified-card-professional": "professional_report",
+    }
+    for testid, tier in mapping.items():
+        idx = html.index(f'data-testid="{testid}"')
+        tag = html[idx:html.index(">", idx) + 1]
+        assert f"pvSelectReportTier('{tier}')" in tag
 
 
 # ── PVORD06: Submission blocked without report type (JS validation present) ───
@@ -163,10 +163,10 @@ def test_PVORD12_report_type_change_clears_attachment_state():
 # ── PVORD13: Keyboard/DOM focus order — report type before submit ─────────────
 def test_PVORD13_dom_order_report_type_before_submit():
     html = _html()
-    idx_select = html.index('id="pv-submission-report-type"')
-    idx_btn    = html.index('id="generateBtn"')
-    assert idx_select < idx_btn, (
-        "pv-submission-report-type select must appear before generateBtn in DOM"
+    idx_card = html.index('id="pv-unified-wrap-traditional"')
+    idx_btn = html.index('id="generateBtn"')
+    assert idx_card < idx_btn, (
+        "Unified report-type cards must appear before generateBtn in the DOM"
     )
 
 
@@ -177,17 +177,17 @@ def test_PVORD13_dom_order_report_type_before_submit():
 # ── PVRSC01: Reporting section combined boundary is marked ────────────────────
 def test_PVRSC01_reporting_section_combined_boundary_marked():
     html = _html()
-    assert 'data-testid="pv-unified-report-issuance-in-chat"' in html
-    assert '<!-- /pv-report-issuance-combined -->' in html
+    assert 'data-testid="pv-unified-report-type-section"' in html
+    assert '<!-- /pv-unified-report-type-section -->' in html
 
 
 # ── PVRSC02: Exactly three report-level chip controls remain ──────────────────
 def test_PVRSC02_exactly_three_report_level_chips():
     html = _html()
     section = _reporting_section(html)
-    for chip in ['pv-core-report-chip-traditional',
-                 'pv-core-report-chip-detailed',
-                 'pv-core-report-chip-professional']:
+    for chip in ['pv-unified-card-traditional',
+                 'pv-unified-card-detailed',
+                 'pv-unified-card-professional']:
         count = section.count(chip)
         assert count == 1, (
             f"Chip '{chip}' must appear exactly once inside reporting section; got {count}"
@@ -197,19 +197,19 @@ def test_PVRSC02_exactly_three_report_level_chips():
 # ── PVRSC03: Traditional report chip exists exactly once ─────────────────────
 def test_PVRSC03_traditional_chip_exists_once():
     html = _html()
-    assert html.count('pv-core-report-chip-traditional') == 1
+    assert html.count('pv-unified-card-traditional') == 1
 
 
 # ── PVRSC04: Detailed report chip exists exactly once ────────────────────────
 def test_PVRSC04_detailed_chip_exists_once():
     html = _html()
-    assert html.count('pv-core-report-chip-detailed') == 1
+    assert html.count('pv-unified-card-detailed') == 1
 
 
 # ── PVRSC05: Professional report chip exists exactly once ────────────────────
 def test_PVRSC05_professional_chip_exists_once():
     html = _html()
-    assert html.count('pv-core-report-chip-professional') == 1
+    assert html.count('pv-unified-card-professional') == 1
 
 
 # ── PVRSC06: No static "تنزيل PDF" label inside reporting section ────────────
@@ -318,8 +318,11 @@ def test_PVRSC16_excel_card_has_admin_only_label():
 def test_PVRSC17_chip_onclick_uses_core_bundle_function():
     html = _html()
     section = _reporting_section(html)
-    assert 'pvGenerateCoreReportBundle' in section, (
-        "Report chip onclick must call pvGenerateCoreReportBundle in reporting section"
+    assert "pvSelectReportTier" in section, (
+        "Report cards must call pvSelectReportTier inside the merged section"
+    )
+    assert "pvGenerateCoreReportBundle" not in section, (
+        "Visible report cards must remain select-only until the Send action"
     )
 
 
@@ -347,9 +350,9 @@ def test_PVRSC18_removed_ids_no_active_js_references():
 # ── PVBC01: Previous mandate — three chips still present ─────────────────────
 def test_PVBC01_previous_mandate_three_chips_still_present():
     html = _html()
-    for chip in ['pv-core-report-chip-traditional',
-                 'pv-core-report-chip-detailed',
-                 'pv-core-report-chip-professional']:
+    for chip in ['pv-unified-card-traditional',
+                 'pv-unified-card-detailed',
+                 'pv-unified-card-professional']:
         assert html.count(chip) == 1, f"Chip {chip!r} must appear exactly once"
 
 

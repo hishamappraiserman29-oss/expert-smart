@@ -102,11 +102,11 @@ def test_T09_unified_section_inside_chat_container():
     html = _html()
     chat_open  = html.index('data-testid="pro-val-chat-command-center"')
     chat_close = html.index(
-        "<!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->"
+        "<!-- /pro-val-chat-command-center ai-section -->"
     )
-    unified    = html.index('data-testid="pv-unified-report-issuance-in-chat"')
+    unified    = html.index('data-testid="pv-unified-report-type-section"')
     assert chat_open < unified < chat_close, (
-        "pv-unified-report-issuance-in-chat must be inside the chat container; "
+        "pv-unified-report-type-section must be inside the chat container; "
         f"chat_open={chat_open}, unified={unified}, chat_close={chat_close}"
     )
 
@@ -115,7 +115,7 @@ def test_T09_unified_section_inside_chat_container():
 def test_T10_advanced_section_outside_chat_container():
     html = _html()
     chat_close = html.index(
-        "<!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->"
+        "<!-- /pro-val-chat-command-center ai-section -->"
     )
     advanced   = html.index('data-testid="pv-special-report-workflows"')
     assert advanced > chat_close, (
@@ -129,11 +129,11 @@ def test_T11_core_report_issuance_inside_chat_container():
     html = _html()
     chat_open  = html.index('data-testid="pro-val-chat-command-center"')
     chat_close = html.index(
-        "<!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->"
+        "<!-- /pro-val-chat-command-center ai-section -->"
     )
-    area1 = html.index('data-testid="pv-core-valuation-report-issuance"')
+    area1 = html.index('data-testid="pv-unified-report-type-section"')
     assert chat_open < area1 < chat_close, (
-        "pv-core-valuation-report-issuance must be inside the chat container"
+        "pv-unified-report-type-section must be inside the chat container"
     )
 
 

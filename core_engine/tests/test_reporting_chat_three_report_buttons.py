@@ -49,38 +49,36 @@ def test_T02_chat_contains_exactly_three_report_buttons():
 # ── T03: Traditional report button exists exactly once ───────────────────────
 def test_T03_traditional_report_button_exists_once():
     html = _html()
-    testid = "pv-core-report-chip-traditional"
+    testid = "pv-unified-card-traditional"
     assert html.count(testid) == 1
 
 
 # ── T04: Detailed report button exists exactly once ──────────────────────────
 def test_T04_detailed_report_button_exists_once():
     html = _html()
-    testid = "pv-core-report-chip-detailed"
+    testid = "pv-unified-card-detailed"
     assert html.count(testid) == 1
 
 
 # ── T05: Professional report button exists exactly once ──────────────────────
 def test_T05_professional_report_button_exists_once():
     html = _html()
-    testid = "pv-core-report-chip-professional"
+    testid = "pv-unified-card-professional"
     assert html.count(testid) == 1
 
 
 # ── T06: Three buttons map to three distinct canonical tier values ────────────
 def test_T06_three_buttons_map_to_distinct_tiers():
     html = _html()
-    ctx = _ctx()
-    tier_map = ctx["chat_report_button_tier_map"]
-    # Each chip's onclick must reference its own tier
-    for testid, tier in tier_map.items():
-        idx = html.index(testid)
-        nearby = html[idx: idx + 400]
-        assert tier in nearby, (
-            f"Chip {testid!r} nearby HTML does not contain tier {tier!r}"
-        )
-    # All three tiers are distinct
-    assert len(set(tier_map.values())) == 3
+    mapping = {
+        "pv-unified-card-traditional": "traditional_report",
+        "pv-unified-card-detailed": "detailed_report",
+        "pv-unified-card-professional": "professional_report",
+    }
+    for testid, tier in mapping.items():
+        idx = html.index(f'data-testid="{testid}"')
+        tag = html[idx:html.index(">", idx) + 1]
+        assert f"pvSelectReportTier('{tier}')" in tag
 
 
 # ── T07: Chat contains no visible seven-report dropdown ──────────────────────
@@ -158,7 +156,7 @@ def test_T12_duplicate_expert_review_section_not_in_chat():
     html = _html()
     chat_open  = html.index('data-testid="pro-val-chat-command-center"')
     chat_close = html.index(
-        "<!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->"
+        "<!-- /pro-val-chat-command-center ai-section -->"
     )
     # The "طلب مراجعة خبير معتمد" heading must NOT appear between chat open and close
     chat_block = html[chat_open:chat_close]
@@ -175,7 +173,7 @@ def test_T12_duplicate_expert_review_section_not_in_chat():
 def test_T13_authoritative_expert_review_section_preserved():
     html = _html()
     chat_close = html.index(
-        "<!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->"
+        "<!-- /pro-val-chat-command-center ai-section -->"
     )
     # The authoritative section (with pro-val-cert-submit) is after the chat container
     advanced_idx = html.index('data-testid="pro-val-expert-review-request-section"',
@@ -253,34 +251,33 @@ def test_T20_admin_excel_button_present_for_js():
 # ── T21: Traditional button calls traditional tier ───────────────────────────
 def test_T21_traditional_button_calls_traditional_tier():
     html = _html()
-    idx = html.index("pv-core-report-chip-traditional")
-    nearby = html[idx: idx + 400]
-    assert "traditional_report" in nearby
-    assert "detailed_report"    not in nearby.split("traditional_report")[1][:50]
+    idx = html.index('data-testid="pv-unified-card-traditional"')
+    tag = html[idx:html.index(">", idx) + 1]
+    assert "pvSelectReportTier('traditional_report')" in tag
 
 
 # ── T22: Detailed button calls detailed tier ─────────────────────────────────
 def test_T22_detailed_button_calls_detailed_tier():
     html = _html()
-    idx = html.index("pv-core-report-chip-detailed")
-    nearby = html[idx: idx + 400]
-    assert "detailed_report" in nearby
+    idx = html.index('data-testid="pv-unified-card-detailed"')
+    tag = html[idx:html.index(">", idx) + 1]
+    assert "pvSelectReportTier('detailed_report')" in tag
 
 
 # ── T23: Professional button calls professional tier ─────────────────────────
 def test_T23_professional_button_calls_professional_tier():
     html = _html()
-    idx = html.index("pv-core-report-chip-professional")
-    nearby = html[idx: idx + 400]
-    assert "professional_report" in nearby
+    idx = html.index('data-testid="pv-unified-card-professional"')
+    tag = html[idx:html.index(">", idx) + 1]
+    assert "pvSelectReportTier('professional_report')" in tag
 
 
 # ── T24: Chat buttons do not invoke seven-report review API ──────────────────
 def test_T24_chat_buttons_do_not_invoke_seven_report_review_api():
     html = _html()
-    for testid in ["pv-core-report-chip-traditional",
-                   "pv-core-report-chip-detailed",
-                   "pv-core-report-chip-professional"]:
+    for testid in ["pv-unified-card-traditional",
+                   "pv-unified-card-detailed",
+                   "pv-unified-card-professional"]:
         idx = html.index(testid)
         nearby = html[idx: idx + 300]
         assert "pvIssueSpecialReportPdf" not in nearby, (
@@ -289,11 +286,11 @@ def test_T24_chat_buttons_do_not_invoke_seven_report_review_api():
 
 
 # ── T25: pvGenerateCoreReportBundle drives all three chips ───────────────────
-def test_T25_core_bundle_function_drives_chips():
+def test_T25_report_cards_use_selector_function():
     html = _html()
-    assert "pvGenerateCoreReportBundle" in html
+    assert "function pvSelectReportTier" in html
     for tier in ["traditional_report", "detailed_report", "professional_report"]:
-        assert f"pvGenerateCoreReportBundle('{tier}')" in html
+        assert f"pvSelectReportTier('{tier}')" in html
 
 
 # ── T26: Backward-compat spans preserve removed testids ──────────────────────

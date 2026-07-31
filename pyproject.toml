@@ -35,6 +35,8 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 markers = [
     "live_server: requires a running local server and Playwright browser",
+    "smoke: critical Playwright tests executed on pull requests",
+    "e2e: end-to-end tests requiring a browser or external runtime",
 ]
 
 [tool.mypy]

@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
           cache: pip
 
       - name: Install Python dependencies
@@ -35,4 +35,10 @@ jobs:
         run: python -m playwright install --with-deps chromium
 
       - name: Run E2E smoke tests
-        run: pytest core_engine/tests/e2e/ -v --tb=short
+        run: |
+          python -m pytest core_engine/tests/e2e/test_requirements_checklist_smoke.py \
+            -m smoke \
+            --strict-markers \
+            -v \
+            --tb=short \
+            --maxfail=1

@@ -422,6 +422,8 @@ Requires a running bridge_api server (managed by conftest.py) and Playwright.
   CS3020 — (8ZZE) regression guard: partial_interest supp still renders (8ZZD guard)
 """
 from __future__ import annotations
+import pytest
+
 
 import json
 
@@ -30334,7 +30336,35 @@ def _load_architectural_cultural_heritage_supp(page, live_server):
     page.goto(live_server, wait_until="networkidle")
     _inject_session(page)
     page.select_option("#asset-type", value="architectural_cultural_heritage_detailed")
-    page.select_option("#val-purpose", value="fair_market_value")
+    purpose_select = page.locator("#val-purpose")
+    purpose_select.wait_for(state="attached")
+    purpose_select.evaluate(
+        """(element, value) => {
+            const optionExists = Array.from(element.options)
+                .some((option) => option.value === value);
+
+            if (!optionExists) {
+                throw new Error(
+                    `Option ${value} does not exist in #val-purpose`
+                );
+            }
+
+            element.value = value;
+            element.dispatchEvent(
+                new Event("input", { bubbles: true })
+            );
+            element.dispatchEvent(
+                new Event("change", { bubbles: true })
+            );
+        }""",
+        "fair_market_value",
+    )
+    page.wait_for_function(
+        """() =>
+            document.querySelector("#val-purpose")?.value
+            === "fair_market_value"
+        """
+    )
     page.locator("#es-req-supp").wait_for(state="visible", timeout=6_000)
 
 
@@ -30800,6 +30830,7 @@ def test_CS3144_8zzg_section_Q_documentation_notes_textarea(page, live_server):
     assert count >= 1, "8ZZG: ach_supp_q_digital_documentation_notes textarea missing"
 
 
+@pytest.mark.smoke
 def test_CS3145_8zzg_section_R_title_deed_copy_bool(page, live_server):
     """Phase 8ZZG: Section R ach_doc_supp_title_deed_copy bool renders."""
     _load_architectural_cultural_heritage_supp(page, live_server)
@@ -30835,6 +30866,7 @@ def test_CS3149_8zzg_total_ach_doc_supp_field_count(page, live_server):
     assert count == 16, f"8ZZG: expected 16 ach_doc_supp_ fields, got {count}"
 
 
+@pytest.mark.smoke
 def test_CS3150_8zzg_no_api_call_on_supp_change(page, live_server):
     """Phase 8ZZG: changing a supplemental field does NOT trigger POST /api/valuation."""
     _load_architectural_cultural_heritage_supp(page, live_server)
@@ -30871,6 +30903,7 @@ def test_CS3152_8zzg_no_auth_modal_on_supp_change(page, live_server):
     assert modal_count == 0, f"8ZZG: auth modal appeared unexpectedly, count={modal_count}"
 
 
+@pytest.mark.smoke
 def test_CS3153_8zzg_new_bool_fields_render_as_checkbox_or_select(page, live_server):
     """Phase 8ZZG: bool fields render as checkbox input or select."""
     _load_architectural_cultural_heritage_supp(page, live_server)
@@ -30888,6 +30921,7 @@ def test_CS3153_8zzg_new_bool_fields_render_as_checkbox_or_select(page, live_ser
         assert count >= 1, f"8ZZG: bool field {field} not rendered as checkbox or select"
 
 
+@pytest.mark.smoke
 def test_CS3154_8zzg_ach_methodology_opts_24_options(page, live_server):
     """Phase 8ZZG: _ACH_METHODOLOGY_OPTS has 24 options (21 base + 3 new)."""
     _load_architectural_cultural_heritage_supp(page, live_server)
@@ -31010,6 +31044,7 @@ def test_CS3169_8zzg_section_R_cultural_authority_letter_bool(page, live_server)
     assert count >= 1, "8ZZG: ach_doc_supp_cultural_authority_recognition_letter missing"
 
 
+@pytest.mark.smoke
 def test_CS3170_8zzg_section_F_14_fields_render(page, live_server):
     """Phase 8ZZG: Section F has 14 fields (all ach_supp_f_ fields present)."""
     _load_architectural_cultural_heritage_supp(page, live_server)

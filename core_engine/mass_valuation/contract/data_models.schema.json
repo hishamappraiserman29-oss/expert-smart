@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_id": "MASS_VAL_DATA_MODELS_SCHEMA_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "Three core data models for mass valuation. All advisory_only=True. No automated approval or certification. These are JSON Schema specifications — actual database tables deferred to P1 migration.",
+
+  "MassValuationRun": {
+    "description": "Top-level record for a mass valuation run — parameters, status, summary metrics.",
+    "type": "object",
+    "required": [
+      "run_id", "run_name", "property_type", "jurisdiction",
+      "status", "created_at", "created_by", "advisory_only"
+    ],
+    "properties": {
+      "run_id": {
+        "type": "string", "format": "uuid",
+        "description": "Unique run identifier."
+      },
+      "run_name": {
+        "type": "string",
+        "description": "Human-readable run label (e.g., 'Riyadh Residential Q1 2026')."
+      },
+      "property_type": {
+        "type": "string",
+        "enum": ["residential", "commercial", "industrial", "land", "mixed_use", "villa", "apartment", "compound", "office", "warehouse", "hotel", "retail"]
+      },
+      "jurisdiction": {
+        "type": "string",
+        "description": "Geographic scope (e.g., 'SA-RY' for Riyadh, 'SA' for all Saudi)."
+      },
+      "status": {
+        "type": "string",
+        "enum": ["draft", "training", "validated", "approved_for_internal_use", "active", "challenger", "deprecated", "rejected", "archived"],
+        "description": "Current lifecycle state — see states.json."
+      },
+      "method": {
+        "type": "string",
+        "enum": ["avm_hedonic", "avm_comparable", "avm_hybrid", "ratio_study_only"],
+        "description": "Valuation method used."
+      },
+      "standard_version_id": {
+        "type": "string",
+        "description": "Applied standard — from standard_version.schema.json (e.g., 'IAAO-2023')."
+      },
+      "training_period_start": {"type": "string", "format": "ISO8601_date"},
+      "training_period_end":   {"type": "string", "format": "ISO8601_date"},
+      "n_training_records":    {"type": "integer", "minimum": 0},
+      "n_validation_records":  {"type": "integer", "minimum": 0},
+      "n_predicted_properties":{"type": "integer", "minimum": 0},
+      "iaao_summary": {
+        "type": "object",
+        "description": "IAAO ratio study summary — same structure as audit_trail iaao_metrics.",
+        "properties": {
+          "cod":     {"type": "number"},
+          "prd":     {"type": "number"},
+          "prb":     {"type": "number"},
+          "r_squared": {"type": "number", "description": "Diagnostic only"}
+        }
+      },
+      "ood_property_count": {
+        "type": "integer",
+        "description": "Number of properties flagged as out-of-distribution."
+      },
+      "manual_review_required_count": {
+        "type": "integer",
+        "description": "Number of properties pending human review."
+      },
+      "audit_trail_id": {
+        "type": "string", "format": "uuid",
+        "description": "Reference to the AuditTrailRecord for this run."
+      },
+      "advisory_only":       {"type": "boolean", "const": true},
+      "certification_ready": {"type": "boolean", "const": false},
+      "created_at":  {"type": "string", "format": "ISO8601_datetime"},
+      "created_by":  {"type": "string"},
+      "approved_at": {"type": "string", "format": "ISO8601_datetime", "nullable": true},
+      "approved_by": {"type": "string", "nullable": true}
+    },
+    "db_alignment": {
+      "note": "No existing table. P1 adds mass_valuation_runs table. In P0, stored as JSONB in audit_logs.details_json.",
+      "related_tables": ["audit_logs", "valuations"]
+    }
+  },
+
+  "PropertyPrediction": {
+    "description": "Per-property prediction output from a mass valuation run.",
+    "type": "object",
+    "required": [
+      "prediction_id", "run_id", "property_id",
+      "distribution_status", "review_status",
+      "model_version", "created_at", "advisory_only"
+    ],
+    "properties": {
+      "prediction_id": {
+        "type": "string", "format": "uuid",
+        "description": "Unique prediction record identifier."
+      },
+      "run_id": {
+        "type": "string", "format": "uuid"
+      },
+      "property_id": {
+        "type": "string",
+        "description": "Source property identifier from data_contract.json."
+      },
+      "estimated_value": {
+        "type": ["number", "null"],
+        "description": "Model-estimated market value in SAR. NULL if distribution_status='insufficient_evidence'.",
+        "minimum": 0
+      },
+      "unit_value": {
+        "type": ["number", "null"],
+        "description": "Estimated value per m² (SAR/m²). NULL if area missing.",
+        "minimum": 0
+      },
+      "prediction_interval_low": {
+        "type": ["number", "null"],
+        "description": "Lower bound of 90% prediction interval. Widens for OOD properties.",
+        "minimum": 0
+      },
+      "prediction_interval_high": {
+        "type": ["number", "null"],
+        "description": "Upper bound of 90% prediction interval.",
+        "minimum": 0
+      },
+      "confidence": {
+        "type": "string",
+        "enum": ["high", "medium", "low", "insufficient"],
+        "description": "Qualitative confidence level — derived from OOD status, data completeness, and PI width."
+      },
+      "distribution_status": {
+        "type": "string",
+        "enum": ["in_distribution", "out_of_distribution", "insufficient_evidence"],
+        "description": "Whether the property falls within the model's training distribution."
+      },
+      "review_status": {
+        "type": "string",
+        "enum": ["manual_review_required", "reviewed", "approved_for_release", "rejected"],
+        "description": "Human review lifecycle status — see states.json property_states."
+      },
+      "quality_flags": {
+        "type": "array",
+        "description": "List of quality rule IDs triggered for this property.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "rule_id":   {"type": "string"},
+            "rule_name": {"type": "string"},
+            "score":     {"type": "number", "nullable": true}
+          }
+        }
+      },
+      "model_version": {
+        "type": "string",
+        "description": "Model version from ml/model_registry.py ModelMetadata.version."
+      },
+      "comparable_ids": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "IDs of comparable properties used (if comparable method applied)."
+      },
+      "shap_values": {
+        "type": "object",
+        "description": "SHAP feature importance — admin_only. Never exposed to user role.",
+        "audience": ["admin_only"],
+        "additionalProperties": {"type": "number"}
+      },
+      "limitations": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Human-readable limitation statements to include in output (e.g., 'OOD: property age exceeds training distribution range')."
+      },
+      "advisory_only": {"type": "boolean", "const": true},
+      "created_at":    {"type": "string", "format": "ISO8601_datetime"}
+    },
+    "audience_separation": {
+      "user_visible_fields":  ["prediction_id", "property_id", "estimated_value", "unit_value", "prediction_interval_low", "prediction_interval_high", "confidence", "distribution_status", "limitations"],
+      "admin_only_fields":    ["shap_values", "quality_flags", "comparable_ids", "model_version", "review_status"],
+      "never_exposed_fields": []
+    },
+    "db_alignment": {
+      "note": "Partially maps to valuations.result_json (JSONB). P1 adds property_predictions table.",
+      "related_tables": ["valuations", "comparables"]
+    }
+  },
+
+  "ReviewDecision": {
+    "description": "Human reviewer decision on a PropertyPrediction — override, accept, or reject.",
+    "type": "object",
+    "required": [
+      "decision_id", "prediction_id", "property_id", "run_id",
+      "model_value", "decision", "reviewed_by", "reviewed_at"
+    ],
+    "properties": {
+      "decision_id": {
+        "type": "string", "format": "uuid"
+      },
+      "prediction_id": {
+        "type": "string", "format": "uuid"
+      },
+      "property_id": {
+        "type": "string"
+      },
+      "run_id": {
+        "type": "string", "format": "uuid"
+      },
+      "model_value": {
+        "type": ["number", "null"],
+        "description": "Original model-estimated value before any override.",
+        "minimum": 0
+      },
+      "reviewed_value": {
+        "type": ["number", "null"],
+        "description": "Value after human review. NULL if decision='rejected' or model_value accepted unchanged.",
+        "minimum": 0
+      },
+      "decision": {
+        "type": "string",
+        "enum": ["accepted", "overridden", "rejected"],
+        "description": "accepted: model value used as-is. overridden: reviewer substituted a different value. rejected: property excluded from output."
+      },
+      "reason": {
+        "type": "string",
+        "description": "Mandatory human-written reason for the decision. Required for all decisions."
+      },
+      "evidence_ids": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "IDs of additional market evidence reviewed (comparables, transaction records)."
+      },
+      "quality_flags_reviewed": {
+        "type": "array",
+        "items": {"type": "string"},
+        "description": "Quality rule IDs explicitly reviewed and dispositioned."
+      },
+      "reviewed_by":  {"type": "string", "description": "Reviewer user ID — must be a human analyst or admin."},
+      "reviewed_at":  {"type": "string", "format": "ISO8601_datetime"},
+      "approved_by":  {"type": "string", "nullable": true, "description": "Second-level approver if required."},
+      "approved_at":  {"type": "string", "format": "ISO8601_datetime", "nullable": true},
+      "advisory_only":{"type": "boolean", "const": true}
+    },
+    "governance_rules": {
+      "reviewed_by_must_be_human":   true,
+      "reason_is_mandatory":         true,
+      "model_value_immutable":       true,
+      "auto_approval_prohibited":    true,
+      "certification_by_system":     false
+    },
+    "db_alignment": {
+      "note": "Maps to quality_audits.findings_json (JSONB) for individual decisions. P1 adds review_decisions table.",
+      "related_tables": ["quality_audits", "audit_logs"]
+    }
+  }
+}

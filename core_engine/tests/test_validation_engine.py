@@ -21,18 +21,22 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-# ── __init__ exports ──────────────────────────────────────────────────────────
+    # ── __init__ exports ──────────────────────────────────────────────────────────
 
-from reports.validation import (
-    Severity,
-    ValidationIssue,
-    ValidationResult,
-    validate_inputs,
-    validate_outputs,
-    validate_report,
-)
+    from reports.validation import (
+        Severity,
+        ValidationIssue,
+        ValidationResult,
+        validate_inputs,
+        validate_outputs,
+        validate_report,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────

@@ -79,6 +79,25 @@ _PROFILES: dict[str, ReportProfile] = {
         exclude_advanced_sheets=False,
         default_output_ext=".xlsm",
     ),
+    # ── Phase 14: audience-separated profiles (additive — existing unchanged) ──
+    "external_pdf": ReportProfile(
+        style="external_pdf",
+        label_ar="تقرير العميل الخارجي (PDF ملخّص)",
+        label_en="External Client PDF Summary",
+        include_advanced_analytics=False,
+        exclude_advanced_sheets=True,
+        include_sales_adjustment_matrix=False,
+        default_output_ext=".pdf",
+    ),
+    "internal_detailed": ReportProfile(
+        style="internal_detailed",
+        label_ar="التقرير الداخلي التفصيلي (Excel + PDF)",
+        label_en="Internal Detailed Report (Excel + PDF)",
+        include_advanced_analytics=True,
+        exclude_advanced_sheets=False,
+        include_sales_adjustment_matrix=True,
+        default_output_ext=".xlsx",
+    ),
 }
 
 _DEFAULT_STYLE = "legacy"

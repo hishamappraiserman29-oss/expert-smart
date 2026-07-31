@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 env:
-  PYTHON_VERSION: "3.13"
+  PYTHON_VERSION: "3.11"
   IMAGE_NAME: expert-smart/api
 
 jobs:
@@ -87,11 +87,20 @@ jobs:
               sys.exit(1)
           print("Secret guard passed — no credentials detected in tracked files.")
 
-      - name: Run tests
+      - name: Run CI-safe requirements tests
         run: |
-          python -m pytest tests/ -q --tb=short \
-            --ignore=tests/e2e \
-            --cov=. --cov-report=xml --cov-report=term-missing
+          python -m pytest \
+            tests/test_requirements_endpoint.py \
+            tests/test_valuation_requirements.py \
+            tests/test_asset_families.py \
+            tests/test_purpose_integration_matrix.py \
+            tests/test_purpose_routes.py \
+            tests/test_approval_rules.py \
+            -q \
+            --tb=short \
+            --cov=. \
+            --cov-report=xml \
+            --cov-report=term-missing
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

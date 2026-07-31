@@ -1,0 +1,112 @@
+{
+  "contract_id": "MASS_VAL_RBAC_MATRIX_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "governance_note": "Role-based access control for mass valuation platform. Audience separation enforced at every output layer — API, HTML, PDF, Excel.",
+
+  "roles": {
+    "user": {
+      "label":       "مستخدم عادي",
+      "description": "External client or end-user. Receives simplified advisory output only.",
+      "trust_level": "low"
+    },
+    "analyst": {
+      "label":       "محلّل",
+      "description": "Internal valuation analyst. Can review predictions and submit review decisions.",
+      "trust_level": "medium"
+    },
+    "admin": {
+      "label":       "مسؤول النظام",
+      "description": "Platform administrator. Full access to all outputs, metrics, and governance records.",
+      "trust_level": "high"
+    },
+    "system": {
+      "label":       "النظام",
+      "description": "Automated system identity for logging and state transitions. No human output generated.",
+      "trust_level": "system"
+    }
+  },
+
+  "capabilities": {
+    "view_estimated_value":          {"user": true,  "analyst": true,  "admin": true,  "system": false, "notes": "Rounded to nearest 1,000 SAR for user role"},
+    "view_prediction_interval":      {"user": true,  "analyst": true,  "admin": true,  "system": false},
+    "view_confidence_label":         {"user": true,  "analyst": true,  "admin": true,  "system": false},
+    "view_distribution_status":      {"user": true,  "analyst": true,  "admin": true,  "system": false, "notes": "User sees human-readable label only; analyst/admin see raw enum"},
+    "view_limitations_text":         {"user": true,  "analyst": true,  "admin": true,  "system": false},
+    "view_comparable_ids":           {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "view_shap_values":              {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "view_quality_flags":            {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "view_model_version":            {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "view_hyperparameters":          {"user": false, "analyst": false, "admin": true,  "system": true},
+    "view_audit_trail":              {"user": false, "analyst": false, "admin": true,  "system": true},
+    "view_full_review_decision":     {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "view_iaao_metrics":             {"user": false, "analyst": true,  "admin": true,  "system": true},
+    "view_r_squared":                {"user": false, "analyst": true,  "admin": true,  "system": true, "notes": "Diagnostic only — shown with disclaimer"},
+    "view_prb_metric":               {"user": false, "analyst": true,  "admin": true,  "system": true},
+    "view_basel_section":            {"user": false, "analyst": false, "admin": true,  "system": false, "notes": "Basel/LTV section is admin_only"},
+    "view_prudent_value":            {"user": false, "analyst": false, "admin": true,  "system": false},
+    "view_ltv_table":                {"user": false, "analyst": false, "admin": true,  "system": false},
+    "export_html":                   {"user": true,  "analyst": true,  "admin": true,  "system": false},
+    "export_pdf":                    {"user": true,  "analyst": true,  "admin": true,  "system": false},
+    "export_excel":                  {"user": false, "analyst": true,  "admin": true,  "system": false, "notes": "Excel contains full technical detail — not for user role"},
+    "export_jsonl_predictions":      {"user": false, "analyst": false, "admin": true,  "system": true},
+    "submit_review_decision":        {"user": false, "analyst": true,  "admin": true,  "system": false},
+    "approve_run_state_transition":  {"user": false, "analyst": false, "admin": true,  "system": false},
+    "trigger_training_run":          {"user": false, "analyst": false, "admin": true,  "system": true},
+    "view_raw_data":                 {"user": false, "analyst": false, "admin": true,  "system": true},
+    "archive_run":                   {"user": false, "analyst": false, "admin": true,  "system": true}
+  },
+
+  "output_layer_separation": {
+    "HTML_user": {
+      "audience": "user",
+      "sections_included": [
+        "property_summary", "estimated_value", "prediction_interval",
+        "confidence_label", "distribution_status_label", "limitations"
+      ],
+      "sections_excluded": [
+        "shap_values", "quality_flags_detail", "model_version",
+        "hyperparameters", "audit_trail", "iaao_metrics",
+        "basel_section", "ltv_table", "excel_reference"
+      ]
+    },
+    "HTML_admin": {
+      "audience": "admin",
+      "sections_included": [
+        "all_user_sections",
+        "shap_values", "quality_flags_detail", "model_version",
+        "iaao_metrics (COD/PRD/PRB/R²)", "audit_trail_summary",
+        "basel_section", "ltv_table", "review_decision_trail"
+      ]
+    },
+    "PDF_user": {
+      "audience": "user",
+      "identical_to": "HTML_user"
+    },
+    "PDF_admin": {
+      "audience": "admin",
+      "identical_to": "HTML_admin"
+    },
+    "Excel_admin_only": {
+      "audience": "admin",
+      "sheets": [
+        "Portfolio Summary",
+        "Per-Property Predictions",
+        "Ratio Study (COD/PRD/PRB)",
+        "Quality Flags",
+        "SHAP Summary",
+        "Audit Trail",
+        "مصدرية المدخلات (Provenance)"
+      ],
+      "never_for_user": true
+    }
+  },
+
+  "enforcement_points": [
+    "API response filtering: role checked before serialisation",
+    "HTML generation: audience parameter passed to _build_html(role=...)",
+    "PDF generation: role-specific HTML rendered by Playwright",
+    "Excel: only generated when role == 'admin'",
+    "Watermark on admin documents: 'داخلي — للإدارة فقط'"
+  ]
+}

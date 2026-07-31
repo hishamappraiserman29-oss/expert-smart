@@ -42,10 +42,14 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app  # noqa: E402
-from auth.tokens import generate_token  # noqa: E402
+    from bridge_api import app  # noqa: E402
+    from auth.tokens import generate_token  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 _USER        = "regular-sec002b-user"
 _TEST_SECRET = "test-secret-for-sec002b"

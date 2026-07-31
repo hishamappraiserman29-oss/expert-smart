@@ -37,11 +37,14 @@ from .sections.sales_comparison_pdf import render_sales_comparison
 _FIXED_CREATION_DATE: datetime = datetime(2000, 1, 1, 0, 0, 0)
 _FIXED_PRODUCER: str = "EXPERT_SMART PDF Engine"
 _FIXED_CREATOR: str = "core_engine.reports.pdf"
-_FOOTER_TEXT: str = "EXPERT_SMART — تقرير التقييم العقاري"
+_FOOTER_TEXT: str = "ALHADY FOR REAL PROPERTY — تقرير التقييم العقاري"
 
 # ── Valid profile keys ────────────────────────────────────────────────────────
 
-_VALID_PROFILES: frozenset[str] = frozenset({"legacy", "detailed", "professional_template"})
+_VALID_PROFILES: frozenset[str] = frozenset({
+    "legacy", "detailed", "professional_template",
+    "external_pdf", "internal_detailed",
+})
 
 
 # ── Font registration with optional directory override ────────────────────────

@@ -11,17 +11,21 @@ pandas
 numpy
 scipy
 pykrige
-openpyxl
+openpyxl>=3.1.5
 xlsxwriter
 statsmodels
 prophet
 geopandas
 shapely
+matplotlib>=3.11.0
 
 # Document processing
 python-docx
-PyMuPDF
+PyMuPDF==1.27.2.3
 PyPDF2
+
+# Excel COM automation (Windows only — required by template-driven Excel builder)
+pywin32>=312 ; sys_platform == "win32"
 
 # Backend / Bridge API
 flask
@@ -43,3 +47,4 @@ requests
 fpdf2
 arabic-reshaper
 python-bidi
+jinja2>=3.1

@@ -28,7 +28,9 @@ import pandas as pd
 from datetime import datetime
 import xlsxwriter
 
-warnings.filterwarnings("ignore")
+# Suppress third-party library deprecation noise only; do not hide security warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 # ─── Expert constants ─────────────────────────────────────────────────────────
 EXPERT_NAME  = "هشام محمد محمد المهدى"

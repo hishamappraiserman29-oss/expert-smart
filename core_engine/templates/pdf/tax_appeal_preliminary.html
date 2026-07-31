@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>تقرير فحص ضريبي مبدئي</title>
+  <style>
+    {{ font_css_block }}
+    @page { size: A4; margin: 16mm 14mm 16mm 14mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', Tahoma, Arial, sans-serif;
+      font-size: 9.5pt;
+      color: #111827;
+      background: #fff;
+      direction: rtl;
+      line-height: 1.55;
+    }
+
+    /* ── Cover Page ─────────────────────────────────────────────────── */
+    .cover {
+      page-break-after: always;
+      height: 265mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18mm;
+      text-align: center;
+    }
+    .cover-brand {
+      font-size: 12pt;
+      font-weight: 800;
+      color: #1B2E4B;
+      letter-spacing: 0.3px;
+      padding-bottom: 14px;
+      border-bottom: 3px solid #B8860B;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+    .cover-accent { width: 48px; height: 3px; background: #B8860B; margin: 0 auto 22px; }
+    .cover-title {
+      font-size: 21pt;
+      font-weight: 800;
+      color: #1B2E4B;
+      margin-bottom: 6px;
+    }
+    .cover-subtitle { font-size: 10.5pt; color: #4B5563; margin-bottom: 24px; }
+    .cover-badge {
+      display: inline-block;
+      border: 2px solid #B8860B;
+      background: #FEF3C7;
+      border-radius: 20px;
+      padding: 5px 22px;
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: #92400E;
+      margin-bottom: 32px;
+    }
+    .cover-info {
+      background: #F8F9FA;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      padding: 18px 24px;
+      width: 90%;
+      text-align: right;
+      margin-bottom: 22px;
+    }
+    .cover-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 9.5pt;
+    }
+    .cover-row:last-child { border-bottom: none; }
+    .clbl { font-weight: 700; color: #374151; }
+    .cval { color: #1B2E4B; font-weight: 600; }
+    .cover-notice {
+      background: #FEF3C7;
+      border-right: 4px solid #B8860B;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 8.5pt;
+      color: #92400E;
+      text-align: right;
+      width: 90%;
+      line-height: 1.65;
+    }
+
+    /* ── Advisory bar ────────────────────────────────────────────────── */
+    .advisory {
+      background: #FEF3C7;
+      border: 2px solid #B8860B;
+      border-radius: 5px;
+      padding: 7px 14px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 9pt;
+      font-weight: 700;
+      color: #92400E;
+    }
+
+    /* ── Sections ────────────────────────────────────────────────────── */
+    .sec {
+      margin-bottom: 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 5px;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    .sec-hdr {
+      background: #1B2E4B;
+      color: #fff;
+      font-size: 10pt;
+      font-weight: 700;
+      padding: 6px 12px;
+    }
+    .sec-hdr.green  { background: #1A5E30; }
+    .sec-hdr.red    { background: #7F1D1D; }
+    .sec-hdr.amber  { background: #92400E; }
+    .sec-hdr.gray   { background: #374151; }
+    .sec-body { padding: 10px 12px; }
+
+    /* ── KPI Cards ───────────────────────────────────────────────────── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 10px 12px;
+    }
+    .card {
+      border: 1px solid #D1D5DB;
+      border-radius: 5px;
+      padding: 10px 8px;
+      background: #F8F9FA;
+      text-align: center;
+    }
+    .card-lbl { font-size: 7.5pt; color: #6B7280; margin-bottom: 5px; }
+    .card-val { font-size: 11pt; font-weight: 700; color: #1B2E4B; }
+    .card.warn  .card-val { color: #7F1D1D; }
+    .card.safe  .card-val { color: #1A5E30; }
+    .card.gold  .card-val { color: #92400E; }
+
+    /* ── Field Table ─────────────────────────────────────────────────── */
+    .ftbl {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .ftbl td {
+      padding: 4px 8px;
+      border: 1px solid #D1D5DB;
+      vertical-align: top;
+    }
+    .ftbl tr:nth-child(even) td { background: #F8F9FA; }
+    .lbl {
+      background: #EFF2F7 !important;
+      font-weight: 700;
+      color: #1B2E4B;
+      width: 34%;
+    }
+
+    /* ── Comparison Table ────────────────────────────────────────────── */
+    .cmp {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+    .cmp th {
+      background: #1B2E4B;
+      color: #fff;
+      padding: 5px 8px;
+      text-align: right;
+      border: 1px solid #D1D5DB;
+      font-weight: 700;
+    }
+    .cmp td {
+      padding: 5px 8px;
+      border: 1px solid #D1D5DB;
+      text-align: right;
+    }
+    .cmp tr:nth-child(even) td { background: #F8F9FA; }
+    .cmp tr.total-row td { background: #F0FDF4; }
+    .gov   { color: #7F1D1D; font-weight: 600; }
+    .corr  { color: #1A5E30; font-weight: 600; }
+    .diff  { color: #7F1D1D; font-weight: 700; }
+    .save  { color: #1A5E30; font-weight: 800; font-size: 10pt; }
+
+    /* ── Status Badge ────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+    }
+    .bdg-safe    { background: #D1FAE5; color: #065F46; }
+    .bdg-soon    { background: #FEF3C7; color: #92400E; }
+    .bdg-urgent  { background: #FEE2E2; color: #7F1D1D; }
+    .bdg-expired { background: #7F1D1D; color: #fff; }
+    .bdg-unknown { background: #F3F4F6; color: #374151; }
+    .bdg-draft   { background: #EFF2F7; color: #374151; }
+
+    /* ── Alert Box ───────────────────────────────────────────────────── */
+    .alert-urgent {
+      background: #FEE2E2;
+      border-right: 4px solid #7F1D1D;
+      border-radius: 4px;
+      padding: 7px 12px;
+      margin-top: 8px;
+      font-size: 8.5pt;
+      color: #7F1D1D;
+      font-weight: 700;
+    }
+
+    /* ── Document Checklist ──────────────────────────────────────────── */
+    .doc-list { list-style: none; margin: 0; padding: 0; }
+    .doc-item {
+      display: flex;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 8.5pt;
+    }
+    .doc-item:last-child { border-bottom: none; }
+    .doc-box {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #9CA3AF;
+      border-radius: 2px;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    .doc-box.missing { border-color: #7F1D1D; background: #FEE2E2; }
+    .doc-txt { color: #111827; }
+    .doc-txt.missing { color: #7F1D1D; font-weight: 700; }
+
+    /* ── Numbered Steps ──────────────────────────────────────────────── */
+    .steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      align-items: flex-start;
+      padding: 5px 0;
+      border-bottom: 1px solid #E5E7EB;
+      font-size: 8.5pt;
+      gap: 8px;
+    }
+    .steps li:last-child { border-bottom: none; }
+    .steps li::before {
+      content: counter(step);
+      background: #1B2E4B;
+      color: #fff;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7.5pt;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Disclaimer ──────────────────────────────────────────────────── */
+    .disclaimer {
+      background: #F8F9FA;
+      border: 1px solid #D1D5DB;
+      border-right: 4px solid #374151;
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 8pt;
+      color: #374151;
+      line-height: 1.9;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+    .disclaimer-title {
+      font-size: 9pt;
+      font-weight: 700;
+      color: #1B2E4B;
+      margin-bottom: 6px;
+    }
+    .disclaimer p { margin-top: 4px; }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    .rpt-footer {
+      margin-top: 16px;
+      padding: 8px 14px;
+      border-top: 2px solid #D1D5DB;
+      font-size: 7.5pt;
+      color: #6B7280;
+      text-align: center;
+    }
+    .italic-note {
+      font-size: 7.5pt;
+      color: #92400E;
+      font-style: italic;
+      margin-top: 6px;
+    }
+
+    /* ── Deadline box variants ──────────────────────────── */
+    .deadline-box { border: 2px solid #7F1D1D; border-radius: 4px; padding: 8px; margin: 8px 0; }
+    .deadline-danger { background: #FEF2F2; border-color: #7F1D1D; }
+    .deadline-urgent { background: #FFFBEB; border-color: #B45309; }
+    .deadline-safe { background: #F0FDF4; border-color: #166534; }
+    .committee-wording { font-size: 9.5pt; font-weight: 600; color: #1B2E4B; line-height: 1.7; margin: 6px 0 10px; }
+    .section-note { font-size: 8.5pt; color: #374151; margin: 4px 0; font-style: italic; }
+    .warn-text { color: #7F1D1D; font-weight: 600; }
+    .comp-table { width:100%; border-collapse:collapse; font-size:8pt; margin:4px 0; }
+    .comp-table th { background:#1F4E78; color:#fff; padding:4px 6px; text-align:right; }
+    .comp-table td { border:1px solid #D1D5DB; padding:3px 6px; text-align:right; }
+    .comp-table tr:nth-child(even) td { background:#F9FAFB; }
+  </style>
+</head>
+<body>
+
+<!-- ══ COVER PAGE ═══════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-brand">ALHADY FOR REAL PROPERTY — الهادي للتقييم العقاري والفحص الضريبي</div>
+  <div class="cover-accent"></div>
+  <div class="cover-title">تقرير فحص ضريبي مبدئي</div>
+  <div class="cover-subtitle">{{ tax_mode_label_ar }}</div>
+  <div class="cover-badge">تقرير استرشادي — غير معتمد رسميًا</div>
+  <div class="cover-info">
+    <div class="cover-row">
+      <span class="clbl">رقم الطلب</span>
+      <span class="cval">{{ request_id }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">المكلف</span>
+      <span class="cval">{{ taxpayer_name }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">نوع الضريبة</span>
+      <span class="cval">{{ tax_mode_label_ar }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">الموقع</span>
+      <span class="cval">{{ city }} — {{ governorate }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">تاريخ التقرير</span>
+      <span class="cval">{{ report_date }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">نوع العقار</span>
+      <span class="cval">{{ property_subtype_label_ar }} — {{ tax_property_class_label_ar }}</span>
+    </div>
+    <div class="cover-row">
+      <span class="clbl">حالة التقرير</span>
+      <span class="cval"><span class="badge bdg-draft">مبدئي غير معتمد</span></span>
+    </div>
+  </div>
+  <div class="cover-notice">
+    هذا التقرير استرشادي مبدئي يعتمد على البيانات المُدخلة يدويًا فقط.
+    لا يُستخدم طعنًا رسميًا ولا يُعد استشارة قانونية معتمدة قبل مراجعة وتوقيع خبير تقييم مرخص.
+    لا يوجد اتصال بالإنترنت أو قواعد بيانات آلية في هذا الإصدار.
+  </div>
+</div>
+
+<!-- ══ Advisory Bar ══════════════════════════════════════════════════════════════ -->
+<div class="advisory">
+  تقرير استرشادي مبدئي — غير معتمد رسميًا — يستلزم مراجعة وتوقيع خبير تقييم عقاري مرخص قبل الاستخدام الرسمي
+</div>
+
+<!-- ══ 1. الملخص التنفيذي ═══════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr green">الملخص التنفيذي</div>
+  <div class="cards">
+    <div class="card">
+      <div class="card-lbl">نوع الضريبة</div>
+      <div class="card-val">{{ tax_mode_label_ar }}</div>
+    </div>
+    <div class="card {% if overcharge_detected %}warn{% else %}safe{% endif %}">
+      <div class="card-lbl">الضريبة الحكومية</div>
+      <div class="card-val">{{ government_tax_amount }}</div>
+    </div>
+    <div class="card safe">
+      <div class="card-lbl">التقدير الاسترشادي</div>
+      <div class="card-val">{{ corrected_tax_amount }}</div>
+    </div>
+    <div class="card {% if overcharge_detected %}warn{% else %}safe{% endif %}">
+      <div class="card-lbl">الوفر المتوقع</div>
+      <div class="card-val">{{ expected_savings }}</div>
+    </div>
+    <div class="card {% if deadline_status_key in ('urgent','expired') %}warn{% elif deadline_status_key == 'soon' %}gold{% else %}safe{% endif %}">
+      <div class="card-lbl">حالة مهلة الطعن</div>
+      <div class="card-val">{{ deadline_status }}</div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">جودة البيانات</div>
+      <div class="card-val">{{ data_quality_status }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 2. بيانات العقار والمكلف ══════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr">بيانات العقار والمكلف</div>
+  <div class="sec-body">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">اسم المكلف</td>
+        <td>{{ taxpayer_name }}</td>
+        <td class="lbl">رقم الهاتف</td>
+        <td>{{ taxpayer_phone }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">نوع العقار</td>
+        <td>{{ property_type }}</td>
+        <td class="lbl">المساحة (م²)</td>
+        <td>{{ area }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">المحافظة</td>
+        <td>{{ governorate }}</td>
+        <td class="lbl">المدينة</td>
+        <td>{{ city }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">الحي / المنطقة</td>
+        <td>{{ district }}</td>
+        <td class="lbl">عنوان العقار</td>
+        <td>{{ property_address }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">تاريخ أساس الضريبة</td>
+        <td>{{ assessment_date }}</td>
+        <td class="lbl">تاريخ استلام الإخطار</td>
+        <td>{{ notice_received_date }}</td>
+      </tr>
+      <tr>
+        <td class="lbl" style="color:#92400E;">آخر تاريخ حصر الضريبة / تاريخ أساس التقييم الضريبي</td>
+        <td colspan="3">
+          <strong>{{ tax_assessment_basis_date }}</strong>
+          <span style="font-size:7.5pt;color:#374151;font-style:italic;margin-right:6px;">
+            لا يطابق هذا التاريخ بالضرورة تاريخ التقرير أو تاريخ استلام الإخطار؛
+            وهو التاريخ المرجعي الذي تُفهم عليه دلالة الوعاء الضريبي محل الطعن.
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td class="lbl">فئة العقار</td>
+        <td>{{ tax_property_class_label_ar }}</td>
+        <td class="lbl">النوع الفرعي</td>
+        <td>{{ property_subtype_label_ar }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">نموذج التقرير</td>
+        <td colspan="3" style="font-style:italic;font-size:8pt;color:#374151;">{{ report_archetype }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 3. تفاصيل نوع الضريبة ══════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr amber">تفاصيل نوع الضريبة</div>
+  <div class="sec-body">
+    {% if tax_mode == "annual_real_estate_tax" %}
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">نوع الضريبة</td>
+        <td>{{ tax_mode_label_ar }}</td>
+        <td class="lbl">سنة دورة الفحص</td>
+        <td>{{ inspection_cycle_year }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">دورة التقييم التالية</td>
+        <td>{{ next_reassessment_year }}</td>
+        <td class="lbl">نسبة خصم الصيانة</td>
+        <td>{{ maintenance_deduction_rate }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">القيمة الإيجارية الحكومية</td>
+        <td class="gov">{{ government_assessed_annual_rental_value }}</td>
+        <td class="lbl">الإعفاء السنوي</td>
+        <td>{{ exemption_amount }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">الوعاء الخاضع للضريبة</td>
+        <td>{{ taxable_base }}</td>
+        <td class="lbl">أساس الاحتساب الزمني</td>
+        <td>{{ date_basis_note }}</td>
+      </tr>
+      <tr>
+        <td class="lbl" style="color:#92400E;">آخر تاريخ حصر الضريبة / تاريخ أساس التقييم الضريبي</td>
+        <td colspan="3" style="font-size:8.5pt;">
+          <strong>{{ tax_assessment_basis_date }}</strong>
+          <br><span style="font-size:7.5pt;color:#374151;font-style:italic;">{{ tax_assessment_basis_date_note }}</span>
+        </td>
+      </tr>
+    </table>
+    {% else %}
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">نوع الضريبة</td>
+        <td>{{ tax_mode_label_ar }}</td>
+        <td class="lbl">معدل ضريبة التصرفات</td>
+        <td style="font-weight:700;color:#7F1D1D;">{{ transfer_rate_pct }} — ثابت قانونيًا</td>
+      </tr>
+      <tr>
+        <td class="lbl">تاريخ البيع / التصرف</td>
+        <td>{{ sale_date }}</td>
+        <td class="lbl">أساس الاحتساب الزمني</td>
+        <td>{{ date_basis_note }}</td>
+      </tr>
+      <tr>
+        <td class="lbl" colspan="4" style="background:#FEF3C7 !important;color:#92400E;font-style:italic;font-size:8pt;">
+          {{ annual_thresholds_note }}
+        </td>
+      </tr>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ 4. جدول المقارنة ══════════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr {% if overcharge_detected %}red{% else %}green{% endif %}">
+    جدول المقارنة — الحكومة مقابل التقدير الاسترشادي
+  </div>
+  <div class="sec-body">
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th>البند</th>
+          <th>القيمة الحكومية</th>
+          <th>التقدير الاسترشادي</th>
+          <th>الفرق</th>
+          <th>الملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if tax_mode == "annual_real_estate_tax" %}
+        <tr>
+          <td>القيمة الإيجارية</td>
+          <td class="gov">{{ government_assessed_annual_rental_value }}</td>
+          <td class="corr">{{ estimated_market_rental_value }}</td>
+          <td>—</td>
+          <td style="font-size:7.5pt;">أساس الحساب</td>
+        </tr>
+        <tr>
+          <td>الضريبة السنوية</td>
+          <td class="gov">{{ government_tax_amount }}</td>
+          <td class="corr">{{ corrected_tax_amount }}</td>
+          <td class="{% if overcharge_detected %}diff{% endif %}">{{ overcharge_amount }}</td>
+          <td>{{ "مغالاة مرصودة" if overcharge_detected else "ضمن المعقول" }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td>قيمة التصرف</td>
+          <td class="gov">{{ government_assessed_sale_value }}</td>
+          <td class="corr">{{ challenged_sale_value }}</td>
+          <td>—</td>
+          <td style="font-size:7.5pt;">أساس الحساب</td>
+        </tr>
+        <tr>
+          <td>ضريبة التصرفات ({{ transfer_rate_pct }})</td>
+          <td class="gov">{{ transfer_tax_government }}</td>
+          <td class="corr">{{ transfer_tax_corrected }}</td>
+          <td class="{% if overcharge_detected %}diff{% endif %}">{{ overcharge_amount }}</td>
+          <td>معدل ثابت 2.5%</td>
+        </tr>
+        {% endif %}
+        <tr class="total-row">
+          <td><strong>الوفر المتوقع</strong></td>
+          <td>—</td>
+          <td>—</td>
+          <td class="save"><strong>{{ expected_savings }}</strong></td>
+          <td>{{ overcharge_percentage }}% مغالاة</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="italic-note">{{ calculation_label }}</p>
+  </div>
+</div>
+
+<!-- ══ 5. مهلة الطعن 60 يومًا ══════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr {% if deadline_status_key in ('urgent','expired') %}red{% elif deadline_status_key == 'soon' %}amber{% else %}green{% endif %}">
+    مهلة الطعن 60 يومًا
+  </div>
+  <div class="sec-body">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">تاريخ استلام الإخطار</td>
+        <td>{{ notice_received_date }}</td>
+        <td class="lbl">المهلة القانونية</td>
+        <td>60 يومًا من تاريخ الإخطار</td>
+      </tr>
+      <tr>
+        <td class="lbl">تاريخ انتهاء المهلة</td>
+        <td style="font-weight:700;">{{ deadline_date }}</td>
+        <td class="lbl">الأيام المتبقية</td>
+        <td style="font-weight:700;">{{ days_remaining }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">حالة المهلة</td>
+        <td colspan="3">
+          <span class="badge bdg-{{ deadline_status_key }}">{{ deadline_status }}</span>
+        </td>
+      </tr>
+    </table>
+    {% if deadline_status_key == 'expired' %}
+    <div class="alert-urgent">انتهت مهلة الطعن — يستلزم التحقق من إمكانية الاستثناء مع المختص القانوني قبل اتخاذ أي إجراء.</div>
+    {% elif deadline_status_key == 'urgent' %}
+    <div class="alert-urgent">المهلة قاربت على الانتهاء ({{ days_remaining }} يوم) — يُوصى باتخاذ إجراءات الطعن فورًا.</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ 6. المستندات المطلوبة ══════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr gray">المستندات المطلوبة للطعن — {{ tax_property_class_label_ar }}</div>
+  <div class="sec-body">
+    <p style="font-size:8pt;color:#374151;margin-bottom:8px;">{{ docs_checklist_label }}</p>
+    <ul class="doc-list">
+      {% for doc in required_documents_checklist %}
+      <li class="doc-item">
+        <div class="doc-box {% if doc.status == 'مطلوب' and doc.required %}missing{% endif %}"></div>
+        <span class="doc-txt {% if doc.status == 'مطلوب' and doc.required %}missing{% endif %}">
+          {{ doc.label_ar }}
+          {% if doc.status == 'مُقدَّم' %}<span style="color:#1A5E30;font-size:7.5pt;"> — مُقدَّم</span>{% endif %}
+          {% if doc.status == 'اختياري' %}<span style="color:#6B7280;font-size:7.5pt;"> — اختياري</span>{% endif %}
+          {% if doc.note %}<span style="color:#6B7280;font-size:7pt;"> ({{ doc.note }})</span>{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<!-- ══ 7. مصادر البيانات ══════════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr gray">مصادر البيانات المستخدمة في هذا التقرير</div>
+  <div class="sec-body">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">بيانات مُدخلة يدويًا</td>
+        <td>بيانات العقار والمكلف والضريبة — مُدخلة من المستخدم مباشرةً</td>
+      </tr>
+      <tr>
+        <td class="lbl">استرجاع آلي من الإنترنت</td>
+        <td style="color:#6B7280;font-style:italic;">غير مفعل في هذا الإصدار — مرحلة مستقبلية</td>
+      </tr>
+      <tr>
+        <td class="lbl">قاعدة بيانات آلية (Qdrant)</td>
+        <td style="color:#6B7280;font-style:italic;">غير مفعلة — مرحلة مستقبلية</td>
+      </tr>
+      <tr>
+        <td class="lbl">مقارنات سوقية آلية</td>
+        <td style="color:#6B7280;font-style:italic;">غير متاحة — تستلزم مراجعة الخبير يدويًا</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ 8. الخطوات التالية ══════════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr green">الخطوات التالية الموصى بها</div>
+  <div class="sec-body">
+    <ol class="steps">
+      <li>مراجعة هذا التقرير مع خبير تقييم عقاري مرخص للتحقق من دقة الأرقام وتأكيد المغالاة.</li>
+      <li>استيفاء المستندات الناقصة المشار إليها في قائمة المستندات أعلاه.</li>
+      <li>طلب إعداد مذكرة طعن فنية معتمدة إذا تأكدت المغالاة بعد مراجعة الخبير.</li>
+      <li>تقديم الطعن الرسمي إلى الجهة المختصة قبل انتهاء مهلة 60 يومًا.</li>
+    </ol>
+  </div>
+</div>
+
+{% if deadline_legal_status %}
+<div class="section deadline-box {% if deadline_legal_status.formal_rejection_risk %}deadline-danger{% elif deadline_legal_status.urgent_action_required %}deadline-urgent{% else %}deadline-safe{% endif %}">
+  <div class="section-title">حالة مهلة الطعن والإجراء المطلوب</div>
+  <table class="data-table">
+    <tr><td class="lbl">تاريخ استلام الإخطار</td><td>{{ deadline_legal_status.notice_received_date or "غير متاح" }}</td></tr>
+    <tr><td class="lbl">تاريخ انتهاء المهلة</td><td>{{ deadline_legal_status.deadline_date or "غير متاح" }}</td></tr>
+    <tr><td class="lbl">الأيام المتبقية</td><td>{{ deadline_legal_status.days_remaining }}</td></tr>
+    <tr><td class="lbl">حالة المهلة</td><td><span class="badge">{{ deadline_legal_status.deadline_status }}</span></td></tr>
+    <tr><td class="lbl">خطر الرفض الشكلي</td><td>{{ "مرتفع — يلزم مراجعة فورية" if deadline_legal_status.formal_rejection_risk else "منخفض" }}</td></tr>
+    <tr><td class="lbl">الإجراء الموصى به</td><td>{{ deadline_legal_status.recommended_next_step or "راجع الخبير" }}</td></tr>
+    {% if deadline_legal_status.post_deadline_guidance %}
+    <tr><td class="lbl">توجيه ما بعد المهلة</td><td class="warn-text">{{ deadline_legal_status.post_deadline_guidance }}</td></tr>
+    {% endif %}
+    <tr><td class="lbl">مراجعة قانونية / خبير</td><td>{{ "مطلوبة" if deadline_legal_status.legal_review_required else "لا" }}</td></tr>
+  </table>
+  <p class="disclaimer-note">{{ deadline_legal_status.disclaimer or "إرشاد إجرائي عام — يحتاج مراجعة مختص." }}</p>
+</div>
+{% endif %}
+
+<!-- ══ طرق التقييم والفحص الفني — الطرق الخمس ══════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">طرق التقييم والفحص الفني — الطرق الخمس</div>
+  <div class="sec-body">
+    {% if tax_valuation_methods %}
+    <table class="cmp" style="margin-bottom:10px;">
+      <thead>
+        <tr>
+          <th>الطريقة</th>
+          <th>الانطباقية</th>
+          <th>حالة البيانات</th>
+          <th>الدلالة</th>
+          <th>ملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for method in tax_valuation_methods %}
+        <tr>
+          <td style="font-weight:700;color:#1B2E4B;">{{ method.method_label_ar }}</td>
+          <td>
+            {% if method.method_applicability == 'applicable' %}<span class="badge bdg-safe">منطبقة</span>
+            {% elif method.method_applicability == 'supporting' %}<span class="badge bdg-soon">مساندة</span>
+            {% elif method.method_applicability == 'future_ready' %}<span class="badge bdg-unknown">مستقبلية</span>
+            {% elif method.method_applicability == 'data_gap' %}<span class="badge bdg-expired">ناقص بيانات</span>
+            {% else %}{{ method.method_applicability }}{% endif %}
+          </td>
+          <td style="font-size:8pt;color:#374151;">{{ method.data_availability_status }}</td>
+          <td style="font-weight:600;color:#1A5E30;">
+            {% if method.indicated_value is number %}{{ "{:,.0f}".format(method.indicated_value) }} ج.م
+            {% else %}{{ method.indicated_value }}{% endif %}
+          </td>
+          <td style="font-size:8pt;color:#374151;">{{ method.expert_notes[:80] if method.expert_notes else "—" }}{% if method.expert_notes|length > 80 %}...{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- ── Detailed method sections (one per method) ─────────────────── -->
+    {% for method in tax_valuation_methods %}
+    <div style="margin-top:10px;border:1px solid #D1D5DB;border-radius:4px;overflow:hidden;page-break-inside:avoid;">
+      <div style="background:{% if method.method_key == 'cost_approach' %}#7B2D00{% elif method.method_key == 'market_comparison_approach' %}#1A4D2E{% elif method.method_key == 'income_capitalization_approach' %}#1B2E4B{% elif method.method_key == 'tax_comparison_approach' %}#374151{% else %}#4B3F6B{% endif %};padding:4px 10px;">
+        <span style="color:#fff;font-weight:700;font-size:8.5pt;">{{ method.method_label_ar }}</span>
+        <span style="color:#D1D5DB;font-size:7.5pt;margin-right:10px;">{{ method.data_availability_status }}</span>
+      </div>
+      <div style="padding:7px 10px;">
+        {% if method.explanation_ar %}
+        <p style="font-size:7.5pt;color:#374151;line-height:1.65;border-right:2px solid #B8860B;padding-right:6px;margin-bottom:6px;">{{ method.explanation_ar }}</p>
+        {% endif %}
+        {% if method.calculation_rows %}
+        <table class="cmp" style="font-size:7.5pt;margin-bottom:5px;">
+          <thead><tr><th>البيان</th><th>القيمة</th><th>الصيغة</th></tr></thead>
+          <tbody>
+            {% for calc in method.calculation_rows %}
+            <tr>
+              <td style="font-weight:600;">{{ calc.label }}</td>
+              <td>{{ "{:,.0f}".format(calc.value) if calc.value is number else calc.value }}</td>
+              <td style="font-style:italic;color:#6B7280;font-size:7pt;">{{ calc.formula if calc.formula else "—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if method.method_key == 'cost_approach' and method.component_table %}
+        <p style="font-size:7.5pt;font-weight:700;color:#7B2D00;margin:5px 0 2px;">جدول مكونات المنشأة:</p>
+        <table class="cmp" style="font-size:7pt;">
+          <thead><tr><th>المكوِّن</th><th>م²</th><th>تكلفة/م²</th><th>تكلفة الإحلال</th><th>إهلاك%</th><th>القيمة الصافية</th></tr></thead>
+          <tbody>
+            {% for comp in method.component_table %}
+            <tr>
+              <td>{{ comp.component_name }}</td>
+              <td>{{ comp.area_m2 }}</td>
+              <td>{{ "{:,.0f}".format(comp.unit_cost) if comp.unit_cost is number else comp.unit_cost }}</td>
+              <td>{{ "{:,.0f}".format(comp.replacement_cost_new) if comp.replacement_cost_new is number else comp.replacement_cost_new }}</td>
+              <td>{{ comp.total_dep_pct }}</td>
+              <td style="font-weight:700;color:#1A5E30;">{{ "{:,.0f}".format(comp.depreciated_value) if comp.depreciated_value is number else comp.depreciated_value }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if method.method_key == 'market_comparison_approach' and method.comparison_matrix %}
+        <p style="font-size:7.5pt;font-weight:700;color:#1A4D2E;margin:5px 0 2px;">مصفوفة التعديلات والمقارنات:</p>
+        <table class="cmp" style="font-size:7pt;">
+          <thead><tr><th>المقارن</th><th>م²</th><th>سعر/م²</th><th>تعديل كلي</th><th>معدَّل/م²</th><th>مُدرج؟</th></tr></thead>
+          <tbody>
+            {% for comp in method.comparison_matrix %}
+            <tr {% if not comp.included %}style="opacity:0.6;"{% endif %}>
+              <td>{{ comp.comparable_id }}</td>
+              <td>{{ comp.area }}</td>
+              <td>{{ "{:,.0f}".format(comp.price_per_m2) if comp.price_per_m2 is number else comp.price_per_m2 }}</td>
+              <td>{{ comp.total_adj_factor }}</td>
+              <td style="font-weight:700;">{{ "{:,.0f}".format(comp.adjusted_price_per_m2) if comp.adjusted_price_per_m2 is number else comp.adjusted_price_per_m2 }}</td>
+              <td>{{ "✓" if comp.included else "✗" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if method.method_key == 'tax_comparison_approach' %}
+          {% if method.government_assessment_table %}
+          <p style="font-size:7.5pt;font-weight:700;color:#374151;margin:5px 0 2px;">التقدير الحكومي:</p>
+          <table class="ftbl" style="font-size:7pt;margin-bottom:4px;">
+            <tr><td class="lbl">القيمة الإيجارية الحكومية</td><td>{{ method.government_assessment_table.govt_assessed_rental_value }}</td>
+                <td class="lbl">الضريبة الحكومية</td><td style="color:#7F1D1D;font-weight:700;">{{ method.government_assessment_table.govt_tax_amount }}</td></tr>
+            <tr><td class="lbl">سنة الدورة</td><td>{{ method.government_assessment_table.tax_year_or_cycle }}</td>
+                <td class="lbl">رقم الإخطار</td><td>{{ method.government_assessment_table.notice_number }}</td></tr>
+          </table>
+          {% endif %}
+          {% if method.expert_indication_table %}
+          <p style="font-size:7.5pt;font-weight:700;color:#1A4D2E;margin:5px 0 2px;">تقدير الخبير:</p>
+          <table class="ftbl" style="font-size:7pt;margin-bottom:4px;">
+            <tr><td class="lbl">القيمة الإيجارية المشارة</td><td>{{ method.expert_indication_table.expert_indicated_rental_value }}</td>
+                <td class="lbl">الضريبة المشارة</td><td style="color:#1A5E30;font-weight:700;">{{ method.expert_indication_table.expert_indicated_tax_amount }}</td></tr>
+          </table>
+          {% endif %}
+          {% if method.comparable_tax_cases %}
+          <p style="font-size:7.5pt;font-weight:700;color:#374151;margin:5px 0 2px;">حالات ضريبية مقارنة:</p>
+          <table class="cmp" style="font-size:7pt;margin-bottom:4px;">
+            <thead><tr><th>الحالة</th><th>الموقع</th><th>م²</th><th>الضريبة</th><th>ض./م²</th><th>معدَّلة/م²</th><th>مُدرجة؟</th></tr></thead>
+            <tbody>
+              {% for tc in method.comparable_tax_cases %}
+              <tr>
+                <td>{{ tc.case_id }}</td><td style="font-size:7pt;">{{ tc.location[:25] if tc.location|length > 25 else tc.location }}</td>
+                <td>{{ tc.area_m2 }}</td><td>{{ tc.tax_amount }}</td>
+                <td>{{ tc.tax_per_m2 }}</td><td>{{ tc.adjusted_tax_per_m2 }}</td>
+                <td>{{ "✓" if tc.included else "✗" }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+          {% if method.tax_gap_table %}
+          <p style="font-size:7.5pt;font-weight:700;color:#5C1A1A;margin:5px 0 2px;">فجوة الضريبة:</p>
+          <table class="ftbl" style="font-size:7pt;">
+            <tr><td class="lbl">الضريبة الحكومية</td><td style="color:#7F1D1D;font-weight:700;">{{ method.tax_gap_table.government_tax }}</td>
+                <td class="lbl">الضريبة المشارة</td><td style="color:#1A5E30;font-weight:700;">{{ method.tax_gap_table.indicated_tax }}</td></tr>
+            <tr><td class="lbl">فارق المغالاة</td><td style="color:#7F1D1D;font-weight:700;">{{ method.tax_gap_table.overcharge_amount }}</td>
+                <td class="lbl">الوفر المتوقع</td><td style="color:#1A5E30;font-weight:700;">{{ method.tax_gap_table.expected_saving }}</td></tr>
+          </table>
+          {% endif %}
+        {% endif %}
+        {% if method.method_key == 'multiple_regression_approach' and method.variable_table %}
+        <p style="font-size:7.5pt;font-weight:700;color:#374151;margin:5px 0 2px;">جدول المتغيرات والمعاملات:</p>
+        <table class="cmp" style="font-size:7pt;">
+          <thead><tr><th>المتغير</th><th>القيمة</th><th>المعامل</th><th>المساهمة (ج.م)</th><th>الحالة</th></tr></thead>
+          <tbody>
+            {% for v in method.variable_table %}
+            <tr>
+              <td>{{ v.variable_ar }}</td>
+              <td>{{ "{:,.2f}".format(v.value) if v.value is number else v.value }}</td>
+              <td>{{ "{:,.0f}".format(v.coefficient) if v.coefficient is number else v.coefficient }}</td>
+              <td style="font-weight:700;color:#1A5E30;">{{ "{:,.0f}".format(v.contribution) if v.contribution is number else v.contribution }}</td>
+              <td style="font-size:7pt;color:#6B7280;">{{ v.source_status }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if method.required_missing_inputs %}
+        <p style="font-size:7pt;color:#7F1D1D;margin-top:4px;">البيانات الناقصة: {{ method.required_missing_inputs | join(' — ') }}</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Reconciliation summary -->
+    {% if five_method_reconciliation %}
+    <div style="background:#F0FDF4;border:1px solid #A7F3D0;border-radius:4px;padding:10px 14px;margin-top:10px;">
+      <div style="font-weight:700;color:#1B2E4B;font-size:9pt;margin-bottom:6px;">توفيق نتائج الطرق الخمس</div>
+      {% if five_method_reconciliation.applicability_table %}
+      <p style="font-size:7.5pt;font-weight:700;color:#C9973A;margin-bottom:4px;">جدول انطباقية الطرق:</p>
+      <table class="cmp" style="font-size:7.5pt;margin-bottom:8px;">
+        <thead><tr><th>الطريقة</th><th>الانطباقية</th><th>حالة البيانات</th><th>الدلالة</th><th>الوزن</th><th>مُدرجة؟</th></tr></thead>
+        <tbody>
+          {% for app in five_method_reconciliation.applicability_table %}
+          <tr {% if not app.included %}style="opacity:0.65;"{% endif %}>
+            <td style="font-weight:700;">{{ app.method }}</td>
+            <td>{{ "منطبقة" if app.applicability == "applicable" else "مستقبلية" if app.applicability == "future_ready" else "ناقص" }}</td>
+            <td style="font-size:7pt;">{{ app.data_status[:40] if app.data_status|length > 40 else app.data_status }}</td>
+            <td>{{ "{:,.0f}".format(app.indicated_value) if app.indicated_value is number else app.indicated_value }}</td>
+            <td>{{ app.weight }}</td>
+            <td>{{ "✓" if app.included else "✗" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      <table class="ftbl">
+        {% for entry in five_method_reconciliation.method_weight %}
+        <tr>
+          <td class="lbl" style="width:32%;">{{ entry.method }}</td>
+          <td style="color:#1A5E30;font-weight:600;">
+            {% if entry.value is number %}{{ "{:,.0f}".format(entry.value) }} ج.م{% else %}{{ entry.value }}{% endif %}
+          </td>
+          <td style="color:#374151;">{{ entry.weight }}</td>
+          <td style="color:#6B7280;font-size:8pt;">{{ entry.note if entry.note else "" }}</td>
+        </tr>
+        {% endfor %}
+        <tr style="background:#D1FAE5;">
+          <td class="lbl"><strong>النتيجة المرجحة الإجمالية</strong></td>
+          <td colspan="3" style="font-weight:700;color:#1A5E30;font-size:10pt;">
+            {% if five_method_reconciliation.weighted_result is number %}
+              {{ "{:,.0f}".format(five_method_reconciliation.weighted_result) }} ج.م
+            {% else %}{{ five_method_reconciliation.weighted_result }}{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="lbl">الوفر المتوقع</td>
+          <td colspan="3" style="font-weight:700;color:#7F1D1D;">
+            {% if five_method_reconciliation.expected_savings is number %}
+              {{ "{:,.0f}".format(five_method_reconciliation.expected_savings) }} ج.م
+            {% else %}{{ five_method_reconciliation.expected_savings }}{% endif %}
+          </td>
+        </tr>
+      </table>
+      {% if five_method_reconciliation.final_conclusion_table %}
+      <div style="margin-top:8px;background:#FFF7ED;border:1px solid #FCD34D;border-radius:4px;padding:8px 10px;">
+        <p style="font-size:7.5pt;font-weight:700;color:#92400E;margin-bottom:4px;">الخلاصة النهائية للتوفيق:</p>
+        <table class="ftbl" style="font-size:7.5pt;">
+          <tr><td class="lbl">القيمة المختارة من الخبير</td>
+              <td style="font-weight:700;color:#1A5E30;">{{ "{:,.0f}".format(five_method_reconciliation.final_conclusion_table.expert_selected_value) if five_method_reconciliation.final_conclusion_table.expert_selected_value is number else five_method_reconciliation.final_conclusion_table.expert_selected_value }}</td>
+              <td class="lbl">الضريبة المختارة</td>
+              <td style="font-weight:700;color:#1A5E30;">{{ five_method_reconciliation.final_conclusion_table.expert_selected_tax }}</td></tr>
+          <tr><td class="lbl">الضريبة الحكومية</td>
+              <td style="color:#7F1D1D;font-weight:700;">{{ five_method_reconciliation.final_conclusion_table.government_tax }}</td>
+              <td class="lbl">فارق المغالاة</td>
+              <td style="color:#7F1D1D;font-weight:700;">{{ five_method_reconciliation.final_conclusion_table.overcharge_amount }}</td></tr>
+          <tr><td class="lbl">الطرق المستخدمة</td>
+              <td colspan="3" style="font-size:7pt;">{{ five_method_reconciliation.final_conclusion_table.methods_used | join(' — ') if five_method_reconciliation.final_conclusion_table.methods_used else "—" }}</td></tr>
+          <tr style="background:#FEF3C7;"><td class="lbl" colspan="4"><strong>الخلاصة: </strong>{{ five_method_reconciliation.final_conclusion_table.conclusion_ar }}</td></tr>
+        </table>
+      </div>
+      {% endif %}
+      <p class="italic-note" style="margin-top:6px;">{{ five_method_reconciliation.reconciliation_notes }}</p>
+    </div>
+    {% endif %}
+
+    <div style="background:#FEF3C7;border-right:3px solid #B8860B;border-radius:3px;padding:7px 12px;margin-top:10px;font-size:8pt;color:#92400E;">
+      {{ five_method_future_enrichment_note }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ طرق التقييم المنطبقة ════════════════════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-hdr amber">طرق التقييم المنطبقة — {{ tax_property_class_label_ar }}</div>
+  <div class="sec-body">
+    <table class="ftbl">
+      {% for method_label in valuation_methods_labels_ar %}
+      <tr>
+        <td class="lbl" style="width:20%;">طريقة {{ loop.index }}</td>
+        <td>{{ method_label }}</td>
+      </tr>
+      {% endfor %}
+      {% if report_archetype == "special_purpose_tax_appeal_narrative" %}
+      <tr>
+        <td class="lbl">ملاحظة مهمة</td>
+        <td style="color:#7F1D1D;font-weight:700;">
+          لا تُطبَّق مقارنة البيوع أو طريقة الرسملة للمنشآت الصناعية — طريقة التكلفة هي الأساس الوحيد.
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+
+    {% if report_archetype == "special_purpose_tax_appeal_narrative" %}
+    <!-- Narrative sections for special-purpose / industrial properties -->
+    <hr style="border:none;border-top:1px dashed #D1D5DB;margin:12px 0;">
+    <div style="font-weight:700;color:#1B2E4B;font-size:9.5pt;margin-bottom:6px;">مجال العمل</div>
+    <p style="font-size:8.5pt;line-height:1.7;color:#111827;">{{ scope_of_work_ar }}</p>
+
+    <div style="font-weight:700;color:#1B2E4B;font-size:9.5pt;margin:10px 0 6px;">الافتراضات الرئيسية</div>
+    <p style="font-size:8.5pt;line-height:1.7;color:#111827;">{{ assumptions_ar }}</p>
+
+    <div style="font-weight:700;color:#1B2E4B;font-size:9.5pt;margin:10px 0 6px;">التعريفات</div>
+    <p style="font-size:8.5pt;line-height:1.7;color:#111827;">{{ definitions_ar }}</p>
+
+    <div style="font-weight:700;color:#1B2E4B;font-size:9.5pt;margin:10px 0 6px;">المحددات</div>
+    <p style="font-size:8.5pt;line-height:1.7;color:#111827;">{{ limitations_ar }}</p>
+
+    {% if industrial_components %}
+    <div style="font-weight:700;color:#1B2E4B;font-size:9.5pt;margin:10px 0 6px;">مكونات المنشأة (ملخص)</div>
+    <table class="cmp" style="margin-top:4px;">
+      <thead>
+        <tr>
+          <th>المكوّن</th><th>المساحة (م²)</th><th>سعر الوحدة (ج.م/م²)</th><th>الإهلاك</th><th>القيمة الصافية</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for comp in industrial_components %}
+        <tr>
+          <td>{{ comp.name }}</td>
+          <td>{{ comp.area }}</td>
+          <td>{{ comp.unit_cost }}</td>
+          <td>{{ comp.depreciation }}</td>
+          <td>{{ comp.net_value }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% endif %}
+
+    {% if report_archetype == "non_residential_tax_appeal_summary" %}
+    <!-- Non-residential: floor adjustment and frontage note -->
+    <hr style="border:none;border-top:1px dashed #D1D5DB;margin:12px 0;">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">نوع الدور</td>
+        <td>{{ commercial_floor_type }}</td>
+        <td class="lbl">معامل الدور</td>
+        <td>{{ floor_adjustment_factor }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">عرض الواجهة</td>
+        <td>{{ frontage_width }}</td>
+        <td class="lbl">نوع النشاط</td>
+        <td>{{ commercial_activity }}</td>
+      </tr>
+    </table>
+    {% endif %}
+
+    {% if report_archetype == "residential_tax_appeal_summary" %}
+    <!-- Residential: occupancy and completion -->
+    <hr style="border:none;border-top:1px dashed #D1D5DB;margin:12px 0;">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">وضع الإشغال</td>
+        <td>{{ occupancy_status }}</td>
+        <td class="lbl">حالة الإتمام</td>
+        <td>{{ completion_status }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">سنة الإتمام</td>
+        <td>{{ completion_year }}</td>
+        <td class="lbl">دليل الإتمام</td>
+        <td>{{ construction_date_evidence }}</td>
+      </tr>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ تنبيهات خاصة بفئة العقار ═══════════════════════════════════════════ -->
+{% if special_warnings %}
+<div class="sec">
+  <div class="sec-hdr amber">تنبيهات خاصة — {{ tax_property_class_label_ar }}</div>
+  <div class="sec-body">
+    <ul class="steps">
+      {% for warn in special_warnings %}
+      <li>{{ warn }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ تحليل أعلى وأفضل استغلال HBU ══════════════════════════════════════════ -->
+{% if hbu_analysis %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1F3A5F;">تحليل أعلى وأفضل استغلال — HBU</div>
+  <div class="sec-body">
+    <table class="ftbl">
+      <tr>
+        <td class="lbl">الاستخدام الحالي</td>
+        <td>{{ hbu_analysis.current_use }}</td>
+        <td class="lbl">الاستخدام المرخص</td>
+        <td>{{ hbu_analysis.licensed_use }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">الممكن ماديًا</td>
+        <td>{{ hbu_analysis.physically_possible_uses }}</td>
+        <td class="lbl">المسموح قانونًا</td>
+        <td>{{ hbu_analysis.legally_permissible_uses }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">المجدي ماليًا</td>
+        <td>{{ hbu_analysis.financially_feasible_uses }}</td>
+        <td class="lbl">الأعلى إنتاجية</td>
+        <td>{{ hbu_analysis.maximally_productive_use }}</td>
+      </tr>
+      <tr style="background:#EFF6FF;">
+        <td class="lbl">خلاصة HBU</td>
+        <td colspan="3" style="font-weight:600;color:#1F3A5F;">{{ hbu_analysis.hbu_conclusion }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">أثر HBU على القيمة الإيجارية</td>
+        <td colspan="3">{{ hbu_analysis.hbu_effect_on_rental_value }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">أثر HBU على أوزان الطرق</td>
+        <td colspan="3">{{ hbu_analysis.hbu_effect_on_method_weighting }}</td>
+      </tr>
+      {% if hbu_analysis.hbu_required_missing_inputs %}
+      <tr style="background:#FEF3C7;">
+        <td class="lbl">المستندات المطلوبة</td>
+        <td colspan="3" style="color:#92400E;">{{ hbu_analysis.hbu_required_missing_inputs | join(' | ') }}</td>
+      </tr>
+      {% endif %}
+    </table>
+    <p style="font-size:7.5pt;color:#6B7280;margin-top:6px;font-style:italic;">{{ hbu_analysis.hbu_advisory_note }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ ربط الطرق بالمعايير المهنية ══════════════════════════════════════════ -->
+{% if standards_mapping %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#3B1F6B;">ربط الطرق بالمعايير المهنية</div>
+  <div class="sec-body">
+    <table style="width:100%;border-collapse:collapse;font-size:8pt;">
+      <thead>
+        <tr style="background:#5B3FA0;color:#fff;">
+          <th style="padding:5px 7px;text-align:right;border:1px solid #7C3AED;">الطريقة</th>
+          <th style="padding:5px 7px;text-align:right;border:1px solid #7C3AED;">المبدأ المهني</th>
+          <th style="padding:5px 7px;text-align:right;border:1px solid #7C3AED;">حالة المرجع</th>
+          <th style="padding:5px 7px;text-align:right;border:1px solid #7C3AED;">ملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in standards_mapping.standards_mapping_rows %}
+        <tr style="{% if loop.index is odd %}background:#F5F3FF;{% else %}background:#FFFFFF;{% endif %}">
+          <td style="padding:4px 7px;border:1px solid #DDD8FE;font-weight:600;">{{ row.method_name }}</td>
+          <td style="padding:4px 7px;border:1px solid #DDD8FE;font-size:7.5pt;">{{ row.valuation_principle }}</td>
+          <td style="padding:4px 7px;border:1px solid #DDD8FE;font-size:7.5pt;color:#6B7280;">{{ row.standard_reference_status }}</td>
+          <td style="padding:4px 7px;border:1px solid #DDD8FE;font-size:7.5pt;">{{ row.professional_use_note }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:7.5pt;color:#4C1D95;margin-top:6px;font-style:italic;background:#EDE9FE;padding:6px 8px;border-radius:4px;">{{ standards_mapping.standards_advisory_note }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ حالة البيانات ومصادرها ══════════════════════════════════════════════ -->
+{% if data_governance %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1A2E4A;">حالة البيانات ومصادرها</div>
+  <div class="sec-body">
+    {% set gov_sum = data_governance.data_governance_summary %}
+    {% if gov_sum.qa_simulation_active %}
+    <div style="background:#FEE2E2;border-right:4px solid #DC2626;border-radius:4px;padding:8px 12px;margin-bottom:10px;font-size:8.5pt;color:#7F1D1D;font-weight:700;">
+      ⚠ بيانات محاكاة QA — لا تصلح للاستخدام في تقرير رسمي أو تقديم أمام جهة ضريبية.
+    </div>
+    {% endif %}
+    <table style="width:100%;border-collapse:collapse;font-size:8pt;">
+      <thead>
+        <tr style="background:#2E4A6A;color:#fff;">
+          <th style="padding:4px 6px;text-align:right;border:1px solid #4A7DA0;">الطريقة</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #4A7DA0;">عنصر البيانات</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #4A7DA0;">حالة المصدر</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #4A7DA0;">محاكاة QA؟</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #4A7DA0;">جاهز إنتاج؟</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data_governance.data_governance_rows %}
+        <tr style="{% if row.is_qa_simulation and not row.production_ready %}background:#FEE2E2;{% elif loop.index is odd %}background:#F0F4F8;{% else %}background:#FFFFFF;{% endif %}">
+          <td style="padding:4px 6px;border:1px solid #D1D5DB;font-weight:600;font-size:7.5pt;">{{ row.method }}</td>
+          <td style="padding:4px 6px;border:1px solid #D1D5DB;font-size:7.5pt;">{{ row.data_item }}</td>
+          <td style="padding:4px 6px;border:1px solid #D1D5DB;font-size:7.5pt;">{{ row.source_status }}</td>
+          <td style="padding:4px 6px;border:1px solid #D1D5DB;text-align:center;font-size:7.5pt;">{{ "نعم" if row.is_qa_simulation else "لا" }}</td>
+          <td style="padding:4px 6px;border:1px solid #D1D5DB;text-align:center;font-size:7.5pt;color:{% if row.production_ready %}#1A5E30{% else %}#7F1D1D{% endif %};">{{ "نعم" if row.production_ready else "لا" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:7.5pt;color:#92400E;margin-top:6px;font-style:italic;background:#FEF3C7;padding:6px 8px;border-radius:4px;">{{ gov_sum.no_live_data_note }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ الافتراضات العامة والافتراضات الخاصة ══════════════════════════════════ -->
+{% if assumptions_disclosure %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B4332;">الافتراضات العامة والافتراضات الخاصة ومحددات الاستخدام</div>
+  <div class="sec-body">
+    <p style="font-size:8pt;color:#1B4332;background:#D1FAE5;padding:7px 10px;border-radius:4px;font-weight:700;margin-bottom:8px;">{{ assumptions_disclosure.extraordinary_separator_note }}</p>
+    <table class="ftbl" style="width:100%;font-size:7.5pt;">
+      <thead>
+        <tr style="background:#1B4332;color:#fff;">
+          <th style="padding:4px 6px;text-align:right;border:1px solid #6EE7B7;">نوع الافتراض</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #6EE7B7;">نص الافتراض</th>
+          <th style="padding:4px 6px;text-align:center;border:1px solid #6EE7B7;">أثر على القيمة؟</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #6EE7B7;">حالة التحقق</th>
+          <th style="padding:4px 6px;text-align:right;border:1px solid #6EE7B7;">إجراء الخبير المطلوب</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in assumptions_disclosure.all_assumption_rows %}
+        <tr style="{% if row.assumption_type == 'خاص / استثنائي' %}background:#FEF3C7;{% elif loop.index is odd %}background:#F0FDF4;{% else %}background:#FFFFFF;{% endif %}">
+          <td style="padding:3px 6px;border:1px solid #D1FAE5;font-weight:{% if row.assumption_type == 'خاص / استثنائي' %}700{% else %}normal{% endif %};color:{% if row.assumption_type == 'خاص / استثنائي' %}#92400E{% else %}#1F2937{% endif %};">{{ row.assumption_type }}</td>
+          <td style="padding:3px 6px;border:1px solid #D1FAE5;">{{ row.assumption_text }}</td>
+          <td style="padding:3px 6px;border:1px solid #D1FAE5;text-align:center;font-weight:700;color:{% if row.affects_value %}#DC2626{% else %}#6B7280{% endif %};">{{ "نعم" if row.affects_value else "لا" }}</td>
+          <td style="padding:3px 6px;border:1px solid #D1FAE5;color:#4B5563;">{{ row.verification_status }}</td>
+          <td style="padding:3px 6px;border:1px solid #D1FAE5;color:#374151;">{{ row.expert_action_required if row.expert_action_required else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:7.5pt;color:#065F46;margin-top:7px;font-style:italic;background:#ECFDF5;padding:6px 8px;border-radius:4px;">{{ assumptions_disclosure.disclosure_advisory }}</p>
+    <p style="font-size:7.5pt;color:#374151;margin-top:4px;">الأثر على القيمة: {{ assumptions_disclosure.assumptions_impact_on_value }}<br>الأثر على الضريبة: {{ assumptions_disclosure.assumptions_impact_on_tax }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ تحليل الحساسية ونطاق النتيجة الاسترشادي ═══════════════════════════════ -->
+{% if sensitivity_analysis %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1E40AF;">تحليل الحساسية ونطاق النتيجة الاسترشادي</div>
+  <div class="sec-body">
+    <p style="font-size:8pt;color:#1E3A8A;background:#DBEAFE;padding:7px 10px;border-radius:4px;font-weight:600;margin-bottom:8px;">{{ sensitivity_analysis.no_statistical_certainty_note }}</p>
+    <table class="ftbl" style="width:100%;font-size:8pt;">
+      <tr><td style="font-weight:700;padding:3px 8px;background:#EFF6FF;width:45%;">الضريبة الاسترشادية الأساسية (ج.م)</td><td style="padding:3px 8px;font-weight:700;color:#1D4ED8;">{{ "{:,.0f}".format(sensitivity_analysis.base_indicated_tax) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#DBEAFE;">نسبة الحساسية</td><td style="padding:3px 8px;font-weight:700;color:#1D4ED8;">{{ sensitivity_analysis.sensitivity_pct_label }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#EFF6FF;">النطاق المنخفض — ضريبة (ج.م)</td><td style="padding:3px 8px;color:#059669;">{{ "{:,.0f}".format(sensitivity_analysis.tax_low) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#DBEAFE;">النطاق المرتفع — ضريبة (ج.م)</td><td style="padding:3px 8px;color:#DC2626;">{{ "{:,.0f}".format(sensitivity_analysis.tax_high) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#EFF6FF;">الوفر المتوقع — أدنى (ج.م)</td><td style="padding:3px 8px;color:#059669;">{{ "{:,.0f}".format(sensitivity_analysis.expected_saving_low) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#DBEAFE;">الوفر المتوقع — الأساس (ج.م)</td><td style="padding:3px 8px;font-weight:700;color:#1D4ED8;">{{ "{:,.0f}".format(sensitivity_analysis.expected_saving_base) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#EFF6FF;">الوفر المتوقع — أعلى (ج.م)</td><td style="padding:3px 8px;color:#059669;">{{ "{:,.0f}".format(sensitivity_analysis.expected_saving_high) }}</td></tr>
+      <tr><td style="font-weight:700;padding:3px 8px;background:#DBEAFE;">مستوى الثقة</td><td style="padding:3px 8px;">{{ sensitivity_analysis.confidence_level_label }}</td></tr>
+    </table>
+    <p style="font-size:7.5pt;color:#374151;margin-top:6px;"><strong>محركات الحساسية الرئيسية:</strong> {% for d in sensitivity_analysis.key_sensitivity_drivers %}{{ d }}{% if not loop.last %} — {% endif %}{% endfor %}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ فجوات البيانات المطلوبة ════════════════════════════════════════════════ -->
+{% set pcr = property_class_technical_review if property_class_technical_review is defined else none %}
+{% if pcr and pcr.detected_gaps %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#7F1D1D;">فجوات البيانات المطلوبة لاستكمال الاعتماد</div>
+  <div class="sec-body">
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-bottom:8px;">
+      <thead>
+        <tr style="background:#991B1B;color:#fff;">
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:10%;">رمز</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:22%;">الفجوة</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:20%;">الطريقة المتأثرة</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:8%;">الخطورة</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:20%;">الإجراء المطلوب</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:14%;">حالة المصدر</th>
+          <th style="padding:3px 6px;border:1px solid #FCA5A5;width:6%;text-align:center;">جاهز؟</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for gap in pcr.detected_gaps %}
+        <tr style="background:{% if gap.severity == 'critical' %}#FEE2E2{% elif gap.severity == 'high' %}#FEF3C7{% elif gap.severity == 'medium' %}#FEFCE8{% else %}#F0FDF4{% endif %};">
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;font-weight:700;font-size:7pt;">{{ gap.issue_id }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;font-weight:600;">{{ gap.issue_title }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;">{{ gap.affected_method }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;font-weight:700;color:{% if gap.severity == 'critical' %}#991B1B{% elif gap.severity == 'high' %}#92400E{% else %}#374151{% endif %};">{{ gap.severity }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;">{{ gap.corrected_value_or_required_action }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;">{{ gap.data_source_status }}</td>
+          <td style="padding:3px 6px;border:1px solid #FCA5A5;text-align:center;color:#991B1B;font-weight:700;">{{ "لا" if not gap.production_ready else "نعم" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="background:#FEF3C7;border-radius:4px;padding:6px 10px;font-size:7.5pt;color:#92400E;">
+      <strong>الأدلة المطلوبة:</strong>
+      {% for ev in pcr.required_evidence %} {{ ev }}{% if not loop.last %} — {% endif %}{% endfor %}
+    </div>
+    <p style="font-size:7pt;color:#991B1B;margin-top:4px;font-style:italic;">{{ pcr.production_readiness_status }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ طبقة الذكاء المرجعي ═══════════════════════════════════════════════════ -->
+{% set reg = tax_reference_registry if tax_reference_registry is defined else none %}
+{% set udm = unified_depreciation_model if unified_depreciation_model is defined else none %}
+{% set tsd = tax_sensitivity_detailed if tax_sensitivity_detailed is defined else none %}
+{% set ara = appeal_risk_assessment if appeal_risk_assessment is defined else none %}
+{% set prl = prior_report_links if prior_report_links is defined else none %}
+
+{% if reg %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">قاعدة المراجع الداخلية للقيم الإيجارية والمعاملات</div>
+  <div class="sec-body">
+    {% set conf = reg.source_confidence_summary %}
+    <table class="data-tbl" style="width:100%;">
+      <tr><th>إجمالي المراجع</th><td>{{ conf.total_references }}</td><th>محاكاة QA</th><td>{{ conf.qa_simulation_count }}</td></tr>
+      <tr><th>Qdrant مفعل</th><td>لا — مرحلة مستقبلية</td><th>الإنترنت مفعل</th><td>لا</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#7F1D1D;font-style:italic;">{{ conf.overall_confidence }}</p>
+    {% if reg.rental_references %}
+    <p style="font-size:8pt;font-weight:bold;color:#1B2E4B;">أ. مراجع إيجارية ({{ reg.rental_references|length }} مرجع)</p>
+    <table class="data-tbl" style="font-size:7.5pt;width:100%;">
+      <tr><th>رقم المرجع</th><th>الإيجار الشهري</th><th>الإيجار السنوي</th><th>الحالة</th></tr>
+      {% for r in reg.rental_references %}
+      <tr><td>{{ r.reference_id }}</td><td>{{ r.monthly_rent }}</td><td>{{ r.annual_rent }}</td><td style="font-size:7pt;color:#92400E;">{{ r.source_status }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+    {% if reg.transaction_references %}
+    <p style="font-size:8pt;font-weight:bold;color:#1B2E4B;margin-top:4px;">ب. مراجع معاملات سوقية ({{ reg.transaction_references|length }} مرجع)</p>
+    <table class="data-tbl" style="font-size:7.5pt;width:100%;">
+      <tr><th>رقم المرجع</th><th>المساحة م²</th><th>القيمة</th><th>السعر/م²</th></tr>
+      {% for t in reg.transaction_references %}
+      <tr><td>{{ t.reference_id }}</td><td>{{ t.area }}</td><td>{{ t.value }}</td><td>{{ t.price_per_m2 }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if udm %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1A4D2E;">نموذج الإهلاك الموحد</div>
+  <div class="sec-body">
+    <table class="data-tbl" style="width:100%;">
+      <tr><th>فئة العقار</th><td>{{ udm.class_label_ar }}</td><th>العمر الاقتصادي</th><td>{{ udm.economic_life_years }} سنة</td></tr>
+      <tr><th>العمر الفعلي</th><td>{% if udm.effective_age_missing %}<span style="color:#7F1D1D;">غير مُقدَّم</span>{% else %}{{ udm.effective_age_years }} سنة{% endif %}</td><th>المعدل السنوي</th><td>{{ "%.3f%%"|format(udm.annual_depreciation_rate * 100) }}</td></tr>
+      <tr><th>الإهلاك المتراكم</th><td>{% if udm.accumulated_depreciation_rate is not none %}{{ "%.1f%%"|format(udm.accumulated_depreciation_rate * 100) }}{% else %}<span style="color:#7F1D1D;">يحتاج العمر الفعلي</span>{% endif %}</td><th>المنهجية</th><td>{{ udm.depreciation_method }}</td></tr>
+    </table>
+    {% if udm.effective_age_missing %}
+    <p style="font-size:7pt;color:#7F1D1D;font-style:italic;">⚠ {{ udm.effective_age_gap_note }}</p>
+    {% endif %}
+    {% if udm.ain_shams_guidance_note %}
+    <p style="font-size:7pt;color:#92400E;font-style:italic;">{{ udm.ain_shams_guidance_note }}</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if tsd and tsd.rental_value_sensitivity %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1E40AF;">تحليل الحساسية للضريبة</div>
+  <div class="sec-body">
+    <p style="font-size:7pt;color:#7F1D1D;font-style:italic;">{{ tsd.sensitivity_disclaimer }}</p>
+    <table class="data-tbl" style="font-size:7.5pt;width:100%;">
+      <tr><th>السيناريو</th><th>الإيجار السنوي</th><th>الوعاء الخاضع</th><th>الضريبة الاسترشادية</th><th>التوفير المتوقع</th></tr>
+      {% for row in tsd.rental_value_sensitivity %}
+      <tr>
+        <td>{{ row.scenario }}</td>
+        <td>{{ "{:,.0f}".format(row.annual_rental_value) }}</td>
+        <td>{{ "{:,.0f}".format(row.taxable_basis) }}</td>
+        <td>{{ "{:,.0f}".format(row.indicative_tax) }}</td>
+        <td>{% if row.expected_saving is not none %}{{ "{:,.0f}".format(row.expected_saving) }}{% else %}—{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if ara %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#7F1D1D;">تقييم مخاطر الطعن</div>
+  <div class="sec-body">
+    {% set risk_bg = '#FEE2E2' if ara.overall_risk_level == 'مرتفع' else ('#FEF3C7' if ara.overall_risk_level == 'متوسط' else '#F0FDF4') %}
+    {% set risk_fg = '#7F1D1D' if ara.overall_risk_level == 'مرتفع' else ('#92400E' if ara.overall_risk_level == 'متوسط' else '#1A4D2E') %}
+    <div style="background:{{ risk_bg }};border-radius:4px;padding:6px 10px;margin-bottom:6px;">
+      <span style="font-weight:bold;color:{{ risk_fg }};font-size:9pt;">مستوى المخاطرة: {{ ara.overall_risk_level }}</span>
+      &nbsp;—&nbsp;<span style="font-size:7.5pt;color:{{ risk_fg }};">{{ ara.acceptance_probability_label }}</span>
+    </div>
+    <table class="data-tbl" style="font-size:7.5pt;width:100%;">
+      <tr><th>قوة الأدلة</th><td>{{ ara.evidence_strength_score }}</td><th>جودة المقارنات</th><td>{{ ara.comparable_quality_score }}</td></tr>
+      <tr><th>دعم الإهلاك</th><td>{{ ara.depreciation_support_score }}</td><th>موثوقية المصادر</th><td>{{ ara.source_reliability_score }}</td></tr>
+      <tr><th>اكتمال المستندات</th><td>{{ ara.document_completeness_score }}</td><th>المجموع الموزون</th><td><strong>{{ ara.overall_risk_score }}</strong></td></tr>
+    </table>
+    {% if ara.key_risks %}
+    <ul style="margin:4px 0;padding-right:14px;font-size:7.5pt;color:#7F1D1D;">
+      {% for r in ara.key_risks %}<li>{{ r }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    <p style="font-size:7pt;color:#6B7280;font-style:italic;">{{ ara.risk_disclaimer }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if prl %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#3B1F6B;">الربط مع تقارير تقييم سابقة</div>
+  <div class="sec-body">
+    <p style="font-size:7.5pt;color:#6B7280;font-style:italic;">التقارير السابقة تُستخدم كمراجع داعمة فقط — ليست بديلًا عن تقييم ضريبي رسمي</p>
+    {% for lnk in prl %}
+    <div style="background:#F5F3FF;border-radius:3px;padding:5px 8px;margin-bottom:4px;font-size:7.5pt;">
+      <strong>{{ lnk.linked_report_id }}</strong> ({{ lnk.report_type }}) — {{ lnk.district }} — {{ lnk.report_date }}
+      {% if lnk.indicated_market_value %} — قيمة: {{ "{:,.0f}".format(lnk.indicated_market_value) }}{% endif %}
+      {% if lnk.indicated_rental_value %} — إيجار: {{ "{:,.0f}".format(lnk.indicated_rental_value) }}{% endif %}
+      <br/><span style="color:#7F1D1D;">{{ lnk.limitations }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ بيان الامتثال المهني وجاهزية المعايير ══════════════════════════════════ -->
+{% set professional_compliance_readiness = professional_compliance_readiness if professional_compliance_readiness is defined else none %}
+{% if professional_compliance_readiness %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">بيان الامتثال المهني وجاهزية المعايير — استرشادي</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p style="color:#7F1D1D;font-weight:bold;">{{ professional_compliance_readiness.compliance_preamble }}</p>
+    <table class="data-tbl" style="width:100%">
+      <tr><th>المعيار</th><th>جاهزية استرشادية</th><th>ملاحظة</th></tr>
+      {% set ivs = professional_compliance_readiness.ivs_2025 %}
+      {% if ivs %}
+      <tr><td>IVS 2025</td><td>{{ ivs.readiness_status }}</td><td>{{ ivs.compliance_claim }}</td></tr>
+      {% endif %}
+      {% set uspap = professional_compliance_readiness.uspap %}
+      {% if uspap %}
+      <tr><td>USPAP</td><td>{{ uspap.readiness_status }}</td><td>{{ uspap.compliance_claim }}</td></tr>
+      {% endif %}
+      {% set rics = professional_compliance_readiness.rics_red_book_2025 %}
+      {% if rics %}
+      <tr><td>RICS Red Book 2025</td><td>{{ rics.readiness_status }}</td><td>{{ rics.compliance_claim }}</td></tr>
+      {% endif %}
+      {% set fra = professional_compliance_readiness.fra_egyptian %}
+      {% if fra %}
+      <tr><td>معايير هيئة الرقابة المالية (FRA)</td><td>{{ fra.readiness_status }}</td><td>{{ fra.compliance_claim }}</td></tr>
+      {% endif %}
+      {% set ifrs13 = professional_compliance_readiness.ifrs_13 %}
+      {% if ifrs13 %}
+      <tr><td>IFRS 13 (القيمة العادلة)</td><td>{{ ifrs13.applicability }}</td><td>{{ ifrs13.note }}</td></tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ نطاق العمل ══════════════════════════════════════════════════════════════ -->
+{% set scope_of_work = scope_of_work if scope_of_work is defined else none %}
+{% if scope_of_work %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">نطاق العمل</div>
+  <div class="sec-body">
+    <table class="data-tbl" style="width:100%">
+      <tr><th>البند</th><th>التفاصيل</th></tr>
+      <tr><td>الغرض من التقييم</td><td>{{ scope_of_work.intended_use }}</td></tr>
+      <tr><td>المستخدمون المقصودون</td><td>{{ scope_of_work.intended_users }}</td></tr>
+      <tr><td>حق الملكية</td><td>{{ scope_of_work.property_interest }}</td></tr>
+      <tr><td>تاريخ التقييم الفعلي</td><td>{{ scope_of_work.effective_date }}</td></tr>
+      <tr><td>تاريخ المعاينة</td><td>{{ scope_of_work.inspection_date }}</td></tr>
+      <tr><td>طرق التقييم المستخدمة</td><td>{{ scope_of_work.valuation_methods | join(", ") if scope_of_work.valuation_methods is iterable and scope_of_work.valuation_methods is not string else scope_of_work.valuation_methods }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ مراجعة الجودة المهنية ══════════════════════════════════════════════════ -->
+{% set quality_control_checklist = quality_control_checklist if quality_control_checklist is defined else none %}
+{% if quality_control_checklist %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1A4D2E;">مراجعة الجودة المهنية — استرشادي</div>
+  <div class="sec-body">
+    <p style="font-size:7.5pt;color:#374151;">الحالة العامة: <strong>{{ quality_control_checklist.overall_status }}</strong></p>
+    <table class="data-tbl" style="width:100%">
+      <tr><th>#</th><th>البند</th><th>الحالة</th></tr>
+      {% for item in quality_control_checklist.checklist %}
+      <tr><td>{{ loop.index }}</td><td>{{ item.label }}</td><td>{{ item.status }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ ESG والاستدامة والمخاطر المناخية ══════════════════════════════════════ -->
+{% set esg_climate_risk_assessment = esg_climate_risk_assessment if esg_climate_risk_assessment is defined else none %}
+{% if esg_climate_risk_assessment %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1A4D2E;">ESG والاستدامة والمخاطر المناخية — استرشادي</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p style="color:#7F1D1D;">{{ esg_climate_risk_assessment.assessment_note }}</p>
+    {% set rf = esg_climate_risk_assessment.risk_factors %}
+    {% if rf %}
+    <table class="data-tbl" style="width:100%">
+      <tr><th>عامل المخاطرة</th><th>التقييم</th></tr>
+      <tr><td>مخاطر الفيضانات</td><td>{{ rf.flood_risk }}</td></tr>
+      <tr><td>الإجهاد الحراري</td><td>{{ rf.heat_stress_risk }}</td></tr>
+      <tr><td>أثر التأمين</td><td>{{ rf.insurance_impact }}</td></tr>
+      <tr><td>الامتثال للبناء الأخضر</td><td>{{ rf.green_building_compliance_status }}</td></tr>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ الفحص القانوني والمستندي ══════════════════════════════════════════════ -->
+{% set legal_due_diligence_readiness = legal_due_diligence_readiness if legal_due_diligence_readiness is defined else none %}
+{% if legal_due_diligence_readiness %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#374151;">الفحص القانوني والمستندي — استرشادي</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p style="color:#7F1D1D;">{{ legal_due_diligence_readiness.disclaimer }}</p>
+    <table class="data-tbl" style="width:100%">
+      <tr><th>البند</th><th>الحالة</th></tr>
+      {% for item in legal_due_diligence_readiness.checklist %}
+      <tr><td>{{ item.label }}</td><td>{{ item.status }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ مراجعة النظراء والخبير المستقل ══════════════════════════════════════ -->
+{% set peer_review_readiness = peer_review_readiness if peer_review_readiness is defined else none %}
+{% if peer_review_readiness %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#374151;">مراجعة النظراء والخبير المستقل — استرشادي</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p>حالة مراجعة النظراء: <strong>{{ "مكتملة" if peer_review_readiness.peer_review_completed else "لم تُجرَ بعد" }}</strong></p>
+    {% set ur = peer_review_readiness.uspap_appraisal_review %}
+    {% if ur %}
+    <p><strong>جاهزية مراجعة USPAP:</strong> {{ ur.readiness }}</p>
+    {% endif %}
+    {% set rr = peer_review_readiness.rics_review %}
+    {% if rr %}
+    <p><strong>جاهزية مراجعة RICS:</strong> {{ rr.readiness }}</p>
+    {% endif %}
+    <p style="color:#6B7280;font-style:italic;">{{ peer_review_readiness.reviewer_signature_placeholder }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ نطاق عدم اليقين وتحليل الحساسية ══════════════════════════════════════ -->
+{% set uncertainty_range = uncertainty_range if uncertainty_range is defined else none %}
+{% if uncertainty_range %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1E40AF;">نطاق عدم اليقين وتحليل الحساسية — استرشادي</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p style="color:#7F1D1D;">{{ uncertainty_range.label_ar }}</p>
+    {% set base = uncertainty_range.base_scenario %}
+    {% set low = uncertainty_range.low_scenario %}
+    {% set high = uncertainty_range.high_scenario %}
+    {% if base and low and high %}
+    <table class="data-tbl" style="width:100%">
+      <tr><th>السيناريو</th><th>القيمة السوقية</th><th>الضريبة المقدرة</th><th>التوفير المقدر</th></tr>
+      <tr><td>القاعدة</td><td>{{ "{:,.0f}".format(base.market_value) if base.market_value is number else base.market_value }}</td><td>{{ "{:,.0f}".format(base.estimated_tax) if base.estimated_tax is number else base.estimated_tax }}</td><td>{{ "{:,.0f}".format(base.estimated_saving) if base.estimated_saving is number else base.estimated_saving }}</td></tr>
+      <tr><td>منخفض</td><td>{{ "{:,.0f}".format(low.market_value) if low.market_value is number else low.market_value }}</td><td>{{ "{:,.0f}".format(low.estimated_tax) if low.estimated_tax is number else low.estimated_tax }}</td><td>{{ "{:,.0f}".format(low.estimated_saving) if low.estimated_saving is number else low.estimated_saving }}</td></tr>
+      <tr><td>مرتفع</td><td>{{ "{:,.0f}".format(high.market_value) if high.market_value is number else high.market_value }}</td><td>{{ "{:,.0f}".format(high.estimated_tax) if high.estimated_tax is number else high.estimated_tax }}</td><td>{{ "{:,.0f}".format(high.estimated_saving) if high.estimated_saving is number else high.estimated_saving }}</td></tr>
+    </table>
+    {% endif %}
+    <p style="font-size:7pt;color:#6B7280;font-style:italic;">{{ uncertainty_range.advisory_note }}</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ مصفوفة المستندات المطلوبة ══════════════════════════════════════════════ -->
+{% set document_requirements_matrix = document_requirements_matrix if document_requirements_matrix is defined else none %}
+{% if document_requirements_matrix %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">مصفوفة المستندات المطلوبة</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <table class="data-tbl" style="width:100%">
+      <tr><th>المستند</th><th>المستوى</th><th>يؤثر على التقديم</th><th>يؤثر على الموعد</th></tr>
+      {% for item in document_requirements_matrix.matrix %}
+      <tr>
+        <td>{{ item.label }}</td>
+        <td>{{ item.level }}</td>
+        <td>{{ "نعم" if item.affects_submission else "لا" }}</td>
+        <td>{{ "نعم" if item.affects_deadline else "لا" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ توضيح أساس الضريبة مقارنة بالقيمة السوقية ══════════════════════════ -->
+{% set tax_basis_explanation = tax_basis_explanation if tax_basis_explanation is defined else none %}
+{% if tax_basis_explanation %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">توضيح أساس الضريبة مقارنة بالقيمة السوقية</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p style="color:#7F1D1D;">{{ tax_basis_explanation.distinction_note }}</p>
+    {% set at = tax_basis_explanation.annual_tax %}
+    {% if at %}
+    <p><strong>ضريبة العقار السنوية:</strong></p>
+    <table class="data-tbl" style="width:100%">
+      <tr><td>أساس الاحتساب</td><td>{{ at.rental_value_basis }}</td></tr>
+      <tr><td>الإيجار الفعلي</td><td>{{ at.effective_rental }}</td></tr>
+      <tr><td>الاستقطاعات</td><td>{{ at.deduction }}</td></tr>
+      <tr><td>الوعاء الضريبي</td><td>{{ at.taxable_income }}</td></tr>
+      <tr><td>معدل الضريبة</td><td>{{ at.annual_rate }}</td></tr>
+    </table>
+    {% endif %}
+    {% set tt = tax_basis_explanation.transfer_tax %}
+    {% if tt %}
+    <p><strong>ضريبة التصرفات:</strong></p>
+    <table class="data-tbl" style="width:100%">
+      <tr><td>أساس الاحتساب</td><td>{{ tt.transfer_basis }}</td></tr>
+      <tr><td>معدل الضريبة</td><td>{{ tt.transfer_rate }}</td></tr>
+      <tr><td>ملاحظة</td><td>{{ tt.formula_note }}</td></tr>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ حوكمة الأصول المتخصصة — المصانع ══════════════════════════════════════ -->
+{% set specialized_asset_governance = specialized_asset_governance if specialized_asset_governance is defined else none %}
+{% if specialized_asset_governance and specialized_asset_governance.applicable %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#374151;">حوكمة الأصول المتخصصة — المصانع</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p>{{ specialized_asset_governance.note }}</p>
+    <table class="data-tbl" style="width:100%">
+      <tr><td>استبعاد الآلات والمعدات</td><td>{{ "مؤكد" if specialized_asset_governance.machinery_exclusion_confirmed else "يحتاج تأكيد" }}</td></tr>
+      {% set lbs = specialized_asset_governance.land_building_split %}
+      {% if lbs %}
+      <tr><td>نسبة الأرض للمبنى</td><td>{{ lbs.land_ratio }} / {{ lbs.building_ratio }}</td></tr>
+      {% endif %}
+      <tr><td>مصدر بيانات الأرض الصناعية</td><td>{{ specialized_asset_governance.industrial_land_source_status }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ حوكمة الأصول تحت الأرض — الأقبية ══════════════════════════════════ -->
+{% set underground_asset_governance = underground_asset_governance if underground_asset_governance is defined else none %}
+{% if underground_asset_governance and underground_asset_governance.applicable %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#374151;">حوكمة الأصول تحت الأرض — الأقبية</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <p>{{ underground_asset_governance.note }}</p>
+    <table class="data-tbl" style="width:100%">
+      <tr><td>نصيب الأرض = صفر — يحتاج مبرر</td><td>{{ "نعم" if underground_asset_governance.land_share_zero_requires_justification else "لا" }}</td></tr>
+      <tr><td>مبرر معامل القبو</td><td>{{ underground_asset_governance.basement_factor_justification }}</td></tr>
+      <tr><td>مخاطر الفيضانات</td><td>{{ underground_asset_governance.flood_risk_heightened }}</td></tr>
+      <tr><td>مخاطر الوصول</td><td>{{ underground_asset_governance.access_risk }}</td></tr>
+      <tr><td>مخاطر التهوية</td><td>{{ underground_asset_governance.ventilation_risk }}</td></tr>
+      <tr><td>نوع الملكية</td><td>{{ underground_asset_governance.ownership_type }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ مساحة توقيع الخبير ══════════════════════════════════════════════════ -->
+{% set uspap_pcr = professional_compliance_readiness.uspap if professional_compliance_readiness else none %}
+{% if uspap_pcr %}
+<div class="sec">
+  <div class="sec-hdr" style="background:#1B2E4B;">مساحة توقيع الخبير / Appraiser Signature</div>
+  <div class="sec-body" style="font-size:7.5pt;">
+    <table class="data-tbl" style="width:100%">
+      <tr><td>اسم الخبير</td><td>{{ uspap_pcr.appraiser_signature_placeholder.appraiser_name }}</td></tr>
+      <tr><td>المؤهل / الترخيص</td><td>{{ uspap_pcr.appraiser_signature_placeholder.credential }}</td></tr>
+      <tr><td>تاريخ التوقيع</td><td>{{ uspap_pcr.appraiser_signature_placeholder.signature_date }}</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#6B7280;font-style:italic;">{{ uspap_pcr.restricted_use_warning }}</p>
+    <p style="font-size:7pt;color:#6B7280;font-style:italic;">{{ uspap_pcr.significant_assistance_disclosure }}</p>
+  </div>
+</div>
+{% endif %}
+
+{% if reference_grounding %}
+<div class="section">
+  <div class="section-title">التأصيل المرجعي للمدخلات الفنية — Reference Grounding</div>
+  <table class="data-table">
+    <tr><td class="lbl">معايير التقييم المصرية</td><td>{{ reference_grounding.egyptian_valuation_standards_status }}</td></tr>
+    <tr><td class="lbl">مرجع FRA المصري</td><td>{{ reference_grounding.fra_reference_status }}</td></tr>
+    <tr><td class="lbl">توجيهات تكلفة جامعة عين شمس</td><td>{{ reference_grounding.ain_shams_cost_guidance_status }}</td></tr>
+    <tr><td class="lbl">مرجع أسعار أراضي المجتمعات العمرانية</td><td>{{ reference_grounding.nuca_land_price_reference_status }}</td></tr>
+    <tr><td class="lbl">مرجع مصلحة الضرائب العقارية</td><td>{{ reference_grounding.tax_authority_reference_status }}</td></tr>
+    <tr><td class="lbl">حالة مرجع التكلفة</td><td>{{ reference_grounding.cost_reference_status }}</td></tr>
+    <tr><td class="lbl">حالة مرجع الإهلاك</td><td>{{ reference_grounding.depreciation_reference_status }}</td></tr>
+    <tr><td class="lbl">حالة مرجع سعر الأرض</td><td>{{ reference_grounding.land_price_reference_status }}</td></tr>
+    <tr><td class="lbl">حالة مرجع خصومات الدخل</td><td>{{ reference_grounding.income_deduction_reference_status }}</td></tr>
+    <tr><td class="lbl">مستندات مطلوبة</td><td>{{ reference_grounding.source_documents_missing | join(", ") if reference_grounding.source_documents_missing else "لا بيانات" }}</td></tr>
+    <tr><td class="lbl">جاهزية الإنتاج</td><td>{{ "لا" if not reference_grounding.production_readiness else "نعم" }}</td></tr>
+  </table>
+  <p class="disclaimer-note">لا يتم اعتبار أي مدخل موسوم بأنه محاكاة QA أو مصدر مستقبلي كدليل رسمي قبل إرفاق المستند أو مراجعة الخبير.</p>
+</div>
+{% endif %}
+
+{% if comparative_tax_argument %}
+<div class="section">
+  <div class="section-title">تحليل المقارنة الضريبية ونسبة المغالاة</div>
+  <table class="data-table">
+    <tr><td class="lbl">الضريبة الحكومية</td><td>{{ comparative_tax_argument.government_tax_amount | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">ضريبة الحكومة / م²</td><td>{{ comparative_tax_argument.government_tax_per_m2 }} ج.م/م²</td></tr>
+    <tr><td class="lbl">التقدير الاسترشادي للخبير</td><td>{{ comparative_tax_argument.expert_indicated_tax_amount | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">ضريبة الخبير / م²</td><td>{{ comparative_tax_argument.expert_indicated_tax_per_m2 }} ج.م/م²</td></tr>
+    <tr><td class="lbl">فجوة ضريبة المتر</td><td>{{ comparative_tax_argument.tax_per_m2_gap }} ج.م/م²</td></tr>
+    <tr><td class="lbl">مبلغ المغالاة</td><td>{{ comparative_tax_argument.overcharge_amount | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">نسبة المغالاة المرصودة</td><td>{{ comparative_tax_argument.overcharge_percentage }}</td></tr>
+    <tr><td class="lbl">متوسط ضريبة المثيل / م²</td><td>{{ comparative_tax_argument.average_comparable_tax_per_m2 or "يحتاج حالات مقارنة" }}</td></tr>
+    <tr><td class="lbl">نسبة الموضوع للمثيل</td><td>{{ comparative_tax_argument.subject_vs_comparable_ratio or "يحتاج حالات مقارنة" }}</td></tr>
+    <tr><td class="lbl">قوة الحجة</td><td>{{ comparative_tax_argument.argument_strength }}</td></tr>
+    <tr><td class="lbl">حالة المصدر</td><td>{{ comparative_tax_argument.source_status }}</td></tr>
+  </table>
+  {% if comparative_tax_argument.comparable_tax_cases %}
+  <h4 style="margin:8px 0 4px; font-size:9pt; color:#1B2E4B;">حالات ضريبية مقارنة</h4>
+  <table class="comp-table">
+    <tr><th>الكود</th><th>المنطقة</th><th>ضريبة/م²</th><th>مُدرج؟</th><th>المصدر</th></tr>
+    {% for c in comparative_tax_argument.comparable_tax_cases %}
+    <tr>
+      <td>{{ c.case_id }}</td>
+      <td>{{ c.district }}</td>
+      <td>{{ c.tax_per_m2 }}</td>
+      <td>{{ "نعم" if c.included else "لا" }}</td>
+      <td>{{ c.source_status }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <p class="disclaimer-note">{{ comparative_tax_argument.disclaimer or "" }}</p>
+</div>
+{% endif %}
+
+{% if deductible_expense_analysis %}
+<div class="section">
+  <div class="section-title">الخصومات والاستقطاعات المؤثرة على الوعاء الضريبي</div>
+  <table class="data-table">
+    <tr><td class="lbl">فئة العقار</td><td>{{ deductible_expense_analysis.property_class }}</td></tr>
+    <tr><td class="lbl">إجمالي القيمة الإيجارية السنوية</td><td>{{ deductible_expense_analysis.gross_annual_rental_value }} ج.م</td></tr>
+    <tr><td class="lbl">نسبة خصم الصيانة والإدارة</td><td>{{ (deductible_expense_analysis.maintenance_deduction_rate * 100) | round(0) | int }}%</td></tr>
+    <tr><td class="lbl">مبلغ الخصم</td><td>{{ deductible_expense_analysis.maintenance_deduction_amount | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">الوعاء الضريبي الصافي</td><td>{{ deductible_expense_analysis.net_taxable_rental_basis | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">أساس النسبة</td><td>{{ deductible_expense_analysis.statutory_or_assumption_basis }}</td></tr>
+    <tr><td class="lbl">حالة المصدر</td><td>{{ deductible_expense_analysis.source_status }}</td></tr>
+    <tr><td class="lbl">هل تنطبق على ضريبة التصرفات؟</td><td>لا — ضريبة التصرفات لا تخضع لهذه الخصومات</td></tr>
+  </table>
+  <p class="disclaimer-note">{{ deductible_expense_analysis.notes or "" }}</p>
+</div>
+{% endif %}
+
+{% if committee_reconciliation_matrix %}
+<div class="section">
+  <div class="section-title">مصفوفة توفيق نتائج الطرق — Committee Reconciliation Matrix</div>
+  <table class="data-table">
+    <tr><td class="lbl">عدد الطرق المدروسة</td><td>{{ committee_reconciliation_matrix.methods_considered }}</td></tr>
+    <tr><td class="lbl">الطرق المُدرجة</td><td>{{ committee_reconciliation_matrix.methods_used | join(", ") if committee_reconciliation_matrix.methods_used else "يحتاج مراجعة" }}</td></tr>
+    <tr><td class="lbl">نتيجة الترجيح للقيمة</td><td>{{ committee_reconciliation_matrix.weighted_value_result | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">الضريبة المرجحة النهائية</td><td>{{ committee_reconciliation_matrix.final_indicated_tax | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">الوفر المتوقع</td><td>{{ committee_reconciliation_matrix.expected_saving | round(0) }} ج.م</td></tr>
+    <tr><td class="lbl">إجمالي الأوزان المُدرجة</td><td>{{ committee_reconciliation_matrix.total_weight }}%</td></tr>
+  </table>
+  {% if committee_reconciliation_matrix.method_entries %}
+  <h4 style="margin:8px 0 4px; font-size:9pt; color:#1B2E4B;">تفاصيل الطرق والأوزان</h4>
+  <table class="comp-table">
+    <tr><th>الطريقة</th><th>الضريبة الدلالية</th><th>جودة البيانات</th><th>الوزن</th><th>النتيجة المرجحة</th><th>مُدرج؟</th></tr>
+    {% for m in committee_reconciliation_matrix.method_entries %}
+    <tr>
+      <td>{{ m.method_name }}</td>
+      <td>{{ m.indicated_tax | round(0) if m.indicated_tax else "—" }}</td>
+      <td>{{ m.data_quality_status }}</td>
+      <td>{{ m.weight }}%</td>
+      <td>{{ m.weighted_result | round(0) if m.weighted_result else "—" }}</td>
+      <td>{{ "نعم" if m.included else "لا" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <p class="section-note">تم استخدام مصفوفة توفيق لترجيح الطرق الملائمة واستبعاد الطرق غير المكتملة أو غير الملائمة، للوصول إلى دلالة فنية واحدة قابلة للمراجعة.</p>
+  <p class="disclaimer-note">{{ committee_reconciliation_matrix.ivs_readiness_note or "جاهزية استرشادية — يحتاج مراجعة الخبير" }}</p>
+</div>
+{% endif %}
+
+{% if industrial_asset_separation and industrial_asset_separation.applicable %}
+<div class="section">
+  <div class="section-title">الفصل بين الأصول العقارية والأصول التشغيلية</div>
+  <table class="data-table">
+    <tr><td class="lbl">مكونات الأصول العقارية</td><td>{{ industrial_asset_separation.taxable_real_estate_components | join("، ") }}</td></tr>
+    <tr><td class="lbl">الأصول المستبعدة (تشغيلية)</td><td>{{ industrial_asset_separation.excluded_operating_assets | join("، ") }}</td></tr>
+    <tr><td class="lbl">الآلات والمعدات</td><td>مستبعدة — {{ industrial_asset_separation.machinery_equipment_exclusion.reason }}</td></tr>
+    <tr><td class="lbl">خطوط الإنتاج</td><td>مستبعدة — {{ industrial_asset_separation.production_lines_exclusion.reason }}</td></tr>
+    <tr><td class="lbl">الشهرة التجارية</td><td>مستبعدة — {{ industrial_asset_separation.goodwill_exclusion.reason }}</td></tr>
+  </table>
+  <p class="disclaimer-note">{{ industrial_asset_separation.valuation_scope_note }}</p>
+</div>
+{% endif %}
+
+{% if geographic_tax_reasonableness_check %}
+<div class="section">
+  <div class="section-title">اختبار المثل الجغرافي — Geographic Tax Reasonableness Check</div>
+  <table class="data-table">
+    <tr><td class="lbl">المنطقة / المحافظة</td><td>{{ geographic_tax_reasonableness_check.subject_district }}</td></tr>
+    <tr><td class="lbl">ضريبة العقار الموضوع / م²</td><td>{{ geographic_tax_reasonableness_check.subject_tax_per_m2 }} ج.م/م²</td></tr>
+    <tr><td class="lbl">متوسط ضريبة المثيل / م²</td><td>{{ geographic_tax_reasonableness_check.average_comparable_tax_per_m2 or "يحتاج حالات مقارنة" }}</td></tr>
+    <tr><td class="lbl">فجوة التقدير مقابل المنطقة</td><td>{{ geographic_tax_reasonableness_check.government_vs_area_average_gap or "يحتاج مراجعة" }}</td></tr>
+    <tr><td class="lbl">نسبة المغالاة عن المنطقة</td><td>{{ geographic_tax_reasonableness_check.government_vs_area_average_ratio or "يحتاج مراجعة" }}</td></tr>
+    <tr><td class="lbl">مؤشر المبالغة في التقدير</td><td>{{ "نعم — يُوصى بالطعن" if geographic_tax_reasonableness_check.overassessment_indicator else "لا" }}</td></tr>
+    <tr><td class="lbl">حالة المصدر</td><td>{{ geographic_tax_reasonableness_check.data_source_status }}</td></tr>
+    <tr><td class="lbl">جاهزية الإنتاج</td><td>لا</td></tr>
+  </table>
+  {% if geographic_tax_reasonableness_check.comparable_tax_rows %}
+  <h4 style="margin:8px 0 4px; font-size:9pt; color:#1B2E4B;">حالات ضريبية مرجعية من المنطقة</h4>
+  <table class="comp-table">
+    <tr><th>الكود</th><th>المنطقة</th><th>ضريبة/م²</th><th>تطابق جغرافي</th><th>مُدرج</th></tr>
+    {% for r in geographic_tax_reasonableness_check.comparable_tax_rows %}
+    <tr>
+      <td>{{ r.tax_comparable_id }}</td>
+      <td>{{ r.district }}</td>
+      <td>{{ r.tax_per_m2 }}</td>
+      <td>{{ r.geo_match_status }}</td>
+      <td>{{ "نعم" if r.included else "لا" }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  <p class="disclaimer-note">{{ geographic_tax_reasonableness_check.expert_notes or "" }}</p>
+</div>
+{% endif %}
+
+{% if committee_argument_summary %}
+<div class="section">
+  <div class="section-title">ملخص الحجة الفنية للطعن</div>
+  <p>{{ committee_argument_summary.taxpayer_position_summary }}</p>
+  <table class="data-table">
+    <tr><td class="lbl">حجة المغالاة</td><td>{{ committee_argument_summary.overcharge_argument }}</td></tr>
+    <tr><td class="lbl">حجة ضريبة المتر</td><td>{{ committee_argument_summary.tax_per_m2_argument }}</td></tr>
+    <tr><td class="lbl">نتيجة توفيق الطرق</td><td>{{ committee_argument_summary.method_reconciliation_argument }}</td></tr>
+    <tr><td class="lbl">حالة المهلة</td><td>{{ committee_argument_summary.deadline_position_summary }}</td></tr>
+    <tr><td class="lbl">المستندات المطلوبة</td><td>{{ committee_argument_summary.documents_needed_summary }}</td></tr>
+    <tr><td class="lbl">توصية الخبير</td><td>{{ committee_argument_summary.expert_recommendation }}</td></tr>
+  </table>
+  <p class="disclaimer-note">{{ committee_argument_summary.formal_disclaimer }}</p>
+</div>
+{% endif %}
+
+<!-- ══ حالة مصادر التقرير (Part G — Preliminary) ══════════════════════════════ -->
+{% set ev_sum = evidence_summary or {} %}
+{% if ev_sum.evidence_total_count %}
+<div class="section">
+  <div class="section-title">حالة مصادر التقرير</div>
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي المرفقات</td><td>{{ ev_sum.evidence_total_count }}</td></tr>
+    <tr><td class="lbl">معتمدة للتقرير</td><td>{{ ev_sum.approved_for_report_count }}</td></tr>
+    <tr><td class="lbl">معتمدة كمصدر إنتاجي</td><td>{{ ev_sum.approved_as_source_count }}</td></tr>
+    <tr><td class="lbl">قيد المراجعة</td><td>{{ ev_sum.needs_review_count }}</td></tr>
+  </table>
+  {% if ev_sum.missing_mandatory_evidence %}
+  <p style="color:#B91C1C;">⚠ مستندات مطلوبة ناقصة: {{ ev_sum.missing_mandatory_evidence | join("، ") }}</p>
+  {% endif %}
+  <p class="disclaimer-note">{{ ev_sum.note }}</p>
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">سيتم مراجعة المرفقات بواسطة الخبير — لا يستخدم كمصدر معتمد قبل الاعتماد الرسمي.</p>
+</div>
+{% endif %}
+
+<!-- ══ المدخلات المرتبطة بالمصادر (Field Mapping — Preliminary) ════════════════ -->
+{% set fm_sum_p = field_mapping_summary or {} %}
+{% set sli_p    = source_linked_inputs   or {} %}
+{% if fm_sum_p.confirmed_mappings %}
+<div class="section">
+  <div class="section-title">المدخلات المرتبطة بالمصادر</div>
+  <table class="data-table">
+    <tr><td class="lbl">حقول مؤكدة مرتبطة بمصادر</td><td>{{ fm_sum_p.confirmed_mappings }}</td></tr>
+    <tr><td class="lbl">جاهزة للإنتاج</td><td>{{ fm_sum_p.production_ready_mappings }}</td></tr>
+    {% if fm_sum_p.unresolved_conflicts %}
+    <tr><td class="lbl" style="color:#B91C1C;">تعارضات غير محسومة</td><td style="color:#B91C1C; font-weight:bold;">{{ fm_sum_p.unresolved_conflicts }}</td></tr>
+    {% endif %}
+  </table>
+  {% for fkey, fval in sli_p.items() %}
+  <p style="font-size:8pt; margin:2px 0;">
+    <strong>{{ fkey }}:</strong> {{ fval.display_value }}
+    <span style="color:#6B7280; font-size:7pt;">(المصدر: {{ fval.evidence_type }} — {{ "إنتاجي" if fval.production_ready else "للتقرير فقط" }})</span>
+  </p>
+  {% endfor %}
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    جميع القيم المرتبطة بالمصادر مُدخلة ومؤكدة يدويًا من الخبير. لا يتم استخلاص أي قيم تلقائيًا.
+  </p>
+</div>
+{% endif %}
+
+<!-- ══ حالة استخراج البيانات من المستندات (Extraction Readiness — Preliminary) ════ -->
+{% set ex_sum_p = extraction_summary or {} %}
+{% if ex_sum_p.total_extractions %}
+<div class="section">
+  <div class="section-title">حالة استخراج البيانات من المستندات</div>
+  <table class="data-table">
+    <tr><td class="lbl">إجمالي الاستخراجات</td><td>{{ ex_sum_p.total_extractions }}</td></tr>
+    <tr><td class="lbl">مُؤكَّد من الخبير</td><td>{{ ex_sum_p.confirmed_extractions }}</td></tr>
+    <tr><td class="lbl">إنتاجي</td><td>{{ ex_sum_p.production_ready_extractions }}</td></tr>
+    {% if ex_sum_p.expert_actions_required %}
+    <tr><td class="lbl" style="color:#B45309;">بانتظار مراجعة الخبير</td><td style="color:#B45309; font-weight:bold;">{{ ex_sum_p.expert_actions_required }}</td></tr>
+    {% endif %}
+  </table>
+  <p class="disclaimer-note" style="font-size:7.5pt; color:#6B7280;">
+    لا يتم استخراج أي بيانات تلقائيًا. جميع القيم مُدخلة يدويًا ومُراجَعة من الخبير.
+    OCR: غير مفعّل. Qdrant: غير مفعّل.
+  </p>
+</div>
+{% endif %}
+
+<!-- ══ قراءات واستخلاصات مبدئية للمرفقات (Preliminary — غير معتمدة) ══════════ -->
+{% set ocr_s_p = ocr_pilot_summary or {} %}
+{% set ocr_sf  = ocr_suggested_fields or [] %}
+{% set ocr_bas = ocr_broad_advisory_summary or {} %}
+{% set ocr_bev = ocr_advisory_by_evidence_type or [] %}
+{% set sp_sum  = structured_parser_summary or {} %}
+{% set sp_adv  = structured_parser_advisory_by_evidence_type or [] %}
+<div class="sec">
+  <div class="sec-hdr amber">قراءات واستخلاصات مبدئية للمرفقات — غير معتمدة</div>
+  <div class="sec-body">
+
+    <!-- Combined summary table -->
+    <table class="ftbl" style="margin-bottom:8px;">
+      <tr>
+        <td class="lbl">OCR مفعَّل (Pilot)</td>
+        <td>{{ "نعم" if ocr_s_p.ocr_active_now else "لا" }}</td>
+        <td class="lbl">API خارجي / Qdrant / RAG</td>
+        <td style="color:#1A5E30;font-weight:700;">لا — لا — لا</td>
+      </tr>
+      <tr>
+        <td class="lbl">إجمالي مهام OCR</td>
+        <td>{{ ocr_s_p.total_ocr_jobs or 0 }}</td>
+        <td class="lbl">إجمالي اقتراحات OCR</td>
+        <td>{{ ocr_bas.total_ocr_suggested_fields or 0 }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">مهام المحلل الجدولي</td>
+        <td>{{ sp_sum.total_parse_jobs or 0 }}</td>
+        <td class="lbl">مكتملة / فاشلة</td>
+        <td>{{ sp_sum.completed_parse_jobs or 0 }} / {{ sp_sum.failed_parse_jobs or 0 }}</td>
+      </tr>
+      <tr>
+        <td class="lbl">نتائج جاهزة للإنتاج</td>
+        <td style="color:#DC2626;font-weight:700;">0 — دائمًا</td>
+        <td class="lbl">مستخدَمة في تقرير معتمد</td>
+        <td style="color:#DC2626;font-weight:700;">0 — يلزم تأكيد الخبير</td>
+      </tr>
+    </table>
+
+    <!-- Per-evidence-type OCR summary -->
+    {% if ocr_bev %}
+    <p style="font-weight:700;color:#92400E;font-size:8.5pt;margin:6px 0 4px;">ملخص قراءات OCR حسب نوع المستند:</p>
+    <table class="cmp" style="margin-bottom:8px;">
+      <thead>
+        <tr>
+          <th>نوع المستند</th>
+          <th>حالة OCR</th>
+          <th>عدد الاقتراحات</th>
+          <th>حالة الاعتماد</th>
+          <th>ملاحظة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eg in ocr_bev %}
+        <tr>
+          <td style="font-weight:600;color:#1B2E4B;font-size:8pt;">{{ eg.evidence_label_ar }}</td>
+          <td style="font-size:7.5pt;">
+            {% if eg.ocr_status == "structured_parser_required" %}
+            <span style="color:#6B7280;">مسار جدولي — ليس OCR</span>
+            {% else %}
+            <span style="color:#92400E;">اقتراحات متاحة</span>
+            {% endif %}
+          </td>
+          <td style="text-align:center;">{{ eg.suggestions_count }}</td>
+          <td style="color:#DC2626;font-weight:700;font-size:7.5pt;">غير معتمدة</td>
+          <td style="font-size:7pt;color:#6B7280;">{{ eg.limitations_ar[:60] if eg.limitations_ar else "—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Structured parser advisory summaries for Excel comparables -->
+    {% if sp_adv %}
+    <p style="font-weight:700;color:#0C4A6E;font-size:8.5pt;margin:8px 0 4px;">
+      استخلاص جدولي مبدئي لمقارنات Excel — غير معتمد:
+    </p>
+    {% for spa in sp_adv %}
+    <div style="margin-bottom:6px;padding:5px 8px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:3px;">
+      <p style="font-weight:700;font-size:8pt;margin:0 0 4px;color:#0C4A6E;">
+        {{ spa.evidence_label_ar }}
+        <span style="font-weight:400;font-size:7.5pt;color:#6B7280;">
+          — {{ spa.row_count or 0 }} صف إجمالي / {{ spa.usable_row_count or 0 }} صالح
+        </span>
+      </p>
+      {% if spa.top_suggestions %}
+      <table class="cmp" style="font-size:7.5pt;">
+        <thead><tr><th>البيان</th><th>القيمة</th></tr></thead>
+        <tbody>
+          {% for key, val in spa.top_suggestions %}
+          <tr>
+            <td style="color:#1B2E4B;font-weight:600;">{{ key }}</td>
+            <td style="font-family:monospace;color:#0C4A6E;">{{ val }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      <p style="font-size:7pt;color:#DC2626;font-weight:700;margin:3px 0 0;">
+        {{ spa.advisory_label_ar }}
+      </p>
+    </div>
+    {% endfor %}
+    {% else %}
+    <!-- Excel/CSV notice when no parse jobs run yet -->
+    {% if ocr_bas.structured_parser_types_count and ocr_bas.structured_parser_types_count > 0 %}
+    <div style="margin-top:6px;padding:5px 8px;background:#F0F9FF;border:1px solid #BAE6FD;border-radius:3px;font-size:7.5pt;color:#0C4A6E;">
+      <strong>ملاحظة:</strong>
+      ملفات Excel/CSV (مقارنات بيوع / إيجار / ضريبية) لا تُعالَج بـ OCR —
+      تُعالَج عبر المحلل الجدولي (structured parser) بعد رفعها في الباك أوفيس.
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- Field-level OCR suggestions (no raw text) -->
+    {% if ocr_sf %}
+    <p style="font-weight:700;color:#1B2E4B;font-size:8.5pt;margin:8px 0 4px;">
+      القيم المستخرجة بـ OCR — مبدئية غير معتمدة:
+    </p>
+    <table class="cmp">
+      <thead>
+        <tr>
+          <th>الحقل</th>
+          <th>القيمة المقروءة آليًا</th>
+          <th>الثقة</th>
+          <th>المصدر</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sf in ocr_sf %}
+        <tr>
+          <td style="font-weight:600;color:#1B2E4B;">{{ sf.field_label_ar }}</td>
+          <td style="font-family:monospace;color:#7F1D1D;">{{ sf.ocr_value }}</td>
+          <td style="{% if sf.confidence >= 0.8 %}color:#1A5E30;{% elif sf.confidence >= 0.6 %}color:#92400E;{% else %}color:#7F1D1D;{% endif %}font-size:8pt;">
+            {{ sf.confidence_label_ar }}
+          </td>
+          <td style="font-size:7.5pt;color:#374151;">{{ sf.evidence_type_label_ar }}</td>
+          <td style="font-size:7.5pt;font-weight:700;color:#DC2626;">{{ sf.label_ar }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:6px;padding:5px 8px;background:#FFF7ED;border:1px solid #FCD34D;border-radius:3px;font-size:7.5pt;">
+      <strong>مفتاح:</strong>
+      ● بيانات يدوية &nbsp;
+      <span style="color:#DC2626;">◆ قراءة OCR مبدئية — غير معتمدة</span> &nbsp;
+      <span style="color:#0C4A6E;">■ استخلاص جدولي مبدئي — غير معتمد</span> &nbsp;
+      <span style="color:#1A5E30;">★ تأكيد الخبير</span>
+    </div>
+    {% elif not ocr_sf and not ocr_bev and not sp_adv %}
+    <p style="font-size:8pt;color:#6B7280;font-style:italic;">لا توجد قيم مستخرجة آليًا من مستندات هذا الطلب حتى الآن.</p>
+    {% endif %}
+
+    <!-- Disclaimer -->
+    <p style="color:#DC2626;font-weight:700;font-size:8pt;margin-top:8px;border-right:3px solid #DC2626;padding-right:6px;">
+      هذه القراءات والاستخلاصات مبدئية وغير معتمدة، ولا تصلح للاستخدام الرسمي إلا بعد مراجعة الخبير
+      وتأكيدها وربطها بالمصادر وفحص التعارضات. OCR مُوسَم "قراءة/استخلاص آلي مبدئي — غير معتمد".
+      هذا التقرير مبدئي غير معتمد.
+    </p>
+  </div>
+</div>
+
+<!-- ══ الشروط والإخلاء (موحد — مرة واحدة فقط) ════════════════════════════════ -->
+<div class="disclaimer">
+  <div class="disclaimer-title">الشروط والافتراضات العامة وإخلاء المسؤولية</div>
+  <p>{{ appeal_disclaimer_ar }}</p>
+  <p>جميع القيم الواردة في هذا التقرير ذات طابع استرشادي تقديري استناداً إلى البيانات المُدخلة فقط.
+  قد تختلف المعدلات والحدود والإعفاءات الفعلية المُطبَّقة رسميًا عمّا ورد في هذا الحساب.</p>
+  <p>{{ source_registry_disclaimer }}</p>
+  <p>لا تُعد هذه النتائج رأياً قانونياً معتمدًا ولا مذكرة طعن رسمية.
+  الاعتماد على هذا التقرير دون مراجعة خبير مرخص يقع على مسؤولية المستخدم وحده.</p>
+</div>
+
+<!-- ══ Footer ══════════════════════════════════════════════════════════════════════ -->
+<div class="rpt-footer">
+  ALHADY FOR REAL PROPERTY &nbsp;|&nbsp; رقم الطلب: {{ request_id }} &nbsp;|&nbsp; {{ report_date }}<br>
+  تقرير فحص ضريبي مبدئي — استرشادي غير معتمد — يستلزم مراجعة خبير مرخص
+</div>
+
+</body>
+</html>

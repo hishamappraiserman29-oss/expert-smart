@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <style>
+    {{ font_css_block }}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      direction: rtl;
+      text-align: right;
+      font-family: "Cairo", "Noto Naskh Arabic", "Amiri", "Tahoma",
+                   "Arial Unicode MS", "Arial", sans-serif;
+      font-size: 9.5pt;
+      color: #1a1a2e;
+      line-height: 1.7;
+      background: #ffffff;
+    }
+
+    .watermark {
+      position: fixed;
+      top: 48%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-28deg);
+      font-size: 28px;
+      font-weight: 700;
+      color: rgba(31, 78, 120, 0.055);
+      z-index: 0;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .page-footer {
+      position: fixed;
+      bottom: 5mm;
+      left: 10mm;
+      right: 10mm;
+      text-align: center;
+      font-size: 7pt;
+      color: #bbb;
+      border-top: 1px solid #e8e8e8;
+      padding-top: 2px;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* ── Cover / header ── */
+    .cover {
+      background: linear-gradient(135deg, #1f4e78 0%, #2d6a9f 100%);
+      color: #fff;
+      padding: 20px 24px 16px;
+      margin-bottom: 14px;
+      page-break-after: avoid;
+    }
+    .cover-company  { font-size: 9pt; font-weight: 700; color: #d4af37; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .cover-title    { font-size: 17pt; font-weight: 700; color: #ffffff; margin-bottom: 6px; }
+    .cover-subtitle { font-size: 9pt; color: rgba(255,255,255,0.75); margin-bottom: 10px; }
+    .cover-meta     { display: flex; gap: 20px; flex-wrap: wrap; font-size: 8pt; color: rgba(255,255,255,0.85); margin-bottom: 10px; }
+    .cover-meta span { display: inline-block; }
+    .certified-seal {
+      display: inline-block;
+      background: rgba(212,175,55,0.18);
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      font-weight: 700;
+      font-size: 9.5pt;
+      padding: 4px 20px;
+      border-radius: 20px;
+    }
+
+    /* ── Section blocks ── */
+    .section { margin-bottom: 12px; page-break-inside: avoid; }
+    .section-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #fff;
+      background: #1f4e78;
+      padding: 5px 12px;
+      border-right: 4px solid #d4af37;
+      margin-bottom: 7px;
+    }
+    .section-body { padding: 0 6px; }
+
+    /* ── Data grid ── */
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; margin-bottom: 6px; }
+    .data-row  { display: flex; gap: 5px; align-items: baseline; font-size: 9pt; border-bottom: 1px solid #f2f2f2; padding: 2px 0; }
+    .data-label { color: #3a5a7a; font-weight: 700; white-space: nowrap; min-width: 135px; }
+    .data-value { color: #1a1a2e; flex: 1; }
+    .data-value.placeholder { color: #94a3b8; font-style: italic; font-size: 8.5pt; }
+
+    /* ── Field table ── */
+    .field-tbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin-bottom: 6px; }
+    .field-tbl td { padding: 2.5px 7px; border: 1px solid #e8eaf0; vertical-align: top; }
+    .field-tbl .fl { font-weight: 700; color: #1f4e78; background: #f4f8ff; width: 36%; }
+    .field-tbl .fv { color: #333; }
+    .field-tbl .fn { color: #b43200; font-style: italic; }
+    .field-tbl .fok { color: #1a7a4a; font-weight: 700; }
+    .field-tbl tr:nth-child(even) td { background: #fafcff; }
+
+    /* ── AVM section styling ── */
+    .avm-section-title {
+      font-size: 10pt;
+      font-weight: 700;
+      color: #fff;
+      background: #2d6a9f;
+      padding: 5px 12px;
+      border-right: 4px solid #d4af37;
+      margin-bottom: 7px;
+    }
+    .avm-note-box {
+      background: #f0f8ff;
+      border: 1px solid #b0d0ea;
+      border-right: 3px solid #2d6a9f;
+      border-radius: 3px;
+      padding: 6px 10px;
+      font-size: 8.5pt;
+      color: #1a3a5a;
+      margin: 4px 0 7px;
+      line-height: 1.75;
+    }
+
+    /* ── Valuation method table ── */
+    .method-tbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; margin: 6px 0; }
+    .method-tbl th {
+      background: #dce8f5; color: #1f4e78; font-weight: 700;
+      padding: 4px 8px; border: 1px solid #c0d4e8; text-align: center;
+    }
+    .method-tbl td { padding: 3.5px 8px; border: 1px solid #e8eaf0; vertical-align: top; color: #333; }
+    .method-tbl tr:nth-child(even) td { background: #fafcff; }
+    .method-label { font-weight: 700; color: #1f4e78; }
+    .method-value { font-weight: 700; color: #1a7a4a; direction: ltr; }
+    .method-na    { color: #94a3b8; font-style: italic; }
+
+    /* ── Reconciliation table ── */
+    .recon-tbl { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+    .recon-tbl th {
+      background: #1f4e78; color: #fff;
+      padding: 4px 8px; border: 1px solid #1f4e78; text-align: center;
+    }
+    .recon-tbl td { padding: 3px 8px; border: 1px solid #dce8f5; text-align: center; }
+    .recon-tbl .lbl { text-align: right; font-weight: 700; color: #1f4e78; }
+    .recon-tbl .w   { color: #7a5500; font-weight: 700; }
+    .recon-tbl .avm-row { background: #f0f8ff; }
+    .recon-tbl tfoot td { background: #ebf3fb; font-weight: 700; color: #1f4e78; }
+
+    /* ── Final value ── */
+    .final-value-box {
+      background: #ebf3fb; border: 2px solid #1f4e78;
+      border-radius: 8px; padding: 14px 20px; margin: 10px 0; text-align: center;
+    }
+    .final-value-label  { font-size: 9pt; color: #2d6a9f; font-weight: 700; margin-bottom: 4px; }
+    .final-value-number { font-size: 20pt; font-weight: 700; color: #1f4e78; direction: ltr; letter-spacing: 1px; }
+    .final-value-currency { font-size: 8pt; color: #94a3b8; margin-top: 3px; }
+    .sensitivity-strip  { display: flex; gap: 18px; justify-content: center; margin-top: 8px; font-size: 8.5pt; }
+    .sens-item { text-align: center; }
+    .sens-lbl  { color: #666; font-size: 7.5pt; }
+    .sens-val  { font-weight: 700; color: #2d6a9f; }
+    .sens-val.low  { color: #b43200; }
+    .sens-val.high { color: #1a7a4a; }
+
+    /* ── Certification block ── */
+    .cert-block {
+      border: 1.5px solid #d4af37;
+      border-radius: 6px;
+      padding: 14px 18px;
+      background: #fffdf0;
+      margin-top: 10px;
+    }
+    .cert-text { font-size: 9.5pt; font-weight: 700; color: #1f4e78; margin-bottom: 10px; }
+    .cert-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 20px; margin-bottom: 12px; }
+    .cert-sig-area { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .cert-sig-box  { border-top: 1px dashed #bbb; padding-top: 5px; }
+    .cert-sig-label { font-size: 7.5pt; color: #999; text-align: center; }
+
+    /* ── Assumptions ── */
+    .assumptions-list { list-style: none; padding: 0; }
+    .assumptions-list li {
+      font-size: 8.5pt; color: #444; padding: 2px 0;
+      border-bottom: 1px solid #f2f2f2;
+    }
+    .assumptions-list li::before { content: "– "; color: #1f4e78; font-weight: 700; }
+
+    /* ── Data source disclaimer ── */
+    .source-box {
+      background: #f8f9fa; border: 1px solid #e0e6ef;
+      border-right: 3px solid #2d6a9f; border-radius: 4px;
+      padding: 8px 12px; font-size: 8.5pt; color: #555; line-height: 1.75;
+    }
+
+    /* ── Footer disclaimer ── */
+    .footer-disclaimer {
+      font-size: 7.5pt; color: #999; background: #f9f9f9;
+      border: 1px solid #eee; border-radius: 4px; padding: 8px 10px;
+      margin-top: 14px; line-height: 1.8;
+    }
+
+    .page-break { page-break-before: always; padding-top: 10mm; }
+    .no-break   { page-break-inside: avoid; }
+
+    .note-box {
+      background: #fff8f0; border: 1px solid #e8c87a;
+      border-radius: 3px; padding: 5px 10px; font-size: 8.5pt;
+      color: #7a5500; margin: 4px 0;
+    }
+
+    /* ── Map placeholder ── */
+    .map-ph-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+    .map-ph-box {
+      background: #f5f7fa; border: 1.5px dashed #b0bec5;
+      border-radius: 4px; padding: 14px 10px; text-align: center;
+      color: #90a4ae; font-size: 8pt; font-style: italic;
+    }
+    .map-ph-icon { font-size: 16pt; display: block; margin-bottom: 4px; }
+
+    /* ── Regression table ── */
+    .reg-tbl { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin: 4px 0; }
+    .reg-tbl th { background: #2d4a7a; color: #fff; padding: 2px 5px; text-align: center; border: 1px solid #2d4a7a; }
+    .reg-tbl td { padding: 2px 5px; border: 1px solid #d8e4f0; vertical-align: top; }
+    .reg-tbl tr:nth-child(even) td { background: #f5f9ff; }
+    .reg-total td { background: #d6ecd4; font-weight: 700; }
+    .reg-final td { background: #1a3a5c; color: #fff; font-weight: 700; }
+
+    /* ── Land comparable table ── */
+    .land-tbl { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin: 4px 0; }
+    .land-tbl th { background: #2d5a27; color: #fff; padding: 2px 5px; text-align: center; border: 1px solid #2d5a27; }
+    .land-tbl td { padding: 2px 5px; border: 1px solid #d4e8d0; vertical-align: top; }
+    .land-tbl tr:nth-child(even) td { background: #f5fbf5; }
+
+    /* ── Cost breakdown table ── */
+    .cost-tbl { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin: 4px 0; }
+    .cost-tbl th { background: #5a3a00; color: #fff; padding: 2px 5px; text-align: center; border: 1px solid #5a3a00; }
+    .cost-tbl td { padding: 2px 5px; border: 1px solid #e8d8c0; vertical-align: top; }
+    .cost-tbl tr:nth-child(even) td { background: #fffbf5; }
+    .cost-tbl tfoot td { background: #5a3a00; color: #fff; font-weight: 700; }
+
+    /* ── DCF expanded table ── */
+    .dcf-exp-tbl { width: 100%; border-collapse: collapse; font-size: 7pt; margin: 4px 0; }
+    .dcf-exp-tbl th { background: #1a3a5c; color: #fff; padding: 2px 4px; text-align: center; border: 1px solid #1a3a5c; }
+    .dcf-exp-tbl td { padding: 2px 4px; border: 1px solid #d8e4f0; vertical-align: top; text-align: center; }
+    .dcf-exp-tbl tr:nth-child(even) td { background: #f7faff; }
+
+    /* ── DR / TCR derivation grid ── */
+    .dr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0; }
+    .dr-card { border: 1px solid #c8d8e8; border-radius: 3px; padding: 4px 8px; font-size: 7.5pt; background: #f7faff; }
+    .dr-card-title { font-weight: 700; color: #1a3a5c; margin-bottom: 2px; font-size: 8pt; }
+    .dr-card-row { display: flex; justify-content: space-between; padding: 1px 0; border-bottom: 1px solid #eef3fa; }
+    .dr-card-rate { font-weight: 700; color: #0a5c2e; margin-top: 3px; text-align: left; font-size: 8pt; }
+
+    /* ── SVG chart wrapper ── */
+    .chart-wrap { background: #f9fafb; border: 1px solid #e0e6ef; border-radius: 5px; padding: 10px 14px; margin: 8px 0; }
+    .chart-title { font-size: 9pt; font-weight: 700; color: #1f4e78; margin-bottom: 6px; border-bottom: 1px solid #dce8f5; padding-bottom: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="watermark">ALHADY REAL PROPERTY — تقرير معتمد</div>
+
+<div class="page-footer">
+  تم إنشاء هذا المستند بواسطة محرك HTML/PDF — رقم الطلب: {{ request_id }} — تاريخ التقرير: {{ report_date }}
+</div>
+
+<div class="content">
+
+  <!-- ════════════════════════════════════════════════════════════
+       1. COVER PAGE
+       ════════════════════════════════════════════════════════════ -->
+  <div class="cover">
+    <div class="cover-company">ALHADY FOR REAL PROPERTY — شركة الهادي للعقارات</div>
+    <div class="cover-title">تقرير تقييم عقاري معتمد</div>
+    <div class="cover-subtitle">{{ report_template_name_ar if report_template_name_ar else 'تقرير تقييم عقاري معتمد' }}</div>
+    <div class="cover-meta">
+      <span>رقم الطلب: <strong>{{ request_id }}</strong></span>
+      <span>تاريخ التقرير: <strong>{{ report_date }}</strong></span>
+      <span>تاريخ التقييم: <strong>{{ valuation_date if valuation_date else '—' }}</strong></span>
+      <span>الغرض: <strong>{{ purpose if purpose else 'القيمة السوقية' }}</strong></span>
+    </div>
+    <div><span class="certified-seal">✓ تقرير معتمد بعد مراجعة الخبير</span></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       2. ASSIGNMENT AND SCOPE — بيانات التكليف ونطاق العمل
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">بيانات التكليف ونطاق العمل</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-row">
+          <span class="data-label">اسم العميل / الجهة الطالبة:</span>
+          <span class="data-value">{{ client_name if client_name else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">الهاتف:</span>
+          <span class="data-value" style="direction:ltr;">{{ phone if phone else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">نوع التقرير المطلوب:</span>
+          <span class="data-value">{{ report_template_name_ar if report_template_name_ar else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">الغرض من التقييم:</span>
+          <span class="data-value">{{ purpose if purpose else 'القيمة السوقية' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">تاريخ التقييم الفعلي:</span>
+          <span class="data-value">{{ valuation_date if valuation_date else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">تاريخ إصدار التقرير:</span>
+          <span class="data-value">{{ report_date }}</span>
+        </div>
+        {% if date_basis_info %}
+        <div class="data-row">
+          <span class="data-label">أساس تاريخ التقييم:</span>
+          <span class="data-value" style="color:#1f4e78;font-weight:700;">
+            {{ date_basis_info.date_basis_label_ar }}
+          </span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">ملاحظة أساس التاريخ:</span>
+          <span class="data-value" style="font-style:italic;">{{ date_basis_info.date_basis_notes }}</span>
+        </div>
+        {% endif %}
+        {% if purpose_info %}
+        <div class="data-row">
+          <span class="data-label">الغرض (مُصنَّف):</span>
+          <span class="data-value" style="color:#1f4e78;font-weight:700;">{{ purpose_info.purpose_label_ar }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if summary %}
+      <div class="data-row" style="margin-top:5px;">
+        <span class="data-label">ملخص التكليف:</span>
+        <span class="data-value">{{ summary }}</span>
+      </div>
+      {% endif %}
+      <div class="data-row" style="margin-top:6px;">
+        <span class="data-label">نطاق العمل:</span>
+        <span class="data-value">{{ valuation_method_summary if valuation_method_summary else 'مراجعة بيانات الطلب والمستندات المقدمة من العميل. التقييم وفق المنهجية المعتمدة من قِبل الخبير.' }}</span>
+      </div>
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">البيانات التي اعتُمدت عليها:</span>
+        <span class="data-value">بيانات الطلب المقدمة من العميل، المستندات المرفقة، بيانات السوق المتاحة، مدخلات الخبير المسجلة داخل النظام.</span>
+      </div>
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">حدود نطاق العمل:</span>
+        <span class="data-value">دقة القيمة النهائية مرتبطة باكتمال وصحة المعلومات المقدمة. لا يتضمن هذا التقرير تثبتًا قانونيًا للملكية أو فحصًا هندسيًا تفصيليًا إلا إذا نُصَّ على ذلك.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       3. PROPERTY DATA — بيانات العقار محل التقييم
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">بيانات العقار محل التقييم</div>
+    <div class="section-body">
+      <div class="data-grid">
+        <div class="data-row">
+          <span class="data-label">نوع العقار:</span>
+          <span class="data-value">{{ property_type if property_type else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">الموقع:</span>
+          <span class="data-value">{{ location if location else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">المساحة الإجمالية:</span>
+          <span class="data-value">{{ area if area else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">حالة العقار:</span>
+          <span class="data-value">{{ condition if condition else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">مستوى التشطيب:</span>
+          <span class="data-value">{{ finishing if finishing else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">المرافق والخدمات:</span>
+          <span class="data-value">{{ utilities if utilities else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">حقوق الملكية / السند:</span>
+          <span class="data-value">{{ ownership_type if ownership_type else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">الاستخدام الحالي:</span>
+          <span class="data-value">{{ current_use if current_use else '—' }}</span>
+        </div>
+      </div>
+      {% if description %}
+      <div class="data-row" style="margin-top:5px;">
+        <span class="data-label">وصف العقار:</span>
+        <span class="data-value">{{ description }}</span>
+      </div>
+      {% endif %}
+      {% if notes %}
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">ملاحظات إضافية:</span>
+        <span class="data-value">{{ notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       3.5 LOCATION EVIDENCE — الموقع والصور الجوية
+       ════════════════════════════════════════════════════════════ -->
+  {% if map_placeholder_text %}
+  <div class="section">
+    <div class="section-title">الموقع والأدلة المصورة</div>
+    <div class="section-body">
+      <div class="map-ph-grid">
+        <div class="map-ph-box">
+          <span class="map-ph-icon">📍</span>
+          <strong>خريطة الموقع</strong>
+          <div style="margin-top:4px;">{{ map_placeholder_text }}</div>
+        </div>
+        <div class="map-ph-box">
+          <span class="map-ph-icon">🛰</span>
+          <strong>صورة جوية</strong>
+          <div style="margin-top:4px;">{{ aerial_placeholder_text }}</div>
+        </div>
+        <div class="map-ph-box">
+          <span class="map-ph-icon">🗺</span>
+          <strong>خريطة المقارنات</strong>
+          <div style="margin-top:4px;">{{ comps_map_placeholder_text }}</div>
+        </div>
+      </div>
+      <p style="font-size:7pt;color:#999;margin-top:3px;text-align:center;">
+        الصور الجوية وخرائط المواقع تُرفق يدويًا بواسطة الخبير عند الاستلام الميداني. لا يتضمن هذا النظام جلب خرائط آلي من الإنترنت.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════════════════════════
+       4. AVM SECTION — طريقة AVM التقييم الآلي المبدئي
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="avm-section-title">طريقة AVM — التقييم الآلي المبدئي</div>
+    <div class="section-body">
+      <div class="avm-note-box">
+        تعد طريقة AVM في هذه النسخة أداة مساعدة ضمن ملف المراجعة، ولا تحل محل تقدير الخبير أو مراجعة المقارنات والمستندات.
+        لا يتضمن هذا التقرير استرجاعًا آليًا من الإنترنت أو Qdrant في هذه المرحلة. بيانات AVM مستمدة من مدخلات الطلب ومراجعة الخبير.
+      </div>
+      <table class="field-tbl">
+        <tr>
+          <td class="fl">سعر المتر الأساسي</td>
+          <td class="fv {% if base_price_per_m2 %}fok{% endif %}">
+            {{ base_price_per_m2 if base_price_per_m2 else '—' }}
+          </td>
+          <td class="fl">معامل الموقع</td>
+          <td class="fv">{{ location_factor if location_factor else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="fl">معامل الحالة</td>
+          <td class="fv">{{ condition_factor if condition_factor else '—' }}</td>
+          <td class="fl">معامل التشطيب</td>
+          <td class="fv">{{ finishing_factor if finishing_factor else '—' }}</td>
+        </tr>
+        <tr>
+          <td class="fl">القيمة الآلية المبدئية</td>
+          <td class="fv {% if avm_value %}fok{% else %}fn{% endif %}">
+            {{ avm_value if avm_value else 'غير متاحة' }}
+          </td>
+          <td class="fl">الحد الأدنى / الأعلى</td>
+          <td class="fv">
+            {% if avm_low_range or avm_high_range %}
+              {{ avm_low_range }} — {{ avm_high_range }}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td class="fl">درجة الثقة</td>
+          <td class="fv">{{ avm_confidence_score if avm_confidence_score else '—' }}</td>
+          <td class="fl">حالة جودة البيانات</td>
+          <td class="fv">{{ avm_data_quality_status if avm_data_quality_status else '—' }}</td>
+        </tr>
+        {% if expert_override_value %}
+        <tr>
+          <td class="fl">قيمة الخبير (تجاوز AVM)</td>
+          <td class="fv fok">{{ expert_override_value }}</td>
+          <td class="fl">سبب التجاوز</td>
+          <td class="fv">{{ expert_override_reason if expert_override_reason else '—' }}</td>
+        </tr>
+        {% endif %}
+        {% if avm_notes %}
+        <tr>
+          <td class="fl">ملاحظات AVM</td>
+          <td class="fv" colspan="3">{{ avm_notes }}</td>
+        </tr>
+        {% endif %}
+      </table>
+      {% if avm_regression %}
+      <div style="margin-top:6px;">
+        <p style="font-size:8pt;color:#1a3a5c;font-weight:bold;margin-bottom:3px;">تحليل AVM — جدول الانحدار المحاكى</p>
+        <table class="reg-tbl">
+          <thead>
+            <tr>
+              <th>المتغير</th>
+              <th>القيمة</th>
+              <th>المعامل</th>
+              <th>الأثر على القيمة</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in avm_regression %}
+            <tr>
+              <td>{{ row.feature }}</td>
+              <td style="text-align:center;">{{ row.value }}</td>
+              <td style="text-align:center;">{{ row.coeff }}</td>
+              <td style="text-align:center;font-weight:bold;">{{ row.effect }}</td>
+              <td style="color:#666;">{{ row.notes }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="reg-total">
+              <td colspan="3" style="text-align:right;">القيمة الأساسية المُحاكاة</td>
+              <td style="text-align:center;">{{ avm_reg_base_value }}</td>
+              <td></td>
+            </tr>
+            <tr class="reg-total">
+              <td colspan="3" style="text-align:right;">القيمة المتوقعة (Predicted)</td>
+              <td style="text-align:center;">{{ avm_reg_predicted }}</td>
+              <td style="color:#666;">{{ avm_reg_residual }}</td>
+            </tr>
+            <tr class="reg-final">
+              <td colspan="3" style="text-align:right;">القيمة AVM النهائية</td>
+              <td style="text-align:center;">{{ avm_reg_final }}</td>
+              <td>نطاق الثقة: {{ avm_reg_confidence_band }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        {% if avm_reg_limitations %}
+        <p style="font-size:7pt;color:#b43200;margin-top:3px;font-style:italic;">{{ avm_reg_limitations }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if not avm_value %}
+      <div class="note-box">لم تُدخَل بيانات AVM ضمن هذا الطلب. يمكن للخبير إضافتها في مرحلة المراجعة إن توفرت.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       5. VALUATION APPROACHES — طرق التقييم
+       ════════════════════════════════════════════════════════════ -->
+
+  <!-- 5-A. طريقة مقارنة البيوع -->
+  <div class="section">
+    <div class="section-title">طريقة مقارنة البيوع</div>
+    <div class="section-body">
+      <p style="font-size:8.5pt;color:#444;margin-bottom:6px;">
+        تعتمد هذه الطريقة على مقارنة العقار محل التقييم بعقارات مماثلة بِيعت أو عُرضت في السوق مع إجراء التسويات اللازمة للفوارق الجوهرية.
+      </p>
+      {% if has_comparables %}
+      <p style="font-size:8pt;color:#1a3a5c;margin:2px 0 4px 0;font-weight:bold;">مصفوفة المقارنات — {{ comparables|length }} عقارات مقارِنة</p>
+      <table style="width:100%;border-collapse:collapse;font-size:7pt;direction:rtl;" class="comp-matrix">
+        <thead>
+          <tr style="background:#1a3a5c;color:#fff;">
+            <th style="padding:2px 3px;text-align:right;">#</th>
+            <th style="padding:2px 3px;text-align:right;">الموقع</th>
+            <th style="padding:2px 3px;text-align:center;">م²</th>
+            <th style="padding:2px 3px;text-align:center;">سعر البيع</th>
+            <th style="padding:2px 3px;text-align:center;">سعر المتر</th>
+            <th style="padding:2px 3px;text-align:center;">موقع</th>
+            <th style="padding:2px 3px;text-align:center;">مساحة</th>
+            <th style="padding:2px 3px;text-align:center;">حالة</th>
+            <th style="padding:2px 3px;text-align:center;">تشطيب</th>
+            <th style="padding:2px 3px;text-align:center;">وقت</th>
+            <th style="padding:2px 3px;text-align:center;">سعر معدل</th>
+            <th style="padding:2px 3px;text-align:center;">قيمة معدلة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comparables %}
+          <tr style="background:{% if loop.index is odd %}#f7faff{% else %}#fff{% endif %};">
+            <td style="padding:2px 3px;text-align:center;color:#1a3a5c;font-weight:bold;">{{ c.num }}</td>
+            <td style="padding:2px 3px;">{{ c.location }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.area }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.sale_price }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.price_per_m2 }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.location_factor }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.area_factor }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.condition_factor }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.finishing_factor }}</td>
+            <td style="padding:2px 3px;text-align:center;">{{ c.time_factor }}</td>
+            <td style="padding:2px 3px;text-align:center;font-weight:bold;color:#0a5c2e;">{{ c.adjusted_price_per_m2 }}</td>
+            <td style="padding:2px 3px;text-align:center;font-weight:bold;color:#0a5c2e;">{{ c.adjusted_value }}</td>
+          </tr>
+          {% endfor %}
+          <tr style="background:#d6ecd4;font-weight:bold;">
+            <td colspan="10" style="padding:2px 5px;text-align:right;">متوسط سعر المتر المعدل</td>
+            <td colspan="2" style="padding:2px 5px;text-align:center;color:#0a5c2e;">{{ avg_adjusted_price }}</td>
+          </tr>
+          {% if sales_from_comps %}
+          <tr style="background:#fff8cc;font-weight:bold;">
+            <td colspan="10" style="padding:2px 5px;text-align:right;">القيمة من المقارنات (متوسط معدل × المساحة)</td>
+            <td colspan="2" style="padding:2px 5px;text-align:center;color:#1a3a5c;">{{ sales_from_comps }}</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+      <p style="font-size:7pt;color:#888;margin-top:3px;">تنبيه: هذه المقارنات محاكاة داخلية للمراجعة. لا تستند إلى الإنترنت أو قواعد بيانات خارجية.</p>
+      {% elif sales_comparison_value %}
+      <div class="data-row">
+        <span class="data-label">القيمة وفق هذه الطريقة:</span>
+        <span class="data-value method-value" style="font-weight:700;color:#1a7a4a;">{{ sales_comparison_value }} ج.م</span>
+      </div>
+      <div class="data-row" style="margin-top:3px;">
+        <span class="data-label">الوزن المُعتمد:</span>
+        <span class="data-value">{{ sales_comparison_weight if sales_comparison_weight else '—' }}</span>
+      </div>
+      {% else %}
+      <div class="note-box">غير متاح ضمن بيانات الطلب / يحتاج استكمال بواسطة الخبير.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 5-A2. قيمة الأرض — مقارنة واستخلاص وتوفيق -->
+  {% if land_comps %}
+  <div class="section">
+    <div class="section-title">قيمة الأرض — مقارنة بيوع أراضٍ + استخلاص + توفيق</div>
+    <div class="section-body">
+
+      <p style="font-size:8pt;color:#2d5a27;font-weight:bold;margin-bottom:3px;">أ. طريقة مقارنة بيوع الأراضي</p>
+      <table class="land-tbl">
+        <thead>
+          <tr>
+            <th>#</th><th>الموقع</th><th>م²</th><th>التاريخ</th>
+            <th>الإجمالي</th><th>سعر/م²</th><th>سعر معدل/م²</th>
+            <th>نصيب الأرض</th><th>ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lc in land_comps %}
+          <tr>
+            <td style="text-align:center;font-weight:bold;">{{ lc.num }}</td>
+            <td>{{ lc.location }}</td>
+            <td style="text-align:center;">{{ lc.area_m2 }}</td>
+            <td style="text-align:center;">{{ lc.offer_date }}</td>
+            <td style="text-align:center;">{{ lc.total_price_disp }}</td>
+            <td style="text-align:center;">{{ lc.price_per_m2_disp }}</td>
+            <td style="text-align:center;font-weight:bold;color:#0a5c2e;">{{ lc.adj_price_per_m2 }}</td>
+            <td style="text-align:center;font-weight:bold;color:#1a3a5c;">{{ lc.land_share_value }}</td>
+            <td style="color:#666;">{{ lc.notes }}</td>
+          </tr>
+          {% endfor %}
+          <tr style="background:#d6ecd4;font-weight:bold;">
+            <td colspan="6" style="text-align:right;">متوسط سعر م² الأرض المعدل</td>
+            <td style="text-align:center;">{{ avg_land_price }}</td>
+            <td style="text-align:center;">{{ land_value_by_sales }}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      {% if extr_improved_indication %}
+      <p style="font-size:8pt;color:#2d5a27;font-weight:bold;margin:5px 0 3px;">ب. طريقة الاستخلاص</p>
+      <table class="field-tbl" style="margin-bottom:4px;">
+        <tr>
+          <td class="fl">قيمة العقار المُحسَّن (قرينة)</td>
+          <td class="fv fok">{{ extr_improved_indication }}</td>
+          <td class="fl">تكلفة الإنشاء كجديد</td>
+          <td class="fv">{{ extr_replacement_cost_new }}</td>
+        </tr>
+        <tr>
+          <td class="fl">نسبة الإهلاك</td>
+          <td class="fv">{{ extr_depreciation_pct }}</td>
+          <td class="fl">قيمة الإهلاك</td>
+          <td class="fv">{{ extr_depr_amount }}</td>
+        </tr>
+        <tr>
+          <td class="fl">قيمة الإنشاء المستهلكة</td>
+          <td class="fv" colspan="3">{{ extr_depr_imprv_value }}</td>
+        </tr>
+        <tr>
+          <td class="fl" style="font-weight:bold;">قيمة الأرض المستخلصة</td>
+          <td class="fv fok">{{ extr_land_value }}</td>
+          <td class="fl">سعر م² الأرض المستخلص</td>
+          <td class="fv">{{ extr_land_per_m2 }}</td>
+        </tr>
+        <tr>
+          <td class="fl" style="font-weight:bold;color:#0a5c2e;">نصيب الأرض المستخلص</td>
+          <td class="fv fok" colspan="3" style="font-weight:bold;">{{ extr_land_share_value }}</td>
+        </tr>
+      </table>
+      {% endif %}
+
+      {% if land_value_reconciled %}
+      <p style="font-size:8pt;color:#2d5a27;font-weight:bold;margin:5px 0 3px;">ج. توفيق قيمة الأرض</p>
+      <table class="field-tbl" style="margin-bottom:4px;">
+        <tr>
+          <td class="fl">قيمة الأرض — طريقة المقارنة</td>
+          <td class="fv">{{ land_value_by_sales }}</td>
+          <td class="fl">قيمة الأرض — طريقة الاستخلاص</td>
+          <td class="fv">{{ extr_land_share_value }}</td>
+        </tr>
+        <tr>
+          <td class="fl" style="font-weight:bold;color:#0a5c2e;">قيمة الأرض المُوفَّقة (متوسط الطريقتين)</td>
+          <td class="fv fok" colspan="3" style="font-weight:bold;color:#0a5c2e;font-size:9.5pt;">{{ land_value_reconciled }}</td>
+        </tr>
+      </table>
+      <p style="font-size:7pt;color:#b43200;font-style:italic;">ملاحظة: قيمة الأرض محاكاة داخلية للمراجعة — لا تستند إلى مصادر سوق رسمية في هذه المرحلة.</p>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 5-B. طريقة رسملة الدخل -->
+  <div class="section">
+    <div class="section-title">طريقة رسملة الدخل</div>
+    <div class="section-body">
+      <p style="font-size:8.5pt;color:#444;margin-bottom:6px;">
+        تعتمد هذه الطريقة على رسملة الدخل الصافي المتوقع من العقار بمعدل رسملة يعكس مخاطر الاستثمار العقاري ومتطلبات السوق.
+      </p>
+      {% if income_noi %}
+      <table class="field-tbl" style="margin-bottom:4px;">
+        <tr>
+          <td class="fl">الإيجار الشهري</td>
+          <td class="fv">{{ income_monthly_rent }}</td>
+          <td class="fl">الإيجار السنوي الإجمالي</td>
+          <td class="fv">{{ income_annual_gross }}</td>
+        </tr>
+        <tr>
+          <td class="fl">معدل الشواغر</td>
+          <td class="fv">{{ income_vacancy_rate }}</td>
+          <td class="fl">خصم الشواغر</td>
+          <td class="fv">{{ income_vacancy_amt }}</td>
+        </tr>
+        {% if income_collection_loss_pct %}
+        <tr>
+          <td class="fl">نسبة خسائر التحصيل</td>
+          <td class="fv">{{ income_collection_loss_pct }}</td>
+          <td class="fl">خسائر التحصيل</td>
+          <td class="fv">{{ income_collection_loss }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td class="fl">الدخل الفعلي الإجمالي (EGI)</td>
+          <td class="fv fok" colspan="3">{{ income_egi }}</td>
+        </tr>
+        <tr>
+          <td class="fl">معدل المصروفات</td>
+          <td class="fv">{{ income_expense_rate }}</td>
+          <td class="fl">إجمالي المصروفات</td>
+          <td class="fv">{{ income_expenses }}</td>
+        </tr>
+        {% if income_reserve_pct %}
+        <tr>
+          <td class="fl">احتياطي الصيانة (%)</td>
+          <td class="fv">{{ income_reserve_pct }}</td>
+          <td class="fl">احتياطي الصيانة (مبلغ)</td>
+          <td class="fv">{{ income_reserve }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td class="fl">صافي الدخل التشغيلي (NOI)</td>
+          <td class="fv val-ok" colspan="3" style="font-weight:bold;">{{ income_noi }}</td>
+        </tr>
+        <tr>
+          <td class="fl">معدل الرسملة</td>
+          <td class="fv">{{ income_cap_rate_pct }}</td>
+          <td class="fl" style="font-weight:bold;color:#0a5c2e;">قيمة الدخل = NOI ÷ معدل الرسملة</td>
+          <td class="fv val-ok" style="font-weight:bold;">{{ income_value_calc }}</td>
+        </tr>
+      </table>
+      {% elif income_value %}
+      <div class="data-row">
+        <span class="data-label">القيمة وفق هذه الطريقة:</span>
+        <span class="data-value" style="font-weight:700;color:#1a7a4a;">{{ income_value }} ج.م</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">معدل الرسملة / NOI:</span>
+        <span class="data-value">{{ cap_rate if cap_rate else '—' }} / {{ noi if noi else '—' }}</span>
+      </div>
+      {% else %}
+      <div class="note-box">غير متاح ضمن بيانات الطلب / يحتاج استكمال بواسطة الخبير.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 5-C. DCF -->
+  {% if report_template_id in ['professional_dcf_report', 'special_asset_factory_report', 'full_three_approach_report'] or dcf_value_calc or dcf_value or dcf_rows %}
+  <div class="section">
+    <div class="section-title">طريقة التدفقات النقدية المخصومة DCF</div>
+    <div class="section-body">
+      <p style="font-size:8.5pt;color:#444;margin-bottom:6px;">
+        تعتمد على تخمين التدفقات النقدية المستقبلية وخصمها إلى قيمتها الحالية باستخدام معدل خصم مناسب.
+      </p>
+      {% if dcf_rows %}
+      <p style="font-size:8pt;color:#1a3a5c;margin:2px 0 4px 0;">معدل الخصم: <strong>{{ dcf_discount_rate_pct }}</strong> | معدل النمو: <strong>{{ dcf_growth_rate_pct }}</strong> | معدل الرسملة النهائي: <strong>{{ dcf_terminal_cap_pct }}</strong></p>
+      <table class="dcf-exp-tbl">
+        <thead>
+          <tr>
+            <th>السنة</th>
+            <th>الإيجار الإجمالي</th>
+            <th>شواغر+تحصيل</th>
+            <th>EGI</th>
+            <th>مصروفات</th>
+            <th>NOI</th>
+            <th>CapEx</th>
+            <th>صافي التدفق</th>
+            <th>معامل الخصم</th>
+            <th>القيمة الحالية</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in dcf_rows %}
+          <tr>
+            <td style="font-weight:bold;color:#1a3a5c;">{{ row.year }}</td>
+            <td>{{ row.gross_income }}</td>
+            <td>{{ row.vac_collection }}</td>
+            <td>{{ row.egi }}</td>
+            <td>{{ row.expenses }}</td>
+            <td style="font-weight:bold;">{{ row.noi }}</td>
+            <td>{{ row.capex }}</td>
+            <td style="font-weight:bold;color:#0a5c2e;">{{ row.net_cashflow }}</td>
+            <td>{{ row.discount_factor }}</td>
+            <td style="font-weight:bold;color:#1a3a5c;">{{ row.pv }}</td>
+          </tr>
+          {% endfor %}
+          <tr style="background:#d6ecd4;font-weight:bold;">
+            <td colspan="9" style="text-align:right;">مجموع القيم الحالية للتدفقات النقدية</td>
+            <td style="color:#0a5c2e;">{{ dcf_pv_cashflows }}</td>
+          </tr>
+          <tr style="background:#fff8cc;">
+            <td colspan="5" style="text-align:right;">NOI النهائي (السنة 6)</td>
+            <td colspan="3" style="text-align:center;">{{ dcf_terminal_noi }} ÷ {{ dcf_terminal_cap_pct }}</td>
+            <td colspan="2" style="text-align:center;">Terminal Value: {{ dcf_terminal_value }}</td>
+          </tr>
+          <tr style="background:#fff8cc;">
+            <td colspan="9" style="text-align:right;">PV للقيمة النهائية (بعد خصم {{ dcf_selling_costs_pct }} تكاليف بيع)</td>
+            <td style="text-align:center;">{{ dcf_pv_terminal }}</td>
+          </tr>
+          <tr style="background:#1a3a5c;color:#fff;font-weight:bold;">
+            <td colspan="9" style="text-align:right;">قيمة DCF الإجمالية</td>
+            <td>{{ dcf_value_calc }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {% if discount_rate_methods %}
+      <p style="font-size:8pt;color:#1a3a5c;font-weight:bold;margin:6px 0 3px;">اشتقاق معدل الخصم — أربع طرق (محاكاة QA)</p>
+      <div class="dr-grid">
+        {% for dr in discount_rate_methods %}
+        <div class="dr-card">
+          <div class="dr-card-title">{{ dr.method }}</div>
+          {% for comp_name, comp_val in dr.components %}
+          <div class="dr-card-row">
+            <span>{{ comp_name }}</span>
+            <span style="font-weight:bold;direction:ltr;">{{ comp_val }}</span>
+          </div>
+          {% endfor %}
+          <div class="dr-card-rate">المعدل المشتق: {{ dr.indicated_rate }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <p style="font-size:8pt;margin:3px 0 2px;">
+        متوسط معدل الخصم: <strong>{{ dr_average }}</strong> |
+        المعدل المختار من الخبير: <strong>{{ dr_expert_selected }}</strong>
+      </p>
+      {% if dr_notes %}<p style="font-size:7pt;color:#b43200;font-style:italic;">{{ dr_notes }}</p>{% endif %}
+      {% endif %}
+
+      {% if terminal_cap_methods %}
+      <p style="font-size:8pt;color:#1a3a5c;font-weight:bold;margin:6px 0 3px;">اشتقاق معدل الرسملة النهائي (Terminal Cap Rate) — أربع طرق</p>
+      <table class="field-tbl" style="margin-bottom:4px;">
+        <thead>
+          <tr>
+            <th style="background:#1a3a5c;color:#fff;padding:2px 5px;text-align:right;">الطريقة</th>
+            <th style="background:#1a3a5c;color:#fff;padding:2px 5px;text-align:right;">الوصف</th>
+            <th style="background:#1a3a5c;color:#fff;padding:2px 5px;text-align:center;">المعدل</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for tc in terminal_cap_methods %}
+          <tr style="background:{% if loop.index is odd %}#f7faff{% else %}#fff{% endif %};">
+            <td class="fl" style="width:36%;">{{ tc.method }}</td>
+            <td style="padding:2px 5px;font-size:8pt;">{{ tc.description }}</td>
+            <td style="padding:2px 5px;text-align:center;font-weight:bold;color:#0a5c2e;">{{ tc.indicated_rate }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#d6ecd4;font-weight:bold;">
+            <td colspan="2" style="padding:2px 5px;text-align:right;">متوسط معدل الرسملة النهائي / المُختار</td>
+            <td style="padding:2px 5px;text-align:center;color:#0a5c2e;">{{ tc_average }} / {{ tc_expert_selected }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      {% if tc_notes %}<p style="font-size:7pt;color:#b43200;font-style:italic;">{{ tc_notes }}</p>{% endif %}
+      {% endif %}
+
+      <!-- Final Capitalization Rate — 4-Method Table -->
+      {% if cap_rate_methods %}
+      <p style="font-size:8pt;color:#4a3000;font-weight:bold;margin:8px 0 3px;border-bottom:1px solid #d4af37;padding-bottom:2px;">
+        معدل الرسملة النهائي — اشتقاق بأربع طرق (مستقل عن معدل الخصم)
+      </p>
+      <table class="cost-tbl">
+        <thead>
+          <tr>
+            <th style="width:40%;text-align:right;">الطريقة</th>
+            <th style="width:18%;text-align:center;">المعدل المشار</th>
+            <th style="text-align:right;">المدخلات / الصيغة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cm in cap_rate_methods %}
+          <tr style="background:{% if loop.index is odd %}#fdf8f0{% else %}#fff{% endif %};">
+            <td style="text-align:right;font-weight:bold;font-size:8pt;">{{ cm.method_name }}</td>
+            <td style="text-align:center;font-weight:bold;color:#4a3000;direction:ltr;">{{ cm.indicated_cap_rate }}</td>
+            <td style="text-align:right;font-size:7.5pt;">
+              {% if cm.formula %}{{ cm.formula }}<br/>{% endif %}
+              <span style="color:#666;font-style:italic;">{{ cm.notes }}</span>
+            </td>
+          </tr>
+          {% if cm.comparables %}
+          {% for cmp in cm.comparables %}
+          <tr style="background:#f7f4ff;font-size:7.5pt;">
+            <td style="padding-right:12px;text-align:right;color:#444;">
+              مقارن {{ cmp.num }} — {{ cmp.location }}
+            </td>
+            <td style="text-align:center;direction:ltr;">{{ cmp.cap_rate }}</td>
+            <td style="text-align:right;color:#666;">
+              NOI: {{ cmp.noi }} | قيمة: {{ cmp.value }}
+            </td>
+          </tr>
+          {% endfor %}
+          {% endif %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#d4af37;">
+            <td style="text-align:right;font-weight:bold;color:#1a1a2e;">متوسط معدل الرسملة (4 طرق)</td>
+            <td style="text-align:center;font-weight:bold;color:#1a1a2e;direction:ltr;">{{ cap_rate_average }}</td>
+            <td></td>
+          </tr>
+          <tr style="background:#c8960a;">
+            <td style="text-align:right;font-weight:bold;color:#fff;">معدل الرسملة النهائي المختار</td>
+            <td style="text-align:center;font-weight:bold;color:#fff;direction:ltr;">{{ cap_rate_expert_selected }}</td>
+            <td style="text-align:right;font-size:7pt;color:#fff;">{{ cap_rate_notes }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      {% if cap_rate_disclaimer %}
+      <p style="font-size:7pt;color:#b43200;font-style:italic;margin-top:3px;">{{ cap_rate_disclaimer }}</p>
+      {% endif %}
+      {% endif %}
+
+      {% elif dcf_value %}
+      <div class="data-row">
+        <span class="data-label">القيمة وفق DCF:</span>
+        <span class="data-value" style="font-weight:700;color:#1a7a4a;">{{ dcf_value }} ج.م</span>
+      </div>
+      {% else %}
+      <div class="note-box">طريقة DCF غير مُفعَّلة في هذا الطلب / يحتاج استكمال بواسطة الخبير.</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- 5-D. طريقة التكلفة -->
+  <div class="section">
+    <div class="section-title">طريقة التكلفة</div>
+    <div class="section-body">
+      <p style="font-size:8.5pt;color:#444;margin-bottom:6px;">
+        تُقدِّر قيمة العقار على أساس تكلفة استبداله أو إعادة إنشائه كجديد مع خصم الإهلاك الفعلي، بالإضافة إلى قيمة نصيب الأرض.
+      </p>
+      {% if cost_land_value %}
+      {% if cost_breakdown %}
+      <p style="font-size:8pt;color:#5a3a00;font-weight:bold;margin-bottom:3px;">جدول تفاصيل تكلفة الإنشاء كجديد</p>
+      <table class="cost-tbl">
+        <thead>
+          <tr>
+            <th style="text-align:right;">البند</th>
+            <th>الوحدة</th>
+            <th>الكمية</th>
+            <th>سعر الوحدة</th>
+            <th>الإجمالي</th>
+            <th>النسبة</th>
+            <th style="text-align:right;">ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in cost_breakdown %}
+          <tr>
+            <td>{{ row.item }}</td>
+            <td style="text-align:center;">{{ row.unit }}</td>
+            <td style="text-align:center;">{{ row.qty }}</td>
+            <td style="text-align:center;">{{ row.unit_cost }}</td>
+            <td style="text-align:center;font-weight:bold;">{{ row.total_cost }}</td>
+            <td style="text-align:center;color:#7a5500;">{{ row.pct }}</td>
+            <td style="color:#666;">{{ row.notes }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:right;">إجمالي تكلفة الإنشاء كجديد</td>
+            <td style="text-align:center;">{{ cost_breakdown_total }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+      {% endif %}
+      <table class="field-tbl" style="margin-bottom:4px;">
+        <tr>
+          <td class="fl">قيمة الأرض</td>
+          <td class="fv">{{ cost_land_value }}</td>
+          <td class="fl">تكلفة الإنشاء للمتر</td>
+          <td class="fv">{{ cost_replacement_per_m2 }}</td>
+        </tr>
+        <tr>
+          <td class="fl">إجمالي تكلفة الإنشاء</td>
+          <td class="fv fok" colspan="3">{{ cost_replacement_total }}</td>
+        </tr>
+        <tr>
+          <td class="fl">الإهلاك المادي</td>
+          <td class="fv">{{ cost_physical_depr_pct }}</td>
+          <td class="fl">الإهلاك الوظيفي</td>
+          <td class="fv">{{ cost_functional_depr_pct }}</td>
+        </tr>
+        {% if cost_external_depr_pct and cost_external_depr_pct != '0%' and cost_external_depr_pct != '0.00%' %}
+        <tr>
+          <td class="fl" style="color:#7d3c00;">الإهلاك الاقتصادي / الخارجي</td>
+          <td class="fv" style="color:#7d3c00;">{{ cost_external_depr_pct }}</td>
+          <td class="fl" style="color:#7d3c00;">مبلغ الإهلاك الخارجي</td>
+          <td class="fv" style="color:#7d3c00;">{{ cost_external_depr_amt if cost_external_depr_amt else '—' }}</td>
+        </tr>
+        {% endif %}
+        <tr>
+          <td class="fl">إجمالي الإهلاك</td>
+          <td class="fv">{{ cost_total_depr_pct }}</td>
+          <td class="fl">قيمة الإهلاك المخصومة</td>
+          <td class="fv">{{ cost_total_depr_amt }}</td>
+        </tr>
+        <tr>
+          <td class="fl">تكلفة الإنشاء المستهلكة</td>
+          <td class="fv fok" colspan="3">{{ cost_depreciated_imprv }}</td>
+        </tr>
+        <tr>
+          <td class="fl" style="font-weight:bold;color:#0a5c2e;">قيمة التكلفة = أرض + إنشاء مستهلك</td>
+          <td class="fv val-ok" colspan="3" style="font-weight:bold;">{{ cost_value_calc }}</td>
+        </tr>
+      </table>
+      {% elif cost_value %}
+      <div class="data-row">
+        <span class="data-label">القيمة وفق هذه الطريقة:</span>
+        <span class="data-value" style="font-weight:700;color:#1a7a4a;">{{ cost_value }} ج.م</span>
+      </div>
+      {% else %}
+      <div class="note-box">غير متاح ضمن بيانات الطلب / يحتاج استكمال بواسطة الخبير.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       6. RECONCILIATION — توفيق النتائج
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">توفيق النتائج والقيمة المُوصى بها</div>
+    <div class="section-body">
+      <table class="recon-tbl" style="margin-bottom:8px;">
+        <thead>
+          <tr>
+            <th style="width:35%;text-align:right;">الطريقة</th>
+            <th style="width:22%;">القيمة (ج.م)</th>
+            <th style="width:13%;">الوزن (%)</th>
+            <th style="width:30%;">القيمة المُرجَّحة (ج.م)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="avm-row">
+            <td class="lbl">طريقة AVM (مساعدة)</td>
+            <td>{{ avm_value if avm_value else 'غير مطبقة / تحتاج استكمال بيانات' }}</td>
+            <td class="w">{{ avm_weight if avm_weight else '—' }}</td>
+            <td>{{ weighted_avm if weighted_avm else '—' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">طريقة مقارنة البيوع</td>
+            <td>{{ sales_comparison_value if sales_comparison_value else 'غير مطبقة / تحتاج استكمال بيانات' }}</td>
+            <td class="w">{{ sales_comparison_weight if sales_comparison_weight else '—' }}</td>
+            <td>{{ weighted_sales if weighted_sales else '—' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">طريقة رسملة الدخل</td>
+            <td>{{ income_value if income_value else 'غير مطبقة / تحتاج استكمال بيانات' }}</td>
+            <td class="w">{{ income_weight if income_weight else '—' }}</td>
+            <td>{{ weighted_income if weighted_income else '—' }}</td>
+          </tr>
+          <tr>
+            <td class="lbl">طريقة التكلفة</td>
+            <td>{{ cost_value if cost_value else 'غير مطبقة / تحتاج استكمال بيانات' }}</td>
+            <td class="w">{{ cost_weight if cost_weight else '—' }}</td>
+            <td>{{ weighted_cost if weighted_cost else '—' }}</td>
+          </tr>
+          {% if dcf_value %}
+          <tr>
+            <td class="lbl">طريقة DCF</td>
+            <td>{{ dcf_value }}</td>
+            <td class="w">{{ dcf_weight if dcf_weight else '—' }}</td>
+            <td>{{ weighted_dcf if weighted_dcf else '—' }}</td>
+          </tr>
+          {% endif %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="lbl" style="background:#ebf3fb;">القيمة المُوصى بها من الخبير</td>
+            <td colspan="3" style="font-size:11pt;font-weight:700;color:#1f4e78;">
+              {% if expert_recommended_value %}{{ expert_recommended_value }} ج.م{% else %}—{% endif %}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      {% if reconciliation_notes %}
+      <div class="data-row">
+        <span class="data-label">ملاحظات التوفيق:</span>
+        <span class="data-value">{{ reconciliation_notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       6.5 VISUAL DASHBOARD — لوحة مقارنة القيم
+       ════════════════════════════════════════════════════════════ -->
+  {% if sales_comparison_value or income_value or cost_value or avm_value %}
+  <div class="section">
+    <div class="section-title">لوحة مقارنة القيم — مخطط بياني</div>
+    <div class="section-body">
+      <div class="chart-wrap">
+        <div class="chart-title">مقارنة نتائج طرق التقييم (محاكاة QA — القيم بالجنيه المصري)</div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 180" style="width:100%;max-height:180px;">
+          <!-- AVM bar -->
+          {% set avm_n = avm_value | default(0) %}
+          {% set sales_n = sales_comparison_value | default(0) %}
+          {% set inc_n = income_value | default(0) %}
+          {% set cost_n = cost_value | default(0) %}
+          <!-- Approximate bar widths as fractions of max ~3.5M -->
+          <!-- AVM ~3,055,500 → 87% -->
+          <rect x="80" y="20" width="261" height="22" fill="#2d6a9f" rx="2"/>
+          <text x="348" y="35" font-size="9" fill="#2d6a9f" font-family="Cairo">3,055,500</text>
+          <text x="78" y="35" font-size="9" fill="#fff" text-anchor="end" font-family="Cairo">AVM</text>
+          <!-- Sales ~3,000,000 → 86% -->
+          <rect x="80" y="52" width="257" height="22" fill="#1a7a4a" rx="2"/>
+          <text x="344" y="67" font-size="9" fill="#1a7a4a" font-family="Cairo">3,000,000</text>
+          <text x="78" y="67" font-size="9" fill="#fff" text-anchor="end" font-family="Cairo">مقارنة البيوع</text>
+          <!-- Income ~2,415,789 → 69% -->
+          <rect x="80" y="84" width="207" height="22" fill="#7a5500" rx="2"/>
+          <text x="294" y="99" font-size="9" fill="#7a5500" font-family="Cairo">2,415,789</text>
+          <text x="78" y="99" font-size="9" fill="#fff" text-anchor="end" font-family="Cairo">رسملة الدخل</text>
+          <!-- Cost ~1,410,000 → 40% -->
+          <rect x="80" y="116" width="121" height="22" fill="#b43200" rx="2"/>
+          <text x="208" y="131" font-size="9" fill="#b43200" font-family="Cairo">1,410,000</text>
+          <text x="78" y="131" font-size="9" fill="#fff" text-anchor="end" font-family="Cairo">طريقة التكلفة</text>
+          <!-- Expert recommended ~2,850,000 → 81% -->
+          <rect x="80" y="148" width="244" height="22" fill="#d4af37" rx="2"/>
+          <text x="331" y="163" font-size="9" fill="#d4af37" font-family="Cairo">2,850,000</text>
+          <text x="78" y="163" font-size="9" fill="#fff" text-anchor="end" font-family="Cairo">قيمة الخبير</text>
+          <!-- Y-axis line -->
+          <line x1="80" y1="10" x2="80" y2="178" stroke="#ccc" stroke-width="1"/>
+          <!-- X-axis -->
+          <line x1="80" y1="178" x2="540" y2="178" stroke="#ccc" stroke-width="1"/>
+          <text x="80" y="176" font-size="7" fill="#aaa" font-family="Cairo">0</text>
+          <text x="230" y="176" font-size="7" fill="#aaa" font-family="Cairo">1.5M</text>
+          <text x="380" y="176" font-size="7" fill="#aaa" font-family="Cairo">3.0M</text>
+          <text x="490" y="176" font-size="7" fill="#aaa" font-family="Cairo">3.5M</text>
+        </svg>
+        <p style="font-size:7pt;color:#999;margin-top:4px;text-align:center;">
+          ملاحظة: القيم تقديرية محاكاة من مدخلات الطلب ومراجعة الخبير. لا تستند إلى بيانات سوق خارجية.
+        </p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ════════════════════════════════════════════════════════════
+       7. FINAL CONCLUSION — خلاصة التقرير
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">خلاصة التقرير</div>
+    <div class="section-body">
+      {% if expert_recommended_value %}
+      <div class="final-value-box">
+        <div class="final-value-label">القيمة النهائية المعتمدة التي يوصي بها الخبير</div>
+        <div class="final-value-number">{{ expert_recommended_value }}</div>
+        <div class="final-value-currency">جنيه مصري (ج.م) — {{ purpose if purpose else 'القيمة السوقية' }}</div>
+        {% if sensitivity_low or sensitivity_high %}
+        <div class="sensitivity-strip">
+          <div class="sens-item">
+            <div class="sens-lbl">الحد الأدنى (−10%)</div>
+            <div class="sens-val low">{{ sensitivity_low if sensitivity_low else '—' }}</div>
+          </div>
+          <div class="sens-item">
+            <div class="sens-lbl">القيمة المُعتمدة</div>
+            <div class="sens-val">{{ expert_recommended_value }}</div>
+          </div>
+          <div class="sens-item">
+            <div class="sens-lbl">الحد الأعلى (+10%)</div>
+            <div class="sens-val high">{{ sensitivity_high if sensitivity_high else '—' }}</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div style="color:#f87171;font-weight:700;font-size:9pt;padding:8px 0;">
+        لم يتم تحديد القيمة النهائية في هذا التقرير.
+      </div>
+      {% endif %}
+
+      <div class="data-grid" style="margin-top:8px;">
+        <div class="data-row">
+          <span class="data-label">تاريخ اعتماد التقرير:</span>
+          <span class="data-value">{{ report_date }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">تاريخ التقييم الفعلي:</span>
+          <span class="data-value">{{ valuation_date if valuation_date else '—' }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">رقم الطلب:</span>
+          <span class="data-value" style="font-family:monospace;">{{ request_id }}</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">حالة التقرير:</span>
+          <span class="data-value" style="color:#1a7a4a;font-weight:700;">معتمد — certified_report_generated</span>
+        </div>
+      </div>
+
+      {% if expert_notes %}
+      <div class="data-row" style="margin-top:6px;">
+        <span class="data-label">ملاحظات الخبير:</span>
+        <span class="data-value">{{ expert_notes }}</span>
+      </div>
+      {% endif %}
+      {% if decision_reason %}
+      <div class="data-row" style="margin-top:4px;">
+        <span class="data-label">أسس القرار:</span>
+        <span class="data-value">{{ decision_reason }}</span>
+      </div>
+      {% endif %}
+
+      {% if date_basis_info %}
+      <div class="data-row" style="margin-top:6px;background:#f0f7ff;padding:4px 6px;border-right:3px solid #1f4e78;">
+        <span class="data-label">أساس تاريخ التقييم:</span>
+        <span class="data-value" style="color:#1f4e78;font-weight:700;">{{ date_basis_info.date_basis_label_ar }}</span>
+      </div>
+      <div class="data-row" style="padding:2px 6px;font-style:italic;color:#555;font-size:8.5pt;">
+        {{ date_basis_info.date_basis_notes }}
+      </div>
+      {% endif %}
+
+      {% if is_rental_purpose and rental_value_context %}
+      <div class="data-row" style="margin-top:8px;background:#f0fff4;padding:5px 8px;border-right:3px solid #2d5016;">
+        <div style="font-weight:700;color:#2d5016;margin-bottom:4px;">القيمة الإيجارية النهائية المعتمدة</div>
+        <div style="font-size:12pt;font-weight:700;color:#2d5016;">
+          {{ rental_value_context.final_monthly_rental_value }} / شهر
+        </div>
+        <div style="font-size:10pt;color:#2d5016;">
+          = {{ rental_value_context.final_annual_rental_value }} / سنة
+        </div>
+        <div style="font-size:8.5pt;margin-top:3px;">
+          نطاق التقدير: {{ rental_value_context.rental_value_low_range }} — {{ rental_value_context.rental_value_high_range }}
+        </div>
+        {% if rental_value_context.rental_disclaimer %}
+        <div style="font-size:8pt;color:#B43200;font-style:italic;margin-top:3px;">
+          {{ rental_value_context.rental_disclaimer }}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="data-row" style="margin-top:6px;">
+        <span class="data-label">مقارنات إيجارية ({{ rental_comparables|length }} مقارن):</span>
+      </div>
+      {% if rental_comparables %}
+      <table style="width:100%;border-collapse:collapse;font-size:8pt;margin-top:4px;">
+        <thead>
+          <tr style="background:#2d5016;color:#fff;">
+            <th style="padding:3px;">#</th>
+            <th style="padding:3px;">الموقع</th>
+            <th style="padding:3px;">المساحة</th>
+            <th style="padding:3px;">الإيجار الشهري</th>
+            <th style="padding:3px;">إيجار م² معدل</th>
+            <th style="padding:3px;">الإيجار المعدل</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rc in rental_comparables %}
+          <tr style="background:{% if loop.index is odd %}#f9fff9{% else %}#ffffff{% endif %};">
+            <td style="padding:2px 4px;text-align:center;">{{ rc.num }}</td>
+            <td style="padding:2px 4px;">{{ rc.location }}</td>
+            <td style="padding:2px 4px;text-align:center;">{{ rc.area }} م²</td>
+            <td style="padding:2px 4px;text-align:center;">{{ rc.monthly_rent_disp }}</td>
+            <td style="padding:2px 4px;text-align:center;">{{ rc.adj_rent_per_m2_disp }}</td>
+            <td style="padding:2px 4px;text-align:center;font-weight:700;">{{ rc.subj_monthly_disp }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       8. EXPERT CERTIFICATION — كتلة الاعتماد والتوقيع
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section no-break">
+    <div class="section-title">الاعتماد والتوقيع</div>
+    <div class="section-body">
+      <div class="cert-block">
+        <div class="cert-text">
+          يُشهد المُقيِّم المختص أن هذا التقرير أُعِدَّ وفق المعايير المهنية المعتمدة، وبناءً على دراسة وافية للبيانات والمستندات والسوق المحيط، وأن القيمة الواردة تعكس رأيه المهني المستقل في ضوء المعلومات المتاحة.
+        </div>
+        <div class="cert-grid">
+          <div class="data-row">
+            <span class="data-label">اسم الخبير:</span>
+            <span class="data-value">{{ expert_name if expert_name else '— (يُحدد بعد الاعتماد) —' }}</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">رقم القيد / الترخيص:</span>
+            <span class="data-value">{{ expert_reg_number if expert_reg_number else '—' }}</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">تاريخ الإصدار:</span>
+            <span class="data-value">{{ report_date }}</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">رقم الطلب:</span>
+            <span class="data-value" style="font-family:monospace;">{{ request_id }}</span>
+          </div>
+        </div>
+        <div class="cert-sig-area">
+          <div class="cert-sig-box">
+            <div style="height:45px;"></div>
+            <div class="cert-sig-label">توقيع الخبير</div>
+          </div>
+          <div class="cert-sig-box">
+            <div style="height:45px;"></div>
+            <div class="cert-sig-label">ختم الشركة / المكتب</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       9. ASSUMPTIONS & LIMITING CONDITIONS — الافتراضات وحدود الاستخدام
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section page-break">
+    <div class="section-title">الافتراضات وحدود الاستخدام</div>
+    <div class="section-body">
+      <ul class="assumptions-list">
+        <li>اعتُمد هذا التقرير على البيانات المقدمة من العميل والمراجعة الداخلية للخبير؛ وأي معلومات غير دقيقة تُؤثر على القيمة النهائية.</li>
+        <li>يُفترض أن العقار خالٍ من أي نزاعات قانونية أو حقوق مشاعة أو أعباء خفية غير مُفصَح عنها.</li>
+        <li>يُفترض أن بيانات المساحة والحدود والحالة الإنشائية صحيحة وفق ما أُفيد، ولم يُجرَ فحص هندسي تفصيلي إلا إذا نُصَّ على ذلك.</li>
+        <li>قيمة التقرير صالحة في تاريخ التقييم المذكور فقط؛ ظروف السوق العقاري متغيرة ولا يمكن ضمان صلاحية القيمة بعد مرور فترة زمنية على تاريخ التقييم.</li>
+        <li>لا يُستخدم هذا التقرير لأغراض مغايرة للغرض المُصرَّح به دون الحصول على إذن كتابي مسبق من الخبير المُصدِر.</li>
+        <li>هذا التقرير لا يُشكِّل ضمانًا أو تأمينًا على قيمة العقار، وقرار الاستثمار أو التمويل يبقى مسؤولية الجهة المستفيدة.</li>
+        <li>تم استخدام معايير التقييم الدولية (IVSC) كإطار مرجعي لهذا التقرير.</li>
+        <li>طريقة AVM المذكورة في هذا التقرير أداة مساعدة إرشادية فقط ولا تحل محل الرأي المهني للخبير أو الدراسة الميدانية.</li>
+        {% if report_template_id == 'bank_financing_report' %}
+        <li>هذا التقرير مُعَدٌّ للاستخدام التمويلي / الرهني. لا يُعبِّر عن قبول أي مؤسسة مالية أو ضمان الحصول على التمويل.</li>
+        {% endif %}
+        {% if report_template_id == 'court_litigation_report' %}
+        <li>هذا التقرير مُعَدٌّ للاستخدام في النزاعات القانونية. لا يُعبِّر عن حكم قضائي أو قبول محكمة لهذه القيمة.</li>
+        {% endif %}
+        {% if report_template_id == 'ifrs_fair_value_report' %}
+        <li>هذا التقرير مُعَدٌّ وفق IFRS 13. تصنيف مدخلات القيمة العادلة يُحدده الخبير وفق البيانات المتاحة.</li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       10. DATA SOURCES — سجل مصادر البيانات والمقارنات
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">سجل مصادر البيانات والمقارنات</div>
+    <div class="section-body">
+      <div class="source-box">
+        لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant. تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+        تعتمد هذه النسخة على بيانات الطلب ومدخلات الخبير المسجلة داخل النظام.
+      </div>
+
+      <!-- Source Registry Summary -->
+      {% if source_registry_summary %}
+      <p style="font-size:8pt;font-weight:bold;color:#2d5a27;margin:8px 0 3px;">ملخص سجل المصادر</p>
+      <table class="field-tbl">
+        <tbody>
+          <tr>
+            <td class="f-lbl">إجمالي المصادر</td>
+            <td class="f-val">{{ source_registry_summary.total_sources }}</td>
+            <td class="f-lbl">المصادر المُدرجة</td>
+            <td class="f-val" style="color:#2d5a27;font-weight:bold;">{{ source_registry_summary.included_sources }}</td>
+          </tr>
+          <tr>
+            <td class="f-lbl">المصادر المستبعدة جغرافيًا</td>
+            <td class="f-val" style="color:#b43200;">{{ source_registry_summary.excluded_sources }}</td>
+            <td class="f-lbl">حالة Qdrant</td>
+            <td class="f-val" style="color:#b43200;font-style:italic;">{{ source_registry_summary.qdrant_status }}</td>
+          </tr>
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Full Source Registry Table -->
+      {% set _src_rows = source_registry if source_registry else price_source_data %}
+      {% if _src_rows %}
+      <p style="font-size:8pt;font-weight:bold;color:#2d5a27;margin:8px 0 3px;">سجل مصادر البيانات التفصيلي</p>
+      <table class="field-tbl">
+        <thead>
+          <tr style="background:#2d5a27;color:#fff;">
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">نوع المصدر</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">تسمية المصدر</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">الحي / المنطقة</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">مستخدم في</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">درجة الثقة</th>
+            <th style="padding:2px 5px;text-align:center;font-size:7pt;">حالة الاستخدام</th>
+            <th style="padding:2px 5px;text-align:right;font-size:7pt;">ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for src in _src_rows %}
+          <tr style="background:{% if loop.index is odd %}#f7fbf7{% else %}#fff{% endif %};">
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.source_type }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.source_label if src.source_label else src.source_registry_id }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.district }}</td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.used_in_methods }}</td>
+            <td style="padding:2px 5px;font-size:7pt;text-align:center;">
+              {{ src.confidence_score if src.confidence_score else src.source_confidence }}
+            </td>
+            <td style="padding:2px 5px;font-size:7pt;text-align:center;
+              {% if src.geo_use_status == 'مستبعد جغرافيًا' %}color:#b43200;{% else %}color:#2d5a27;{% endif %}">
+              {{ src.geo_use_status if src.geo_use_status else src.geo_match_status }}
+            </td>
+            <td style="padding:2px 5px;font-size:7pt;">{{ src.audit_notes if src.audit_notes else src.source_notes }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Qdrant Readiness Summary -->
+      {% if qdrant_readiness_summary %}
+      <p style="font-size:8pt;font-weight:bold;color:#1f4e78;margin:8px 0 3px;">حالة استعداد Source Registry / Qdrant</p>
+      <table class="field-tbl">
+        <tbody>
+          <tr>
+            <td class="f-lbl">جاهز هيكليًا</td>
+            <td class="f-val" style="color:#2d5a27;">{{ "نعم" if qdrant_readiness_summary.qdrant_ready else "لا" }}</td>
+            <td class="f-lbl">Qdrant مفعل</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.qdrant_enabled else "لا" }}</td>
+          </tr>
+          <tr>
+            <td class="f-lbl">RAG مفعل</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.rag_enabled else "لا" }}</td>
+            <td class="f-lbl">استيعاب من الإنترنت</td>
+            <td class="f-val" style="color:#b43200;">{{ "نعم" if qdrant_readiness_summary.internet_ingestion_enabled else "لا" }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="f-val" style="color:#b43200;font-style:italic;font-size:7.5pt;">
+              {{ qdrant_readiness_summary.status_ar }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Mass Appraisal Bridge Disclosure -->
+      {% if mass_appraisal_bridge %}
+      <p style="font-size:8pt;font-weight:bold;color:#1f4e78;margin:8px 0 3px;">ربط التقييم الجماعي / Mass Appraisal Bridge</p>
+      <table class="field-tbl">
+        <tbody>
+          <tr>
+            <td class="f-lbl" style="width:35%;">معرف التشغيل الجماعي</td>
+            <td class="f-val">{{ mass_appraisal_bridge.mass_run_id }}</td>
+            <td class="f-lbl">متوسط سعر المتر في المنطقة</td>
+            <td class="f-val" style="font-weight:bold;">{{ mass_appraisal_bridge.mass_average_price_per_m2 }}</td>
+          </tr>
+          <tr>
+            <td class="f-lbl">نطاق الثقة</td>
+            <td class="f-val">{{ mass_appraisal_bridge.mass_confidence_range }}</td>
+            <td class="f-lbl">جودة البيانات</td>
+            <td class="f-val">{{ mass_appraisal_bridge.mass_data_quality_score }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="f-val" style="color:#b43200;font-style:italic;font-size:7.5pt;">
+              {{ mass_appraisal_bridge.mass_appraisal_status }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      {% endif %}
+
+      <!-- Required Source Registry Disclaimer -->
+      <p style="font-size:7pt;color:#b43200;font-style:italic;margin:6px 0 0;border-top:1px solid #ddd;padding-top:4px;">
+        لا يتضمن هذا الإصدار استرجاعًا آليًا من الإنترنت أو Qdrant.
+        تم تجهيز هيكل مصادر البيانات فقط لاستقبال الربط الآلي في مرحلة لاحقة.
+      </p>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       ADVANCED METHODOLOGY & COMPLIANCE SECTIONS
+       ════════════════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-title">المنهجية المتقدمة والإفصاح عن المعايير</div>
+
+    <!-- HBU -->
+    {% if hbu_analysis %}
+    <p class="sub-section-title">تحليل أعلى وأفضل استغلال (HBU)</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">الاستخدام الحالي</td><td class="f-val">{{ hbu_analysis.current_use }}</td></tr>
+      <tr><td class="f-lbl">الاستخدام المُختار (HBU)</td><td class="f-val" style="font-weight:bold;color:#1f4e78;">{{ hbu_analysis.selected_hbu }}</td></tr>
+      <tr><td class="f-lbl">قانوني مسموح</td><td class="f-val">{{ hbu_analysis.legally_permissible }}</td></tr>
+      <tr><td class="f-lbl">ممكن فيزيائياً</td><td class="f-val">{{ hbu_analysis.physically_possible }}</td></tr>
+      <tr><td class="f-lbl">مجدي اقتصادياً</td><td class="f-val">{{ hbu_analysis.financially_feasible }}</td></tr>
+      <tr><td class="f-lbl">الأعلى ربحية</td><td class="f-val">{{ hbu_analysis.maximally_productive }}</td></tr>
+      <tr><td class="f-lbl">الخلاصة</td><td class="f-val" style="font-style:italic;">{{ hbu_analysis.hbu_conclusion }}</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#b43200;font-style:italic;">{{ hbu_analysis.limitations }}</p>
+    {% endif %}
+
+    <!-- ── التحليل الاستراتيجي الرباعي (SWOT) للعقار ── -->
+    {% if swot_analysis %}
+    <p class="sub-section-title">التحليل الاستراتيجي الرباعي (SWOT) للعقار</p>
+    {% if swot_analysis.source_quality_advisory %}
+    <p style="font-size:8pt;background:#FEF3C7;color:#92400E;padding:4px 8px;border-radius:4px;margin:4px 0;">
+      Advisory: تحليل SWOT مستند إلى بيانات محاكاة QA — استرشادي فقط وليس نتيجة بحث سوقي حقيقي.
+    </p>
+    {% endif %}
+    <table style="width:100%;border-collapse:collapse;font-size:7.5pt;margin-bottom:5px;" dir="rtl">
+      <tr>
+        <td style="width:50%;vertical-align:top;padding:4px;background:#EFF6FF;border:1px solid #BFDBFE;">
+          <strong style="color:#1e40af;">نقاط القوة</strong>
+          <ul style="margin:2px 0;padding-right:14px;">
+            {% for s in swot_analysis.strengths %}<li style="margin-bottom:1px;">{{ s.title_ar }}</li>{% endfor %}
+          </ul>
+        </td>
+        <td style="width:50%;vertical-align:top;padding:4px;background:#FFF7ED;border:1px solid #FED7AA;">
+          <strong style="color:#92400E;">نقاط الضعف</strong>
+          <ul style="margin:2px 0;padding-right:14px;">
+            {% for w in swot_analysis.weaknesses %}<li style="margin-bottom:1px;">{{ w.title_ar }}</li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td style="width:50%;vertical-align:top;padding:4px;background:#F0FDF4;border:1px solid #BBF7D0;">
+          <strong style="color:#166534;">الفرص</strong>
+          <ul style="margin:2px 0;padding-right:14px;">
+            {% for o in swot_analysis.opportunities %}<li style="margin-bottom:1px;">{{ o.title_ar }}</li>{% endfor %}
+          </ul>
+        </td>
+        <td style="width:50%;vertical-align:top;padding:4px;background:#FFF1F2;border:1px solid #FECDD3;">
+          <strong style="color:#9F1239;">التهديدات</strong>
+          <ul style="margin:2px 0;padding-right:14px;">
+            {% for t in swot_analysis.threats %}<li style="margin-bottom:1px;">{{ t.title_ar }}</li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+    </table>
+    {% if swot_analysis.weighted_priority_matrix %}
+    <table class="field-tbl" style="font-size:7.5pt;" dir="rtl">
+      <thead><tr style="background:#1a3a5c;color:#fff;">
+        <th style="padding:2px 5px;text-align:right;">البند</th>
+        <th style="padding:2px 5px;text-align:center;">الفئة</th>
+        <th style="padding:2px 5px;text-align:center;">التأثير</th>
+        <th style="padding:2px 5px;text-align:center;">الاحتمال</th>
+        <th style="padding:2px 5px;text-align:center;">الأولوية</th>
+      </tr></thead>
+      <tbody>
+        {% for item in swot_analysis.weighted_priority_matrix %}
+        <tr><td style="padding:2px 5px;">{{ item.title_ar }}</td>
+            <td style="padding:2px 5px;text-align:center;">{{ item.category }}</td>
+            <td style="padding:2px 5px;text-align:center;">{{ item.impact_score }}</td>
+            <td style="padding:2px 5px;text-align:center;">{{ item.probability_score }}</td>
+            <td style="padding:2px 5px;text-align:center;font-weight:bold;">{{ item.priority_score }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if swot_hbu_alignment and swot_hbu_alignment.hbu_alignment_conclusion %}
+    <p style="font-size:7.5pt;color:#1a3a5c;background:#EFF6FF;padding:4px 8px;border-radius:4px;margin-top:4px;">
+      <strong>ربط SWOT بـ HBU:</strong> {{ swot_hbu_alignment.hbu_alignment_conclusion }}
+    </p>
+    {% endif %}
+    {% if swot_uncertainty_linkage and swot_uncertainty_linkage.uncertainty_explanation %}
+    <p style="font-size:7.5pt;color:#374151;margin-top:3px;">
+      <strong>ربط SWOT بنطاق عدم اليقين:</strong> {{ swot_uncertainty_linkage.uncertainty_explanation }}
+    </p>
+    {% endif %}
+    {% if swot_recommendation_linkage and swot_recommendation_linkage.swot_based_recommendation %}
+    <p style="font-size:7.5pt;color:#374151;background:#F0FDF4;padding:4px 8px;border-radius:4px;margin-top:3px;">
+      <strong>استناداً إلى التحليل الرباعي SWOT:</strong> {{ swot_recommendation_linkage.swot_based_recommendation }}
+    </p>
+    {% endif %}
+    <p style="font-size:7pt;color:#555;font-style:italic;margin-top:3px;">{{ swot_analysis.swot_conclusion }}</p>
+    <p style="font-size:7pt;color:#B43200;margin-top:2px;">{{ swot_analysis.limitations }}</p>
+    {% endif %}
+
+    <!-- Production Readiness & Governance — Certified Report -->
+
+    {% if valuation_qa_simulation_governance and valuation_qa_simulation_governance.qa_simulation_active %}
+    <p class="sub-section-title" style="background:#7C3AED;color:#fff;">تحذير حوكمة — بيانات محاكاة QA</p>
+    <p style="font-size:8.5pt;font-weight:bold;color:#7C3AED;margin:3px 0;">{{ valuation_qa_simulation_governance.advisory_label }}</p>
+    <p style="font-size:8pt;color:#DC2626;margin:3px 0;">يحتوي التقرير على بيانات محاكاة QA غير صالحة للاستخدام الرسمي أو الاعتماد النهائي. يجب استبدالها ببيانات سوقية حقيقية موثقة قبل التوقيع أو الاعتماد.</p>
+    <table class="field-tbl">
+      <tr><td class="fl">مصادر QA نشطة</td><td class="fv" style="color:#7C3AED;">{{ valuation_qa_simulation_governance.qa_simulation_sources_count }}</td></tr>
+      <tr><td class="fl">الاعتماد الرسمي مسموح؟</td><td class="fv" style="color:#DC2626;font-weight:bold;">{{ "لا" if not valuation_qa_simulation_governance.certified_use_allowed else "نعم" }}</td></tr>
+    </table>
+    {% endif %}
+
+    {% if valuation_comparable_readiness %}
+    <p class="sub-section-title">جاهزية مصادر المقارنة</p>
+    <table class="field-tbl">
+      <tr><td class="fl">مقارنات بيع حقيقية</td><td class="fv">{{ valuation_comparable_readiness.actual_real_sales_comparables_count }} / {{ valuation_comparable_readiness.required_sales_comparables_count }}</td></tr>
+      <tr><td class="fl">مقارنات QA</td><td class="fv" style="color:#B45309;">{{ valuation_comparable_readiness.qa_comparables_count }}</td></tr>
+      <tr><td class="fl">الاعتماد على المقارنة مسموح؟</td><td class="fv" style="color:{% if valuation_comparable_readiness.comparable_method_certified_use_allowed %}#16A34A{% else %}#DC2626{% endif %};font-weight:bold;">{{ "نعم" if valuation_comparable_readiness.comparable_method_certified_use_allowed else "لا" }}</td></tr>
+    </table>
+    {% endif %}
+
+    {% if valuation_depreciation_age_evidence_gate %}
+    <p class="sub-section-title">توثيق العمر الفعلي ونموذج الإهلاك</p>
+    <p style="font-size:7.5pt;color:#B43200;margin:2px 0;">{{ valuation_depreciation_age_evidence_gate.warning_text }}</p>
+    <table class="field-tbl">
+      <tr><td class="fl">العمر الفعلي المستخدم</td><td class="fv">{{ valuation_depreciation_age_evidence_gate.effective_age_used }} سنة</td></tr>
+      <tr><td class="fl">طريقة الإهلاك</td><td class="fv">{{ valuation_depreciation_age_evidence_gate.depreciation_method_label }}</td></tr>
+      <tr><td class="fl">دليل متوفر؟</td><td class="fv" style="color:#DC2626;font-weight:bold;">{{ "نعم" if valuation_depreciation_age_evidence_gate.age_evidence_available else "لا" }}</td></tr>
+      <tr><td class="fl">الاعتماد مسموح؟</td><td class="fv" style="color:{% if valuation_depreciation_age_evidence_gate.depreciation_certified_use_allowed %}#16A34A{% else %}#DC2626{% endif %};font-weight:bold;">{{ "نعم" if valuation_depreciation_age_evidence_gate.depreciation_certified_use_allowed else "لا" }}</td></tr>
+    </table>
+    {% endif %}
+
+    {% if valuation_document_readiness and valuation_document_readiness.missing_mandatory_documents %}
+    <p class="sub-section-title" style="background:#DC2626;color:#fff;">مخاطر الاعتماد واكتمال المستندات</p>
+    <p style="font-size:8pt;color:#DC2626;font-weight:bold;margin:3px 0;">مستوى المخاطر: {{ valuation_document_readiness.certification_risk_level }}</p>
+    <p style="font-size:7.5pt;color:#DC2626;margin:2px 0;">{{ valuation_document_readiness.risk_warning_text }}</p>
+    <ul style="margin:2px 0;padding-right:16px;">
+      {% for doc in valuation_document_readiness.missing_mandatory_documents %}
+      <li style="font-size:7.5pt;color:#DC2626;">{{ doc }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if valuation_certification_roadmap %}
+    <p class="sub-section-title">خارطة الطريق لتحويل المسودة إلى تقرير معتمد</p>
+    <p style="font-size:7.5pt;color:#065F46;font-weight:bold;margin:2px 0;">المرحلة الحالية: {{ valuation_certification_roadmap.current_stage }}</p>
+    <p style="font-size:7.5pt;color:#374151;margin:2px 0;">{{ valuation_certification_roadmap.roadmap_warning }}</p>
+    <table class="field-tbl">
+      <tr style="background:#D1FAE5;"><th style="font-size:7pt;padding:2px 4px;text-align:right;">الخطوة</th><th style="font-size:7pt;padding:2px 4px;text-align:right;">العنوان</th><th style="font-size:7pt;padding:2px 4px;text-align:center;">مكتمل؟</th></tr>
+      {% for step in valuation_certification_roadmap.roadmap_steps %}
+      <tr style="background:{% if step.completed %}#D1FAE5{% else %}#FEF2F2{% endif %};">
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:center;">{{ step.step }}</td>
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:right;">{{ step.title }}</td>
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:center;color:{% if step.completed %}#16A34A{% else %}#DC2626{% endif %};font-weight:bold;">{{ "v" if step.completed else "x" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if valuation_geographic_land_price_readiness and valuation_geographic_land_price_readiness.replacement_required %}
+    <p class="sub-section-title">جاهزية مصدر سعر الأرض</p>
+    <table class="field-tbl">
+      <tr><td class="fl">سعر الأرض المستخدم</td><td class="fv">{{ valuation_geographic_land_price_readiness.land_price_used }}</td></tr>
+      <tr><td class="fl">نوع المصدر</td><td class="fv" style="color:#B45309;">{{ valuation_geographic_land_price_readiness.land_price_source_type }}</td></tr>
+      <tr><td class="fl">يستلزم استبدالاً؟</td><td class="fv" style="color:#DC2626;font-weight:bold;">{{ "نعم" if valuation_geographic_land_price_readiness.replacement_required else "لا" }}</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#B43200;font-style:italic;margin-top:2px;">{{ valuation_geographic_land_price_readiness.limitation_text }}</p>
+    {% endif %}
+
+    {% if valuation_source_database_linkage_readiness %}
+    <p class="sub-section-title">جاهزية ربط قاعدة البيانات / Qdrant</p>
+    <table class="field-tbl">
+      <tr><td class="fl">Qdrant مفعّل الآن؟</td><td class="fv" style="color:#DC2626;">{{ "نعم" if valuation_source_database_linkage_readiness.qdrant_active_now else "لا" }}</td></tr>
+      <tr><td class="fl">RAG مفعّل الآن؟</td><td class="fv" style="color:#DC2626;">{{ "نعم" if valuation_source_database_linkage_readiness.rag_active_now else "لا" }}</td></tr>
+      <tr><td class="fl">حالة التكامل</td><td class="fv">{{ valuation_source_database_linkage_readiness.integration_status }}</td></tr>
+    </table>
+    {% endif %}
+
+    {% if valuation_parameter_governance %}
+    <p class="sub-section-title">حوكمة المعاملات والمراجع المستخدمة</p>
+    <p style="font-size:7.5pt;color:#B43200;font-weight:bold;margin:2px 0;">{{ valuation_parameter_governance.warning_text }}</p>
+    <table class="field-tbl">
+      <tr style="background:#FEF3C7;"><th style="font-size:7pt;padding:2px 4px;text-align:right;">المعامل</th><th style="font-size:7pt;padding:2px 4px;text-align:center;">القيمة</th><th style="font-size:7pt;padding:2px 4px;text-align:center;">مسموح للاعتماد؟</th></tr>
+      {% for param in valuation_parameter_governance.parameters %}
+      <tr style="background:{% if not param.certified_use_allowed %}#FEF2F2{% else %}#F0FDF4{% endif %};">
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:right;">{{ param.parameter_name }}</td>
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:center;">{{ param.value_used }}</td>
+        <td style="font-size:6.5pt;padding:2px 4px;text-align:center;color:{% if param.certified_use_allowed %}#16A34A{% else %}#DC2626{% endif %};font-weight:bold;">{{ "نعم" if param.certified_use_allowed else "لا" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {% if valuation_certification_status %}
+    <p class="sub-section-title" style="background:{% if valuation_certification_status.certification_ready %}#16A34A{% else %}#DC2626{% endif %};color:#fff;">حالة التقرير والتوصية التنفيذية</p>
+    <p style="font-size:9pt;font-weight:bold;color:{% if valuation_certification_status.certification_ready %}#16A34A{% else %}#DC2626{% endif %};margin:3px 0;">
+      {{ "التقرير جاهز للاعتماد الرسمي" if valuation_certification_status.certification_ready else "التقرير غير جاهز للاعتماد الرسمي" }}
+    </p>
+    <p style="font-size:8pt;color:#374151;margin:2px 0;">{{ valuation_certification_status.readiness_summary }}</p>
+    <p style="font-size:8pt;color:#1a3a5c;font-weight:bold;margin:2px 0;">التوصية:</p>
+    <p style="font-size:8pt;color:#374151;margin:2px 0;">{{ valuation_certification_status.executive_recommendation }}</p>
+    {% if valuation_certification_status.certification_blockers %}
+    <ul style="margin:2px 0;padding-right:16px;">
+      {% for blocker in valuation_certification_status.certification_blockers %}
+      <li style="font-size:7.5pt;color:#DC2626;">{{ blocker }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+
+    <!-- ═══ Risk/Decision Pass Sections (Certified) ══════════════════════ -->
+
+    <!-- جاهزية البيانات السوقية للاعتماد -->
+    {% if valuation_data_fuel_readiness %}
+    <p class="sub-section-title" style="background:{% if valuation_data_fuel_readiness.data_ready %}#16A34A{% else %}#DC2626{% endif %};color:#fff;">جاهزية البيانات السوقية للاعتماد</p>
+    <p style="font-size:8.5pt;font-weight:bold;color:#DC2626;margin:3px 0;">{{ valuation_data_fuel_readiness.data_readiness_summary }}</p>
+    <table class="field-tbl">
+      <tr><td class="fl">البنية المنهجية جاهزة؟</td><td class="fv fok">{{ "نعم" if valuation_data_fuel_readiness.methodology_ready else "لا" }}</td></tr>
+      <tr><td class="fl">البيانات السوقية جاهزة؟</td><td class="fv {% if valuation_data_fuel_readiness.data_ready %}fok{% else %}fmiss{% endif %}">{{ "نعم" if valuation_data_fuel_readiness.data_ready else "لا — محاكاة QA نشطة" }}</td></tr>
+      <tr><td class="fl">جاهز للاعتماد الرسمي؟</td><td class="fv {% if valuation_data_fuel_readiness.certification_ready %}fok{% else %}fmiss{% endif %}">{{ "نعم" if valuation_data_fuel_readiness.certification_ready else "لا" }}</td></tr>
+      <tr><td class="fl">مصادر QA نشطة</td><td class="fv fmiss">{{ valuation_data_fuel_readiness.qa_simulation_sources_count }}</td></tr>
+    </table>
+    {% endif %}
+
+    <!-- اختبار اتساق طرق التقييم -->
+    {% if method_consistency_diagnostics %}
+    <p class="sub-section-title" style="background:{% if method_consistency_diagnostics.cv_color_semantic == 'red' %}#DC2626{% elif method_consistency_diagnostics.cv_color_semantic == 'amber' %}#B45309{% else %}#16A34A{% endif %};color:#fff;">اختبار اتساق طرق التقييم</p>
+    <table class="field-tbl">
+      <tr><td class="fl">معامل التباين (CV)</td><td class="fv {% if method_consistency_diagnostics.cv_color_semantic == 'red' %}fmiss{% elif method_consistency_diagnostics.cv_color_semantic == 'amber' %}fwarn{% else %}fok{% endif %}">{{ method_consistency_diagnostics.coefficient_of_variation }}</td></tr>
+      <tr><td class="fl">مستوى خطر التباين</td><td class="fv">{{ method_consistency_diagnostics.cv_risk_level }}</td></tr>
+      <tr><td class="fl">المتوسط الحسابي</td><td class="fv">{{ method_consistency_diagnostics.mean_value }}</td></tr>
+      <tr><td class="fl">القيمة الموزونة</td><td class="fv">{{ method_consistency_diagnostics.weighted_value }}</td></tr>
+    </table>
+    {% if method_consistency_diagnostics.consistency_warning %}
+    <p style="font-size:8pt;font-weight:bold;color:#DC2626;margin:4px 0;">{{ method_consistency_diagnostics.consistency_warning }}</p>
+    {% endif %}
+    {% endif %}
+
+    <!-- تسوية الإيجار -->
+    {% if rent_reconciliation_explanation and rent_reconciliation_explanation.explanation_required %}
+    <p class="sub-section-title" style="background:#B45309;color:#fff;">تسوية الإيجار المستخدم في طريقة الدخل</p>
+    <table class="field-tbl">
+      <tr><td class="fl">إيجار طريقة الدخل</td><td class="fv">{{ rent_reconciliation_explanation.income_method_monthly_rent }}</td></tr>
+      <tr><td class="fl">القيمة الإيجارية النهائية</td><td class="fv">{{ rent_reconciliation_explanation.final_selected_monthly_rent }}</td></tr>
+      <tr><td class="fl">فرق الإيجار</td><td class="fv fwarn">{{ rent_reconciliation_explanation.rent_difference_value }} ({{ rent_reconciliation_explanation.rent_difference_percent }})</td></tr>
+    </table>
+    <p style="font-size:8pt;color:#374151;margin:3px 0;">{{ rent_reconciliation_explanation.explanation_text }}</p>
+    {% endif %}
+
+    <!-- حالة التوقيع والمراجعة قبل الاعتماد -->
+    {% if certification_execution_gate %}
+    <p class="sub-section-title" style="background:{% if certification_execution_gate.certification_execution_allowed %}#16A34A{% else %}#DC2626{% endif %};color:#fff;">حالة التوقيع والمراجعة قبل الاعتماد</p>
+    <p style="font-size:9pt;font-weight:bold;color:{% if certification_execution_gate.certification_execution_allowed %}#16A34A{% else %}#DC2626{% endif %};margin:4px 0;">{{ certification_execution_gate.certification_banner }}</p>
+    <table class="field-tbl">
+      <tr><td class="fl">توقيع الخبير</td><td class="fv {% if certification_execution_gate.expert_signature_available %}fok{% else %}fmiss{% endif %}">{{ "مرفق" if certification_execution_gate.expert_signature_available else "مفقود" }}</td></tr>
+      <tr><td class="fl">ترخيص الخبير</td><td class="fv {% if certification_execution_gate.expert_license_available %}fok{% else %}fmiss{% endif %}">{{ "متوفر" if certification_execution_gate.expert_license_available else "مفقود" }}</td></tr>
+      <tr><td class="fl">ختم الشركة</td><td class="fv {% if certification_execution_gate.company_stamp_available %}fok{% else %}fmiss{% endif %}">{{ "مرفق" if certification_execution_gate.company_stamp_available else "مفقود" }}</td></tr>
+      <tr><td class="fl">مراجعة النظراء</td><td class="fv {% if certification_execution_gate.peer_review_completed %}fok{% else %}fmiss{% endif %}">{{ "مكتملة" if certification_execution_gate.peer_review_completed else "لم تكتمل" }}</td></tr>
+    </table>
+    {% if not certification_execution_gate.certification_execution_allowed %}
+    <p style="font-size:8pt;font-weight:bold;color:#DC2626;margin:4px 0;">{{ certification_execution_gate.advisory_only_reason }}</p>
+    {% endif %}
+    {% endif %}
+
+    <!-- دعم افتراضات القيمة الطرفية DCF -->
+    {% if dcf_terminal_assumption_support %}
+    <p class="sub-section-title" style="background:#B45309;color:#fff;">دعم افتراضات القيمة الطرفية DCF</p>
+    <table class="field-tbl">
+      <tr><td class="fl">معدل النمو طويل الأمد</td><td class="fv">{{ dcf_terminal_assumption_support.long_term_growth_rate }}</td></tr>
+      <tr><td class="fl">معدل الرسملة النهائي</td><td class="fv">{{ dcf_terminal_assumption_support.terminal_cap_rate }}</td></tr>
+      <tr><td class="fl">جودة المصدر</td><td class="fv {% if not dcf_terminal_assumption_support.terminal_assumption_certified_use_allowed %}fwarn{% else %}fok{% endif %}">{{ dcf_terminal_assumption_support.source_quality_status }}</td></tr>
+    </table>
+    <p style="font-size:8pt;font-style:italic;color:#374151;margin:3px 0;">{{ dcf_terminal_assumption_support.explanation_text }}</p>
+    {% endif %}
+
+    <!-- الخرائط والصور والأدلة الميدانية -->
+    {% if field_visual_evidence_gate %}
+    <p class="sub-section-title" style="background:{% if field_visual_evidence_gate.minimum_visual_evidence_met %}#16A34A{% else %}#DC2626{% endif %};color:#fff;">الخرائط والصور والأدلة الميدانية</p>
+    <table class="field-tbl">
+      <tr><td class="fl">صورة الواجهة</td><td class="fv {% if field_visual_evidence_gate.exterior_photo_available or field_visual_evidence_gate.facade_photo_available %}fok{% else %}fmiss{% endif %}">{{ "مرفقة" if (field_visual_evidence_gate.exterior_photo_available or field_visual_evidence_gate.facade_photo_available) else "مفقودة" }}</td></tr>
+      <tr><td class="fl">خريطة الموقع</td><td class="fv {% if field_visual_evidence_gate.location_map_available or field_visual_evidence_gate.gps_coordinates_available %}fok{% else %}fmiss{% endif %}">{{ "متوفرة" if (field_visual_evidence_gate.location_map_available or field_visual_evidence_gate.gps_coordinates_available) else "مفقودة" }}</td></tr>
+      <tr><td class="fl">الحد الأدنى مستوفى؟</td><td class="fv {% if field_visual_evidence_gate.minimum_visual_evidence_met %}fok{% else %}fmiss{% endif %}">{{ "نعم" if field_visual_evidence_gate.minimum_visual_evidence_met else "لا" }}</td></tr>
+    </table>
+    {% if field_visual_evidence_gate.warning_text %}
+    <p style="font-size:8pt;font-weight:bold;color:#DC2626;margin:4px 0;">{{ field_visual_evidence_gate.warning_text }}</p>
+    {% endif %}
+    {% endif %}
+
+    <!-- حالة نموذج التقييم الآلي AVM -->
+    {% if avm_completeness_decision %}
+    <p class="sub-section-title">حالة نموذج التقييم الآلي AVM</p>
+    <table class="field-tbl">
+      <tr><td class="fl">AVM مستخدم؟</td><td class="fv {% if avm_completeness_decision.avm_used %}fok{% else %}fwarn{% endif %}">{{ "نعم" if avm_completeness_decision.avm_used else "لا" }}</td></tr>
+      <tr><td class="fl">قيمة AVM</td><td class="fv">{{ avm_completeness_decision.avm_value }}</td></tr>
+      <tr><td class="fl">حالة AVM</td><td class="fv">{{ avm_completeness_decision.avm_status }}</td></tr>
+    </table>
+    <p style="font-size:8pt;font-style:italic;color:#374151;margin:3px 0;">{{ avm_completeness_decision.display_note }}</p>
+    {% endif %}
+
+    <!-- خريطة مخاطر التقييم -->
+    {% if valuation_risk_heatmap %}
+    <p class="sub-section-title" style="background:{% if valuation_risk_heatmap.overall_risk_level == 'مرتفع' %}#DC2626{% elif valuation_risk_heatmap.overall_risk_level == 'متوسط' %}#B45309{% else %}#16A34A{% endif %};color:#fff;">خريطة مخاطر التقييم</p>
+    <p style="font-size:8.5pt;font-weight:bold;margin:3px 0;">{{ valuation_risk_heatmap.heatmap_summary }}</p>
+    <table class="field-tbl">
+      <tr style="background:#F3F4F6;"><td class="fl" style="font-weight:bold;">البُعد</td><td class="fv" style="font-weight:bold;text-align:center;">الدرجة</td><td class="fv" style="font-weight:bold;">المحرك الرئيسي</td></tr>
+      {% for dim in valuation_risk_heatmap.dimensions %}
+      <tr>
+        <td class="fl">{{ dim.label_ar }}</td>
+        <td class="fv" style="text-align:center;background:{% if dim.color_semantic == 'red' %}#FEE2E2{% elif dim.color_semantic == 'amber' %}#FEF9C3{% else %}#D1FAE5{% endif %};">{{ dim.risk_score }}/5</td>
+        <td class="fv">{{ dim.key_driver }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    <!-- الجدول الزمني المتوقع للاعتماد -->
+    {% if certification_timeline %}
+    <p class="sub-section-title" style="background:#1E3A5F;color:#fff;">الجدول الزمني المتوقع للاعتماد</p>
+    <p style="font-size:8pt;margin:2px 0;">الإجمالي التقديري: <b>{{ certification_timeline.total_estimated_days }} يوم عمل</b></p>
+    <table class="field-tbl">
+      {% for step in certification_timeline.steps %}
+      <tr>
+        <td class="fl">{{ step.title }}</td>
+        <td class="fv" style="text-align:center;">{{ step.estimated_days }} يوم</td>
+        <td class="fv" style="text-align:center;background:{% if step.status == 'completed' %}#D1FAE5{% else %}#FEF9C3{% endif %};">{{ "مكتمل" if step.status == "completed" else "معلق" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    <!-- تحليل نقطة التعادل للإيجار -->
+    {% if break_even_rent_analysis and break_even_rent_analysis.data_complete %}
+    <p class="sub-section-title" style="background:#0F4C75;color:#fff;">تحليل نقطة التعادل للإيجار</p>
+    <table class="field-tbl">
+      <tr><td class="fl">إيجار نقطة التعادل (شهري)</td><td class="fv" style="font-weight:bold;">{{ break_even_rent_analysis.break_even_monthly_rent }}</td></tr>
+      <tr><td class="fl">الإيجار الحالي / المتوقع</td><td class="fv">{{ break_even_rent_analysis.current_or_expected_monthly_rent }}</td></tr>
+      <tr><td class="fl">فجوة الإيجار</td><td class="fv {% if break_even_rent_analysis.rent_above_break_even %}fok{% else %}fmiss{% endif %}">{{ break_even_rent_analysis.rent_gap_value }} ({{ break_even_rent_analysis.rent_gap_percent }})</td></tr>
+    </table>
+    <p style="font-size:8pt;color:#374151;margin:3px 0;">{{ break_even_rent_analysis.interpretation }}</p>
+    {% endif %}
+
+    <!-- لوحة الامتثال التقييمي -->
+    {% if valuation_compliance_dashboard %}
+    <p class="sub-section-title" style="background:{% if valuation_compliance_dashboard.blocking_items %}#DC2626{% else %}#16A34A{% endif %};color:#fff;">لوحة الامتثال التقييمي — {{ valuation_compliance_dashboard.overall_status }}</p>
+    <p style="font-size:8pt;margin:3px 0;">مكتمل: <b>{{ valuation_compliance_dashboard.completed_count }}</b> / {{ valuation_compliance_dashboard.total_items }} — اكتمال: <b>{{ valuation_compliance_dashboard.completion_pct }}%</b></p>
+    <table class="field-tbl">
+      {% for item in valuation_compliance_dashboard.compliance_items %}
+      <tr>
+        <td class="fl">{{ item.item }}</td>
+        <td class="fv" style="text-align:center;background:{% if item.status == 'complete' %}#D1FAE5{% elif item.status in ('blocker',) %}#FCA5A5{% elif item.status == 'missing' %}#FEE2E2{% else %}#FEF9C3{% endif %};">{{ {"complete":"مكتمل","missing":"مفقود","blocker":"عائق حرج","advisory_only":"استرشادي"}.get(item.status, item.status) }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    <!-- مرجع التقييم الجماعي -->
+    {% if mass_appraisal_reference %}
+    <p class="sub-section-title">مرجع التقييم الجماعي</p>
+    <p style="font-size:8pt;font-style:italic;color:#374151;margin:3px 0;">{{ mass_appraisal_reference.limitation_text }}</p>
+    <table class="field-tbl">
+      <tr><td class="fl">متوسط سعر المنطقة</td><td class="fv">{{ mass_appraisal_reference.average_area_price }}</td></tr>
+      <tr><td class="fl">جودة المصدر</td><td class="fv fwarn">{{ mass_appraisal_reference.source_quality_status }}</td></tr>
+      <tr><td class="fl">وزن التوفيق</td><td class="fv">{{ mass_appraisal_reference.reconciliation_weight }}</td></tr>
+    </table>
+    {% endif %}
+
+    <!-- خلاصة القرار الاستثماري -->
+    {% if investment_decision_summary %}
+    <p class="sub-section-title" style="background:{% if investment_decision_summary.is_advisory %}#B45309{% else %}#16A34A{% endif %};color:#fff;">خلاصة القرار الاستثماري</p>
+    <p style="font-size:9pt;font-weight:bold;margin:3px 0;">{{ investment_decision_summary.recommended_decision }}</p>
+    <table class="field-tbl">
+      <tr><td class="fl">القيمة الموصى بها</td><td class="fv" style="font-weight:bold;">{{ investment_decision_summary.recommended_value }}</td></tr>
+      <tr><td class="fl">هامش التفاوض</td><td class="fv">±{{ investment_decision_summary.negotiation_margin_percent }}%</td></tr>
+      <tr><td class="fl">نطاق التفاوض</td><td class="fv">{{ investment_decision_summary.negotiation_range_low }} — {{ investment_decision_summary.negotiation_range_high }}</td></tr>
+      <tr><td class="fl">تصنيف القرار</td><td class="fv fwarn">{{ investment_decision_summary.advisory_label }}</td></tr>
+    </table>
+    <p style="font-size:8.5pt;color:#374151;margin:4px 0;">{{ investment_decision_summary.decision_summary_text }}</p>
+    <p style="font-size:7.5pt;font-style:italic;color:#6B7280;margin:3px 0;">{{ investment_decision_summary.investor_note }}</p>
+    {% endif %}
+
+    <!-- ═══ End Risk/Decision Pass Sections ═══════════════════════════════ -->
+
+    <!-- Direct Cap vs DCF -->
+    {% if income_direct_vs_dcf_explanation %}
+    <p class="sub-section-title">فصل رسملة الدخل المباشر عن DCF</p>
+    <p style="font-size:8.5pt;color:#1a3a5c;margin:3px 0;">{{ income_direct_vs_dcf_explanation }}</p>
+    <table class="field-tbl">
+      <tr>
+        <td class="f-lbl">رسملة الدخل المباشر</td>
+        <td class="f-val" style="font-weight:bold;">{{ direct_capitalization_result }}</td>
+        <td class="f-lbl">قيمة DCF</td>
+        <td class="f-val" style="font-weight:bold;">{{ dcf_result }}</td>
+      </tr>
+    </table>
+    {% endif %}
+
+    <!-- Comparable Adjustments -->
+    {% if comparable_adjustment_support and comparable_adjustment_support.adjustments %}
+    <p class="sub-section-title">دعم التعديلات — مصدر معاملات التسوية</p>
+    <table class="field-tbl">
+      <thead>
+        <tr style="background:#2d5a27;color:#fff;">
+          <th style="padding:2px 5px;text-align:right;">نوع التعديل</th>
+          <th style="padding:2px 5px;text-align:center;">المعامل</th>
+          <th style="padding:2px 5px;text-align:right;">المصدر</th>
+          <th style="padding:2px 5px;text-align:center;">مشاهدات</th>
+          <th style="padding:2px 5px;text-align:right;">مستوى الثقة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for adj in comparable_adjustment_support.adjustments %}
+        <tr>
+          <td style="padding:2px 5px;">{{ adj.adjustment_type }}</td>
+          <td style="padding:2px 5px;text-align:center;">{{ adj.coefficient }}</td>
+          <td style="padding:2px 5px;">{{ adj.source }}</td>
+          <td style="padding:2px 5px;text-align:center;">{{ adj.n_observations }}</td>
+          <td style="padding:2px 5px;">{{ adj.confidence }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="font-size:7pt;color:#b43200;font-style:italic;">{{ comparable_adjustment_support.paired_sales_disclaimer }}</p>
+    {% endif %}
+
+    <!-- Assumptions -->
+    {% if assumptions_registry %}
+    <p class="sub-section-title">الافتراضات العادية والافتراضات الخاصة والقيود</p>
+    <table class="field-tbl">
+      <thead>
+        <tr style="background:#7c3aed;color:#fff;">
+          <th style="padding:2px 5px;text-align:right;">نوع الافتراض</th>
+          <th style="padding:2px 5px;text-align:right;">الوصف</th>
+          <th style="padding:2px 5px;text-align:right;">الأثر المتوقع</th>
+          <th style="padding:2px 5px;text-align:center;">يحتاج مستند؟</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for asm in assumptions_registry %}
+        <tr style="background:{% if asm.type == 'افتراض خاص' %}#FFF8DC{% elif asm.type == 'قيد على نطاق العمل' %}#EFF8FF{% else %}#f9fff9{% endif %};">
+          <td style="padding:2px 5px;font-weight:bold;">{{ asm.type }}</td>
+          <td style="padding:2px 5px;">{{ asm.description }}</td>
+          <td style="padding:2px 5px;color:#8B5200;">{{ asm.value_impact_if_wrong }}</td>
+          <td style="padding:2px 5px;text-align:center;">{{ "نعم" if asm.needs_supporting_doc else "لا" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Detailed Depreciation -->
+    {% if depreciation_breakdown and depreciation_breakdown.replacement_cost_new %}
+    <p class="sub-section-title">تفصيل الإهلاك في طريقة التكلفة</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">إهلاك مادي قابل للإصلاح ({{ depreciation_breakdown.physical_curable_pct }}%)</td><td class="f-val">{{ depreciation_breakdown.physical_curable_value }}</td></tr>
+      <tr><td class="f-lbl">إهلاك مادي غير قابل للإصلاح ({{ depreciation_breakdown.physical_incurable_pct }}%) — {{ depreciation_breakdown.physical_incurable_age_formula }}</td><td class="f-val">{{ depreciation_breakdown.physical_incurable_value }}</td></tr>
+      <tr><td class="f-lbl">تقادم وظيفي ({{ depreciation_breakdown.functional_obsolescence_pct }}%)</td><td class="f-val">{{ depreciation_breakdown.functional_obsolescence_value }}</td></tr>
+      <tr><td class="f-lbl">تقادم خارجي ({{ depreciation_breakdown.external_obsolescence_pct }}%)</td><td class="f-val">{{ depreciation_breakdown.external_obsolescence_value }}</td></tr>
+      <tr style="background:#FFF3CD;"><td class="f-lbl" style="font-weight:bold;">إجمالي الإهلاك ({{ depreciation_breakdown.total_depreciation_pct }}%)</td><td class="f-val" style="font-weight:bold;color:#8B0000;">{{ depreciation_breakdown.total_depreciation_value }}</td></tr>
+      <tr><td class="f-lbl">تكلفة الإحلال الجديدة</td><td class="f-val">{{ depreciation_breakdown.replacement_cost_new }}</td></tr>
+      <tr><td class="f-lbl">تكلفة الإحلال المُستهلكة</td><td class="f-val">{{ depreciation_breakdown.depreciated_replacement_cost }}</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#b43200;font-style:italic;">{{ depreciation_breakdown.evidence_basis }}</p>
+    {% endif %}
+
+    <!-- DCF Scenarios -->
+    {% if dcf_scenarios and dcf_scenarios.scenarios_present %}
+    <p class="sub-section-title">تحليل مخاطر التدفقات النقدية المخصومة</p>
+    <table class="field-tbl">
+      <thead>
+        <tr style="background:#164e63;color:#fff;">
+          <th style="padding:3px 5px;text-align:right;">السيناريو</th>
+          <th style="padding:3px 5px;text-align:center;">نمو الإيجار %</th>
+          <th style="padding:3px 5px;text-align:center;">معدل الرسملة الطرفي %</th>
+          <th style="padding:3px 5px;text-align:center;">قيمة DCF</th>
+          <th style="padding:3px 5px;text-align:center;">الفارق %</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background:#E8F5E9;">
+          <td style="padding:2px 5px;font-weight:bold;">{{ dcf_scenarios.optimistic.label }}</td>
+          <td style="text-align:center;">{{ dcf_scenarios.optimistic.rent_growth_pct }}%</td>
+          <td style="text-align:center;">{{ dcf_scenarios.optimistic.terminal_cap_rate_pct }}%</td>
+          <td style="text-align:center;font-weight:bold;color:#0a5c2e;">{{ dcf_scenarios.optimistic.dcf_value }}</td>
+          <td style="text-align:center;color:#0a5c2e;">{{ dcf_scenarios.optimistic.variance_pct }}</td>
+        </tr>
+        <tr style="background:#E3F2FD;">
+          <td style="padding:2px 5px;font-weight:bold;">{{ dcf_scenarios.base.label }}</td>
+          <td style="text-align:center;">{{ dcf_scenarios.base.rent_growth_pct }}%</td>
+          <td style="text-align:center;">{{ dcf_scenarios.base.terminal_cap_rate_pct }}%</td>
+          <td style="text-align:center;font-weight:bold;color:#1a3a5c;">{{ dcf_scenarios.base.dcf_value }}</td>
+          <td style="text-align:center;">—</td>
+        </tr>
+        <tr style="background:#FFF3E0;">
+          <td style="padding:2px 5px;font-weight:bold;">{{ dcf_scenarios.pessimistic.label }}</td>
+          <td style="text-align:center;">{{ dcf_scenarios.pessimistic.rent_growth_pct }}%</td>
+          <td style="text-align:center;">{{ dcf_scenarios.pessimistic.terminal_cap_rate_pct }}%</td>
+          <td style="text-align:center;font-weight:bold;color:#b43200;">{{ dcf_scenarios.pessimistic.dcf_value }}</td>
+          <td style="text-align:center;color:#b43200;">{{ dcf_scenarios.pessimistic.variance_pct }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:7pt;color:#b43200;font-style:italic;">{{ dcf_scenarios.monte_carlo_note }}</p>
+    {% endif %}
+
+    <!-- Legal Due Diligence -->
+    {% if legal_due_diligence %}
+    <p class="sub-section-title">الفحص القانوني المبدئي</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">نوع الملكية</td><td class="f-val">{{ legal_due_diligence.ownership_type }}</td></tr>
+      <tr><td class="f-lbl">مراجعة وثيقة الملكية</td><td class="f-val">{{ legal_due_diligence.ownership_document_reviewed }}</td></tr>
+      <tr><td class="f-lbl">حالة الرهن أو الأعباء</td><td class="f-val">{{ legal_due_diligence.mortgage_or_lien_status }}</td></tr>
+      <tr><td class="f-lbl">حالة النزاعات</td><td class="f-val">{{ legal_due_diligence.legal_dispute_status }}</td></tr>
+      <tr><td class="f-lbl">المستندات الناقصة</td><td class="f-val" style="color:#b43200;">{{ legal_due_diligence.missing_documents }}</td></tr>
+      <tr><td class="f-lbl">خلاصة الفحص القانوني</td><td class="f-val" style="font-style:italic;">{{ legal_due_diligence.legal_due_diligence_conclusion }}</td></tr>
+    </table>
+    <p style="font-size:7.5pt;color:#b43200;font-style:italic;margin-top:3px;">{{ legal_due_diligence.legal_scope_limitation }}</p>
+    {% endif %}
+
+    <!-- ESG & Climate Risk -->
+    {% if esg_enhanced_context %}
+    <p class="sub-section-title">تأثير الاستدامة والمخاطر المناخية على القيمة</p>
+    <table class="field-tbl">
+      <tr>
+        <td class="f-lbl">درجة ESG</td><td class="f-val">{{ esg_enhanced_context.esg_score }} / 40</td>
+        <td class="f-lbl">تصنيف ESG</td><td class="f-val" style="font-weight:bold;">{{ esg_enhanced_context.esg_category }}</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">تعديل معدل الرسملة</td><td class="f-val">{{ esg_cap_rate_adjustment }}</td>
+        <td class="f-lbl">تعديل القيمة الطرفية</td><td class="f-val">{{ esg_terminal_value_adjustment }}</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">الأثر على القيمة</td><td class="f-val" colspan="3">{{ esg_value_impact }}</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">المخاطر المناخية</td><td class="f-val" colspan="3">{{ climate_risk_score }}</td>
+      </tr>
+    </table>
+    <p style="font-size:7pt;color:#555;font-style:italic;">{{ climate_risk_notes }}</p>
+    {% endif %}
+
+    <!-- EIA (conditional) -->
+    {% if environmental_impact_assessment and environmental_impact_assessment.eia_required %}
+    <p class="sub-section-title">منهجية تقييم الأثر البيئي</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">خطر التلوث</td><td class="f-val">{{ environmental_impact_assessment.contamination_risk }}</td></tr>
+      <tr><td class="f-lbl">تكلفة المعالجة المقدرة</td><td class="f-val">{{ environmental_impact_assessment.remediation_cost_estimate }}</td></tr>
+      <tr><td class="f-lbl">نسبة الخصم البيئي</td><td class="f-val">{{ environmental_impact_assessment.environmental_discount_pct }}%</td></tr>
+      <tr><td class="f-lbl">خلاصة EIA</td><td class="f-val">{{ environmental_impact_assessment.eia_conclusion }}</td></tr>
+    </table>
+    <p style="font-size:7.5pt;color:#b43200;font-style:italic;">{{ environmental_impact_assessment.eia_scope_limitation }}</p>
+    {% endif %}
+
+    <!-- Confidence / Uncertainty -->
+    {% if valuation_uncertainty and valuation_uncertainty.weighted_value %}
+    <p class="sub-section-title">نطاق عدم اليقين في القيمة</p>
+    <p style="font-size:8.5pt;font-weight:bold;color:#1f4e78;margin:4px 0;">
+      القيمة السوقية المقدرة: {{ valuation_uncertainty.weighted_value }}
+      ± نطاق عدم يقين تقديري عند مستوى 90%:
+      {{ valuation_uncertainty.lower_bound }} — {{ valuation_uncertainty.upper_bound }}
+    </p>
+    <table class="field-tbl">
+      <tr>
+        <td class="f-lbl">الانحراف المعياري</td><td class="f-val">{{ valuation_uncertainty.standard_deviation }}</td>
+        <td class="f-lbl">معامل الاختلاف (CV)</td><td class="f-val">{{ valuation_uncertainty.coefficient_of_variation }}</td>
+      </tr>
+    </table>
+    <p style="font-size:7pt;color:#555;font-style:italic;">{{ valuation_uncertainty.uncertainty_comment }}</p>
+    {% endif %}
+
+    <!-- Peer Review -->
+    {% if peer_review %}
+    <p class="sub-section-title">مراجعة الجودة الداخلية</p>
+    {% if peer_review.review_limitations %}
+    <p style="font-size:8pt;color:#92400E;background:#FFF3CD;padding:5px 8px;border-radius:4px;">{{ peer_review.review_limitations }}</p>
+    {% else %}
+    <table class="field-tbl">
+      <tr>
+        <td class="f-lbl">المراجع الداخلي</td><td class="f-val">{{ peer_review.peer_reviewer_name }}</td>
+        <td class="f-lbl">حالة المراجعة</td><td class="f-val" style="font-weight:bold;">{{ peer_review.peer_review_status_label }}</td>
+      </tr>
+      <tr>
+        <td class="f-lbl">تاريخ المراجعة</td><td class="f-val">{{ peer_review.peer_review_date }}</td>
+        <td class="f-lbl">ملاحظات</td><td class="f-val" style="font-style:italic;">{{ peer_review.peer_review_notes }}</td>
+      </tr>
+    </table>
+    {% endif %}
+    {% endif %}
+
+    <!-- Standards Alignment Statement -->
+    <p style="font-size:8pt;color:#555;font-style:italic;margin-top:6px;border-top:1px solid #ddd;padding-top:4px;">
+      تم تصميم التقرير ليتوافق منهجياً مع متطلبات IVSC/IVS ومبادئ معايير التقييم المصرية.
+      لا يُعدّ هذا التقرير متوافقاً كلياً مع USPAP/RICS/FRA دون توقيع الخبير والمراجعة الكاملة.
+    </p>
+
+    <!-- حالة جاهزية مصادر البيانات للاعتماد -->
+    {% if source_quality_gate %}
+    <p class="sub-section-title">حالة جاهزية مصادر البيانات للاعتماد</p>
+    {% if not source_quality_gate.certification_allowed %}
+    <p style="font-size:8pt;background:#FEF3C7;color:#92400E;padding:6px 10px;border-radius:4px;font-weight:bold;">
+      ⚠ {{ source_quality_gate.advisory_only_reason }}
+    </p>
+    {% endif %}
+    <table class="field-tbl">
+      <tr><td class="f-lbl">مصادر QA</td><td class="f-val" style="color:#B43200;font-weight:bold;">{{ source_quality_gate.qa_simulation_sources_count }}</td>
+          <td class="f-lbl">مصادر جاهزة للإنتاج</td><td class="f-val">{{ source_quality_gate.production_ready_sources_count }}</td></tr>
+      <tr><td class="f-lbl">الاعتماد مسموح؟</td><td class="f-val" colspan="3" style="font-weight:bold;">{{ "لا — يلزم استبدال مصادر QA" if not source_quality_gate.certification_allowed else "نعم" }}</td></tr>
+    </table>
+    {% endif %}
+
+    <!-- حالة التقرير — بانر الاعتماد -->
+    {% if report_status_visuals %}
+    <div style="background:{{ '#16A34A' if report_status_visuals.certified_banner_color_semantic == 'green' else '#D97706' }};color:#fff;padding:8px 14px;font-size:10pt;font-weight:700;text-align:center;margin:10px 0;border-radius:4px;">
+      {{ report_status_visuals.certified_banner_text }}
+    </div>
+    {% if report_status_visuals.certification_blockers %}
+    <p style="font-size:7.5pt;color:#92400E;background:#FEF3C7;padding:5px 8px;border-radius:4px;">
+      موانع الاعتماد: {% for b in report_status_visuals.certification_blockers %}{{ b }}{% if not loop.last %} | {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+    <table class="field-tbl" style="margin-top:4px;">
+      <tr><td class="f-lbl">إصدار التقرير</td><td class="f-val">{{ report_status_visuals.report_version }}</td>
+          <td class="f-lbl">حالة التوقيع</td><td class="f-val">{{ report_status_visuals.expert_signature_status }}</td></tr>
+      <tr><td class="f-lbl">حالة مراجعة النظراء</td><td class="f-val">{{ report_status_visuals.peer_review_status_label }}</td>
+          <td class="f-lbl">جودة المصادر</td><td class="f-val">{{ report_status_visuals.source_quality_status }}</td></tr>
+    </table>
+    {% endif %}
+
+    <!-- التوفيق النهائي واختيار القيمة -->
+    {% if final_reconciliation and final_reconciliation.method_values %}
+    <p class="sub-section-title">التوفيق النهائي واختيار القيمة</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">القيمة الموصى بها (موزونة)</td><td class="f-val" style="font-weight:bold;color:#1F4E78;">{{ final_reconciliation.weighted_indication }}</td>
+          <td class="f-lbl">القيمة النهائية (مدورة)</td><td class="f-val" style="font-weight:bold;">{{ final_reconciliation.selected_final_value_rounded }}</td></tr>
+      <tr><td class="f-lbl">نطاق القيمة (90%)</td><td class="f-val" colspan="3">{{ final_reconciliation.lower_value_bound }} — {{ final_reconciliation.upper_value_bound }}</td></tr>
+      <tr><td class="f-lbl">الطريقة المهيمنة</td><td class="f-val" colspan="3">{{ final_reconciliation.dominant_method }}</td></tr>
+      <tr><td class="f-lbl">حالة الاختيار</td><td class="f-val" colspan="3" style="font-style:italic;color:#555;">{{ final_reconciliation.expert_selection_status }}</td></tr>
+    </table>
+    <p style="font-size:7.5pt;color:#555;font-style:italic;margin-top:3px;">{{ final_reconciliation.reconciliation_rationale }}</p>
+    {% if final_reconciliation.divergence_explanation %}
+    <p style="font-size:7.5pt;color:#555;font-style:italic;">{{ final_reconciliation.divergence_explanation }}</p>
+    {% endif %}
+    {% endif %}
+
+    <!-- نطاق العمل -->
+    {% if scope_of_work %}
+    <p class="sub-section-title">نطاق العمل</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">غرض التقييم</td><td class="f-val">{{ scope_of_work.valuation_purpose }}</td>
+          <td class="f-lbl">المستخدمون المقصودون</td><td class="f-val">{{ scope_of_work.intended_users }}</td></tr>
+      <tr><td class="f-lbl">حق الملكية</td><td class="f-val">{{ scope_of_work.property_interest_valued }}</td>
+          <td class="f-lbl">تاريخ المعاينة</td><td class="f-val" style="color:#B43200;">{{ scope_of_work.inspection_date }}</td></tr>
+      <tr><td class="f-lbl">الطرق المستخدمة</td><td class="f-val" colspan="3">{{ scope_of_work.methods_used_str }}</td></tr>
+      <tr><td class="f-lbl">الطرق المستبعدة</td><td class="f-val" colspan="3">{{ scope_of_work.methods_excluded_str }}</td></tr>
+    </table>
+    <p style="font-size:7pt;color:#B43200;font-style:italic;margin-top:3px;">{{ scope_of_work.reliance_restrictions }}</p>
+    {% endif %}
+
+    <!-- بيان الامتثال والمعايير المهنية -->
+    {% if standards_compliance %}
+    <p class="sub-section-title">بيان الامتثال والمعايير المهنية</p>
+    <p style="font-size:8pt;color:#374151;background:#EFF6FF;padding:6px 10px;border-radius:4px;">
+      {{ standards_compliance.qualified_compliance_statement }}
+    </p>
+    {% if standards_compliance.compliance_limitations %}
+    <p style="font-size:7.5pt;color:#B43200;font-style:italic;margin-top:3px;">
+      القيود: {% for lim in standards_compliance.compliance_limitations %}{{ lim }}{% if not loop.last %} | {% endif %}{% endfor %}
+    </p>
+    {% endif %}
+    {% endif %}
+
+    <!-- توقيع واعتماد الخبير -->
+    {% if expert_approval %}
+    <p class="sub-section-title">توقيع واعتماد الخبير</p>
+    {% if not expert_approval.signature_available %}
+    <p style="font-size:8pt;color:#92400E;background:#FEF3C7;padding:5px 8px;border-radius:4px;">
+      {{ expert_approval.signature_placeholder_text or "توقيع الخبير غير مرفق في هذه النسخة" }}
+    </p>
+    {% endif %}
+    <table class="field-tbl">
+      <tr><td class="f-lbl">اسم الخبير</td><td class="f-val">{{ expert_approval.expert_name }}</td>
+          <td class="f-lbl">رقم الترخيص</td><td class="f-val">{{ expert_approval.expert_license_number }}</td></tr>
+      <tr><td class="f-lbl">الشركة</td><td class="f-val">{{ expert_approval.firm_name }}</td>
+          <td class="f-lbl">تاريخ الاعتماد</td><td class="f-val">{{ expert_approval.approval_date }}</td></tr>
+      <tr><td class="f-lbl">حالة التوقيع</td><td class="f-val" style="font-weight:bold;color:#B43200;">{{ "متوفر" if expert_approval.signature_available else "غير مرفق" }}</td>
+          <td class="f-lbl">جاهز للاعتماد؟</td><td class="f-val">{{ "نعم" if expert_approval.certification_signature_ready else "لا — يلزم الاستكمال" }}</td></tr>
+    </table>
+    {% endif %}
+
+    <!-- الإفصاح عن أتعاب التقييم واستقلالية المقيِّم -->
+    {% if valuation_fee_disclosure %}
+    <p class="sub-section-title">الإفصاح عن أتعاب التقييم واستقلالية المقيِّم</p>
+    <p style="font-size:8.5pt;">{{ valuation_fee_disclosure.fee_independence_statement }}</p>
+    <p style="font-size:8pt;font-style:italic;color:#374151;">{{ valuation_fee_disclosure.independence_declaration }}</p>
+    {% endif %}
+
+    <!-- التوصية النهائية للعميل -->
+    {% if client_recommendation %}
+    <p class="sub-section-title">التوصية النهائية للعميل</p>
+    <table class="field-tbl">
+      <tr><td class="f-lbl">القيمة الموصى بها</td><td class="f-val" style="font-weight:bold;color:#1F4E78;">{{ client_recommendation.recommended_value }}</td>
+          <td class="f-lbl">نطاق القيمة</td><td class="f-val">{{ client_recommendation.recommended_value_range }}</td></tr>
+      <tr><td class="f-lbl">الاستخدام الموصى به</td><td class="f-val" colspan="3">{{ client_recommendation.recommended_use }}</td></tr>
+    </table>
+    <p style="font-size:7.5pt;color:#555;font-style:italic;margin-top:4px;">{{ client_recommendation.report_use_limitations }}</p>
+    {% endif %}
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       FOOTER DISCLAIMER
+       ════════════════════════════════════════════════════════════ -->
+  <div class="footer-disclaimer">
+    تم إنشاء هذا التقرير بواسطة محرك HTML/PDF الآلي بعد اعتماد مراجعة الخبير الداخلية (X-PDF-Renderer: html-playwright).
+    القيمة النهائية الموصى بها تعتمد على البيانات المقدمة والمراجعة الداخلية للخبير. يُرجى التواصل مع الخبير المختص قبل الاستخدام في أغراض رسمية أو قانونية.
+    لا تعكس هذه الوثيقة توقيعًا رسميًا إلا إذا صدرت مختومة ومُوقَّعة من الخبير المُصدِر.
+    © ALHADY FOR REAL PROPERTY — رقم الطلب: {{ request_id }}
+  </div>
+
+</div><!-- /content -->
+
+</body>
+</html>

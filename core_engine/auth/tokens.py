@@ -28,7 +28,31 @@ def _get_secret() -> str:
             "JWT_SECRET environment variable is not set. "
             "Set a strong random secret before generating or verifying tokens."
         )
+    # Production deployments require ≥ 32 bytes (RFC 7518 §3.2 for HS256/SHA-256)
+    _env = (os.environ.get("FLASK_ENV", "") or os.environ.get("APP_ENV", "")).lower()
+    if _env == "production" and len(secret.encode()) < 32:
+        raise AuthError(
+            "JWT_SECRET is too short for production: "
+            f"{len(secret.encode())} bytes (minimum 32 bytes for HS256/SHA-256). "
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
     return secret
+
+
+def validate_secret_strength(secret: str) -> list[str]:
+    """Return a list of strength issues; empty list means acceptable for production.
+
+    Use this at startup or in health-check endpoints to surface configuration
+    problems before they cause runtime failures.
+    """
+    issues: list[str] = []
+    if len(secret.encode()) < 32:
+        issues.append(
+            f"JWT_SECRET is {len(secret.encode())} bytes; "
+            "HS256/SHA-256 requires ≥ 32 bytes (RFC 7518 §3.2). "
+            "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\""
+        )
+    return issues
 
 
 def _get_ttl() -> int:

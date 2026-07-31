@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_id": "MASS_VAL_DATA_CONTRACT_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "jurisdiction": "SA",
+  "advisory_only": true,
+  "certification_ready": false,
+  "governance_principles": [
+    "human_in_the_loop",
+    "no_black_box",
+    "no_data_invention",
+    "reproducibility",
+    "audience_separation",
+    "configurable_standards"
+  ],
+  "db_alignment": {
+    "note": "Fields map to core_engine/database/schema.sql tables where indicated. New mass-valuation tables are defined in data_models.schema.json and deferred to P1 migration.",
+    "existing_tables": ["comparables", "valuations", "quality_audits", "audit_logs"]
+  },
+
+  "fields": {
+    "property_id": {
+      "type": "string",
+      "format": "uuid_or_alphanumeric",
+      "unit": null,
+      "required": true,
+      "validation_rules": [
+        {"rule": "non_empty_string", "action": "reject"},
+        {"rule": "max_length_100", "action": "reject"},
+        {"rule": "no_special_chars_except_dash_underscore", "action": "reject"}
+      ],
+      "missing_policy": "reject — property_id is the anchor key; no record without it",
+      "db_column": "comparables.id (UUID) or external source ID before reconciliation",
+      "notes": "Source system IDs must be deduplicated before ingestion."
+    },
+
+    "property_type": {
+      "type": "string",
+      "enum": [
+        "residential", "commercial", "industrial", "land",
+        "mixed_use", "hotel", "retail", "office", "warehouse",
+        "villa", "apartment", "compound"
+      ],
+      "unit": null,
+      "required": true,
+      "validation_rules": [
+        {"rule": "in_enum", "action": "reject"},
+        {"rule": "case_insensitive_match", "action": "normalise_to_lowercase"}
+      ],
+      "missing_policy": "reject — property_type determines applicable valuation method and IAAO COD threshold; cannot be imputed",
+      "db_column": "comparables.property_type",
+      "notes": "Enum aligned with input_validator._VALID_PROPERTY_TYPES."
+    },
+
+    "city": {
+      "type": "string",
+      "unit": null,
+      "required": true,
+      "validation_rules": [
+        {"rule": "non_empty_string", "action": "reject"},
+        {"rule": "in_canonical_city_list", "action": "flag_for_review"},
+        {"rule": "max_length_100", "action": "reject"}
+      ],
+      "missing_policy": "reject — city is part of location identity; no statistical imputation permitted",
+      "db_column": "comparables.governorate (combined with district)",
+      "notes": "Saudi canonical cities list defined separately. No imputation for location fields."
+    },
+
+    "district": {
+      "type": "string",
+      "unit": null,
+      "required": false,
+      "validation_rules": [
+        {"rule": "non_empty_string_if_present", "action": "flag_for_review"},
+        {"rule": "max_length_150", "action": "truncate_and_flag"}
+      ],
+      "missing_policy": "flag_for_review — district enriches spatial analysis but its absence does not block ingestion; must not be imputed statistically",
+      "db_column": "comparables.location_description (partial)",
+      "notes": "Geocoding to district from coordinates is permitted only if coordinates are verified (see coordinates field)."
+    },
+
+    "address": {
+      "type": "string",
+      "unit": null,
+      "required": false,
+      "validation_rules": [
+        {"rule": "max_length_500", "action": "truncate_and_flag"},
+        {"rule": "no_path_traversal", "action": "reject"}
+      ],
+      "missing_policy": "allow_null — address is descriptive; absence documented in record",
+      "db_column": "valuations.property_address",
+      "notes": "Free-text field. Sanitised by input_validator before storage."
+    },
+
+    "coordinates": {
+      "type": "object",
+      "properties": {
+        "latitude":  {"type": "number", "minimum": 16.3, "maximum": 32.2},
+        "longitude": {"type": "number", "minimum": 34.5, "maximum": 55.7}
+      },
+      "unit": "decimal_degrees (WGS84)",
+      "required": false,
+      "validation_rules": [
+        {"rule": "latitude_in_saudi_bounds_16.3_to_32.2", "action": "reject"},
+        {"rule": "longitude_in_saudi_bounds_34.5_to_55.7", "action": "reject"},
+        {"rule": "both_present_or_both_null", "action": "reject_partial"}
+      ],
+      "missing_policy": "allow_null — if missing: documented_absence; if incorrect: flag_for_review. Geocoding from address is permitted only if address is verified and geocoding source is logged (see source_log.py pattern).",
+      "db_column": "comparables.latitude + comparables.longitude",
+      "notes": "Bounds set for Saudi Arabia. Coordinates outside bounds rejected — not imputed."
+    },
+
+    "land_area_m2": {
+      "type": "number",
+      "unit": "m²",
+      "required": true,
+      "validation_rules": [
+        {"rule": "greater_than_0", "action": "reject"},
+        {"rule": "less_than_10000000", "action": "flag_for_review"},
+        {"rule": "numeric_type", "action": "reject"}
+      ],
+      "missing_policy": "exclude_or_manual_review — land area is a primary valuation input; zero or negative values rejected; missing value triggers manual_review_required status",
+      "db_column": "comparables.area_sqm (land context)",
+      "notes": "Minimum 0.1 m² aligned with input_validator._MIN_AREA_SQM."
+    },
+
+    "built_up_area_m2": {
+      "type": "number",
+      "unit": "m²",
+      "required": false,
+      "validation_rules": [
+        {"rule": "greater_than_0_if_present", "action": "reject"},
+        {"rule": "not_greater_than_land_area_times_floors_if_both_present", "action": "flag_for_review"},
+        {"rule": "less_than_10000000", "action": "flag_for_review"}
+      ],
+      "missing_policy": "allow_null_for_land_use — for built assets: flag_for_review if missing; not imputed",
+      "db_column": "comparables.area_sqm (built context)",
+      "notes": "Required for income and cost approaches in P1."
+    },
+
+    "rentable_area_m2": {
+      "type": "number",
+      "unit": "m²",
+      "required": false,
+      "validation_rules": [
+        {"rule": "greater_than_0_if_present", "action": "reject"},
+        {"rule": "not_greater_than_built_up_area_if_both_present", "action": "flag_for_review"}
+      ],
+      "missing_policy": "allow_null — if income approach used and rentable_area missing: insufficient_evidence status for that method",
+      "db_column": null,
+      "notes": "Not in existing schema — new field for mass valuation. Added to MassValuationRun in P1."
+    },
+
+    "age": {
+      "type": "integer",
+      "unit": "years",
+      "required": false,
+      "validation_rules": [
+        {"rule": "non_negative_integer", "action": "reject"},
+        {"rule": "less_than_200", "action": "flag_for_review"},
+        {"rule": "not_future_year_built", "action": "reject"}
+      ],
+      "missing_policy": "optional_sector_imputation — age may be imputed as sector median with explicit quality_flag='age_imputed_sector_median'; imputation logged in provenance. Price/location fields NEVER imputed.",
+      "db_column": "comparables.age_years",
+      "notes": "year_built accepted as alternative; age = current_year − year_built."
+    },
+
+    "condition": {
+      "type": "string",
+      "enum": ["new", "excellent", "good", "fair", "poor", "unknown"],
+      "unit": null,
+      "required": false,
+      "validation_rules": [
+        {"rule": "in_enum_if_present", "action": "normalise_to_unknown"}
+      ],
+      "missing_policy": "default_to_unknown — condition defaults to 'unknown' if missing; flagged in quality layer; no value imputation",
+      "db_column": null,
+      "notes": "Aligned with mass_appraisal._market_adjustment condition map."
+    },
+
+    "use": {
+      "type": "string",
+      "enum": [
+        "owner_occupied", "investment_rental", "vacant", "mixed",
+        "under_construction", "government", "waqf", "unknown"
+      ],
+      "unit": null,
+      "required": false,
+      "validation_rules": [
+        {"rule": "in_enum_if_present", "action": "normalise_to_unknown"}
+      ],
+      "missing_policy": "default_to_unknown — use type defaults to 'unknown' if missing; documented in record",
+      "db_column": null,
+      "notes": "Relevant for income approach — unknown use → insufficient_evidence for rental methods."
+    },
+
+    "transaction_date": {
+      "type": "string",
+      "format": "ISO8601_date (YYYY-MM-DD)",
+      "unit": null,
+      "required": true,
+      "validation_rules": [
+        {"rule": "valid_iso8601_date", "action": "reject"},
+        {"rule": "not_future_date", "action": "reject"},
+        {"rule": "within_configurable_lookback_window", "action": "flag_out_of_window"}
+      ],
+      "missing_policy": "reject — transaction_date is required for temporal validation and ratio study; missing date = excluded from time-series analysis",
+      "db_column": "comparables.listed_date",
+      "notes": "Lookback window defined per run in standard_version config (default 36 months for SA residential)."
+    },
+
+    "transaction_price": {
+      "type": "number",
+      "unit": "SAR",
+      "required": true,
+      "validation_rules": [
+        {"rule": "strictly_positive", "action": "reject"},
+        {"rule": "not_zero", "action": "reject"},
+        {"rule": "currency_unit_must_be_SAR_or_explicitly_converted", "action": "reject_if_currency_ambiguous"},
+        {"rule": "plausibility_range_per_property_type_and_area", "action": "flag_for_review"},
+        {"rule": "isolation_forest_outlier", "action": "flag_for_review_not_delete"}
+      ],
+      "missing_policy": "exclude_from_ratio_study — transaction_price missing: record excluded from COD/PRD/PRB analysis; NOT imputed statistically. Record retained for spatial context only.",
+      "db_column": "comparables.price_egp (field name legacy — SA platform uses SAR)",
+      "notes": "CRITICAL: Price is never statistically imputed. Zero price → rejected. Isolation Forest flags for human review only."
+    },
+
+    "evidence_type": {
+      "type": "string",
+      "enum": [
+        "registered_sale", "offer_listing", "rental_contract",
+        "valuation_report", "government_assessment", "manual_entry", "unknown"
+      ],
+      "unit": null,
+      "required": true,
+      "validation_rules": [
+        {"rule": "in_enum", "action": "flag_as_unknown"}
+      ],
+      "missing_policy": "default_to_unknown — evidence type defaults to 'unknown' but is documented; affects confidence score in provenance",
+      "db_column": "comparables.source (partial)",
+      "notes": "Registered sales receive highest confidence weight in IAAO ratio studies."
+    },
+
+    "occupancy": {
+      "type": "number",
+      "unit": "percent (0–100)",
+      "required": false,
+      "validation_rules": [
+        {"rule": "between_0_and_100_if_present", "action": "reject"},
+        {"rule": "numeric_type_if_present", "action": "reject"}
+      ],
+      "missing_policy": "allow_null — if income approach used and occupancy missing: insufficient_evidence for rental methods; not imputed",
+      "db_column": null,
+      "notes": "New field for mass valuation income analysis."
+    },
+
+    "quality_finish": {
+      "type": "string",
+      "enum": ["luxury", "high", "standard", "economy", "shell", "unknown"],
+      "unit": null,
+      "required": false,
+      "validation_rules": [
+        {"rule": "in_enum_if_present", "action": "normalise_to_unknown"}
+      ],
+      "missing_policy": "default_to_unknown — quality/finish defaults to 'unknown'; documented in quality layer",
+      "db_column": "comparables.finishing_level + comparables.quality_tier",
+      "notes": "Maps to both finishing_level and quality_tier in the existing comparables table."
+    }
+  },
+
+  "canonical_field_count": 18,
+  "required_field_count": 5,
+  "notes": [
+    "advisory_only=True — no automated certification or approval.",
+    "Location fields (city, coordinates) are NEVER statistically imputed.",
+    "Price (transaction_price) is NEVER statistically imputed.",
+    "Isolation Forest and Z-score anomaly detection = flag_for_review only, not auto-delete.",
+    "All missing values produce documented absence states, not zeros or averages."
+  ]
+}

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="traditional">
+<head>
+<meta charset="UTF-8"/>
+<title>تقرير تقييم عقاري محترف مبدئي</title>
+<style>
+{{ font_css_block }}
+/* ═══ PV Design System — Traditional Blue Theme ═══ */
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{direction:rtl;text-align:right;font-family:'Cairo','Noto Naskh Arabic','Amiri','Arial',sans-serif;font-size:9.5pt;color:#1a1a2e;line-height:1.72;background:#fff;}
+@page{size:A4;margin:24mm 15mm 18mm 15mm;}
+body{padding-top:14mm;padding-bottom:11mm;}
+:root{--c-primary:#1a5276;--c-primary-d:#1f4e78;--c-accent:#2e86c1;--c-gold:#d4af37;--c-danger:#922b21;--c-warn:#f39c12;--c-ok:#1e8449;--c-bg-strip:#ebf5fb;--c-bg-key:#eaf4fb;--c-border:#d0d0d0;--c-text-mute:#7f8c8d;}
+/* COVER */
+.cover-page{page-break-after:always;min-height:250mm;background:linear-gradient(145deg,#1f4e78 0%,#2e86c1 100%);color:#fff;padding:30px 32px 26px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;}
+.cover-page::after{content:'';position:absolute;bottom:0;left:0;right:0;height:5mm;background:#d4af37;opacity:.65;}
+.cover-badge{font-size:8pt;font-weight:700;color:#d4af37;letter-spacing:2px;margin-bottom:10px;text-transform:uppercase;}
+.cover-title{font-size:20pt;font-weight:700;color:#fff;margin-bottom:6px;line-height:1.3;}
+.cover-sub{font-size:9.5pt;color:rgba(255,255,255,.80);margin-bottom:16px;}
+.cover-divider{border:none;border-top:1px solid rgba(255,255,255,.22);margin:14px 0;}
+.cover-meta{display:flex;flex-wrap:wrap;gap:7px 26px;font-size:8.5pt;color:rgba(255,255,255,.88);margin-bottom:10px;}
+.cover-meta span{display:flex;gap:5px;align-items:baseline;}
+.cover-meta strong{color:#fff;}
+.cover-seal{display:inline-block;border:2px solid #f39c12;color:#f39c12;background:rgba(243,156,18,.12);font-weight:700;font-size:9pt;padding:5px 22px;border-radius:20px;margin-top:12px;align-self:flex-start;}
+.cover-confidential{font-size:7pt;color:rgba(255,255,255,.50);margin-top:8px;}
+/* HEADER / FOOTER */
+.pv-header{position:fixed;top:0;left:0;right:0;height:12mm;background:#fff;border-bottom:2px solid #1a5276;padding:0 15mm;display:flex;align-items:center;justify-content:space-between;font-size:7.5pt;color:#1a5276;z-index:100;}
+.pv-header .hdr-firm{font-weight:700;font-size:8pt;}
+.pv-header .hdr-ref{color:#7f8c8d;}
+.pv-header .hdr-status{font-size:7pt;color:#f39c12;font-weight:700;padding:1px 7px;border:1px solid #f39c12;border-radius:3px;}
+.pv-footer{position:fixed;bottom:0;left:0;right:0;height:9mm;background:#fff;border-top:1px solid #e0e6ef;padding:0 15mm;display:flex;align-items:center;justify-content:space-between;font-size:7pt;color:#7f8c8d;z-index:100;}
+.pv-footer .ftr-advisory{color:#922b21;font-weight:700;font-size:6.5pt;}
+.pv-footer .ftr-page{direction:ltr;}
+/* WATERMARK */
+.watermark{position:fixed;top:48%;left:50%;transform:translate(-50%,-50%) rotate(-28deg);font-size:28px;font-weight:700;color:rgba(31,78,120,.055);z-index:0;white-space:nowrap;pointer-events:none;}
+.content{position:relative;z-index:1;}
+/* SECTION TITLES */
+h1{font-size:16pt;color:#1a5276;margin-bottom:6px;}
+h2{font-size:11.5pt;color:#1a5276;margin:18px 0 6px;border-bottom:2px solid #1a5276;padding-bottom:3px;}
+h3{font-size:10.5pt;color:#2e86c1;margin:12px 0 4px;}
+.section-title{font-size:10pt;font-weight:700;color:#fff;background:#1a5276;padding:5px 14px;border-right:4px solid #d4af37;margin-bottom:7px;}
+.section{margin-bottom:14px;page-break-inside:avoid;}
+.section-body{padding:0 6px;}
+.no-break{page-break-inside:avoid;}
+.page-break{page-break-before:always;padding-top:6mm;}
+/* KPI CARDS */
+.kpi-row{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0;}
+.kpi-card{flex:1 1 110px;min-width:95px;background:#f4f8ff;border:1px solid #d0d0d0;border-top:3px solid #1a5276;border-radius:6px;padding:8px 12px;text-align:center;}
+.kpi-value{font-size:15pt;font-weight:700;color:#1a5276;direction:ltr;display:block;}
+.kpi-label{font-size:7.5pt;color:#555;display:block;margin-top:3px;}
+/* VALUE CONCLUSION BOX */
+.value-conclusion-box{background:#ebf3fb;border:2px solid #1f4e78;border-radius:8px;padding:16px 22px;margin:12px 0;text-align:center;}
+.vcb-label{font-size:9pt;color:#2e86c1;font-weight:700;margin-bottom:4px;}
+.vcb-amount{font-size:22pt;font-weight:700;color:#1f4e78;direction:ltr;display:block;}
+.vcb-amount-words{font-size:10pt;color:#1a5276;margin:4px 0;}
+.vcb-currency{font-size:8pt;color:#7f8c8d;}
+.vcb-advisory{font-size:7.5pt;color:#f39c12;margin-top:6px;border-top:1px solid #d0d0d0;padding-top:4px;}
+/* WARNING / MISSING DATA */
+.warning-box{background:#fef9e7;border:1.5px solid #f39c12;border-radius:5px;padding:9px 14px;font-size:8.5pt;color:#7d6608;margin:6px 0;}
+.warning-box .wb-label{font-size:10pt;color:#922b21;font-weight:700;display:block;margin-bottom:4px;}
+.missing-data-box{background:#fdf2f8;border:1.5px dashed #c0392b;border-radius:5px;padding:9px 14px;font-size:8.5pt;color:#7b241c;margin:6px 0;}
+/* RECONCILIATION BOX */
+.reconciliation-box{background:#f0faf5;border:1.5px solid #1e8449;border-right:4px solid #1e8449;border-radius:5px;padding:10px 14px;margin:8px 0;}
+.rec-header{font-weight:700;color:#145a32;font-size:10pt;margin-bottom:7px;}
+.rec-method-row{display:flex;justify-content:space-between;font-size:9pt;padding:3px 0;border-bottom:1px solid #c3e6d3;}
+.rec-final-row{display:flex;justify-content:space-between;font-size:10pt;font-weight:700;color:#1f4e78;padding:5px 0 0;}
+/* TABLES */
+table{width:100%;border-collapse:collapse;margin:6px 0;font-size:9pt;}
+th{background:#1a5276;color:#fff;padding:6px 9px;font-size:9pt;text-align:right;}
+td{padding:5px 9px;border:1px solid #d0d0d0;vertical-align:top;}
+tr:nth-child(even) td{background:#ebf5fb;}
+.kv-table td:first-child{font-weight:700;width:36%;background:#eaf4fb;}
+.td-num{direction:ltr;text-align:left;}
+/* CHART / MAP PLACEHOLDERS */
+.chart-placeholder{background:#f9fbfd;border:1.5px dashed #d0d0d0;border-radius:6px;padding:18px;text-align:center;color:#7f8c8d;font-size:8.5pt;margin:8px 0;}
+.map-placeholder{background:#f0f4fa;border:1.5px dashed #a9cce3;border-radius:6px;padding:20px;text-align:center;color:#3a5a7a;font-size:8.5pt;min-height:40mm;margin:8px 0;display:flex;align-items:center;justify-content:center;}
+/* APPENDIX */
+.appendix-section{page-break-before:always;padding-top:8mm;}
+.appendix-title{font-size:12pt;font-weight:700;color:#1a5276;border-bottom:2px solid #1a5276;padding-bottom:4px;margin:0 0 10px;}
+/* SIGNATURE GATE */
+.signature-gate{border:1.5px dashed #c0392b;border-radius:6px;background:#fdf2f8;padding:12px 16px;margin:10px 0;text-align:center;}
+.sig-gate-label{font-size:10pt;font-weight:700;color:#7b241c;display:block;margin-bottom:6px;}
+.sig-gate-slot{border:1px solid #c0392b;border-radius:4px;height:18mm;background:#fff9fb;margin:8px auto;max-width:75%;display:flex;align-items:center;justify-content:center;color:#c0392b;font-size:8.5pt;}
+/* DRAFT DISCLAIMER */
+.draft-disclaimer{background:#fef9e7;border:2px solid #f39c12;border-radius:6px;padding:12px 16px;margin:12px 0 18px;text-align:center;font-size:11pt;font-weight:700;color:#7d6608;}
+.draft-disclaimer .dd-label{font-size:13pt;color:#922b21;display:block;margin-bottom:4px;}
+.draft-disclaimer .dd-sub{font-size:8.5pt;font-weight:normal;color:#7d6608;}
+/* CERT BLOCK */
+.cert-block{border:1.5px solid #d4af37;border-radius:6px;padding:12px 16px;background:#fffdf0;margin:8px 0;}
+.cert-text{font-size:9.5pt;font-weight:700;color:#1f4e78;margin-bottom:8px;}
+/* UTILITY */
+.ok{color:#1e8449;font-weight:700;} .nok{color:#922b21;font-weight:700;} .na{color:#7f8c8d;font-style:italic;}
+.ltr{direction:ltr;text-align:left;display:inline-block;}
+.note-box{background:#fff8f0;border:1px solid #e8c87a;border-radius:3px;padding:5px 10px;font-size:8.5pt;color:#7a5500;margin:4px 0;}
+.source-box{background:#f8f9fa;border:1px solid #e0e6ef;border-right:3px solid #2e86c1;border-radius:4px;padding:8px 12px;font-size:8.5pt;color:#555;line-height:1.75;}
+.footer-disclaimer{font-size:7.5pt;color:#999;background:#f9f9f9;border:1px solid #eee;border-radius:4px;padding:8px 10px;margin-top:14px;line-height:1.8;}
+.blockers-list{list-style:none;padding:0;}
+.blockers-list li{padding:4px 8px;margin:3px 0;background:#fef9e7;border-right:4px solid #f39c12;font-size:9pt;}
+</style>
+</head>
+<body>
+
+<div class="watermark">تقرير مبدئي — غير معتمد</div>
+
+<!-- ══ FIXED HEADER ═══════════════════════════════════════════════════════════ -->
+<div class="pv-header">
+  <span class="hdr-firm">Expert Smart — منصة التقييم العقاري المهني</span>
+  <span class="hdr-ref">{{ ctx.report_number | default("") }}</span>
+  <span class="hdr-status">تقرير مبدئي</span>
+</div>
+
+<!-- ══ FIXED FOOTER ═══════════════════════════════════════════════════════════ -->
+<div class="pv-footer">
+  <span class="ftr-advisory">للاستخدام الداخلي فقط — غير معتمد</span>
+  <span class="ftr-date ltr">{{ generated_at }}</span>
+  <span class="ftr-page ltr">صفحة <span class="page-number"></span></span>
+</div>
+
+<div class="content">
+
+<!-- ══ COVER PAGE ══════════════════════════════════════════════════════════════ -->
+{% set req = ctx.request_summary | default({}) %}
+<div class="cover-page">
+  <div>
+    <div class="cover-badge">Expert Smart — تقييم عقاري مهني</div>
+    <div class="cover-title">تقرير تقييم عقاري محترف مبدئي</div>
+    <div class="cover-sub">Professional Valuation Preliminary Report — Advisory Use Only</div>
+    <hr class="cover-divider"/>
+    <div class="cover-meta">
+      <span>رقم التقرير: <strong>{{ ctx.report_number | default("غير محدد") }}</strong></span>
+      <span>رقم الطلب: <strong>{{ req.request_id | default("غير محدد") }}</strong></span>
+      <span>تاريخ التقييم: <strong>{{ req.valuation_date | default("غير محدد") }}</strong></span>
+      <span>تاريخ الإصدار: <strong>{{ generated_at[:10] if generated_at else "غير محدد" }}</strong></span>
+    </div>
+    <div class="cover-meta">
+      <span>العميل: <strong>{{ req.client_name | default("غير محدد") }}</strong></span>
+      <span>نوع العقار: <strong>{{ req.property_type | default("غير محدد") }}</strong></span>
+      <span>غرض التقييم: <strong>{{ req.valuation_purpose | default("غير محدد") }}</strong></span>
+    </div>
+    <div class="cover-meta">
+      <span>أساس القيمة: <strong>{{ req.basis_of_value | default("غير محدد") }}</strong></span>
+      <span>نوع التقرير: <strong>{{ req.report_type_label | default("تقرير مبدئي") }}</strong></span>
+    </div>
+    <div class="cover-meta">
+      <span>العنوان: <strong>{{ req.property_address | default("غير محدد") }}</strong></span>
+    </div>
+  </div>
+  <div>
+    <div class="cover-seal draft">تقرير مبدئي — للاستخدام الاستشاري فقط</div>
+    <div class="cover-confidential">Private &amp; Confidential — سري ومحدود التداول — للاستخدام الاستشاري الداخلي فقط</div>
+  </div>
+</div>
+
+<!-- ══ ADVISORY WARNING ════════════════════════════════════════════════════════ -->
+<div class="draft-disclaimer">
+  <span class="dd-label">تحذير مهم — تقرير مبدئي غير معتمد</span>
+  <span class="dd-sub">{{ ctx.advisory_label | default("هذا التقرير مبدئي واستشاري فقط — غير صالح للاستخدام الرسمي أو الاعتماد النهائي") }}</span>
+</div>
+
+<!-- ══ TABLE OF CONTENTS (advisory / static) ══════════════════════════════════ -->
+<div class="section no-break">
+  <h2>جدول المحتويات</h2>
+  <div class="note-box">ملاحظة: أرقام الصفحات تقريبية في هذه المرحلة — تُحدَّد عند اكتمال التقرير المعتمد.</div>
+  <table class="kv-table">
+    <tr><td>١. بيانات الطلب والعقار</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٢. خطاب الإحالة</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٣. شهادة الخبير (مبدئية)</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٤. المعايير المهنية المطبقة</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٥. نطاق العمل</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٦. بيانات العقار التفصيلية</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٧. الخرائط وموقع العقار</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٨. تحليل السوق</td><td class="td-num ltr">—</td></tr>
+    <tr><td>٩. طرق التقييم</td><td class="td-num ltr">—</td></tr>
+    <tr><td>١٠. التوفيق والقيمة المبدئية</td><td class="td-num ltr">—</td></tr>
+    <tr><td>١١. عدم اليقين في التقييم</td><td class="td-num ltr">—</td></tr>
+    <tr><td>١٢. الافتراضات والقيود</td><td class="td-num ltr">—</td></tr>
+    <tr><td>الملاحق أ–هـ</td><td class="td-num ltr">—</td></tr>
+  </table>
+</div>
+
+<!-- ══ LETTER OF TRANSMITTAL (advisory) ══════════════════════════════════════ -->
+<div class="section no-break page-break">
+  <h2>خطاب الإحالة</h2>
+  <div class="note-box">هذا الخطاب مبدئي واستشاري — يتطلب الإصدار الرسمي مراجعة خبير معتمد.</div>
+  <p style="margin:8px 0;line-height:1.9;">
+    السادة / {{ req.client_name | default("العميل الكريم") }} — المحترمين،<br/>
+    تحية طيبة وبعد،<br/>
+    بالإشارة إلى طلبكم الكريم رقم <strong>{{ req.request_id | default("—") }}</strong>،
+    يسرنا تقديم هذا التقرير المبدئي لتقييم عقار
+    <strong>{{ req.property_type | default("—") }}</strong>
+    الواقع في <strong>{{ req.property_address | default("—") }}</strong>
+    وذلك لغرض <strong>{{ req.valuation_purpose | default("—") }}</strong>،
+    اعتباراً من تاريخ التقييم <strong>{{ req.valuation_date | default("—") }}</strong>.<br/>
+    يُعدّ هذا التقرير مبدئياً وللاستخدام الداخلي فقط. يستلزم الإصدار الرسمي استيفاء جميع بوابات الاعتماد.
+  </p>
+</div>
+
+<!-- ══ CERTIFICATE OF VALUE (advisory — 8 clauses all pending) ════════════════ -->
+<div class="section no-break">
+  <h2>شهادة الخبير — مبدئية</h2>
+  <div class="cert-block">
+    <div class="cert-text">الشهادة التالية مبدئية — جميع البنود تستلزم توقيع خبير معتمد ومرخص للإصدار الرسمي.</div>
+    <table class="kv-table">
+      <tr><td>١. صحة المعلومات</td><td><span class="na">⚠ بانتظار مراجعة الخبير</span></td></tr>
+      <tr><td>٢. استقلالية التحليل</td><td><span class="na">⚠ بانتظار مراجعة الخبير</span></td></tr>
+      <tr><td>٣. موضوعية الرأي المهني</td><td><span class="na">⚠ بانتظار مراجعة الخبير</span></td></tr>
+      <tr><td>٤. معاينة العقار</td><td><span class="na">⚠ يتطلب تأكيد المعاينة الميدانية</span></td></tr>
+      <tr><td>٥. استند التقييم على تحليل HBU</td><td><span class="na">⚠ {{ "مكتمل مبدئياً" if (ctx.advanced_reviews | default({})).hbu_completed else "بانتظار اكتمال HBU" }}</span></td></tr>
+      <tr><td>٦. لا مصلحة مالية للخبير في العقار</td><td><span class="na">⚠ بانتظار إقرار الخبير</span></td></tr>
+      <tr><td>٧. الامتثال لمعايير IVS / التقييم المعمول بها</td><td><span class="na">⚠ بانتظار مراجعة الامتثال</span></td></tr>
+      <tr><td>٨. التوقيع ورقم العضوية</td><td><span class="nok">مقيّد — يتطلب خبيراً مرخصاً</span></td></tr>
+    </table>
+    <div class="signature-gate">
+      <span class="sig-gate-label">بوابة التوقيع — مقيّدة</span>
+      <div class="sig-gate-slot">التوقيع والختم — يتطلب خبيراً معتمداً</div>
+      <div class="sig-gate-note">لا يحتوي هذا التقرير على توقيع أو ختم آلي — التوقيع الرسمي من مسؤولية الخبير المرخص</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STANDARDS COMPLIANCE ════════════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>المعايير المهنية المطبقة</h2>
+  <table class="kv-table">
+    <tr><td>إطار المعايير</td><td>المعايير الدولية للتقييم (IVS) — International Valuation Standards Council (IVSC)</td></tr>
+    <tr><td>المعايير المطبقة</td><td>IVS General Standards | IVS 105 (Valuation Approaches) | IVS 200 (Businesses and Business Interests) | IVS 210 | IVS 220</td></tr>
+    <tr><td>أساس القيمة</td><td>{{ req.basis_of_value | default("القيمة السوقية — Market Value (IVS Definition)") }}</td></tr>
+    <tr><td>تاريخ نفاذ القيمة</td><td>{{ req.valuation_date | default("غير محدد") }}</td></tr>
+    <tr><td>حالة الامتثال</td><td><span class="na">مبدئي — يُؤكَّد عند الاعتماد النهائي</span></td></tr>
+  </table>
+</div>
+
+<!-- ══ 1. SCOPE OF WORK ════════════════════════════════════════════════════════ -->
+<div class="section no-break page-break">
+  <h2>١. نطاق العمل</h2>
+  <p>يعتمد هذا التقرير على البيانات المتوفرة في مرحلة الدراسة الأولية. نطاق العمل مبدئي وقابل للتعديل بعد اكتمال جميع المستندات والمصادر والمقارنات المطلوبة.</p>
+  <table class="kv-table" style="margin-top:8px;">
+    <tr><td>نوع التقرير</td><td><strong>{{ req.report_type_label | default("تقرير احترافي") }}</strong></td></tr>
+    <tr><td>غرض التقييم</td><td>{{ req.valuation_purpose | default("غير متاح") }}</td></tr>
+    <tr><td>المستخدمون المقصودون</td><td>{{ req.client_name | default("غير متاح") }}</td></tr>
+    <tr><td>المصلحة الموضوع قيمتها</td><td>{{ req.basis_of_value | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ التقييم الفعلي</td><td>{{ req.valuation_date | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ المعاينة</td><td>{{ req.inspection_date | default("غير متاح") }}</td></tr>
+  </table>
+</div>
+
+<!-- ══ 2. PROPERTY DATA SHEET ══════════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٢. بيانات الطلب والعقار</h2>
+  <table class="kv-table">
+    <tr><td>رقم الطلب</td><td>{{ req.request_id | default("غير متاح") }}</td></tr>
+    <tr><td>نوع التقرير</td><td><strong>{{ req.report_type_label | default("تقرير احترافي") }}</strong></td></tr>
+    <tr><td>اسم العميل</td><td>{{ req.client_name | default("غير متاح") }}</td></tr>
+    <tr><td>نوع العميل</td><td>{{ req.client_type | default("غير متاح") }}</td></tr>
+    <tr><td>عنوان العقار</td><td>{{ req.property_address | default("غير متاح") }}</td></tr>
+    <tr><td>نوع العقار</td><td>{{ req.property_type | default("غير متاح") }}</td></tr>
+    <tr><td>غرض التقييم</td><td>{{ req.valuation_purpose | default("غير متاح") }}</td></tr>
+    <tr><td>أساس القيمة</td><td>{{ req.basis_of_value | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ التقييم</td><td>{{ req.valuation_date | default("غير متاح") }}</td></tr>
+    <tr><td>تاريخ المعاينة</td><td>{{ req.inspection_date | default("غير متاح") }}</td></tr>
+    <tr><td>العملة</td><td>{{ req.currency | default("SAR") }}</td></tr>
+    <tr><td>إحداثيات GPS</td><td><span class="na ltr">{{ req.gps_coordinates | default("—  يُدرج عند توفر البيانات المعتمدة") }}</span></td></tr>
+    <tr><td>رقم الصك / سند الملكية</td><td><span class="na">{{ req.deed_number | default("— يُدرج عند توفر سند الملكية") }}</span></td></tr>
+    <tr><td>رقم رخصة البناء</td><td><span class="na">{{ req.building_permit | default("— يُدرج عند توفر الرخصة") }}</span></td></tr>
+    <tr><td>التقسيم الزوني</td><td>{{ req.zoning | default("—") }}</td></tr>
+    <tr><td>مساحة الأرض (م²)</td><td><span class="ltr">{{ req.land_area | default("—") }}</span></td></tr>
+    <tr><td>المساحة المبنية (م²)</td><td><span class="ltr">{{ req.built_up_area | default("—") }}</span></td></tr>
+    <tr><td>تاريخ إعداد التقرير</td><td>{{ generated_at }}</td></tr>
+  </table>
+</div>
+
+<!-- ══ 3. LOCATION MAPS PLACEHOLDER ═══════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٣. موقع العقار والخرائط</h2>
+  <div class="map-placeholder">
+    خريطة الموقع — تُضاف عند توفر بيانات GIS المعتمدة<br/>
+    <span style="font-size:7.5pt;color:#7f8c8d;display:block;margin-top:6px;">
+      GPS: {{ req.gps_coordinates | default("N—  E— (غير متاح)") }} | المصدر: يُدرج عند التوثيق
+    </span>
+  </div>
+  <div class="note-box">صور ميدانية فعلية مطلوبة للتقرير المعتمد — تُضاف بعد المعاينة الميدانية الرسمية</div>
+</div>
+
+<!-- ══ 4. EVIDENCE & SOURCE READINESS ═════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٤. جاهزية المستندات والمصادر</h2>
+  {% set ev = ctx.evidence_summary | default({}) %}
+  <table class="kv-table">
+    <tr><td>جاهزية المستندات الإلزامية</td>
+        <td class="{{ 'ok' if ev.mandatory_document_readiness else 'nok' }}">
+          {{ "مكتملة" if ev.mandatory_document_readiness else "غير مكتملة" }}</td></tr>
+    <tr><td>عدد المستندات المعتمدة</td><td>{{ ev.approved_count | default(0) }}</td></tr>
+    <tr><td>الفئات المفقودة</td>
+        <td>{{ ev.missing_categories | join("، ") if ev.missing_categories else "لا توجد فئات مفقودة معروفة" }}</td></tr>
+    <tr><td>بيانات QA موجودة</td>
+        <td class="nok" style="font-size:8.5pt;">{{ "نعم — للاستخدام المبدئي فقط" if ev.qa_data_present else "لا" }}</td></tr>
+  </table>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ ev.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 5. COMPARABLE SUMMARY ══════════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٥. ملخص المقارنات</h2>
+  {% set comp = ctx.comparable_summary | default({}) %}
+  <div class="kpi-row">
+    <div class="kpi-card"><span class="kpi-value">{{ comp.total_count | default(0) }}</span><span class="kpi-label">إجمالي المقارنات</span></div>
+    <div class="kpi-card kpi-ok"><span class="kpi-value">{{ comp.production_ready_count | default(0) }}</span><span class="kpi-label">جاهزة إنتاجياً</span></div>
+    <div class="kpi-card kpi-warn"><span class="kpi-value">{{ comp.staged_count | default(0) }}</span><span class="kpi-label">قيد التهيئة</span></div>
+  </div>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ comp.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 6. METHOD ANALYSIS ══════════════════════════════════════════════════════ -->
+<div class="section">
+  <h2>٦. تحليل طرق التقييم</h2>
+  {% set methods = ctx.method_summary | default({}) %}
+  {% if methods.methods %}
+  <table>
+    <tr><th>الطريقة</th><th>القيمة المؤشرة</th><th>الحالة</th></tr>
+    {% for m in methods.methods %}
+    <tr>
+      <td>{{ m.method_type | default("غير متاح") }}</td>
+      <td class="td-num">{{ m.indicated_value | default("غير متاح") }}</td>
+      <td>{{ m.status | default("غير متاح") }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p class="nok">لم يتم تشغيل أي طريقة تقييم بعد.</p>
+  {% endif %}
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ methods.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 7. MARKET ANALYSIS (advisory) ══════════════════════════════════════════ -->
+<div class="section no-break page-break">
+  <h2>٧. تحليل السوق العقاري</h2>
+  <div class="note-box">
+    <span class="wb-label">ملاحظة</span>
+    تحليل السوق التالي استشاري مبدئي — يستلزم التقرير المعتمد مراجعة بيانات سوقية محدّثة ومصادر معتمدة.
+    بيانات السوق في هذا القسم استشارية — تستلزم مصادر موثقة ومعتمدة في التقرير النهائي
+  </div>
+  <table class="kv-table">
+    <tr><td>نوع السوق العقاري</td><td>{{ req.property_type | default("—") }}</td></tr>
+    <tr><td>الموقع / المنطقة</td><td>{{ req.property_address | default("—") }}</td></tr>
+    <tr><td>اتجاهات الأسعار</td><td><span class="na">تُحدَّد بعد توفر بيانات السوق المعتمدة</span></td></tr>
+    <tr><td>مؤشرات العرض والطلب</td><td><span class="na">تُحدَّد بعد توفر بيانات السوق المعتمدة</span></td></tr>
+    <tr><td>معدلات الإيجار السائدة</td><td><span class="na">تُدرج بيانات السوق المعتمدة عند توفرها</span></td></tr>
+    <tr><td>توقعات السوق</td><td><span class="na">بانتظار مراجعة خبير السوق</span></td></tr>
+  </table>
+</div>
+
+<!-- ══ 8. RECONCILIATION PREVIEW ══════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٨. التوفيق المبدئي</h2>
+  {% set methods = ctx.method_summary | default({}) %}
+  {% set prelim = ctx.preliminary_approval | default({}) %}
+  <div class="reconciliation-box">
+    <div class="rec-header">ملخص التوفيق المبدئي</div>
+    {% if methods.methods %}
+    {% for m in methods.methods %}
+    <div class="rec-method-row">
+      <span class="rm-name">{{ m.method_type | default("—") }}</span>
+      <span class="rm-value">{{ m.indicated_value | default("—") }}</span>
+      <span class="rm-weight">{{ m.weight | default("—") }}</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+    <div class="rec-final-row">
+      <span>القيمة المُسوَّاة المبدئية</span>
+      <span class="ltr">{{ methods.reconciliation_value | default("غير متاح") }}</span>
+    </div>
+  </div>
+  <table class="kv-table">
+    <tr><td>اكتملت التسوية</td>
+        <td class="{{ 'ok' if methods.reconciliation_completed else 'nok' }}">
+          {{ "نعم" if methods.reconciliation_completed else "لا — مبدئي" }}</td></tr>
+    <tr><td>الموافقة المبدئية</td>
+        <td class="{{ 'ok' if prelim.preliminary_approval_ready else 'nok' }}">
+          {{ "صادرة" if prelim.preliminary_approval_ready else "غير صادرة" }}</td></tr>
+  </table>
+  <!-- Value Conclusion Box -->
+  {% set fv = methods.reconciliation_value %}
+  <div class="value-conclusion-box">
+    <div class="vcb-label">القيمة المؤشرة المبدئية</div>
+    <div class="vcb-amount">{{ fv | default("—") }}</div>
+    <div class="vcb-amount-words"><span class="na">القيمة بالحروف: تُدرج عند الاعتماد النهائي</span></div>
+    <div class="vcb-currency">{{ req.currency | default("SAR") }}</div>
+    <div class="vcb-advisory">⚠ هذه القيمة مبدئية استشارية — غير معتمدة وغير صالحة للاستخدام الرسمي</div>
+  </div>
+</div>
+
+<!-- ══ 9. VALUATION UNCERTAINTY ═══════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>٩. عدم اليقين في التقييم</h2>
+  <p>وفقاً لـ IVSC Technical Paper on Uncertainty in Valuations، تتأثر القيمة التقديرية بعوامل عدم اليقين التالية:</p>
+  <table class="kv-table" style="margin-top:8px;">
+    <tr><td>حالة البيانات السوقية</td><td><span class="na">مبدئية — تُراجَع عند الاعتماد</span></td></tr>
+    <tr><td>تقلبات السوق</td><td><span class="na">تُحدَّد بعد تحليل السوق المفصّل</span></td></tr>
+    <tr><td>نطاق القيمة المحتملة</td><td><span class="na">يُحدَّد عند اكتمال الطرق</span></td></tr>
+    <tr><td>شرط عدم اليقين المادي</td><td><span class="na">يُقيَّم عند اكتمال مراجعة السوق</span></td></tr>
+    <tr><td>مرجع IVSC</td><td class="ltr">IVSC TIP — Uncertainty in Valuations (2013 / updated)</td></tr>
+  </table>
+</div>
+
+<!-- ══ 10. ASSUMPTIONS & LIMITING CONDITIONS ══════════════════════════════════ -->
+<div class="section no-break">
+  <h2>١٠. الافتراضات والقيود</h2>
+  <table>
+    <tr><th>#</th><th>الافتراض / القيد</th></tr>
+    <tr><td>١</td><td>يُفترض أن سند الملكية سليم وخالٍ من أي أعباء قانونية — هذا افتراض مبدئي غير مؤكد.</td></tr>
+    <tr><td>٢</td><td>البيانات المستخدمة مبدئية ومن مصادر غير معتمدة — تُستبدل بمصادر إنتاجية قبل الاعتماد.</td></tr>
+    <tr><td>٣</td><td>المعاينة الميدانية لم تُؤكَّد بعد — تُشترط للتقرير المعتمد.</td></tr>
+    <tr><td>٤</td><td>لا يُعدّ هذا التقرير رأياً قانونياً أو تقييماً هندسياً أو تدقيقاً بيئياً.</td></tr>
+    <tr><td>٥</td><td>قيمة التقييم تعكس المعلومات المتاحة في تاريخ التقييم المذكور فقط.</td></tr>
+    <tr><td>٦</td><td>لا يُجيز هذا التقرير استخدامه لأي غرض آخر غير المذكور في نطاق العمل.</td></tr>
+  </table>
+</div>
+
+<!-- ══ 11. ADVANCED REVIEWS STATUS ════════════════════════════════════════════ -->
+<div class="section no-break page-break">
+  <h2>١١. حالة المراجعات المتقدمة</h2>
+  {% set adv = ctx.advanced_reviews | default({}) %}
+  <table>
+    <tr><th>المراجعة</th><th>الحالة</th></tr>
+    <tr><td>تحليل HBU</td>
+        <td class="{{ 'ok' if adv.hbu_completed else 'nok' }}">{{ "مكتمل" if adv.hbu_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>الفحص القانوني</td>
+        <td class="{{ 'ok' if adv.legal_completed else 'nok' }}">{{ "مكتمل" if adv.legal_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>ESG والمخاطر المناخية</td>
+        <td class="{{ 'ok' if adv.esg_completed else 'nok' }}">{{ "مكتمل" if adv.esg_completed else "يحتاج استكمال" }}</td></tr>
+    <tr><td>تحليل SWOT</td>
+        <td class="{{ 'ok' if adv.swot_completed else 'nok' }}">{{ "مكتمل" if adv.swot_completed else "يحتاج استكمال" }}</td></tr>
+  </table>
+  <p style="font-size:8.5pt;color:#7d6608;margin-top:4px;">{{ adv.advisory_note | default("") }}</p>
+</div>
+
+<!-- ══ 12. CERTIFICATION BLOCKERS ══════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>١٢. موانع الاعتماد النهائي</h2>
+  {% set missing = ctx.missing_certification_gates | default({}) %}
+  <p style="font-size:8.5pt;color:#7d6608;margin-bottom:6px;">{{ missing.advisory_note | default("") }}</p>
+  {% if missing.blockers %}
+  <ul class="blockers-list">
+    {% for b in missing.blockers %}
+    <li>{{ b }}</li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="ok">لا توجد موانع معروفة — تحقق من اكتمال جميع البوابات.</p>
+  {% endif %}
+</div>
+
+<!-- ══ 13. RECOMMENDED NEXT ACTIONS ════════════════════════════════════════════ -->
+<div class="section no-break">
+  <h2>١٣. الإجراءات الموصى بها</h2>
+  {% set actions = ctx.expert_next_actions | default({}) %}
+  <ul class="blockers-list" style="border-right-color:#1a5276;">
+    {% for action in actions.actions | default([]) %}
+    <li style="border-right-color:#1a5276;">{{ action }}</li>
+    {% endfor %}
+  </ul>
+</div>
+
+<!-- ══ OUTPUT MATRIX ════════════════════════════════════════════════════════════ -->
+{% set mx = ctx.output_matrix | default({}) %}
+{% if mx %}
+<div class="section no-break">
+  <h2>١٤. ملف مصفوفة المخرجات</h2>
+  <table class="kv-table">
+    <tr><td>نوع التقرير</td><td><strong>{{ mx.report_type_label | default(mx.report_type | default("غير متاح")) }}</strong></td></tr>
+    <tr><td>غرض التقييم</td><td>{{ mx.valuation_purpose_label | default(mx.valuation_purpose | default("غير متاح")) }}</td></tr>
+    <tr><td>نوع العقار / الأصل</td><td>{{ mx.property_type_label | default(mx.property_type | default("غير متاح")) }}</td></tr>
+    <tr><td>عدد أوراق المصنف الخبير النشطة</td><td>{{ mx.expert_sheet_count | default("غير متاح") }}</td></tr>
+    <tr><td>الطرق المطلوبة</td>
+        <td>{{ mx.required_methods | join("، ") if mx.required_methods else "تُحدَّد لاحقاً" }}</td></tr>
+    <tr><td>الطرق الاختيارية</td>
+        <td>{{ mx.optional_methods | join("، ") if mx.optional_methods else "—" }}</td></tr>
+  </table>
+  {% if ctx.output_warnings %}
+  <ul class="blockers-list" style="border-right-color:#f39c12;margin-top:6px;">
+    {% for w in ctx.output_warnings %}
+    <li>{{ w }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ══ METHOD REQUIREMENTS ══════════════════════════════════════════════════════ -->
+{% set req2 = ctx.request_summary | default({}) %}
+{% if req2.report_type in ("detailed_report", "professional_report") %}
+{% set mx = ctx.output_matrix | default({}) %}
+{% if mx.required_methods or mx.asset_additional_methods %}
+<div class="section no-break">
+  <h2>١٥. الطرق المطلوبة لهذا الغرض والأصل</h2>
+  <table>
+    <tr><th>الفئة</th><th>الطرق</th></tr>
+    {% if mx.required_methods %}
+    <tr><td>طرق مطلوبة</td><td>{{ mx.required_methods | join(" / ") }}</td></tr>
+    {% endif %}
+    {% if mx.optional_methods %}
+    <tr><td>طرق اختيارية</td><td>{{ mx.optional_methods | join(" / ") }}</td></tr>
+    {% endif %}
+    {% if mx.asset_additional_methods %}
+    <tr><td>طرق إضافية لنوع الأصل</td><td>{{ mx.asset_additional_methods | join(" / ") }}</td></tr>
+    {% endif %}
+  </table>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- ══ ASSET-SPECIFIC REQUIREMENTS ════════════════════════════════════════════ -->
+{% set asr = ctx.asset_specific_requirements | default({}) %}
+{% if asr and not asr.is_generic_fallback %}
+<div class="section no-break">
+  <h2>١٦. ملخص متطلبات الأصل المختار</h2>
+  <table class="kv-table">
+    <tr><td>نوع الأصل المُحدَّد</td><td>{{ asr.asset_type_resolved | default("—") }}</td></tr>
+    <tr><td>عنوان المتطلبات</td><td>{{ asr.requirements_panel_title_ar | default("—") }}</td></tr>
+    <tr><td>عدد المدخلات المطلوبة</td><td>{{ asr.required_inputs | length if asr.required_inputs else 0 }}</td></tr>
+    <tr><td>عدد الطرق الموصى بها</td><td>{{ asr.recommended_methods | length if asr.recommended_methods else 0 }}</td></tr>
+  </table>
+  {% if asr.warnings %}
+  <ul class="blockers-list" style="margin-top:6px;">
+    {% for w in asr.warnings %}
+    <li>{{ w }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ══ CANONICAL TAXONOMY ══════════════════════════════════════════════════════ -->
+{% set ct = ctx.canonical_taxonomy | default({}) %}
+{% if ct %}
+<div class="section no-break">
+  <h2>ملخص التصنيف القانوني الرباعي المحاور</h2>
+  {% set ax1 = ct.axis_1_asset_classification | default({}) %}
+  {% set ax2 = ct.axis_2_assignment_purpose | default({}) %}
+  {% set ax3 = ct.axis_3_basis_of_value | default({}) %}
+  {% set ax4 = ct.axis_4_report_type | default({}) %}
+  <table class="kv-table">
+    <tr><td>عائلة الأصل</td><td>{{ ax1.asset_family | default("—") }}</td></tr>
+    <tr><td>نوع الأصل</td><td>{{ ax1.asset_type | default("—") }}</td></tr>
+    <tr><td>النوع الفرعي</td><td>{{ ax1.asset_subtype | default("—") }}</td></tr>
+    <tr><td>حالة الأصل</td><td>{{ ax1.asset_condition_path | default("—") }}</td></tr>
+    <tr><td>غرض التكليف</td><td>{{ ax2.assignment_purpose | default("—") }}</td></tr>
+    <tr><td>الجهة المستهدفة</td><td>{{ ax2.intended_user_category | default("—") }}</td></tr>
+    <tr><td>أساس القيمة</td><td>{{ ax3.basis_of_value | default("—") }}</td></tr>
+    <tr><td>نوع التقرير</td><td>{{ ax4.report_type | default("—") }}</td></tr>
+  </table>
+</div>
+{% endif %}
+
+<!-- ══ APPENDICES ══════════════════════════════════════════════════════════════ -->
+<div class="appendix-section">
+  <div class="appendix-title">الملحق أ — خرائط الموقع</div>
+  <div class="map-placeholder">
+    خريطة الموقع التفصيلية — تُضاف عند توفر بيانات GIS المعتمدة<br/>
+    <span style="font-size:7.5pt;display:block;margin-top:6px;">GPS: {{ req.gps_coordinates | default("غير متاح") }}</span>
+  </div>
+</div>
+
+<div class="appendix-section">
+  <div class="appendix-title">الملحق ب — صور العقار</div>
+  <div class="note-box">الصور الميدانية الفعلية مطلوبة — تُضاف بعد المعاينة الميدانية المعتمدة والتوثيق الرسمي</div>
+  <div class="chart-placeholder" style="min-height:35mm;">صور خارجية — تُضاف بعد المعاينة</div>
+</div>
+
+<div class="appendix-section">
+  <div class="appendix-title">الملحق ج — مستندات الملكية</div>
+  <div class="note-box">رقم الصك / مستندات الملكية: {{ req.deed_number | default("لم تُستلَم بعد") }} — تُدرج نسخة مُخفَّفة عند استلام المستندات.</div>
+</div>
+
+<div class="appendix-section">
+  <div class="appendix-title">الملحق د — بيانات المقارنات السوقية</div>
+  {% set comp = ctx.comparable_summary | default({}) %}
+  <div class="note-box">عدد المقارنات المتاحة: {{ comp.total_count | default(0) }} — بيانات QA مستبعدة من التقرير الرسمي — تستلزم مصادر موثقة</div>
+</div>
+
+<div class="appendix-section">
+  <div class="appendix-title">الملحق هـ — بيانات الخبير المعتمد</div>
+  <div class="signature-gate">
+    <span class="sig-gate-label">بيانات خبير التقييم — مقيّدة</span>
+    <div class="sig-gate-slot">اسم الخبير / رقم الرخصة / عضوية هيئة التقييم — مقيّد بانتظار خبير معتمد</div>
+    <div class="sig-gate-note">لا يُصدر هذا النظام بيانات مقيّم أو رخصة أو ختم آلي — جميعها مسؤولية الخبير المرخص</div>
+  </div>
+</div>
+
+<!-- ══ FOOTER DISCLAIMER ═══════════════════════════════════════════════════════ -->
+<div class="footer-disclaimer">
+  <strong>تقرير مبدئي / غير معتمد / للاستخدام الداخلي فقط</strong><br/>
+  تاريخ الإنشاء: {{ generated_at }} | رقم التقرير: {{ ctx.report_number | default("") }} | رقم المخرج: {{ ctx.get("output_id", "") if ctx is mapping else "" }}<br/>
+  تقرير مبدئي استشاري — لا يُعدّ معتمداً — يستلزم الاعتماد استيفاء جميع بوابات الاعتماد النظامية وتوقيع الخبير المرخص<br/>
+  لا يجوز الاحتجاج بهذا التقرير في أي إجراء رسمي أو قانوني. يستلزم الاعتماد النهائي استيفاء جميع بوابات الاعتماد.
+</div>
+
+</div><!-- /content -->
+</body>
+</html>

@@ -18,10 +18,14 @@ from pathlib import Path
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.validation.input_validator import validate_inputs
-from reports.validation.result import Severity
+    from reports.validation.input_validator import validate_inputs
+    from reports.validation.result import Severity
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Valid full DTO ────────────────────────────────────────────────────────────

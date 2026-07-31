@@ -99,6 +99,14 @@ try:
 except ImportError:
     ResidentialAdapter = CommercialAdapter = None  # type: ignore[assignment,misc]
 from reports.excel_builder import ExcelReportBuilder
+try:
+    from reports.excel_template_driven_builder import (
+        build_template_driven_professional_workbook as _build_55_sheet,
+    )
+    _EXCEL_55_BUILDER_AVAILABLE = True
+except Exception:
+    _build_55_sheet = None  # type: ignore[assignment]
+    _EXCEL_55_BUILDER_AVAILABLE = False
 
 # ── Phase 7 land adapter + quality auditor ────────────────────────────────────
 try:
@@ -106,6 +114,13 @@ try:
 except ImportError:
     LandAdapter = None  # type: ignore[assignment,misc]
 from reports.quality_auditor import ReportQualityAuditor
+
+# ── Phase 8B requirements registry ───────────────────────────────────────────
+from adapters.valuation_requirements import (
+    get_requirements,
+    SUPPORTED_ASSET_TYPES,
+    SUPPORTED_PURPOSES_BY_ASSET_TYPE,
+)
 
 # ── Phase 15 enterprise features (optional — absent on main until R3 is merged)
 try:
@@ -675,13 +690,17 @@ def serve_index():
 
 @app.route("/<path:path>")
 def serve_static(path):
-    """يُقدّم ملفات CSS/JS/fonts/images من مجلد frontend/"""
+    """يُقدّم ملفات CSS/JS/fonts/images من مجلد frontend/
+
+    SEC-022: uses send_from_directory directly so werkzeug's safe_join() guards
+    against path-traversal — no os.path.isfile() probe outside the frontend dir.
+    """
     from flask import send_from_directory
-    full = os.path.join(_FRONTEND_DIR, path)
-    if os.path.isfile(full):
+    from werkzeug.exceptions import NotFound
+    try:
         return send_from_directory(_FRONTEND_DIR, path)
-    # fallback: 404 عادي بدلاً من traceback
-    return jsonify({"error": "file not found"}), 404
+    except NotFound:
+        return jsonify({"error": "file not found"}), 404
 
 # ═══════════════════════════════════════════════════════════════════════════
 # محرك التقييم
@@ -5487,65 +5506,383 @@ def handle_valuation():
         _tpl_used    = False
         _fallback    = False
         _fb_reason   = ""
+        name               = None  # Excel filename — only set for admin users
+        _excel_sheet_count = 0     # actual sheet count; set from workbook after generation
 
-        if report_style == "professional_template":
-            # ── Attempt individual_valuation_professional_template.xlsm ───────
-            try:
+        if _is_admin(g.user_id):
+            import pathlib as _pathlib
+            if _build_55_sheet is not None:
                 try:
-                    from reports.excel_template_renderer import (
-                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                        build_individual_valuation_report as _build_iv,
+                    _55_name = f"Report_{rid}_{ts}_admin.xlsx"
+                    _55_path = os.path.join(OUTPUTS, _55_name)
+                    _mv_for_excel = float(
+                        res.get("market_value") or full.get("market_value") or 0
                     )
-                except ImportError:
-                    from core_engine.reports.excel_template_renderer import (  # type: ignore
-                        INDIVIDUAL_VALUATION_TEMPLATE as _IVTPL,
-                        build_individual_valuation_report as _build_iv,
-                    )
-                if _IVTPL.is_file():
-                    _tpl_name = f"Report_{rid}_{ts}.xlsm"
-                    _tpl_path = os.path.join(OUTPUTS, _tpl_name)
-                    _iv_ctx = {
-                        "report_date":       full.get("report_date", datetime.now().strftime("%d/%m/%Y")),
-                        "valuation_date":    full.get("date", ""),
-                        "client_name":       full.get("client_name", full.get("expert", "N/A")),
-                        "property_type":     full.get("property_type", ""),
-                        "location":          full.get("location", ""),
-                        "area":              full.get("area", ""),
-                        "valuation_purpose": full.get("valuation_purpose", ""),
-                        "market_value":      float(full.get("market_value") or 0),
-                        "final_value":       float(full.get("market_value") or 0),
-                        "confidence":        full.get("confidence", ""),
-                        "reviewer_name":     full.get("expert", "N/A"),
-                        "report_id":         rid,
+                    _55_ctx = {
+                        "request_summary": {
+                            "area":              full.get("area"),
+                            "area_sqm":          full.get("area"),
+                            "property_type":     full.get("property_type"),
+                            "property_address":  full.get("location"),
+                            "location":          full.get("location"),
+                            "client_name":       full.get("client_name") or full.get("expert"),
+                            "construction_year": full.get("construction_year"),
+                            "floor_number":      full.get("floor_number"),
+                            "building_age":      full.get("building_age"),
+                            "price_per_sqm":     full.get("price_per_meter"),
+                            "valuation_date":    full.get("report_date") or datetime.now().strftime("%d/%m/%Y"),
+                            "report_id":         rid,
+                            "final_value":       _mv_for_excel,
+                            "currency":          payload.get("currency", "SAR"),
+                            "vacancy_rate":      full.get("vacancy_rate"),
+                            "opex_ratio":        full.get("opex_ratio"),
+                            "holding_period":    full.get("holding_period"),
+                        },
+                        "method_summary": {
+                            "price_per_sqm":          full.get("price_per_meter"),
+                            "market_price_per_sqm":   full.get("price_per_meter"),
+                            "cap_rate":               full.get("cap_rate"),
+                            "annual_rent_per_sqm":    full.get("annual_rent_per_sqm"),
+                            "wacc":                   full.get("wacc"),
+                            "growth_rate":            full.get("growth_rate"),
+                            "final_value":            _mv_for_excel,
+                            "market_value":           _mv_for_excel,
+                            "sigma":                  full.get("sigma"),
+                            "vacancy_rate":           full.get("vacancy_rate"),
+                            "opex_ratio":             full.get("opex_ratio"),
+                            "holding_period":         full.get("holding_period"),
+                            "excavation_rate":        full.get("excavation_rate"),
+                            "concrete_rate":          full.get("concrete_rate"),
+                            "steel_rate":             full.get("steel_rate"),
+                            "wacc_construction":      full.get("wacc_construction"),
+                            "facade_rate":            full.get("facade_rate"),
+                        },
+                        "comparable_summary": {
+                            "price_per_sqm":  full.get("price_per_meter"),
+                            "rental_per_sqm": full.get("annual_rent_per_sqm"),
+                        },
                     }
-                    _iv_out = _build_iv(output_path=_tpl_path, context=_iv_ctx, tables={})
-                    if _iv_out is not None and os.path.isfile(_tpl_path):
-                        name      = _tpl_name
-                        _tpl_used = True
+                    _55_result = _build_55_sheet(
+                        _55_ctx,
+                        _pathlib.Path(_55_path),
+                        request_id=rid,
+                    )
+                    if _55_result.get("success"):
+                        # Saudi jurisdiction localization + physical validation
+                        try:
+                            import openpyxl as _opx_val
+                            # ── Saudi localization: overwrite Egyptian template content ──
+                            _loc = _55_ctx["request_summary"].get("location") or "المملكة العربية السعودية"
+                            _cur = _55_ctx["request_summary"].get("currency") or "SAR"
+                            _pty = _55_ctx["request_summary"].get("property_type") or "العقار"
+                            _lwb = _opx_val.load_workbook(_55_path)
+                            def _sw(_sn, _cel, _val):
+                                if _sn in _lwb.sheetnames:
+                                    _lwb[_sn][_cel] = _val
+                            # Location cells — injected from request
+                            _sw("الافتراضات والمدخلات", "B57", _loc)
+                            _sw("التقرير", "H8", _loc)
+                            _sw("المقارنات الإيجارية", "B5", _loc)
+                            # Market / institution references
+                            _sw("الافتراضات والمدخلات", "D48", "Tadawul (Saudi Exchange)")
+                            _sw("الافتراضات والمدخلات", "A147", "التضخم السنوي")
+                            _sw("التقرير", "A16",
+                                f"العقار موضوع التقييم عبارة عن {_pty} وفق بيانات الطلب. "
+                                "بناءً على الدراسة الميدانية وتحليل السوق، يُعتبر الاستخدام "
+                                "الحالي هو أعلى وأفضل استخدام للعقار، إذ يحقق أقصى قدر من "
+                                "العائد المادي ويتوافق مع الاستخدامات السائدة في المنطقة المحيطة.")
+                            _sw("مقارنات البيوع", "A47", "مقارنات البيوع")
+                            for _sn55, _cel55, _old55, _new55 in [
+                                ("المقارنات الإيجارية", "A37", "المصري", "السعودي"),
+                                ("محددات التقييم",       "A32", "المصري", "السعودي"),
+                            ]:
+                                if _sn55 in _lwb.sheetnames:
+                                    _v55 = _lwb[_sn55][_cel55].value
+                                    if _v55 and _old55 in str(_v55):
+                                        _lwb[_sn55][_cel55] = str(_v55).replace(_old55, _new55)
+                            if "توفيق النتائج" in _lwb.sheetnames:
+                                _v18 = _lwb["توفيق النتائج"]["A18"].value
+                                if _v18 and ("القاهرة" in str(_v18) or "شقة سكنية" in str(_v18)):
+                                    _lwb["توفيق النتائج"]["A18"] = (
+                                        str(_v18)
+                                        .replace("شقة سكنية", _pty)
+                                        .replace("القاهرة", _loc))
+                            if "شهادة" in _lwb.sheetnames:
+                                _v26 = _lwb["شهادة"]["A26"].value
+                                if _v26:
+                                    import re as _re55
+                                    _tashkeel_re = _re55.compile(r'[ً-ٟؐ-ؚ]')
+                                    _v26_clean = _tashkeel_re.sub('', str(_v26))
+                                    if "مصري" in _v26_clean:
+                                        _lwb["شهادة"]["A26"] = _v26_clean.replace(
+                                            "جمعية المقيمين المصريين",
+                                            "الهيئة السعودية للمقيمين المعتمدين (TAQEEM)")
+                            if "لوحة القيادة التنفيذية" in _lwb.sheetnames:
+                                _v22 = _lwb["لوحة القيادة التنفيذية"]["A22"].value
+                                if _v22 and ("المصري" in str(_v22) or "EGP" in str(_v22)):
+                                    _lwb["لوحة القيادة التنفيذية"]["A22"] = (
+                                        "📊  • مؤشرات الاقتصاد الكلي — يُرجى تحديث القيم "
+                                        "من مصادر البنك المركزي السعودي (ساما)")
+                            # Data sources — Saudi portals and institutions
+                            if "مصادر البيانات والمنهجية" in _lwb.sheetnames:
+                                _ds = _lwb["مصادر البيانات والمنهجية"]
+                                _ds["A6"]  = "عقار السعودية (Aqar.sa)"
+                                _ds["B6"]  = "https://sa.aqar.fm"
+                                _ds["C6"]  = "أسعار عقارات سعودية — بيانات مباشرة"
+                                _ds["A7"]  = "بروبرتي فايندر السعودية (Property Finder SA)"
+                                _ds["B7"]  = "https://www.propertyfinder.com.sa"
+                                _ds["C7"]  = "صفقات مُنقضية ومُعروضة — المملكة العربية السعودية"
+                                _ds["A8"]  = "بيوت السعودية (Bayut.sa)"
+                                _ds["B8"]  = "https://www.bayut.sa"
+                                _ds["A9"]  = "مسكن السعودية (Msaken.com)"
+                                _ds["B9"]  = "https://www.msaken.com"
+                                _ds["C9"]  = "بيانات المطورين والوحدات السكنية"
+                                _ds["A10"] = "واحة السعودية (Wahet.com.sa)"
+                                _ds["B10"] = "https://www.wahet.com.sa"
+                                _ds["C10"] = "منصة عقارية سعودية شاملة"
+                                # Update hyperlinks on B cells to new Saudi URLs
+                                for _bcel, _burl in [
+                                    ("B6",  "https://sa.aqar.fm"),
+                                    ("B7",  "https://www.propertyfinder.com.sa"),
+                                    ("B8",  "https://www.bayut.sa"),
+                                    ("B9",  "https://www.msaken.com"),
+                                    ("B10", "https://www.wahet.com.sa"),
+                                ]:
+                                    _ds[_bcel].hyperlink = _burl
+                                _ds["A14"] = "البنك المركزي السعودي (ساما) — SAMA"
+                                _ds["B14"] = "https://www.sama.gov.sa"
+                                _ds["C14"] = "معدل اتفاقيات إعادة الشراء (REPO) — بيانات ساما"
+                                _ds["A15"] = "الهيئة العامة للإحصاء السعودية (GASTAT)"
+                                _ds["B15"] = "https://www.stats.gov.sa"
+                                _ds["C15"] = "معدل التضخم السنوي — مؤشر أسعار المستهلك"
+                                _ds["A16"] = "وزارة الاستثمار السعودية"
+                                _ds["B16"] = "https://invest.gov.sa/ar"
+                                _ds["C16"] = "معايير التقييم العقاري السعودي والفرص الاستثمارية"
+                                _ds["A17"] = "مؤشر MSCI للعقارات في دول الخليج"
+                                _ds["C17"] = "علاوة مخاطر السوق العقاري الخليجي"
+                                _c24 = _ds["C24"].value
+                                if _c24 and "المصري" in str(_c24):
+                                    _ds["C24"] = str(_c24).replace("المصري", "السعودي")
+                            # Compliance standards — replace Egyptian with IVS/REGA
+                            if "بيان الامتثال" in _lwb.sheetnames:
+                                _cs = _lwb["بيان الامتثال"]
+                                _cs["D3"] = "معايير التقييم الدولية (IVS) — مبادئ HBU"
+                                _cs["D4"] = "IVS 410"
+                                _cs["D5"] = "IVS 105 — طريقة السوق"
+                                _cs["D6"] = "IVS 105 — طريقة الدخل"
+                                _cs["D7"] = "IVS 105 — DCF"
+                                _cs["D8"] = "IVS — الإفصاح والشفافية"
+                                for _cr55 in ["D9", "D10"]:
+                                    _cv55 = _cs[_cr55].value
+                                    if _cv55 and "FRA" in str(_cv55):
+                                        _cs[_cr55] = str(_cv55).replace("FRA", "REGA")
+                                # D2 column header: "مرجع FRA" → "المرجع التنظيمي (REGA)"
+                                _d2_cv55 = _cs["D2"].value
+                                if _d2_cv55 and "FRA" in str(_d2_cv55):
+                                    _cs["D2"] = "المرجع التنظيمي (REGA)"
+                                _b12 = _cs["B12"].value
+                                if _b12 and "المصرية" in str(_b12):
+                                    _cs["B12"] = str(_b12).replace(
+                                        "والمعايير المصرية للتقييم",
+                                        "ومعايير التقييم السعودية والدولية (IVS)")
+                            # نطاق العمل A1 — scope heading: FRA → REGA
+                            if "نطاق العمل" in _lwb.sheetnames:
+                                _nw55 = _lwb["نطاق العمل"]
+                                _nw_a1v = _nw55["A1"].value
+                                if _nw_a1v and "FRA" in str(_nw_a1v):
+                                    _nw55["A1"] = (
+                                        str(_nw_a1v)
+                                        .replace("/ FRA", "/ REGA")
+                                        .replace("/FRA", "/REGA")
+                                    )
+                            # Value in words — currency label and Arabic number words
+                            if "القيمة بالحروف" in _lwb.sheetnames:
+                                _vw = _lwb["القيمة بالحروف"]
+                                _vw["A3"] = f"الوحدة الحسابية: ريال سعودي ({_cur})"
+                                _a5v = _vw["A5"].value
+                                if _a5v:
+                                    _vw["A5"] = str(_a5v).replace("EGP", _cur)
+                                for _vcel in ["C5", "A9"]:
+                                    _vval = _vw[_vcel].value
+                                    if _vval and "جنيهاً مصرياً" in str(_vval):
+                                        _vw[_vcel] = (str(_vval)
+                                            .replace("جنيهاً مصرياً", "ريالاً سعودياً")
+                                            .replace("قرشاً", "هللةً"))
+                                for _vr in range(15, 25):
+                                    for _vc in ["B", "D", "E"]:
+                                        _hcell = _vw[f"{_vc}{_vr}"]
+                                        if _hcell.value and "EGP" in str(_hcell.value):
+                                            _hcell.value = str(_hcell.value).replace("EGP", _cur)
+                            # Global sweep: replace remaining EGP currency markers
+                            _egp_replaced = 0
+                            for _sng in _lwb.sheetnames:
+                                for _rwg in _lwb[_sng].iter_rows():
+                                    for _cg in _rwg:
+                                        if _cg.value is None:
+                                            continue
+                                        _vg = str(_cg.value)
+                                        if "EGP" in _vg:
+                                            _cg.value = _vg.replace("EGP", _cur)
+                                            _egp_replaced += 1
+                            if _egp_replaced:
+                                print(f"{_ts()} [EXCEL-55] global EGP→{_cur}: {_egp_replaced} cells")
+                            # QA annotation sweep: replace محاكاة QA with production wording
+                            _qa_replaced = 0
+                            for _sn_qa in _lwb.sheetnames:
+                                for _rw_qa in _lwb[_sn_qa].iter_rows():
+                                    for _c_qa in _rw_qa:
+                                        if (_c_qa.value
+                                                and isinstance(_c_qa.value, str)
+                                                and "محاكاة QA" in str(_c_qa.value)):
+                                            _c_qa.value = str(_c_qa.value).replace(
+                                                "محاكاة QA", "قيد المراجعة")
+                                            _qa_replaced += 1
+                            if "بيان الامتثال" in _lwb.sheetnames:
+                                _cs_qa55 = _lwb["بيان الامتثال"]
+                                if (_cs_qa55["F5"].value
+                                        and "قيد المراجعة" in str(_cs_qa55["F5"].value)):
+                                    _cs_qa55["F5"] = "مقارنات السوق"
+                            if "حوكمة مصادر البيانات" in _lwb.sheetnames:
+                                _hg_qa55 = _lwb["حوكمة مصادر البيانات"]
+                                if (_hg_qa55["B6"].value
+                                        and "قيد المراجعة" in str(_hg_qa55["B6"].value)):
+                                    _hg_qa55["B6"] = "قيد التحقق من المصادر"
+                            if _qa_replaced:
+                                print(f"{_ts()} [EXCEL-55] QA annotation sweep: {_qa_replaced} cells")
+                            # Sweep number_format strings: replace EGP with _cur
+                            _fmt_fixed = 0
+                            for _snf in _lwb.sheetnames:
+                                for _rwf in _lwb[_snf].iter_rows():
+                                    for _cf in _rwf:
+                                        if _cf.number_format and "EGP" in str(_cf.number_format):
+                                            _cf.number_format = str(_cf.number_format).replace("EGP", _cur)
+                                            _fmt_fixed += 1
+                            if _fmt_fixed:
+                                print(f"{_ts()} [EXCEL-55] number_format EGP→{_cur}: {_fmt_fixed} cells")
+                            # Fix chart title text runs containing EGP
+                            _chart_fixed = 0
+                            for _snc in _lwb.sheetnames:
+                                for _chrt in getattr(_lwb[_snc], '_charts', []):
+                                    if isinstance(getattr(_chrt, 'title', None), str):
+                                        if "EGP" in _chrt.title:
+                                            _chrt.title = _chrt.title.replace("EGP", _cur)
+                                            _chart_fixed += 1
+                                    elif getattr(_chrt, 'title', None) is not None:
+                                        try:
+                                            for _pp in _chrt.title.tx.rich.p:
+                                                for _rr in _pp.r:
+                                                    if _rr.t and "EGP" in _rr.t:
+                                                        _rr.t = _rr.t.replace("EGP", _cur)
+                                                        _chart_fixed += 1
+                                        except AttributeError:
+                                            pass
+                            if _chart_fixed:
+                                print(f"{_ts()} [EXCEL-55] chart EGP→{_cur}: {_chart_fixed} text runs")
+                            # Safety sweep: remove any residual hyperlinks to .com.eg / .org.eg
+                            import re as _re_hyp
+                            _eg_dom = _re_hyp.compile(r'\.(?:com|org|net|gov)\.eg\b', _re_hyp.IGNORECASE)
+                            _hyp_fixed = 0
+                            for _snl in _lwb.sheetnames:
+                                for _rwl in _lwb[_snl].iter_rows():
+                                    for _cl in _rwl:
+                                        _hl = getattr(_cl, 'hyperlink', None)
+                                        _ht = getattr(_hl, 'target', '') or ''
+                                        if _hl and _eg_dom.search(_ht):
+                                            _cl.hyperlink = None
+                                            _hyp_fixed += 1
+                            if _hyp_fixed:
+                                print(f"{_ts()} [EXCEL-55] removed {_hyp_fixed} Egyptian hyperlinks")
+                            _lwb.save(_55_path)
+                            _lwb.close()
+                            del _lwb
+                            print(f"{_ts()} [EXCEL-55] Saudi localization applied → {_55_name}")
+                            # Physical validation (belt-and-suspenders)
+                            _vwb = _opx_val.load_workbook(
+                                _55_path, read_only=True, data_only=True
+                            )
+                            _vsheets = len(_vwb.sheetnames)
+                            _vwb.close()
+                            if _vsheets == 55:
+                                name               = _55_name
+                                _excel_sheet_count = _vsheets
+                                _tpl_used          = True
+                                print(f"{_ts()} [EXCEL-55] validated {_vsheets} sheets → {_55_name}")
+                            else:
+                                raise ValueError(f"physical sheet count {_vsheets} ≠ 55")
+                        except Exception as _val_err:
+                            # Remove partial/invalid artifact; do not expose download URL
+                            try:
+                                os.remove(_55_path)
+                            except OSError:
+                                pass
+                            _fallback  = True
+                            _fb_reason = f"post-generation validation failed: {str(_val_err)[:200]}"
+                            print(f"{_ts()} [EXCEL-55] validation FAILED — {_fb_reason}")
                     else:
-                        raise RuntimeError("template render returned None")
-                else:
-                    raise FileNotFoundError("individual_valuation_professional_template.xlsm not found")
-            except Exception as _iv_err:
+                        _fallback  = True
+                        _fb_reason = f"55-sheet builder: {_55_result.get('errors', [])[:1]}"
+                        print(f"{_ts()} [EXCEL-55] FAILED — {_fb_reason}")
+                except Exception as _55_err:
+                    _fallback  = True
+                    _fb_reason = f"55-sheet builder exception: {str(_55_err)[:200]}"
+                    print(f"{_ts()} [EXCEL-55] exception: {_55_err}")
+            else:
                 _fallback  = True
-                _fb_reason = str(_iv_err)
-                _style_used = "legacy"
-                ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-                name = f"Report_{rid}_{ts}{ext}"
-                path = os.path.join(OUTPUTS, name)
-                write_to_excel_template(full, path)
-        else:
-            # legacy / detailed — write_to_excel_template fills all template sheets.
-            # For legacy, advanced analytics sheets are stripped from the saved file.
-            ext  = ".xlsm" if TEMPLATE.endswith(".xlsm") else ".xlsx"
-            name = f"Report_{rid}_{ts}{ext}"
-            path = os.path.join(OUTPUTS, name)
-            write_to_excel_template(full, path)
-            print(f"{_ts()} [REPORT-STYLE] requested={report_style} used={_style_used} path={path}")
-            if report_style == "legacy" or _style_used == "legacy":
-                _remove_legacy_advanced_sheets(path)
+                _fb_reason = "55-sheet builder not available at import time"
+                print(f"{_ts()} [EXCEL-55] builder unavailable — skipping Excel generation")
 
         write_word_summary(full, os.path.join(OUTPUTS, f"Summary_{rid}_{ts}.docx"))
+
+        # ── Three-tier HTML + PDF report generation ────────────────────────────
+        _ura = (payload.get("unified_report_action") or
+                payload.get("selected_report_action") or "").strip()
+        _VALID_TIER_TYPES = {"traditional_report", "detailed_report", "professional_report"}
+        _html_filename: "str | None" = None
+        _pdf_filename: "str | None" = None
+        _html_generation_error: "str | None" = None
+
+        if _ura in _VALID_TIER_TYPES:
+            try:
+                try:
+                    from reports.html_report_builder import generate_html_report as _gen_html
+                except ImportError:
+                    from core_engine.reports.html_report_builder import generate_html_report as _gen_html  # type: ignore
+                _html_name = f"Report_{rid}_{ts}_{_ura}.html"
+                _html_out = os.path.join(OUTPUTS, _html_name)
+                _gen_html(full, _ura, _html_out)
+                _html_filename = _html_name
+                print(f"{_ts()} [HTML-REPORT] generated: {_html_name}")
+            except Exception as _html_err:
+                _html_generation_error = str(_html_err)
+                print(f"{_ts()} [HTML-REPORT] generation failed: {_html_err}")
+
+            try:
+                try:
+                    from reports.pv_three_tier_pdf_builder import (
+                        render_traditional_pdf as _rtp,
+                        render_detailed_pdf as _rdp,
+                        render_professional_pdf as _rpp,
+                    )
+                except ImportError:
+                    from core_engine.reports.pv_three_tier_pdf_builder import (  # type: ignore
+                        render_traditional_pdf as _rtp,
+                        render_detailed_pdf as _rdp,
+                        render_professional_pdf as _rpp,
+                    )
+                _tier_renderers = {
+                    "traditional_report": _rtp,
+                    "detailed_report": _rdp,
+                    "professional_report": _rpp,
+                }
+                _tier_renderer = _tier_renderers.get(_ura)
+                if _tier_renderer:
+                    _pdf_name = f"Report_{rid}_{ts}_{_ura}.pdf"
+                    _pdf_out = os.path.join(OUTPUTS, _pdf_name)
+                    _tier_renderer(full, output_path=_pdf_out)
+                    _pdf_filename = _pdf_name
+                    print(f"{_ts()} [PDF-REPORT] generated: {_pdf_name}")
+            except Exception as _pdf_err:
+                print(f"{_ts()} [PDF-REPORT] generation failed: {_pdf_err}")
 
         # ── (Wave 2) تقرير Word مخصص لكل غرض ولكل نوع أصل ────────────────────
         # نُولِّد التقرير إذا كان هناك غرض محدد، أو إذا كان هناك نوع أصل متخصص
@@ -5566,14 +5903,16 @@ def handle_valuation():
             print(f"{_ts()} [PURPOSE-REPORT] skipped: {_pr_err}")
 
         resp = {"status":"success",
+                "report_id": rid,
                 "market_value": res["market_value"],
                 "valuation_purpose": _vp,
-                "excel_url": f"http://127.0.0.1:5000/api/download/{name}",
                 "report_style_requested": report_style,
                 "report_style_used":      _style_used,
                 "template_used":          _tpl_used,
                 "fallback_used":          _fallback,
                 "fallback_reason":        _fb_reason if _fallback else ""}
+        if _is_admin(g.user_id) and name is not None:
+            resp["excel_url"] = f"http://127.0.0.1:5000/api/download/{name}"
         if _validation_result:
             resp["validation"] = _validation_result
         # ── Persist Gate — opt-in via "persist": true in payload (Wave BA.3) ──
@@ -5625,6 +5964,45 @@ def handle_valuation():
                 print(f"{_ts()} [ASSET-TYPE-EXCEL] skipped: {_ax_err}")
         if purpose_report_url:
             resp["purpose_report_url"] = purpose_report_url
+        if _html_filename:
+            resp["html_view_url"]     = f"http://127.0.0.1:5000/api/report/html-view/{_html_filename}"
+            resp["html_download_url"] = f"http://127.0.0.1:5000/api/download/{_html_filename}"
+            resp["report_type"]       = _ura
+        if _html_generation_error:
+            resp["html_generation_error"] = _html_generation_error
+        if _pdf_filename:
+            resp["pdf_url"] = f"http://127.0.0.1:5000/api/download/{_pdf_filename}"
+        if _ura in _VALID_TIER_TYPES:
+            resp["formats"] = {
+                "html": {
+                    "filename":    _html_filename,
+                    "viewUrl":     resp.get("html_view_url"),
+                    "downloadUrl": resp.get("html_download_url"),
+                    "generated":   _html_filename is not None,
+                    "error":       _html_generation_error,
+                },
+                "pdf": {
+                    "filename":    _pdf_filename,
+                    "downloadUrl": resp.get("pdf_url"),
+                    "generated":   _pdf_filename is not None,
+                },
+            }
+            if _is_admin(g.user_id):
+                if name is not None:
+                    resp["formats"]["excel"] = {
+                        "filename":    name,
+                        "downloadUrl": f"http://127.0.0.1:5000/api/download/{name}",
+                        "sheetCount":  _excel_sheet_count,
+                        "generated":   True,
+                    }
+                else:
+                    resp["formats"]["excel"] = {
+                        "filename":    None,
+                        "downloadUrl": None,
+                        "sheetCount":  0,
+                        "generated":   False,
+                        "error":       _fb_reason,
+                    }
         # إفصاحات إضافية للأغراض المتخصصة
         if _vp == "uncertainty_valuation":
             spread = float(payload.get("uncertainty_spread_pct", 0.15))
@@ -5653,6 +6031,13 @@ def download(filename: str):
     safe_name = os.path.basename(filename)
     if not safe_name or safe_name != filename:
         return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    # Layer 2b — Excel workbooks are administrator-only downloads
+    if safe_name.endswith(".xlsx") or safe_name.endswith(".xlsm"):
+        if not _is_admin(getattr(g, "user_id", None)):
+            return jsonify({
+                "status": "forbidden",
+                "message": "Excel workbook downloads require administrator access",
+            }), 403
     # Layer 3 — realpath containment (absolute guarantee against traversal)
     abs_outputs = os.path.realpath(OUTPUTS)
     filepath = os.path.realpath(os.path.join(OUTPUTS, safe_name))
@@ -5661,6 +6046,45 @@ def download(filename: str):
     if not os.path.isfile(filepath):
         return jsonify({"status": "error", "message": "File not found"}), 404
     return send_file(filepath, as_attachment=True)
+
+
+@app.route("/api/report/html-view/<filename>")
+@require_auth
+@limiter.limit("30/minute", exempt_when=_rate_limit_disabled)
+def html_view(filename: str):
+    """Serve a generated HTML report inline (for browser viewing).
+
+    Applies security headers: X-Content-Type-Options, Referrer-Policy, CSP.
+    Only .html files from the OUTPUTS directory are served.
+    """
+    if "/" in filename or "\\" in filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not safe_name.endswith(".html"):
+        return jsonify({"status": "error", "message": "Invalid file type"}), 400
+    abs_outputs = os.path.realpath(OUTPUTS)
+    filepath = os.path.realpath(os.path.join(OUTPUTS, safe_name))
+    if not filepath.startswith(abs_outputs + os.sep):
+        return jsonify({"status": "error", "message": "Invalid filename"}), 400
+    if not os.path.isfile(filepath):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+    try:
+        content = open(filepath, encoding="utf-8").read()
+    except Exception as _read_err:
+        return jsonify({"status": "error", "message": "Read error"}), 500
+    from flask import make_response
+    resp_obj = make_response(content)
+    resp_obj.headers["Content-Type"] = "text/html; charset=utf-8"
+    resp_obj.headers["Content-Disposition"] = f'inline; filename="{safe_name}"'
+    resp_obj.headers["X-Content-Type-Options"] = "nosniff"
+    resp_obj.headers["Referrer-Policy"] = "no-referrer"
+    resp_obj.headers["Content-Security-Policy"] = (
+        "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:;"
+    )
+    return resp_obj
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: Market Feed — استقبال وعرض البيانات الخارجية
@@ -7094,6 +7518,105 @@ def image_analyze():
         return _safe_err(e)
 
 
+# ── Phase 20 compatibility alias ─────────────────────────────────────────
+# /api/image/geo-analyze → /api/image/analyze  (same handler; legacy alias
+# used by index.html and sovereign_brain.html).  Non-breaking — delegates
+# entirely to image_analyze().
+@app.route("/api/image/geo-analyze", methods=["POST", "OPTIONS"])
+def image_geo_analyze():
+    """Legacy alias for /api/image/analyze (Phase 20 compat)."""
+    return image_analyze()
+
+
+# ── Phase 20 legacy stubs — sovereign.html endpoints not yet wired ────────
+# These endpoints are called by sovereign.html (legacy page, not served at /).
+# They return 501 with a descriptive message so the page degrades gracefully
+# instead of showing network errors.  Full wiring is a Phase 21 task.
+
+@app.route("/api/market-sweep", methods=["POST", "OPTIONS"])
+def legacy_market_sweep():
+    """Phase 20 stub — sovereign.html market sweep (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "market-sweep is a legacy sovereign endpoint; use /api/radar/* for live data",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/bank-audit", methods=["POST", "OPTIONS"])
+def legacy_bank_audit():
+    """Phase 20 stub — sovereign.html bank audit (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "bank-audit is a legacy sovereign endpoint; use /api/banking/collateral/value or /api/banking/ltv/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/fund-valuation", methods=["POST", "OPTIONS"])
+def legacy_fund_valuation():
+    """Phase 20 stub — sovereign.html fund valuation (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "fund-valuation is a legacy sovereign endpoint; use /api/funds/fair-value/assess or /api/funds/nav/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/tax-pilot", methods=["POST", "OPTIONS"])
+def legacy_tax_pilot():
+    """Phase 20 stub — sovereign.html tax pilot (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "tax-pilot is a legacy sovereign endpoint; tax engine available via /api/government/tax/calculate",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/master-report", methods=["POST", "OPTIONS"])
+def legacy_master_report():
+    """Phase 20 stub — sovereign.html master report (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "master-report is a legacy sovereign endpoint; use /api/valuation/report for full reports",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/report/generate", methods=["POST", "OPTIONS"])
+def legacy_report_generate():
+    """Phase 20 stub — sovereign.html report/generate (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "report/generate is a legacy sovereign endpoint; use /api/valuation/report",
+        "legacy": True,
+    }), 501
+
+
+@app.route("/api/session/update", methods=["POST", "OPTIONS"])
+def legacy_session_update():
+    """Phase 20 stub — sovereign_v2.html session update (not yet wired)."""
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    return jsonify({
+        "status": "not_implemented",
+        "message": "session/update is a legacy sovereign endpoint",
+        "legacy": True,
+    }), 501
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # Endpoint: EIA Assessment — تقييم الأثر البيئي (ADDITIVE)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -7182,6 +7705,67 @@ def handle_hbu_analyze():
             "result":      result,
             "excel_url":   excel_url,
             "report_date": datetime.now().strftime("%d/%m/%Y"),
+        })
+    except ValueError as ve:
+        return jsonify({"status": "error", "message": str(ve)}), 400
+    except Exception as e:
+        print(traceback.format_exc())
+        return _safe_err(e)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Endpoint: HBU Enhanced Report — تقرير HBU المُحسَّن (محاور A-F) (ADDITIVE)
+# ═══════════════════════════════════════════════════════════════════════════
+@app.route("/api/hbu/enhanced-report", methods=["POST", "OPTIONS"])
+def handle_hbu_enhanced_report():
+    if request.method == "OPTIONS":
+        return jsonify({}), 200
+    try:
+        import pathlib as _pathlib
+        try:
+            from reports.hbu_enhanced_report import generate_enhanced_hbu_report
+        except ImportError:
+            try:
+                from core_engine.reports.hbu_enhanced_report import generate_enhanced_hbu_report  # type: ignore
+            except ImportError as imp_err:
+                return jsonify({"status": "error",
+                                "message": f"hbu_enhanced_report غير متاح: {imp_err}"}), 500
+
+        payload  = request.get_json(silent=True) or {}
+        case_id  = payload.get("case_id") or "HBU-ENHANCED-API"
+        out_dir  = _pathlib.Path(OUTPUTS) / "enhanced_hbu" / case_id
+
+        manifest = generate_enhanced_hbu_report(
+            payload=payload,
+            out_dir=out_dir,
+            case_id=case_id,
+        )
+
+        # Convert file paths → download URLs (user-facing only)
+        BASE_URL = "http://127.0.0.1:5000/api/download"
+        arts_raw = manifest.get("artifacts", {})
+        artifacts_urls: dict = {}
+        for key, fpath in arts_raw.items():
+            if fpath and _pathlib.Path(fpath).exists():
+                fname = _pathlib.Path(fpath).name
+                # Only expose user-facing artifacts to the API caller
+                if key in ("user_html", "user_pdf"):
+                    artifacts_urls[key] = f"{BASE_URL}/{fname}"
+                # Admin artifacts: path returned for internal use only
+                elif key in ("admin_html", "admin_pdf", "admin_xlsx"):
+                    artifacts_urls[key] = None  # not exposed to user
+
+        return jsonify({
+            "status":          "success",
+            "case_id":         case_id,
+            "artifacts":       artifacts_urls,
+            "financial_depth": manifest.get("financial_depth", {}),
+            "recommended_use": manifest.get("hbu_result", {}).get("recommended_use"),
+            "recommended_npv": manifest.get("hbu_result", {}).get("recommended_npv"),
+            "governance":      manifest.get("governance", {}),
+            "errors":          manifest.get("errors", []),
+            "warnings":        manifest.get("warnings", []),
+            "report_date":     datetime.now().strftime("%d/%m/%Y"),
         })
     except ValueError as ve:
         return jsonify({"status": "error", "message": str(ve)}), 400
@@ -8263,6 +8847,97 @@ def api_valuation_report_download(filename: str):
         as_attachment=True,
         download_name=f"valuation_report_{safe_name}",
     )
+
+
+# ── Phase 8B — Requirements Checklist ────────────────────────────────────────
+
+@app.route("/api/valuation/requirements", methods=["GET"])
+@require_auth
+def api_valuation_requirements():
+    """Return Requirements Matrix checklist for (?asset_type=&purpose=)."""
+    asset_type = request.args.get("asset_type", "").strip()
+    purpose    = request.args.get("purpose", "").strip()
+
+    if not asset_type or not purpose:
+        return jsonify({
+            "status":  "error",
+            "message": "Missing required query parameters: asset_type, purpose",
+        }), 400
+
+    if asset_type not in SUPPORTED_ASSET_TYPES:
+        return jsonify({
+            "status":  "error",
+            "message": (
+                f"Unknown asset_type '{asset_type}'. "
+                f"Supported: {sorted(SUPPORTED_ASSET_TYPES)}"
+            ),
+        }), 400
+
+    valid_purposes = SUPPORTED_PURPOSES_BY_ASSET_TYPE.get(asset_type, frozenset())
+    if purpose not in valid_purposes:
+        return jsonify({
+            "status":  "error",
+            "message": (
+                f"Purpose '{purpose}' not supported for asset_type '{asset_type}'. "
+                f"Supported: {sorted(valid_purposes)}"
+            ),
+        }), 400
+
+    reqs = get_requirements(asset_type, purpose)
+
+    # Phase 8H.2C: checklist_items is the primary frontend contract — every
+    # field with role / label_ar / group / ui_required so the UI can filter,
+    # label, and classify controls without hardcoding anything.
+    checklist_items = [
+        {
+            "name":        f.name,
+            "required":    f.required,
+            "field_type":  f.field_type,
+            "description": f.description,
+            "valid_values": list(f.valid_values),
+            "role":        f.role,
+            "label_ar":    f.label_ar,
+            "group":       f.group,
+            "ui_required": f.ui_required,
+            "field_owner": f.field_owner,
+        }
+        for f in reqs.metadata_fields
+    ]
+    # dynamic_fields kept for backward compat; enriched with same metadata.
+    dynamic_fields = [
+        {
+            "name":        f.name,
+            "field_type":  f.field_type,
+            "valid_values": list(f.valid_values),
+            "role":        f.role,
+            "label_ar":    f.label_ar,
+            "group":       f.group,
+            "ui_required": f.ui_required,
+        }
+        for f in reqs.metadata_fields
+        if f.valid_values
+    ]
+
+    _methods: dict[str, list[str]] = {
+        "residential": ["comparable", "cost", "income"],
+        "commercial":  ["comparable", "cost", "income"],
+        "land":        ["comparable", "income"],
+    }
+    _notes: dict[tuple[str, str], str] = {
+        ("land",        "market_value"):        "Cost approach weight is 0 for unimproved land.",
+        ("land",        "investment_analysis"):  "Income approach via development/residual method.",
+        ("residential", "mortgage_lending"):    "LTV ratio required for Basel III compliance.",
+    }
+
+    return jsonify({
+        "status":              "ok",
+        "asset_type":          asset_type,
+        "purpose":             purpose,
+        "checklist_items":     checklist_items,
+        "dynamic_fields":      dynamic_fields,
+        "recommended_methods": _methods.get(asset_type, ["comparable"]),
+        "notes":               _notes.get((asset_type, purpose), ""),
+    })
 
 
 # ── Phase 7 routes ────────────────────────────────────────────────────────────
@@ -11971,12 +12646,384 @@ def admin_audit_endpoint():
 from composite_routes import register as _register_composite  # Wave 4
 _register_composite(app, require_auth)
 
+from tax_appeal_routes import register as _register_tax_appeal  # Tax Appeal Phase 1-3
+_register_tax_appeal(app, require_auth, limiter)
+
+from shared_request_routes import register as _register_shared_requests  # Shared Request Backend
+_register_shared_requests(app, require_auth, limiter)
+
+from professional_valuation_routes import register as _register_professional_valuation  # Phase B
+_register_professional_valuation(app, require_auth)
+from professional_valuation_evidence_routes import register_pv_evidence_routes as _register_pv_evidence  # Phase C
+_register_pv_evidence(app, require_auth)
+from professional_valuation_comparables import register_pv_comparable_routes as _register_pv_comparable  # Phase D
+_register_pv_comparable(app, require_auth)
+from professional_valuation_methods import register_pv_method_routes as _register_pv_methods  # Phase E
+_register_pv_methods(app, require_auth)
+from professional_valuation_advanced_review import register_pv_advanced_review_routes as _register_pv_advanced_review  # Phase F
+_register_pv_advanced_review(app, require_auth)
+from professional_valuation_certification import register_pv_certification_routes as _register_pv_certification  # Phase G
+_register_pv_certification(app, require_auth)
+from professional_valuation_outputs import register_pv_outputs_routes as _register_pv_outputs  # Phase H
+_register_pv_outputs(app, require_auth)
+from professional_valuation_preliminary_outputs import register_pv_preliminary_routes as _register_pv_preliminary  # Phase H Addendum
+_register_pv_preliminary(app, require_auth)
+
+# ── Report Review endpoint (minimum fix 2026-07-24) ───────────────────────────
+try:
+    from pv_report_review_endpoint import register_review_endpoint as _register_rr
+    _register_rr(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _rr_import_err:
+    print(f"[WARN] pv_report_review_endpoint not loaded: {_rr_import_err}")
+
+# ── Report Simulation endpoint (2026-07-25) ───────────────────────────────────
+try:
+    from pv_report_simulation_endpoint import register_simulation_endpoint as _register_sim
+    _register_sim(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sim_import_err:
+    print(f"[WARN] pv_report_simulation_endpoint not loaded: {_sim_import_err}")
+
+# ── Simulation Market Research endpoints (Phase 6 — server-side only) ─────────
+try:
+    from valuation_market_research import register_research_endpoint as _register_research
+    _register_research(app, require_auth, _is_admin)
+except Exception as _research_import_err:
+    print(f"[WARN] valuation_market_research not loaded: {_research_import_err}")
+
 # ── DEV ONLY: local auth bootstrap (guarded by EXPERT_SMART_DEV_AUTH=1) ──────
 try:
     from dev_auth import register as _register_dev_auth   # DEV ONLY — see dev_auth.py
     _register_dev_auth(app)
 except ImportError:
     pass  # dev_auth.py absent in production deploys — silently skip
+
+# ── Standards Compliance Visual QA endpoint (2026-07-27) ─────────────────────
+try:
+    from pv_standards_compliance_endpoint import register_standards_compliance as _register_sc
+    _register_sc(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sc_import_err:
+    print(f"[WARN] pv_standards_compliance_endpoint not loaded: {_sc_import_err}")
+
+# ── Standards Compliance v2 endpoint (2026-07-27) ─────────────────────────────
+try:
+    from pv_standards_compliance_v2_endpoint import register_standards_compliance_v2 as _register_sc2
+    _register_sc2(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _sc2_import_err:
+    print(f"[WARN] pv_standards_compliance_v2_endpoint not loaded: {_sc2_import_err}")
+
+try:
+    from pv_report_update_endpoint import register_report_update_endpoint as _register_ru
+    _register_ru(app, require_auth, _is_admin, OUTPUTS)
+except Exception as _ru_import_err:
+    print(f"[WARN] pv_report_update_endpoint not loaded: {_ru_import_err}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Mass Valuation P1/P2 — MVP endpoints + DB persistence
+# advisory_only=True on all responses; Basel/LTV never exposed to non-admin.
+# ─────────────────────────────────────────────────────────────────────────────
+try:
+    from mass_valuation.runner import MassValuationRunner as _MVRunner
+    from mass_valuation.audit_recorder import build_audit_record as _mv_build_audit
+    from mass_valuation.output_builder import OutputBuilder as _MVOutputBuilder
+    import mass_valuation.db_writer as _mv_db
+    _MV_AVAILABLE = True
+except Exception as _mv_import_err:
+    print(f"[WARN] mass_valuation P1/P2 not loaded: {_mv_import_err}")
+    _MV_AVAILABLE = False
+
+# P12 — column mapping + quality check pipeline (independent of runner)
+try:
+    from mass_valuation.pipeline import run_pipeline as _mv_run_pipeline
+    _MV_PIPELINE_AVAILABLE = True
+except Exception as _mvp_import_err:
+    print(f"[WARN] mass_valuation pipeline (P12) not loaded: {_mvp_import_err}")
+    _MV_PIPELINE_AVAILABLE = False
+
+
+@app.route("/api/mass-valuation/run", methods=["POST"])
+@require_auth
+def mv_run():
+    """POST /api/mass-valuation/run — Execute a mass valuation run. Admin only."""
+    if not _is_admin():
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    body            = request.get_json(silent=True) or {}
+    records         = body.get("records", [])
+    run_name        = body.get("run_name", "P1 Run")
+    property_type   = body.get("property_type", "residential")
+    jurisdiction    = body.get("jurisdiction", "SA")
+    method          = body.get("method", "avm")
+    base_market_ppm = float(body.get("base_market_ppm", 0))
+    location        = body.get("location", "Riyadh")
+    iaao_thresholds = body.get("iaao_thresholds")
+
+    if not isinstance(records, list) or not records:
+        return jsonify({"error": "records must be a non-empty list"}), 400
+
+    runner     = _MVRunner(
+        run_name=run_name, property_type=property_type,
+        jurisdiction=jurisdiction, method=method,
+        iaao_thresholds=iaao_thresholds,
+    )
+    run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
+    audit_record = _mv_build_audit(run_result, code_commit="HEAD")
+
+    # P2 — persist to DB (graceful: run still succeeds if DB unavailable)
+    db_saved_run_id = None
+    if _DB_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                db_saved_run_id = _mv_db.save_run(run_result, _db)
+                if db_saved_run_id:
+                    _mv_db.save_predictions(
+                        run_result.get("predictions", []),
+                        db_saved_run_id,
+                        _db,
+                    )
+        except Exception as _db_err:
+            print(f"[WARN] mass-valuation DB persist failed: {_db_err}")
+
+    return jsonify({
+        "run_id":              run_result["run_id"],
+        "status":              run_result["status"],
+        "n_input_records":     run_result["n_input_records"],
+        "n_rejected":          run_result["n_rejected"],
+        "n_predicted":         run_result["n_predicted_properties"],
+        "iaao_summary":        run_result["iaao_summary"],
+        "audit_trail_id":      audit_record["audit_id"],
+        "db_persisted":        db_saved_run_id is not None,
+        "advisory_only":       True,
+        "certification_ready": False,
+    }), 200
+
+
+@app.route("/api/mass-valuation/runs", methods=["GET"])
+@require_auth
+def mv_list_runs():
+    """GET /api/mass-valuation/runs — Recent runs (analyst/admin), RBAC-filtered."""
+    role  = "admin" if _is_admin(g.user_id) else "analyst"
+    limit = min(int(request.args.get("limit", 50)), 200)
+
+    if _DB_AVAILABLE and _MV_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                runs = _mv_db.list_runs(_db, role=role, limit=limit)
+            return jsonify({"runs": runs, "count": len(runs), "advisory_only": True}), 200
+        except Exception as _e:
+            print(f"[WARN] mv_list_runs DB error: {_e}")
+
+    return jsonify({
+        "runs": [], "count": 0,
+        "advisory_only": True,
+        "message": "DB unavailable — runs not persisted yet.",
+    }), 200
+
+
+@app.route("/api/mass-valuation/predictions/<run_id>", methods=["GET"])
+@require_auth
+def mv_get_predictions(run_id: str):
+    """
+    GET /api/mass-valuation/predictions/<run_id>
+    Returns predictions for a run, filtered to the caller's role.
+    P2: reads from property_predictions table.
+    """
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    role = "admin" if _is_admin(g.user_id) else request.args.get("role", "user")
+    if role not in {"user", "analyst", "admin"}:
+        role = "user"
+    if role == "admin" and not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required for admin-level output"}), 403
+
+    if _DB_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                preds = _mv_db.get_predictions_for_run(run_id, _db)
+            if preds:
+                filtered = _MVOutputBuilder().filter_predictions_list(preds, role)
+                return jsonify({
+                    "run_id":      run_id,
+                    "predictions": filtered,
+                    "count":       len(filtered),
+                    "advisory_only": True,
+                }), 200
+        except Exception as _e:
+            print(f"[WARN] mv_get_predictions DB error: {_e}")
+
+    return jsonify({
+        "run_id":        run_id,
+        "predictions":   [],
+        "count":         0,
+        "advisory_only": True,
+        "message":       "Run not found or DB unavailable.",
+    }), 200
+
+
+@app.route("/api/mass-valuation/review/<prediction_id>", methods=["POST"])
+@require_auth
+def mv_review_prediction(prediction_id: str):
+    """
+    POST /api/mass-valuation/review/<prediction_id>
+    Body: {run_id, decision, reason, property_id?, model_value?, reviewed_value?}
+    Admin only. reviewed_by is set to g.user_id (never 'system').
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    body        = request.get_json(silent=True) or {}
+    run_id      = body.get("run_id", "")
+    decision    = body.get("decision", "")
+    reason      = body.get("reason", "")
+    property_id = body.get("property_id", "")
+    model_value     = body.get("model_value")
+    reviewed_value  = body.get("reviewed_value")
+    reviewed_by = g.user_id or ""
+
+    if not run_id:
+        return jsonify({"error": "run_id is required"}), 400
+
+    try:
+        decision_id = None
+        if _DB_AVAILABLE:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                decision_id = _mv_db.save_review_decision(
+                    prediction_id=prediction_id,
+                    run_id=run_id,
+                    decision=decision,
+                    reason=reason,
+                    reviewed_by=reviewed_by,
+                    db=_db,
+                    property_id=property_id,
+                    model_value=float(model_value) if model_value is not None else None,
+                    reviewed_value=float(reviewed_value) if reviewed_value is not None else None,
+                )
+        else:
+            # Validate even without DB so callers get correct errors
+            _mv_db.save_review_decision.__module__  # module exists
+            from mass_valuation.db_writer import (
+                _validate_reviewed_by as _vr,
+                _validate_decision    as _vd,
+                _validate_reason      as _vrn,
+            )
+            _vr(reviewed_by)
+            _vd(decision)
+            _vrn(reason)
+
+        return jsonify({
+            "decision_id":   decision_id,
+            "prediction_id": prediction_id,
+            "decision":      decision,
+            "db_persisted":  decision_id is not None,
+            "advisory_only": True,
+        }), 200
+
+    except ValueError as _ve:
+        return jsonify({"error": str(_ve)}), 400
+
+
+@app.route("/api/mass-valuation/runs/<run_id>/export", methods=["GET"])
+@require_auth
+def mv_export_run(run_id: str):
+    """
+    GET /api/mass-valuation/runs/<run_id>/export
+    Admin only — returns 403 for any non-admin role (O-01).
+    Returns a stub JSON payload; Excel generation wired in P5.
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({
+            "error":   "Excel export is restricted to admin role only.",
+            "hint":    "Request an admin user to perform this export.",
+            "run_id":  run_id,
+        }), 403
+
+    if not _MV_AVAILABLE:
+        return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    return jsonify({
+        "run_id":        run_id,
+        "export_format": "xlsx",
+        "status":        "not_generated",
+        "message":       "Excel generation will be available in a future release.",
+        "advisory_only": True,
+    }), 200
+
+
+@app.route("/api/mass-valuation/import", methods=["POST"])
+@require_auth
+def mv_import():
+    """
+    POST /api/mass-valuation/import — Pipeline: raw records → mapper → quality check → optional run.
+    Admin only. Wires D-02 (column_mapper) + D-03/D-04/D-05 (quality_checker).
+    Body: {records, source?, lookback_months?, execute?, run_name?, property_type?,
+           jurisdiction?, method?, base_market_ppm?, location?}
+    If execute=true, passes eligible (non-rejected) records to MassValuationRunner.
+    """
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+    if not _MV_PIPELINE_AVAILABLE:
+        return jsonify({"error": "mass_valuation pipeline unavailable"}), 503
+
+    body            = request.get_json(silent=True) or {}
+    raw_records     = body.get("records", [])
+    source          = body.get("source", "csv")
+    lookback_months = int(body.get("lookback_months", 36))
+    execute         = bool(body.get("execute", False))
+
+    if not isinstance(raw_records, list) or not raw_records:
+        return jsonify({"error": "records must be a non-empty list"}), 400
+
+    # Stage 1+2: column mapping (D-02) + quality check (D-03/D-04/D-05)
+    pipeline = _mv_run_pipeline(raw_records, source=source, lookback_months=lookback_months)
+
+    # Stage 3 (optional): run eligible records through MassValuationRunner
+    run_result_summary = None
+    if execute and pipeline.eligible_records:
+        if not _MV_AVAILABLE:
+            run_result_summary = {"error": "mass_valuation runner unavailable"}
+        else:
+            try:
+                runner  = _MVRunner(
+                    run_name=body.get("run_name", "Import Run"),
+                    property_type=body.get("property_type", "residential"),
+                    jurisdiction=body.get("jurisdiction", "SA"),
+                    method=body.get("method", "avm"),
+                )
+                run_out = runner.run(
+                    pipeline.eligible_records,
+                    base_market_ppm=float(body.get("base_market_ppm", 0)),
+                    location=body.get("location", "Riyadh"),
+                )
+                run_result_summary = {
+                    "run_id":          run_out["run_id"],
+                    "status":          run_out["status"],
+                    "n_input_records": run_out["n_input_records"],
+                    "n_predicted":     run_out["n_predicted_properties"],
+                    "iaao_summary":    run_out["iaao_summary"],
+                }
+            except Exception as _run_err:
+                run_result_summary = {"error": str(_run_err)}
+
+    return jsonify({
+        "n_input":              pipeline.n_input,
+        "n_eligible":           pipeline.n_eligible,
+        "n_flagged":            pipeline.n_flagged,
+        "n_rejected":           pipeline.n_rejected,
+        "unmapped_field_names": pipeline.unmapped_field_names,
+        "pipeline_report":      pipeline.pipeline_report(),
+        "run_result":           run_result_summary,
+        "advisory_only":        True,
+        "certification_ready":  False,
+    }), 200
+
 
 if __name__ == "__main__":
     print(f"Template [v22-MI] : {TEMPLATE}")

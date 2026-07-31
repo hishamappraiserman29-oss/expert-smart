@@ -23,7 +23,11 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

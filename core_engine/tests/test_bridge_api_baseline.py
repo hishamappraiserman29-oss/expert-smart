@@ -26,10 +26,14 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app  # noqa: E402
-from auth.tokens import generate_token  # noqa: E402
+    from bridge_api import app  # noqa: E402
+    from auth.tokens import generate_token  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 _USER        = "baseline-test-user"
 _TEST_SECRET = "test-secret-for-baseline"
@@ -110,9 +114,9 @@ class TestValuationBaseline:
     def test_BL06_success_response_has_required_keys(self, client):
         data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
         assert data["status"] == "success"
+        # excel_url is role-based (admin-only); not required for a non-admin baseline user
         required = (
             "market_value",
-            "excel_url",
             "report_style_requested",
             "report_style_used",
             "template_used",
@@ -127,10 +131,12 @@ class TestValuationBaseline:
         assert isinstance(data["market_value"], (int, float))
         assert data["market_value"] > 0
 
-    def test_BL08_excel_url_is_http_string(self, client):
+    def test_BL08_non_admin_response_has_no_excel_url(self, client):
+        # excel_url is admin-only; baseline test user (baseline-test-user) is not admin
         data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()
-        assert isinstance(data["excel_url"], str)
-        assert data["excel_url"].startswith("http")
+        assert "excel_url" not in data, (
+            "excel_url must not be present for non-admin users"
+        )
 
     def test_BL09_template_and_fallback_are_booleans(self, client):
         data = client.post("/api/valuation", json=_MINIMAL, headers=_auth()).get_json()

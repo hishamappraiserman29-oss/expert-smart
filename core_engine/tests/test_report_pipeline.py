@@ -29,17 +29,21 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.report_pipeline import (  # noqa: E402
-    PipelineResult,
-    _build_engine_dto,
-    fetch_report,
-    fetch_reports,
-    persist_report_data,
-    run_report_pipeline,
-    validate_report_data,
-)
+    from reports.report_pipeline import (  # noqa: E402
+        PipelineResult,
+        _build_engine_dto,
+        fetch_report,
+        fetch_reports,
+        persist_report_data,
+        run_report_pipeline,
+        validate_report_data,
+    )
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 # ── Sample flat dict (bridge_api "full" shape) ────────────────────────────────

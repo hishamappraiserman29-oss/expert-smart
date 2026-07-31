@@ -98,3 +98,8 @@ node_modules/
 
 # Root-level ad-hoc test scripts (depend on WIP subsystems not yet on main)
 /_test*.py
+
+# Runtime storage for generated leads/uploads/reports
+core_engine/tax_appeal/
+core_engine/instance/
+core_engine/core_engine/

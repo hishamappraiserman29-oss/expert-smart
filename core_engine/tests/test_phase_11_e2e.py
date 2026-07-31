@@ -33,10 +33,14 @@ for _p in (str(_CORE), str(_ROOT)):
 import os
 import tempfile
 os.environ.setdefault("JWT_SECRET", "test-secret-e2e-bundle")
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app
-from auth.tokens import generate_token as _gen_token
+    from bridge_api import app
+    from auth.tokens import generate_token as _gen_token
+finally:
+    os.chdir(_ORIG_CWD)
 _AUTH_HDR = {"Authorization": f"Bearer {_gen_token('test-user-e2e')}"}
 from openpyxl import load_workbook
 from reports.excel_builder import ExcelReportBuilder

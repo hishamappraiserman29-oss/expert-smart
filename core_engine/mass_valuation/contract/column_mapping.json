@@ -1,0 +1,303 @@
+{
+  "contract_id": "MASS_VAL_COLUMN_MAPPING_V1",
+  "contract_version": "1.0.0",
+  "effective_date": "2026-07-29",
+  "description": "Import mapping from common source column names to canonical data_contract.json field names. Multiple source aliases per canonical field. Case-insensitive matching applied before lookup.",
+
+  "canonical_to_aliases": {
+    "property_id": {
+      "aliases": [
+        "Property_No", "PropertyNo", "PROP_ID", "prop_id",
+        "property_id", "PropertyID", "id", "unit_id", "UnitNo",
+        "رقم_العقار", "رقم_الوحدة"
+      ],
+      "transform": "strip_whitespace + to_string",
+      "notes": "Primary deduplication key. Reject if null after transform."
+    },
+    "property_type": {
+      "aliases": [
+        "Property_Type", "PropertyType", "PROP_TYPE", "prop_type",
+        "Type", "asset_type", "AssetType", "category",
+        "نوع_العقار", "الفئة"
+      ],
+      "transform": "strip_whitespace + lowercase",
+      "value_map": {
+        "سكني":      "residential",
+        "تجاري":     "commercial",
+        "صناعي":     "industrial",
+        "أرض":       "land",
+        "متعدد":     "mixed_use",
+        "فيلا":      "villa",
+        "شقة":       "apartment",
+        "مجمع":      "compound",
+        "فندق":      "hotel",
+        "مكاتب":     "office",
+        "مستودع":    "warehouse",
+        "تجزئة":     "retail",
+        "residential": "residential",
+        "commercial":  "commercial",
+        "land":        "land"
+      },
+      "notes": "Arabic value map for Saudi source files."
+    },
+    "city": {
+      "aliases": [
+        "City", "city", "CITY", "Governorate", "governorate",
+        "Region", "region", "المدينة", "المنطقة", "المحافظة"
+      ],
+      "transform": "strip_whitespace + title_case",
+      "notes": "Validated against canonical Saudi city list post-import."
+    },
+    "district": {
+      "aliases": [
+        "District", "district", "DISTRICT", "Neighborhood",
+        "neighborhood", "Area", "area", "Suburb",
+        "الحي", "المنطقة_الفرعية", "النطاق"
+      ],
+      "transform": "strip_whitespace",
+      "notes": "Optional. Geocoding from coordinates permitted only if verified."
+    },
+    "address": {
+      "aliases": [
+        "Address", "address", "ADDRESS", "Location",
+        "location", "Full_Address", "العنوان", "الموقع"
+      ],
+      "transform": "strip_whitespace + sanitise_control_chars",
+      "notes": "Free text. Sanitised via input_validator pattern."
+    },
+    "coordinates.latitude": {
+      "aliases": [
+        "Latitude", "latitude", "LAT", "lat",
+        "خط_العرض", "Y_Coord", "y"
+      ],
+      "transform": "to_float",
+      "notes": "Paired with longitude. Both must be present or both null."
+    },
+    "coordinates.longitude": {
+      "aliases": [
+        "Longitude", "longitude", "LON", "lon", "lng",
+        "خط_الطول", "X_Coord", "x"
+      ],
+      "transform": "to_float",
+      "notes": "Paired with latitude."
+    },
+    "land_area_m2": {
+      "aliases": [
+        "Land_Area", "LandArea", "LAND_AREA", "land_area",
+        "Plot_Area", "PlotArea", "SiteArea", "Area_m2",
+        "مساحة_الأرض", "مساحة_القطعة", "المساحة"
+      ],
+      "transform": "to_float + unit_normalise",
+      "unit_conversions": {
+        "sqft_to_m2": 0.092903,
+        "acre_to_m2": 4046.856,
+        "sqm_to_m2":  1.0
+      },
+      "notes": "Unit declared in import manifest. Reject if ≤ 0."
+    },
+    "built_up_area_m2": {
+      "aliases": [
+        "Built_Area", "BuiltArea", "Built_Up_Area", "GFA",
+        "Gross_Floor_Area", "floor_area", "BUA",
+        "مساحة_البناء", "المساحة_المبنية", "إجمالي_المساحة"
+      ],
+      "transform": "to_float + unit_normalise",
+      "unit_conversions": {
+        "sqft_to_m2": 0.092903,
+        "sqm_to_m2":  1.0
+      },
+      "notes": "Optional for land parcels."
+    },
+    "rentable_area_m2": {
+      "aliases": [
+        "Rentable_Area", "RentableArea", "NLA", "Net_Lettable_Area",
+        "Leasable_Area", "مساحة_الإيجار", "المساحة_القابلة_للإيجار"
+      ],
+      "transform": "to_float + unit_normalise",
+      "unit_conversions": {
+        "sqft_to_m2": 0.092903,
+        "sqm_to_m2":  1.0
+      },
+      "notes": "Required for income-approach analysis in P1."
+    },
+    "age": {
+      "aliases": [
+        "Age", "age", "AGE", "Property_Age", "age_years",
+        "Year_Built", "year_built", "YearBuilt", "Construction_Year",
+        "عمر_العقار", "سنة_البناء"
+      ],
+      "transform": "to_int_or_derive_from_year_built",
+      "derive_rule": "age = current_year - year_built (if year_built provided)",
+      "notes": "Sector-median imputation permitted only with explicit quality_flag."
+    },
+    "condition": {
+      "aliases": [
+        "Condition", "condition", "CONDITION", "State", "PropertyCondition",
+        "حالة_العقار", "الحالة"
+      ],
+      "transform": "strip_whitespace + lowercase",
+      "value_map": {
+        "جديد":    "new",
+        "ممتاز":   "excellent",
+        "جيد":     "good",
+        "مقبول":   "fair",
+        "سيء":     "poor",
+        "غير_محدد": "unknown",
+        "new":       "new",
+        "excellent": "excellent",
+        "good":      "good",
+        "fair":      "fair",
+        "average":   "fair",
+        "poor":      "poor"
+      },
+      "notes": "Unrecognised values normalised to 'unknown'."
+    },
+    "use": {
+      "aliases": [
+        "Use", "use", "Usage", "usage", "Property_Use",
+        "Occupancy_Type", "استخدام_العقار", "طبيعة_الاستخدام"
+      ],
+      "transform": "strip_whitespace + lowercase",
+      "value_map": {
+        "مالك":            "owner_occupied",
+        "استثماري":        "investment_rental",
+        "شاغر":            "vacant",
+        "مختلط":           "mixed",
+        "تحت_الإنشاء":    "under_construction",
+        "حكومي":          "government",
+        "وقف":             "waqf",
+        "owner_occupied":      "owner_occupied",
+        "investment_rental":   "investment_rental",
+        "vacant":              "vacant"
+      },
+      "notes": "Unrecognised values normalised to 'unknown'."
+    },
+    "transaction_date": {
+      "aliases": [
+        "Sale_Date", "SaleDate", "SALE_DATE", "Transaction_Date",
+        "TransactionDate", "Contract_Date", "Deed_Date",
+        "تاريخ_البيع", "تاريخ_الصفقة", "تاريخ_العقد"
+      ],
+      "transform": "parse_date_to_ISO8601",
+      "accepted_formats": [
+        "YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY",
+        "DD-MM-YYYY", "YYYYMMDD", "Hijri_1446-MM-DD"
+      ],
+      "notes": "Hijri dates converted to Gregorian before storage. Future dates rejected."
+    },
+    "transaction_price": {
+      "aliases": [
+        "Sale_Value", "SaleValue", "SALE_PRICE", "Price",
+        "Transaction_Price", "Deal_Price", "ContractValue",
+        "سعر_البيع", "قيمة_الصفقة", "ثمن_البيع", "قيمة_العقد"
+      ],
+      "transform": "to_float + currency_assert_SAR",
+      "notes": "CRITICAL: Price NEVER statistically imputed. Zero rejected. Must be SAR or explicitly converted with rate documented."
+    },
+    "evidence_type": {
+      "aliases": [
+        "Evidence_Type", "EvidenceType", "Source_Type", "DataType",
+        "Transaction_Type", "نوع_المصدر", "نوع_الدليل", "نوع_الصفقة"
+      ],
+      "transform": "strip_whitespace + lowercase",
+      "value_map": {
+        "صك_مسجّل":       "registered_sale",
+        "عرض_سوق":        "offer_listing",
+        "عقد_إيجار":      "rental_contract",
+        "تقرير_تقييم":    "valuation_report",
+        "تقييم_حكومي":    "government_assessment",
+        "إدخال_يدوي":     "manual_entry",
+        "registered_sale":     "registered_sale",
+        "offer":               "offer_listing",
+        "listing":             "offer_listing",
+        "rental":              "rental_contract"
+      },
+      "notes": "Unrecognised values mapped to 'unknown'."
+    },
+    "occupancy": {
+      "aliases": [
+        "Occupancy", "occupancy", "Occupancy_Rate", "OccupancyRate",
+        "نسبة_الإشغال", "الإشغال"
+      ],
+      "transform": "to_float + assert_0_to_100",
+      "notes": "Percent 0–100. Not imputed if missing."
+    },
+    "quality_finish": {
+      "aliases": [
+        "Quality", "quality", "Finish", "finish", "Finishing",
+        "Finishing_Level", "Quality_Tier", "Grade",
+        "جودة_التشطيب", "مستوى_التشطيب", "الدرجة"
+      ],
+      "transform": "strip_whitespace + lowercase",
+      "value_map": {
+        "فاخر":   "luxury",
+        "عالي":   "high",
+        "متوسط":  "standard",
+        "اقتصادي": "economy",
+        "هيكل":   "shell",
+        "luxury":   "luxury",
+        "high":     "high",
+        "standard": "standard",
+        "economy":  "economy",
+        "shell":    "shell"
+      },
+      "notes": "Maps to both finishing_level and quality_tier in comparables table."
+    }
+  },
+
+  "import_sources": {
+    "csv": {
+      "encoding": "UTF-8-BOM or UTF-8",
+      "delimiter": "comma or semicolon (auto-detected)",
+      "header_row": 1,
+      "notes": "BOM stripped before parsing."
+    },
+    "xlsx": {
+      "sheet": "first non-hidden sheet or sheet named 'Data' / 'بيانات'",
+      "header_row": 1,
+      "notes": "Merged cells in header are flattened before column detection."
+    },
+    "db": {
+      "table": "comparables",
+      "mapping_mode": "direct column alias (see aliases above)",
+      "notes": "Direct DB import uses existing schema.sql column names."
+    },
+    "api": {
+      "format": "JSON array of objects",
+      "key_matching": "alias lookup (case-insensitive)",
+      "notes": "Nested coordinates object accepted as {lat, lon} or flat lat/lon fields."
+    }
+  },
+
+  "standard_template": {
+    "description": "Canonical CSV template header for data submission",
+    "columns": [
+      "property_id", "property_type", "city", "district", "address",
+      "latitude", "longitude",
+      "land_area_m2", "built_up_area_m2", "rentable_area_m2",
+      "age", "condition", "use",
+      "transaction_date", "transaction_price",
+      "evidence_type", "occupancy", "quality_finish"
+    ],
+    "example_row": {
+      "property_id":       "PROP-2024-RY-001",
+      "property_type":     "residential",
+      "city":              "Riyadh",
+      "district":          "Al Nakheel",
+      "address":           "شارع الأمير فيصل، حي النخيل، الرياض",
+      "latitude":          24.7136,
+      "longitude":         46.6753,
+      "land_area_m2":      600.0,
+      "built_up_area_m2":  450.0,
+      "rentable_area_m2":  null,
+      "age":               8,
+      "condition":         "good",
+      "use":               "owner_occupied",
+      "transaction_date":  "2024-03-15",
+      "transaction_price": 2850000,
+      "evidence_type":     "registered_sale",
+      "occupancy":         null,
+      "quality_finish":    "high"
+    }
+  }
+}

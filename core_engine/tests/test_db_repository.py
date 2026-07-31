@@ -13,11 +13,15 @@ import pytest
 
 _CORE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_CORE))
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from reports.db.migrations import migrate  # noqa: E402
-from reports.db.models import ReportRecord  # noqa: E402
-from reports.db.repository import ReportRepository  # noqa: E402
+    from reports.db.migrations import migrate  # noqa: E402
+    from reports.db.models import ReportRecord  # noqa: E402
+    from reports.db.repository import ReportRepository  # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 
 @pytest.fixture()

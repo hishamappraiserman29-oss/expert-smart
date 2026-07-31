@@ -32,11 +32,15 @@ for _p in (str(_CORE), str(_ROOT)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-os.chdir(str(_CORE))
+_ORIG_CWD = os.getcwd()
+try:
+    os.chdir(str(_CORE))
 
-from bridge_api import app                          # noqa: E402
-from reports.report_pipeline import PipelineResult  # noqa: E402
-from auth.tokens import generate_token              # noqa: E402
+    from bridge_api import app                          # noqa: E402
+    from reports.report_pipeline import PipelineResult  # noqa: E402
+    from auth.tokens import generate_token              # noqa: E402
+finally:
+    os.chdir(_ORIG_CWD)
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
 
@@ -126,9 +130,11 @@ class TestNoPersist:
     def test_PA04_existing_keys_intact_without_persist(self, client):
         data = client.post("/api/valuation", json=_MINIMAL,
                            headers=_auth()).get_json()
-        for key in ("market_value", "excel_url",
+        for key in ("market_value",
                     "report_style_requested", "report_style_used"):
             assert key in data, f"Key missing: {key!r}"
+        # excel_url is now admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
 
 # ── PA05–PA10: persist=true + DB success ─────────────────────────────────────
@@ -165,13 +171,15 @@ class TestPersistSuccess:
                            headers=_auth()).get_json()
         assert data["persist_error"] == ""
 
-    def test_PA09_persist_true_excel_url_still_present(self, client):
-        """Generation must not be blocked — excel_url must survive."""
+    def test_PA09_persist_true_generation_not_blocked(self, client):
+        """Generation must not be blocked by persist=true."""
         data = client.post("/api/valuation",
                            json={**_MINIMAL, "persist": True},
                            headers=_auth()).get_json()
-        assert "excel_url" in data
-        assert data["excel_url"].startswith("http")
+        assert data["status"] == "success"
+        assert data.get("market_value", 0) > 0
+        # excel_url is admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
     def test_PA10_persist_called_exactly_once(self, client):
         client.post("/api/valuation", json={**_MINIMAL, "persist": True},
@@ -213,13 +221,15 @@ class TestPersistFailure:
                            headers=_auth()).get_json()
         assert "report_db_id" not in data or data.get("report_db_id") is None
 
-    def test_PA15_db_failure_excel_url_still_present(self, client):
-        """Excel report delivered despite DB failure."""
+    def test_PA15_db_failure_generation_still_succeeds(self, client):
+        """Report generation succeeds despite DB failure (P1: non-fatal persist)."""
         data = client.post("/api/valuation",
                            json={**_MINIMAL, "persist": True},
                            headers=_auth()).get_json()
-        assert "excel_url" in data
         assert data["status"] == "success"
+        assert data.get("market_value", 0) > 0
+        # excel_url is admin-only; non-admin users do not receive it
+        assert "excel_url" not in data
 
 
 # ── PA16–PA17: validate + persist coexistence ────────────────────────────────
@@ -261,9 +271,10 @@ class TestProfileKeyForwarding:
     @pytest.mark.parametrize("style,expected", [
         ("legacy",                "legacy"),
         ("detailed",              "detailed"),
-        # professional_template: template file absent in test env → fallback to legacy;
-        # persist receives the *actual* _style_used (legacy), not the requested style.
-        ("professional_template", "legacy"),
+        # professional_template: no longer falls back to legacy (old template-renderer
+        # fallback path was inside the admin Excel block, which was replaced by the
+        # 55-sheet builder; non-admin users now receive the requested style as-is).
+        ("professional_template", "professional_template"),
         ("bogus_style",           "legacy"),   # invalid style → falls back to legacy
     ])
     def test_PA18_profile_key_forwarded(self, client, style, expected):

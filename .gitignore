@@ -103,3 +103,19 @@ node_modules/
 core_engine/tax_appeal/
 core_engine/instance/
 core_engine/core_engine/
+
+# Virtual environments
+.venv/
+.venv_clean_test/
+venv/
+
+# Playwright / browser test outputs
+playwright-report/
+test-results/
+*.trace.zip
+
+# Additional credential container formats
+*.p12
+*.pfx
+*.jks
+*.keystore

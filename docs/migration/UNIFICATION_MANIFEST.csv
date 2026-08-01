@@ -1,0 +1,5 @@
+source_root,source_relative_path,destination_relative_path,category,source_sha256,destination_sha256,migration_wave,migration_commit,decision,evidence,notes
+canonical_source,.gitignore,.gitignore,GITIGNORE_ADDITION,,,phase_0,,ACCEPTED_ADDITIONS_ONLY,phase_0_commit,"Added: .venv/ .venv_clean_test/ venv/ playwright-report/ test-results/ *.trace.zip *.p12 *.pfx *.jks *.keystore"
+canonical_source,docs/migration/ARCHIVAL_REFS.md,docs/migration/ARCHIVAL_REFS.md,MIGRATION_DOCUMENT,,,phase_0,,CREATED,phase_0_commit,"Records all 22 bundle refs, stash, secret scan results"
+canonical_source,docs/migration/UNIFICATION_MANIFEST.csv,docs/migration/UNIFICATION_MANIFEST.csv,MIGRATION_DOCUMENT,,,phase_0,,CREATED,phase_0_commit,"This file — loss-prevention manifest for all migration decisions"
+canonical_source,docs/migration/UNIFICATION_REPORT.md,docs/migration/UNIFICATION_REPORT.md,MIGRATION_DOCUMENT,,,phase_0,,CREATED,phase_0_commit,"Phase 0 summary — baseline test results and scan outcomes"

@@ -6,6 +6,8 @@
     <title>Expert_Smart | م. هشام المهدي v26</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg: #030712;
@@ -1340,6 +1342,7 @@
         <button class="es-tab-btn"               id="es-tab-valuation"    onclick="esShowTab('valuation')"    type="button" role="tab">🏠 التقييم</button>
         <button class="es-tab-btn es-tab-active" id="es-tab-professional" onclick="esShowTab('professional')" type="button" role="tab" aria-selected="true">⚖️ التقييم المحترف</button>
         <button class="es-tab-btn"               id="es-tab-composite"    onclick="esShowTab('composite')"    type="button" role="tab" data-testid="composite-valuation-tab">📊 التقييم المجمع</button>
+        <button class="es-tab-btn" id="es-tab-mass-valuation" onclick="esShowTab('mass-valuation')" type="button" role="tab" data-testid="mass-valuation-tab" aria-controls="ws-mass-valuation" style="display:none">🏘 التقييم الجماعي</button>
         <button class="es-tab-btn" id="es-tab-expert-backoffice" onclick="esShowTab('expert-backoffice')" type="button" role="tab" data-testid="expert-backoffice-tab" style="display:none; border-color:rgba(212,175,55,0.5);">🔐 مكتب الخبير</button>
         <button class="es-tab-btn" id="es-tab-tax-appeal-backoffice" onclick="esShowTab('tax-appeal-backoffice')" type="button" role="tab" data-testid="tax-appeal-backoffice-tab" style="display:none; border-color:rgba(16,185,129,0.5);">🧾 مكتب طعون الضرائب</button>
         <button class="es-tab-btn" id="es-tab-professional-valuation" onclick="esShowTab('professional-valuation')" type="button" role="tab" data-testid="professional-valuation-tab" style="display:none; border-color:rgba(139,92,246,0.5);">📋 مكتب التقييم المحترف</button>
@@ -12705,6 +12708,524 @@
         </div><!-- /#cmp-mode-wrapper -->
     </div>
     <!-- ── End Phase 11: Composite Valuation Tab ─────────────────────── -->
+
+    <!-- ── Begin Phase 13: Mass Valuation Import Tab ──────────────────── -->
+    <style>
+    /* ══ Phase 13: Mass Valuation Import ══════════════════════════════════ */
+    #ws-mass-valuation { padding: 1.5rem 0; }
+    .mv-advisory-banner {
+        display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap;
+        background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.28);
+        border-radius: 10px; padding: 0.85rem 1.2rem; margin-bottom: 1.5rem;
+        font-size: 0.84rem; color: rgba(249,250,251,0.75); line-height: 1.5;
+    }
+    .mv-adv-badge {
+        white-space: nowrap; background: rgba(212,175,55,0.15);
+        border: 1px solid rgba(212,175,55,0.3); border-radius: 5px;
+        padding: 1px 8px; font-weight: 700; font-size: 0.76rem; color: var(--gold);
+    }
+    .mv-adv-badge.mv-badge-red {
+        background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #fca5a5;
+    }
+    .mv-section-title { font-size: 0.95rem; font-weight: 700; color: var(--gold); margin: 0 0 0.7rem; }
+    .mv-mode-selector { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .mv-mode-btn {
+        padding: 0.42rem 1rem; border: 1px solid var(--border); border-radius: 7px;
+        background: transparent; color: var(--text); cursor: pointer;
+        font-family: 'Tajawal', sans-serif; font-size: 0.88rem;
+        transition: background 0.14s, border-color 0.14s;
+    }
+    .mv-mode-btn:hover { border-color: var(--gold); }
+    .mv-mode-btn.mv-mode-active {
+        border-color: var(--gold); background: rgba(212,175,55,0.11); color: var(--gold); font-weight: 700;
+    }
+    .mv-input-panel { display: none; margin-bottom: 1.1rem; }
+    .mv-input-panel.mv-panel-active { display: block; }
+    .mv-file-label {
+        display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;
+        padding: 0.5rem 1.1rem; border: 1px dashed var(--border); border-radius: 8px;
+        color: var(--text); font-size: 0.88rem; transition: border-color 0.14s; user-select: none;
+    }
+    .mv-file-label:hover { border-color: var(--gold); }
+    .mv-file-input { display: none; }
+    .mv-file-name { display: inline-block; margin-right: 0.7rem; font-size: 0.83rem; color: rgba(249,250,251,0.5); }
+    .mv-json-textarea {
+        width: 100%; box-sizing: border-box; min-height: 110px;
+        background: rgba(17,24,39,0.85); border: 1px solid var(--border); border-radius: 8px;
+        color: var(--text); font-size: 0.82rem; font-family: 'Courier New', monospace;
+        padding: 0.7rem 0.9rem; resize: vertical; direction: ltr; text-align: left;
+    }
+    .mv-json-textarea:focus { outline: none; border-color: var(--gold); }
+    .mv-options-row { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .mv-opt-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.84rem; color: rgba(249,250,251,0.65); }
+    .mv-opt-input {
+        background: rgba(17,24,39,0.85); border: 1px solid var(--border); border-radius: 6px;
+        color: var(--text); padding: 0.28rem 0.6rem; font-family: 'Tajawal', sans-serif;
+        font-size: 0.88rem; width: 76px; text-align: center;
+    }
+    .mv-opt-input:focus { outline: none; border-color: var(--gold); }
+    .mv-actions-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.4rem; flex-wrap: wrap; }
+    .mv-btn {
+        padding: 0.58rem 1.4rem; border-radius: 9px; border: none; cursor: pointer;
+        font-family: 'Tajawal', sans-serif; font-size: 0.92rem; font-weight: 700;
+        transition: opacity 0.14s, transform 0.1s;
+    }
+    .mv-btn:hover:not(:disabled) { opacity: 0.87; }
+    .mv-btn:active:not(:disabled) { transform: scale(0.97); }
+    .mv-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+    .mv-btn-preview { background: var(--gold); color: #0a0a0a; }
+    .mv-btn-execute { background: linear-gradient(135deg, #10b981, #059669); color: #fff; display: none; }
+    .mv-record-count { font-size: 0.83rem; color: rgba(249,250,251,0.5); }
+    .mv-policy-note {
+        background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.22);
+        border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.82rem;
+        color: rgba(16,185,129,0.88); margin-bottom: 1.4rem;
+    }
+    .mv-error-banner {
+        background: rgba(239,68,68,0.09); border: 1px solid rgba(239,68,68,0.3);
+        border-radius: 8px; padding: 0.7rem 1rem; color: #fca5a5;
+        font-size: 0.86rem; display: none; margin-bottom: 1rem;
+    }
+    .mv-kpis { display: none; margin-bottom: 1.5rem; }
+    .mv-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .mv-kpi-card {
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 1rem 1.2rem; text-align: center;
+    }
+    .mv-kpi-value {
+        font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums;
+        color: var(--gold); line-height: 1.15;
+    }
+    .mv-kpi-label { font-size: 0.8rem; color: rgba(249,250,251,0.55); margin-top: 0.3rem; }
+    .mv-kpi-flagged .mv-kpi-value { color: #f59e0b; }
+    .mv-kpi-rejected .mv-kpi-value { color: #ef4444; }
+    .mv-unmapped { margin-top: 0.8rem; display: none; font-size: 0.82rem; color: rgba(249,250,251,0.58); }
+    .mv-unmapped strong { color: #f59e0b; }
+    .mv-unmapped code { background: rgba(245,158,11,0.1); border-radius: 3px; padding: 0 4px; font-size: 0.8rem; }
+    .mv-table-wrapper {
+        overflow-x: auto; display: none; margin-bottom: 1.5rem;
+        border: 1px solid var(--border); border-radius: 10px;
+    }
+    .mv-pipeline-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 560px; }
+    .mv-pipeline-table th {
+        background: rgba(212,175,55,0.09); color: var(--gold);
+        padding: 0.55rem 0.85rem; text-align: right; font-weight: 700;
+        border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .mv-pipeline-table td {
+        padding: 0.42rem 0.85rem; border-bottom: 1px solid rgba(212,175,55,0.08);
+        color: var(--text); vertical-align: top;
+    }
+    .mv-pipeline-table tr:last-child td { border-bottom: none; }
+    .mv-pipeline-table tr:hover td { background: rgba(212,175,55,0.04); }
+    .mv-act-eligible { color: var(--success); font-weight: 700; }
+    .mv-act-flagged  { color: #f59e0b; font-weight: 700; }
+    .mv-act-rejected { color: #ef4444; font-weight: 700; }
+    .mv-run-box {
+        background: var(--bg-card); border: 1px solid rgba(16,185,129,0.28);
+        border-radius: 12px; padding: 1.2rem 1.4rem; display: none; margin-bottom: 1.5rem;
+    }
+    .mv-run-title { font-size: 0.92rem; font-weight: 700; color: #10b981; margin-bottom: 0.8rem; }
+    .mv-run-kv { display: flex; gap: 0.55rem; margin-bottom: 0.35rem; align-items: baseline; }
+    .mv-run-key { color: rgba(249,250,251,0.52); font-size: 0.82rem; flex-shrink: 0; }
+    .mv-run-val { color: var(--text); font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    /* ══ End Phase 13 styles ════════════════════════════════════════════ */
+    </style>
+
+    <div id="ws-mass-valuation" class="es-workspace" role="tabpanel" aria-labelledby="es-tab-mass-valuation">
+        <div id="mv-admin-guard" style="display:none; padding:3rem 1rem; text-align:center; color:rgba(249,250,251,0.4); font-size:1rem;">
+            🔒 صلاحيات المشرف مطلوبة للوصول إلى هذه الخاصية
+        </div>
+        <div id="mv-main-content">
+            <div class="mv-advisory-banner">
+                <span class="mv-adv-badge">تقديري فقط</span>
+                <span class="mv-adv-badge mv-badge-red">غير معتمد رسمياً</span>
+                <span>advisory_only: true — certification_ready: false — النتائج استرشادية. لا يُستخدم هذا النظام كسند قانوني أو ضريبي أو ائتماني.</span>
+            </div>
+
+            <p class="mv-section-title">📂 مصدر البيانات</p>
+            <div class="mv-mode-selector">
+                <button class="mv-mode-btn mv-mode-active" data-mode="csv"  onclick="mvSetMode('csv')"  data-testid="mv-mode-csv">CSV</button>
+                <button class="mv-mode-btn"                data-mode="xlsx" onclick="mvSetMode('xlsx')" data-testid="mv-mode-xlsx">Excel / XLSX</button>
+                <button class="mv-mode-btn"                data-mode="json" onclick="mvSetMode('json')" data-testid="mv-mode-json">JSON</button>
+            </div>
+
+            <div class="mv-input-panel mv-panel-active" id="mv-panel-csv">
+                <label class="mv-file-label" for="mv-file-csv">📄 اختر ملف CSV</label>
+                <input class="mv-file-input" type="file" id="mv-file-csv" accept=".csv"
+                       data-testid="mv-file-csv" onchange="mvHandleCSVFile(this)">
+                <span class="mv-file-name" id="mv-csv-name">لم يُختر ملف</span>
+            </div>
+            <div class="mv-input-panel" id="mv-panel-xlsx">
+                <label class="mv-file-label" for="mv-file-xlsx">📊 اختر ملف Excel</label>
+                <input class="mv-file-input" type="file" id="mv-file-xlsx" accept=".xlsx,.xls"
+                       data-testid="mv-file-xlsx" onchange="mvHandleXLSXFile(this)">
+                <span class="mv-file-name" id="mv-xlsx-name">لم يُختر ملف</span>
+            </div>
+            <div class="mv-input-panel" id="mv-panel-json">
+                <textarea class="mv-json-textarea" id="mv-json-input" data-testid="mv-json-input"
+                          placeholder='[{"property_id": "P001", "price": 500000, "location": "Riyadh"}]'
+                          oninput="mvHandleJSONInput()" rows="6" dir="ltr"></textarea>
+            </div>
+
+            <div class="mv-options-row">
+                <label class="mv-opt-label">
+                    نافذة الرجوع (أشهر):
+                    <input class="mv-opt-input" type="number" id="mv-lookback" value="36"
+                           min="1" max="120" data-testid="mv-lookback">
+                </label>
+            </div>
+
+            <div class="mv-actions-row">
+                <button class="mv-btn mv-btn-preview" id="mv-btn-preview"
+                        onclick="mvRunPreview()" disabled data-testid="mv-btn-preview">🔍 فحص البيانات</button>
+                <button class="mv-btn mv-btn-execute" id="mv-btn-execute"
+                        onclick="mvRunExecute()" data-testid="mv-btn-execute">⚡ تنفيذ على المؤهلة</button>
+                <span class="mv-record-count" id="mv-record-count"></span>
+            </div>
+
+            <div class="mv-policy-note">
+                🔒 سياسة الشذوذ: السجلات المُعلَّمة (for_review) تُحال للمراجعة فقط — لا حذف تلقائي، لا اعتماد آلي.
+            </div>
+
+            <div class="mv-error-banner" id="mv-error" role="alert" data-testid="mv-error"></div>
+
+            <div class="mv-kpis" id="mv-kpis" data-testid="mv-kpis">
+                <p class="mv-section-title">📊 ملخص الفحص</p>
+                <div class="mv-kpi-grid">
+                    <div class="mv-kpi-card">
+                        <div class="mv-kpi-value" id="mv-kpi-eligible" data-testid="mv-kpi-eligible">—</div>
+                        <div class="mv-kpi-label">سجل مؤهل</div>
+                    </div>
+                    <div class="mv-kpi-card mv-kpi-flagged">
+                        <div class="mv-kpi-value" id="mv-kpi-flagged" data-testid="mv-kpi-flagged">—</div>
+                        <div class="mv-kpi-label">للمراجعة</div>
+                    </div>
+                    <div class="mv-kpi-card mv-kpi-rejected">
+                        <div class="mv-kpi-value" id="mv-kpi-rejected" data-testid="mv-kpi-rejected">—</div>
+                        <div class="mv-kpi-label">مرفوض</div>
+                    </div>
+                </div>
+                <div class="mv-unmapped" id="mv-unmapped" data-testid="mv-unmapped"></div>
+            </div>
+
+            <div class="mv-table-wrapper" id="mv-table-wrapper" data-testid="mv-table-wrapper">
+                <p class="mv-section-title" style="padding:0.75rem 0.85rem 0;">📋 تقرير المسار</p>
+                <table class="mv-pipeline-table" id="mv-pipeline-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>معرّف العقار</th>
+                            <th>الحالة</th>
+                            <th>إشارات الجودة</th>
+                            <th>حقول غير مُعيَّنة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mv-pipeline-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="mv-run-box" id="mv-run-result" data-testid="mv-run-result">
+                <p class="mv-run-title">✅ نتيجة التنفيذ</p>
+                <div id="mv-run-result-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    /* ── Phase 13: Mass Valuation Import UI ─────────────────────────────── */
+    (function () {
+        var _mvRecords        = null;
+        var _mvPreviewDone    = false;
+        var _mvPendingRequest = false;
+        var _mvCurrentMode    = 'csv';
+        var _mvLastBody       = null;
+
+        function mvInitAdminGate() {
+            var sess = (typeof esGetSession === 'function') ? esGetSession() : null;
+            var tab  = document.getElementById('es-tab-mass-valuation');
+            if (sess && sess.is_admin) {
+                if (tab) tab.style.display = '';
+            } else {
+                var guard = document.getElementById('mv-admin-guard');
+                var main  = document.getElementById('mv-main-content');
+                if (guard) guard.style.display = '';
+                if (main)  main.style.display  = 'none';
+            }
+        }
+
+        window.mvSetMode = function (mode) {
+            _mvCurrentMode = mode;
+            document.querySelectorAll('.mv-mode-btn').forEach(function (b) {
+                b.classList.toggle('mv-mode-active', b.getAttribute('data-mode') === mode);
+            });
+            ['csv', 'xlsx', 'json'].forEach(function (m) {
+                var p = document.getElementById('mv-panel-' + m);
+                if (p) p.classList.toggle('mv-panel-active', m === mode);
+            });
+            _mvRecords = null;
+            mvInvalidatePreview();
+            mvClearError();
+        };
+
+        window.mvHandleCSVFile = function (input) {
+            if (!input.files || !input.files[0]) return;
+            var file   = input.files[0];
+            var nameEl = document.getElementById('mv-csv-name');
+            if (nameEl) nameEl.textContent = file.name;
+            if (typeof Papa === 'undefined') {
+                mvShowError('مكتبة تحليل CSV غير محملة — يرجى تحديث الصفحة.');
+                return;
+            }
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: function (result) {
+                    _mvRecords = result.data;
+                    mvInvalidatePreview();
+                    mvClearError();
+                },
+                error: function (err) {
+                    mvShowError('تعذّر قراءة ملف CSV: ' + (err && err.message ? err.message : 'خطأ غير معروف'));
+                    _mvRecords = null;
+                    mvInvalidatePreview();
+                }
+            });
+        };
+
+        window.mvHandleXLSXFile = function (input) {
+            if (!input.files || !input.files[0]) return;
+            var file   = input.files[0];
+            var nameEl = document.getElementById('mv-xlsx-name');
+            if (nameEl) nameEl.textContent = file.name;
+            if (typeof XLSX === 'undefined') {
+                mvShowError('مكتبة Excel غير محملة — يرجى تحديث الصفحة.');
+                return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    var wb = XLSX.read(e.target.result, { type: 'array' });
+                    var ws = wb.Sheets[wb.SheetNames[0]];
+                    _mvRecords = XLSX.utils.sheet_to_json(ws, { defval: '' });
+                    mvInvalidatePreview();
+                    mvClearError();
+                } catch (err) {
+                    mvShowError('تعذّر قراءة ملف Excel: ' + (err && err.message ? err.message : 'خطأ غير معروف'));
+                    _mvRecords = null;
+                    mvInvalidatePreview();
+                }
+            };
+            reader.onerror = function () {
+                mvShowError('تعذّر قراءة الملف.');
+                _mvRecords = null;
+                mvInvalidatePreview();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        window.mvHandleJSONInput = function () {
+            var raw = (document.getElementById('mv-json-input') || {}).value || '';
+            if (!raw.trim()) { _mvRecords = null; mvInvalidatePreview(); return; }
+            try {
+                var parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) throw new Error('الجذر يجب أن يكون مصفوفة JSON');
+                _mvRecords = parsed;
+                mvInvalidatePreview();
+                mvClearError();
+            } catch (err) {
+                mvShowError('JSON غير صالح: ' + (err && err.message ? err.message : 'تحقق من التنسيق'));
+                _mvRecords = null;
+                mvInvalidatePreview();
+            }
+        };
+
+        function mvInvalidatePreview() {
+            _mvPreviewDone = false;
+            _mvLastBody    = null;
+            var btnExec   = document.getElementById('mv-btn-execute');
+            var kpis      = document.getElementById('mv-kpis');
+            var tableWrap = document.getElementById('mv-table-wrapper');
+            var runResult = document.getElementById('mv-run-result');
+            var count     = document.getElementById('mv-record-count');
+            var btnPrev   = document.getElementById('mv-btn-preview');
+            if (btnExec)   btnExec.style.display   = 'none';
+            if (kpis)      kpis.style.display       = 'none';
+            if (tableWrap) tableWrap.style.display  = 'none';
+            if (runResult) runResult.style.display  = 'none';
+            var hasRecords = !!(Array.isArray(_mvRecords) && _mvRecords.length > 0);
+            if (btnPrev) btnPrev.disabled = !hasRecords || _mvPendingRequest;
+            if (count) count.textContent = hasRecords ? ('(' + _mvRecords.length + ' سجل جاهز)') : '';
+        }
+
+        window.mvRunPreview = function () {
+            if (_mvPendingRequest || !Array.isArray(_mvRecords) || !_mvRecords.length) return;
+            mvClearError();
+            var lookback = parseInt(((document.getElementById('mv-lookback') || {}).value || '36'), 10);
+            if (isNaN(lookback) || lookback < 1) lookback = 36;
+            var body = { records: _mvRecords, source: _mvCurrentMode, lookback_months: lookback, execute: false };
+            _mvLastBody = body;
+            mvLockButtons(true);
+            esFetch('/api/mass-valuation/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function (r) {
+                var ok = r.ok, status = r.status;
+                return r.json().then(function (data) {
+                    return { ok: ok, status: status, data: data };
+                }).catch(function () { return { ok: ok, status: status, data: {} }; });
+            }).then(function (result) {
+                mvUnlockButtons();
+                if (!result.ok) { mvShowError(mvFriendlyError(result.status, result.data)); return; }
+                _mvPreviewDone = true;
+                mvRenderKPIs(result.data);
+                mvRenderPipelineTable(result.data.pipeline_report || []);
+                var btnExec = document.getElementById('mv-btn-execute');
+                if (btnExec && result.data.n_eligible > 0) btnExec.style.display = '';
+            }).catch(function (err) {
+                mvUnlockButtons();
+                if (err && err.message === 'ES_AUTH_401') return;
+                if (err && err.message === 'ES_AUTH_403') { mvShowError('صلاحيات المشرف مطلوبة لهذه العملية.'); return; }
+                mvShowError('تعذّر الاتصال بالخادم — تحقق من اتصالك.');
+            });
+        };
+
+        window.mvRunExecute = function () {
+            if (_mvPendingRequest || !_mvLastBody || !_mvPreviewDone) return;
+            mvClearError();
+            var body      = Object.assign({}, _mvLastBody, { execute: true });
+            var runResult = document.getElementById('mv-run-result');
+            if (runResult) runResult.style.display = 'none';
+            mvLockButtons(false);
+            esFetch('/api/mass-valuation/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            }).then(function (r) {
+                var ok = r.ok, status = r.status;
+                return r.json().then(function (data) {
+                    return { ok: ok, status: status, data: data };
+                }).catch(function () { return { ok: ok, status: status, data: {} }; });
+            }).then(function (result) {
+                mvUnlockButtons();
+                if (!result.ok) { mvShowError(mvFriendlyError(result.status, result.data)); return; }
+                mvRenderRunResult(result.data);
+            }).catch(function (err) {
+                mvUnlockButtons();
+                if (err && err.message === 'ES_AUTH_401') return;
+                if (err && err.message === 'ES_AUTH_403') { mvShowError('صلاحيات المشرف مطلوبة لهذه العملية.'); return; }
+                mvShowError('تعذّر الاتصال بالخادم — تحقق من اتصالك.');
+            });
+        };
+
+        function mvRenderKPIs(resp) {
+            var kpis = document.getElementById('mv-kpis');
+            if (!kpis) return;
+            kpis.style.display = '';
+            var el;
+            el = document.getElementById('mv-kpi-eligible'); if (el) el.textContent = resp.n_eligible != null ? resp.n_eligible : '—';
+            el = document.getElementById('mv-kpi-flagged');  if (el) el.textContent = resp.n_flagged  != null ? resp.n_flagged  : '—';
+            el = document.getElementById('mv-kpi-rejected'); if (el) el.textContent = resp.n_rejected != null ? resp.n_rejected : '—';
+            var unmappedEl = document.getElementById('mv-unmapped');
+            if (unmappedEl) {
+                var unmapped = Array.isArray(resp.unmapped_field_names) ? resp.unmapped_field_names : [];
+                if (unmapped.length > 0) {
+                    unmappedEl.style.display = '';
+                    unmappedEl.innerHTML = '<strong>حقول غير معروفة:</strong> ' +
+                        unmapped.map(function (f) { return '<code>' + escMv(f) + '</code>'; }).join('، ');
+                } else {
+                    unmappedEl.style.display = 'none';
+                }
+            }
+        }
+
+        function mvRenderPipelineTable(report) {
+            var wrapper = document.getElementById('mv-table-wrapper');
+            var tbody   = document.getElementById('mv-pipeline-tbody');
+            if (!wrapper || !tbody) return;
+            if (!Array.isArray(report) || !report.length) { wrapper.style.display = 'none'; return; }
+            wrapper.style.display = '';
+            tbody.innerHTML = '';
+            report.forEach(function (rec) {
+                var ac = rec.action === 'flag_for_review' ? 'mv-act-flagged'
+                       : rec.action === 'reject'         ? 'mv-act-rejected' : '';
+                var flags    = Array.isArray(rec.quality_flags) ? rec.quality_flags.join('، ')
+                             : (rec.quality_flags  ? String(rec.quality_flags)  : '—');
+                var unmapped = Array.isArray(rec.unmapped_keys)  ? rec.unmapped_keys.join('، ')
+                             : (rec.unmapped_keys   ? String(rec.unmapped_keys)   : '—');
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td>' + escMv(String(rec.index != null ? rec.index : '')) + '</td>' +
+                    '<td>' + escMv(String(rec.property_id || '—')) + '</td>' +
+                    '<td class="' + ac + '">' + escMv(String(rec.action || '—')) + '</td>' +
+                    '<td>' + escMv(flags) + '</td>' +
+                    '<td>' + escMv(unmapped) + '</td>';
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mvRenderRunResult(resp) {
+            var box     = document.getElementById('mv-run-result');
+            var content = document.getElementById('mv-run-result-content');
+            if (!box || !content) return;
+            var rr = resp.run_result;
+            if (!rr) { box.style.display = 'none'; return; }
+            box.style.display = '';
+            if (rr.error) {
+                content.innerHTML = '<div class="mv-run-kv"><span class="mv-run-val" style="color:#fca5a5;">خطأ في التنفيذ: ' + escMv(String(rr.error)) + '</span></div>';
+                return;
+            }
+            var iaao = (rr.iaao_summary && typeof rr.iaao_summary === 'object') ? rr.iaao_summary : {};
+            var html =
+                '<div class="mv-run-kv"><span class="mv-run-key">رقم الجولة:</span><span class="mv-run-val">'       + escMv(String(rr.run_id           || '—')) + '</span></div>' +
+                '<div class="mv-run-kv"><span class="mv-run-key">الحالة:</span><span class="mv-run-val">'             + escMv(String(rr.status            || '—')) + '</span></div>' +
+                '<div class="mv-run-kv"><span class="mv-run-key">السجلات المُدخلة:</span><span class="mv-run-val">'  + escMv(String(rr.n_input_records != null ? rr.n_input_records : '—')) + '</span></div>' +
+                '<div class="mv-run-kv"><span class="mv-run-key">التقديرات:</span><span class="mv-run-val">'          + escMv(String(rr.n_predicted     != null ? rr.n_predicted     : '—')) + '</span></div>';
+            if (iaao.cod != null) html += '<div class="mv-run-kv"><span class="mv-run-key">IAAO COD:</span><span class="mv-run-val">' + escMv(String(iaao.cod)) + '</span></div>';
+            if (iaao.prd != null) html += '<div class="mv-run-kv"><span class="mv-run-key">IAAO PRD:</span><span class="mv-run-val">' + escMv(String(iaao.prd)) + '</span></div>';
+            content.innerHTML = html;
+        }
+
+        function mvFriendlyError(status, data) {
+            if (status === 503) return 'خدمة التقييم الجماعي غير متاحة حالياً.';
+            if (status === 400 && data && data.error) return 'بيانات غير صالحة: ' + data.error;
+            return 'حدث خطأ غير متوقع (' + status + ') — يرجى المحاولة مرة أخرى.';
+        }
+
+        window.mvShowError = function (msg) {
+            var el = document.getElementById('mv-error');
+            if (el) { el.textContent = msg; el.style.display = 'block'; }
+        };
+        window.mvClearError = function () {
+            var el = document.getElementById('mv-error');
+            if (el) { el.textContent = ''; el.style.display = 'none'; }
+        };
+
+        function mvLockButtons(isPreview) {
+            _mvPendingRequest = true;
+            var p = document.getElementById('mv-btn-preview');
+            var e = document.getElementById('mv-btn-execute');
+            if (p) { p.disabled = true; if (isPreview) p.textContent = '⏳ جارٍ الفحص…'; }
+            if (e) e.disabled = true;
+        }
+        function mvUnlockButtons() {
+            _mvPendingRequest = false;
+            var p = document.getElementById('mv-btn-preview');
+            var e = document.getElementById('mv-btn-execute');
+            if (p) { p.disabled = false; p.textContent = '🔍 فحص البيانات'; }
+            if (e) e.disabled = false;
+        }
+
+        function escMv(s) {
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        document.addEventListener('DOMContentLoaded', mvInitAdminGate);
+    }());
+    </script>
+    <!-- ── End Phase 13: Mass Valuation Import Tab ──────────────────── -->
     <!-- ══ End Phase 1: Four-Tab Navigation Shell ══════════════════════════ -->
 
 </div><!-- /container -->

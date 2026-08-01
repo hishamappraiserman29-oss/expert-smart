@@ -12447,7 +12447,562 @@
         });
     }
 
-    async function processAndGenerate() {
+
+    // ?? Schema-driven editable valuation requirements ????????????????
+    var existingStaticFieldNames = Object.freeze({
+        asset_type: true,
+        property_type: true,
+        valuation_purpose: true,
+        purpose: true,
+        location: true,
+        description: true,
+        date: true,
+        valuation_date: true,
+        area: true,
+        total_area: true,
+        total_area_m2: true,
+        price_per_meter: true,
+        report_style: true,
+        submission_report_type: true
+    });
+
+    window.existingStaticFieldNames =
+        existingStaticFieldNames;
+
+    window.esExistingStaticFieldNames =
+        existingStaticFieldNames;
+
+    window.esActiveRequirementFields = [];
+    window.esKnownDynamicRequirementNames = {};
+    window.esDynamicRequirementValues = {};
+    window.esDynamicRequirementErrors = {};
+
+    window.esRequirementElements = function (
+        fieldName
+    ) {
+        var panel =
+            document.getElementById(
+                'es-req-panel'
+            );
+
+        if (!panel) return [];
+
+        return Array.prototype.filter.call(
+            panel.querySelectorAll(
+                '[data-es-req-field]'
+            ),
+            function (element) {
+                return (
+                    element.getAttribute(
+                        'data-es-req-field'
+                    ) === fieldName
+                    && element.type !== 'file'
+                );
+            }
+        );
+    };
+
+    window.esDefaultRequirementValue = function (
+        field
+    ) {
+        if (
+            field.field_type === 'bool'
+            || field.group === 'document'
+        ) {
+            return false;
+        }
+
+        if (field.field_type === 'list') {
+            return [];
+        }
+
+        return '';
+    };
+
+    window.esReadDynamicRequirementValue =
+        function (field) {
+            var elements =
+                window.esRequirementElements(
+                    field.name
+                );
+
+            if (field.field_type === 'list') {
+                var selected = [];
+
+                elements.forEach(
+                    function (element) {
+                        if (
+                            element.type
+                            === 'checkbox'
+                        ) {
+                            if (element.checked) {
+                                selected.push(
+                                    element.value
+                                );
+                            }
+
+                            return;
+                        }
+
+                        if (
+                            element.tagName
+                            === 'SELECT'
+                            && element.multiple
+                        ) {
+                            Array.prototype.forEach.call(
+                                element.selectedOptions
+                                || [],
+                                function (option) {
+                                    selected.push(
+                                        option.value
+                                    );
+                                }
+                            );
+                        }
+                    }
+                );
+
+                return selected;
+            }
+
+            if (
+                field.field_type === 'bool'
+                || field.group === 'document'
+            ) {
+                var checkbox = elements.find(
+                    function (element) {
+                        return (
+                            element.type
+                            === 'checkbox'
+                        );
+                    }
+                );
+
+                if (checkbox) {
+                    return (
+                        checkbox.checked
+                        === true
+                    );
+                }
+
+                var boolElement = elements[0];
+
+                if (!boolElement) {
+                    return false;
+                }
+
+                var boolValue = String(
+                    boolElement.value || ''
+                ).toLowerCase();
+
+                return (
+                    boolValue === 'true'
+                    || boolValue === '1'
+                    || boolValue === 'yes'
+                    || boolValue === 'on'
+                );
+            }
+
+            var element = elements[0];
+
+            if (!element) return '';
+
+            return String(
+                element.value === undefined
+                    ? ''
+                    : element.value
+            ).trim();
+        };
+
+    window.esCaptureDynamicRequirementValues =
+        function () {
+            var fields = Array.isArray(
+                window.esActiveRequirementFields
+            )
+                ? window.esActiveRequirementFields
+                : [];
+
+            fields.forEach(function (field) {
+                if (
+                    !field
+                    || !field.name
+                    || field.role === 'engine_value'
+                    || field.role !== 'user_input'
+                ) {
+                    return;
+                }
+
+                window.esDynamicRequirementValues[
+                    field.name
+                ] =
+                    window
+                        .esReadDynamicRequirementValue(
+                            field
+                        );
+            });
+
+            return (
+                window.esDynamicRequirementValues
+            );
+        };
+
+    window.esHydrateDynamicRequirementValues =
+        function () {
+            var fields = Array.isArray(
+                window.esActiveRequirementFields
+            )
+                ? window.esActiveRequirementFields
+                : [];
+
+            fields.forEach(function (field) {
+                if (
+                    !field
+                    || !field.name
+                    || !Object.prototype
+                        .hasOwnProperty.call(
+                            window
+                                .esDynamicRequirementValues,
+                            field.name
+                        )
+                ) {
+                    return;
+                }
+
+                var value =
+                    window.esDynamicRequirementValues[
+                        field.name
+                    ];
+
+                var elements =
+                    window.esRequirementElements(
+                        field.name
+                    );
+
+                if (field.field_type === 'list') {
+                    var selected =
+                        Array.isArray(value)
+                            ? value.map(String)
+                            : [];
+
+                    elements.forEach(
+                        function (element) {
+                            if (
+                                element.type
+                                === 'checkbox'
+                            ) {
+                                element.checked =
+                                    selected.indexOf(
+                                        String(
+                                            element.value
+                                        )
+                                    ) !== -1;
+                            }
+                        }
+                    );
+
+                    return;
+                }
+
+                if (
+                    field.field_type === 'bool'
+                    || field.group === 'document'
+                ) {
+                    var checkbox = elements.find(
+                        function (element) {
+                            return (
+                                element.type
+                                === 'checkbox'
+                            );
+                        }
+                    );
+
+                    if (checkbox) {
+                        checkbox.checked =
+                            value === true;
+                        return;
+                    }
+
+                    if (elements[0]) {
+                        elements[0].value =
+                            value === true
+                                ? 'true'
+                                : 'false';
+                    }
+
+                    return;
+                }
+
+                if (
+                    elements[0]
+                    && value !== null
+                    && value !== undefined
+                ) {
+                    // String(0) preserves numeric zero.
+                    elements[0].value =
+                        String(value);
+                }
+            });
+        };
+
+    window.esSetDynamicRequirementMetadata =
+        function (metadata) {
+            var source = (
+                metadata
+                && typeof metadata === 'object'
+            )
+                ? metadata
+                : {};
+
+            var fields = Array.isArray(
+                window.esActiveRequirementFields
+            )
+                ? window.esActiveRequirementFields
+                : [];
+
+            fields.forEach(function (field) {
+                if (
+                    !field
+                    || !field.name
+                    || !Object.prototype
+                        .hasOwnProperty.call(
+                            source,
+                            field.name
+                        )
+                ) {
+                    return;
+                }
+
+                window.esDynamicRequirementValues[
+                    field.name
+                ] = source[field.name];
+            });
+
+            window
+                .esHydrateDynamicRequirementValues();
+        };
+
+    window.esBuildDynamicRequirementMetadata =
+        function (existingMetadata) {
+            var metadata = Object.assign(
+                {},
+                existingMetadata || {}
+            );
+
+            var errors = [];
+
+            var fields = Array.isArray(
+                window.esActiveRequirementFields
+            )
+                ? window.esActiveRequirementFields
+                : [];
+
+            window.esDynamicRequirementErrors = {};
+
+            // Remove all old schema values before adding
+            // only the currently active schema values.
+            Object.keys(
+                window
+                    .esKnownDynamicRequirementNames
+                || {}
+            ).forEach(function (name) {
+                delete metadata[name];
+            });
+
+            fields.forEach(function (field) {
+                if (
+                    !field
+                    || !field.name
+                    || field.role === 'engine_value'
+                    || field.role !== 'user_input'
+                    || existingStaticFieldNames[
+                        field.name
+                    ]
+                ) {
+                    return;
+                }
+
+                var name = field.name;
+
+                var label =
+                    field.label_ar
+                    || field.description
+                    || name;
+
+                var value =
+                    window
+                        .esReadDynamicRequirementValue(
+                            field
+                        );
+
+                if (field.field_type === 'list') {
+                    var listValue =
+                        Array.isArray(value)
+                            ? value
+                            : [];
+
+                    if (
+                        field.ui_required
+                        && listValue.length === 0
+                    ) {
+                        errors.push(
+                            label
+                            + ': ??? ?????? ???? '
+                            + '????? ??? ?????.'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        Array.isArray(
+                            field.valid_values
+                        )
+                        && field.valid_values.length
+                        && listValue.some(
+                            function (item) {
+                                return (
+                                    field.valid_values
+                                        .indexOf(item)
+                                    === -1
+                                );
+                            }
+                        )
+                    ) {
+                        errors.push(
+                            label
+                            + ': ???? ???? ??? ??????.'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        listValue.length > 0
+                        || field.ui_required
+                    ) {
+                        metadata[name] = listValue;
+                    }
+
+                    return;
+                }
+
+                if (
+                    field.field_type === 'bool'
+                    || field.group === 'document'
+                ) {
+                    // false is meaningful and must be retained.
+                    metadata[name] =
+                        value === true;
+
+                    return;
+                }
+
+                if (
+                    field.field_type === 'int'
+                    || field.field_type === 'float'
+                ) {
+                    if (value === '') {
+                        if (field.ui_required) {
+                            errors.push(
+                                label
+                                + ': ??? ????? ?????.'
+                            );
+                        }
+
+                        return;
+                    }
+
+                    var numberValue =
+                        Number(value);
+
+                    if (
+                        !Number.isFinite(
+                            numberValue
+                        )
+                    ) {
+                        errors.push(
+                            label
+                            + ': ??? ????? ??? ????.'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        field.field_type === 'int'
+                        && !Number.isInteger(
+                            numberValue
+                        )
+                    ) {
+                        errors.push(
+                            label
+                            + ': ??? ????? ??? ????.'
+                        );
+
+                        return;
+                    }
+
+                    // Numeric zero remains zero.
+                    metadata[name] = numberValue;
+                    return;
+                }
+
+                var textValue = String(
+                    value === null
+                    || value === undefined
+                        ? ''
+                        : value
+                ).trim();
+
+                if (
+                    field.ui_required
+                    && textValue === ''
+                ) {
+                    errors.push(
+                        label
+                        + ': ??? ????? ?????.'
+                    );
+
+                    return;
+                }
+
+                if (
+                    Array.isArray(
+                        field.valid_values
+                    )
+                    && field.valid_values.length
+                    && textValue !== ''
+                    && field.valid_values.indexOf(
+                        textValue
+                    ) === -1
+                ) {
+                    errors.push(
+                        label
+                        + ': ?????? ???????? '
+                        + '??? ??????.'
+                    );
+
+                    return;
+                }
+
+                if (
+                    textValue !== ''
+                    || field.ui_required
+                ) {
+                    metadata[name] = textValue;
+                }
+            });
+
+            window
+                .esCaptureDynamicRequirementValues();
+
+            return {
+                metadata: metadata,
+                errors: errors
+            };
+        };
+
+async function processAndGenerate() {
         const btn = document.getElementById('generateBtn');
         const description = input.value;
         const apiUrl = document.getElementById('api-url').value;
@@ -12535,6 +13090,60 @@
 
             // Asset-type specific fields (intangible, partial interest, construction, quarry)
             Object.assign(basePayload, collectAssetTypePayload(basePayload.property_type));
+
+            const dynamicRequirementResult =
+                window
+                    .esBuildDynamicRequirementMetadata
+                    ? window
+                        .esBuildDynamicRequirementMetadata(
+                            basePayload.metadata
+                            || {}
+                        )
+                    : {
+                        metadata: {},
+                        errors: []
+                    };
+
+            if (
+                dynamicRequirementResult.errors
+                && dynamicRequirementResult
+                    .errors.length > 0
+            ) {
+                alert(
+                    "???? ??????? ??????? ???????:"
+                    + "\n\n"
+                    + dynamicRequirementResult
+                        .errors.join("\n")
+                );
+
+                return;
+            }
+
+            const staticMetadata = {
+                asset_type:
+                    basePayload.property_type,
+                property_type:
+                    basePayload.property_type,
+                valuation_purpose:
+                    basePayload.valuation_purpose,
+                location:
+                    basePayload.location,
+                description:
+                    basePayload.description,
+                date:
+                    basePayload.date,
+                area:
+                    basePayload.area,
+                price_per_meter:
+                    basePayload.price_per_meter
+            };
+
+            // Static fields are merged last and win collisions.
+            basePayload.metadata = Object.assign(
+                {},
+                dynamicRequirementResult.metadata,
+                staticMetadata
+            );
 
             const response = await esFetch(apiUrl, {
                 method: 'POST',
@@ -18157,28 +18766,85 @@ function _showIndexToast(msg, type) {
     // Values are written to window.esRequirementDraft and NEVER submitted to API.
     function _attachDraftCollector() {
         window.esRequirementDraft = {};
-        var panel = document.getElementById('es-req-panel');
+
+        var panel =
+            document.getElementById(
+                'es-req-panel'
+            );
+
         if (!panel) return;
-        panel.querySelectorAll('[data-es-req-field]').forEach(function (el) {
-            el.addEventListener('change', function () {
-                var fn  = el.getAttribute('data-es-req-field');
-                if (el.type === 'checkbox') {
-                    if (!Array.isArray(window.esRequirementDraft[fn])) {
-                        window.esRequirementDraft[fn] = [];
-                    }
-                    var arr = window.esRequirementDraft[fn];
-                    var val = el.value || true;
-                    if (el.checked) {
-                        if (arr.indexOf(val) === -1) arr.push(val);
-                    } else {
-                        var idx = arr.indexOf(val);
-                        if (idx !== -1) arr.splice(idx, 1);
-                    }
-                } else {
-                    window.esRequirementDraft[fn] = el.value;
+
+        if (
+            typeof window
+                .esHydrateDynamicRequirementValues
+            === 'function'
+        ) {
+            window
+                .esHydrateDynamicRequirementValues();
+        }
+
+        function syncDraft() {
+            if (
+                typeof window
+                    .esCaptureDynamicRequirementValues
+                === 'function'
+            ) {
+                window
+                    .esCaptureDynamicRequirementValues();
+            }
+
+            var draft = {};
+
+            var fields = Array.isArray(
+                window.esActiveRequirementFields
+            )
+                ? window.esActiveRequirementFields
+                : [];
+
+            fields.forEach(function (field) {
+                if (
+                    !field
+                    || !field.name
+                    || field.role === 'engine_value'
+                    || field.role !== 'user_input'
+                ) {
+                    return;
+                }
+
+                if (
+                    Object.prototype
+                        .hasOwnProperty.call(
+                            window
+                                .esDynamicRequirementValues,
+                            field.name
+                        )
+                ) {
+                    draft[field.name] =
+                        window
+                            .esDynamicRequirementValues[
+                                field.name
+                            ];
                 }
             });
+
+            window.esRequirementDraft = draft;
+        }
+
+        panel.querySelectorAll(
+            '[data-es-req-field]'
+        ).forEach(function (element) {
+            element.addEventListener(
+                'input',
+                syncDraft
+            );
+
+            element.addEventListener(
+                'change',
+                syncDraft
+            );
         });
+
+        syncDraft();
     }
 
     // ── Phase 8N: Shared component fields for building-like assets ──────────
@@ -18445,6 +19111,96 @@ function _showIndexToast(msg, type) {
     // ── Render successful checklist response ──────────────────────────────────
     // Sections: A=required data, B=report docs, C=optional enhancing, D=methods
     function renderPanel(data) {
+        if (
+            typeof window
+                .esCaptureDynamicRequirementValues
+            === 'function'
+        ) {
+            window
+                .esCaptureDynamicRequirementValues();
+        }
+
+        var rawDynamicFields = (
+            data
+            && Array.isArray(
+                data.dynamic_fields
+            )
+        )
+            ? data.dynamic_fields
+            : [];
+
+        rawDynamicFields.forEach(
+            function (field) {
+                if (field && field.name) {
+                    window
+                        .esKnownDynamicRequirementNames[
+                            field.name
+                        ] = true;
+                }
+            }
+        );
+
+        window.esActiveRequirementFields =
+            rawDynamicFields.filter(
+                function (field) {
+                    return (
+                        field
+                        && field.name
+                        && field.role === 'user_input'
+                        && field.role !== 'engine_value'
+                        && !window
+                            .esExistingStaticFieldNames[
+                                field.name
+                            ]
+                    );
+                }
+            );
+
+        var previousValues =
+            window.esDynamicRequirementValues
+            || {};
+
+        var nextValues = {};
+
+        window.esActiveRequirementFields.forEach(
+            function (field) {
+                if (
+                    Object.prototype
+                        .hasOwnProperty.call(
+                            previousValues,
+                            field.name
+                        )
+                ) {
+                    nextValues[field.name] =
+                        previousValues[
+                            field.name
+                        ];
+                } else {
+                    nextValues[field.name] =
+                        window
+                            .esDefaultRequirementValue(
+                                field
+                            );
+                }
+            }
+        );
+
+        window.esDynamicRequirementValues =
+            nextValues;
+
+        window.esDynamicRequirementErrors = {};
+
+        data = Object.assign(
+            {},
+            data || {},
+            {
+                dynamic_fields:
+                    window
+                        .esActiveRequirementFields
+            }
+        );
+
+
         var panel   = document.getElementById('es-req-panel');
         var titleEl = document.getElementById('es-req-title');
         var softEl  = document.getElementById('es-req-soft-msg');
@@ -18496,6 +19252,16 @@ function _showIndexToast(msg, type) {
         panel.style.display = 'block';
         _attachDraftCollector();
         _renderSupplemental(data.asset_type);
+
+
+        if (
+            typeof window
+                .esHydrateDynamicRequirementValues
+            === 'function'
+        ) {
+            window
+                .esHydrateDynamicRequirementValues();
+        }
     }
 
     // ── Building-full: floor-use table (Phase 8J) ────────────────────────────
@@ -39053,6 +39819,20 @@ var _PROFILE_FORM_SCHEMA = {
     }
 
     function onSelectionChange() {
+        if (
+            typeof window
+                .esCaptureDynamicRequirementValues
+            === 'function'
+        ) {
+            window
+                .esCaptureDynamicRequirementValues();
+        }
+
+        // While loading the next schema, no stale schema
+        // is considered active or eligible for submission.
+        window.esActiveRequirementFields = [];
+
+
         var atEl  = document.getElementById('asset-type');
         var purEl = document.getElementById('val-purpose');
         if (!atEl || !purEl) return;

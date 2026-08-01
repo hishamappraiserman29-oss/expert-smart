@@ -31051,3 +31051,297 @@ def test_CS3170_8zzg_section_F_14_fields_render(page, live_server):
     count = page.locator("[data-es-supp-field^='ach_supp_f_']").count()
     assert count >= 14, f"8ZZG: expected >= 14 ach_supp_f_ fields, got {count}"
 
+
+# ?? Editable Dynamic Requirement Metadata Tests ???????????????????????????????????
+
+
+def test_EDF001_typed_dynamic_requirement_metadata_builder(
+    page,
+    live_server,
+):
+    """Dynamic requirement values are serialized with backend field types."""
+    page.goto(
+        live_server,
+        wait_until="domcontentloaded",
+    )
+
+    result = page.evaluate(
+        """
+        () => {
+            const panel = document.getElementById(
+                'es-req-panel'
+            );
+
+            if (!panel) {
+                throw new Error(
+                    '#es-req-panel was not found'
+                );
+            }
+
+            panel.innerHTML = `
+                <input
+                    data-es-req-field="property_title"
+                    value="  ??? ?????  "
+                >
+
+                <input
+                    type="number"
+                    data-es-req-field="floor_count"
+                    value="12"
+                >
+
+                <input
+                    type="number"
+                    data-es-req-field="occupancy_rate"
+                    value="0"
+                >
+
+                <input
+                    type="checkbox"
+                    data-es-req-field="has_active_lease"
+                >
+
+                <input
+                    type="checkbox"
+                    data-es-req-field="amenities"
+                    value="pool"
+                    checked
+                >
+
+                <input
+                    type="checkbox"
+                    data-es-req-field="amenities"
+                    value="gym"
+                    checked
+                >
+
+                <input
+                    type="checkbox"
+                    data-es-req-field="amenities"
+                    value="spa"
+                >
+
+                <input
+                    data-es-req-field="engine_market_value"
+                    value="999999"
+                >
+            `;
+
+            window.esActiveRequirementFields = [
+                {
+                    name: 'property_title',
+                    field_type: 'str',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '??? ??????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'floor_count',
+                    field_type: 'int',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '??? ???????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'occupancy_rate',
+                    field_type: 'float',
+                    role: 'user_input',
+                    ui_required: false,
+                    label_ar: '???? ???????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'has_active_lease',
+                    field_type: 'bool',
+                    role: 'user_input',
+                    ui_required: false,
+                    label_ar: '???? ??? ?????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'amenities',
+                    field_type: 'list',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '???????',
+                    valid_values: [
+                        'pool',
+                        'gym',
+                        'spa'
+                    ],
+                    group: 'data'
+                },
+                {
+                    name: 'engine_market_value',
+                    field_type: 'float',
+                    role: 'engine_value',
+                    ui_required: false,
+                    label_ar: '???? ??????',
+                    valid_values: [],
+                    group: 'data'
+                }
+            ];
+
+            window.esKnownDynamicRequirementNames = {
+                property_title: true,
+                floor_count: true,
+                occupancy_rate: true,
+                has_active_lease: true,
+                amenities: true,
+                engine_market_value: true,
+                stale_old_field: true
+            };
+
+            return window
+                .esBuildDynamicRequirementMetadata({
+                    stale_old_field: 'must disappear',
+                    unrelated_existing_metadata:
+                        'must remain'
+                });
+        }
+        """
+    )
+
+    assert result["errors"] == []
+
+    metadata = result["metadata"]
+
+    assert metadata["property_title"] == "??? ?????"
+    assert metadata["floor_count"] == 12
+    assert isinstance(metadata["floor_count"], int)
+
+    assert metadata["occupancy_rate"] == 0
+    assert isinstance(
+        metadata["occupancy_rate"],
+        (int, float),
+    )
+
+    assert metadata["has_active_lease"] is False
+    assert metadata["amenities"] == ["pool", "gym"]
+
+    assert (
+        metadata["unrelated_existing_metadata"]
+        == "must remain"
+    )
+
+    assert "engine_market_value" not in metadata
+    assert "stale_old_field" not in metadata
+
+
+def test_EDF002_ui_required_validation_blocks_invalid_values(
+    page,
+    live_server,
+):
+    """Only ui_required fields block submission and integers stay integral."""
+    page.goto(
+        live_server,
+        wait_until="domcontentloaded",
+    )
+
+    result = page.evaluate(
+        """
+        () => {
+            const panel = document.getElementById(
+                'es-req-panel'
+            );
+
+            if (!panel) {
+                throw new Error(
+                    '#es-req-panel was not found'
+                );
+            }
+
+            panel.innerHTML = `
+                <input
+                    data-es-req-field="required_name"
+                    value="   "
+                >
+
+                <input
+                    type="number"
+                    data-es-req-field="required_units"
+                    value="4.5"
+                >
+
+                <input
+                    type="checkbox"
+                    data-es-req-field="required_document"
+                >
+
+                <input
+                    data-es-req-field="optional_note"
+                    value=""
+                >
+            `;
+
+            window.esActiveRequirementFields = [
+                {
+                    name: 'required_name',
+                    field_type: 'str',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '??? ?????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'required_units',
+                    field_type: 'int',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '??? ???????',
+                    valid_values: [],
+                    group: 'data'
+                },
+                {
+                    name: 'required_document',
+                    field_type: 'bool',
+                    role: 'user_input',
+                    ui_required: true,
+                    label_ar: '??????? ????',
+                    valid_values: [],
+                    group: 'document'
+                },
+                {
+                    name: 'optional_note',
+                    field_type: 'str',
+                    role: 'user_input',
+                    ui_required: false,
+                    label_ar: '??????',
+                    valid_values: [],
+                    group: 'data'
+                }
+            ];
+
+            window.esKnownDynamicRequirementNames = {
+                required_name: true,
+                required_units: true,
+                required_document: true,
+                optional_note: true
+            };
+
+            return window
+                .esBuildDynamicRequirementMetadata({});
+        }
+        """
+    )
+
+    errors = result["errors"]
+    metadata = result["metadata"]
+
+    assert len(errors) == 2
+    assert any("??? ?????" in error for error in errors)
+    assert any("??? ???????" in error for error in errors)
+
+    # false remains a valid boolean even when ui_required=True.
+    assert metadata["required_document"] is False
+
+    # Empty optional strings are omitted.
+    assert "optional_note" not in metadata
+

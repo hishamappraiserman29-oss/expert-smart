@@ -7761,7 +7761,7 @@
         <button data-testid="pv-core-generate-admin-excel" id="pv-core-generate-admin-excel-btn"
                 onclick="pvGenerateCoreValuationAdminExcel()" type="button">إصدار شيت Excel للأدمن</button>
     </div>
-    </div><!-- /pro-val-chat-command-center ai-section -->
+    </div><!-- /pro-val-chat-command-center ai-section — extended to include unified report issuance -->
 
     <!-- ══════════════════════════════════════════════════════════════
          AREA 2 — Special Report Workflows (outside chat container)
@@ -7817,11 +7817,12 @@
         <div data-testid="pv-special-workflow-buttons"
              style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
 
-            <button data-testid="pv-open-report-review-table"
+            <button type="button"
+                    data-testid="pv-open-report-review-table"
                     id="pv-btn-report-review"
                     aria-expanded="false"
                     aria-controls="pv-req-panel-report-review"
-                    onclick="pvOpenSpecialReportRequirementsTable('report_review_output')"
+                    onclick="toggleAdvancedReportPanel('review')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(139,92,246,0.4);
                            background:rgba(139,92,246,0.08);color:#c4b5fd;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
@@ -7829,11 +7830,12 @@
                 &#128269; مراجعة التقرير المرفوع
             </button>
 
-            <button data-testid="pv-open-simulation-table"
+            <button type="button"
+                    data-testid="pv-open-simulation-table"
                     id="pv-btn-simulation"
                     aria-expanded="false"
                     aria-controls="pv-req-panel-simulation"
-                    onclick="pvOpenSpecialReportRequirementsTable('simulated_uploaded_report')"
+                    onclick="toggleAdvancedReportPanel('simulation')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(212,175,55,0.4);
                            background:rgba(212,175,55,0.07);color:#fde68a;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
@@ -7841,11 +7843,25 @@
                 &#128196; رفع تقرير للمراجعة والتحليل
             </button>
 
-            <button data-testid="pv-open-hbu-table"
+            <button type="button"
+                    data-testid="pv-open-update-table"
+                    id="pv-btn-update"
+                    aria-expanded="false"
+                    aria-controls="pv-req-panel-update"
+                    onclick="toggleAdvancedReportPanel('update')"
+                    style="padding:8px 14px;border-radius:8px;border:1px solid rgba(251,146,60,0.4);
+                           background:rgba(251,146,60,0.07);color:#fdba74;
+                           font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
+                           display:flex;align-items:center;gap:6px;">
+                &#128260; فتح متطلبات تحديث التقرير
+            </button>
+
+            <button type="button"
+                    data-testid="pv-open-hbu-table"
                     id="pv-btn-hbu"
                     aria-expanded="false"
                     aria-controls="pv-req-panel-hbu"
-                    onclick="pvOpenSpecialReportRequirementsTable('hbu_analysis_report')"
+                    onclick="toggleAdvancedReportPanel('hbu')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(34,197,94,0.4);
                            background:rgba(34,197,94,0.07);color:#86efac;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
@@ -7853,11 +7869,12 @@
                 &#127959; فتح متطلبات أعلى وأفضل استخدام
             </button>
 
-            <button data-testid="pv-open-standards-table"
+            <button type="button"
+                    data-testid="pv-open-standards-table"
                     id="pv-btn-standards"
                     aria-expanded="false"
                     aria-controls="pv-req-panel-standards"
-                    onclick="pvOpenSpecialReportRequirementsTable('standards_compliance_report')"
+                    onclick="toggleAdvancedReportPanel('compliance')"
                     style="padding:8px 14px;border-radius:8px;border:1px solid rgba(59,130,246,0.4);
                            background:rgba(59,130,246,0.07);color:#93c5fd;
                            font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;
@@ -7883,6 +7900,8 @@
         <!-- wizard_steps_count=5 | not_inside_chat_box=true | location=special_reports_section -->
         <div data-testid="pv-special-req-panel-report_review_output"
              id="pv-req-panel-report-review"
+             hidden
+             aria-hidden="true"
              style="display:none;margin-top:4px;padding:0;border-radius:8px;
                     border:1px solid rgba(139,92,246,0.3);background:rgba(139,92,246,0.04);overflow:hidden;">
 
@@ -8805,6 +8824,8 @@
         <!-- ── PANEL 2: Simulated Uploaded Report Requirements ──────────── -->
         <div data-testid="pv-special-req-panel-simulated_uploaded_report"
              id="pv-req-panel-simulation"
+             hidden
+             aria-hidden="true"
              style="display:none;margin-top:4px;padding:14px;border-radius:8px;
                     border:1px solid rgba(212,175,55,0.3);background:rgba(212,175,55,0.03);">
             <!-- ═══════════════════════════════════════════════════════════════
@@ -9213,6 +9234,106 @@
 
                 </div><!-- end sim-new-property-form -->
 
+                <!-- ══ MARKET RESEARCH PANEL (Phase 13-15 approval gate) ══════ -->
+                <div id="sim-market-research-panel"
+                     data-testid="sim-market-research-panel"
+                     style="margin-top:14px;border:1px solid rgba(96,165,250,0.3);
+                            border-radius:8px;background:rgba(96,165,250,0.04);overflow:hidden;">
+
+                    <!-- Header / toggle -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;
+                                padding:9px 12px;background:rgba(96,165,250,0.07);cursor:pointer;"
+                         onclick="simToggleMarketResearch()">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:0.82rem;font-weight:700;color:#93c5fd;">
+                                &#127760; المدخلات السوقية المقترحة
+                            </span>
+                            <span id="sim-mr-badge"
+                                  style="display:none;font-size:0.68rem;padding:2px 7px;
+                                         border-radius:10px;background:rgba(16,185,129,0.2);
+                                         color:#6ee7b7;font-weight:600;">
+                                مُعتمَد
+                            </span>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <button onclick="event.stopPropagation();simRunMarketResearch()"
+                                    id="sim-mr-search-btn"
+                                    data-testid="sim-market-research-search-btn"
+                                    style="padding:5px 14px;border-radius:6px;
+                                           border:1px solid rgba(96,165,250,0.5);
+                                           background:rgba(96,165,250,0.12);color:#93c5fd;
+                                           font-family:Tajawal,sans-serif;font-size:0.75rem;cursor:pointer;">
+                                &#128270; بحث المدخلات السوقية
+                            </button>
+                            <span id="sim-mr-chevron" style="color:#64748b;font-size:0.8rem;">&#9660;</span>
+                        </div>
+                    </div>
+
+                    <!-- Research disclosure -->
+                    <div style="padding:6px 12px;font-size:0.68rem;color:#64748b;
+                                background:rgba(245,158,11,0.04);border-bottom:1px solid rgba(96,165,250,0.1);">
+                        هذه المدخلات مستخرجة من مصادر سوقية متاحة عبر الإنترنت وتخضع للمراجعة البشرية.
+                        لا تمثل اعتمادًا رسميًا أو بديلًا عن التحقق المهني من السوق.
+                    </div>
+
+                    <!-- Collapsible body -->
+                    <div id="sim-mr-body" style="display:none;padding:12px;">
+
+                        <!-- Status row -->
+                        <div id="sim-mr-status"
+                             style="font-size:0.75rem;color:#94a3b8;padding:6px 0;min-height:18px;">
+                            اضغط "بحث المدخلات السوقية" لاستكشاف القيم السوقية المقترحة.
+                        </div>
+
+                        <!-- Provider unavailable notice -->
+                        <div id="sim-mr-provider-unavailable"
+                             style="display:none;padding:8px 10px;border-radius:6px;
+                                    background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);
+                                    font-size:0.75rem;color:#fcd34d;margin-top:6px;">
+                            &#9888; مزوّد البحث غير مُكوَّن. يمكنك إدخال القيم يدويًا أدناه أو المتابعة بدونها.
+                        </div>
+
+                        <!-- Proposed inputs container (rendered by JS) -->
+                        <div id="sim-mr-inputs-container" style="margin-top:10px;"></div>
+
+                        <!-- Manual override note (shown when overrides applied) -->
+                        <div id="sim-mr-override-note"
+                             style="display:none;margin-top:8px;padding:7px 10px;border-radius:6px;
+                                    background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);
+                                    font-size:0.72rem;color:#fcd34d;">
+                            تم تعديل بعض المدخلات يدويًا بواسطة المستخدم.
+                        </div>
+
+                        <!-- Approval gate -->
+                        <div id="sim-mr-approval-gate" style="display:none;margin-top:12px;">
+                            <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:6px;">
+                                راجع المدخلات المقترحة ثم اضغط تأكيد للمتابعة.
+                            </div>
+                            <button onclick="simApproveResearchInputs()"
+                                    data-testid="sim-market-research-approve-btn"
+                                    style="padding:7px 18px;border-radius:7px;
+                                           border:1px solid rgba(16,185,129,0.5);
+                                           background:rgba(16,185,129,0.12);color:#6ee7b7;
+                                           font-family:Tajawal,sans-serif;font-size:0.8rem;cursor:pointer;">
+                                &#10003; تأكيد المدخلات المستخدمة في المحاكاة
+                            </button>
+                            <div style="font-size:0.68rem;color:#64748b;margin-top:4px;">
+                                تأكيد المدخلات لا يعني اعتمادًا رسميًا أو تحققًا مهنيًا من السوق.
+                            </div>
+                        </div>
+
+                        <!-- Skip option -->
+                        <div style="margin-top:8px;font-size:0.7rem;color:#64748b;text-align:center;">
+                            <span style="cursor:pointer;text-decoration:underline;"
+                                  onclick="simSkipMarketResearch()">
+                                تخطي بحث السوق والمتابعة بالمدخلات اليدوية
+                            </span>
+                        </div>
+
+                    </div><!-- end sim-mr-body -->
+                </div><!-- end sim-market-research-panel -->
+                <!-- ══ END MARKET RESEARCH PANEL ══════════════════════════════ -->
+
                 <div style="display:flex;gap:8px;margin-top:12px;">
                     <button onclick="simGoToStep(2)"
                             style="padding:7px 14px;border-radius:7px;border:1px solid rgba(107,114,128,0.3);
@@ -9221,6 +9342,7 @@
                         &#8592; السابق
                     </button>
                     <button onclick="simGoToStep(4)"
+                            data-testid="sim-step3-next-btn"
                             style="padding:7px 20px;border-radius:7px;border:1px solid rgba(212,175,55,0.5);
                                    background:rgba(212,175,55,0.12);color:#fde68a;
                                    font-family:Tajawal,sans-serif;font-size:0.82rem;cursor:pointer;">
@@ -9312,27 +9434,37 @@
                     </div>
 
                     <!-- Download (shown after generation, not before) -->
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <div id="sim-file-controls" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <a data-testid="sim-download-generated-report" id="sim-download-link"
-                           href="/api/professional-valuation/download-simulation-report"
+                           href="#"
                            style="padding:8px 18px;border-radius:7px;border:1px solid rgba(212,175,55,0.5);
                                   background:rgba(212,175,55,0.12);color:#fde68a;text-decoration:none;
                                   font-family:Tajawal,sans-serif;font-size:0.82rem;">
                             &#11015; تنزيل PDF
                         </a>
                         <a id="sim-view-html" data-testid="sim-view-html"
-                           href="#" target="_blank"
+                           href="#" rel="noopener noreferrer"
                            style="padding:8px 18px;border-radius:7px;border:1px solid rgba(59,130,246,0.4);
                                   background:rgba(59,130,246,0.1);color:#93c5fd;text-decoration:none;
                                   font-family:Tajawal,sans-serif;font-size:0.82rem;">
                             &#128065; عرض HTML
                         </a>
                         <a id="sim-download-html" data-testid="sim-download-html"
-                           href="#" download="simulated_report.html"
+                           href="#"
                            style="padding:8px 18px;border-radius:7px;border:1px solid rgba(59,130,246,0.3);
                                   background:rgba(59,130,246,0.07);color:#93c5fd;text-decoration:none;
                                   font-family:Tajawal,sans-serif;font-size:0.82rem;">
                             &#11015; تنزيل HTML
+                        </a>
+                    </div>
+                    <!-- Admin Excel section (hidden for normal users) -->
+                    <div id="sim-admin-excel-section" style="display:none;margin-top:8px;">
+                        <a id="sim-download-excel" data-testid="sim-download-excel"
+                           href="#"
+                           style="padding:8px 18px;border-radius:7px;border:1px solid rgba(16,185,129,0.4);
+                                  background:rgba(16,185,129,0.1);color:#6ee7b7;text-decoration:none;
+                                  font-family:Tajawal,sans-serif;font-size:0.82rem;">
+                            &#11015; تنزيل Excel
                         </a>
                     </div>
 
@@ -9349,7 +9481,230 @@
                  style="font-size:0.7rem;color:#9ca3af;padding:4px 0;min-height:14px;"></div>
         </div>
 
-        <!-- ── PANEL 3: HBU Analysis — 6-Step Wizard ──────────────────────
+        <!-- ── PANEL 3: Report Update Workflow ────────────────────────────
+             update_workflow_enabled=true | not_inside_chat_box=true
+             location=special_reports_section
+             advisory_only=true | fake_signature_created=false
+             certification_ready=false | non_certified=true
+             original_report_preserved=true | new_version_created=true ── -->
+        <div data-testid="pv-special-req-panel-report_update"
+             id="pv-req-panel-update"
+             hidden
+             aria-hidden="true"
+             style="display:none;margin-top:4px;padding:14px;border-radius:8px;
+                    border:1px solid rgba(251,146,60,0.3);background:rgba(251,146,60,0.03);">
+
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;
+                        padding-bottom:8px;border-bottom:1px solid rgba(251,146,60,0.2);margin-bottom:8px;">
+                <div>
+                    <div style="font-weight:700;color:#fdba74;font-size:0.95rem;">
+                        &#128260; تحديث التقرير
+                    </div>
+                    <div style="font-size:0.7rem;color:#9ca3af;margin-top:3px;max-width:520px;">
+                        تحديث تقرير تقييم موجود بتاريخ تقييم جديد (اليوم أو مستقبلي) مع إعادة تقييم المنهجيات والمدخلات السوقية. يُنشئ إصداراً جديداً دون المساس بالتقرير الأصلي.
+                    </div>
+                </div>
+                <button onclick="pvCloseSpecialReportPanel('report_update')"
+                        type="button"
+                        style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.1rem;flex-shrink:0;">&#10005;</button>
+            </div>
+
+            <!-- Advisory warning -->
+            <div style="padding:6px 10px;background:rgba(251,146,60,0.08);border:1px solid rgba(251,146,60,0.25);
+                        border-radius:4px;font-size:0.7rem;color:#fdba74;margin-bottom:10px;">
+                &#9888; التقرير المحدَّث استرشادي — advisory_only=True | fake_signature_created=False
+                | certification_ready=False | original_report_preserved=True | new_version_created=True
+            </div>
+
+            <!-- Output note -->
+            <div data-testid="pv-update-format-note"
+                 style="padding:6px 10px;background:rgba(16,185,129,0.05);
+                        border:1px solid rgba(16,185,129,0.15);border-radius:4px;
+                        font-size:0.72rem;color:#6ee7b7;margin-bottom:12px;">
+                &#128202; المستخدم العادي: HTML و PDF فقط — المسؤول: HTML و PDF و Excel
+            </div>
+
+            <!-- ─── Update Form ─────────────────────────────────────────── -->
+            <form id="pv-update-form" onsubmit="return false;" autocomplete="off">
+
+                <!-- Field 1: Source report ID -->
+                <div style="margin-bottom:12px;">
+                    <label for="pv-update-source-id"
+                           style="display:block;font-size:0.78rem;color:#d1d5db;margin-bottom:4px;font-weight:600;">
+                        التقرير المطلوب تحديثه <span style="color:#f87171;">*</span>
+                    </label>
+                    <input type="text"
+                           id="pv-update-source-id"
+                           data-testid="pv-update-source-id"
+                           placeholder="أدخل معرّف التقرير (Report ID)"
+                           required
+                           style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid rgba(251,146,60,0.35);
+                                  background:rgba(30,30,40,0.7);color:#e5e7eb;font-size:0.8rem;
+                                  font-family:Tajawal,sans-serif;box-sizing:border-box;" />
+                    <div id="pv-update-source-err"
+                         style="font-size:0.68rem;color:#f87171;min-height:14px;padding-top:2px;"></div>
+                </div>
+
+                <!-- Field 2: Update reason -->
+                <div style="margin-bottom:12px;">
+                    <label for="pv-update-reason"
+                           style="display:block;font-size:0.78rem;color:#d1d5db;margin-bottom:4px;font-weight:600;">
+                        سبب تحديث التقرير <span style="color:#f87171;">*</span>
+                    </label>
+                    <textarea id="pv-update-reason"
+                              data-testid="pv-update-reason"
+                              rows="2"
+                              required
+                              placeholder="مثال: تحديث بيانات السوق، تغيير تاريخ التقييم، تحديث الافتراضات..."
+                              style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid rgba(251,146,60,0.35);
+                                     background:rgba(30,30,40,0.7);color:#e5e7eb;font-size:0.8rem;
+                                     font-family:Tajawal,sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
+                    <div id="pv-update-reason-err"
+                         style="font-size:0.68rem;color:#f87171;min-height:14px;padding-top:2px;"></div>
+                </div>
+
+                <!-- Field 3: Valuation date mode -->
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:0.78rem;color:#d1d5db;margin-bottom:6px;font-weight:600;">
+                        نوع تاريخ التقييم <span style="color:#f87171;">*</span>
+                    </div>
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                                      font-size:0.8rem;color:#e5e7eb;">
+                            <input type="radio" name="pv-update-date-mode" value="today"
+                                   id="pv-update-mode-today"
+                                   data-testid="pv-update-mode-today"
+                                   checked
+                                   onchange="pvUpdateDateModeChanged()"
+                                   style="accent-color:#fdba74;" />
+                            تاريخ تقييم اليوم
+                        </label>
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                                      font-size:0.8rem;color:#e5e7eb;">
+                            <input type="radio" name="pv-update-date-mode" value="future"
+                                   id="pv-update-mode-future"
+                                   data-testid="pv-update-mode-future"
+                                   onchange="pvUpdateDateModeChanged()"
+                                   style="accent-color:#fdba74;" />
+                            تاريخ تقييم مستقبلي
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Resolved today date (read-only, shown for "today" mode) -->
+                <div id="pv-update-today-display"
+                     data-testid="pv-update-today-display"
+                     style="margin-bottom:12px;padding:7px 10px;border-radius:6px;
+                            border:1px solid rgba(251,146,60,0.2);background:rgba(251,146,60,0.04);
+                            font-size:0.78rem;color:#9ca3af;">
+                    تاريخ التقييم المحدَّث: <span id="pv-update-today-value"
+                                                    data-testid="pv-update-today-value"
+                                                    style="color:#fdba74;font-weight:600;"></span>
+                    <span style="font-size:0.65rem;color:#6b7280;margin-right:6px;">(يُحدَّد من الخادم)</span>
+                </div>
+
+                <!-- Field 4: Future date picker (conditional) -->
+                <div id="pv-update-future-date-row"
+                     data-testid="pv-update-future-date-row"
+                     hidden
+                     style="margin-bottom:12px;">
+                    <label for="pv-update-future-date"
+                           style="display:block;font-size:0.78rem;color:#d1d5db;margin-bottom:4px;font-weight:600;">
+                        تاريخ التقييم المستقبلي <span style="color:#f87171;">*</span>
+                    </label>
+                    <input type="date"
+                           id="pv-update-future-date"
+                           data-testid="pv-update-future-date"
+                           disabled
+                           style="padding:7px 10px;border-radius:6px;border:1px solid rgba(251,146,60,0.35);
+                                  background:rgba(30,30,40,0.7);color:#e5e7eb;font-size:0.8rem;
+                                  font-family:Tajawal,sans-serif;" />
+                    <div id="pv-update-future-date-err"
+                         style="font-size:0.68rem;color:#f87171;min-height:14px;padding-top:2px;"></div>
+
+                    <!-- Prospective warning -->
+                    <div id="pv-update-prospective-warn"
+                         data-testid="pv-update-prospective-warn"
+                         style="margin-top:8px;padding:7px 10px;background:rgba(234,179,8,0.08);
+                                border:1px solid rgba(234,179,8,0.25);border-radius:4px;
+                                font-size:0.7rem;color:#fcd34d;line-height:1.5;">
+                        &#9888; كلما امتد تاريخ التقييم إلى فترة مستقبلية أبعد، زادت درجة عدم اليقين المرتبطة بافتراضات السوق والتوقعات الاقتصادية.
+                    </div>
+                </div>
+
+                <!-- Field 5: Update scope -->
+                <div style="margin-bottom:12px;">
+                    <label for="pv-update-scope"
+                           style="display:block;font-size:0.78rem;color:#d1d5db;margin-bottom:4px;font-weight:600;">
+                        نطاق التحديث <span style="color:#f87171;">*</span>
+                    </label>
+                    <select id="pv-update-scope"
+                            data-testid="pv-update-scope"
+                            required
+                            style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid rgba(251,146,60,0.35);
+                                   background:rgba(30,30,40,0.7);color:#e5e7eb;font-size:0.8rem;
+                                   font-family:Tajawal,sans-serif;box-sizing:border-box;">
+                        <option value="">— اختر نطاق التحديث —</option>
+                        <option value="full">تحديث كامل للتقرير</option>
+                        <option value="market_data">تحديث بيانات السوق</option>
+                        <option value="methods">تحديث أساليب التقييم</option>
+                        <option value="assumptions">تحديث الافتراضات</option>
+                        <option value="value_conclusion">تحديث قيمة التقييم والنتيجة</option>
+                    </select>
+                    <div id="pv-update-scope-err"
+                         style="font-size:0.68rem;color:#f87171;min-height:14px;padding-top:2px;"></div>
+                </div>
+
+                <!-- Field 6: Notes (optional) -->
+                <div style="margin-bottom:14px;">
+                    <label for="pv-update-notes"
+                           style="display:block;font-size:0.78rem;color:#d1d5db;margin-bottom:4px;">
+                        ملاحظات التحديث <span style="color:#6b7280;font-size:0.7rem;">(اختياري)</span>
+                    </label>
+                    <textarea id="pv-update-notes"
+                              data-testid="pv-update-notes"
+                              rows="2"
+                              placeholder="ملاحظات إضافية حول التحديث..."
+                              style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid rgba(107,114,128,0.3);
+                                     background:rgba(30,30,40,0.7);color:#e5e7eb;font-size:0.8rem;
+                                     font-family:Tajawal,sans-serif;resize:vertical;box-sizing:border-box;"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <button type="button"
+                        data-testid="pv-update-submit-btn"
+                        id="pv-update-submit-btn"
+                        onclick="pvGenerateReportUpdate()"
+                        style="width:100%;padding:10px;border-radius:8px;border:none;cursor:pointer;
+                               background:linear-gradient(135deg,rgba(251,146,60,0.7),rgba(234,88,12,0.8));
+                               color:#fff;font-family:Tajawal,sans-serif;font-size:0.88rem;font-weight:700;
+                               letter-spacing:0.3px;">
+                    &#128260; إنشاء التقرير المحدَّث
+                </button>
+
+            </form>
+
+            <!-- Status -->
+            <div data-testid="pv-update-status" id="pv-update-status"
+                 style="font-size:0.72rem;color:#9ca3af;padding:6px 0;min-height:16px;margin-top:6px;"></div>
+
+            <!-- Results -->
+            <div id="pv-update-results"
+                 data-testid="pv-update-results"
+                 style="display:none;margin-top:10px;padding:10px;border-radius:6px;
+                        border:1px solid rgba(251,146,60,0.2);background:rgba(251,146,60,0.04);">
+                <div style="font-size:0.75rem;color:#fdba74;font-weight:700;margin-bottom:8px;">
+                    &#10003; ملفات التقرير المحدَّث
+                </div>
+                <div id="pv-update-result-links"
+                     data-testid="pv-update-result-links"
+                     style="display:flex;flex-direction:column;gap:6px;"></div>
+            </div>
+
+        </div><!-- /pv-req-panel-update -->
+
+        <!-- ── PANEL 4: HBU Analysis — 6-Step Wizard ──────────────────────
              wizard_steps_count=6 | not_inside_chat_box=true
              location=special_reports_section
              hbu_workflow_enabled=true | aggregated_market_research_enabled=true
@@ -9362,6 +9717,8 @@
         <div data-testid="pv-special-req-panel-hbu_analysis_report"
              id="pv-req-panel-hbu"
              data-panel-title="متطلبات تحليل أعلى وأفضل استخدام"
+             hidden
+             aria-hidden="true"
              style="display:none;margin-top:4px;border-radius:8px;
                     border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.02);overflow:hidden;">
 
@@ -10212,10 +10569,12 @@
             </div>
         </div><!-- /pv-req-panel-hbu -->
 
-        <!-- ── PANEL 4: Standards Compliance Requirements ─────────────── -->
-        <!-- ── PANEL 4: Standards Compliance Wizard ──────────────── -->
+        <!-- ── PANEL 5: Standards Compliance Requirements ─────────────── -->
+        <!-- ── PANEL 5: Standards Compliance Wizard ──────────────── -->
         <div data-testid="pv-special-req-panel-standards_compliance_report"
              id="pv-req-panel-standards"
+             hidden
+             aria-hidden="true"
              style="display:none;margin-top:4px;border-radius:8px;
                     border:1px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.02);overflow:hidden;">
             <!-- Header -->
@@ -10558,6 +10917,14 @@
                                   color:#93c5fd;font-family:Tajawal,sans-serif;font-size:0.82rem;
                                   text-decoration:none;cursor:pointer;">
                             &#11015; تنزيل HTML
+                        </a>
+                        <a id="sc-download-excel-link" data-testid="sc-download-excel-link"
+                           href="#" download="standards_compliance_admin.xlsx"
+                           style="display:none;padding:8px 16px;border-radius:6px;
+                                  background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.3);
+                                  color:#86efac;font-family:Tajawal,sans-serif;font-size:0.82rem;
+                                  text-decoration:none;cursor:pointer;">
+                            &#11015; Excel (مسؤول)
                         </a>
                     </div>
                 </div>
@@ -13811,6 +14178,9 @@ function pvInitChatCommandCenter() {
     pvInitUnifiedProfessionalValuationPageContext();
     // Do not pre-select a tier — user must choose explicitly via the unified cards
     pvInitCoreReportIssuanceSection();
+    // Enforce initial accordion state: all advanced-report panels closed
+    window.activeAdvancedReportPanel = null;
+    if (typeof renderAdvancedReportPanels === 'function') renderAdvancedReportPanels();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -14428,10 +14798,15 @@ function pvChatQuickActionSpecialReports() {
 // ── End Chat Intent Guard ─────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Advanced Report Requirements — exclusive accordion
+// State values: null | "review" | "simulation" | "update" | "hbu" | "compliance"
+// ─────────────────────────────────────────────────────────────────────────────
 
+// Legacy maps — kept for pvCalculateSpecialReportCompletion compatibility
 var _PV_SPECIAL_PANEL_IDS = {
     report_review_output:         'pv-req-panel-report-review',
     simulated_uploaded_report:    'pv-req-panel-simulation',
+    report_update:                'pv-req-panel-update',
     hbu_analysis_report:          'pv-req-panel-hbu',
     standards_compliance_report:  'pv-req-panel-standards'
 };
@@ -14439,55 +14814,79 @@ var _PV_SPECIAL_PANEL_IDS = {
 var _PV_SPECIAL_BTN_IDS = {
     report_review_output:         'pv-btn-report-review',
     simulated_uploaded_report:    'pv-btn-simulation',
+    report_update:                'pv-btn-update',
     hbu_analysis_report:          'pv-btn-hbu',
     standards_compliance_report:  'pv-btn-standards'
 };
 
+// Accordion maps — simple keys used by toggleAdvancedReportPanel
+var _ADVANCED_PANEL_IDS = {
+    review:     'pv-req-panel-report-review',
+    simulation: 'pv-req-panel-simulation',
+    update:     'pv-req-panel-update',
+    hbu:        'pv-req-panel-hbu',
+    compliance: 'pv-req-panel-standards'
+};
+
+var _ADVANCED_BTN_IDS = {
+    review:     'pv-btn-report-review',
+    simulation: 'pv-btn-simulation',
+    update:     'pv-btn-update',
+    hbu:        'pv-btn-hbu',
+    compliance: 'pv-btn-standards'
+};
+
+// Single authoritative state — null = all closed
 window.activeAdvancedReportPanel = null;
 
-function pvOpenSpecialReportRequirementsTable(type) {
-    // Close all panels and reset all button ARIA states
-    Object.values(_PV_SPECIAL_PANEL_IDS).forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+function renderAdvancedReportPanels() {
+    Object.keys(_ADVANCED_PANEL_IDS).forEach(function(name) {
+        var panel = document.getElementById(_ADVANCED_PANEL_IDS[name]);
+        var btn   = document.getElementById(_ADVANCED_BTN_IDS[name]);
+        var isOpen = (window.activeAdvancedReportPanel === name);
+        if (panel) {
+            panel.hidden = !isOpen;
+            panel.setAttribute('aria-hidden', String(!isOpen));
+            panel.style.display = isOpen ? '' : 'none';
+        }
+        if (btn) {
+            btn.type = 'button';
+            btn.setAttribute('aria-expanded', String(isOpen));
+        }
     });
-    Object.values(_PV_SPECIAL_BTN_IDS).forEach(function(bid) {
-        var btn = document.getElementById(bid);
-        if (btn) btn.setAttribute('aria-expanded', 'false');
-    });
-    // Exclusive toggle: clicking the already-open panel closes it
-    if (window.activeAdvancedReportPanel === type) {
-        window.activeAdvancedReportPanel = null;
-        pvSyncSplitReportIssuanceContext();
-        return;
+}
+
+function toggleAdvancedReportPanel(name) {
+    window.activeAdvancedReportPanel =
+        (window.activeAdvancedReportPanel === name) ? null : name;
+    renderAdvancedReportPanels();
+    if (window.activeAdvancedReportPanel !== null) {
+        var openPanel = document.getElementById(_ADVANCED_PANEL_IDS[window.activeAdvancedReportPanel]);
+        if (openPanel) openPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    var panelId = _PV_SPECIAL_PANEL_IDS[type];
-    if (!panelId) return;
-    var panel = document.getElementById(panelId);
-    if (panel) {
-        panel.style.display = 'block';
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    window.activeAdvancedReportPanel = type;
-    // Mark active button as expanded
-    var activeBtn = document.getElementById(_PV_SPECIAL_BTN_IDS[type] || '');
-    if (activeBtn) activeBtn.setAttribute('aria-expanded', 'true');
-    // Sync legacy hidden select so backend action is set
-    var sel = document.getElementById('pv-chat-report-action');
-    if (sel) sel.value = type;
     pvSyncSplitReportIssuanceContext();
 }
 
-function pvCloseSpecialReportPanel(type) {
-    var panelId = _PV_SPECIAL_PANEL_IDS[type];
-    if (!panelId) return;
-    var panel = document.getElementById(panelId);
-    if (panel) panel.style.display = 'none';
-    if (window.activeAdvancedReportPanel === type) window.activeAdvancedReportPanel = null;
-    // Reset ARIA state on the button
-    var btn = document.getElementById(_PV_SPECIAL_BTN_IDS[type] || '');
-    if (btn) btn.setAttribute('aria-expanded', 'false');
-    pvSyncSplitReportIssuanceContext();
+// Translator for panel X-close buttons that still pass old key names
+var _OLD_TO_PANEL_NAME = {
+    report_review_output:        'review',
+    simulated_uploaded_report:   'simulation',
+    report_update:               'update',
+    hbu_analysis_report:         'hbu',
+    standards_compliance_report: 'compliance'
+};
+
+function pvOpenSpecialReportRequirementsTable(oldType) {
+    toggleAdvancedReportPanel(_OLD_TO_PANEL_NAME[oldType] || oldType);
+}
+
+function pvCloseSpecialReportPanel(oldType) {
+    var name = _OLD_TO_PANEL_NAME[oldType] || oldType;
+    if (window.activeAdvancedReportPanel === name) {
+        window.activeAdvancedReportPanel = null;
+        renderAdvancedReportPanels();
+        pvSyncSplitReportIssuanceContext();
+    }
 }
 
 /* ── Asset type validation helper ─────────────────────────────────────────── */
@@ -14511,6 +14910,8 @@ function pvToggleAdvancedRequirements() {
     toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
     if (label) label.textContent = expanded ? 'إخفاء المتطلبات' : 'عرض المتطلبات';
     if (arrow) arrow.style.transform = expanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    // Sync inner panel visibility with authoritative accordion state
+    renderAdvancedReportPanels();
 }
 
 /* ── Submission report type + attachment helpers ───────────────────────────── */
@@ -14659,7 +15060,7 @@ function pvRenderSplitReportIssuanceControls() {
 
 function pvRenderCoreValuationReportIssuance()             { pvRenderSplitReportIssuanceControls(); }
 function pvRenderSpecialReportWorkflowButtons()            { pvSyncSplitReportIssuanceContext(); }
-function pvRenderReportReviewRequirementsTable()           { pvOpenSpecialReportRequirementsTable('report_review_output'); }
+function pvRenderReportReviewRequirementsTable()           { pvSyncSplitReportIssuanceContext(); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Report Review 5-Step Wizard
@@ -15055,8 +15456,8 @@ function rrShowV2Results() {
     var dl2 = document.getElementById('rr-download-v2-pdf');
     if (dl2) dl2.href = '/api/professional-valuation/download-review-pdf-v2';
 }
-function pvRenderSimulatedUploadedReportRequirementsTable(){ pvOpenSpecialReportRequirementsTable('simulated_uploaded_report'); }
-function pvRenderHbuRequirementsTable()                    { pvOpenSpecialReportRequirementsTable('hbu_analysis_report'); }
+function pvRenderSimulatedUploadedReportRequirementsTable(){ pvSyncSplitReportIssuanceContext(); }
+function pvRenderHbuRequirementsTable()                    { pvSyncSplitReportIssuanceContext(); }
 
 /* ── HBU 6-Step Wizard JS ──────────────────────────────────────────────── */
 var _hbuStepLabels = ['',
@@ -15166,50 +15567,731 @@ function simGoToStep(n) {
 }
 
 function simGenerateReport() {
+    // Clear stale state before new request
+    var resultPanel = document.getElementById('sim-valuation-results-panel');
+    if (resultPanel) resultPanel.style.display = 'none';
+    var adminXlSec = document.getElementById('sim-admin-excel-section');
+    if (adminXlSec) adminXlSec.style.display = 'none';
+    ['sim-download-link','sim-view-html','sim-download-html','sim-download-excel'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) { el.onclick = null; el.href = '#'; }
+    });
+
     var btn = document.getElementById('sim-generate-btn');
-    if (btn) { btn.disabled = true; btn.textContent = '...جارٍ الإنشاء'; }
     var statusEl = document.getElementById('pv-sim-status');
-    if (statusEl) statusEl.textContent = 'جارٍ تشغيل محرك التقييم وإنشاء التقرير...';
-    fetch('/api/professional-valuation/generate-simulation-report', {
+    if (btn) { btn.disabled = true; btn.textContent = '...جارٍ الإنشاء'; }
+    if (statusEl) statusEl.textContent = 'جارٍ إعداد محاكاة التقرير وإنشاء الملفات...';
+
+    function gv(testid) {
+        var el = document.querySelector('[data-testid="' + testid + '"]');
+        return el ? el.value.trim() : '';
+    }
+    function gn(testid, def) {
+        var v = parseFloat(gv(testid));
+        return isNaN(v) ? (def || 0) : v;
+    }
+
+    var comps = [];
+    for (var ci = 1; ci <= 4; ci++) {
+        var cprice = gn('sim-comp' + ci + '-price');
+        var carea  = gn('sim-comp' + ci + '-area');
+        if (cprice > 0 && carea > 0) {
+            comps.push({
+                location:    gv('sim-comp' + ci + '-loc'),
+                area:        carea,
+                price:       cprice,
+                date:        gv('sim-comp' + ci + '-date'),
+                adjustment:  parseFloat(gv('sim-comp' + ci + '-adj')) || 1.0,
+                reliability: gv('sim-comp' + ci + '-rel')
+            });
+        }
+    }
+
+    var payload = {
+        advisory_only:       true,
+        not_real_training:   true,
+        fake_signature_created: false,
+        property_type:       gv('sim-property-type'),
+        property_location:   gv('sim-property-location'),
+        total_area_m2:       gn('sim-total-area'),
+        land_area_m2:        gn('sim-land-area'),
+        built_up_area_m2:    gn('sim-built-area'),
+        valuation_purpose:   gv('sim-valuation-purpose'),
+        basis_of_value:      gv('sim-basis-of-value'),
+        monthly_rent:        gn('sim-monthly-rent', 12000),
+        vacancy_rate:        gn('sim-vacancy-rate', 5),
+        collection_loss:     gn('sim-collection-loss', 2),
+        op_expenses:         gn('sim-op-expenses', 10),
+        maint_reserve:       gn('sim-maint-reserve', 5),
+        cap_rate:            gn('sim-cap-rate', 6.5),
+        land_price:          gn('sim-land-price', 2500),
+        construction_cost:   gn('sim-construction-cost', 2200),
+        phys_depr:           gn('sim-phys-depr', 15),
+        func_depr:           gn('sim-func-depr', 5),
+        ext_depr:            gn('sim-ext-depr', 3),
+        weight_sales:        gn('sim-weight-sales', 50),
+        weight_income:       gn('sim-weight-income', 35),
+        weight_cost:         gn('sim-weight-cost', 15),
+        comparables:         comps
+    };
+
+    window.esFetch('/api/professional-valuation/generate-simulation-report', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({template_simulation: true, advisory_only: true})
+        body: JSON.stringify(payload)
     })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-        simShowValuationResults(d);
-        if (statusEl) statusEl.textContent = d.status === 'ok' ? '✓ تم إنشاء التقرير' : (d.message || 'تم الإنشاء');
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
         if (btn) { btn.disabled = false; btn.textContent = '&#128196; إنشاء التقرير المحاكي'; }
+        if (!d.ok && d.status !== 'success') {
+            if (statusEl) statusEl.textContent = d.message || 'تعذر إنشاء ملفات محاكاة التقرير. يرجى مراجعة المدخلات والمحاولة مرة أخرى.';
+            return;
+        }
+        if (statusEl) statusEl.textContent = d.message || '✓ تم إنشاء ملفات المحاكاة';
+        simShowSimulationResults(d);
     })
-    .catch(function(){
-        simShowValuationResults({});
-        if (statusEl) statusEl.textContent = 'تم الإنشاء (وضع استرشادي)';
+    .catch(function(err) {
         if (btn) { btn.disabled = false; btn.textContent = '&#128196; إنشاء التقرير المحاكي'; }
+        if (statusEl) statusEl.textContent = 'تعذر إنشاء ملفات محاكاة التقرير. يرجى مراجعة المدخلات والمحاولة مرة أخرى.';
+        console.error('[SIM] Error:', err && err.message ? err.message : String(err));
     });
 }
 
-function simShowValuationResults(d) {
+function simShowSimulationResults(d) {
+    var outputs  = d.outputs || {};
+    var pdfOut   = outputs.pdf  || {};
+    var htmlOut  = outputs.html || {};
+    var excelOut = outputs.excel || null;
+
+    // Update BASE scenario value summary
+    var scenarios = d.scenarios || [];
+    var base = null;
+    for (var si = 0; si < scenarios.length; si++) {
+        if (scenarios[si].scenario_id === 'BASE') { base = scenarios[si]; break; }
+    }
+    var cur = d.currency_code || 'QAR';
+    var fmt = function(v) { return v ? (Number(v).toLocaleString('ar') + ' ' + cur) : '—'; };
+    if (base) {
+        var sv = document.getElementById('sim-sc-value');
+        var iv = document.getElementById('sim-income-val');
+        var cv = document.getElementById('sim-cost-val');
+        var fv = document.getElementById('sim-final-val');
+        if (sv) sv.textContent = fmt(base.sales_comparison_value);
+        if (iv) iv.textContent = fmt(base.income_value);
+        if (cv) cv.textContent = fmt(base.cost_value);
+        if (fv) fv.textContent = fmt(base.final_value);
+    }
+
+    var ps = document.getElementById('sim-preview-status');
+    if (ps) ps.textContent = d.message || '✓ ملفات المحاكاة جاهزة';
+
+    // Show results panel
     var panel = document.getElementById('sim-valuation-results-panel');
     if (panel) { panel.style.display = ''; panel.scrollIntoView({behavior:'smooth', block:'start'}); }
-    var fmt = function(v){ return v ? ('SAR ' + Number(v).toLocaleString('ar-SA')) : '—'; };
-    var sv = document.getElementById('sim-sc-value');
-    var iv = document.getElementById('sim-income-val');
-    var cv = document.getElementById('sim-cost-val');
-    var fv = document.getElementById('sim-final-val');
-    if (d && d.sales_comparison_value) {
-        if (sv) sv.textContent = fmt(d.sales_comparison_value);
-        if (iv) iv.textContent = fmt(d.income_value);
-        if (cv) cv.textContent = fmt(d.cost_value);
-        if (fv) fv.textContent = fmt(d.final_market_value);
+
+    // PDF download (uses esDownloadAuth — carries Bearer token)
+    var pdfLink = document.getElementById('sim-download-link');
+    if (pdfLink && pdfOut.download_url) {
+        var _pu = pdfOut.download_url, _pf = pdfOut.filename || 'simulation.pdf';
+        pdfLink.href = '#';
+        pdfLink.onclick = (function(u, f) {
+            return function(e) { e.preventDefault(); esDownloadAuth(u, f); return false; };
+        }(_pu, _pf));
     }
-    var ps = document.getElementById('sim-preview-status');
-    if (ps) ps.textContent = d.pdf_path ? 'التقرير PDF جاهز للتحميل' : 'التقرير مُولَّد (استرشادي)';
-    var simHtmlView = document.getElementById('sim-view-html');
-    if (simHtmlView && d.html_url) simHtmlView.href = d.html_url;
-    var simHtmlDl = document.getElementById('sim-download-html');
-    if (simHtmlDl && d.html_url) simHtmlDl.href = d.html_url;
+
+    // HTML view (uses esViewAuth — carries Bearer token)
+    var htmlView = document.getElementById('sim-view-html');
+    if (htmlView && htmlOut.view_url) {
+        var _hvu = htmlOut.view_url;
+        htmlView.href = '#';
+        htmlView.onclick = (function(u) {
+            return function(e) { e.preventDefault(); esViewAuth(u); return false; };
+        }(_hvu));
+    }
+
+    // HTML download (uses esDownloadAuth — carries Bearer token)
+    var htmlDl = document.getElementById('sim-download-html');
+    if (htmlDl && (htmlOut.download_url || htmlOut.view_url)) {
+        var _hdu = htmlOut.download_url || htmlOut.view_url;
+        var _hdf = htmlOut.filename || 'simulation.html';
+        htmlDl.href = '#';
+        htmlDl.onclick = (function(u, f) {
+            return function(e) { e.preventDefault(); esDownloadAuth(u, f); return false; };
+        }(_hdu, _hdf));
+    }
+
+    // Admin Excel (only shown when response contains excel key)
+    var adminXlSec = document.getElementById('sim-admin-excel-section');
+    if (excelOut && excelOut.download_url && adminXlSec) {
+        adminXlSec.style.display = '';
+        var xlLink = document.getElementById('sim-download-excel');
+        if (xlLink) {
+            var _xu = excelOut.download_url, _xf = excelOut.filename || 'simulation.xlsx';
+            xlLink.href = '#';
+            xlLink.onclick = (function(u, f) {
+                return function(e) { e.preventDefault(); esDownloadAuth(u, f); return false; };
+            }(_xu, _xf));
+        }
+    }
 }
-function pvRenderStandardsComplianceRequirementsTable()    { pvOpenSpecialReportRequirementsTable('standards_compliance_report'); }
+
+/* legacy alias — kept for any external callers */
+function simShowValuationResults(d) { simShowSimulationResults(d); }
+
+/* ── Render aliases (compat) ─────────────────────────────────────────────── */
+function pvRenderUpdateRequirementsTable()                { pvSyncSplitReportIssuanceContext(); }
+function pvRenderStandardsComplianceRequirementsTable()    { pvSyncSplitReportIssuanceContext(); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   REPORT UPDATE WORKFLOW — تحديث التقرير
+   advisory_only=True | fake_signature_created=False
+   certification_ready=False | original_report_preserved=True
+   new_version_created=True | non_certified=True
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Dedicated result state — never shares Simulation state */
+var _reportUpdateResult = {
+    status: 'idle',
+    requestId: null,
+    sourceReportId: null,
+    updatedReportId: null,
+    htmlFilename: null,
+    htmlViewUrl: null,
+    htmlDownloadUrl: null,
+    pdfFilename: null,
+    pdfDownloadUrl: null,
+    excelFilename: null,
+    excelDownloadUrl: null,
+    error: null
+};
+
+/* Initialise the today-date display when the panel is first shown */
+function pvUpdateInitTodayDisplay() {
+    var span = document.getElementById('pv-update-today-value');
+    if (!span) return;
+    // Show an approximate date; server resolves authoritatively on submit
+    var d = new Date();
+    var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    span.textContent = iso;
+}
+
+/* Set the minimum allowed future date (tomorrow) on the date picker */
+function pvUpdateSetFutureMin() {
+    var picker = document.getElementById('pv-update-future-date');
+    if (!picker) return;
+    var d = new Date();
+    d.setDate(d.getDate() + 1);
+    picker.min = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+/* Called when the user changes the date-mode radio */
+function pvUpdateDateModeChanged() {
+    var todayMode = document.getElementById('pv-update-mode-today');
+    var isFuture = todayMode ? !todayMode.checked : false;
+
+    var todayRow = document.getElementById('pv-update-today-display');
+    var futureRow = document.getElementById('pv-update-future-date-row');
+    var futurePicker = document.getElementById('pv-update-future-date');
+    var futureErr = document.getElementById('pv-update-future-date-err');
+
+    if (todayRow) todayRow.style.display = isFuture ? 'none' : '';
+    if (futureRow) {
+        futureRow.hidden = !isFuture;
+        futureRow.style.display = isFuture ? '' : 'none';
+    }
+    if (futurePicker) {
+        futurePicker.disabled = !isFuture;
+        if (!isFuture) {
+            futurePicker.value = '';
+            if (futureErr) futureErr.textContent = '';
+        } else {
+            pvUpdateSetFutureMin();
+        }
+    }
+    pvUpdateInitTodayDisplay();
+}
+
+/* Client-side validation before submit */
+function pvUpdateValidate() {
+    var ok = true;
+    function err(id, msg) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = msg;
+        ok = false;
+    }
+    function clr(id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '';
+    }
+
+    clr('pv-update-source-err');
+    clr('pv-update-reason-err');
+    clr('pv-update-scope-err');
+    clr('pv-update-future-date-err');
+
+    var sourceId = (document.getElementById('pv-update-source-id') || {}).value || '';
+    var reason   = (document.getElementById('pv-update-reason') || {}).value || '';
+    var scope    = (document.getElementById('pv-update-scope') || {}).value || '';
+    var modeToday = document.getElementById('pv-update-mode-today');
+    var isFuture = modeToday ? !modeToday.checked : false;
+    var futureDate = (document.getElementById('pv-update-future-date') || {}).value || '';
+
+    if (!sourceId.trim()) err('pv-update-source-err', 'يرجى اختيار التقرير المطلوب تحديثه.');
+    if (!reason.trim())   err('pv-update-reason-err', 'يرجى توضيح سبب تحديث التقرير.');
+    if (!scope)           err('pv-update-scope-err',  'يرجى تحديد نطاق التحديث.');
+    if (isFuture) {
+        if (!futureDate) {
+            err('pv-update-future-date-err', 'يرجى تحديد تاريخ التقييم المستقبلي.');
+        } else {
+            var today = new Date(); today.setHours(0,0,0,0);
+            var sel = new Date(futureDate + 'T00:00:00');
+            if (sel <= today)
+                err('pv-update-future-date-err', 'يجب أن يكون تاريخ التقييم المستقبلي بعد تاريخ اليوم.');
+        }
+    }
+    return ok;
+}
+
+/* Main generate function */
+function pvGenerateReportUpdate() {
+    if (!pvUpdateValidate()) return;
+
+    var btn = document.getElementById('pv-update-submit-btn');
+    var statusEl = document.getElementById('pv-update-status');
+    var resultsEl = document.getElementById('pv-update-results');
+    var linksEl = document.getElementById('pv-update-result-links');
+
+    if (btn) { btn.disabled = true; btn.textContent = '...جارٍ الإنشاء'; }
+    if (statusEl) statusEl.textContent = 'جارٍ إنشاء التقرير المحدَّث...';
+    if (resultsEl) resultsEl.style.display = 'none';
+
+    var modeToday = document.getElementById('pv-update-mode-today');
+    var isFuture = modeToday ? !modeToday.checked : false;
+
+    var payload = {
+        source_report_id: (document.getElementById('pv-update-source-id') || {}).value || '',
+        update_reason:    (document.getElementById('pv-update-reason') || {}).value || '',
+        update_mode:      isFuture ? 'future' : 'today',
+        future_date:      isFuture ? ((document.getElementById('pv-update-future-date') || {}).value || '') : '',
+        update_scope:     (document.getElementById('pv-update-scope') || {}).value || '',
+        notes:            (document.getElementById('pv-update-notes') || {}).value || ''
+    };
+
+    window.esFetch('/api/professional-valuation/generate-report-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(resp) { return resp.json().then(function(d) { return { ok: resp.ok, data: d }; }); })
+    .then(function(r) {
+        var d = r.data;
+        if (btn) { btn.disabled = false; btn.textContent = '&#128260; إنشاء التقرير المحدَّث'; }
+        if (!r.ok || !d.ok) {
+            var msg = (d && d.error) || 'تعذر إنشاء التقرير المحدَّث. يرجى مراجعة المدخلات والمحاولة مرة أخرى.';
+            if (statusEl) statusEl.textContent = msg;
+            _reportUpdateResult.status = 'error';
+            _reportUpdateResult.error = msg;
+            return;
+        }
+
+        _reportUpdateResult.status          = 'done';
+        _reportUpdateResult.requestId       = d.request_id || null;
+        _reportUpdateResult.sourceReportId  = d.source_report_id || null;
+        _reportUpdateResult.updatedReportId = d.updated_report_id || null;
+        _reportUpdateResult.htmlViewUrl     = d.html_view_url || null;
+        _reportUpdateResult.htmlDownloadUrl = d.html_download_url || null;
+        _reportUpdateResult.htmlFilename    = d.html_filename || 'report_update.html';
+        _reportUpdateResult.pdfDownloadUrl  = d.pdf_download_url || null;
+        _reportUpdateResult.pdfFilename     = d.pdf_filename || 'report_update.pdf';
+        _reportUpdateResult.excelDownloadUrl= d.excel_download_url || null;
+        _reportUpdateResult.excelFilename   = d.excel_filename || null;
+        _reportUpdateResult.error           = null;
+
+        if (statusEl) statusEl.textContent = d.message || '&#10003; تم إنشاء التقرير المحدَّث';
+
+        // Build result links
+        if (linksEl) {
+            linksEl.innerHTML = '';
+            function mkLink(label, action) {
+                var a = document.createElement('a');
+                a.href = '#';
+                a.style.cssText = 'font-size:0.78rem;color:#fdba74;text-decoration:none;display:inline-block;padding:4px 10px;border-radius:4px;border:1px solid rgba(251,146,60,0.3);';
+                a.textContent = label;
+                a.addEventListener('click', function(e) { e.preventDefault(); action(); });
+                return a;
+            }
+            var row1 = document.createElement('div');
+            row1.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;';
+
+            if (d.html_view_url)
+                row1.appendChild(mkLink('&#128065; عرض HTML', function(){ esViewAuth(d.html_view_url); }));
+            if (d.html_download_url)
+                row1.appendChild(mkLink('&#11015; تنزيل HTML', function(){ esDownloadAuth(d.html_download_url, _reportUpdateResult.htmlFilename); }));
+            if (d.pdf_download_url)
+                row1.appendChild(mkLink('&#11015; تنزيل PDF', function(){ esDownloadAuth(d.pdf_download_url, _reportUpdateResult.pdfFilename); }));
+            if (d.excel_download_url)
+                row1.appendChild(mkLink('&#11015; تنزيل Excel', function(){ esDownloadAuth(d.excel_download_url, _reportUpdateResult.excelFilename || 'report_update.xlsx'); }));
+
+            linksEl.appendChild(row1);
+
+            if (d.request_id) {
+                var meta = document.createElement('div');
+                meta.style.cssText = 'font-size:0.65rem;color:#6b7280;margin-top:6px;';
+                meta.textContent = 'رقم الطلب: ' + d.request_id + (d.updated_report_id ? ' | إصدار: ' + d.updated_report_id : '');
+                linksEl.appendChild(meta);
+            }
+        }
+        if (resultsEl) resultsEl.style.display = '';
+    })
+    .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.textContent = '&#128260; إنشاء التقرير المحدَّث'; }
+        if (statusEl) statusEl.textContent = 'تعذر إنشاء التقرير المحدَّث. يرجى مراجعة المدخلات والمحاولة مرة أخرى.';
+        _reportUpdateResult.status = 'error';
+        _reportUpdateResult.error = String(err);
+    });
+}
+
+/* Initialise Update panel state when the accordion block loads */
+(function pvInitUpdatePanel() {
+    pvUpdateInitTodayDisplay();
+    pvUpdateSetFutureMin();
+}());
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MARKET RESEARCH PANEL — Phases 6, 13-15 (internet-assisted inputs)
+   advisory_only=true | no_certification | server_side_research_only
+   ══════════════════════════════════════════════════════════════════════════ */
+
+// Persisted research package (pending approval → approved)
+var _simResearchPkg = null;
+var _simResearchApproved = false;
+var _simResearchOverrides = {};
+
+function simToggleMarketResearch() {
+    var body = document.getElementById('sim-mr-body');
+    var chev = document.getElementById('sim-mr-chevron');
+    if (!body) return;
+    var open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : '';
+    if (chev) chev.textContent = open ? '▼' : '▲';
+}
+
+function simRunMarketResearch() {
+    var statusEl  = document.getElementById('sim-mr-status');
+    var btn       = document.getElementById('sim-mr-search-btn');
+    var body      = document.getElementById('sim-mr-body');
+    var providerEl = document.getElementById('sim-mr-provider-unavailable');
+    var container = document.getElementById('sim-mr-inputs-container');
+    var gateEl    = document.getElementById('sim-mr-approval-gate');
+
+    if (body) body.style.display = '';
+    var chev = document.getElementById('sim-mr-chevron');
+    if (chev) chev.textContent = '▲';
+
+    if (statusEl) statusEl.textContent = '⏳ جارٍ البحث عن المدخلات السوقية...';
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ البحث...'; }
+    if (container) container.innerHTML = '';
+    if (gateEl)   gateEl.style.display = 'none';
+    _simResearchApproved = false;
+    _simResearchPkg = null;
+
+    function gv(testid) {
+        var el = document.querySelector('[data-testid="' + testid + '"]');
+        return el ? el.value.trim() : '';
+    }
+    function gn(testid, def) {
+        var v = parseFloat(gv(testid));
+        return isNaN(v) ? (def || 0) : v;
+    }
+
+    var payload = {
+        case_id:         'SIM-RESEARCH-' + Date.now(),
+        country_ar:      gv('sim-country-ar') || 'قطر',
+        city_ar:         gv('sim-city-ar') || gv('sim-property-location').split(' ')[0] || '',
+        district_ar:     gv('sim-district-ar') || '',
+        asset_type_ar:   gv('sim-property-type') || '',
+        currency_code:   gv('sim-currency-code') || 'QAR',
+        simulation_date: gv('sim-valuation-date') || new Date().toISOString().slice(0,10),
+        land_area_m2:    gn('sim-land-area', 0),
+        built_up_area_m2: gn('sim-built-area', 0),
+        advisory_only:   true
+    };
+
+    window.esFetch('/api/simulation/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (btn) { btn.disabled = false; btn.textContent = '🔍 بحث المدخلات السوقية'; }
+        _simResearchPkg = d;
+
+        // Provider unavailable notice
+        if (providerEl) {
+            providerEl.style.display = (!d.provider_configured) ? '' : 'none';
+        }
+
+        if (statusEl) statusEl.textContent = d.status_message_ar || '✓ اكتمل البحث';
+
+        simRenderProposedInputs(d);
+
+        if (container && container.children.length > 0) {
+            if (gateEl) gateEl.style.display = '';
+        }
+    })
+    .catch(function(err) {
+        if (btn) { btn.disabled = false; btn.textContent = '🔍 بحث المدخلات السوقية'; }
+        if (statusEl) statusEl.textContent = 'تعذر الاتصال بخدمة البحث السوقي. يمكنك المتابعة بالمدخلات اليدوية.';
+        console.error('[SIM-RESEARCH]', err && err.message ? err.message : String(err));
+        if (providerEl) providerEl.style.display = '';
+    });
+}
+
+function simRenderProposedInputs(pkg) {
+    var container = document.getElementById('sim-mr-inputs-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    var proposed = pkg.proposed_inputs || {};
+    var methods  = pkg.applicable_methods || [];
+    var sources  = pkg.sources || [];
+
+    if (Object.keys(proposed).length === 0) {
+        container.innerHTML = '<div style="color:#94a3b8;font-size:0.75rem;padding:8px 0;">'
+            + 'لم يتم العثور على مدخلات مقترحة. يمكنك الإدخال اليدوي أدناه.</div>';
+        return;
+    }
+
+    var methodLabels = {
+        'M-SALES':  'أسلوب المقارنة بالمبيعات',
+        'M-INCOME': 'أسلوب رسملة الدخل',
+        'M-DCF':    'التدفقات النقدية المخصومة',
+        'M-COST':   'أسلوب التكلفة'
+    };
+    var methodOrder = ['sales_comparison','income_capitalization','dcf','cost_approach'];
+    var methodIdMap = {
+        'sales_comparison': 'M-SALES',
+        'income_capitalization': 'M-INCOME',
+        'dcf': 'M-DCF',
+        'cost_approach': 'M-COST'
+    };
+
+    methodOrder.forEach(function(mk) {
+        if (!proposed[mk]) return;
+        var mid = methodIdMap[mk] || mk;
+        var method = methods.filter(function(m){ return m.method_id === mid; })[0] || {};
+        if (!method.applicable && method.applicable !== undefined) return;
+
+        var html = '<div style="margin-bottom:12px;padding:10px;background:rgba(15,23,42,0.6);'
+            + 'border:1px solid rgba(96,165,250,0.15);border-radius:8px;">';
+        html += '<div style="font-size:0.78rem;font-weight:700;color:#93c5fd;margin-bottom:8px;">'
+            + (methodLabels[mid] || mk) + '</div>';
+
+        var inputs = proposed[mk];
+        Object.keys(inputs).forEach(function(ik) {
+            var inp = inputs[ik];
+            if (typeof inp !== 'object' || inp === null) return;
+
+            var isOverridden = _simResearchOverrides[mk] && _simResearchOverrides[mk][ik] !== undefined;
+            var displayVal = isOverridden ? _simResearchOverrides[mk][ik] : inp.selected_value;
+            var missing = inp.missing;
+
+            var confColor = {'high':'#10b981','medium':'#f59e0b','low':'#ef4444','insufficient':'#94a3b8'}[inp.confidence] || '#94a3b8';
+            var rowId = 'sim-mr-inp-' + mk.replace(/_/g,'-') + '-' + ik.replace(/_/g,'-');
+
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;'
+                + 'margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.04);">';
+            html += '<div style="flex:1;">';
+            html += '<div style="font-size:0.73rem;color:#94a3b8;">' + (inp.label_ar || ik) + '</div>';
+            if (!missing) {
+                html += '<div style="font-size:0.8rem;color:#e2e8f0;font-weight:600;margin-top:2px;">'
+                    + (displayVal !== null && displayVal !== undefined ? Number(displayVal).toLocaleString('ar') : '—')
+                    + ' <span style="font-size:0.68rem;color:#64748b;">' + (inp.unit || '') + '</span></div>';
+                if (inp.low !== null && inp.low !== undefined && inp.high !== null) {
+                    html += '<div style="font-size:0.68rem;color:#64748b;">نطاق: '
+                        + Number(inp.low).toLocaleString('ar') + ' – '
+                        + Number(inp.high).toLocaleString('ar') + '</div>';
+                }
+            } else {
+                html += '<div style="font-size:0.75rem;color:#ef4444;margin-top:2px;">⚠ غير متاح — أدخل يدويًا</div>';
+            }
+            // Source count
+            var srcCount = (inp.source_ids || []).length;
+            if (srcCount > 0) {
+                html += '<div style="font-size:0.67rem;color:#64748b;margin-top:2px;">'
+                    + srcCount + ' مصدر · ثقة: <span style="color:' + confColor + ';">' + (inp.confidence||'') + '</span></div>';
+            }
+            html += '</div>';
+
+            // Edit control
+            html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-right:8px;">';
+            html += '<input type="number" id="' + rowId + '"'
+                + ' data-mr-method="' + mk + '" data-mr-input="' + ik + '"'
+                + ' placeholder="' + (missing ? 'أدخل يدويًا' : '') + '"'
+                + ' value="' + (isOverridden ? displayVal : '') + '"'
+                + ' step="any"'
+                + ' style="width:90px;padding:4px 6px;border-radius:5px;border:1px solid rgba(96,165,250,0.3);'
+                + 'background:rgba(15,23,42,0.8);color:#e2e8f0;font-size:0.75rem;text-align:left;"'
+                + ' oninput="simHandleInputOverride(this)">';
+            if (isOverridden) {
+                html += '<div style="font-size:0.67rem;color:#f59e0b;">معدَّل يدويًا</div>';
+            }
+            html += '</div>';
+            html += '</div>'; // end flex row
+        });
+
+        html += '</div>';
+        container.insertAdjacentHTML('beforeend', html);
+    });
+
+    // Source summary (non-admin: names + dates only)
+    if (sources.length > 0) {
+        var srcHtml = '<div style="margin-top:8px;padding:8px 10px;background:rgba(15,23,42,0.4);'
+            + 'border:1px solid rgba(96,165,250,0.1);border-radius:6px;">';
+        srcHtml += '<div style="font-size:0.73rem;font-weight:600;color:#94a3b8;margin-bottom:4px;">'
+            + 'المصادر (' + sources.length + ')</div>';
+        sources.forEach(function(s) {
+            var pubDate = s.publication_date || '';
+            var conf = s.confidence || '';
+            var evType = s.evidence_type === 'asking_price' ? ' · سعر عرض' : '';
+            srcHtml += '<div style="font-size:0.7rem;color:#64748b;padding:2px 0;">'
+                + '<span style="color:#cbd5e1;">' + (s.publisher || s.title || '') + '</span>'
+                + (pubDate ? ' · ' + pubDate : '') + evType + '</div>';
+        });
+        srcHtml += '</div>';
+        container.insertAdjacentHTML('beforeend', srcHtml);
+    }
+}
+
+function simHandleInputOverride(inputEl) {
+    var mk  = inputEl.getAttribute('data-mr-method');
+    var ik  = inputEl.getAttribute('data-mr-input');
+    var val = parseFloat(inputEl.value);
+    if (!mk || !ik) return;
+    if (!_simResearchOverrides[mk]) _simResearchOverrides[mk] = {};
+    if (!isNaN(val)) {
+        _simResearchOverrides[mk][ik] = val;
+    } else {
+        delete _simResearchOverrides[mk][ik];
+    }
+    var noteEl = document.getElementById('sim-mr-override-note');
+    var hasOverrides = Object.keys(_simResearchOverrides).some(function(m) {
+        return Object.keys(_simResearchOverrides[m]).length > 0;
+    });
+    if (noteEl) noteEl.style.display = hasOverrides ? '' : 'none';
+}
+
+function simApproveResearchInputs() {
+    if (!_simResearchPkg) return;
+
+    // Merge overrides into approved_inputs
+    var approvedInputs = {};
+    var proposed = _simResearchPkg.proposed_inputs || {};
+    Object.keys(proposed).forEach(function(mk) {
+        approvedInputs[mk] = {};
+        var inputs = proposed[mk];
+        Object.keys(inputs).forEach(function(ik) {
+            var inp = inputs[ik];
+            if (typeof inp !== 'object') return;
+            var override = (_simResearchOverrides[mk] || {})[ik];
+            var val = override !== undefined ? override : inp.selected_value;
+            if (val !== null && val !== undefined) {
+                approvedInputs[mk][ik] = val;
+            }
+        });
+    });
+
+    // Build manual_overrides list for any out-of-range entries
+    var manualOverrides = [];
+    Object.keys(_simResearchOverrides).forEach(function(mk) {
+        Object.keys(_simResearchOverrides[mk]).forEach(function(ik) {
+            var v = _simResearchOverrides[mk][ik];
+            var inp = (proposed[mk] || {})[ik] || {};
+            manualOverrides.push({
+                method_key: mk, input_key: ik, manual_value: v,
+                reason: 'manual entry by user',
+                original_proposed: inp.selected_value
+            });
+        });
+    });
+
+    // Call approve endpoint
+    var gateEl  = document.getElementById('sim-mr-approval-gate');
+    var statusEl = document.getElementById('sim-mr-status');
+    if (statusEl) statusEl.textContent = '⏳ جارٍ تأكيد المدخلات...';
+
+    window.esFetch('/api/simulation/research/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            research_package: _simResearchPkg,
+            approved_inputs:  approvedInputs,
+            manual_overrides: manualOverrides
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.error) {
+            if (statusEl) statusEl.textContent = '⚠ ' + (d.message_ar || d.error);
+            return;
+        }
+        _simResearchPkg = d;
+        _simResearchApproved = true;
+
+        if (statusEl) statusEl.textContent = '✓ تم تأكيد المدخلات — يمكنك الآن إنشاء التقرير';
+        if (gateEl) gateEl.style.display = 'none';
+
+        var badge = document.getElementById('sim-mr-badge');
+        if (badge) badge.style.display = '';
+
+        // Inject approved research_package into the existing payload when generating
+        // (handled inside simGenerateReport via _simResearchPkg)
+    })
+    .catch(function(err) {
+        if (statusEl) statusEl.textContent = 'خطأ في تأكيد المدخلات. يمكنك المتابعة بدون بحث سوقي.';
+        console.error('[SIM-APPROVE]', err && err.message ? err.message : String(err));
+    });
+}
+
+function simSkipMarketResearch() {
+    _simResearchPkg = null;
+    _simResearchApproved = false;
+    var body = document.getElementById('sim-mr-body');
+    if (body) body.style.display = 'none';
+    var chev = document.getElementById('sim-mr-chevron');
+    if (chev) chev.textContent = '▼';
+    var statusEl = document.getElementById('sim-mr-status');
+    if (statusEl) statusEl.textContent = 'تم تخطي البحث السوقي — يُستخدم الإدخال اليدوي.';
+}
+
+/* Patch simGenerateReport to include approved research_package when available */
+(function() {
+    var _origSimGenerate = simGenerateReport;
+    simGenerateReport = function() {
+        // Inject _simResearchPkg (approved) into the payload via a temporary global
+        window._simPendingResearchPkg = (_simResearchApproved && _simResearchPkg) ? _simResearchPkg : null;
+        _origSimGenerate.apply(this, arguments);
+    };
+})();
+
+/* Patch the fetch call to include research_package in the simulation payload */
+(function() {
+    var _origFetch = window.esFetch;
+    if (!_origFetch) return;
+    window.esFetch = function(url, opts) {
+        if (url === '/api/professional-valuation/generate-simulation-report'
+            && opts && opts.body && window._simPendingResearchPkg) {
+            try {
+                var body = JSON.parse(opts.body);
+                body.research_package = window._simPendingResearchPkg;
+                opts = Object.assign({}, opts, { body: JSON.stringify(body) });
+            } catch(e) { /* parse failed — send without research */ }
+        }
+        return _origFetch.call(this, url, opts);
+    };
+})();
+/* ══ END MARKET RESEARCH PANEL JS ═══════════════════════════════════════════ */
 
 /* ── HBU PDF+HTML bundle generation (Panel 3) ─────────────────────────── */
 function pvGenerateHbuPdfBundle() {
@@ -15250,15 +16332,18 @@ function pvGenerateStandardsComplianceBundle() {
     var genBtn   = document.querySelector('[data-testid="sc-generate-report"]');
     if (statusEl) statusEl.textContent = 'جارٍ توليد تقرير الامتثال (استرشادي)...';
     if (genBtn)   genBtn.disabled = true;
-    fetch('/api/professional-valuation/generate-standards-report', {
+    fetch('/api/standards-compliance/generate', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({advisory_only: true, not_real_training: true, standards_compliance: true,
-                              fake_certification_prevented: true, fake_signature_created: false})
+        headers: {'Content-Type': 'application/json'}
     })
     .then(function(r){ return r.json(); })
     .then(function(d){
-        if (statusEl) statusEl.textContent = d.message || 'تم توليد تقرير الامتثال (استرشادي).';
+        var scoreText = '';
+        if (d.score_pct !== undefined) {
+            var light = d.traffic_light === 'green' ? '🟢' : d.traffic_light === 'red' ? '🔴' : '🟡';
+            scoreText = ' | ' + light + ' ' + d.score_pct + '% — ' + (d.score_label || '');
+        }
+        if (statusEl) statusEl.textContent = (d.message || 'تم توليد تقرير الامتثال (استرشادي).') + scoreText;
         var dlSec = document.getElementById('sc-download-section');
         if (dlSec) dlSec.style.display = '';
         var pdfLink = document.getElementById('sc-download-pdf-link');
@@ -15267,6 +16352,15 @@ function pvGenerateStandardsComplianceBundle() {
         if (htmlView && d.html_url) htmlView.href = d.html_url;
         var htmlDl = document.getElementById('sc-download-html');
         if (htmlDl && d.html_url) htmlDl.href = d.html_url;
+        var xlLink = document.getElementById('sc-download-excel-link');
+        if (xlLink) {
+            if (d.excel_url) {
+                xlLink.href = d.excel_url;
+                xlLink.style.display = '';
+            } else {
+                xlLink.style.display = 'none';
+            }
+        }
         if (genBtn) genBtn.disabled = false;
     })
     .catch(function(){
@@ -15411,7 +16505,7 @@ function pvSyncSpecialReportRequirementsToUnifiedContext() {
     window._pvSpecialReportRequirementsContext = sr;
 }
 
-function pvRenderSpecialReportRequirementsShell(type)          { pvOpenSpecialReportRequirementsTable(type); }
+function pvRenderSpecialReportRequirementsShell(type)          { pvSyncSplitReportIssuanceContext(); }
 function pvRenderSpecialReportRequirementGroup(type, group)    { pvSyncSpecialReportRequirementsToUnifiedContext(); }
 function pvRenderSpecialReportRequirementField(type, field)    { pvSyncSpecialReportRequirementsToUnifiedContext(); }
 function pvRenderSpecialReportRepeatableGroup(type, group)     { pvSyncSpecialReportRequirementsToUnifiedContext(); }

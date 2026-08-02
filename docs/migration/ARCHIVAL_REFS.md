@@ -40,15 +40,15 @@
 | `refs/heads/backup-before-mass-template-profiles` | `83a15f06` | Already Represented — 0 unique commits vs main |
 | `refs/heads/backup/ci-before-fix-20260731` | `fc923d2b` | Already Represented — 0 unique commits vs main |
 | `refs/heads/backup/pr3-baseline-2026-08-01` | `1af87c65` | Already Represented — verified post-merge CI snapshot |
-| `refs/heads/feature/composite-frontend-wave5` | `effa7b9f` | Pending Analysis |
+| `refs/heads/feature/composite-frontend-wave5` | `effa7b9f` | Already Represented — ancestor of main, 0 unique commits (Wave 1A preflight 2026-08-02) |
 | `refs/heads/feature/mass-valuation-import-ui` | `6d2ee18e` | Merged — PR #6 squash-merged to main |
 | `refs/heads/feature/r3-1-database-security-review` | `73c507b8` | Partially Unique — database subsystem + closure report |
 | `refs/heads/feature/r3-1-security-only` | `9a1584a2` | Partially Unique — security subsystem + rename |
-| `refs/heads/feature/r3-2-government-banking-funds-review` | `ae4884dc` | Pending Analysis |
+| `refs/heads/feature/r3-2-government-banking-funds-review` | `ae4884dc` | Already Represented — ancestor of main, 0 unique commits (Wave 1A preflight 2026-08-02) |
 | `refs/heads/feature/reports-initiative` | `43dffaf9` | Unique Migration Candidate — Semantic Review Required |
 | `refs/heads/feature/requirements-checklist-ui` | `b34a5711` | Active development branch (legacy primary HEAD) |
 | `refs/heads/main` | `5e83c8d0` | Canonical — matches origin/main |
-| `refs/heads/site-practical-improvements` | `bc8e2f53` | Pending Analysis |
+| `refs/heads/site-practical-improvements` | `bc8e2f53` | Already Represented — ancestor of main, 0 unique commits (Wave 1A preflight 2026-08-02) |
 | `refs/heads/wip/r3-subsystems-checkpoint` | `99c78e63` | Scope-Frozen — 24 commits, 222 files, 53,856 insertions |
 | `refs/tags/v1.0.0` | `e84b5fe0` | Release tag — preserved |
 | `refs/tags/v1.0.1` | `c42bf49c` | Release tag — preserved |
@@ -75,14 +75,19 @@
 
 ---
 
-## Previously Unrecorded Branches (discovered in bundle)
+## Previously Unrecorded Branches (resolved 2026-08-02)
 
-Three branches were discovered in the bundle that were not in the prior branch analysis:
-- `feature/composite-frontend-wave5` — pending unique-commit analysis
-- `feature/r3-2-government-banking-funds-review` — pending unique-commit analysis
-- `site-practical-improvements` — pending unique-commit analysis
+Three branches were discovered in the bundle that were not in the prior branch analysis.
+All three confirmed ALREADY REPRESENTED during Wave 1A preflight (2026-08-02):
 
-These must be analyzed before any migration wave that could overlap with their content.
+| Branch | Classification | Method |
+|--------|---------------|--------|
+| `feature/composite-frontend-wave5` | ALREADY_REPRESENTED | `git merge-base --is-ancestor` exit 0; `git log main..<branch>` = 0 commits |
+| `feature/r3-2-government-banking-funds-review` | ALREADY_REPRESENTED | Same |
+| `site-practical-improvements` | ALREADY_REPRESENTED | Same |
+
+The only HBU-related commit across all three (`1f346cc`) is itself an ancestor of main.
+No Wave 1A content is blocked or affected by these branches.
 
 ---
 

@@ -586,3 +586,106 @@ Schema drift resolution and Frontend normalization (`"أرض"` → `"land"`) are
 - No route changes in `bridge_api.py`
 - No push
 - No direct commit to `integration/unification`
+
+---
+
+## Wave 3A — Standards Compliance Developer Tool Preservation
+
+**Branch:** `migration/wave3a-standards-compliance-devtool`
+**Decision:** `OPTION_D_DEVELOPER_TOOL_PRESERVATION`
+**Date:** 2026-08-02
+
+### Candidate Source Hashes (Legacy untracked working tree)
+
+| File | SHA-256 |
+|---|---|
+| `standards_compliance_visual_qa_generator.py` | `33532171EEA4A2D3CD41DA9B97161247D3032C419EE8819CF35577CC9A35F4C1` |
+| `pv_standards_compliance_endpoint.py` | `4EB14FA5BDA15D498C9D203B20208B641DCD40601964BB999F02F9A54668EAFB` |
+| `test_pv_standards_compliance_deep_visual_qa.py` | `B5D0DCD3A9B077D1B1BA98365F99FE351092A77C8CC4E68F370B2AE3C85188F1` |
+
+None of the three candidate files had git history in either repository.
+
+### Contract Matrix
+
+```
+CONTRACT_MATRIX_COMPLETED       = True
+ACTIVE_ENDPOINT_MIGRATION_APPROVED = False
+```
+
+All 18 contract dimensions were assessed (Sections A–W of the Wave 3 Preflight Report).
+Two structural blockers were identified for the endpoint:
+
+1. `CONCURRENCY_SAFETY = UNSAFE` — fixed module-level `CASE_ID` caused all concurrent
+   calls to write the same filenames.
+2. `TEST_QUALITY = NOT_CI_SAFE` — tests SC-D21 to SC-D40 required pre-generated
+   artifacts and could not be added to the CI baseline without restructuring.
+
+### Why the Endpoint Was Not Migrated
+
+`bridge_api.py` in Unified already contains the v1 registration stub at lines 12701–12705,
+currently silently skipped because the module is absent.  Simply copying
+`pv_standards_compliance_endpoint.py` would activate six HTTP routes on the next server
+restart without addressing the two blockers above.
+
+```
+ENDPOINT_STATUS    = BLOCKED_NOT_MIGRATED
+ROUTE_ACTIVATION   = NONE
+BRIDGE_API_CHANGE  = NONE
+```
+
+### What Was Migrated
+
+**Generator only** — `core_engine/standards_compliance_visual_qa_generator.py` — with
+the following hardening applied before copy:
+
+| Property | Before | After |
+|---|---|---|
+| Runtime status | BROWSER_DEPENDENT_FILE_WRITER (unclassified) | CLI_ONLY_UNWIRED |
+| Output path | Fixed module-level constant (project tree) | Caller-supplied `output_root` (required) |
+| Concurrency | UNSAFE — shared CASE_ID filenames | SAFE_WITH_UNIQUE_WORKDIR per call |
+| Run isolation | None | `<output_root>/<case_id>/<run_id>/` |
+| Overwrite policy | Always overwrites | `FileExistsError` by default; opt-in `overwrite=True` |
+| Path safety | None | `_sanitize_component()` regex + `relative_to()` containment check |
+| Valuer name | A realistic-looking personal valuer identity and professional credential (removed) | `"مثمن تجريبي — بيانات QA اصطناعية"` (explicitly synthetic) |
+| HTML escaping | None | `_esc()` applied at every string-insertion site |
+| Browser lifecycle | No try/finally | `finally: page.close()` + `finally: browser.close()` |
+| Partial cleanup | None | Failed run removes only its own created files |
+| CLI interface | Bare `__main__` block | `argparse` with `--output-dir` (required), `--case-id`, `--run-id`, `--overwrite` |
+| Governance flags | 6 flags | 8 flags — added `official_compliance_decision=False`, `synthetic_data=True` |
+| Module docstring | Functional description only | DEVELOPER_TOOL classification docstring |
+
+**New test file** — `core_engine/tests/test_standards_compliance_visual_qa_generator_unit.py`
+— 28 tests (VT01–VT28), all CI-safe (no real browser, no network, no persistent project
+artifacts).  No Legacy deep-visual test file copied.
+
+### Classification
+
+```
+GENERATOR_STATUS            = DEVELOPER_TOOL_PRESERVATION
+GENERATOR_RUNTIME_STATUS    = CLI_ONLY_UNWIRED
+ENDPOINT_STATUS             = BLOCKED_NOT_MIGRATED
+ROUTE_ACTIVATION            = NONE
+PLAYWRIGHT_INTEGRATION_TESTS = DEFERRED_OPTIONAL
+VISUAL_SCREENSHOT_APPROVAL  = MANUAL_DEVELOPER_WORKFLOW
+```
+
+### Endpoint Redesign Prerequisites (for Wave 3B, not yet approved)
+
+Before the endpoint can be migrated:
+
+1. Resolve `CONCURRENCY_SAFETY = UNSAFE` — parameterize output paths per request.
+2. Restructure SC-D21 to SC-D40 as optional integration tests with explicit fixture
+   generation; extract SC-D01 to SC-D20 as CI-safe unit tests.
+3. Add SC02–SC05 route contract tests.
+4. Sanitize `str(exc)` in 500 responses (error path exposes internal paths).
+5. Fix `score_pct` initial assignment bug (line 99 of the Legacy endpoint).
+
+### What Was NOT Done in Wave 3A
+
+- `pv_standards_compliance_endpoint.py` — not copied
+- `test_pv_standards_compliance_deep_visual_qa.py` — not copied (NOT_CI_SAFE)
+- `bridge_api.py` — unchanged
+- No HTTP routes activated
+- No real browser executed during implementation
+- No persistent artifacts generated under the repository tree
+- No push

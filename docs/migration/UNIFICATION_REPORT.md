@@ -411,9 +411,178 @@ build_hbu_inputs (Wave 1B) → run_hbu_analysis (engine) → enhance_hbu_financi
 | Secret guard (Wave 1C files) | **PASSED — 0 real secrets** |
 | `git diff --check` | **PASSED** |
 
-### Pending Decisions Before Wave 1D / Wave 2
+### Pending Decisions After Wave 1C
 
-1. **Wave 1C commit approval** — `A6_AWAITING_WAVE_1C_COMMIT_APPROVAL`.
-2. **Route wiring decisions** — `build_enhanced_sections` (Wave 1C), `enhance_hbu_financials` (Wave 1A), and `build_hbu_inputs` (Wave 1B) are all library-only. Separate decisions required before any is called from `bridge_api.py`.
-3. **`feature/reports-initiative` semantic review** — business policy review required before Wave 2.
-4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.
+1. **Route wiring decisions** — `build_enhanced_sections` (Wave 1C), `enhance_hbu_financials` (Wave 1A), and `build_hbu_inputs` (Wave 1B) are all library-only. Separate decisions required before any is called from `bridge_api.py`.
+2. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.
+
+---
+
+## Phase Wave 2 — Reports Initiative R2 Closure
+
+**Date:** 2026-08-02
+**Source commit:** `feature/reports-initiative` @ `43dffaf95e9c1048a31c965c13f3101c8e194827`
+**Branch:** `migration/wave2-reports-initiative-r2-verification`
+**Status:** COMPLETE — pending commit approval (`A6_AWAITING_WAVE_2_CLOSURE_COMMIT_APPROVAL`)
+**Migration type:** `VERIFICATION_AND_DOCUMENTATION_ONLY` — no Production code migration
+
+---
+
+### Wave 2 Summary
+
+Wave 2 is a closure wave. The business-policy preflight determined that all five files from commit `43dffaf` on `feature/reports-initiative` are already present in Unified — absorbed through a different migration path. No cherry-pick, no file copy, no Production code modification, and no fixture regeneration was performed.
+
+The wave's only deliverable is a new contract-test file (`test_request_validation_property_types.py`) that formally documents the approved policy decisions and provides regression gates.
+
+---
+
+### Source Branch and Commit
+
+| Field | Value |
+|-------|-------|
+| Branch | `feature/reports-initiative` |
+| Commit SHA | `43dffaf95e9c1048a31c965c13f3101c8e194827` |
+| Unique commits vs main | **1** — `43dffaf` only |
+| Merge base (vs Unified main) | `0bd505653c50a31a05ce7b521fcfe82ab4d1c105` |
+| Cherry-pick suppression | `43dffaf` did not appear in `--cherry-pick` output — its `request_validation.py` diff is patch-equivalent to a commit already in main's history |
+
+---
+
+### Pre-Absorption Matrix — All Five `43dffaf` Files
+
+| File | Legacy blob SHA | Unified blob SHA | Equivalent | Migration action |
+|------|----------------|-----------------|------------|-----------------|
+| `core_engine/api/request_validation.py` | `83f42fe8` | `83f42fe8` | **YES** | NO_ACTION_PREABSORBED |
+| `core_engine/tests/fixtures/baseline_land_detailed.json` | `7d768f34` | `7d768f34` | **YES** | NO_ACTION_PREABSORBED |
+| `core_engine/tests/fixtures/baseline_land_legacy.json` | `4ac1686f` | `4ac1686f` | **YES** | NO_ACTION_PREABSORBED |
+| `core_engine/tests/fixtures/report_land.json` | `618a38a8` | `618a38a8` | **YES** | NO_ACTION_PREABSORBED |
+| `core_engine/tests/test_report_baseline.py` | `fe202646` | `5756220a` | **NO** | PREABSORBED_WITH_IMPROVEMENT |
+
+`test_report_baseline.py` blob differs because Unified added +4 lines: a `try/finally` CWD-restore governance fix (`_ORIG_CWD = os.getcwd()` wrapper). BL08 and BL09 (the `43dffaf` additions) are fully present in the Unified version.
+
+---
+
+### Policy Decisions
+
+| Policy | Decision | Evidence |
+|--------|----------|----------|
+| `INDUSTRIAL_POLICY` | **KEEP** | Phase 9.1 added `industrial` to `SUPPORTED_ASSET_TYPES` with 4 purposes, `_INDUSTRIAL` FieldSpec, active CI tests REQ19/REQ21, frontend tax-tab option, HBU scenarios, bridge_api branching |
+| `LAND_RUNTIME_READINESS` | **READY** | `land` in `SUPPORTED_ASSET_TYPES`; `_LAND` FieldSpec; REQ07/REQ14 CI gates; `adapters/land.py`; bridge_api routes; report templates; i18n; mass valuation contracts; professional valuation |
+| `43dffaf` industrial retirement | **NOT APPLIED** | Retirement was the original commit's intent but is superseded by Phase 9.1 expansion. Applying it would break REQ19, REQ21, frontend tax tab, HBU scenarios |
+| `SCHEMA_DRIFT_PRESENT` | **YES** | 7 separate property-type lists across the codebase (see below); deferred to independent initiative |
+| `FRONTEND_BACKEND_SCHEMA_MATCH` | **PARTIAL_MATCH** | Simple valuation tab submits Arabic string values; tax tab and professional tab submit English codes / subtypes |
+| `WAVE_2_PRODUCTION_CODE_MIGRATION_REQUIRED` | **False** | All code changes already present in Unified |
+| `MIGRATION_TECHNIQUE` | **VERIFICATION_AND_DOCUMENTATION_ONLY** | No cherry-pick; no copy; no modification to any Production file |
+
+---
+
+### Current `SUPPORTED_ASSET_TYPES` Registry
+
+```python
+SUPPORTED_ASSET_TYPES: frozenset[str] = frozenset({
+    "residential",
+    "commercial",
+    "land",
+    "industrial",   # Phase 9.1 — KEEP
+    "hotel",        # Phase 9.1
+})
+```
+
+Search schema `allowed_values` at runtime: `['commercial', 'hotel', 'industrial', 'land', 'residential']`
+
+The registry has **5 members**, not 3 as `43dffaf` originally targeted.
+
+---
+
+### Fixture Inventory and Privacy Classification
+
+| Fixture | SHA-256 | Classification |
+|---------|---------|---------------|
+| `report_land.json` | `EF2E7B7F…` | `SYNTHETIC_SAFE_FIXTURE` — Test Client / Test Appraiser / Cairo New Cairo (generic area) / frozen date 2026-01-01 / no real names, IDs, coordinates, or credentials |
+| `baseline_land_legacy.json` | `B986E51A…` | `SYNTHETIC_SAFE_FIXTURE` — Excel golden snapshot; cost=0 (correct for vacant land); all values trace to explicit input |
+| `baseline_land_detailed.json` | `AD3DA796…` | `SYNTHETIC_SAFE_FIXTURE` — same as above, detailed report style |
+
+**No fabricated values in fixtures.** Cost weight is 0 (no cost approach for land). Income and comparable weights are explicitly provided. `hbu: "residential"` is a planning input, not an appraiser conclusion. No building fields appear for vacant land.
+
+---
+
+### Schema Drift — Seven Sources of Truth
+
+| Source | Members | Notes |
+|--------|---------|-------|
+| `adapters/valuation_requirements.py` SUPPORTED_ASSET_TYPES | 5 (residential, commercial, land, industrial, hotel) | Authoritative registry |
+| `api/request_validation.py` search schema | Delegates to above (sorted) | DRY — no drift here |
+| `mass_valuation/contract/schema_validator.py` | residential, commercial, industrial, land, mixed_use, villa, apartment, ... | Additional sub-types; no hotel |
+| `mass_valuation/contract/data_models.schema.json` | Same as above | No hotel |
+| `security/input_validator.py` | residential, commercial, industrial, land, mixed_use, ... | No hotel |
+| `adapters/commercial.py` | office, retail, mixed_use, industrial, warehouse | No land; sub-type list |
+| `hbu_scenarios.py` SCENARIO_TYPES | residential, commercial, industrial, hotel, mixed_use | No land |
+
+Schema drift resolution and Frontend normalization (`"أرض"` → `"land"`) are deferred to an independent initiative — out of scope for Wave 2.
+
+---
+
+### Baseline Tests — All Green
+
+| Suite | Result |
+|-------|--------|
+| BL01–BL09 (report baseline) | **9/9 PASSED** |
+| PT01–PT09 (new contract tests, 10 runs) | **10/10 PASSED** |
+| Wave 1A regression (FD01–FD12) | **12/12 PASSED** |
+| Wave 1B regression (HB01–HB19) | **19/19 PASSED** |
+| Wave 1C regression (RS01–RS28+, 55 tests) | **55/55 PASSED** |
+| CI requirements regression | **275/275 PASSED** |
+
+---
+
+### Property-Type Contract Test Details (PT01–PT09)
+
+| Test | Assertion | Result |
+|------|-----------|--------|
+| PT01 — Registry delegation | `allowed_values == sorted(SUPPORTED_ASSET_TYPES)` — no hardcoded list | PASSED |
+| PT02 — land accepted | `validate_request("search", {"property_type": "land"})` → `(True, [])` | PASSED |
+| PT03 — industrial accepted | `validate_request("search", {"property_type": "industrial"})` → `(True, [])` | PASSED |
+| PT04 — hotel accepted | `validate_request("search", {"property_type": "hotel"})` → `(True, [])` | PASSED |
+| PT05a — residential accepted | `validate_request("search", {"property_type": "residential"})` → `(True, [])` | PASSED |
+| PT05b — commercial accepted | `validate_request("search", {"property_type": "commercial"})` → `(True, [])` | PASSED |
+| PT06 — unknown rejected | `"unknown_asset"` → error contains "must be one of" | PASSED |
+| PT07 — missing rejected | empty payload → "Missing required field: property_type" | PASSED |
+| PT08 — case sensitivity | `"Land"` rejected — no normalization; contract documented | PASSED |
+| PT09 — no-industrial-retirement guard | `"industrial" in SUPPORTED_ASSET_TYPES` AND in search schema | PASSED |
+
+---
+
+### Golden Fixture Integrity After Tests
+
+| Fixture | SHA-256 before | SHA-256 after | Unchanged |
+|---------|---------------|--------------|-----------|
+| `report_land.json` | `EF2E7B7F…` | `EF2E7B7F…` | **YES** |
+| `baseline_land_legacy.json` | `B986E51A…` | `B986E51A…` | **YES** |
+| `baseline_land_detailed.json` | `AD3DA796…` | `AD3DA796…` | **YES** |
+
+`FIXTURE_HASHES_UNCHANGED = True`. `UPDATE_SNAPSHOTS` env var was absent throughout.
+
+---
+
+### Deferred Items
+
+1. **Schema drift** — 7 separate property-type lists with differing membership require a dedicated unification initiative (not Wave 2).
+2. **Frontend normalization** — simple-valuation tab submits Arabic string values (`"أرض"`) as form values; these are not validated against the search schema (different endpoint). Resolving the `PARTIAL_MATCH` is deferred.
+3. **Route wiring** — `build_enhanced_sections` (Wave 1C), `enhance_hbu_financials` (Wave 1A), `build_hbu_inputs` (Wave 1B) remain library-only. Separate decisions required.
+4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push.
+5. **Stash analysis** (`PENDING_WAVE_5_GATE`) — must not be applied until gate opens.
+
+---
+
+### What Was NOT Done in This Wave
+
+- No cherry-pick of `43dffaf`
+- No file copy from Legacy
+- No modification to `request_validation.py`
+- No modification to `adapters/valuation_requirements.py`
+- No fixture regeneration (`UPDATE_SNAPSHOTS` not set)
+- No schema changes to mass_valuation contracts
+- No frontend changes
+- No route changes in `bridge_api.py`
+- No push
+- No direct commit to `integration/unification`

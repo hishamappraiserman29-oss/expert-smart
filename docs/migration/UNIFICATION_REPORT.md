@@ -309,3 +309,111 @@ The default `float(case.get("base_market_ppm", 0) or 0)` is retained as a struct
 2. **Route wiring decisions** — both `enhance_hbu_financials` (Wave 1A) and `build_hbu_inputs` (Wave 1B) are library-only. Separate decisions required before either is called from `bridge_api.py`.
 3. **`feature/reports-initiative` semantic review** — business policy review required before Wave 2.
 4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.
+
+---
+
+## Phase Wave 1C — HBU Section Renderer
+
+**Date:** 2026-08-02
+**Branch:** `migration/wave1c-hbu-report-sections` (branched from `integration/unification` HEAD `4c45894d`)
+**Status:** COMPLETE — pending commit approval (`A6_AWAITING_WAVE_1C_COMMIT_APPROVAL`)
+
+### Classification
+
+| Field | Value |
+|-------|-------|
+| Option | `OPTION_C — LIBRARY_PRESERVATION_ONLY` |
+| Code quality | `PRODUCTION_HARDENED` |
+| Runtime status | `INACTIVE_LIBRARY` |
+| Wiring status | `LIBRARY_ONLY_UNWIRED` |
+| Canonical renderer | `core_engine/reports/hbu_enhanced_report.py` |
+| Source of truth changed | `False` |
+
+### Files Migrated
+
+| File | source_sha256 | destination_sha256 | Notes |
+|------|--------------|-------------------|-------|
+| `core_engine/hbu_report_sections.py` | `74AFFA22F3190A6F4EE51A087D0E7303826CBB59DCBD72FD5230B4B5FD9892E4` | `C05ACA9411807841E5D941492C15652B33A0FF5B8A052EE769BD02FF48BB22E5` | Governance fixes applied + scenario RLV label correction (see below) |
+| `core_engine/tests/test_hbu_report_sections.py` | N/A (new file) | `4F4919AA3E153C340015E2864AAC9AD7296C43CA08ADF3D60C30A4073C5FC83C` | New test suite — 55 tests RS01–RS28+ (5 new RLV-label policy tests added) |
+
+Source hash matches copy-integrity check (COPY_INTEGRITY_PASS). Destination hash differs due to approved focused fixes.
+
+### Governance Fixes Applied
+
+**Fix 1 — HTML injection guard (`_esc()` centralized helper)**
+The original module contained ~32 sites where external data was interpolated into HTML f-strings without escaping — XSS risk across all section functions.
+The fix adds `import html as _html` and `_esc(value)` using `html.escape("" if value is None else str(value), quote=True)`. All external data (site fields, planning fields, scenario values, synth_label, governance text, labels) passes through `_esc()` before HTML interpolation. `section_html` is a trusted callback and is not escaped. Formatter callbacks (`fmt_currency`, `pct`) are contractually plain-text-only — they are also wrapped in `_esc()` at all call sites. Final count: `UNSAFE_HTML_INTERPOLATIONS_AFTER_FIX = 0`.
+
+**Fix 2 — Missing-value policy (physical dimensions)**
+Physical dimensions (land_area, frontage, depth, road_width) originally treated any falsy value (including `0`) as unavailable and silently fabricated "محدود" for missing road_width.
+The fix: None or `<= 0` → "غير متاح" for physical dimensions. No fabricated "محدود". Road_width missing → "غير متاح".
+
+**Fix 3 — Missing-value policy (financial fields)**
+Financial values (NPV, IRR, RLV, profit, cashflows) originally mixed `None` → "غير متاح" with `0` treated as falsy and silently shown as unavailable.
+The fix: uses `isinstance(v, (int, float))` to distinguish numeric zero from None. `None` → "غير متاح"; `0` is a valid financial value and renders as zero.
+
+**Fix 4 — Empty sensitivity grid → text message**
+Empty `sensitivity_grid` originally rendered as `<table></table>` — invalid markup and confusing UI.
+The fix replaces it with an Arabic paragraph: "بيانات الحساسية غير متاحة — يتطلّب معدل خصم وحساسية من تحليل العمق المالي (Wave 1A)".
+
+**Fix 5 — Empty discount table → text message**
+Same pattern — empty discount rows rendered as bare `<table>`. Replaced with text message.
+
+**Fix 6 — Supply/demand fabrication removed**
+Original code emitted unconditional positive market assertions ("الطلب في تنامٍ مستمر...") regardless of evidence.
+The fix conditions assertions on `has_approved` / `has_draft` / no evidence. Three distinct outcome paths: approved evidence, draft evidence, no evidence available. No unconditional claims.
+
+**Fix 7 — `fmt_sar` renamed `fmt_currency`**
+Function renamed from `fmt_sar` to `fmt_currency` — no backward-compatibility alias needed (zero callers in Unified).
+
+**Fix 8 — RTL / accessibility**
+Added `dir="rtl"` on all content containers, `<bdi dir="ltr">` on numeric values, `scope="col"` on all `<th>` elements, `overflow-x:auto` wrappers on all tables, feasibility text labels alongside color indicators.
+
+**Fix 9 — RLV labels carry NPV identity method ID (Wave 1A)**
+Both Section C per-scenario RLV and Section D optimal RLV labels now carry `"هوية NPV (Wave 1A)"` method identifier, consistent with `hbu_financial_depth.enhance_hbu_financials` which computes `RLV = NPV + land_cost`. The GDV/TDC/developer-profit formula belongs exclusively to the canonical `hbu_enhanced_report.py`.
+
+**Fix 10 — Governance constants and module docstring**
+Added `_advisory_only = True`, `_certification_ready = False`, `_ADVISORY_DISCLAIMER` constant, and comprehensive module docstring classifying the file as `INACTIVE_LIBRARY / LIBRARY_ONLY_UNWIRED`.
+
+### RLV Source Matrix
+
+| Location | Source key | Verified producer | Label policy |
+|----------|-----------|-------------------|--------------|
+| Section C | `scenarios_evaluated[*].residual_land_value` | Not produced by the canonical engine; enrichment source unverified unless explicit metadata present | Neutral ("المنهج غير موثق") when value present but no `rlv_method_id`; NPV-identity label only when `sc["rlv_method_id"] == "NPV_IDENTITY_RLV"`; unavailable message when value absent |
+| Section D | `financial_depth.residual_land_value` | `hbu_financial_depth.enhance_hbu_financials` (Wave 1A), formula `RLV = NPV + land_cost` | NPV-identity label always — producer is verified |
+| Section D per m² | `financial_depth.rlv_per_m2` | `hbu_financial_depth.enhance_hbu_financials` (Wave 1A), formula `RLV / land_area` | NPV-identity-per-m² label always — producer is verified |
+
+**Engine verification:** `hbu_analysis_engine._evaluate_scenario` does NOT produce `residual_land_value`. A value at `sc["residual_land_value"]` may arrive from Wave 1A or any other enrichment path; its producer is confirmed only when `sc["rlv_method_id"] == "NPV_IDENTITY_RLV"` is present. Section C unavailable message: "غير متاح — محرك HBU لا ينتج RLV على مستوى السيناريو، ويلزم إثراء مالي موثق."
+
+### Correct Pipeline Order
+
+```
+build_hbu_inputs (Wave 1B) → run_hbu_analysis (engine) → enhance_hbu_financials (Wave 1A) → build_enhanced_sections (Wave 1C)
+```
+
+### What Is NOT Changed
+
+- `core_engine/reports/hbu_enhanced_report.py` — canonical active HBU renderer: **unchanged**
+- `core_engine/bridge_api.py` — no route added, no import added: **unchanged**
+- `frontend/index.html` — no frontend changes: **unchanged**
+- All Wave 1A and 1B files — unchanged by this wave
+
+### Test Results
+
+| Suite | Result |
+|-------|--------|
+| RS01–RS28+ (55 focused wave tests) | **55/55 PASSED (1.01s)** |
+| Wave 1A regression (FD01–FD12) | **12/12 PASSED** |
+| Wave 1B regression (HB01–HB19) | **19/19 PASSED** |
+| CI requirements regression (275 tests) | **275/275 PASSED** |
+| Import smoke (`hbu_report_sections`) | **HBU_REPORT_SECTIONS_IMPORT_OK** |
+| Syntax check (both files) | **SYNTAX_OK** |
+| Secret guard (Wave 1C files) | **PASSED — 0 real secrets** |
+| `git diff --check` | **PASSED** |
+
+### Pending Decisions Before Wave 1D / Wave 2
+
+1. **Wave 1C commit approval** — `A6_AWAITING_WAVE_1C_COMMIT_APPROVAL`.
+2. **Route wiring decisions** — `build_enhanced_sections` (Wave 1C), `enhance_hbu_financials` (Wave 1A), and `build_hbu_inputs` (Wave 1B) are all library-only. Separate decisions required before any is called from `bridge_api.py`.
+3. **`feature/reports-initiative` semantic review** — business policy review required before Wave 2.
+4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.

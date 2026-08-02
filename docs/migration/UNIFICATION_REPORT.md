@@ -223,3 +223,89 @@ This repository contains two parallel implementations of HBU financial depth met
 2. **Route wiring decision** — `enhance_hbu_financials` is not connected to any endpoint. A separate decision is required before it is called from `bridge_api.py`.
 3. **`feature/reports-initiative` semantic review** — business policy review required before Wave 2 (retiring `industrial`, enabling `land`).
 4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.
+
+---
+
+## Phase Wave 1B — HBU Inputs Sourcing Bridge
+
+**Date:** 2026-08-02
+**Branch:** `migration/wave1b-hbu-inputs-bridge` (branched from `integration/unification` HEAD `56da9ddd`)
+**Status:** COMPLETE — pending commit approval (`A6_AWAITING_WAVE_1B_COMMIT_APPROVAL`)
+
+### Files Migrated
+
+| File | source_sha256 | destination_sha256 | Notes |
+|------|--------------|-------------------|-------|
+| `core_engine/hbu_inputs_bridge.py` | `D7500BCA...` | `E60E7878...` | Governance fixes applied (see below) |
+| `core_engine/tests/test_hbu_inputs_bridge.py` | `7734F896...` | `564F673F...` | Tests HB08–HB19 added; HB01–HB07 updated |
+
+Source hashes match Wave 1B preflight report. Destination hashes differ due to approved focused fixes.
+
+### Wave 1B Governance Controls
+
+**Fix 1 — Enrichment opt-in (`enable_enrichment` parameter)**
+Original code created `MarketEnrichmentLayer(use_mock=False)` unconditionally when no layer was supplied, potentially calling `ExistingLocalMarketFeedProvider` and `KnowledgeStoreProvider` without caller consent (violates Data Minimization).
+The fix adds `enable_enrichment: bool = False`. Enrichment is now activated only when: `enrichment_layer` is provided, OR `use_mock_enrichment=True`, OR `enable_enrichment=True`. Without opt-in, all enrichment-dependent fields return `"enrichment_not_enabled"` in `unavailable`.
+
+**Fix 2 — Geography guard (`_GEOGRAPHY_RESTRICTED_SOURCES` + `_enrichment_covers_geography`)**
+`ExistingLocalMarketFeedProvider` uses `EgyptianPriceRangeDictionary` (Egyptian pricing) regardless of `country_code`. For `country_code="SA"`, these values were labeled `draft_pending_review` but were still elevated to `inputs` — misrepresenting geographically incompatible data as HBU inputs.
+The fix adds `_GEOGRAPHY_RESTRICTED_SOURCES = {"EgyptianPriceRangeDictionary": {"EG", "EGP"}}` and `_enrichment_covers_geography()` which examines `data_source_log`. When a restricted source is detected for a non-matching geography, ALL enrichment values from that run go to `unavailable` with reason `"enrichment_geography_unsupported"`. Mock and knowledge-store sources are unrestricted.
+
+**Fix 3 — Confidence from evidence only (no 65% heuristic)**
+Original code fell back to `ma_conf = 65.0` when no IAAO ratio study was available, inventing a heuristic confidence value.
+The fix removes this fallback entirely. When `ratio_study.n_sales == 0` or `cod` is absent, `confidence=None` is stored with `confidence_status="unavailable"` and `confidence_reason="ratio_study_missing"`. These fields propagate to the `provenance` table. Confidence from a real ratio study is still computed as `clamp(50, 95, 100 - COD)`.
+
+**Fix 4 — Temporary artifact lifecycle (`TemporaryDirectory`)**
+Original code used `tempfile.mkdtemp()` — the temp directory (and Excel artifact inside it) persisted after the function returned, accumulating on disk.
+The fix uses `tempfile.TemporaryDirectory(prefix="hbu_ma_")` as a context manager. When `work_dir=None`, the directory is created, `run_mass_appraisal` runs, and the directory is deleted on exit (even if an exception occurs). When the caller supplies `work_dir`, the caller manages its lifecycle (documented in the function docstring).
+
+**Fix 5 — base_market_ppm confirmed Neutral Sentinel (Path B)**
+Investigation of `run_mass_appraisal` revealed that `_market_adjustment(base_ppm, unit, market_ppm)` accepts `market_ppm` but never uses it. Therefore `base_market_ppm=0` (the missing-key default) has no effect on any computed value. The docstring is updated to document this contract. Test HB10 verifies numerically that `base_market_ppm=0`, `None`, and `99999` all produce identical `avg_ppm`.
+
+**Fix 6 — Exception propagation documented**
+No exception handling was added around `run_mass_appraisal` or `layer.enrich()` calls. Both propagate as-is. Tests HB16 and HB17 confirm that exceptions do not produce fabricated fallback results. Future route wiring is responsible for converting these to appropriate API errors.
+
+### Privacy Classification
+
+`LOW_CONDITIONAL_PRIVACY_RISK`:
+- No PII fields in the documented schema (`case_id` and comparable IDs are caller-controlled identifiers — their sensitivity depends on the caller).
+- `ExistingLocalMarketFeedProvider` uses local static data (no external transfer).
+- `KnowledgeStoreProvider` is a local Qdrant service — constitutes a service boundary even when not public internet.
+- Geography and property metadata may be sent to a local provider when `enable_enrichment=True`.
+- No raw identifiers are recorded in `source_name` or `reconciliation_note` (verified by HB19).
+- After Fix 1 (opt-in), enrichment providers are never activated without explicit caller consent.
+
+### base_market_ppm Contract (Path B — Neutral Sentinel)
+
+`_market_adjustment(base_ppm, unit, market_ppm)` ignores its `market_ppm` parameter entirely.
+Consequence: `base_market_ppm=0` (missing-key default) is equivalent to any other value — it has zero effect on `avg_ppm`, per-unit `final_ppm`, or `portfolio_summary`. This was verified by test HB10.
+The default `float(case.get("base_market_ppm", 0) or 0)` is retained as a structural sentinel.
+
+### Pre-Migration Decisions Resolved
+
+1. **LEGACY_ONLY_RUNTIME_DEPENDENCIES = 0** — all imports (`mass_appraisal`, `enrichment.market_enrichment`) resolve in Unified.
+2. **Enrichment interface compatibility** — Unified enrichment files confirmed compatible with bridge's call sites (`enrich`, `build_request`, `EnrichmentResult.to_dict()`, `.can_generate_final_report()`, `.suggested_values`, `.market_indicators`, `.data_source_log`).
+3. **Egyptian geography data** — confirmed restricted source; geography guard prevents misuse.
+4. **base_market_ppm** — confirmed Neutral Sentinel (Path B) by code inspection and test.
+5. **Module wiring** — `hbu_inputs_bridge` remains library-only and unwired after migration. No endpoint created.
+
+### Test Results
+
+| Suite | Result |
+|-------|--------|
+| HB01–HB19 (focused wave tests) | **19/19 PASSED** |
+| Wave 1A regression (FD01–FD12) | **12/12 PASSED** |
+| CI requirements regression (275 tests) | **275/275 PASSED** |
+| Import smoke (`hbu_inputs_bridge`) | **HBU_INPUTS_BRIDGE_IMPORT_OK** |
+| Syntax check (both files) | **SYNTAX_OK** |
+| Secret guard (Wave 1B files) | **PASSED — 0 real secrets** |
+| `git diff --check` | **PASSED** |
+
+---
+
+## Pending Decisions Before Wave 1C / Wave 2
+
+1. **Wave 1B commit approval** — `A6_AWAITING_WAVE_1B_COMMIT_APPROVAL`.
+2. **Route wiring decisions** — both `enhance_hbu_financials` (Wave 1A) and `build_hbu_inputs` (Wave 1B) are library-only. Separate decisions required before either is called from `bridge_api.py`.
+3. **`feature/reports-initiative` semantic review** — business policy review required before Wave 2.
+4. **Full content-based secret scan** (gitleaks/trufflehog) — recommended before any push to shared environment.

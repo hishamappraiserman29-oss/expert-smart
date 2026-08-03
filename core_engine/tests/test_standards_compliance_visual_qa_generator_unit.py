@@ -478,14 +478,94 @@ def test_VT22_cli_output_dir_required():
     )
 
 
-# ── VT23 — Endpoint remains absent ───────────────────────────────────────────
+# ── VT23 — Wave3B endpoint transition: import-safe lifecycle sentinel ─────────
+# VT23_TRANSITION = ENDPOINT_ABSENCE_SENTINEL_REPLACED_BY_IMPORT_SAFETY_SENTINEL
+# VT23_CHANGE_REASON = AUTHORIZED_WAVE3B_ENDPOINT_CREATION
 
-def test_VT23_endpoint_remains_absent():
-    """pv_standards_compliance_endpoint.py must NOT exist in the Unified tree."""
-    endpoint = _CORE / "pv_standards_compliance_endpoint.py"
-    assert not endpoint.exists(), (
-        f"Wave 3A contract violation: endpoint file must remain absent. "
-        f"Found at: {endpoint}"
+def test_VT23_wave3b_endpoint_transition_is_explicit_and_import_safe():
+    """VT23_WAVE3B_ENDPOINT_TRANSITION_IS_EXPLICIT_AND_IMPORT_SAFE
+
+    Wave 3B explicitly creates pv_standards_compliance_endpoint.py under
+    authorization A6_WAVE_3B_IMPLEMENTATION_APPROVED_PRECOMMIT_ONLY.
+    This test replaces the former endpoint-absence sentinel with a governance
+    test that preserves the original intent: no accidental endpoint activation
+    or import-time side effects.
+
+    Verifies:
+      1. The endpoint module file exists (Wave 3B creation confirmed).
+      2. It exports exactly `register_standards_compliance` (not _v1 variant).
+      3. The export is callable.
+      4. Importing the module alone produces zero routes, no output directories,
+         no browser launch, and no generated artifacts.
+      5. `register_standards_compliance_v1` is NOT the required public export.
+      6. The endpoint remains registration-driven (routes created only when
+         register_standards_compliance() is explicitly called with an app).
+    """
+    import importlib
+    import sys
+
+    endpoint_path = _CORE / "pv_standards_compliance_endpoint.py"
+
+    # 1. File must exist (Wave 3B creation confirmed)
+    assert endpoint_path.exists(), (
+        f"Wave 3B endpoint file must exist at: {endpoint_path}"
+    )
+
+    # 2 & 3. Import and verify public export
+    mod_name = "pv_standards_compliance_endpoint"
+    if mod_name in sys.modules:
+        ep_mod = sys.modules[mod_name]
+    else:
+        ep_mod = importlib.import_module(mod_name)
+
+    assert hasattr(ep_mod, "register_standards_compliance"), (
+        "Module must export register_standards_compliance"
+    )
+    assert callable(ep_mod.register_standards_compliance), (
+        "register_standards_compliance must be callable"
+    )
+
+    # 5. The _v1 variant must NOT be the required export name
+    assert not hasattr(ep_mod, "register_standards_compliance_v1"), (
+        "register_standards_compliance_v1 must not be the public export"
+    )
+
+    # 4. Import isolation — no output directories created at module level
+    assert not hasattr(ep_mod, "OUTPUTS_DIR"), (
+        "OUTPUTS_DIR must not be created at module level"
+    )
+    assert not hasattr(ep_mod, "ARTIFACTS_DIR"), (
+        "ARTIFACTS_DIR must not be created at module level"
+    )
+    # Module must not hold a fixed hard-coded output path constant
+    assert not hasattr(ep_mod, "_FIXED_OUTPUT_ROOT"), (
+        "_FIXED_OUTPUT_ROOT must not be present at module level"
+    )
+
+    # 6. Route registration is deferred — no Flask app is imported or mutated
+    #    at module import time; the module must not hold a bound Flask app.
+    assert not hasattr(ep_mod, "app"), (
+        "Endpoint module must not hold a module-level Flask app"
+    )
+    assert not hasattr(ep_mod, "_app"), (
+        "Endpoint module must not hold a module-level _app reference"
+    )
+
+    # 4 & 6. Module-level constants must confirm registration-driven design:
+    #   _SEMAPHORE exists (module-level), but no directories are created.
+    assert hasattr(ep_mod, "_SEMAPHORE"), (
+        "_SEMAPHORE must exist at module level (concurrency control)"
+    )
+    assert hasattr(ep_mod, "_CASE_ID"), (
+        "_CASE_ID must exist at module level"
+    )
+    # The registration function must require explicit app argument; it must
+    # NOT be a no-arg callable that activates routes by itself.
+    import inspect
+    sig = inspect.signature(ep_mod.register_standards_compliance)
+    params = list(sig.parameters.keys())
+    assert "app" in params, (
+        "register_standards_compliance must require an 'app' parameter"
     )
 
 

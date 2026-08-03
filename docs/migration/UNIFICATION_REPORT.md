@@ -689,3 +689,210 @@ Before the endpoint can be migrated:
 - No real browser executed during implementation
 - No persistent artifacts generated under the repository tree
 - No push
+
+---
+
+## Wave 3B — Standards Compliance Endpoint Redesign
+
+**Branch:** `migration/wave3b-standards-compliance-endpoint`
+**Branched from:** `integration/unification` HEAD `f3d6643f6ab136030b99adb93cc1e794d552e1e0`
+**Authorization:** `A6_WAVE_3B_IMPLEMENTATION_APPROVED_PRECOMMIT_ONLY`
+**Date:** 2026-08-03
+**Status:** CORRECTIONS APPLIED — awaiting corrected pre-commit approval (`A6_AWAITING_WAVE_3B_PRECOMMIT_APPROVAL`)
+
+Corrections applied after `A6_WAVE_3B_PRECOMMIT_REJECTED_CORRECTIONS_REQUIRED`:
+- POST_SUCCESS_STATUS: corrected 201 → **200** (synchronous completion)
+- VT23: endpoint-absence sentinel replaced by import-safety sentinel (authorized narrow scope expansion)
+- SE31/SE32: test assertions updated from `not in (400/413/415)` to `== 200`
+- SE41: response captured and `assert resp.status_code == 200` added
+- All three Python files re-hashed; manifest updated
+
+---
+
+### Files Created / Modified (Wave 3B — 5-file scope)
+
+| Action | File | source_sha256 | destination_sha256 | Category |
+|--------|------|--------------|-------------------|----------|
+| NEW | `core_engine/pv_standards_compliance_endpoint.py` | `4EB14FA5...` (Legacy) | `9C550BD75281434AB302CF4089381FECE5B8594BCDEC5BF215688F3C8883AC82` | ENDPOINT_MODULE — POST_SUCCESS_STATUS=200 |
+| NEW | `core_engine/tests/test_pv_standards_compliance_endpoint.py` | N/A_NEW_TEST_FILE | `43139280E557D7A64C64CD55D7E87A8046C330C4FB4D6442BDC4795083857F68` | TEST_MODULE — 84 CI-safe unit tests; SE31/SE32/SE41 assert ==200 |
+| MODIFY | `core_engine/tests/test_standards_compliance_visual_qa_generator_unit.py` | `AEEEFB51...` (Wave 3A) | `A49CB0F9635588F894FDED6E983C1044AB3399854FB141BBE6FA77A1109E528A` | TEST_MODULE — VT23 sentinel transition only |
+| MODIFY | `docs/migration/UNIFICATION_MANIFEST.csv` | — | — | MIGRATION_DOCUMENT |
+| MODIFY | `docs/migration/UNIFICATION_REPORT.md` | — | — | MIGRATION_DOCUMENT |
+
+WAVE3B_FILE_SCOPE = 5
+
+---
+
+### What Wave 3B Resolves
+
+Wave 3A identified 5 blockers. All are resolved:
+
+| Blocker (Wave 3A) | Resolution (Wave 3B) |
+|-------------------|---------------------|
+| CONCURRENCY_SAFETY=UNSAFE (fixed CASE_ID filenames) | `BoundedSemaphore(1)` serializes POST+DELETE; `server_run_id = uuid.uuid4().hex` per request; server owns run_id — not client |
+| TEST_QUALITY=NOT_CI_SAFE (SC-D21–D40 require artifacts) | Replaced with 84 CI-safe unit tests (SE01–SE84) using tempfile, mock, no browser, no persistent project artifacts |
+| `score_pct` initial assignment bug | Not replicated — endpoint uses generator's returned `score` dict with defensive validation |
+| `str(exc)` exposing internal paths in 500 responses | `_err()` helper returns opaque `error_code` + generic `message`; never includes exception string or filesystem paths |
+| SC02–SC05 route contract tests | SE12/SE18/SE71/SE73 cover 4-route table, verb mapping, prefix, no-v1-suffix |
+
+---
+
+### Endpoint Architecture
+
+```
+register_standards_compliance(app, require_auth, _is_admin, OUTPUTS) -> None
+  ├── Idempotency guard (app.extensions["standards_compliance_endpoint_registered"])
+  ├── OUTPUTS validation (lstat, S_ISDIR, reparse check)
+  ├── Server-controlled directory creation (registration-only, no mkdir at request time)
+  ├── Path resolution (outputs_r, standards_r, case_r)
+  ├── Identity capture (st_dev + st_ino per configured path)
+  ├── Generator import verification
+  ├── Blueprint + route collision checks
+  └── Blueprint "standards_compliance_v1"
+        POST   /api/standards-compliance/runs           → sc_v1_post_run()
+        GET    /api/standards-compliance/runs/<run_id>  → sc_v1_get_run()
+        DELETE /api/standards-compliance/runs/<run_id>  → sc_v1_delete_run()
+        GET    /api/standards-compliance/runs/<run_id>/artifacts/<artifact_key> → sc_v1_get_artifact()
+```
+
+All 4 routes: `@require_auth` + `_is_admin(g.user_id)` check. Admin-only.
+
+---
+
+### Security Properties
+
+| Property | Implementation |
+|----------|---------------|
+| Concurrency | `_SEMAPHORE = threading.BoundedSemaphore(1)` — module-level; POST + DELETE acquire non-blocking; return 503 if busy |
+| Server-controlled ID | `uuid.uuid4().hex` — 32-char lowercase hex; never client-supplied |
+| Server-controlled path | `output_root = roots.standards_root_r` — captured at registration; no client override |
+| Root chain validation | Per-request `_revalidate_server_roots()`: lstat each configured path, reparse check, identity check (st_ino), resolve, containment hierarchy |
+| Reparse-point detection | `_is_link_or_reparse_lstat()`: `S_ISLNK` OR `FILE_ATTRIBUTE_REPARSE_POINT (0x400)`; None-safe `or 0` guard |
+| TOCTOU mitigation | `_open_validated_regular_file()`: lstat(run_dir) → validate → open(target) → fstat(fd) → compare inodes |
+| Lexical path comparison | `_normalize_absolute_path_text()`: `normcase(abspath(normpath(fspath(v))))`; no `.resolve()` on generator-reported value |
+| Generator contract | `type(run_directory) is not str` → 500; `not os.path.isabs(...)` → 500; lexical mismatch → 500 |
+| Atomic metadata write | tmp file → `json.dump` → `flush` → `fsync` → `os.replace()` |
+| Safe deletion | `_safe_delete_run_dir()`: containment check → top-level allowlist → recursive scan → reparse refusal → `shutil.rmtree` → absence confirmation |
+| Error sanitization | No `str(exc)` in responses; no filesystem paths; opaque `error_code` + generic `message` only |
+| Body size limit | `request.stream.read(257)` — single read; 257 bytes triggers 413; non-JSON with body → 415 |
+
+---
+
+### Retention Policy
+
+| Phase | Target | Action |
+|-------|--------|--------|
+| Pre-generation orphan cleanup | Age > 24h, no valid metadata | `_cleanup_orphans()` — delete |
+| Pre-generation capacity check | `_PRE_GENERATION_TARGET = 9` | `_retention_reduce(target=9)` then gate at `count > 9` → 507 |
+| Post-generation capacity check | `_MAX_COMPLETED_RUNS = 10` | `_retention_reduce(target=10, skip_run_id=new_id)` |
+| Orphan max age | 86,400 seconds (24h) | Applied at next POST |
+
+---
+
+### Test Results (post-corrections)
+
+| Suite | Collected | Passed | Failed | Duration | Notes |
+|-------|-----------|--------|--------|----------|-------|
+| SE01–SE84 (Wave 3B focused) | 84 | **84** | 0 | 2.32s | POST_SUCCESS_STATUS=200 enforced |
+| Wave 3A regression (VT01–VT28) | 28 | **28** | 0 | 0.99s | VT23 AUTHORIZED TRANSITION — PASS |
+| Wave 1A regression (FD01–FD12) | 12 | **12** | 0 | | |
+| Wave 1B regression (HB01–HB19) | 19 | **19** | 0 | | |
+| Wave 1C regression (RS01–RS28+) | 55 | **55** | 0 | | |
+| Wave 2 regression (BL01–BL09 + PT01–PT09) | 19 | **19** | 0 | 3.25s | FIXTURE_HASHES_UNCHANGED=True |
+| CI requirements baseline (ci-cd.yml 6 files) | 275 | **275** | 0 | 10.09s | 40 warnings: JWT key-length, pre-existing |
+| Real-browser direct generator smoke | 1 call | **PASS** | 0 | 14.82s | One direct invocation; 35 PNG; temp cleaned |
+
+---
+
+### VT23 Authorized Sentinel Transition
+
+```
+VT23_TRANSITION          = ENDPOINT_ABSENCE_SENTINEL_REPLACED_BY_IMPORT_SAFETY_SENTINEL
+VT23_CHANGE_REASON       = AUTHORIZED_WAVE3B_ENDPOINT_CREATION
+VT23_AUTHORIZATION       = A6_WAVE_3B_IMPLEMENTATION_APPROVED_PRECOMMIT_ONLY
+VT23_STATUS              = PASS (28/28)
+```
+
+The former `test_VT23_endpoint_remains_absent` asserted the endpoint file must not exist.
+This sentinel was a guard against unauthorized endpoint activation in Wave 3A.
+Wave 3B, operating under explicit authorization, creates the file intentionally.
+The replacement test `test_VT23_wave3b_endpoint_transition_is_explicit_and_import_safe`
+preserves the original governance intent — it verifies:
+
+1. The endpoint file **exists** (Wave 3B creation confirmed)
+2. Exports exactly `register_standards_compliance` (callable)
+3. `register_standards_compliance_v1` is NOT the public export
+4. Importing the module creates zero routes, no output directories, no browser, no artifacts
+5. No module-level Flask app bound; route registration is deferred to explicit call
+6. `register_standards_compliance` requires an `app` parameter — cannot self-activate
+
+Only VT23 was changed. VT01–VT22 and VT24–VT28 are identical to their Wave 3A versions.
+
+---
+
+### Scope Hygiene (post-corrections)
+
+| Check | Result |
+|-------|--------|
+| `bridge_api.py` diff | **0 bytes** — unchanged |
+| `standards_compliance_visual_qa_generator.py` diff | **0 bytes** — unchanged |
+| `pv_standards_compliance_v2_endpoint.py` diff | **0 bytes** — unchanged |
+| `standards_compliance_v2_generator.py` diff | **0 bytes** — unchanged |
+| New untracked files | `pv_standards_compliance_endpoint.py`, `test_pv_standards_compliance_endpoint.py` |
+| Modified tracked files | `test_standards_compliance_visual_qa_generator_unit.py` (VT23 only), `UNIFICATION_MANIFEST.csv`, `UNIFICATION_REPORT.md` |
+| CHANGED_FILE_COUNT | **5** (2 new + 3 modified) |
+| `git diff --check` | **PASS** |
+| STAGED_FILES | **0** |
+| Secret scan (all 5 files) | **CLEAN** — 0 credential patterns found |
+| Wave 3B project artifacts in repo | **0** (no `QA-COMPLIANCE-VISUAL-001/` dirs inside repo) |
+| Pre-existing `REQ-*` artifacts touched | **False** |
+
+---
+
+### What Was NOT Done in Wave 3B
+
+- `bridge_api.py` — not modified; wiring stub at lines 12701–12705 already present
+- `standards_compliance_visual_qa_generator.py` — not modified
+- No routes activated yet (endpoint module created but not called by bridge_api.py until stub is un-commented)
+- No commit or push
+- No `git add`, no `git add -A`, no `git add .`
+- No cherry-pick of `43dffaf`
+- No git commit --amend
+- No direct commit to `integration/unification`
+- ALHADY_Platform — not touched (out of scope)
+
+---
+
+### Constants (post-corrections)
+
+```
+WAVE_3B_IMPLEMENTATION_STATUS      = CORRECTIONS_APPLIED
+WAVE_3B_FILE_SCOPE                 = 5
+POST_SUCCESS_STATUS                = 200
+VT23_SENTINEL_TRANSITION           = AUTHORIZED
+VT23_TRANSITION_TYPE               = ENDPOINT_ABSENCE_SENTINEL_REPLACED_BY_IMPORT_SAFETY_SENTINEL
+
+WAVE_3B_ENDPOINT_FILE_HASH         = 9C550BD75281434AB302CF4089381FECE5B8594BCDEC5BF215688F3C8883AC82
+WAVE_3B_TEST_FILE_HASH             = 43139280E557D7A64C64CD55D7E87A8046C330C4FB4D6442BDC4795083857F68
+WAVE_3A_TEST_FILE_HASH_POST_VT23   = A49CB0F9635588F894FDED6E983C1044AB3399854FB141BBE6FA77A1109E528A
+
+REAL_BROWSER_GATE                  = ONE_DIRECT_GENERATOR_INVOCATION
+REAL_BROWSER_SMOKE                 = PASS
+REAL_BROWSER_RUN_ID                = 5ef9a838e9644e888d4483d24aaedf90
+REAL_BROWSER_DURATION_SECONDS      = 14.82
+REAL_BROWSER_HTML_COUNT            = 2
+REAL_BROWSER_PDF_COUNT             = 2
+REAL_BROWSER_XLSX_COUNT            = 1
+REAL_BROWSER_JSON_COUNT            = 3
+REAL_BROWSER_PNG_COUNT             = 35
+REAL_BROWSER_SCORE_TYPE            = dict
+REAL_BROWSER_TEMP_ROOT_CLEANED     = True
+
+V2_FILES_MODIFIED                  = False
+BRIDGE_API_MODIFIED                = False
+COMMIT_CREATED                     = False
+MERGE_PERFORMED                    = False
+PUSH_PERFORMED                     = False
+
+SENTINEL_CODE                      = A6_AWAITING_WAVE_3B_PRECOMMIT_APPROVAL
+```

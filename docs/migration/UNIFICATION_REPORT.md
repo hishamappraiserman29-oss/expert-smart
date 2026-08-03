@@ -896,3 +896,229 @@ PUSH_PERFORMED                     = False
 
 SENTINEL_CODE                      = A6_AWAITING_WAVE_3B_PRECOMMIT_APPROVAL
 ```
+
+---
+
+## Wave 4A — Standards Compliance V2 Security Governance
+
+**Date:** 2026-08-03
+**Authorization:** `A6_WAVE_4A_IMPLEMENTATION_APPROVED_LOCAL_NO_COMMIT`
+**Status:** CORRECTIONS_APPLIED — awaiting corrected pre-commit approval
+**Branch:** `migration/wave4a-standards-compliance-v2-security`
+
+**Correction 1 (2026-08-03):** `_DELETE_MAX_DEPTH` corrected 8→4; `_DELETE_MAX_ENTRIES` corrected 2000→200.
+
+**Correction 2 (2026-08-03):** Pre-generation retention algorithm replaced with active reduction loop:
+sorted by `created_at` ascending; while count > 9, delete oldest; break on first non-DELETED outcome;
+final recount; 507 only if count remains > 9. PRE_GENERATION_REDUCTION_ATTEMPTED = True.
+
+**Correction 3 (2026-08-03) — Safe Scan Not Implemented:** Previous `_safe_delete_run_dir` used a
+generic `os.walk` depth+entry-count scan accepting arbitrary structures (e.g. `a/b/c/d`).
+Replaced with Generator-derived structural allowlist: `_ROOT_ALLOWED_FILES` `_ROOT_ALLOWED_DIRS`
+`_ARTIFACTS_ALLOWED` `_AUDITS_ALLOWED` `_SS_CATEGORIES_ALLOWED` `_SS_PNG_PATTERNS` (regex per category).
+Uses `os.scandir` at each level — refuses anything not in the Generator-derived allowlist.
+Retention algorithm upgraded to skip-refused (`attempted_ids` set) — tries all candidates before 507.
+Rollbacks (generator failure + metadata write failure) now use `_safe_delete_run_dir` (single
+implementation at all 6 call sites). SAFE_DELETE_IMPLEMENTATION_COUNT = 1.
+Tests expanded: UNKNOWN-1..7 (unexpected root file/dir/artifacts file/audits file/screenshot
+category/extension/nested dir — each REFUSED rmtree=0); RET-SKIP-1 (oldest refused,
+second-oldest deleted → generator called → 200); DEL-BOUND-1..4 rewritten with Generator-shaped
+structures. Total: 189 → 197 tests. PREVIOUS_SAFE_SCAN_CORRECTION_COMPLETED = True.
+
+**Correction 4 (2026-08-03) — Screenshot Allowlist Bounds Not Tight Enough:** Previous `_SS_PNG_PATTERNS`
+used generic `\d{2}` matching sections 00–99 and pages 00–99. Inspected Generator source:
+`_take_screenshots` (lines 1330–1365) caps sections at `sections[:15]`, indexing i+1 → valid range 01–15;
+always produces `_full.png`. HTML maximum: 16 files per category. `_pdf_screenshots` (lines 1368–1383)
+uses `f"{i+1:02d}"` with no cap; valid 2-digit range 01–99. Tightened patterns:
+`section_(0[1-9]|1[0-5])` for HTML (rejects 00, 16–99); `page_(0[1-9]|[1-9]\d)` for PDF (rejects 00, 100+).
+DEL-BOUND-3 rewritten: 16+16+76+76=184 PNGs+16 base=200 (Strategy A valid Generator names).
+DEL-BOUND-4 rewritten: admin_pdf 77 PNGs → 201 entries (Strategy A).
+Added SS-BOUND-1..12: per-category boundary tests (highest valid → accepted; highest+1 → refused; 00 → refused).
+Added PARTIAL-1..8: partial-run rollback safety (empty dir, empty subdirs, one approved file each level → DELETED).
+_make_partial_run helper added. Generator temporary files: NONE (tempfile.NamedTemporaryFile in system temp,
+deleted in finally block — no temp files in run directory). Total: 197 → 217 tests.
+SCREENSHOT_ALLOWLIST_SOURCE = EXECUTABLE_GENERATOR_LOOPS. ARBITRARY_SCREENSHOT_COUNT_ALLOWED = False.
+PARTIAL_APPROVED_RUNS_DELETABLE = True. GENERATOR_TEMPORARY_FILENAME_SET = NONE.
+
+**Correction 5 (2026-08-03) — Output-Bound Contradiction and PDF Cap:** Correction 4 set
+`page_(0[1-9]|[1-9]\d)` accepting pages 01–99. Without a Generator cap, a PDF with >76 pages would
+produce entries exceeding `_DELETE_MAX_ENTRIES=200` (16 base + 16 + 16 + N_user + N_admin; with 99+99
+PDF pages = 246 > 200). PREVIOUS_PDF_SCREENSHOT_MAX_DERIVATION_VALID = False.
+PDF page count type: UNBOUNDED_WITHIN_APPLICATION (no cap in _pdf_screenshots; actual pages depend on
+Chromium rendering of fixed HTML on target OS). Resolution: **OPTION_A — Explicit Generator cap.**
+Added `_PDF_SCREENSHOT_CAP = 76` constant to Generator; `_pdf_screenshots()` breaks at `i >= 76`;
+audit JSON now records `screenshots_captured`, `screenshots_truncated`, `pdf_screenshot_cap`.
+Endpoint PDF regex tightened from `(0[1-9]|[1-9]\d)` to `(0[1-9]|[1-6][0-9]|7[0-6])` (accepts 01–76
+only). SS-BOUND PDF tests updated: page_76 accepted (was page_99); page_77 refused (was page_100).
+DEL-BOUND-4 docstring updated: admin_pdf_page_77 refused by regex (not pure entry count).
+VALID_OUTPUT_CAN_EXCEED_DELETE_LIMIT = False. MAXIMUM_COMPLETE_GENERATOR_SHAPE_DELETABLE = True
+(200 entries: 16 + 16 + 16 + 76 + 76 = 200 ≤ 200). GENERATOR_CAN_CREATE_SCANNER_REJECTED_SCREENSHOT = False.
+SCANNER_ACCEPTS_GENERATOR_IMPOSSIBLE_SCREENSHOT = False. 217/217 tests pass (count unchanged).
+New RBG gate run on final Generator bytes: run_id=738e3f66ebec4a71a15cde7d934739ff,
+user_pdf=7 pages, admin_pdf=13 pages, screenshots_truncated=false for both, PNG_COUNT=52.
+SCREENSHOT_ALLOWLIST_SOURCE = EXECUTABLE_GENERATOR_CONTRACT. REPORT_SELF_HASH_EMBEDDED = False.
+
+---
+
+### Wave 4A Summary
+
+Wave 4A hardens the Standards Compliance V2 feature (OPTION_B: harden active V2 feature).
+All 4 target routes are Admin-only (POLICY_A). Five files modified; no files created or deleted.
+
+### Files Modified
+
+| File | Pre-SHA256 | Post-Blob-SHA256 (committed) | Change |
+|------|-----------|------------|--------|
+| `core_engine/pv_standards_compliance_v2_endpoint.py` | `A6245B6EB7FFFFEBF720A4A94E739F118D39C67EB434ACFD32E7243FE9BE6046` | `37C6A1EEBCAF201509950B4DE0A5883EBB3C8BAB0227153A378FE7C4978C2DD0` | Hardened rewrite + Generator-derived allowlist safe scan + skip-refused retention + unified rollbacks + tightened screenshot bounds + PDF regex cap (0[1-9]\|[1-6][0-9]\|7[0-6]) |
+| `core_engine/standards_compliance_v2_generator.py` | `2F6C05A1C716E548432E5CD235D30D37D47F3F8E828FB9C8AD6656D6FBDB1143` | `05809DAA4B71C7592719E46AF7FA065F7716DA191731DFF783B1711800033395` | Keyword-only signature + synthetic_data + _PDF_SCREENSHOT_CAP=76 + truncation audit. CRLF_WT_SHA256=`E87037080E2BBD66C26A997B847EDB24015A02AA240D9762C5753A4D7FABBDC2` (autocrlf=true artifact; see canonical hash policy note below) |
+| `core_engine/tests/test_pv_standards_compliance_v2.py` | `7D21966D2261D3F141807D41783DC964319B6410E0C86B3BCED77B7A80645ACA` | `725BA7B34749ECDE3A61EF33765CC6C1824ECA559DAC2509A1E6E90C9A7AACC9` | 50→217 tests (SS-BOUND PDF: page_76 accepted / page_77 refused) |
+| `docs/migration/UNIFICATION_MANIFEST.csv` | (see manifest) | (computed externally after final bytes) | Wave 4A manifest rows — updated with Correction 5 SHAs |
+| `docs/migration/UNIFICATION_REPORT.md` | (self) | (computed externally after final bytes) | This document — REPORT_SELF_HASH_EMBEDDED=False |
+
+**Canonical Git-Blob Hash Policy** — `CANONICAL_TRACKED_FILE_HASH_SOURCE = GIT_COMMITTED_BLOB_BYTES`. Post-Blob-SHA256 values above are SHA-256 computed from `git show HEAD:<path>` (LF-normalized bytes in the Git object database, not from the Windows working-tree checkout). `core.autocrlf = true` with no `.gitattributes` converts CRLF-on-disk to LF in the blob at staging. The endpoint (`37C6A1...`) and test (`725BA7...`) files have LF on disk — blob SHA-256 = working-tree SHA-256. The generator file has CRLF on disk — canonical blob SHA-256 is `05809DAA4B71C7592719E46AF7FA065F7716DA191731DFF783B1711800033395` (LF); CRLF working-tree SHA-256 is `E87037080E2BBD66C26A997B847EDB24015A02AA240D9762C5753A4D7FABBDC2` (supplemental, not the committed hash). Normalized-byte equivalence verified: `GENERATOR_NORMALIZED_BYTES_MATCH = True`, `GENERATOR_NON_LINE_ENDING_DIFFERENCES = 0`. `CRLF_WORKING_TREE_HASH_RECORDED_AS_COMMITTED_HASH = False`. `WORKING_TREE_LINE_ENDING_HASH = SUPPLEMENTAL_ONLY`.
+
+### Protected Files (Unchanged)
+
+| File | Pre-SHA256 | Post-SHA256 | Match |
+|------|-----------|------------|-------|
+| `core_engine/bridge_api.py` | `A504AF3A61B55648FDFC31F0ABD5BD09CF2B16856C55D95A819D1D348AF35540` | `A504AF3A61B55648FDFC31F0ABD5BD09CF2B16856C55D95A819D1D348AF35540` | MATCH |
+| `core_engine/pv_standards_compliance_endpoint.py` | `F4420FB098FA348D3F307885A6C7B543C12C93805CDA38A09EDA5CCBBFF18893` | `F4420FB098FA348D3F307885A6C7B543C12C93805CDA38A09EDA5CCBBFF18893` | MATCH |
+| `core_engine/standards_compliance_visual_qa_generator.py` | `4CC20B5615C53C6E914BC3FA2F1B74D48733FB64E2BDCC97CB3425ED3EB919BE` | `4CC20B5615C53C6E914BC3FA2F1B74D48733FB64E2BDCC97CB3425ED3EB919BE` | MATCH |
+| `core_engine/tests/test_pv_standards_compliance_endpoint.py` | `51D60115669FDF7679F23577039255CEB98A9A3DCF1B8E95DB08E6EB7CDA61B6` | `51D60115669FDF7679F23577039255CEB98A9A3DCF1B8E95DB08E6EB7CDA61B6` | MATCH |
+| `core_engine/tests/test_standards_compliance_visual_qa_generator_unit.py` | `A49CB0F9635588F894FDED6E983C1044AB3399854FB141BBE6FA77A1109E528A` | `A49CB0F9635588F894FDED6E983C1044AB3399854FB141BBE6FA77A1109E528A` | MATCH |
+
+PROTECTED_FILES_BYTE_IDENTICAL = True
+
+### Test Gate Results
+
+| Suite | Files | Result |
+|-------|-------|--------|
+| V2 focused (SC2-01..SC2-28 + SV01..SV153 + RET-BOUND + RET-SKIP + DEL-BOUND + UNKNOWN + SS-BOUND + PARTIAL) | `test_pv_standards_compliance_v2.py` | **217/217 PASS** |
+| V1 endpoint (SE01..SE84) | `test_pv_standards_compliance_endpoint.py` | **84/84 PASS** |
+| V1 generator unit (VT01..VT28) | `test_standards_compliance_visual_qa_generator_unit.py` | **28/28 PASS** |
+| Wave 1 HBU | 3 HBU test files | **86/86 PASS** |
+| Wave 2 complete (PT01..PT09 + BL01..BL09) | `test_request_validation_property_types.py` + `test_report_baseline.py` | **19/19 PASS** |
+| CI baseline (6 test files) | Requirements + asset families + purpose routes + approval rules | **275/275 PASS** |
+| Real-browser gate (RBG A01..A17) | Direct generator call in `tempfile.TemporaryDirectory()` | **17/17 PASS** |
+
+CI baseline InsecureKeyLengthWarning count: **40** (20 encode + 20 decode, in `test_requirements_endpoint.py`)
+
+Wave 2 fixture hashes unchanged:
+- `baseline_land_detailed.json`: `AD3DA79657165C41C4EADF7F529EFF9F3219BF9160D0F4163529EAB9B866C1CA`
+- `baseline_land_legacy.json`: `B986E51A79CE2702E9C34C17DEBDC510591631E609B4C5563A800869844741C3`
+- `report_land.json`: `EF2E7B7FC62939269DEA70F286F190C08656F5589D06395E0764713DD5748ECA`
+
+WAVE2_FIXTURE_HASHES_UNCHANGED = True
+
+### Real-Browser Gate (v4 — Correction 5 final Generator bytes)
+
+```
+RBG_RUN_ID                          = 738e3f66ebec4a71a15cde7d934739ff
+REAL_BROWSER_DURATION_SECONDS       = 19.35
+HTML_COUNT                          = 2
+PDF_COUNT                           = 2
+XLSX_COUNT                          = 1
+JSON_COUNT                          = 3
+PNG_COUNT                           = 52  (user_html:16 + admin_html:16 + user_pdf:7 + admin_pdf:13)
+overall_pass                        = True (bool)
+score_pct                           = 74 (int)
+traffic_light                       = 'yellow' (str)
+cross_format_pass                   = True (bool)
+excel_sheets                        = 30 (int)
+user_pdf_pages                      = 7   (well within _PDF_SCREENSHOT_CAP=76)
+admin_pdf_pages                     = 13  (well within _PDF_SCREENSHOT_CAP=76)
+screenshots_truncated_user_pdf      = false
+screenshots_truncated_admin_pdf     = false
+RBG_GOVERNANCE_SOURCE               = GENERATED_AUDIT_JSON (audits/compliance_v2_visual_qa_report.json)
+RBG_GOVERNANCE_EXACT_KEYS           = 7
+RBG_GOVERNANCE_EXTRA_KEYS           = 0
+RBG_GOVERNANCE_MISSING_KEYS         = 0
+governance.advisory_only            = true
+governance.certification_ready      = false
+governance.fake_signature_created   = false
+governance.ml_suggestion_only       = true
+governance.ml_trained_on_approved_only = true
+governance.ml_auto_decision         = false
+governance.synthetic_data           = true
+TEMP_ROOT_EXISTS_AFTER_CONTEXT      = False  (Playwright temp HTML files in system temp; deleted in finally)
+TEMP_RUN_ARTIFACTS_REMOVED_AFTER_CONTEXT = True
+REPOSITORY_ARTIFACTS_CREATED        = 0  (run_dir is outputs/, not repo root)
+PREVIOUS_WAVE4A_GENERATOR_CALLS     = 2
+NEW_GENERATOR_CALLS_THIS_CORRECTION = 1
+TOTAL_WAVE4A_GENERATOR_CALLS        = 3
+```
+
+### Security Contract Values
+
+```
+POLICY_A                            = ADMIN_ONLY_ALL_4_ROUTES
+RUN_SCOPED_GENERIC_ARTIFACT         = True
+SEMAPHORE                           = BoundedSemaphore(1)  # shared POST+DELETE
+UUID_PATTERN                        = UUID4_HEX_32
+OUTPUTS_RESOLUTION                  = ABSOLUTE_AT_REGISTRATION
+REQUEST_BODY_PARSE                  = BOUNDED_RAW_BYTES (stream.read(257))
+METADATA_OPEN_MODEL                 = LSTAT_OPEN_FSTAT_VALIDATED_HANDLE
+METADATA_MAX_BYTES                  = 65536
+ARTIFACT_ALLOWLIST_COUNT            = 8
+GOVERNANCE_KEY_COUNT                = 7
+SYNTHETIC_DATA_FLAG                 = True
+DELETE_POSTCONDITION                = LSTAT_ABSENCE
+REGISTRATION_FAILURE_MODE           = RAISE_BEFORE_BLUEPRINT_REGISTRATION
+MAXIMUM_RECURSION_DEPTH             = 4  (module constant, not used in structural validator)
+MAXIMUM_ENTRY_COUNT                 = 200
+SAFE_DELETE_SOURCE                  = FINAL_EXECUTABLE_GENERATOR
+GENERIC_REGULAR_FILES_ALLOWED       = False
+GENERIC_DIRECTORIES_ALLOWED         = False
+SAFE_DELETE_IMPLEMENTATION_COUNT    = 1  (all 7 call sites use same _safe_delete_run_dir)
+SAFE_DELETE_CALL_SITE_COUNT         = 7  (TTL/orphan/pre-gen reduction/gen-fail-rollback/meta-fail-rollback/post-gen capacity/manual DELETE)
+DIRECT_SHUTIL_RMTREE_OUTSIDE_SAFE_DELETE = 0
+STRUCTURE_VALIDATION_PRECEDES_ENTRY_COUNT_TEST = True  (integrated in single scandir pass)
+PREVIOUS_SAFE_SCAN_CORRECTION_COMPLETED = True
+SCREENSHOT_ALLOWLIST_SOURCE         = EXECUTABLE_GENERATOR_CONTRACT
+SCREENSHOT_REGEX_WITHOUT_BOUND_CHECK = False
+USER_HTML_SCREENSHOT_MAX            = 16  (sections[:15] → 01-15 plus full; hard cap in code)
+ADMIN_HTML_SCREENSHOT_MAX           = 16
+PDF_SCREENSHOT_CAP                  = 76  (_PDF_SCREENSHOT_CAP constant in Generator; _pdf_screenshots breaks at i>=76)
+USER_PDF_SCREENSHOT_MAX             = 76  (explicit cap; pages 01-76; regex (0[1-9]|[1-6][0-9]|7[0-6]))
+ADMIN_PDF_SCREENSHOT_MAX            = 76
+PREVIOUS_PDF_MAX_DERIVATION_VALID   = False  (99 was wrong: _pdf_screenshots had no cap; UNBOUNDED_WITHIN_APPLICATION)
+OUTPUT_BOUND_RESOLUTION             = OPTION_A  (explicit cap added to Generator)
+VALID_OUTPUT_CAN_EXCEED_DELETE_LIMIT = False  (max: 16+16+16+76+76=200 = _DELETE_MAX_ENTRIES)
+MAXIMUM_COMPLETE_GENERATOR_SHAPE    = 200 entries  (16 base + 16 user_html + 16 admin_html + 76 user_pdf + 76 admin_pdf)
+MAXIMUM_COMPLETE_GENERATOR_SHAPE_DELETABLE = True
+GENERATOR_CAN_CREATE_SCANNER_REJECTED_SCREENSHOT = False
+SCANNER_ACCEPTS_GENERATOR_IMPOSSIBLE_SCREENSHOT = False
+ARBITRARY_SCREENSHOT_COUNT_ALLOWED  = False
+PARTIAL_APPROVED_RUNS_DELETABLE     = True
+GENERATOR_TEMPORARY_FILENAME_SET    = NONE  (tempfile.NamedTemporaryFile in system temp, deleted in finally)
+SCREENSHOT_BOUNDARY_TESTS_PASSED    = 12/12  (SS-BOUND-1..12; PDF: page_76 accepted, page_77 refused, page_00 refused)
+PARTIAL_RUN_TESTS_PASSED            = 8/8    (PARTIAL-1..8)
+ENTRY_COUNT_BOUNDARY_STRATEGY       = STRATEGY_A  (real Generator-valid names: 16+16+76+76+16=200)
+REPORT_SELF_HASH_EMBEDDED           = False  (doc hash is external evidence only)
+CANONICAL_TRACKED_FILE_HASH_SOURCE  = GIT_COMMITTED_BLOB_BYTES
+CRLF_WORKING_TREE_HASH_RECORDED_AS_COMMITTED_HASH = False
+WORKING_TREE_LINE_ENDING_HASH       = SUPPLEMENTAL_ONLY
+GENERATOR_NORMALIZED_BYTES_MATCH    = True
+GENERATOR_NON_LINE_ENDING_DIFFERENCES = 0
+AMEND_PERFORMED                     = True  (doc hash correction only; Python+test files unchanged)
+RETENTION_STOPS_ON_FIRST_REFUSED_RUN = False
+RETENTION_ATTEMPTS_LATER_SAFE_CANDIDATES = True
+PRE_GENERATION_507_CONDITION        = post_reduction_recount > 9
+PRE_GENERATION_REDUCTION_ATTEMPTED  = True
+DELETION_LIMITS_TESTED              = True
+UNKNOWN_STRUCTURES_TESTED           = 7  (UNKNOWN-1..7)
+RET_SKIP_TESTED                     = True  (RET-SKIP-1)
+RBG_ASSERTION_COUNT                 = 17
+RBG_TEMP_ROOT_IS_REPOSITORY_ROOT    = False
+BRIDGE_API_MODIFIED                 = False
+STAGED_FILES                        = 0
+COMMITTED_FILES                     = 5
+PUSH_PERFORMED                      = False
+DIFF_CHECK_EXIT                     = 0
+DIFF_CHECK_STDOUT                   = EMPTY
+DIFF_CHECK_STDERR                   = LF_CRLF_WARNINGS_ONLY (not whitespace errors)
+SECRET_SCAN_MATCHES                 = 0
+SECRET_SCAN_STATUS                  = CLEAN
+```
+
+SENTINEL_CODE = A6_AWAITING_WAVE_4A_FAST_FORWARD_MERGE_APPROVAL

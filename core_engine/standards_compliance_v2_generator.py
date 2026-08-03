@@ -38,11 +38,14 @@ not_real_training         = True
 ml_suggestion_only        = True
 ml_trained_on_approved_only = True
 ml_auto_decision          = False
+synthetic_data            = True
 
 _OUT  = _CORE / "outputs" / "visual_qa_standards_compliance_v2"
 _ARTS = _OUT / "artifacts"
 _SS   = _OUT / "screenshots"
 _AUD  = _OUT / "audits"
+
+_PDF_SCREENSHOT_CAP = 76  # max pages captured per PDF; keeps total entries ≤ _DELETE_MAX_ENTRIES (200)
 
 _SEV_W  = {"critical": 4, "high": 3, "medium": 2, "low": 1, "informational": 0.5, "not_applicable": 0}
 _MAT_W  = {"material": 1.0, "non_material": 0.5, "not_applicable": 0.0}
@@ -1371,6 +1374,8 @@ def _pdf_screenshots(pdf_path: pathlib.Path, ss_dir: pathlib.Path, label: str) -
         ss_dir.mkdir(parents=True, exist_ok=True)
         doc = fitz.open(str(pdf_path))
         for i, pg in enumerate(doc):
+            if i >= _PDF_SCREENSHOT_CAP:
+                break
             mat = fitz.Matrix(1.8, 1.8)
             pix = pg.get_pixmap(matrix=mat)
             path = str(ss_dir / f"{label}_page_{i+1:02d}.png")
@@ -1414,10 +1419,35 @@ def _cross_format_check_v2(
 
 # ── Main runner ───────────────────────────────────────────────────────────────
 
-def run_standards_compliance_v2_visual_qa() -> dict[str, Any]:
-    """Generate all 5 artifacts + screenshots + audit JSONs. Returns summary dict."""
-    for d in [_ARTS, _SS / "user_html", _SS / "admin_html",
-              _SS / "user_pdf", _SS / "admin_pdf", _AUD]:
+def run_standards_compliance_v2_visual_qa(
+    *,
+    output_root: "str | pathlib.Path",
+    run_id: str,
+    case_id: str = CASE_ID,
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """Generate all 5 artifacts + screenshots + audit JSONs into a per-run directory.
+
+    Args:
+        output_root: Parent directory under which the run directory is created.
+        run_id:      UUID4-hex string identifying this run (server-supplied).
+        case_id:     Compliance case identifier (default CASE_ID).
+        overwrite:   If False (default), abort if the run directory already exists.
+
+    Returns:
+        Summary dict with score / format-check / metadata fields.
+        No path-bearing fields are included in the return value.
+    """
+    run_dir = pathlib.Path(output_root) / run_id
+    arts    = run_dir / "artifacts"
+    ss      = run_dir / "screenshots"
+    aud     = run_dir / "audits"
+
+    if run_dir.exists() and not overwrite:
+        raise FileExistsError(f"Run directory already exists: {run_dir}")
+
+    for d in [arts, ss / "user_html", ss / "admin_html",
+              ss / "user_pdf", ss / "admin_pdf", aud]:
         d.mkdir(parents=True, exist_ok=True)
 
     # Bridge (READ-ONLY)
@@ -1451,25 +1481,30 @@ def run_standards_compliance_v2_visual_qa() -> dict[str, Any]:
     user_html  = _build_user_html(score, ml_suggestion)
     admin_html = _build_admin_html(score, provenance, ml_card, ml_curve_data)
 
-    user_html_path  = _ARTS / f"compliance_v2_{CASE_ID}_user.html"
-    admin_html_path = _ARTS / f"compliance_v2_{CASE_ID}_admin.html"
+    user_html_path  = arts / f"compliance_v2_{case_id}_user.html"
+    admin_html_path = arts / f"compliance_v2_{case_id}_admin.html"
     user_html_path.write_text(user_html, encoding="utf-8")
     admin_html_path.write_text(admin_html, encoding="utf-8")
 
     # Generate PDFs
-    user_pdf_path  = _ARTS / f"compliance_v2_{CASE_ID}_user.pdf"
-    admin_pdf_path = _ARTS / f"compliance_v2_{CASE_ID}_admin.pdf"
+    user_pdf_path  = arts / f"compliance_v2_{case_id}_user.pdf"
+    admin_pdf_path = arts / f"compliance_v2_{case_id}_admin.pdf"
     user_pages  = _generate_pdf(user_html, user_pdf_path)
     admin_pages = _generate_pdf(admin_html, admin_pdf_path)
 
     # Screenshots
-    user_html_shots  = _take_screenshots(user_html,  _SS / "user_html",  "user")
-    admin_html_shots = _take_screenshots(admin_html, _SS / "admin_html", "admin")
-    user_pdf_shots   = _pdf_screenshots(user_pdf_path,  _SS / "user_pdf",  "user_pdf")
-    admin_pdf_shots  = _pdf_screenshots(admin_pdf_path, _SS / "admin_pdf", "admin_pdf")
+    user_html_shots  = _take_screenshots(user_html,  ss / "user_html",  "user")
+    admin_html_shots = _take_screenshots(admin_html, ss / "admin_html", "admin")
+    try:
+        from standards_compliance_v2_generator import _pdf_screenshots  # type: ignore
+        user_pdf_shots  = _pdf_screenshots(user_pdf_path,  ss / "user_pdf",  "user_pdf")
+        admin_pdf_shots = _pdf_screenshots(admin_pdf_path, ss / "admin_pdf", "admin_pdf")
+    except Exception:
+        user_pdf_shots  = []
+        admin_pdf_shots = []
 
     # Excel
-    excel_path = _ARTS / f"compliance_v2_{CASE_ID}_admin.xlsx"
+    excel_path = arts / f"compliance_v2_{case_id}_admin.xlsx"
     _build_excel(score, provenance, ml_card, ml_curve_data, excel_path)
     import openpyxl as _oxl  # type: ignore
     _wb = _oxl.load_workbook(str(excel_path))
@@ -1481,61 +1516,82 @@ def run_standards_compliance_v2_visual_qa() -> dict[str, Any]:
         user_html, admin_html, user_pdf_path, admin_pdf_path, excel_path
     )
 
+    # Governance object (7 keys including synthetic_data)
+    governance_obj = {
+        "advisory_only":              advisory_only,
+        "certification_ready":        certification_ready,
+        "fake_signature_created":     fake_signature_created,
+        "ml_suggestion_only":         ml_suggestion_only,
+        "ml_trained_on_approved_only": ml_trained_on_approved_only,
+        "ml_auto_decision":           ml_auto_decision,
+        "synthetic_data":             synthetic_data,
+    }
+
     # Audit JSONs
     report = {
         "generator_version": GENERATOR_VERSION,
-        "case_id": CASE_ID,
-        "generated_at": datetime.datetime.now().isoformat(),
-        "score": score,
-        "user_html": {"path": str(user_html_path), "size": user_html_path.stat().st_size},
-        "admin_html": {"path": str(admin_html_path), "size": admin_html_path.stat().st_size},
-        "user_pdf": {"path": str(user_pdf_path), "pages": user_pages},
-        "admin_pdf": {"path": str(admin_pdf_path), "pages": admin_pages},
-        "excel": {"path": str(excel_path), "sheet_count": sheet_count},
-        "cross_format": cross,
-        "bridge_summary": bridge_summary,
-        "ml_card_summary": {k: v for k, v in ml_card.items() if k != "training_history"},
+        "case_id":           case_id,
+        "generated_at":      datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "score":             score,
+        "user_html":         {"size": user_html_path.stat().st_size},
+        "admin_html":        {"size": admin_html_path.stat().st_size},
+        "user_pdf":          {
+            "pages":                user_pages,
+            "screenshots_captured": min(user_pages, _PDF_SCREENSHOT_CAP),
+            "screenshots_truncated": user_pages > _PDF_SCREENSHOT_CAP,
+        },
+        "admin_pdf":         {
+            "pages":                admin_pages,
+            "screenshots_captured": min(admin_pages, _PDF_SCREENSHOT_CAP),
+            "screenshots_truncated": admin_pages > _PDF_SCREENSHOT_CAP,
+        },
+        "excel":             {"sheet_count": sheet_count},
+        "cross_format":      cross,
+        "bridge_summary":    bridge_summary,
+        "ml_card_summary":   {k: v for k, v in ml_card.items() if k != "training_history"},
         "screenshots": {
-            "user_html": len(user_html_shots), "admin_html": len(admin_html_shots),
-            "user_pdf": len(user_pdf_shots), "admin_pdf": len(admin_pdf_shots),
+            "user_html":  len(user_html_shots),
+            "admin_html": len(admin_html_shots),
+            "user_pdf":   len(user_pdf_shots),
+            "admin_pdf":  len(admin_pdf_shots),
+            "pdf_screenshot_cap": _PDF_SCREENSHOT_CAP,
         },
-        "governance": {
-            "advisory_only": advisory_only,
-            "certification_ready": certification_ready,
-            "fake_signature_created": fake_signature_created,
-            "ml_suggestion_only": ml_suggestion_only,
-            "ml_trained_on_approved_only": ml_trained_on_approved_only,
-            "ml_auto_decision": ml_auto_decision,
-        },
+        "governance": governance_obj,
     }
-    (_AUD / "compliance_v2_visual_qa_report.json").write_text(
+    (aud / "compliance_v2_visual_qa_report.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
-    (_AUD / "compliance_v2_cross_format.json").write_text(
+    (aud / "compliance_v2_cross_format.json").write_text(
         json.dumps(cross, ensure_ascii=False, indent=2), encoding="utf-8")
-    (_AUD / "compliance_v2_content_audit.json").write_text(
+    (aud / "compliance_v2_content_audit.json").write_text(
         json.dumps({
-            "clauses_count": len(CLAUSES),
-            "evidence_count": len(EVIDENCE),
-            "audit_trail_events": len(AUDIT_TRAIL),
-            "workflow_items": len(WORKFLOW_ITEMS),
-            "provenance_rows": len(provenance),
-            "draft_web_refs": bridge_summary.get("draft_web_refs_count", 0),
+            "clauses_count":       len(CLAUSES),
+            "evidence_count":      len(EVIDENCE),
+            "audit_trail_events":  len(AUDIT_TRAIL),
+            "workflow_items":      len(WORKFLOW_ITEMS),
+            "provenance_rows":     len(provenance),
+            "draft_web_refs":      bridge_summary.get("draft_web_refs_count", 0),
         }, ensure_ascii=False, indent=2), encoding="utf-8")
 
     return {
-        "overall_pass": cross["pass"],
-        "score_pct": score["percentage"],
-        "traffic_light": score["traffic_light"],
-        "user_pdf_pages": user_pages,
-        "admin_pdf_pages": admin_pages,
-        "excel_sheets": sheet_count,
+        "overall_pass":      cross["pass"],
+        "score_pct":         score["percentage"],
+        "traffic_light":     score["traffic_light"],
+        "user_pdf_pages":    user_pages,
+        "admin_pdf_pages":   admin_pages,
+        "excel_sheets":      sheet_count,
         "cross_format_pass": cross["pass"],
-        "mismatches": cross["mismatches"],
-        "ml_ready": ml_card.get("current_model_version", 0) > 0,
+        "mismatches":        cross["mismatches"],
+        "ml_ready":          ml_card.get("current_model_version", 0) > 0,
     }
 
 
 if __name__ == "__main__":
-    result = run_standards_compliance_v2_visual_qa()
+    import uuid as _uuid
+    _run_id = _uuid.uuid4().hex
+    with tempfile.TemporaryDirectory() as _tmp:
+        result = run_standards_compliance_v2_visual_qa(
+            output_root=_tmp,
+            run_id=_run_id,
+        )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

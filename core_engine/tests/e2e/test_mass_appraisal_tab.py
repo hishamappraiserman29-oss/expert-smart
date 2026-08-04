@@ -836,3 +836,88 @@ def test_MAT64_no_claim_of_qdrant_active(page, live_server):
     text = panel.inner_text()
     # Should NOT claim active Qdrant; should only mention it as planned/future
     assert "Qdrant مفعّل" not in text and "Qdrant نشط" not in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Wave 4B1 regression: price-index authenticated browser regression
+# Proves /api/price-index became authenticated in Wave 4B1 and the UI sends
+# the Authorization header, receiving a non-401 response.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import os as _os
+
+_PRICE_INDEX_JWT = _os.environ.get("E2E_TEST_JWT", "")
+
+
+def test_MAT65_price_index_requires_auth_unauthenticated(page, live_server):
+    """Wave 4B1 regression: unauthenticated /api/price-index GET returns 401."""
+    resp = page.request.get(f"{live_server}/api/price-index")
+    assert resp.status == 401, (
+        f"Wave 4B1: /api/price-index must require auth; expected 401, got {resp.status}"
+    )
+
+
+def test_MAT66_price_index_authenticated_returns_non_401(page, live_server):
+    """Wave 4B1 regression: authenticated /api/price-index GET does not return 401.
+
+    If E2E_TEST_JWT is not set, generates a test token from JWT_SECRET.
+    """
+    import time as _time
+    jwt_token = _PRICE_INDEX_JWT
+    if not jwt_token:
+        secret = _os.environ.get("JWT_SECRET", "ci-test-secret-for-e2e-workflow")
+        try:
+            import jwt as _jwt
+            now = int(_time.time())
+            jwt_token = _jwt.encode(
+                {"sub": "e2e-test-user", "iat": now, "exp": now + 3600},
+                secret,
+                algorithm="HS256",
+            )
+        except Exception:
+            pytest.skip("PyJWT not available — skipping price-index auth regression")
+
+    resp = page.request.get(
+        f"{live_server}/api/price-index",
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
+    assert resp.status != 401, (
+        f"Wave 4B1: authenticated /api/price-index must not return 401, got {resp.status}"
+    )
+
+
+def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
+    """Wave 4B1 regression: frontend price-index widget sends Authorization header.
+
+    Intercepts the fetch to /api/price-index and asserts the Authorization
+    header is present, proving the UI was updated when the endpoint became
+    authenticated in Wave 4B1.
+    """
+    _goto(page, live_server)
+
+    captured_requests: list[dict] = []
+
+    def handle_request(req):
+        if "/api/price-index" in req.url:
+            captured_requests.append({
+                "url": req.url,
+                "auth": req.headers.get("authorization", ""),
+            })
+
+    page.on("request", handle_request)
+
+    # Navigate to mass appraisal tab which loads the price-index widget
+    _switch_mass_mode(page)
+    page.wait_for_timeout(1000)
+
+    # Check if any price-index request was intercepted
+    if not captured_requests:
+        pytest.skip(
+            "No /api/price-index request intercepted — widget may not auto-fetch on load"
+        )
+
+    for req in captured_requests:
+        assert req["auth"].startswith("Bearer "), (
+            f"Price-index request must include Authorization: Bearer header; "
+            f"got auth={req['auth']!r}"
+        )

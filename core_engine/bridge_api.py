@@ -415,9 +415,21 @@ except ImportError as _rl_err:
     _check_array_field = None  # type: ignore[assignment]
 
 try:
-    from avm_lifecycle import LifecycleConfigError as _LifecycleConfigError
+    from avm_lifecycle import (
+        LifecycleConfigError as _LifecycleConfigError,
+        LifecycleCapacityError as _LifecycleCapacityError,
+        LifecycleStorageUnsafeError as _LifecycleStorageUnsafeError,
+    )
 except ImportError:
     _LifecycleConfigError = RuntimeError  # type: ignore[assignment,misc]
+    _LifecycleCapacityError = RuntimeError  # type: ignore[assignment,misc]
+    _LifecycleStorageUnsafeError = RuntimeError  # type: ignore[assignment,misc]
+
+_LIFECYCLE_ERRORS = (
+    _LifecycleConfigError,
+    _LifecycleCapacityError,
+    _LifecycleStorageUnsafeError,
+)
 
 
 @app.errorhandler(413)
@@ -5419,7 +5431,10 @@ def _augment_payload_for_uncertainty(payload: dict) -> None:
 @require_auth
 def handle_valuation():
     try:
-        payload = request.get_json(silent=True) or {}
+        payload, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        if _json_err:
+            return _json_err
+        payload = payload or {}
 
         # ── تفويض تلقائي للأغراض المتخصصة (Wave 2) ──────────────────────────
         # عند اختيار غرض يستوجب موديولاً متخصصاً، نُحوِّل الطلب إليه ونرجع
@@ -7860,7 +7875,10 @@ def handle_price_index():
     try:
         # Accept filters from query string OR JSON body
         if request.method == "POST":
-            payload = request.get_json(silent=True) or {}
+            payload, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+            if _json_err:
+                return _json_err
+            payload = payload or {}
         else:
             payload = {}
         region_filter = (request.args.get("region") or payload.get("region") or "").strip() or None
@@ -7941,7 +7959,7 @@ def handle_mass_appraisal_preview():
         preview["preview"] = True
         return jsonify(preview)
     except Exception as e:
-        if type(e).__name__ == "LifecycleConfigError":
+        if isinstance(e, _LIFECYCLE_ERRORS):
             return jsonify({"error": "artifact_storage_unavailable"}), 503
         print(traceback.format_exc())
         return _safe_err(e)
@@ -7980,7 +7998,7 @@ def handle_mass_appraisal_run():
         )
         return jsonify(result)
     except Exception as e:
-        if type(e).__name__ == "LifecycleConfigError":
+        if isinstance(e, _LIFECYCLE_ERRORS):
             return jsonify({"error": "artifact_storage_unavailable"}), 503
         print(traceback.format_exc())
         return _safe_err(e)
@@ -7999,7 +8017,10 @@ def handle_mass_appraisal_export_xlsx():
                             "message": f"mass_appraisal_excel not available: {imp_err}"}), 500
     try:
         from flask import Response
-        body                = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        if _json_err:
+            return _json_err
+        body                = body or {}
         run_result          = body.get("result") or body
         ratio_study         = body.get("ratio_study")
         calibration_preview = body.get("calibration_preview")
@@ -10524,7 +10545,10 @@ def api_avm_valuation():
     if _avm_predictor_instance is None:
         return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
     try:
-        body = request.get_json(force=True) or {}
+        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        if _json_err:
+            return _json_err
+        body = body or {}
         area_sqm = float(body.get("area_sqm", 0))
         location = str(body.get("location", "")).strip()
         property_type = str(body.get("property_type", "")).strip()
@@ -12866,7 +12890,7 @@ def mv_run():
         run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
         audit_record = _mv_build_audit(run_result, code_commit="HEAD")
     except Exception as _mv_run_err:
-        if type(_mv_run_err).__name__ == "LifecycleConfigError":
+        if isinstance(_mv_run_err, _LIFECYCLE_ERRORS):
             return jsonify({"error": "artifact_storage_unavailable"}), 503
         raise
 
@@ -12975,7 +12999,10 @@ def mv_review_prediction(prediction_id: str):
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body        = request.get_json(silent=True) or {}
+    body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+    if _json_err:
+        return _json_err
+    body        = body or {}
     run_id      = body.get("run_id", "")
     decision    = body.get("decision", "")
     reason      = body.get("reason", "")
@@ -13113,7 +13140,7 @@ def mv_import():
                     "iaao_summary":    run_out["iaao_summary"],
                 }
             except Exception as _run_err:
-                if type(_run_err).__name__ == "LifecycleConfigError":
+                if isinstance(_run_err, _LIFECYCLE_ERRORS):
                     return jsonify({"error": "artifact_storage_unavailable"}), 503
                 run_result_summary = {"error": str(_run_err)}
 

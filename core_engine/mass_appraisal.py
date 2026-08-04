@@ -23,10 +23,19 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 try:
-    from avm_lifecycle import create_run_dir, LifecycleConfigError
+    from avm_lifecycle import (
+        create_run_dir,
+        update_run_metadata_status,
+        LifecycleConfigError,
+        LifecycleCapacityError,
+        LifecycleStorageUnsafeError,
+    )
 except ImportError:
     create_run_dir = None  # type: ignore[assignment]
+    update_run_metadata_status = None  # type: ignore[assignment]
     LifecycleConfigError = RuntimeError  # type: ignore[assignment, misc]
+    LifecycleCapacityError = RuntimeError  # type: ignore[assignment, misc]
+    LifecycleStorageUnsafeError = RuntimeError  # type: ignore[assignment, misc]
 
 _FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
@@ -284,9 +293,10 @@ def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
         return ""
 
     # Persistent write — always redirect to lifecycle-managed directory (Wave 4B1)
+    run_dir_obj = None
     if create_run_dir is not None:
-        run_dir = create_run_dir()
-        path = str(run_dir / "mass_appraisal.xlsx")
+        run_dir_obj = create_run_dir()
+        path = str(run_dir_obj / "mass_appraisal.xlsx")
     else:
         # Fallback: use provided output_dir or OS tmp (never writes into repository)
         import tempfile
@@ -298,7 +308,7 @@ def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
     wb = xlsxwriter.Workbook(path, {
         "nan_inf_to_errors":   True,
         "strings_to_formulas": False,
-        "strings_to_urls":     False,
+        "strings_to_urls": False,
     })
 
     def F(**kw):
@@ -366,6 +376,14 @@ def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
     ws2.set_column("B:B", 20)
 
     wb.close()
+
+    # Update lifecycle metadata: mark run complete
+    if run_dir_obj is not None and update_run_metadata_status is not None:
+        try:
+            update_run_metadata_status(run_dir_obj, "complete")
+        except Exception:
+            pass
+
     return path
 
 

@@ -423,10 +423,19 @@ def register(app, require_auth, limiter=None) -> None:
             "client_visible_message": "",
         }
 
-        # Process document uploads — enforce 5-file limit on doc_* keys (Wave 4B1)
+        # Process document uploads — enforce 5-file limit and 10 MiB per-file limit (Wave 4B1)
         _accepted_docs = accepted_uploaded_files(files, prefix="doc_")
         if len(_accepted_docs) > _MAX_FILE_COUNT:
             return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+        for _fo in _accepted_docs:
+            try:
+                _fo.stream.seek(0, 2)
+                _fsize = _fo.stream.tell()
+                _fo.stream.seek(0)
+            except (AttributeError, OSError):
+                _fsize = 0
+            if _fsize > _MAX_BYTES:
+                return jsonify({"error": "file_too_large", "maximum_bytes": _MAX_BYTES}), 413
 
         doc_errors: list[str] = []
         docs_saved: list[dict] = []
@@ -507,10 +516,19 @@ def register(app, require_auth, limiter=None) -> None:
 
         files      = request.files
 
-        # Enforce 5-file limit on all file keys (Wave 4B1)
+        # Enforce 5-file limit and 10 MiB per-file limit on all file keys (Wave 4B1)
         _accepted_uploads = accepted_uploaded_files(files)
         if len(_accepted_uploads) > _MAX_FILE_COUNT:
             return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+        for _fo in _accepted_uploads:
+            try:
+                _fo.stream.seek(0, 2)
+                _fsize = _fo.stream.tell()
+                _fo.stream.seek(0)
+            except (AttributeError, OSError):
+                _fsize = 0
+            if _fsize > _MAX_BYTES:
+                return jsonify({"error": "file_too_large", "maximum_bytes": _MAX_BYTES}), 413
 
         doc_errors: list[str] = []
         docs_saved: list[dict] = []

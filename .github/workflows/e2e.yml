@@ -9,16 +9,16 @@ on:
 
 jobs:
   e2e:
-    name: Playwright Smoke Tests
+    name: Playwright AVM + Mass Appraisal E2E
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # Dummy secret so bridge_api.py auth middleware initialises cleanly.
-      # E2E tests only exercise the UI (health check + DOM); no JWT is issued.
       JWT_SECRET: ci-test-secret-for-e2e-workflow
       PORT: "5000"
       AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
-      PYTHONPATH: .
+      PYTHONPATH: ${{ github.workspace }}
+      ADMIN_USER_IDS: ""
+      RATE_LIMIT_ENABLED: "false"
 
     steps:
       - uses: actions/checkout@v4
@@ -37,13 +37,55 @@ jobs:
       - name: Install Playwright browsers
         run: python -m playwright install --with-deps chromium
 
+      - name: Create AVM artifact root outside repository
+        run: mkdir -p /tmp/expert_smart_avm_ci
+
+      - name: Start bridge_api server
+        run: |
+          python core_engine/bridge_api.py > /tmp/bridge_api_server.log 2>&1 &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+
+      - name: Poll health endpoint until ready (max 30 s)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:${PORT}/api/advisor/health" > /dev/null 2>&1; then
+              echo "Server ready after $((i * 500))ms"
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "ERROR: server did not become healthy within 30 seconds"
+          cat /tmp/bridge_api_server.log || true
+          exit 1
+
+      - name: Collect E2E tests
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mass_appraisal_tab.py \
+            --collect-only -q
+
       - name: Run E2E smoke tests
         run: |
           python -m pytest \
             -p core_engine.tests.avm_isolation_plugin \
-            core_engine/tests/e2e/test_requirements_checklist_smoke.py \
-            -m smoke \
-            --strict-markers \
-            -v \
-            --tb=short \
-            --maxfail=1
+            core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mass_appraisal_tab.py \
+            -v --tb=short --maxfail=3
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-api-server-log
+          path: /tmp/bridge_api_server.log
+
+      - name: Terminate server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill "$SERVER_PID" 2>/dev/null || true
+            sleep 1
+            kill -9 "$SERVER_PID" 2>/dev/null || true
+          fi

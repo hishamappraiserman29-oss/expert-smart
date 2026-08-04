@@ -476,10 +476,19 @@ def register(app, require_auth, limiter=None) -> None:
             "summary":        form.get("summary", ""),
         }
 
-        # Upload documents — enforce 5-file limit (Wave 4B1)
+        # Upload documents — enforce 5-file limit and 10 MiB per-file limit (Wave 4B1)
         _accepted = accepted_uploaded_files(files)
         if len(_accepted) > _MAX_FILE_COUNT:
             return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+        for _fo in _accepted:
+            try:
+                _fo.stream.seek(0, 2)
+                _fsize = _fo.stream.tell()
+                _fo.stream.seek(0)
+            except (AttributeError, OSError):
+                _fsize = 0
+            if _fsize > _MAX_BYTES:
+                return jsonify({"error": "file_too_large", "maximum_bytes": _MAX_BYTES}), 413
 
         docs_meta: list  = []
         doc_errors: list = []

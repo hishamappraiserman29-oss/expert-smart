@@ -12,15 +12,17 @@ env:
   IMAGE_NAME: expert-smart/api
 
 jobs:
-  # ── Test ─────────────────────────────────────────────────────────────────────
-  test:
-    name: Test Suite
+  # ── Lane 1: Governed MV + Wave 4B1 security (NO scikit-learn) ────────────────
+  test-governed:
+    name: Governed MV + Wave 4B1 Security
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: core_engine
     env:
       PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      ADMIN_USER_IDS: admin-test-id
+      RATE_LIMIT_ENABLED: "false"
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,11 +32,11 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies
+      - name: Install base dependencies (no scikit-learn)
+        working-directory: ${{ github.workspace }}
         run: |
-          pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
-          pip install scikit-learn==1.9.0
-          pip install -r ../requirements-dev.txt
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Secret guard — reject committed credentials
         working-directory: ${{ github.workspace }}
@@ -43,15 +45,10 @@ jobs:
           import sys, pathlib, re, subprocess
 
           FAIL = False
-          # File names that must never be tracked
           FORBIDDEN_NAMES = {"service_account.json", "credentials.json"}
-          # PEM private key: header MUST be followed by a newline (real keys have this;
-          # regex pattern strings stored in .py files do not — avoids false positives
-          # from secrets_scanner.py which stores detection regexes as source code).
           PEM_RE = re.compile(
               r"-----BEGIN (RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----[\r\n]"
           )
-          # service_account type field — scan .json files only
           SA_TYPE_RE = re.compile(r'"type"\s*:\s*"service_account"')
           TEXT_EXTS = {".py", ".txt", ".md", ".yml", ".yaml", ".toml", ".cfg", ".sh"}
 
@@ -90,7 +87,62 @@ jobs:
               sys.exit(1)
           print("Secret guard passed — no credentials detected in tracked files.")
 
+      - name: Collect governed MV + Wave 4B1 tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_mv_api.py \
+            core_engine/tests/test_mv_audit_trail.py \
+            core_engine/tests/test_mv_column_mapper.py \
+            core_engine/tests/test_mv_data_splits.py \
+            core_engine/tests/test_mv_db.py \
+            core_engine/tests/test_mv_governance.py \
+            core_engine/tests/test_mv_iaao_metrics.py \
+            core_engine/tests/test_mv_import_endpoint.py \
+            core_engine/tests/test_mv_interpretability.py \
+            core_engine/tests/test_mv_model_quality.py \
+            core_engine/tests/test_mv_outputs.py \
+            core_engine/tests/test_mv_pipeline.py \
+            core_engine/tests/test_mv_quality_checker.py \
+            core_engine/tests/test_mv_reproducibility.py \
+            core_engine/tests/test_mv_runner.py \
+            core_engine/tests/test_mv_security.py \
+            core_engine/tests/test_schema_validator.py \
+            core_engine/tests/test_wave4b1_security.py \
+            core_engine/tests/test_avm_artifact_lifecycle.py \
+            core_engine/tests/test_wave4b1_waitress_transport.py \
+            --collect-only -q
+
+      - name: Run governed MV + Wave 4B1 security tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_mv_api.py \
+            core_engine/tests/test_mv_audit_trail.py \
+            core_engine/tests/test_mv_column_mapper.py \
+            core_engine/tests/test_mv_data_splits.py \
+            core_engine/tests/test_mv_db.py \
+            core_engine/tests/test_mv_governance.py \
+            core_engine/tests/test_mv_iaao_metrics.py \
+            core_engine/tests/test_mv_import_endpoint.py \
+            core_engine/tests/test_mv_interpretability.py \
+            core_engine/tests/test_mv_model_quality.py \
+            core_engine/tests/test_mv_outputs.py \
+            core_engine/tests/test_mv_pipeline.py \
+            core_engine/tests/test_mv_quality_checker.py \
+            core_engine/tests/test_mv_reproducibility.py \
+            core_engine/tests/test_mv_runner.py \
+            core_engine/tests/test_mv_security.py \
+            core_engine/tests/test_schema_validator.py \
+            core_engine/tests/test_wave4b1_security.py \
+            core_engine/tests/test_avm_artifact_lifecycle.py \
+            core_engine/tests/test_wave4b1_waitress_transport.py \
+            -q --tb=short
+
       - name: Run CI-safe requirements tests
+        working-directory: ${{ github.workspace }}/core_engine
         run: |
           python -m pytest \
             tests/test_requirements_endpoint.py \
@@ -99,30 +151,96 @@ jobs:
             tests/test_purpose_integration_matrix.py \
             tests/test_purpose_routes.py \
             tests/test_approval_rules.py \
-            -q \
-            --tb=short \
-            --cov=. \
-            --cov-report=xml \
-            --cov-report=term-missing
-
-      - name: Run Wave 4B1 AVM security tests
-        env:
-          JWT_SECRET: ci-test-secret
-          ADMIN_USER_IDS: admin-test-id
-          RATE_LIMIT_ENABLED: "false"
-        run: |
-          python -m pytest \
-            -p core_engine.tests.avm_isolation_plugin \
-            tests/test_wave4b1_security.py \
-            tests/test_avm_artifact_lifecycle.py \
-            -q \
-            --tb=short
+            -q --tb=short --cov=. --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
           file: core_engine/coverage.xml
         continue-on-error: true
+
+  # ── Lane 2: ML AVM (WITH scikit-learn) ────────────────────────────────────────
+  test-ml-avm:
+    name: ML AVM (scikit-learn)
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      ADMIN_USER_IDS: admin-test-id
+      RATE_LIMIT_ENABLED: "false"
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci_ml
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install base + ML dependencies
+        working-directory: ${{ github.workspace }}
+        run: |
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -r core_engine/requirements-ml.txt
+
+      - name: Collect ML AVM tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_ml_avm.py \
+            --collect-only -q
+
+      - name: Run ML AVM tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_ml_avm.py \
+            -q --tb=short
+
+  # ── Lane 3: Root mass-appraisal integration ────────────────────────────────────
+  test-root-integration:
+    name: Root Mass-Appraisal Integration
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci_root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install base dependencies (no scikit-learn)
+        working-directory: ${{ github.workspace }}
+        run: |
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Collect root integration tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            tests/test_mass_appraisal_export_integration.py \
+            tests/test_mass_appraisal_template_render.py \
+            --collect-only -q
+
+      - name: Run root mass-appraisal integration tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            tests/test_mass_appraisal_export_integration.py \
+            tests/test_mass_appraisal_template_render.py \
+            -q --tb=short
 
   # ── Lint ─────────────────────────────────────────────────────────────────────
   lint:
@@ -152,11 +270,9 @@ jobs:
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:
     name: Build Docker Image
-    needs: [test, lint]
+    needs: [test-governed, test-ml-avm, test-root-integration, lint]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    # packages:write is only exercised on workflow_dispatch (push: conditional below).
-    # On normal push the image is built but not pushed; login step is skipped.
     permissions:
       contents: read
       packages: write

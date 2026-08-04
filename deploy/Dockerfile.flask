@@ -27,11 +27,12 @@ COPY deploy/requirements-deploy.txt /tmp/requirements-deploy.txt
 RUN pip install --upgrade pip \
  && pip install -r /tmp/requirements-deploy.txt
 
-# Then project deps
+# Then project deps — required packages; fail the build on any installation error
 COPY core_engine/requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt || true
-# `|| true` because some heavy deps (Prophet, statsmodels) may fail on slim;
-# the app gracefully degrades when optional ML libs are absent.
+RUN pip install -r /tmp/requirements.txt
+
+# Dependency audit — fail build if any installed package has broken requirements
+RUN python -m pip check
 
 # Copy the project (read-only — deploy stack does NOT modify core_engine)
 COPY core_engine /app/core_engine

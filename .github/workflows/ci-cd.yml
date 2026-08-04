@@ -19,6 +19,8 @@ jobs:
     defaults:
       run:
         working-directory: core_engine
+    env:
+      PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
+          pip install scikit-learn==1.9.0
           pip install -r ../requirements-dev.txt
 
       - name: Secret guard — reject committed credentials
@@ -101,6 +104,19 @@ jobs:
             --cov=. \
             --cov-report=xml \
             --cov-report=term-missing
+
+      - name: Run Wave 4B1 AVM security tests
+        env:
+          JWT_SECRET: ci-test-secret
+          ADMIN_USER_IDS: admin-test-id
+          RATE_LIMIT_ENABLED: "false"
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            tests/test_wave4b1_security.py \
+            tests/test_avm_artifact_lifecycle.py \
+            -q \
+            --tb=short
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

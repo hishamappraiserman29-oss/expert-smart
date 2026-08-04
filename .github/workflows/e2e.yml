@@ -16,6 +16,9 @@ jobs:
       # Dummy secret so bridge_api.py auth middleware initialises cleanly.
       # E2E tests only exercise the UI (health check + DOM); no JWT is issued.
       JWT_SECRET: ci-test-secret-for-e2e-workflow
+      PORT: "5000"
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
+      PYTHONPATH: .
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +39,9 @@ jobs:
 
       - name: Run E2E smoke tests
         run: |
-          python -m pytest core_engine/tests/e2e/test_requirements_checklist_smoke.py \
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/e2e/test_requirements_checklist_smoke.py \
             -m smoke \
             --strict-markers \
             -v \

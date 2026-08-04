@@ -9,7 +9,13 @@ try:
     from adapters.asset import AssetValuationResult
 except ImportError:
     AssetValuationResult = None  # type: ignore[assignment,misc]
-from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, Palette as _Palette, get_fill as _gf
+try:
+    from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, Palette as _Palette, get_fill as _gf
+except ImportError:
+    import sys as _sys
+    import os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+    from reports.report_theme import BuilderPalette as _BP, NumFormat as _NF, Palette as _Palette, get_fill as _gf
 
 
 # ── Style constants ────────────────────────────────────────────────────────────

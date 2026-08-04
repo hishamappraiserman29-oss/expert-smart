@@ -1296,8 +1296,9 @@
                     const apiBase = typeof _maApiUrl === 'function' ? _maApiUrl() : '';
                     var ctrl = new AbortController();
                     setTimeout(function(){ ctrl.abort(); }, 5000);
-                    fetch(apiBase + "/api/price-index", {signal: ctrl.signal})
-                        .then(function(r){ return r.ok ? r.json() : null; })
+                    var _fetchFn = (typeof window.esFetch === 'function') ? window.esFetch : fetch;
+                    _fetchFn(apiBase + "/api/price-index", {signal: ctrl.signal})
+                        .then(function(r){ return r && r.ok ? r.json() : null; })
                         .then(function(d){
                             if (!d || d.status !== "success" || !d.regions) return;
                             var rs = d.regions;
@@ -2799,6 +2800,12 @@
             if (!listEl) return;
             listEl.innerHTML = '';
             if (!files || !files.length) return;
+            if (files.length > 5) {
+                alert('يمكن إرفاق 5 ملفات كحد أقصى. تم إلغاء الاختيار.');
+                var _inp = document.getElementById('tax-docs-input');
+                if (_inp) _inp.value = '';
+                return;
+            }
             for (var i = 0; i < files.length; i++) {
                 var li = document.createElement('li');
                 var kb = files[i].size > 0 ? Math.round(files[i].size / 1024) + ' KB' : '—';
@@ -4824,6 +4831,12 @@
             if (!listEl) return;
             listEl.innerHTML = '';
             if (!files || !files.length) return;
+            if (files.length > 5) {
+                alert('يمكن إرفاق 5 ملفات كحد أقصى. تم إلغاء الاختيار.');
+                var _inp = document.getElementById('sv-docs-input');
+                if (_inp) _inp.value = '';
+                return;
+            }
             for (var i = 0; i < files.length; i++) {
                 var li = document.createElement('li');
                 var kb = files[i].size > 0 ? Math.round(files[i].size / 1024) + ' KB' : '—';

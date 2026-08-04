@@ -1122,3 +1122,91 @@ SECRET_SCAN_STATUS                  = CLEAN
 ```
 
 SENTINEL_CODE = A6_AWAITING_WAVE_4A_FAST_FORWARD_MERGE_APPROVAL
+
+
+---
+
+## Wave 4B1 — AVM Security Hardening and CI Isolation
+
+**Authorization code**: `A6_WAVE_4B1_IMPLEMENTATION_AUTHORIZED`
+**Branch**: `migration/wave4b1-avm-security-ci-hardening`
+**Date**: 2026-08-05
+
+### Summary
+
+Wave 4B1 applies security hardening to the AVM (Automated Valuation Model) pipeline and CI
+infrastructure. The wave is organized into five themes:
+
+#### 1. Three-Layer Transport Limit
+- **nginx**: `client_max_body_size 64m` (was 50m)
+- **Waitress**: `max_request_body_size = 67_108_864`
+- **Flask**: `app.config["MAX_CONTENT_LENGTH"] = 67_108_864`
+- `@app.errorhandler(413)` returns `{"error": "payload_too_large"}`.
+
+#### 2. AVM Route Hardening (read_bounded_json + check_array_field)
+- `core_engine/request_limits.py` provides `read_bounded_json()`, `check_array_field()`,
+  and `accepted_uploaded_files()`.
+- All 16 `request.get_json()` calls across 11 AVM routes replaced with `_read_bounded_json`.
+- Array-field validation matrix enforced (rows/units ≤5000, records ≤10000, properties ≤500).
+- `PORT = int(os.environ.get("PORT", "5000"))` replaces hardcoded 5000.
+- MANUAL_AVM_OPTIONS_BRANCH_COUNT_AFTER_4B1 = 0 (all manual OPTIONS branches removed).
+
+#### 3. OAF Containment (OAF-001/002/003)
+- `/api/mass-valuation/runs/<run_id>/predictions`: admin-only (OAF-001/002).
+- `/api/mass-valuation/runs`: admin-only (OAF-003).
+- `/api/price-index`: `@require_auth` added.
+- `/api/avm/info`: `@require_auth` added.
+- OAF-004 (review) and OAF-005 (export) deferred to Wave 4B2.
+
+#### 4. Multipart File-Count Limit
+- `accepted_uploaded_files()` counts repeated field names via `files.getlist(key)`.
+- MULTIPART_FILE_COUNT_LIMIT = 5 enforced on:
+  - `POST /api/tax-appeal/leads`
+  - `POST /api/expert-requests`
+  - `POST /api/expert-requests/<id>/documents`
+
+#### 5. AVM Artifact Lifecycle and CI Isolation
+- `core_engine/avm_lifecycle.py`: 12-step creation contract, thread-safe lazy init,
+  `create_run_dir()` returns UUID4 run directory, `LifecycleConfigError` on misconfiguration.
+- `core_engine/tests/avm_isolation_plugin.py`: pytest plugin that snapshots the repo
+  before the session and fails CI if any new artifact lands inside the repo tree.
+- Lifecycle error boundaries added to 4 write paths: preview, run, mass-valuation/run,
+  mass-valuation/import — returns HTTP 503 `{"error": "artifact_storage_unavailable"}`.
+
+#### 6. XLSX Formula Injection Neutralization
+- `mass_appraisal_excel.py`: `_escape_formula()` prepends `'` to cells starting with `=+-@\t\r`.
+- `mass_appraisal.py`: same `_esc()` guard + XlsxWriter options
+  `strings_to_formulas=False`, `strings_to_urls=False`.
+
+#### 7. Dependency Pins
+- Flask==3.1.3, Werkzeug==3.1.8, waitress==3.0.2, scikit-learn==1.9.0
+
+#### 8. CI Workflow Updates
+- `ci-cd.yml`: `PYTHONPATH=${{ github.workspace }}`, `scikit-learn==1.9.0` install,
+  new AVM security test lane with `-p core_engine.tests.avm_isolation_plugin`.
+- `e2e.yml`: `PORT=5000`, `AVM_ARTIFACT_ROOT=/tmp/expert_smart_avm_ci`, `PYTHONPATH=.`,
+  isolation plugin flag.
+
+#### 9. Frontend
+- `loadGrowth()` patched to use `window.esFetch` (Bearer token) for `/api/price-index`.
+- 5-file count guard in `taxHandleDocs()` and `svHandleDocs()` with alert + input reset.
+
+### Gate Results
+
+| Gate | Description | Result |
+|------|-------------|--------|
+| G-1 | bridge_api.py syntax check | PASS |
+| G-2 | File count (15 modified + 6 created = 21) | PASS |
+| G-3 | test_avm_artifact_lifecycle (ALC-01..ALC-12) | 11 PASS, 1 SKIP (Windows symlink) |
+| G-4 | test_wave4b1_security (OAF + Gate 6) | 21 PASS |
+| G-5 | test_wave4b1_waitress_transport (WT-01..WT-05) | 5 PASS |
+| G-6 | Full suite: all 3 test files combined | 37 PASS, 1 SKIP |
+| G-7 | No repo delta (isolation plugin) | PASS |
+
+### Changed Paths
+
+FILES_TO_MODIFY = 15
+FILES_TO_CREATE = 6
+WAVE4B1_TOTAL_CHANGED_PATHS = 21
+
+SENTINEL_CODE = A6_WAVE_4B1_IMPLEMENTATION_COMPLETE_AWAITING_REVIEW

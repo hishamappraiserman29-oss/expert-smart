@@ -33,6 +33,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from request_limits import accepted_uploaded_files
+
+_MAX_FILE_COUNT = 5
+
 # ── Storage directories ───────────────────────────────────────────────────────
 
 _BASE       = Path(__file__).parent / "tax_appeal"
@@ -472,13 +476,14 @@ def register(app, require_auth, limiter=None) -> None:
             "summary":        form.get("summary", ""),
         }
 
-        # Upload documents
+        # Upload documents — enforce 5-file limit (Wave 4B1)
+        _accepted = accepted_uploaded_files(files)
+        if len(_accepted) > _MAX_FILE_COUNT:
+            return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+
         docs_meta: list  = []
         doc_errors: list = []
-        for key in files:
-            fo = files[key]
-            if not fo or not fo.filename:
-                continue
+        for fo in _accepted:
             try:
                 docs_meta.append(_save_document(lead_id, fo))
             except ValueError as exc:

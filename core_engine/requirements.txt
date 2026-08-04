@@ -28,11 +28,16 @@ PyPDF2
 pywin32>=312 ; sys_platform == "win32"
 
 # Backend / Bridge API
-flask
+Flask==3.1.3
+Werkzeug==3.1.8
 flask-cors
 flask-limiter>=3.5,<4.0
 PyJWT[crypto]>=2.10.1,<3.0
 SQLAlchemy>=2.0,<3.0
+waitress==3.0.2
+
+# ML / AVM
+scikit-learn==1.9.0
 
 # AI / Vector Search (AI Agent Brain)
 sentence-transformers

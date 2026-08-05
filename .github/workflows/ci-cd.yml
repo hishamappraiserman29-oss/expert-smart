@@ -343,13 +343,10 @@ assert version("scikit-learn") == "1.9.0", f"scikit-learn=={version(\"scikit-lea
         run: |
           timeout --signal=TERM --kill-after=10s 120s \
             docker run --rm \
+            --workdir /app \
             --entrypoint python \
             expert-smart-deploy-test \
             -c '
-import sys
-for base in ("/app", "/app/core_engine"):
-    if base not in sys.path:
-        sys.path.insert(0, base)
 from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND
 assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"
 '

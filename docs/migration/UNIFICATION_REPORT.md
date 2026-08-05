@@ -1746,3 +1746,100 @@ SELF_HASH_NOT_EMBEDDED
 ```
 
 SENTINEL_CODE = A6_WAVE_4B1_RUNTIME_STORAGE_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 Test Contract Correction
+
+**Date:** 2026-08-06
+**Branch:** `migration/wave4b1-avm-security-ci-hardening`
+**Authorization:** `A6_WAVE_4B1_RUNTIME_STORAGE_TEST_CONTRACT_CORRECTION_AUTHORIZED`
+**Commit message:** `test(ci): enforce complete runtime storage isolation`
+
+### Context
+
+The Wave 4B1 runtime storage correction (commit `50558ce`) was found to have four audit discrepancies in the security test contract:
+
+1. `INTEGRATION_TEST_CHECKS_VECTOR_DB = False` — vector_db was excluded from the integration test's 7-path check due to a pre-existing artifact held open by running servers.
+2. `INTEGRATION_TEST_CAN_SKIP_WHEN_OVERRIDES_MISSING = True` — integration test used `pytest.skip` instead of `assert not missing_overrides`.
+3. `PLUGIN_CLEANUP_GUARD_TESTED = False` — no test exercised `_cleanup_plugin_runtime_root()` safety rejection on repo paths.
+4. `DOCKER_OOD_SYSPATH_INSERTION = True` — the `Assert scikit-learn present` CI step manually inserted `/app/core_engine` into `sys.path` instead of using a clean package import.
+
+### Pre-conditions Verified
+
+- `expert_smart_system/vector_db` quarantined to `%TEMP%\expert_smart_vector_db_quarantine_20260805_234431` after stopping bridge_api servers PID 186552 and 191480 that held the Qdrant `.lock` file.
+- `git diff --check` passed; `python -m compileall -q core_engine` passed.
+
+### Changes Applied (4 files only)
+
+#### `core_engine/tests/test_wave4b1_security.py`
+
+**Change A — `test_storage_override_upload_dir`:** Rewritten to subprocess-based proof. Fresh Python process sets `EXPERT_SMART_UPLOAD_DIR` before any import; uses `sys.stdout = io.StringIO()` to suppress bridge_api startup print statements; asserts only the final `print(_upload_dir)` line equals the override. Import-order-independent.
+
+**Change B — `test_repository_isolation_no_repo_writes`:** Rewritten with three sub-steps:
+- Step 1: `assert not missing_overrides` (fail, not skip) when any of the 6 EXPERT_SMART_* vars is absent.
+- Step 2: All 7 governed paths checked — `expert_smart_system/vector_db` restored to the list (was incorrectly excluded in prior commit).
+- Step 3: QdrantClient path proof — `importlib.reload(_rag)` forces a fresh `_VDB_PATH` from the current env var (fixing the import-order caching bug where `test_storage_override_vector_db` had already imported `rag_advisor` with a different env var value); `_CapturingQdrantClient` captures the path passed to `QdrantClient(path=...)` inside `_init_rag()`.
+
+**Change C — `test_plugin_cleanup_guard_refuses_repo_paths`:** New test. Sets `_plugin._plugin_owned_runtime_root` to the repo root and a repo-child path; asserts `_cleanup_plugin_runtime_root()` returns a non-empty `problems` list without calling `shutil.rmtree`. Verifies the 4-safety-check gate rejects paths inside the repository tree.
+
+#### `.github/workflows/ci-cd.yml`
+
+The `Assert scikit-learn present and default OOD backend in production image` step was corrected:
+- Removed: `sys.path.insert(0, '/app/core_engine')` manual insertion (was masking a potential packaging defect).
+- Added: `--workdir /app` to `docker run`.
+- Result: Import `from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND` succeeds via clean package import only.
+
+### Static Checks
+
+```
+git diff --check          = PASSED (no whitespace errors)
+python -m compileall -q   = PASSED (exit 0)
+syntax check test file    = PASSED
+```
+
+### Validation Gates
+
+```
+FOCUSED_SECURITY_COLLECTION  = 149
+FOCUSED_SECURITY_PASSED      = 149
+FOCUSED_SECURITY_FAILED      = 0
+FOCUSED_SECURITY_SKIPPED     = 0
+
+GOVERNED_COLLECTION          = 532
+GOVERNED_PASSED              = 531
+GOVERNED_SKIPPED             = 1
+GOVERNED_FAILED              = 0
+
+ML_GATE_COLLECTION           = 58
+ML_GATE_PASSED               = 58
+ML_GATE_FAILED               = 0
+
+ROOT_INTEGRATION_PASSED      = 3
+ROOT_INTEGRATION_FAILED      = 0
+
+E2E_COLLECTION_COUNT         = 90
+E2E_PASSED                   = 90
+E2E_FAILED                   = 0
+E2E_SKIPPED                  = 0
+POST_E2E_REPOSITORY_STORAGE_PATH_COUNT = 0
+```
+
+### Corrective Scope
+
+```
+TEST_CONTRACT_CORRECTIVE_FILES_MODIFIED    = 4
+TEST_CONTRACT_CORRECTIVE_FILES_CREATED     = 0
+TEST_CONTRACT_CORRECTIVE_FILES_DELETED     = 0
+INTEGRATION_TEST_CHECKS_VECTOR_DB          = True
+INTEGRATION_TEST_CAN_SKIP_WHEN_OVERRIDES_MISSING = False
+PLUGIN_CLEANUP_GUARD_TESTED                = True
+DOCKER_OOD_SYSPATH_INSERTION_REMOVED       = True
+FOCUSED_SECURITY_PASSED                    = 149
+PUSH_PERFORMED                             = False
+PR_OPENED                                  = False
+MERGE_PERFORMED                            = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_RUNTIME_STORAGE_TEST_CONTRACT_CORRECTION_AWAITING_REVIEW

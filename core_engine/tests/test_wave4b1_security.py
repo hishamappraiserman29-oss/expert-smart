@@ -1681,41 +1681,64 @@ def test_storage_override_model_registry_dir(monkeypatch, tmp_path):
     )
 
 
-def test_storage_override_upload_dir():
-    """bridge_api._UPLOAD_DIR uses EXPERT_SMART_UPLOAD_DIR when set before import."""
-    import bridge_api as _bridge
-    env_val = os.environ.get("EXPERT_SMART_UPLOAD_DIR")
-    if env_val is None:
-        # Standalone (no isolation plugin): verify source contains the override
-        src = (Path(_CORE) / "bridge_api.py").read_text(encoding="utf-8")
-        assert "EXPERT_SMART_UPLOAD_DIR" in src, (
-            "bridge_api.py must reference EXPERT_SMART_UPLOAD_DIR"
-        )
-        return
-    assert _bridge._UPLOAD_DIR == env_val, (
-        f"bridge_api._UPLOAD_DIR must equal EXPERT_SMART_UPLOAD_DIR={env_val!r}, "
-        f"got {_bridge._UPLOAD_DIR!r}"
+def test_storage_override_upload_dir(tmp_path):
+    """bridge_api._UPLOAD_DIR uses EXPERT_SMART_UPLOAD_DIR independently of import order.
+
+    Proven via subprocess: env var is set before any import occurs in the fresh process.
+    bridge_api startup messages are suppressed via StringIO redirect; only the path is printed.
+    """
+    import subprocess, sys as _sys
+
+    external = str(tmp_path / "uploads_override")
+
+    code = "\n".join([
+        "import os, sys, io as _io",
+        f"os.chdir({str(_CORE)!r})",
+        f"sys.path.insert(0, {str(_ROOT)!r})",
+        f"sys.path.insert(0, {str(_CORE)!r})",
+        "_orig_stdout = sys.stdout",
+        "sys.stdout = _io.StringIO()",   # suppress bridge_api startup print statements
+        "import bridge_api",
+        "_upload_dir = bridge_api._UPLOAD_DIR",
+        "sys.stdout = _orig_stdout",
+        "print(_upload_dir)",
+    ])
+
+    env = {**os.environ, "EXPERT_SMART_UPLOAD_DIR": external}
+    result = subprocess.run(
+        [_sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        env=env,
+    )
+    assert result.returncode == 0, (
+        f"bridge_api import in fresh process failed (returncode={result.returncode}):\n"
+        f"{result.stderr[:500]}"
+    )
+    actual = result.stdout.strip()
+    assert actual == external, (
+        f"bridge_api._UPLOAD_DIR must equal EXPERT_SMART_UPLOAD_DIR={external!r} "
+        f"in a fresh process, got {actual!r}"
+    )
+    repo_default = _ROOT / "core_engine" / "uploads"
+    assert not repo_default.exists(), (
+        f"Repository default uploads path must not be created when override is set: {repo_default}"
     )
 
 
 # ── Repository-isolation integration test ─────────────────────────────────────
 
 def test_repository_isolation_no_repo_writes():
-    """With all 6 storage overrides active, no governed collection-time paths exist after import.
+    """With all 6 storage overrides active, all 7 governed repository locations must be absent.
 
-    Checks the 6 paths that bridge_api creates at import time (collection-time deltas).
-    expert_smart_system/vector_db is an E2E server-startup artifact excluded here;
-    it is covered by test_storage_override_vector_db_path and the E2E gate.
+    Covers all 7 storage paths including expert_smart_system/vector_db.
+    Proves QdrantClient receives the external vector path via _init_rag() mock.
+    Fails (does not skip) when any override is missing.
     """
-    # These 6 paths are created at bridge_api IMPORT time (collection-time deltas).
-    collection_paths = [
-        _ROOT / "core_engine" / "data" / "library",
-        _ROOT / "core_engine" / "data" / "style_profiles",
-        _ROOT / "core_engine" / "market_radar.db",
-        _ROOT / "core_engine" / "models",
-        _ROOT / "core_engine" / "models" / "registry",
-        _ROOT / "core_engine" / "uploads",
-    ]
+    from unittest.mock import patch, MagicMock
+
+    # Step 1: Fail immediately when any override is absent
     missing_overrides = [
         v for v in (
             "EXPERT_SMART_VECTOR_DB_PATH",
@@ -1727,16 +1750,68 @@ def test_repository_isolation_no_repo_writes():
         )
         if not os.environ.get(v)
     ]
-    if missing_overrides:
-        import pytest as _pt
-        _pt.skip(
-            f"Storage overrides not set — isolation plugin not active: {missing_overrides}"
-        )
-    for p in collection_paths:
+    assert not missing_overrides, (
+        f"All 6 EXPERT_SMART_* storage overrides must be set before this test. "
+        f"Missing: {missing_overrides}. "
+        f"Run with -p core_engine.tests.avm_isolation_plugin to activate the isolation plugin."
+    )
+
+    # Step 2: All seven governed repository storage locations must be absent
+    all_seven_paths = [
+        _ROOT / "expert_smart_system" / "vector_db",
+        _ROOT / "core_engine" / "data" / "library",
+        _ROOT / "core_engine" / "data" / "style_profiles",
+        _ROOT / "core_engine" / "market_radar.db",
+        _ROOT / "core_engine" / "models",
+        _ROOT / "core_engine" / "models" / "registry",
+        _ROOT / "core_engine" / "uploads",
+    ]
+    for p in all_seven_paths:
         assert not p.exists(), (
-            f"Governed collection-time path must not exist when storage overrides are "
-            f"active: {p}"
+            f"Governed repository storage path must not exist when all overrides are active: {p}"
         )
+
+    # Step 3: Prove _init_rag() passes the external vector path to QdrantClient
+    import importlib
+    import rag_advisor as _rag
+    importlib.reload(_rag)   # force fresh _VDB_PATH from current EXPERT_SMART_VECTOR_DB_PATH
+
+    vdb_external = os.environ["EXPERT_SMART_VECTOR_DB_PATH"]
+    assert _rag._VDB_PATH == vdb_external, (
+        f"rag_advisor._VDB_PATH must equal EXPERT_SMART_VECTOR_DB_PATH={vdb_external!r}, "
+        f"got {_rag._VDB_PATH!r}"
+    )
+
+    captured_qdrant_paths: list = []
+
+    class _CapturingQdrantClient:
+        def __init__(self, path=None, **kwargs):
+            captured_qdrant_paths.append(path)
+        def __getattr__(self, name):
+            return MagicMock()
+
+    original_qdrant = _rag._QDRANT
+    original_embed = _rag._EMBED_MODEL
+    _rag._QDRANT = None
+    _rag._EMBED_MODEL = object()   # truthy — prevents SentenceTransformer download
+
+    try:
+        with patch("qdrant_client.QdrantClient", _CapturingQdrantClient):
+            _rag._init_rag()
+    except Exception:
+        pass   # allow partial failures from missing downstream deps
+    finally:
+        _rag._QDRANT = original_qdrant
+        _rag._EMBED_MODEL = original_embed
+
+    assert captured_qdrant_paths, (
+        "QdrantClient constructor was not called in _init_rag() — "
+        "qdrant_client must be installed and qdrant_client.QdrantClient must be patchable"
+    )
+    assert captured_qdrant_paths[0] == vdb_external, (
+        f"QdrantClient must receive path=EXPERT_SMART_VECTOR_DB_PATH={vdb_external!r}, "
+        f"got {captured_qdrant_paths[0]!r}"
+    )
 
 
 # ── Plugin protection tests ───────────────────────────────────────────────────
@@ -1825,3 +1900,37 @@ def test_plugin_storage_vars_inherited_by_subprocesses():
         assert line and "None" not in line[0], (
             f"{var} must not be None in subprocess — env var not inherited: {line}"
         )
+
+
+def test_plugin_cleanup_guard_refuses_repo_paths():
+    """Cleanup helper refuses to delete paths inside the repository tree.
+
+    Calls the actual committed _cleanup_plugin_runtime_root() helper directly.
+    Verifies both repository root and a child path are rejected as blocking cleanup errors.
+    Verifies shutil.rmtree is not called for any rejected path.
+    """
+    from unittest.mock import patch
+    import core_engine.tests.avm_isolation_plugin as _plugin
+
+    original_owned = _plugin._plugin_owned_runtime_root
+
+    repo_paths = [
+        _ROOT,                               # repository root
+        _ROOT / "core_engine" / "tests",     # child path under the repository
+    ]
+
+    try:
+        for repo_path in repo_paths:
+            _plugin._plugin_owned_runtime_root = repo_path
+
+            with patch("shutil.rmtree") as mock_rmtree:
+                problems = _plugin._cleanup_plugin_runtime_root()
+
+            assert problems, (
+                f"_cleanup_plugin_runtime_root must reject repository path {repo_path} "
+                f"and return a non-empty error list (blocking cleanup error); "
+                f"got empty problems list — safety check failed to fire"
+            )
+            mock_rmtree.assert_not_called()
+    finally:
+        _plugin._plugin_owned_runtime_root = original_owned

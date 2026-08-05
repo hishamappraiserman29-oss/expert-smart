@@ -7114,7 +7114,10 @@ def price_cache_clear():
 # ═══════════════════════════════════════════════════════════════════════════
 import uuid as _uuid
 
-_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+_UPLOAD_DIR = (
+    os.environ.get("EXPERT_SMART_UPLOAD_DIR")
+    or os.path.join(os.path.dirname(__file__), "uploads")
+)
 os.makedirs(_UPLOAD_DIR, exist_ok=True)
 
 _ALLOWED_DOC_EXT  = {".xlsx", ".xls", ".csv", ".pdf", ".docx", ".doc", ".txt", ".xlsm"}

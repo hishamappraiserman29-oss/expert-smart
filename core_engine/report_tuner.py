@@ -14,7 +14,10 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 _BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-_STYLES_DIR = os.path.join(_BASE_DIR, "data", "style_profiles")
+_STYLES_DIR = (
+    os.environ.get("EXPERT_SMART_STYLE_PROFILES_DIR")
+    or os.path.join(_BASE_DIR, "data", "style_profiles")
+)
 os.makedirs(_STYLES_DIR, exist_ok=True)
 
 # ══════════════════════════════════════════════════════════════════════════════

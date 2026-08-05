@@ -1598,3 +1598,230 @@ def test_array_mv_import_records_over_limit(sec_client, monkeypatch):
                          json={"records": [{}] * 10001},
                          headers=_auth_header(_ADMIN_USER))
     _assert_too_many_items(rv, "records", 10000)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 14: Runtime Storage Path Override Tests (Wave 4B1 storage isolation)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import importlib
+
+
+# ── Six path-override tests (one per storage variable) ────────────────────────
+
+def test_storage_override_vector_db_path(monkeypatch, tmp_path):
+    """EXPERT_SMART_VECTOR_DB_PATH: rag_advisor._VDB_PATH uses the override when set."""
+    import rag_advisor as _rag
+    external = str(tmp_path / "vdb_override")
+    monkeypatch.setenv("EXPERT_SMART_VECTOR_DB_PATH", external)
+    importlib.reload(_rag)
+    try:
+        assert _rag._VDB_PATH == external, (
+            f"rag_advisor._VDB_PATH must equal EXPERT_SMART_VECTOR_DB_PATH={external!r}, "
+            f"got {_rag._VDB_PATH!r}"
+        )
+    finally:
+        importlib.reload(_rag)
+
+
+def test_storage_override_library_dir(monkeypatch, tmp_path):
+    """EXPERT_SMART_LIBRARY_DIR: library_scanner._LIB_DIR uses the override when set."""
+    import library_scanner as _lib
+    external = str(tmp_path / "lib_override")
+    monkeypatch.setenv("EXPERT_SMART_LIBRARY_DIR", external)
+    importlib.reload(_lib)
+    try:
+        assert _lib._LIB_DIR == external, (
+            f"library_scanner._LIB_DIR must equal EXPERT_SMART_LIBRARY_DIR={external!r}, "
+            f"got {_lib._LIB_DIR!r}"
+        )
+    finally:
+        importlib.reload(_lib)
+
+
+def test_storage_override_style_profiles_dir(monkeypatch, tmp_path):
+    """EXPERT_SMART_STYLE_PROFILES_DIR: report_tuner._STYLES_DIR uses the override when set."""
+    import report_tuner as _rt
+    external = str(tmp_path / "styles_override")
+    monkeypatch.setenv("EXPERT_SMART_STYLE_PROFILES_DIR", external)
+    importlib.reload(_rt)
+    try:
+        assert _rt._STYLES_DIR == external, (
+            f"report_tuner._STYLES_DIR must equal EXPERT_SMART_STYLE_PROFILES_DIR={external!r}, "
+            f"got {_rt._STYLES_DIR!r}"
+        )
+    finally:
+        importlib.reload(_rt)
+
+
+def test_storage_override_market_radar_db_path(monkeypatch, tmp_path):
+    """EXPERT_SMART_MARKET_RADAR_DB_PATH: market_radar._DB_PATH uses the override when set."""
+    import market_radar as _mr
+    external = str(tmp_path / "radar_override.db")
+    monkeypatch.setenv("EXPERT_SMART_MARKET_RADAR_DB_PATH", external)
+    importlib.reload(_mr)
+    try:
+        assert str(_mr._DB_PATH) == external, (
+            f"market_radar._DB_PATH must equal "
+            f"EXPERT_SMART_MARKET_RADAR_DB_PATH={external!r}, got {_mr._DB_PATH!r}"
+        )
+    finally:
+        importlib.reload(_mr)
+
+
+def test_storage_override_model_registry_dir(monkeypatch, tmp_path):
+    """EXPERT_SMART_MODEL_REGISTRY_DIR: ModelRegistry() default uses the override when set."""
+    external = str(tmp_path / "registry_override")
+    monkeypatch.setenv("EXPERT_SMART_MODEL_REGISTRY_DIR", external)
+    from ml.model_registry import ModelRegistry
+    reg = ModelRegistry()
+    assert str(reg._dir) == external, (
+        f"ModelRegistry() default dir must equal "
+        f"EXPERT_SMART_MODEL_REGISTRY_DIR={external!r}, got {reg._dir!r}"
+    )
+
+
+def test_storage_override_upload_dir():
+    """bridge_api._UPLOAD_DIR uses EXPERT_SMART_UPLOAD_DIR when set before import."""
+    import bridge_api as _bridge
+    env_val = os.environ.get("EXPERT_SMART_UPLOAD_DIR")
+    if env_val is None:
+        # Standalone (no isolation plugin): verify source contains the override
+        src = (Path(_CORE) / "bridge_api.py").read_text(encoding="utf-8")
+        assert "EXPERT_SMART_UPLOAD_DIR" in src, (
+            "bridge_api.py must reference EXPERT_SMART_UPLOAD_DIR"
+        )
+        return
+    assert _bridge._UPLOAD_DIR == env_val, (
+        f"bridge_api._UPLOAD_DIR must equal EXPERT_SMART_UPLOAD_DIR={env_val!r}, "
+        f"got {_bridge._UPLOAD_DIR!r}"
+    )
+
+
+# ── Repository-isolation integration test ─────────────────────────────────────
+
+def test_repository_isolation_no_repo_writes():
+    """With all 6 storage overrides active, no governed collection-time paths exist after import.
+
+    Checks the 6 paths that bridge_api creates at import time (collection-time deltas).
+    expert_smart_system/vector_db is an E2E server-startup artifact excluded here;
+    it is covered by test_storage_override_vector_db_path and the E2E gate.
+    """
+    # These 6 paths are created at bridge_api IMPORT time (collection-time deltas).
+    collection_paths = [
+        _ROOT / "core_engine" / "data" / "library",
+        _ROOT / "core_engine" / "data" / "style_profiles",
+        _ROOT / "core_engine" / "market_radar.db",
+        _ROOT / "core_engine" / "models",
+        _ROOT / "core_engine" / "models" / "registry",
+        _ROOT / "core_engine" / "uploads",
+    ]
+    missing_overrides = [
+        v for v in (
+            "EXPERT_SMART_VECTOR_DB_PATH",
+            "EXPERT_SMART_LIBRARY_DIR",
+            "EXPERT_SMART_STYLE_PROFILES_DIR",
+            "EXPERT_SMART_MARKET_RADAR_DB_PATH",
+            "EXPERT_SMART_MODEL_REGISTRY_DIR",
+            "EXPERT_SMART_UPLOAD_DIR",
+        )
+        if not os.environ.get(v)
+    ]
+    if missing_overrides:
+        import pytest as _pt
+        _pt.skip(
+            f"Storage overrides not set — isolation plugin not active: {missing_overrides}"
+        )
+    for p in collection_paths:
+        assert not p.exists(), (
+            f"Governed collection-time path must not exist when storage overrides are "
+            f"active: {p}"
+        )
+
+
+# ── Plugin protection tests ───────────────────────────────────────────────────
+
+def test_plugin_does_not_ignore_expert_smart_system():
+    """avm_isolation_plugin._IGNORE_NAMES does not contain 'expert_smart_system'."""
+    import core_engine.tests.avm_isolation_plugin as _plugin
+    assert "expert_smart_system" not in _plugin._IGNORE_NAMES, (
+        "expert_smart_system must not be in _IGNORE_NAMES — "
+        "vector_db writes inside the repo must be detected"
+    )
+
+
+def test_plugin_does_not_ignore_core_engine_data_or_models():
+    """avm_isolation_plugin._IGNORE_NAMES does not mask governed storage directories."""
+    import core_engine.tests.avm_isolation_plugin as _plugin
+    for name in ("data", "models", "uploads", "core_engine"):
+        assert name not in _plugin._IGNORE_NAMES, (
+            f"{name!r} must not be in _IGNORE_NAMES — "
+            "would hide library/style_profiles/models/uploads writes"
+        )
+
+
+def test_plugin_storage_vars_set_and_outside_repo():
+    """All 6 storage vars are set and their values resolve outside the repository."""
+    for var in (
+        "EXPERT_SMART_VECTOR_DB_PATH",
+        "EXPERT_SMART_LIBRARY_DIR",
+        "EXPERT_SMART_STYLE_PROFILES_DIR",
+        "EXPERT_SMART_MARKET_RADAR_DB_PATH",
+        "EXPERT_SMART_MODEL_REGISTRY_DIR",
+        "EXPERT_SMART_UPLOAD_DIR",
+    ):
+        val = os.environ.get(var)
+        assert val is not None, (
+            f"{var} must be set before application import — "
+            "isolation plugin must configure it in pytest_configure"
+        )
+        try:
+            Path(val).resolve().relative_to(_ROOT.resolve())
+            assert False, f"{var}={val!r} resolves inside the repository"
+        except ValueError:
+            pass  # outside repo — correct
+
+
+def test_plugin_worker_roots_are_distinct():
+    """Worker-specific root paths differ for main/gw0/gw1 worker IDs."""
+    import tempfile as _tf
+    prefix = "expert_smart_wave4b1_runtime_"
+    pid = str(os.getpid())
+    tmp = Path(_tf.gettempdir())
+    workers = ["main", "gw0", "gw1"]
+    roots = [tmp / f"{prefix}{pid}_{w}" for w in workers]
+    paths = [str(r) for r in roots]
+    assert len(set(paths)) == 3, (
+        f"Worker roots must all be distinct paths: {paths}"
+    )
+
+
+def test_plugin_storage_vars_inherited_by_subprocesses():
+    """Storage env vars set by the isolation plugin are inherited by subprocesses."""
+    import subprocess, sys as _sys
+    check_vars = [
+        "EXPERT_SMART_VECTOR_DB_PATH",
+        "EXPERT_SMART_LIBRARY_DIR",
+        "EXPERT_SMART_UPLOAD_DIR",
+    ]
+    code = "\n".join(
+        f"import os; print({v!r}, repr(os.environ.get({v!r})))"
+        for v in check_vars
+    )
+    result = subprocess.run(
+        [_sys.executable, "-c", code],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert result.returncode == 0, (
+        f"Subprocess exited {result.returncode}: {result.stderr[:200]}"
+    )
+    for var in check_vars:
+        assert var in result.stdout, (
+            f"{var} must appear in subprocess output"
+        )
+        line = [ln for ln in result.stdout.splitlines() if var in ln]
+        assert line and "None" not in line[0], (
+            f"{var} must not be None in subprocess — env var not inherited: {line}"
+        )

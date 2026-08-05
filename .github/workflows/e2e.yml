@@ -49,6 +49,18 @@ jobs:
       - name: Create AVM artifact root outside repository
         run: mkdir -p /tmp/expert_smart_avm_ci
 
+      - name: Allocate E2E runtime storage root outside repository
+        run: |
+          RUNTIME_ROOT="/tmp/expert_smart_runtime_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$RUNTIME_ROOT"
+          echo "EXPERT_SMART_RUNTIME_ROOT=$RUNTIME_ROOT"           >> $GITHUB_ENV
+          echo "EXPERT_SMART_VECTOR_DB_PATH=$RUNTIME_ROOT/vector_db"           >> $GITHUB_ENV
+          echo "EXPERT_SMART_LIBRARY_DIR=$RUNTIME_ROOT/library"                >> $GITHUB_ENV
+          echo "EXPERT_SMART_STYLE_PROFILES_DIR=$RUNTIME_ROOT/style_profiles"  >> $GITHUB_ENV
+          echo "EXPERT_SMART_MARKET_RADAR_DB_PATH=$RUNTIME_ROOT/market_radar.db" >> $GITHUB_ENV
+          echo "EXPERT_SMART_MODEL_REGISTRY_DIR=$RUNTIME_ROOT/models/registry" >> $GITHUB_ENV
+          echo "EXPERT_SMART_UPLOAD_DIR=$RUNTIME_ROOT/uploads"                 >> $GITHUB_ENV
+
       - name: Allocate fresh server port (never 5000)
         run: |
           python - <<'EOF'
@@ -117,4 +129,22 @@ jobs:
             kill "$SERVER_PID" 2>/dev/null || true
             sleep 1
             kill -9 "$SERVER_PID" 2>/dev/null || true
+          fi
+
+      - name: Remove E2E runtime storage root
+        if: always()
+        run: |
+          if [ -n "$EXPERT_SMART_RUNTIME_ROOT" ]; then
+            case "$EXPERT_SMART_RUNTIME_ROOT" in
+              /tmp/expert_smart_runtime_*)
+                if [ -n "$EXPERT_SMART_RUNTIME_ROOT" ] && \
+                   [ "$EXPERT_SMART_RUNTIME_ROOT" != "/" ]; then
+                  rm -rf "$EXPERT_SMART_RUNTIME_ROOT"
+                  echo "Removed runtime storage root: $EXPERT_SMART_RUNTIME_ROOT"
+                fi
+                ;;
+              *)
+                echo "WARNING: EXPERT_SMART_RUNTIME_ROOT=$EXPERT_SMART_RUNTIME_ROOT does not match safety prefix — skipping deletion"
+                ;;
+            esac
           fi

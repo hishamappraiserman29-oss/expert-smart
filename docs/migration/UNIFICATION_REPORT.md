@@ -1655,3 +1655,94 @@ WAVE4B1_SBC_TOTAL_CHANGED_PATHS = 10
 COMMIT_CREATED = False (pending staging)
 
 SENTINEL_CODE = A6_WAVE_4B1_STRUCTURAL_BLOCKER_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 — Runtime Storage Correction
+
+**Authorization:** `A6_WAVE_4B1_RUNTIME_STORAGE_CORRECTION_AUTHORIZED`
+**Branch:** `migration/wave4b1-avm-security-ci-hardening`
+**Starting commit:** `10bf411788b4f58bf30ae1c2373a6dbf65178863`
+
+### Background
+
+CI runs `31009381356` (cancelled) and `31009384293` (failure) on the Wave 4B1 branch exposed two independent failure classes:
+
+1. **Governed-collection gate** (run 31009381356): 6 repository paths added during `pytest --collect-only`. Root cause: `test_wave4b1_security.py` imports `bridge_api` at module level with `os.chdir(str(_CORE))`, triggering all module-level side effects while CWD = `core_engine/`. This single import created `core_engine/data/library`, `core_engine/data/style_profiles`, `core_engine/market_radar.db`, `core_engine/models`, `core_engine/models/registry`, `core_engine/uploads`.
+
+2. **E2E gate** (run 31009384293): 3 Qdrant paths added during E2E server startup. Root cause: `bridge_api.py` starts a `_rag_init` daemon thread in the `__main__` block; thread calls `QdrantClient(path=_VDB_PATH)` creating `expert_smart_system/vector_db/`, `.lock`, `meta.json`.
+
+3. **Docker validation hang** (both runs): `docker run --rm expert-smart-deploy-test python -m pip check` passed `python -m pip check` as positional args to `ENTRYPOINT ["/entrypoint.sh"]`. The script ignored them (`$@` unused), waited 120 s for unreachable Ollama, then launched a blocking waitress server. `pip check` never executed.
+
+### Correction Design
+
+The minimum correction is an explicit production storage-path override on each of the 6 path owners. Import-time initialization is preserved; writes are redirected to externally-configured paths during CI and tests.
+
+**Rejected approaches (with rationale):**
+- **Moving the bridge_api import to a fixture** in `test_wave4b1_security.py`: changes the test import architecture, requires fixture refactoring, does not fix the root causes in the owner modules.
+- **Replacing `radar_api = RadarEngine()`** with a lazy factory: changes business initialization order; the singleton is required by `bridge_api.py` importers.
+- **Adding paths to the isolation-plugin ignore list**: would conceal legitimate repo contamination in future runs. `PLUGIN_REPOSITORY_IGNORE_LIST_CHANGE_COUNT = 0`.
+
+### Six Production Storage Overrides
+
+| Variable | Owner file | Original path |
+|---|---|---|
+| `EXPERT_SMART_VECTOR_DB_PATH` | `core_engine/rag_advisor.py:18` | `expert_smart_system/vector_db` |
+| `EXPERT_SMART_LIBRARY_DIR` | `core_engine/library_scanner.py:18` | `core_engine/data/library` |
+| `EXPERT_SMART_STYLE_PROFILES_DIR` | `core_engine/report_tuner.py:17` | `core_engine/data/style_profiles` |
+| `EXPERT_SMART_MARKET_RADAR_DB_PATH` | `core_engine/market_radar.py:35` | `core_engine/market_radar.db` |
+| `EXPERT_SMART_MODEL_REGISTRY_DIR` | `core_engine/ml/model_registry.py:40` | `models/registry` (relative) |
+| `EXPERT_SMART_UPLOAD_DIR` | `core_engine/bridge_api.py:7117` | `core_engine/uploads` |
+
+Production defaults are unchanged when each variable is absent.
+
+### Isolation Plugin Extension
+
+`pytest_configure` sets all 6 variables to `{tempdir}/expert_smart_wave4b1_runtime_{pid}_{worker}/{subpath}` before any test module is imported. Pre-set values outside the repository are preserved (workflow-managed E2E storage). Values resolving inside the repository are overridden with a warning. Worker isolation is guaranteed: each xdist worker receives an independent root keyed by `PYTEST_XDIST_WORKER`. Plugin-owned root is cleaned up in `pytest_sessionfinish` after delta validation, with 4-check safety gate (prefix, non-empty, non-root, not-in-repo).
+
+### E2E Workflow Environment
+
+`e2e.yml` creates `RUNTIME_ROOT=/tmp/expert_smart_runtime_{RUN_ID}_{ATTEMPT}` before the server-start step and exports all 6 `EXPERT_SMART_*` vars via `$GITHUB_ENV`. The server subprocess inherits these. An `always()` cleanup step removes the runtime root after server termination, gated on the `/tmp/expert_smart_runtime_` safety prefix.
+
+### Docker Entrypoint Correction
+
+`ENTRYPOINT ["/entrypoint.sh"]` discards all command arguments; the script waits 120 s for Ollama then starts a blocking Flask server. Corrected commands use `--entrypoint python` with `timeout --signal=TERM --kill-after=10s 120s` wrapper. All three Docker validation steps (pip-check, exact versions, OOD backend) now execute Python directly.
+
+### Local Gate Results
+
+```
+FOCUSED_SECURITY_PASSED        = 148
+FOCUSED_SECURITY_FAILED        = 0
+GOVERNED_LANE_PASSED           = 348
+GOVERNED_LANE_SKIPPED          = 1
+GOVERNED_LANE_FAILED           = 0
+ML_LANE_PASSED                 = 58
+ML_LANE_FAILED                 = 0
+ROOT_INTEGRATION_PASSED        = 3
+ROOT_INTEGRATION_FAILED        = 0
+E2E_COLLECTION_COUNT           = 90
+E2E_PASSED                     = 90
+E2E_FAILED                     = 0
+E2E_ERRORS                     = 0
+E2E_SKIPPED                    = 0
+REPOSITORY_DELTA_COUNT         = 0
+GIT_DIFF_CHECK_PASSED          = True
+COMPILEALL_PASSED              = True
+```
+
+### Corrective Scope
+
+```
+RUNTIME_STORAGE_CORRECTIVE_FILES_MODIFIED  = 12
+RUNTIME_STORAGE_CORRECTIVE_FILES_CREATED   = 0
+RUNTIME_STORAGE_CORRECTIVE_FILES_DELETED   = 0
+RUNTIME_STORAGE_OVERRIDE_COUNT             = 6
+PLUGIN_REPOSITORY_IGNORE_LIST_CHANGE_COUNT = 0
+RUNTIME_STORAGE_TOTAL_NEW_TEST_COUNT       = 12
+PUSH_PERFORMED                             = False
+PR_OPENED                                  = False
+MERGE_PERFORMED                            = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_RUNTIME_STORAGE_CORRECTION_AWAITING_REVIEW

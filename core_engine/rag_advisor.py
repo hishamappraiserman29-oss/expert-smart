@@ -15,7 +15,10 @@ from typing import List, Dict, Any
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 _ROOT_DIR = os.path.dirname(_BASE_DIR)
-_VDB_PATH  = os.path.join(_ROOT_DIR, "expert_smart_system", "vector_db")
+_VDB_PATH  = (
+    os.environ.get("EXPERT_SMART_VECTOR_DB_PATH")
+    or os.path.join(_ROOT_DIR, "expert_smart_system", "vector_db")
+)
 _FEED_FILE = os.path.join(_BASE_DIR, "data", "market_feed.json")
 
 # ══════════════════════════════════════════════════════════════════════════════

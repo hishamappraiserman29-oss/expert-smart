@@ -19,6 +19,7 @@ Usage (in bridge_api.py):
   records = radar_api.get_records(limit=100)
 """
 
+import os
 import re
 import json
 import math
@@ -32,7 +33,10 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 # ── Database path ─────────────────────────────────────────────────────────────
-_DB_PATH = Path(__file__).parent / "market_radar.db"
+_DB_PATH = Path(
+    os.environ.get("EXPERT_SMART_MARKET_RADAR_DB_PATH")
+    or str(Path(__file__).parent / "market_radar.db")
+)
 
 # ── Source identifiers ────────────────────────────────────────────────────────
 SRC_WHATSAPP = "whatsapp"

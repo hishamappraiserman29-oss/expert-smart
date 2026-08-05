@@ -27,11 +27,12 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+import shutil
 import stat
 import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pytest
 
@@ -170,19 +171,83 @@ def _diff_snapshots(before: Snapshot, after: Snapshot) -> list[str]:
 
 # ── Plugin state ───────────────────────────────────────────────────────────────
 _before_snapshot: Optional[Snapshot] = None
-_worker_failures: list[str] = []
+_worker_failures: List[str] = []
+_plugin_owned_runtime_root: Optional[Path] = None
+
+# Prefix for wave4b1 runtime roots — never matches user-data directories
+_WAVE4B1_PREFIX = "expert_smart_wave4b1_runtime_"
+
+# Storage variables managed by this plugin
+_STORAGE_VARS = (
+    "EXPERT_SMART_VECTOR_DB_PATH",
+    "EXPERT_SMART_LIBRARY_DIR",
+    "EXPERT_SMART_STYLE_PROFILES_DIR",
+    "EXPERT_SMART_MARKET_RADAR_DB_PATH",
+    "EXPERT_SMART_MODEL_REGISTRY_DIR",
+    "EXPERT_SMART_UPLOAD_DIR",
+)
+
+
+def _is_inside_repo(path: Path) -> bool:
+    """Return True if path resolves to inside the repository tree."""
+    try:
+        path.resolve().relative_to(_repo_root().resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _runtime_subpath(rt_root: Path, var: str) -> Path:
+    """Return the canonical subpath within rt_root for a given storage variable."""
+    mapping = {
+        "EXPERT_SMART_VECTOR_DB_PATH":       rt_root / "vector_db",
+        "EXPERT_SMART_LIBRARY_DIR":          rt_root / "library",
+        "EXPERT_SMART_STYLE_PROFILES_DIR":   rt_root / "style_profiles",
+        "EXPERT_SMART_MARKET_RADAR_DB_PATH": rt_root / "market_radar.db",
+        "EXPERT_SMART_MODEL_REGISTRY_DIR":   rt_root / "models" / "registry",
+        "EXPERT_SMART_UPLOAD_DIR":           rt_root / "uploads",
+    }
+    return mapping[var]
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Set up worker-specific AVM artifact roots before any test modules import."""
-    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "")
+    global _plugin_owned_runtime_root
+
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "") or "main"
+
+    # ── Existing AVM_ARTIFACT_ROOT (unchanged behavior) ────────────────────────
     tmp_root = Path(tempfile.gettempdir()) / "expert_smart_avm_ci"
-    if worker_id:
-        worker_root = tmp_root / worker_id
-    else:
-        worker_root = tmp_root / "main"
+    worker_root = tmp_root / worker_id
     worker_root.mkdir(parents=True, exist_ok=True)
     os.environ["AVM_ARTIFACT_ROOT"] = str(worker_root)
+
+    # ── Wave 4B1 runtime storage root — unique per (pid, worker) ──────────────
+    rt_root = (
+        Path(tempfile.gettempdir())
+        / f"{_WAVE4B1_PREFIX}{os.getpid()}_{worker_id}"
+    )
+    rt_root.mkdir(parents=True, exist_ok=True)
+    _plugin_owned_runtime_root = rt_root
+
+    # ── Configure storage variables ────────────────────────────────────────────
+    for var in _STORAGE_VARS:
+        existing = os.environ.get(var)
+        if existing:
+            # Validate the pre-set value is outside the repo
+            try:
+                if _is_inside_repo(Path(existing)):
+                    logger.error(
+                        "AVM isolation plugin: %s=%r resolves inside the repository — "
+                        "overriding with safe external path",
+                        var, existing,
+                    )
+                    os.environ[var] = str(_runtime_subpath(rt_root, var))
+                # else: preserve the pre-set external value; do not claim ownership
+            except Exception:
+                pass  # path may not exist yet — preserve as-is
+        else:
+            os.environ[var] = str(_runtime_subpath(rt_root, var))
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:
@@ -192,11 +257,71 @@ def pytest_sessionstart(session: pytest.Session) -> None:
         _before_snapshot = _snapshot(_repo_root())
 
 
+def _cleanup_plugin_runtime_root() -> List[str]:
+    """Remove the plugin-owned runtime root safely. Returns a list of error messages."""
+    global _plugin_owned_runtime_root
+    problems: List[str] = []
+    if _plugin_owned_runtime_root is None:
+        return problems
+
+    rt = _plugin_owned_runtime_root
+    try:
+        rt_resolved = rt.resolve()
+    except Exception:
+        rt_resolved = rt
+
+    tmp_dir = Path(tempfile.gettempdir()).resolve()
+
+    # Safety checks before deletion
+    name = rt_resolved.name
+    rt_str = str(rt_resolved)
+    is_safe = (
+        bool(name)
+        and name.startswith(_WAVE4B1_PREFIX)
+        and rt_str not in ("", "/", str(Path("/")))
+        and rt_str != str(tmp_dir)
+        and not _is_inside_repo(rt_resolved)
+        and _safe_under_temp(rt_resolved, tmp_dir)
+    )
+
+    if not is_safe:
+        msg = (
+            f"AVM isolation plugin: plugin-owned runtime root {rt_resolved!r} "
+            f"failed safety check — skipping cleanup"
+        )
+        logger.error(msg)
+        problems.append(msg)
+        return problems
+
+    try:
+        shutil.rmtree(str(rt_resolved), ignore_errors=False)
+        _plugin_owned_runtime_root = None
+    except Exception as exc:
+        msg = (
+            f"AVM isolation plugin: failed to remove runtime root "
+            f"{rt_resolved!r}: {exc}"
+        )
+        logger.error(msg)
+        problems.append(msg)
+
+    return problems
+
+
+def _safe_under_temp(path: Path, tmp_dir: Path) -> bool:
+    """Return True if path is directly under the system temp directory."""
+    try:
+        path.relative_to(tmp_dir)
+        return True
+    except ValueError:
+        return False
+
+
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    """Compare repository state after the session; fail CI on any delta."""
+    """Compare repository state after session; clean up plugin root; fail on delta."""
     if _before_snapshot is None:
         return
 
+    # Step 1: repository-delta validation
     after = _snapshot(_repo_root())
     problems = _diff_snapshots(_before_snapshot, after)
 
@@ -215,8 +340,15 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         )
         for p in problems:
             print(f"  {p}", file=sys.stderr)
-        # Preserve an existing failing exit code; worsen a passing one.
         if exitstatus == 0:
+            session.exitstatus = 1
+
+    # Step 2: remove plugin-owned runtime root
+    cleanup_problems = _cleanup_plugin_runtime_root()
+    if cleanup_problems:
+        for p in cleanup_problems:
+            print(f"\n[avm_isolation_plugin] CLEANUP FAIL: {p}", file=sys.stderr)
+        if session.exitstatus == 0:
             session.exitstatus = 1
 
 

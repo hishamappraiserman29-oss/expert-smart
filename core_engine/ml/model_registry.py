@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
@@ -37,7 +38,12 @@ class ModelMetadata:
 class ModelRegistry:
     """Persist, retrieve, and activate versioned AVM models."""
 
-    def __init__(self, registry_dir: str = "models/registry") -> None:
+    def __init__(self, registry_dir: str = "") -> None:
+        if not registry_dir:
+            registry_dir = (
+                os.environ.get("EXPERT_SMART_MODEL_REGISTRY_DIR")
+                or "models/registry"
+            )
         self._dir = Path(registry_dir)
         self._dir.mkdir(parents=True, exist_ok=True)
         self._index_path = self._dir / "index.json"

@@ -316,49 +316,43 @@ jobs:
         run: docker build -f deploy/Dockerfile.flask -t expert-smart-deploy-test .
 
       - name: Validate pip dependency integrity inside deploy image
-        run: docker run --rm expert-smart-deploy-test python -m pip check
+        run: |
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --entrypoint python \
+            expert-smart-deploy-test \
+            -m pip check
 
       - name: Assert exact production package versions inside deploy image
         run: |
-          docker run --rm expert-smart-deploy-test python - << 'PYEOF'
-          from importlib.metadata import version
-          import sys
-          expected = {"Flask": "3.1.3", "Werkzeug": "3.1.8", "waitress": "3.0.2"}
-          fail = False
-          for pkg, exp_ver in expected.items():
-              got = version(pkg)
-              if got != exp_ver:
-                  print(f"FAIL: {pkg}=={got}, expected {exp_ver}")
-                  fail = True
-              else:
-                  print(f"OK: {pkg}=={got}")
-          if fail:
-              sys.exit(1)
-          PYEOF
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --entrypoint python \
+            expert-smart-deploy-test \
+            -c '
+from importlib.metadata import version
+
+assert version("Flask") == "3.1.3", f"Flask=={version(\"Flask\")}"
+assert version("Werkzeug") == "3.1.8", f"Werkzeug=={version(\"Werkzeug\")}"
+assert version("waitress") == "3.0.2", f"waitress=={version(\"waitress\")}"
+assert version("sentence-transformers") == "5.6.1", f"sentence-transformers=={version(\"sentence-transformers\")}"
+assert version("scikit-learn") == "1.9.0", f"scikit-learn=={version(\"scikit-learn\")}"
+'
 
       - name: Assert scikit-learn present and default OOD backend in production image
         run: |
-          docker run --rm expert-smart-deploy-test python - << 'PYEOF'
-          import importlib.util, importlib.metadata, sys
-          spec = importlib.util.find_spec("sklearn")
-          if spec is None:
-              print("FAIL: scikit-learn not importable in production image"); sys.exit(1)
-          ver = importlib.metadata.version("scikit-learn")
-          if ver != "1.9.0":
-              print(f"FAIL: sklearn=={ver}, expected 1.9.0"); sys.exit(1)
-          print(f"OK: sklearn {ver} importable in production image")
-          for base in ("/app", "/app/core_engine"):
-              if base not in sys.path:
-                  sys.path.insert(0, base)
-          try:
-              from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND
-              if DEFAULT_AVM_OOD_BACKEND != "isolation_forest":
-                  print(f"FAIL: DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"); sys.exit(1)
-              print(f"OK: DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}")
-          except ImportError as e:
-              print(f"WARNING: could not import ood_detector ({e})")
-              print("OK: DEFAULT_AVM_OOD_BACKEND=isolation_forest (documented constant)")
-          PYEOF
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --entrypoint python \
+            expert-smart-deploy-test \
+            -c '
+import sys
+for base in ("/app", "/app/core_engine"):
+    if base not in sys.path:
+        sys.path.insert(0, base)
+from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND
+assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"
+'
 
       # ── Nginx: validate the committed configuration against a real binary ───
       - name: Install Nginx

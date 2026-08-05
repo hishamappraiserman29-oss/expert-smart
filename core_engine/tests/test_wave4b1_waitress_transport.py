@@ -30,9 +30,10 @@ for _p in (str(_CORE), str(_ROOT)):
         sys.path.insert(0, _p)
 
 
-_HEALTH_PATH = "/api/advisor/health"
+_HEALTH_PATH   = "/api/advisor/health"
 _BOUNDED_ROUTE = "/api/mass-appraisal/preview"
-_MAX_BODY      = 67_108_864   # 64 MiB — Wave 4B1 limit
+_MAX_BODY      = 67_108_864   # 64 MiB — Waitress server-level limit
+_ROUTE_LIMIT   = 1_048_576    # 1 MiB — /api/mass-appraisal/preview route limit
 _JWT_SECRET    = "test-waitress-secret-32bytes-min!!"
 
 
@@ -190,29 +191,55 @@ def test_wt_01_health_unauthenticated(waitress_server):
         conn.close()
 
 
-# ── WT-02: Declared Content-Length within route limit is accepted ──────────────
+# ── WT-02: Declared Content-Length above route limit but below server limit ────
 
 def test_wt_02_content_length_within_limit_accepted(waitress_server):
-    """A small declared Content-Length is accepted by the transport layer."""
+    """Body with Content-Length = route_limit + 1 returns 413 payload_too_large.
+
+    The body is larger than the route-specific JSON limit (1 MiB) but smaller than
+    the Waitress server-level limit (64 MiB), so Waitress passes the request
+    through to the application, which read_bounded_json() rejects with 413.
+    """
     host, port = waitress_server
-    body = b'{"units": [], "location": "Riyadh", "purpose": "test"}'
-    headers = {**_auth_headers(), "Content-Length": str(len(body))}
-    conn = http.client.HTTPConnection(host, port, timeout=10)
+    # Send the actual body bytes so Waitress can read the full declared length
+    # before passing the request to the WSGI app. read_bounded_json() checks
+    # Content-Length first and returns 413 without reading the body.
+    body = b"x" * (_ROUTE_LIMIT + 1)
+    headers = {**_auth_headers()}  # http.client auto-sets Content-Length from body
+    conn = http.client.HTTPConnection(host, port, timeout=30)
     try:
         conn.request("POST", _BOUNDED_ROUTE, body=body, headers=headers)
         resp = conn.getresponse()
-        # Auth may return 401/403 (before JSON parsing), any non-5xx from transport ok
-        assert resp.status not in (502, 503), (
-            f"Transport should not 502/503 for a small body; got {resp.status}"
+        raw = resp.read()
+        assert resp.status == 413, (
+            f"Route-limit exceeded via Content-Length: expected 413, got {resp.status}"
         )
+        import json as _json
+        try:
+            body_json = _json.loads(raw)
+            assert body_json.get("error") == "payload_too_large", (
+                f"Expected error='payload_too_large', got {body_json}"
+            )
+        except _json.JSONDecodeError:
+            pytest.fail(f"Response body is not JSON: {raw[:200]}")
+    except (http.client.RemoteDisconnected, ConnectionResetError):
+        pass  # Acceptable — Waitress may close before response
     finally:
-        conn.close()
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
-# ── WT-03: Declared Content-Length above route limit is rejected ───────────────
+# ── WT-03: Declared Content-Length above server limit is rejected ──────────────
 
 def test_wt_03_content_length_above_limit_rejected(waitress_server):
-    """Declared Content-Length above 64 MiB is rejected before reading the body."""
+    """Declared Content-Length above 64 MiB is rejected before reading the body.
+
+    Accepted outcomes: HTTP 413 from Waitress, or connection termination before
+    Flask processes the request (RemoteDisconnected / ConnectionResetError).
+    No other status is accepted — 400/431/503 would indicate the body was parsed.
+    """
     host, port = waitress_server
     headers = {
         "Content-Type":   "application/json",
@@ -222,8 +249,8 @@ def test_wt_03_content_length_above_limit_rejected(waitress_server):
     try:
         conn.request("POST", _BOUNDED_ROUTE, body=b"{}", headers=headers)
         resp = conn.getresponse()
-        assert resp.status in (413, 400, 431), (
-            f"Oversized Content-Length: expected 413/400, got {resp.status}"
+        assert resp.status == 413, (
+            f"Oversized Content-Length: expected 413 (Waitress rejection), got {resp.status}"
         )
     except (http.client.RemoteDisconnected, ConnectionResetError):
         pass  # Waitress may close connection for oversized requests — acceptable
@@ -279,12 +306,18 @@ def test_wt_05_health_not_blocked_by_body_limit(waitress_server):
             conn.close()
 
 
-# ── WT-06: HTTP/1.1 chunked body above route limit returns 413 ────────────────
+# ── WT-06: HTTP/1.1 chunked body above server limit is rejected ───────────────
 
 def test_wt_06_chunked_body_above_limit_rejected(waitress_server):
-    """HTTP/1.1 chunked body exceeding 64 MiB is rejected with 413 or connection close."""
+    """HTTP/1.1 chunked body exceeding 64 MiB is rejected with 413 or connection close.
+
+    Sends MAX_BODY + 1 bytes as chunked data — Waitress rejects at max_request_body_size.
+
+    Accepted outcomes: HTTP 413 from Waitress, or connection termination
+    (RemoteDisconnected / ConnectionResetError / BadStatusLine).
+    400/431/503 are NOT accepted — they indicate the body reached the application layer.
+    """
     host, port = waitress_server
-    # Send MAX_BODY + 1 bytes as chunked — Waitress rejects at max_request_body_size
     chunk_size = 65536  # 64 KiB per chunk
     total = _MAX_BODY + 1
     conn = http.client.HTTPConnection(host, port, timeout=60)
@@ -319,11 +352,12 @@ def test_wt_06_chunked_body_above_limit_rejected(waitress_server):
             conn.send(b"0\r\n\r\n")
         try:
             resp = conn.getresponse()
-            assert resp.status in (413, 400, 431, 503), (
-                f"Oversized chunked body: expected 413/400, got {resp.status}"
+            assert resp.status == 413, (
+                f"Oversized chunked body (server-level): expected 413, got {resp.status}. "
+                "Only HTTP 413 or connection termination are acceptable outcomes."
             )
         except (http.client.RemoteDisconnected, ConnectionResetError, http.client.BadStatusLine):
-            pass  # Waitress may close connection — acceptable
+            pass  # Connection termination — acceptable (Waitress closed before Flask)
     finally:
         try:
             conn.close()

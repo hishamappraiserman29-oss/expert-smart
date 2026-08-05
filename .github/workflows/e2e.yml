@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 45
     env:
       JWT_SECRET: ci-test-secret-for-e2e-workflow
-      PORT: "5000"
       AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
       PYTHONPATH: ${{ github.workspace }}
       ADMIN_USER_IDS: ""
@@ -40,16 +39,36 @@ jobs:
       - name: Create AVM artifact root outside repository
         run: mkdir -p /tmp/expert_smart_avm_ci
 
-      - name: Start bridge_api server
+      - name: Allocate fresh server port (never 5000)
         run: |
+          python - <<'EOF'
+          import socket, os
+          for port in range(15900, 16100):
+              if port == 5000:
+                  continue
+              try:
+                  with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                      s.bind(("127.0.0.1", port))
+                      print(f"E2E_SERVER_PORT={port}")
+                      with open(os.environ["GITHUB_ENV"], "a") as f:
+                          f.write(f"E2E_SERVER_PORT={port}\n")
+                      break
+              except OSError:
+                  continue
+          EOF
+
+      - name: Start bridge_api server on fresh port
+        run: |
+          PORT=$E2E_SERVER_PORT \
           python core_engine/bridge_api.py > /tmp/bridge_api_server.log 2>&1 &
           echo "SERVER_PID=$!" >> $GITHUB_ENV
 
       - name: Poll health endpoint until ready (max 30 s)
         run: |
           for i in $(seq 1 60); do
-            if curl -sf "http://127.0.0.1:${PORT}/api/advisor/health" > /dev/null 2>&1; then
-              echo "Server ready after $((i * 500))ms"
+            if curl -sf "http://127.0.0.1:${E2E_SERVER_PORT}/api/advisor/health" > /dev/null 2>&1; then
+              echo "Server ready after $((i * 500))ms on port ${E2E_SERVER_PORT}"
+              echo "E2E_BASE_URL=http://127.0.0.1:${E2E_SERVER_PORT}" >> $GITHUB_ENV
               exit 0
             fi
             sleep 0.5

@@ -7,6 +7,26 @@ from typing import Any
 from flask import request, jsonify
 
 
+# ── Route-specific JSON body byte limits (Wave 4B1 corrective) ─────────────────
+# Transport ceiling: 64 MiB (Waitress max_request_body_size / MAX_CONTENT_LENGTH)
+# Per-route limits below are smaller, providing defense-in-depth at the parser layer.
+LIMIT_VALUATION           =    524_288  # /api/valuation (512 KiB)
+LIMIT_PRICE_INDEX_POST    =    262_144  # /api/price-index POST only (256 KiB)
+LIMIT_MA_PREVIEW          =  1_048_576  # /api/mass-appraisal/preview (1 MiB)
+LIMIT_MA_RUN              =  1_048_576  # /api/mass-appraisal/run (1 MiB)
+LIMIT_MA_EXPORT_XLSX      =  2_097_152  # /api/mass-appraisal/export-xlsx (2 MiB)
+LIMIT_MA_SALES_VERIFY     =  1_048_576  # /api/mass-appraisal/sales/verify (1 MiB)
+LIMIT_MA_SALES_TIMEADJ    =  1_048_576  # /api/mass-appraisal/sales/time-adjust (1 MiB)
+LIMIT_MA_SALES_ADJUST     =  1_048_576  # /api/mass-appraisal/sales/adjust (1 MiB)
+LIMIT_MA_RATIO_STUDY      =  1_048_576  # /api/mass-appraisal/ratio-study/run (1 MiB)
+LIMIT_MA_CALIB_PREVIEW    =  1_048_576  # /api/mass-appraisal/calibration/preview (1 MiB)
+LIMIT_MA_CALIB_SANDBOX    =    524_288  # /api/mass-appraisal/calibration/sandbox (512 KiB)
+LIMIT_AVM_SINGLE          =     65_536  # /api/valuation/avm (64 KiB)
+LIMIT_AVM_BATCH           =    524_288  # /api/valuation/avm/batch (512 KiB)
+LIMIT_MV_RUN              =  2_097_152  # /api/mass-valuation/run (2 MiB)
+LIMIT_MV_REVIEW           =     65_536  # /api/mass-valuation/review/<prediction_id> (64 KiB)
+LIMIT_MV_IMPORT           =  2_097_152  # /api/mass-valuation/import (2 MiB)
+
 def read_bounded_json(max_bytes: int):
     """Read and parse the request body up to max_bytes.
 

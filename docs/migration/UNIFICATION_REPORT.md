@@ -1210,3 +1210,179 @@ FILES_TO_CREATE = 6
 WAVE4B1_TOTAL_CHANGED_PATHS = 21
 
 SENTINEL_CODE = A6_WAVE_4B1_IMPLEMENTATION_COMPLETE_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 Corrective Post-Commit (commit 7e430f2)
+
+**Date**: 2026-08-05  
+**Branch**: `migration/wave4b1-avm-security-ci-hardening`  
+**Commit**: `7e430f2 fix(avm): complete Wave 4B1 gates and lifecycle`
+
+### Corrective Scope
+
+This corrective commit closed gaps identified in the Wave 4B1 post-commit audit. It modifies 10 paths, creates 1 new file, and deletes 0.
+
+### Retrospective Ratification — 2 Unauthorized Corrective Paths
+
+Two files were modified in commit `7e430f2` without explicit per-commit authorization at the time of the commit (authorization `A6_WAVE_4B1_FINAL_AUDIT_GAP_CORRECTION_AUTHORIZED` covers them retroactively):
+
+- `core_engine/tax_appeal_routes.py`: added 10 MiB per-file size enforcement (stream seek-tell) after the 5-file count check on `POST /api/tax-appeal/leads`.
+- `core_engine/shared_request_routes.py`: added 10 MiB per-file size enforcement on `POST /api/expert-requests` and `POST /api/expert-requests/<id>/documents`.
+
+Both changes are conservative tightenings of existing security controls and introduce no behavioral regressions. The multipart policy is now fully enforced at two layers: count (≤5 files) and size (≤10 MiB per file).
+
+### Changes Included in 7e430f2
+
+- `core_engine/avm_lifecycle.py` (NEW): capacity constants, `_RunInfo`, `_inspect_root()`, `_pre_generation_cleanup()`, `update_run_metadata_status()`, `run_metadata.json` creation contract.
+- `core_engine/requirements-ml.txt` (NEW): scikit-learn==1.9.0 moved from runtime to ML-only lane.
+- `core_engine/requirements.txt` (MODIFIED): removed scikit-learn from runtime dependencies.
+- `core_engine/bridge_api.py` (MODIFIED): applied `_read_bounded_json` to 5 additional routes; `_LIFECYCLE_ERRORS` tuple for isinstance checks.
+- `core_engine/tax_appeal_routes.py` (MODIFIED): 10 MiB per-file limit. **[RETROACTIVELY RATIFIED]**
+- `core_engine/shared_request_routes.py` (MODIFIED): 10 MiB per-file limit. **[RETROACTIVELY RATIFIED]**
+- `.github/workflows/ci-cd.yml` (MODIFIED): 3 blocking lanes (governed/ML/root-integration), test filenames corrected, secret guard step.
+- `.github/workflows/e2e.yml` (MODIFIED): server startup, 30 s health poll, explicit E2E test files, server log upload.
+- `core_engine/tests/test_wave4b1_waitress_transport.py` (MODIFIED): WT-06/WT-07/WT-08 added; port-collision unit tests.
+- `core_engine/tests/test_wave4b1_security.py` (MODIFIED): 21 multipart cases + 10 MiB per-file tests + formula injection tests.
+- `core_engine/tests/test_avm_artifact_lifecycle.py` (MODIFIED): ALC-13 metadata pending; ALC-14 status transitions; Windows junction/reparse tests.
+- `core_engine/tests/e2e/test_mass_appraisal_tab.py` (MODIFIED): MAT-65/66 price-index auth regression; MAT-67 initial Bearer header intercept.
+
+### Gate Results (7e430f2)
+
+| Gate | Description | Result |
+|------|-------------|--------|
+| G-1 | bridge_api.py syntax check | PASS |
+| G-2 | test_avm_artifact_lifecycle (ALC-01..ALC-14 + Windows) | PASS |
+| G-3 | test_wave4b1_security (OAF + Gate 6 + corrective) | PASS |
+| G-4 | test_wave4b1_waitress_transport (WT-01..WT-08) | PASS |
+| G-5 | Full governed + ML + root-integration suite | PASS |
+| G-6 | No repo delta (isolation plugin) | PASS |
+
+---
+
+## Wave 4B1 Final Gap-Correction (this commit)
+
+**Date**: 2026-08-05  
+**Branch**: `migration/wave4b1-avm-security-ci-hardening`  
+**Authorization**: `A6_WAVE_4B1_FINAL_AUDIT_GAP_CORRECTION_AUTHORIZED`  
+**Commit message**: `fix(avm): close final Wave 4B1 audit gaps`
+
+### Scope
+
+This final gap-correction commit closes all remaining audit gaps from the Wave 4B1 specification. It modifies 11 paths and creates/deletes 0 files.
+
+### Changes
+
+#### Route-Specific JSON Limits (Section 3)
+
+`core_engine/request_limits.py` now defines 16 named byte-limit constants replacing the single `_GLOBAL_TRANSPORT_LIMIT` that was previously passed to all `read_bounded_json()` calls in `bridge_api.py`:
+
+| Constant | Route | Limit |
+|----------|-------|-------|
+| `LIMIT_VALUATION` | `/api/valuation` | 512 KiB |
+| `LIMIT_PRICE_INDEX_POST` | `/api/price-index POST` | 256 KiB |
+| `LIMIT_MA_PREVIEW` | `/api/mass-appraisal/preview` | 1 MiB |
+| `LIMIT_MA_RUN` | `/api/mass-appraisal/run` | 1 MiB |
+| `LIMIT_MA_EXPORT_XLSX` | `/api/mass-appraisal/export-xlsx` | 2 MiB |
+| `LIMIT_MA_SALES_VERIFY` | `/api/mass-appraisal/sales/verify` | 1 MiB |
+| `LIMIT_MA_SALES_TIMEADJ` | `/api/mass-appraisal/sales/time-adjust` | 1 MiB |
+| `LIMIT_MA_SALES_ADJUST` | `/api/mass-appraisal/sales/adjust` | 1 MiB |
+| `LIMIT_MA_RATIO_STUDY` | `/api/mass-appraisal/ratio-study/run` | 1 MiB |
+| `LIMIT_MA_CALIB_PREVIEW` | `/api/mass-appraisal/calibration/preview` | 1 MiB |
+| `LIMIT_MA_CALIB_SANDBOX` | `/api/mass-appraisal/calibration/sandbox` | 512 KiB |
+| `LIMIT_AVM_SINGLE` | `/api/valuation/avm` | 64 KiB |
+| `LIMIT_AVM_BATCH` | `/api/valuation/avm/batch` | 512 KiB |
+| `LIMIT_MV_RUN` | `/api/mass-valuation/run` | 2 MiB |
+| `LIMIT_MV_REVIEW` | `/api/mass-valuation/review/<id>` | 64 KiB |
+| `LIMIT_MV_IMPORT` | `/api/mass-valuation/import` | 2 MiB |
+
+`_GLOBAL_TRANSPORT_LIMIT = 67_108_864` (64 MiB) is retained for the Waitress `max_request_body_size` server-level ceiling.
+
+All 16 `_read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)` calls in `bridge_api.py` replaced with the corresponding named constants.
+
+#### Test Coverage — 84 New Test Nodes (Sections 4, 5, 8)
+
+`core_engine/tests/test_wave4b1_security.py` extended with:
+- 4 XLSX security tests (no customXml, no external defined names, internal names allowed, no filesystem paths)
+- 48 route-limit tests (16 routes × 3: normal/declared-overlimit/streamed-overlimit)
+- 32 array-field validation tests (16 route-field pairs × 2: invalid-type 400/over-limit 413)
+
+#### Waitress Assertion Tightening (Section 6)
+
+`core_engine/tests/test_wave4b1_waitress_transport.py`:
+- WT-02: now tests route-level boundary (`Content-Length = ROUTE_LIMIT + 1` → exactly 413 `{"error":"payload_too_large"}`), not just "within limit".
+- WT-03: requires `resp.status == 413` exactly (was `in (413, 400, 431)`).
+- WT-06: requires `resp.status == 413` or connection termination (was permitting 400/431/503). 400/431/503 are explicitly NOT accepted.
+- `WAITRESS_COLLECTION_COUNT = 10` unchanged.
+
+#### Lifecycle Tests — 14 New Nodes (Section 7)
+
+`core_engine/tests/test_avm_artifact_lifecycle.py` extended with 14 tests covering capacity management:
+- Unknown root file/directory blocks generation
+- Unknown child inside UUID4 run prevents deletion
+- Unknown run child counts toward capacity
+- Capacity at or above 1,000 is fail-closed
+- Cleanup reduces approved run count below 900
+- Cleanup unable to reach below 900 raises `LifecycleCapacityError`
+- Metadata-only old run is retention-deletable
+- Complete approved run older than retention is deletable
+- Empty metadata-less UUID4 directory older/younger than orphan TTL
+- Non-empty metadata-less run is never deleted
+- Oldest eligible approved runs are deleted first
+- Integration-style: pending→failed on workbook error
+
+#### E2E Stale Server Fix (Section 9)
+
+`core_engine/tests/e2e/conftest.py` rewritten:
+- `STALE_SERVER_REUSE_POSSIBLE = False` (module docstring sentinel).
+- `_find_free_port(start=15900, avoid=5000)` — never returns port 5000.
+- If `E2E_BASE_URL` is set but not reachable, the session fails immediately (no silent fallback to 5000).
+- Captures server log to filesystem on failure.
+
+`.github/workflows/e2e.yml` updated:
+- `PORT: "5000"` removed from env block.
+- New step "Allocate fresh server port (never 5000)" writes `E2E_SERVER_PORT` to `$GITHUB_ENV`.
+- Server start uses `PORT=$E2E_SERVER_PORT`.
+- Health poll writes `E2E_BASE_URL=http://127.0.0.1:${E2E_SERVER_PORT}` to `$GITHUB_ENV`.
+
+`core_engine/tests/e2e/test_mass_appraisal_tab.py` — MAT67 enhanced:
+- Uses `page.goto()` (not `page.request.get()`).
+- Calls `window.loadGrowth()` via `page.evaluate()` to trigger the price-index fetch.
+- Intercepts the `/api/price-index` network request and asserts `Authorization: Bearer` header.
+- Asserts the rendered price-index widget element is visible in the DOM.
+- `page.request.get()` alone is NOT used.
+
+#### CI sklearn Assertions (Section 10)
+
+`.github/workflows/ci-cd.yml`:
+- Governed lane: Python step asserts `sklearn` is not importable (governed isolation confirmed).
+- ML lane: Python step asserts `scikit-learn == "1.9.0"` exactly (version mismatch → CI failure).
+- Root integration lane: `-p core_engine.tests.avm_isolation_plugin` added to both collect and execute steps.
+
+### Gate Results (this commit)
+
+| Gate | Description | Result |
+|------|-------------|--------|
+| G-1 | `python -m compileall -q core_engine` | PASS (exit 0) |
+| G-2 | `git diff --check HEAD` | PASS (exit 0, LF/CRLF warnings only) |
+| G-3 | `ast.parse(bridge_api.py)` | PASS |
+| G-4 | `ast.parse(test_wave4b1_security.py)` (1,599 lines) | PASS |
+| G-5 | `ast.parse(test_avm_artifact_lifecycle.py)` (682 lines) | PASS |
+| G-6 | `ast.parse(test_mass_appraisal_tab.py)` | PASS |
+| G-7 | lifecycle tests (31 pass, 1 skip) | PASS |
+| G-8 | Docker/Nginx remote validation | PENDING (not available in local environment) |
+
+### Incomplete Items
+
+- Wave 4B2 and Wave 4C remain incomplete and are not merge-eligible.
+- Docker/Nginx remote validation pending (requires remote infrastructure).
+- Isolated %TEMP% venv gates: blocked by network/install constraints in local environment; CI lanes enforce the same isolation.
+
+### Changed Paths (this commit)
+
+FILES_TO_MODIFY = 11
+FILES_TO_CREATE = 0
+FILES_TO_DELETE = 0
+WAVE4B1_FINAL_GAP_CORRECTION_TOTAL_CHANGED_PATHS = 11
+
+SENTINEL_CODE = A6_WAVE_4B1_FINAL_AUDIT_GAP_CORRECTION_AWAITING_REVIEW

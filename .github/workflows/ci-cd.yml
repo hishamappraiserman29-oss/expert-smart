@@ -38,6 +38,17 @@ jobs:
           pip install --no-cache-dir -r core_engine/requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Assert scikit-learn absent in governed environment
+        working-directory: ${{ github.workspace }}
+        shell: python
+        run: |
+          import importlib.util, sys
+          spec = importlib.util.find_spec("sklearn")
+          if spec is not None:
+              print(f"FAIL: scikit-learn is importable in the governed environment: {spec.origin}")
+              sys.exit(1)
+          print("sklearn absent — governed isolation confirmed")
+
       - name: Secret guard — reject committed credentials
         working-directory: ${{ github.workspace }}
         shell: python
@@ -186,6 +197,21 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -r core_engine/requirements-ml.txt
 
+      - name: Assert scikit-learn version in ML environment
+        working-directory: ${{ github.workspace }}
+        shell: python
+        run: |
+          import importlib.util, importlib.metadata, sys
+          spec = importlib.util.find_spec("sklearn")
+          if spec is None:
+              print("FAIL: scikit-learn not importable in ML environment")
+              sys.exit(1)
+          version = importlib.metadata.version("scikit-learn")
+          if version != "1.9.0":
+              print(f"FAIL: expected scikit-learn==1.9.0, got {version}")
+              sys.exit(1)
+          print(f"sklearn {version} confirmed in ML environment")
+
       - name: Collect ML AVM tests
         working-directory: ${{ github.workspace }}
         run: |
@@ -230,6 +256,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
             tests/test_mass_appraisal_export_integration.py \
             tests/test_mass_appraisal_template_render.py \
             --collect-only -q
@@ -238,6 +265,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
             tests/test_mass_appraisal_export_integration.py \
             tests/test_mass_appraisal_template_render.py \
             -q --tb=short

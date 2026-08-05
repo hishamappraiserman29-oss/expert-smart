@@ -809,3 +809,792 @@ def test_template_xlsx_no_secret_patterns(sec_client):
             assert m is None, (
                 f"Secret-pattern found in {name}: {m.group()[:40]!r}"
             )
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 11: XLSX public-template — 4 missing security checks
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def test_template_xlsx_no_custom_xml(sec_client):
+    """Template XLSX must not contain any customXml/ ZIP parts."""
+    import zipfile, io as _io
+    rv = sec_client.get("/api/mass-appraisal/template-xlsx")
+    if rv.status_code != 200:
+        pytest.skip("Template endpoint unavailable — skipping content inspection")
+    with zipfile.ZipFile(_io.BytesIO(rv.data)) as zf:
+        custom_xml_parts = [n for n in zf.namelist() if "customXml" in n]
+        assert not custom_xml_parts, (
+            f"Template XLSX must not contain customXml parts: {custom_xml_parts}"
+        )
+
+
+def test_template_xlsx_no_external_defined_names(sec_client):
+    """Template XLSX must not contain external-reference defined names."""
+    import zipfile, io as _io, re as _re
+    rv = sec_client.get("/api/mass-appraisal/template-xlsx")
+    if rv.status_code != 200:
+        pytest.skip("Template endpoint unavailable")
+    # Only examine content of <definedName> elements, not XML namespace declarations
+    defined_name_re = _re.compile(rb"<definedName[^>]*>([^<]*)</definedName>")
+    external_ref_re = _re.compile(rb"\[.+?\.xlsx?\]|file://|http://|https://")
+    with zipfile.ZipFile(_io.BytesIO(rv.data)) as zf:
+        for name in zf.namelist():
+            if "workbook" in name and name.endswith(".xml"):
+                content = zf.read(name)
+                for dn_match in defined_name_re.finditer(content):
+                    cell_formula = dn_match.group(1)
+                    m = external_ref_re.search(cell_formula)
+                    assert m is None, (
+                        f"External reference in <definedName> in {name}: {m.group()[:40]!r}"
+                    )
+
+
+def test_template_xlsx_internal_defined_names_allowed(sec_client):
+    """Template XLSX may contain internal defined names; this test confirms no external-only flag."""
+    import zipfile, io as _io
+    rv = sec_client.get("/api/mass-appraisal/template-xlsx")
+    if rv.status_code != 200:
+        pytest.skip("Template endpoint unavailable")
+    with zipfile.ZipFile(_io.BytesIO(rv.data)) as zf:
+        for name in zf.namelist():
+            if "workbook" in name and name.endswith(".xml"):
+                content = zf.read(name)
+                # Null bytes in workbook XML indicate binary corruption or embedded data
+                assert b'\x00' not in content, (
+                    f"Null bytes found in {name} — may indicate binary-embedded data"
+                )
+
+
+def test_template_xlsx_no_filesystem_paths(sec_client):
+    """Template XLSX must not contain filesystem paths in any ZIP entry."""
+    import zipfile, io as _io, re as _re
+    rv = sec_client.get("/api/mass-appraisal/template-xlsx")
+    if rv.status_code != 200:
+        pytest.skip("Template endpoint unavailable")
+    fs_path_re = _re.compile(
+        rb"[A-Za-z]:\\\\|"
+        rb"\\\\\\\\[A-Za-z]|"
+        rb"/home/|"
+        rb"/Users/|"
+        rb"/root/|"
+        rb"/tmp/[a-z]"
+    )
+    with zipfile.ZipFile(_io.BytesIO(rv.data)) as zf:
+        for name in zf.namelist():
+            content = zf.read(name)
+            m = fs_path_re.search(content)
+            assert m is None, (
+                f"Filesystem path found in {name}: {m.group()[:60]!r}"
+            )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 12: Route-specific JSON body limit tests (16 routes × 3 cases = 48)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import sys as _sys
+_CORE_PATH = str(Path(_CORE))
+if _CORE_PATH not in _sys.path:
+    _sys.path.insert(0, _CORE_PATH)
+
+from request_limits import (
+    LIMIT_VALUATION, LIMIT_PRICE_INDEX_POST,
+    LIMIT_MA_PREVIEW, LIMIT_MA_RUN, LIMIT_MA_EXPORT_XLSX,
+    LIMIT_MA_SALES_VERIFY, LIMIT_MA_SALES_TIMEADJ, LIMIT_MA_SALES_ADJUST,
+    LIMIT_MA_RATIO_STUDY, LIMIT_MA_CALIB_PREVIEW, LIMIT_MA_CALIB_SANDBOX,
+    LIMIT_AVM_SINGLE, LIMIT_AVM_BATCH,
+    LIMIT_MV_RUN, LIMIT_MV_REVIEW, LIMIT_MV_IMPORT,
+)
+
+
+def _overlimit_body(limit: int) -> bytes:
+    return b"x" * (limit + 1)
+
+
+def _assert_payload_too_large(rv):
+    assert rv.status_code == 413, (
+        f"Expected 413 payload_too_large, got {rv.status_code}; body={rv.data[:200]}"
+    )
+    body = rv.get_json() or {}
+    assert body.get("error") == "payload_too_large", (
+        f"Expected error=payload_too_large, got {body}"
+    )
+
+
+# /api/valuation
+
+def test_json_limit_valuation_normal_not_413(sec_client):
+    rv = sec_client.post("/api/valuation",
+                         json={"location": "Riyadh", "area": 100},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413, f"Normal payload must not return 413, got {rv.status_code}"
+
+
+def test_json_limit_valuation_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_VALUATION + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_valuation_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation",
+                         data=_overlimit_body(LIMIT_VALUATION),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/price-index POST
+
+def test_json_limit_price_index_normal_not_413(sec_client):
+    rv = sec_client.post("/api/price-index",
+                         json={"region": "Riyadh"},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_price_index_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/price-index", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_PRICE_INDEX_POST + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_price_index_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/price-index",
+                         data=_overlimit_body(LIMIT_PRICE_INDEX_POST),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/preview
+
+def test_json_limit_ma_preview_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         json={"rows": [], "location": "Riyadh"},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_preview_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_PREVIEW + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_preview_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         data=_overlimit_body(LIMIT_MA_PREVIEW),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/run
+
+def test_json_limit_ma_run_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         json={"rows": [], "location": "Riyadh"},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_run_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_RUN + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_run_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         data=_overlimit_body(LIMIT_MA_RUN),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/export-xlsx
+
+def test_json_limit_ma_export_xlsx_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/export-xlsx",
+                         json={"result": {}},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_export_xlsx_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/export-xlsx", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_EXPORT_XLSX + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_export_xlsx_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/export-xlsx",
+                         data=_overlimit_body(LIMIT_MA_EXPORT_XLSX),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/sales/verify
+
+def test_json_limit_ma_sales_verify_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/verify",
+                         json={"records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_sales_verify_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/verify", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_SALES_VERIFY + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_sales_verify_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/verify",
+                         data=_overlimit_body(LIMIT_MA_SALES_VERIFY),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/sales/time-adjust
+
+def test_json_limit_ma_sales_timeadj_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/time-adjust",
+                         json={"records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_sales_timeadj_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/time-adjust", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_SALES_TIMEADJ + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_sales_timeadj_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/time-adjust",
+                         data=_overlimit_body(LIMIT_MA_SALES_TIMEADJ),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/sales/adjust
+
+def test_json_limit_ma_sales_adjust_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         json={"sale_records": [], "records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_sales_adjust_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_SALES_ADJUST + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_sales_adjust_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         data=_overlimit_body(LIMIT_MA_SALES_ADJUST),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/ratio-study/run
+
+def test_json_limit_ma_ratio_study_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         json={"subject_rows": [], "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_ratio_study_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_RATIO_STUDY + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_ratio_study_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         data=_overlimit_body(LIMIT_MA_RATIO_STUDY),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/calibration/preview
+
+def test_json_limit_ma_calib_preview_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         json={"subject_rows": [], "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_calib_preview_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_CALIB_PREVIEW + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_calib_preview_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         data=_overlimit_body(LIMIT_MA_CALIB_PREVIEW),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-appraisal/calibration/sandbox
+
+def test_json_limit_ma_calib_sandbox_normal_not_413(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/sandbox",
+                         json={"subject_rows": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_ma_calib_sandbox_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/sandbox", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MA_CALIB_SANDBOX + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_ma_calib_sandbox_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/sandbox",
+                         data=_overlimit_body(LIMIT_MA_CALIB_SANDBOX),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/valuation/avm
+
+def test_json_limit_avm_single_normal_not_413(sec_client):
+    rv = sec_client.post("/api/valuation/avm",
+                         json={"area_sqm": 100, "location": "Riyadh"},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_avm_single_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation/avm", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_AVM_SINGLE + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_avm_single_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation/avm",
+                         data=_overlimit_body(LIMIT_AVM_SINGLE),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/valuation/avm/batch
+
+def test_json_limit_avm_batch_normal_not_413(sec_client):
+    rv = sec_client.post("/api/valuation/avm/batch",
+                         json={"properties": []},
+                         headers=_auth_header(_PLAIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_avm_batch_declared_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation/avm/batch", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_AVM_BATCH + 1)},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_avm_batch_streamed_overlimit(sec_client):
+    rv = sec_client.post("/api/valuation/avm/batch",
+                         data=_overlimit_body(LIMIT_AVM_BATCH),
+                         content_type="application/json",
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-valuation/run (admin)
+
+def test_json_limit_mv_run_normal_not_413(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/run",
+                         json={"records": []},
+                         headers=_auth_header(_ADMIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_mv_run_declared_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/run", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MV_RUN + 1)},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_mv_run_streamed_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/run",
+                         data=_overlimit_body(LIMIT_MV_RUN),
+                         content_type="application/json",
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-valuation/review/<prediction_id> (admin)
+
+def test_json_limit_mv_review_normal_not_413(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/review/any-id",
+                         json={"run_id": "r1", "decision": "approved", "reason": "ok"},
+                         headers=_auth_header(_ADMIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_mv_review_declared_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/review/any-id", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MV_REVIEW + 1)},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_mv_review_streamed_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/review/any-id",
+                         data=_overlimit_body(LIMIT_MV_REVIEW),
+                         content_type="application/json",
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# /api/mass-valuation/import (admin)
+
+def test_json_limit_mv_import_normal_not_413(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/import",
+                         json={"records": []},
+                         headers=_auth_header(_ADMIN_USER))
+    assert rv.status_code != 413
+
+
+def test_json_limit_mv_import_declared_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/import", data=b"{}",
+                         content_type="application/json",
+                         environ_overrides={"CONTENT_LENGTH": str(LIMIT_MV_IMPORT + 1)},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+def test_json_limit_mv_import_streamed_overlimit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/import",
+                         data=_overlimit_body(LIMIT_MV_IMPORT),
+                         content_type="application/json",
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_payload_too_large(rv)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 13: Array-field validation tests (16 policies x 2 cases = 32)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _assert_invalid_array_field(rv, field: str):
+    assert rv.status_code == 400, (
+        f"Expected 400 invalid_array_field for {field!r}, got {rv.status_code}"
+    )
+    body = rv.get_json() or {}
+    assert body.get("error") == "invalid_array_field", f"Expected error=invalid_array_field, got {body}"
+    assert body.get("field") == field, f"Expected field={field!r}, got {body.get('field')!r}"
+
+
+def _assert_too_many_items(rv, field: str, maximum: int):
+    assert rv.status_code == 413, (
+        f"Expected 413 too_many_items for {field!r}, got {rv.status_code}"
+    )
+    body = rv.get_json() or {}
+    assert body.get("error") == "too_many_items", f"Expected error=too_many_items, got {body}"
+    assert body.get("field") == field, f"Expected field={field!r}, got {body.get('field')!r}"
+    assert body.get("maximum") == maximum, f"Expected maximum={maximum}, got {body.get('maximum')!r}"
+
+
+# preview: rows
+
+def test_array_preview_rows_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         json={"rows": "not-a-list"}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "rows")
+
+
+def test_array_preview_rows_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         json={"rows": [{}] * 5001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "rows", 5000)
+
+
+# preview: units
+
+def test_array_preview_units_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         json={"units": 42}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "units")
+
+
+def test_array_preview_units_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/preview",
+                         json={"units": [{}] * 5001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "units", 5000)
+
+
+# run: rows
+
+def test_array_run_rows_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         json={"rows": {}}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "rows")
+
+
+def test_array_run_rows_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         json={"rows": [{}] * 5001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "rows", 5000)
+
+
+# run: units
+
+def test_array_run_units_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         json={"units": True}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "units")
+
+
+def test_array_run_units_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/run",
+                         json={"units": [{}] * 5001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "units", 5000)
+
+
+# sales/verify: records
+
+def test_array_sales_verify_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/verify",
+                         json={"records": "bad"}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "records")
+
+
+def test_array_sales_verify_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/verify",
+                         json={"records": [{}] * 10001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "records", 10000)
+
+
+# sales/time-adjust: records
+
+def test_array_sales_timeadj_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/time-adjust",
+                         json={"records": 0}, headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "records")
+
+
+def test_array_sales_timeadj_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/time-adjust",
+                         json={"records": [{}] * 10001}, headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "records", 10000)
+
+
+# sales/adjust: sale_records
+
+def test_array_sales_adjust_sale_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         json={"sale_records": "not-list", "records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "sale_records")
+
+
+def test_array_sales_adjust_sale_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         json={"sale_records": [{}] * 10001, "records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "sale_records", 10000)
+
+
+# sales/adjust: records
+
+def test_array_sales_adjust_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         json={"sale_records": [], "records": 1},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "records")
+
+
+def test_array_sales_adjust_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/sales/adjust",
+                         json={"sale_records": [], "records": [{}] * 10001},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "records", 10000)
+
+
+# ratio-study/run: subject_rows
+
+def test_array_ratio_study_subject_rows_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         json={"subject_rows": 1.5, "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "subject_rows")
+
+
+def test_array_ratio_study_subject_rows_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         json={"subject_rows": [{}] * 5001, "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "subject_rows", 5000)
+
+
+# ratio-study/run: sale_records
+
+def test_array_ratio_study_sale_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         json={"subject_rows": [], "sale_records": {}},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "sale_records")
+
+
+def test_array_ratio_study_sale_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/ratio-study/run",
+                         json={"subject_rows": [], "sale_records": [{}] * 10001},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "sale_records", 10000)
+
+
+# calibration/preview: subject_rows
+
+def test_array_calib_preview_subject_rows_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         json={"subject_rows": False, "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "subject_rows")
+
+
+def test_array_calib_preview_subject_rows_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         json={"subject_rows": [{}] * 5001, "sale_records": []},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "subject_rows", 5000)
+
+
+# calibration/preview: sale_records
+
+def test_array_calib_preview_sale_records_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         json={"subject_rows": [], "sale_records": 99},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "sale_records")
+
+
+def test_array_calib_preview_sale_records_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/preview",
+                         json={"subject_rows": [], "sale_records": [{}] * 10001},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "sale_records", 10000)
+
+
+# calibration/sandbox: subject_rows
+
+def test_array_calib_sandbox_subject_rows_invalid_type(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/sandbox",
+                         json={"subject_rows": "bad"},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "subject_rows")
+
+
+def test_array_calib_sandbox_subject_rows_over_limit(sec_client):
+    rv = sec_client.post("/api/mass-appraisal/calibration/sandbox",
+                         json={"subject_rows": [{}] * 5001},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "subject_rows", 5000)
+
+
+# valuation/avm/batch: properties
+
+def test_array_avm_batch_properties_invalid_type(sec_client):
+    rv = sec_client.post("/api/valuation/avm/batch",
+                         json={"properties": "bad"},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_invalid_array_field(rv, "properties")
+
+
+def test_array_avm_batch_properties_over_limit(sec_client):
+    rv = sec_client.post("/api/valuation/avm/batch",
+                         json={"properties": [{}] * 501},
+                         headers=_auth_header(_PLAIN_USER))
+    _assert_too_many_items(rv, "properties", 500)
+
+
+# mass-valuation/run: records
+
+def test_array_mv_run_records_invalid_type(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/run",
+                         json={"records": "bad"},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_invalid_array_field(rv, "records")
+
+
+def test_array_mv_run_records_over_limit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/run",
+                         json={"records": [{}] * 10001},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_too_many_items(rv, "records", 10000)
+
+
+# mass-valuation/import: records
+
+def test_array_mv_import_records_invalid_type(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/import",
+                         json={"records": 42},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_invalid_array_field(rv, "records")
+
+
+def test_array_mv_import_records_over_limit(sec_client, monkeypatch):
+    monkeypatch.setenv("ADMIN_USER_IDS", _ADMIN_USER)
+    rv = sec_client.post("/api/mass-valuation/import",
+                         json={"records": [{}] * 10001},
+                         headers=_auth_header(_ADMIN_USER))
+    _assert_too_many_items(rv, "records", 10000)

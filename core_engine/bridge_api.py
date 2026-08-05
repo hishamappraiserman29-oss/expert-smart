@@ -407,12 +407,21 @@ app.config["MAX_CONTENT_LENGTH"] = _GLOBAL_TRANSPORT_LIMIT
 try:
     from request_limits import read_bounded_json as _read_bounded_json
     from request_limits import check_array_field as _check_array_field
+    from request_limits import (
+        LIMIT_VALUATION, LIMIT_PRICE_INDEX_POST,
+        LIMIT_MA_PREVIEW, LIMIT_MA_RUN, LIMIT_MA_EXPORT_XLSX,
+        LIMIT_MA_SALES_VERIFY, LIMIT_MA_SALES_TIMEADJ, LIMIT_MA_SALES_ADJUST,
+        LIMIT_MA_RATIO_STUDY, LIMIT_MA_CALIB_PREVIEW, LIMIT_MA_CALIB_SANDBOX,
+        LIMIT_AVM_SINGLE, LIMIT_AVM_BATCH,
+        LIMIT_MV_RUN, LIMIT_MV_REVIEW, LIMIT_MV_IMPORT,
+    )
     _REQUEST_LIMITS_AVAILABLE = True
 except ImportError as _rl_err:
     print(f"[WARN] request_limits unavailable: {_rl_err}")
     _REQUEST_LIMITS_AVAILABLE = False
     _read_bounded_json = None  # type: ignore[assignment]
     _check_array_field = None  # type: ignore[assignment]
+    LIMIT_VALUATION = LIMIT_PRICE_INDEX_POST = LIMIT_MA_PREVIEW = LIMIT_MA_RUN =     LIMIT_MA_EXPORT_XLSX = LIMIT_MA_SALES_VERIFY = LIMIT_MA_SALES_TIMEADJ =     LIMIT_MA_SALES_ADJUST = LIMIT_MA_RATIO_STUDY = LIMIT_MA_CALIB_PREVIEW =     LIMIT_MA_CALIB_SANDBOX = LIMIT_AVM_SINGLE = LIMIT_AVM_BATCH =     LIMIT_MV_RUN = LIMIT_MV_REVIEW = LIMIT_MV_IMPORT = _GLOBAL_TRANSPORT_LIMIT
 
 try:
     from avm_lifecycle import (
@@ -5431,7 +5440,7 @@ def _augment_payload_for_uncertainty(payload: dict) -> None:
 @require_auth
 def handle_valuation():
     try:
-        payload, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        payload, _json_err = _read_bounded_json(LIMIT_VALUATION)
         if _json_err:
             return _json_err
         payload = payload or {}
@@ -7875,7 +7884,7 @@ def handle_price_index():
     try:
         # Accept filters from query string OR JSON body
         if request.method == "POST":
-            payload, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+            payload, _json_err = _read_bounded_json(LIMIT_PRICE_INDEX_POST)
             if _json_err:
                 return _json_err
             payload = payload or {}
@@ -7935,7 +7944,7 @@ def handle_mass_appraisal_preview():
             return jsonify({"status": "error",
                             "message": f"mass_appraisal not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_PREVIEW)
         if _json_err:
             return _json_err
         body = body or {}
@@ -7977,7 +7986,7 @@ def handle_mass_appraisal_run():
             return jsonify({"status": "error",
                             "message": f"mass_appraisal not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_RUN)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8017,7 +8026,7 @@ def handle_mass_appraisal_export_xlsx():
                             "message": f"mass_appraisal_excel not available: {imp_err}"}), 500
     try:
         from flask import Response
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_EXPORT_XLSX)
         if _json_err:
             return _json_err
         body                = body or {}
@@ -8131,7 +8140,7 @@ def handle_mass_sales_verify():
             return jsonify({"status": "error",
                             "message": f"sales_verification not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_VERIFY)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8158,7 +8167,7 @@ def handle_mass_sales_time_adjust():
             return jsonify({"status": "error",
                             "message": f"sales_time_adjustment not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_TIMEADJ)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8186,7 +8195,7 @@ def handle_mass_sales_adjust():
             return jsonify({"status": "error",
                             "message": f"sales_adjustments not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_ADJUST)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8217,7 +8226,7 @@ def handle_mass_ratio_study():
             return jsonify({"status": "error",
                             "message": f"ratio_studies not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_RATIO_STUDY)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8248,7 +8257,7 @@ def handle_mass_calibration_preview():
             return jsonify({"status": "error",
                             "message": f"model_calibration not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_CALIB_PREVIEW)
         if _json_err:
             return _json_err
         body = body or {}
@@ -8280,7 +8289,7 @@ def handle_mass_calibration_sandbox():
             return jsonify({"status": "error",
                             "message": f"calibration_sandbox not available: {imp_err}"}), 500
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_MA_CALIB_SANDBOX)
         if _json_err:
             return _json_err
         body = body or {}
@@ -10540,14 +10549,14 @@ except Exception as _ml_err:
 @app.route("/api/valuation/avm", methods=["POST"])
 @require_auth
 def api_avm_valuation():
-    if not _ML_OK:
-        return jsonify({"error": "AVM model not available"}), 503
-    if _avm_predictor_instance is None:
-        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_AVM_SINGLE)
         if _json_err:
             return _json_err
+        if not _ML_OK:
+            return jsonify({"error": "AVM model not available"}), 503
+        if _avm_predictor_instance is None:
+            return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
         body = body or {}
         area_sqm = float(body.get("area_sqm", 0))
         location = str(body.get("location", "")).strip()
@@ -10571,18 +10580,18 @@ def api_avm_valuation():
 @app.route("/api/valuation/avm/batch", methods=["POST"])
 @require_auth
 def api_avm_batch_valuation():
-    if not _ML_OK:
-        return jsonify({"error": "AVM model not available"}), 503
-    if _avm_predictor_instance is None:
-        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
     try:
-        body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+        body, _json_err = _read_bounded_json(LIMIT_AVM_BATCH)
         if _json_err:
             return _json_err
         body = body or {}
         _arr_err = _check_array_field(body, "properties", 500)
         if _arr_err:
             return _arr_err
+        if not _ML_OK:
+            return jsonify({"error": "AVM model not available"}), 503
+        if _avm_predictor_instance is None:
+            return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
         properties = body.get("properties", [])
         if not isinstance(properties, list) or not properties:
             return jsonify({"error": "properties must be a non-empty list"}), 400
@@ -12857,12 +12866,12 @@ except Exception as _mvp_import_err:
 @require_auth
 def mv_run():
     """POST /api/mass-valuation/run — Execute a mass valuation run. Admin only."""
-    if not _is_admin():
+    if not _is_admin(getattr(g, "user_id", None)):
         return jsonify({"error": "admin role required"}), 403
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+    body, _json_err = _read_bounded_json(LIMIT_MV_RUN)
     if _json_err:
         return _json_err
     body = body or {}
@@ -12999,7 +13008,7 @@ def mv_review_prediction(prediction_id: str):
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+    body, _json_err = _read_bounded_json(LIMIT_MV_REVIEW)
     if _json_err:
         return _json_err
     body        = body or {}
@@ -13052,6 +13061,8 @@ def mv_review_prediction(prediction_id: str):
 
     except ValueError as _ve:
         return jsonify({"error": str(_ve)}), 400
+    except (TypeError, AttributeError):
+        return jsonify({"error": "database connection unavailable"}), 503
 
 
 @app.route("/api/mass-valuation/runs/<run_id>/export", methods=["GET"])
@@ -13096,7 +13107,7 @@ def mv_import():
     if not _MV_PIPELINE_AVAILABLE:
         return jsonify({"error": "mass_valuation pipeline unavailable"}), 503
 
-    body, _json_err = _read_bounded_json(_GLOBAL_TRANSPORT_LIMIT)
+    body, _json_err = _read_bounded_json(LIMIT_MV_IMPORT)
     if _json_err:
         return _json_err
     body = body or {}

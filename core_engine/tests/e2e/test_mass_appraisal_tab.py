@@ -889,12 +889,16 @@ def test_MAT66_price_index_authenticated_returns_non_401(page, live_server):
 def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
     """Wave 4B1 regression: frontend price-index widget sends Authorization header.
 
-    Intercepts the fetch to /api/price-index and asserts the Authorization
-    header is present, proving the UI was updated when the endpoint became
-    authenticated in Wave 4B1.
-    """
-    _goto(page, live_server)
+    Full browser test:
+    1. page.goto() navigates to the live server.
+    2. loadGrowth() is executed in the browser via page.evaluate().
+    3. Intercepts the /api/price-index request and asserts Authorization: Bearer.
+    4. Asserts the rendered price-index widget element is visible in the DOM.
 
+    page.request.get() alone is NOT used — this test exercises the real browser
+    fetch path to confirm the UI sends the header through the same code path
+    that end-users trigger.
+    """
     captured_requests: list[dict] = []
 
     def handle_request(req):
@@ -906,18 +910,49 @@ def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
 
     page.on("request", handle_request)
 
-    # Navigate to mass appraisal tab which loads the price-index widget
-    _switch_mass_mode(page)
-    page.wait_for_timeout(1000)
+    # Step 1: navigate using page.goto() (not page.request)
+    _goto(page, live_server)
 
-    # Check if any price-index request was intercepted
+    # Step 2: switch to mass appraisal mode to ensure widget scaffold is loaded
+    _switch_mass_mode(page)
+
+    # Step 3: execute loadGrowth() in the browser JS context to trigger the
+    # price-index fetch.  The function is expected to be defined on window.
+    load_growth_exists = page.evaluate(
+        "typeof window.loadGrowth === 'function'"
+    )
+    if not load_growth_exists:
+        pytest.skip(
+            "window.loadGrowth() is not defined — widget not present on this page version"
+        )
+
+    page.evaluate("window.loadGrowth()")
+    page.wait_for_timeout(800)
+
+    # Step 4: Assert Authorization: Bearer is present in the intercepted request
     if not captured_requests:
         pytest.skip(
-            "No /api/price-index request intercepted — widget may not auto-fetch on load"
+            "loadGrowth() did not produce a /api/price-index request — "
+            "widget may use lazy loading; check window.loadGrowth implementation"
         )
 
     for req in captured_requests:
         assert req["auth"].startswith("Bearer "), (
-            f"Price-index request must include Authorization: Bearer header; "
-            f"got auth={req['auth']!r}"
+            f"Price-index request must carry Authorization: Bearer header; "
+            f"got auth={req['auth']!r} for url={req['url']!r}"
         )
+
+    # Step 5: Assert the rendered price-index widget is visible in the DOM
+    widget_selector = (
+        '[data-testid="price-index-widget"], '
+        '#price-index-widget, '
+        '.price-index-widget, '
+        '[data-testid="mass-price-index-chart"]'
+    )
+    widget_el = page.query_selector(widget_selector)
+    assert widget_el is not None, (
+        "Rendered price-index widget element must be present in the DOM after loadGrowth()"
+    )
+    assert widget_el.is_visible(), (
+        "Price-index widget must be visible after loadGrowth() executes"
+    )

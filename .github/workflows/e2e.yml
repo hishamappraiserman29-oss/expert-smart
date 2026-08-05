@@ -33,6 +33,16 @@ jobs:
           pip install --no-cache-dir -r core_engine/requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Assert pytest-playwright installed
+        shell: python
+        run: |
+          import importlib.util, sys
+          spec = importlib.util.find_spec("pytest_playwright")
+          if spec is None:
+              print("FAIL: pytest_playwright not installed — check requirements-dev.txt pin")
+              sys.exit(1)
+          print(f"pytest_playwright found: {spec.origin}")
+
       - name: Install Playwright browsers
         run: python -m playwright install --with-deps chromium
 

@@ -14,6 +14,16 @@ from __future__ import annotations
 import json
 import pytest
 
+# ── Auth helpers (mirrors test_mv_import_ui.py) ──────────────────────────────
+
+_ADMIN = json.dumps({"token": "mock-token", "user_id": "u1", "is_admin": True})
+
+
+def _as_admin(page):
+    """Set admin session in localStorage before page navigation."""
+    page.add_init_script(f"localStorage.setItem('es_auth', '{_ADMIN}')")
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 VALID_SAMPLE = json.dumps([
@@ -890,10 +900,12 @@ def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
     """Wave 4B1 regression: frontend price-index widget sends Authorization header.
 
     Full browser test:
+    0. Admin auth is set in localStorage BEFORE navigation so window.esFetch
+       sends the Authorization header on the price-index request.
     1. page.goto() navigates to the live server.
     2. loadGrowth() is executed in the browser via page.evaluate().
     3. Intercepts the /api/price-index request and asserts Authorization: Bearer.
-    4. Asserts the rendered price-index widget element is visible in the DOM.
+    4. Asserts the rendered price-index growth-pulse widget is visible in the DOM.
 
     page.request.get() alone is NOT used — this test exercises the real browser
     fetch path to confirm the UI sends the header through the same code path
@@ -910,6 +922,9 @@ def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
 
     page.on("request", handle_request)
 
+    # Step 0: configure admin auth BEFORE navigation — window.esFetch gates on es_auth
+    _as_admin(page)
+
     # Step 1: navigate using page.goto() (not page.request)
     _goto(page, live_server)
 
@@ -917,23 +932,25 @@ def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
     _switch_mass_mode(page)
 
     # Step 3: execute loadGrowth() in the browser JS context to trigger the
-    # price-index fetch.  The function is expected to be defined on window.
+    # price-index fetch.  The function MUST be defined on window; absence is a failure.
     load_growth_exists = page.evaluate(
         "typeof window.loadGrowth === 'function'"
     )
     if not load_growth_exists:
-        pytest.skip(
+        pytest.fail(
             "window.loadGrowth() is not defined — widget not present on this page version"
         )
 
     page.evaluate("window.loadGrowth()")
     page.wait_for_timeout(800)
 
-    # Step 4: Assert Authorization: Bearer is present in the intercepted request
+    # Step 4: Assert Authorization: Bearer is present in the intercepted request.
+    # Absence after auth setup means _maApiUrl() or esFetch is broken — that is a
+    # test failure, not a skip.
     if not captured_requests:
-        pytest.skip(
-            "loadGrowth() did not produce a /api/price-index request — "
-            "widget may use lazy loading; check window.loadGrowth implementation"
+        pytest.fail(
+            "loadGrowth() did not produce a /api/price-index request after auth setup — "
+            "check _maApiUrl() layered fallback and window.esFetch authentication gate"
         )
 
     for req in captured_requests:
@@ -942,17 +959,16 @@ def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
             f"got auth={req['auth']!r} for url={req['url']!r}"
         )
 
-    # Step 5: Assert the rendered price-index widget is visible in the DOM
-    widget_selector = (
-        '[data-testid="price-index-widget"], '
-        '#price-index-widget, '
-        '.price-index-widget, '
-        '[data-testid="mass-price-index-chart"]'
+    # Step 5: Assert the price-index growth-pulse widget is rendered and visible.
+    # The widget lives in #growth-pulse (global header) and is always present.
+    pulse_el = page.query_selector("#growth-pulse")
+    assert pulse_el is not None, (
+        "Price-index #growth-pulse widget container must be present in the DOM"
     )
-    widget_el = page.query_selector(widget_selector)
-    assert widget_el is not None, (
-        "Rendered price-index widget element must be present in the DOM after loadGrowth()"
+    cma_el = page.query_selector("#gp-cma")
+    assert cma_el is not None, (
+        "#gp-cma pulse item (loadGrowth target) must be present in the DOM"
     )
-    assert widget_el.is_visible(), (
-        "Price-index widget must be visible after loadGrowth() executes"
+    assert cma_el.is_visible(), (
+        "Price-index widget #gp-cma must be visible after loadGrowth() executes"
     )

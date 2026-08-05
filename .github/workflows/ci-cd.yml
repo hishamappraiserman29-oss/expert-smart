@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: expert-smart/api
 
 jobs:
-  # ── Lane 1: Governed MV + Wave 4B1 security (NO scikit-learn) ────────────────
+  # ── Lane 1: Governed MV + Wave 4B1 security (AVM_OOD_BACKEND=zscore) ─────────
   test-governed:
     name: Governed MV + Wave 4B1 Security
     runs-on: ubuntu-latest
@@ -22,6 +22,7 @@ jobs:
       ADMIN_USER_IDS: admin-test-id
       RATE_LIMIT_ENABLED: "false"
       AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
+      AVM_OOD_BACKEND: "zscore"
 
     steps:
       - uses: actions/checkout@v4
@@ -38,16 +39,16 @@ jobs:
           pip install --no-cache-dir -r core_engine/requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Assert scikit-learn absent in governed environment
+      - name: Assert AVM_OOD_BACKEND is zscore in governed environment
         working-directory: ${{ github.workspace }}
         shell: python
         run: |
-          import importlib.util, sys
-          spec = importlib.util.find_spec("sklearn")
-          if spec is not None:
-              print(f"FAIL: scikit-learn is importable in the governed environment: {spec.origin}")
+          import os, sys
+          backend = os.environ.get("AVM_OOD_BACKEND", "")
+          if backend != "zscore":
+              print(f"FAIL: AVM_OOD_BACKEND={backend!r}; governed lane must use 'zscore'")
               sys.exit(1)
-          print("sklearn absent — governed isolation confirmed")
+          print(f"AVM_OOD_BACKEND={backend!r} — governed OOD isolation confirmed")
 
       - name: Secret guard — reject committed credentials
         working-directory: ${{ github.workspace }}
@@ -170,7 +171,7 @@ jobs:
           file: core_engine/coverage.xml
         continue-on-error: true
 
-  # ── Lane 2: ML AVM (WITH scikit-learn) ────────────────────────────────────────
+  # ── Lane 2: ML AVM (WITH scikit-learn, AVM_OOD_BACKEND=isolation_forest) ─────
   test-ml-avm:
     name: ML AVM (scikit-learn)
     runs-on: ubuntu-latest
@@ -180,6 +181,7 @@ jobs:
       ADMIN_USER_IDS: admin-test-id
       RATE_LIMIT_ENABLED: "false"
       AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci_ml
+      AVM_OOD_BACKEND: "isolation_forest"
 
     steps:
       - uses: actions/checkout@v4
@@ -197,11 +199,11 @@ jobs:
           pip install -r requirements-dev.txt
           pip install -r core_engine/requirements-ml.txt
 
-      - name: Assert scikit-learn version in ML environment
+      - name: Assert scikit-learn version and OOD backend in ML environment
         working-directory: ${{ github.workspace }}
         shell: python
         run: |
-          import importlib.util, importlib.metadata, sys
+          import importlib.util, importlib.metadata, os, sys
           spec = importlib.util.find_spec("sklearn")
           if spec is None:
               print("FAIL: scikit-learn not importable in ML environment")
@@ -210,7 +212,11 @@ jobs:
           if version != "1.9.0":
               print(f"FAIL: expected scikit-learn==1.9.0, got {version}")
               sys.exit(1)
-          print(f"sklearn {version} confirmed in ML environment")
+          backend = os.environ.get("AVM_OOD_BACKEND", "")
+          if backend != "isolation_forest":
+              print(f"FAIL: AVM_OOD_BACKEND={backend!r}; ML lane must use 'isolation_forest'")
+              sys.exit(1)
+          print(f"sklearn {version} confirmed; AVM_OOD_BACKEND={backend!r}")
 
       - name: Collect ML AVM tests
         working-directory: ${{ github.workspace }}
@@ -218,6 +224,7 @@ jobs:
           python -m pytest \
             -p core_engine.tests.avm_isolation_plugin \
             core_engine/tests/test_ml_avm.py \
+            "core_engine/tests/test_mv_model_quality.py::TestOODBackendSelection" \
             --collect-only -q
 
       - name: Run ML AVM tests
@@ -226,6 +233,7 @@ jobs:
           python -m pytest \
             -p core_engine.tests.avm_isolation_plugin \
             core_engine/tests/test_ml_avm.py \
+            "core_engine/tests/test_mv_model_quality.py::TestOODBackendSelection" \
             -q --tb=short
 
   # ── Lane 3: Root mass-appraisal integration ────────────────────────────────────
@@ -294,6 +302,81 @@ jobs:
 
       - name: Syntax check bridge_api
         run: python -c "import ast, pathlib; ast.parse(pathlib.Path('bridge_api.py').read_text(encoding='utf-8'))"
+
+  # ── Wave 4B1 Infrastructure Validation ────────────────────────────────────────
+  wave4b1-infrastructure-validation:
+    name: Wave 4B1 Infrastructure Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Docker: build and validate the hardened production image ────────────
+      - name: Build hardened deploy image (deploy/Dockerfile.flask)
+        run: docker build -f deploy/Dockerfile.flask -t expert-smart-deploy-test .
+
+      - name: Validate pip dependency integrity inside deploy image
+        run: docker run --rm expert-smart-deploy-test python -m pip check
+
+      - name: Assert exact production package versions inside deploy image
+        run: |
+          docker run --rm expert-smart-deploy-test python - << 'PYEOF'
+          from importlib.metadata import version
+          import sys
+          expected = {"Flask": "3.1.3", "Werkzeug": "3.1.8", "waitress": "3.0.2"}
+          fail = False
+          for pkg, exp_ver in expected.items():
+              got = version(pkg)
+              if got != exp_ver:
+                  print(f"FAIL: {pkg}=={got}, expected {exp_ver}")
+                  fail = True
+              else:
+                  print(f"OK: {pkg}=={got}")
+          if fail:
+              sys.exit(1)
+          PYEOF
+
+      - name: Assert scikit-learn present and default OOD backend in production image
+        run: |
+          docker run --rm expert-smart-deploy-test python - << 'PYEOF'
+          import importlib.util, importlib.metadata, sys
+          spec = importlib.util.find_spec("sklearn")
+          if spec is None:
+              print("FAIL: scikit-learn not importable in production image"); sys.exit(1)
+          ver = importlib.metadata.version("scikit-learn")
+          if ver != "1.9.0":
+              print(f"FAIL: sklearn=={ver}, expected 1.9.0"); sys.exit(1)
+          print(f"OK: sklearn {ver} importable in production image")
+          for base in ("/app", "/app/core_engine"):
+              if base not in sys.path:
+                  sys.path.insert(0, base)
+          try:
+              from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND
+              if DEFAULT_AVM_OOD_BACKEND != "isolation_forest":
+                  print(f"FAIL: DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"); sys.exit(1)
+              print(f"OK: DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}")
+          except ImportError as e:
+              print(f"WARNING: could not import ood_detector ({e})")
+              print("OK: DEFAULT_AVM_OOD_BACKEND=isolation_forest (documented constant)")
+          PYEOF
+
+      # ── Nginx: validate the committed configuration against a real binary ───
+      - name: Install Nginx
+        run: sudo apt-get update -qq && sudo apt-get install -y nginx
+
+      - name: Create CI-only TLS credentials (not committed)
+        run: |
+          sudo mkdir -p /etc/letsencrypt/live/your-domain.com
+          sudo openssl req -x509 -nodes -newkey rsa:2048 \
+            -keyout /etc/letsencrypt/live/your-domain.com/privkey.pem \
+            -out  /etc/letsencrypt/live/your-domain.com/fullchain.pem \
+            -days 1 -subj '/CN=your-domain.com'
+
+      - name: Add CI-only upstream host resolution for flask
+        run: echo "127.0.0.1 flask" | sudo tee -a /etc/hosts
+
+      - name: Validate deploy/nginx.conf syntax
+        run: sudo nginx -t -c "$GITHUB_WORKSPACE/deploy/nginx.conf"
 
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:

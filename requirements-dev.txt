@@ -1,8 +1,8 @@
 # Development and testing dependencies (not required in production)
 
 # E2E / Playwright
-playwright
-pytest-playwright
+playwright==1.61.0
+pytest-playwright==0.8.0
 
 # Async test compatibility (pytest-playwright leaves a running asyncio loop
 # that breaks asyncio.run() in subsequent tests; nest-asyncio patches the loop

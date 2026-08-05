@@ -1297,7 +1297,7 @@
                     var ctrl = new AbortController();
                     setTimeout(function(){ ctrl.abort(); }, 5000);
                     var _fetchFn = (typeof window.esFetch === 'function') ? window.esFetch : fetch;
-                    _fetchFn(apiBase + "/api/price-index", {signal: ctrl.signal})
+                    _fetchFn(apiBase + "/api/price-index", {signal: ctrl.signal, suppressAuthModal: true})
                         .then(function(r){ return r && r.ok ? r.json() : null; })
                         .then(function(d){
                             if (!d || d.status !== "success" || !d.regions) return;
@@ -1333,6 +1333,7 @@
             } else { init(); }
             // refresh growth pulse every 30 minutes (data feed is continuous)
             setInterval(loadGrowth, 30 * 60 * 1000);
+            window.loadGrowth = loadGrowth;
         })();
     </script>
 
@@ -17826,9 +17827,16 @@ function _showIndexToast(msg, type) {
     function _maResultsEl() { return document.getElementById('mass-appraisal-results'); }
 
     function _maApiUrl() {
-        const base = (document.getElementById('api-url')?.value || 'http://127.0.0.1:5000/api/valuation')
-            .replace(/\/api\/valuation$/, '');
-        return base;
+        const input = document.getElementById('api-url');
+        const current = input?.value ? String(input.value).trim() : '';
+        const isUserConfigured = current && current !== (input?.defaultValue || '');
+        if (isUserConfigured) {
+            return current.replace(/\/api\/valuation\/?$/, '');
+        }
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+            return window.location.origin;
+        }
+        return 'http://127.0.0.1:5000';
     }
 
     // Fill a textarea from the first non-null window variable in the fallback list.

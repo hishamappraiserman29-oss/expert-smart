@@ -99,6 +99,14 @@ jobs:
               sys.exit(1)
           print("Secret guard passed — no credentials detected in tracked files.")
 
+      - name: Allocate governed coverage storage outside repository
+        shell: bash
+        run: |
+          COVERAGE_ROOT="${RUNNER_TEMP}/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/governed"
+          mkdir -p "$COVERAGE_ROOT"
+          echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> "$GITHUB_ENV"
+          echo "COVERAGE_XML=$COVERAGE_ROOT/coverage.xml" >> "$GITHUB_ENV"
+
       - name: Collect governed MV + Wave 4B1 tests
         working-directory: ${{ github.workspace }}
         run: |
@@ -163,12 +171,24 @@ jobs:
             tests/test_purpose_integration_matrix.py \
             tests/test_purpose_routes.py \
             tests/test_approval_rules.py \
-            -q --tb=short --cov=. --cov-report=xml --cov-report=term-missing
+            -q --tb=short --cov=. "--cov-report=xml:${COVERAGE_XML}" --cov-report=term-missing
+
+      - name: Verify governed coverage outputs
+        shell: bash
+        run: |
+          test -f "$COVERAGE_FILE"
+          test -f "$COVERAGE_XML"
+          case "$COVERAGE_FILE" in
+            "$GITHUB_WORKSPACE"/*) exit 1 ;;
+          esac
+          case "$COVERAGE_XML" in
+            "$GITHUB_WORKSPACE"/*) exit 1 ;;
+          esac
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          file: core_engine/coverage.xml
+          file: ${{ env.COVERAGE_XML }}
         continue-on-error: true
 
   # ── Lane 2: ML AVM (WITH scikit-learn, AVM_OOD_BACKEND=isolation_forest) ─────

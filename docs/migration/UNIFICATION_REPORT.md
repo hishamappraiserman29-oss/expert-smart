@@ -2239,3 +2239,227 @@ SELF_HASH_NOT_EMBEDDED
 ```
 
 SENTINEL_CODE = A6_WAVE_4B1_PYTEST_COV_DEPENDENCY_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 External Coverage Artifact Correction
+
+**Date:** 2026-08-06<br>
+**Branch:** `migration/wave4b1-avm-security-ci-hardening`<br>
+**Authorization:** `A6_WAVE_4B1_EXTERNAL_COVERAGE_ARTIFACT_CORRECTION_AUTHORIZED`<br>
+**Starting commit:** `1d56e06767dfba5d984fceb01877b07233e212c6`
+
+---
+
+### Context — Secondary Defect Accepted
+
+The pytest-cov dependency correction (commit `1d56e06`) declared `pytest-cov==7.1.0` and resolved
+primary exit code 4. However, when pytest-cov runs in the CI-safe requirements step (CWD:
+`$GITHUB_WORKSPACE/core_engine`), it creates `core_engine/.coverage` in the repository. The
+`avm_isolation_plugin` — auto-registered via `conftest.py` `pytest_plugins` — detects this file as
+a repository delta and exits code 1. This secondary defect was documented but not fixed in the
+prior authorization. The current authorization resolves it by redirecting all Coverage outputs
+to paths outside the repository.
+
+---
+
+### Root Cause Confirmed
+
+```
+PYTEST_COV_VERSION                              = 7.1.0
+CI_SAFE_REQUIREMENTS_TEST_BODIES_PASSED         = 275
+CI_SAFE_REQUIREMENTS_EXIT_CODE_BEFORE_FIX       = 1
+REPOSITORY_DELTA_BEFORE_FIX                     = ADDED file: core_engine/.coverage
+COVERAGE_DATA_FILE_DEFAULT_LOCATION             = core_engine/.coverage (CWD of CI step)
+COVERAGE_XML_DEFAULT_LOCATION                   = core_engine/coverage.xml (via --cov-report=xml)
+COVERAGE_XML_DOWNSTREAM_CONSUMER                = codecov/codecov-action@v4 file: core_engine/coverage.xml (ci-cd.yml line 171)
+```
+
+---
+
+### Governed Coverage Externalization (`ci-cd.yml`)
+
+**Step 1: Allocate governed coverage storage (added before first pytest invocation)**
+
+```yaml
+- name: Allocate governed coverage storage outside repository
+  shell: bash
+  run: |
+    COVERAGE_ROOT="${RUNNER_TEMP}/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/governed"
+    mkdir -p "$COVERAGE_ROOT"
+    echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> "$GITHUB_ENV"
+    echo "COVERAGE_XML=$COVERAGE_ROOT/coverage.xml" >> "$GITHUB_ENV"
+```
+
+Both resolved paths are outside `$GITHUB_WORKSPACE` by construction (`RUNNER_TEMP` is
+`/home/runner/work/_temp` on ubuntu-latest, which is never under `GITHUB_WORKSPACE`).
+
+**Step 2: CI-safe requirements — `--cov-report=xml:${COVERAGE_XML}`**
+
+Changed from: `--cov-report=xml`<br>
+Changed to: `"--cov-report=xml:${COVERAGE_XML}"`
+
+`--cov=.` and `--cov-report=term-missing` are unchanged.
+
+**Step 3: Verify governed coverage outputs (added after CI-safe requirements step)**
+
+```yaml
+- name: Verify governed coverage outputs
+  shell: bash
+  run: |
+    test -f "$COVERAGE_FILE"
+    test -f "$COVERAGE_XML"
+    case "$COVERAGE_FILE" in
+      "$GITHUB_WORKSPACE"/*) exit 1 ;;
+    esac
+    case "$COVERAGE_XML" in
+      "$GITHUB_WORKSPACE"/*) exit 1 ;;
+    esac
+```
+
+**Step 4: Upload coverage — downstream consumer updated**
+
+`file: core_engine/coverage.xml` → `file: ${{ env.COVERAGE_XML }}`
+
+```
+COVERAGE_TARGET_CHANGED                         = False
+TERM_MISSING_REPORT_PRESERVED                   = True
+XML_REPORT_PRESERVED                            = True
+XML_REPORT_PATH_EXTERNALIZED                    = True
+GOVERNED_COVERAGE_DATA_ASSERTED                 = True
+GOVERNED_COVERAGE_XML_ASSERTED                  = True
+```
+
+---
+
+### E2E Coverage Externalization (`e2e.yml`)
+
+The `Allocate E2E runtime storage root outside repository` step was extended to also allocate
+a Coverage root before server startup and before pytest:
+
+```bash
+COVERAGE_ROOT="/tmp/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/e2e"
+mkdir -p "$COVERAGE_ROOT"
+echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> $GITHUB_ENV
+```
+
+A `Remove E2E coverage root` step was added with `if: always()` and a multi-guard safety check
+that rejects: empty path, `/`, repository paths, and paths not matching the
+`/tmp/expert_smart_coverage_*/e2e` prefix.
+
+```
+E2E_COVERAGE_FILE_SET_BEFORE_PYTEST             = True
+E2E_COVERAGE_PATH_OUTSIDE_REPOSITORY           = True
+E2E_COVERAGE_ROOT_CLEANUP_PRESENT               = True
+E2E_COVERAGE_CLEANUP_SAFETY_GUARD_COMPLETE      = True
+NO_COV_ARGUMENTS_ADDED_TO_E2E_COMMAND          = True
+```
+
+---
+
+### Approach Constraints
+
+```
+AVM_ISOLATION_PLUGIN_MODIFIED                   = False
+COVERAGE_IGNORE_LIST_EXPANDED                   = False
+GITIGNORE_MODIFIED                              = False
+DEPENDENCY_VERSIONS_MODIFIED                    = False
+APPLICATION_CODE_MODIFIED                       = False
+TESTS_MODIFIED                                  = False
+GOVERNED_TEST_FILE_LIST_CHANGED                 = False
+COVERAGE_ARGUMENTS_REMOVED_OR_WEAKENED          = False
+```
+
+---
+
+### CI-Safe Requirements Validation (External Coverage)
+
+Local validation with `COVERAGE_FILE` and `COVERAGE_XML` set to external paths under
+`$TEMP/expert_smart_coverage_local_governed/`:
+
+| Field | Value |
+|-------|-------|
+| Collection count | 275 |
+| Passed | 275 |
+| Failed | 0 |
+| Warnings | 40 (InsecureKeyLengthWarning — pre-existing) |
+| Coverage XML location | external ($COVERAGE_XML env var) |
+| Exit code | **0** |
+| Repository `.coverage` created | False |
+| Repository `coverage.xml` created | False |
+| Isolation plugin delta count | 0 |
+
+---
+
+### Complete Governed Lane
+
+| Suite | Passed | Skipped | Failed | Exit |
+|-------|--------|---------|--------|------|
+| Governed MV + Wave 4B1 security | 531 | 1 | 0 | 0 |
+| CI-safe requirements (external coverage) | 275 | 0 | 0 | 0 |
+
+```
+LOCAL_COMPLETE_GOVERNED_LANE_PASSED             = True
+LOCAL_COMPLETE_GOVERNED_LANE_EXIT_CODE          = 0
+GOVERNED_REPOSITORY_DELTA_COUNT                 = 0
+```
+
+---
+
+### E2E Validation
+
+```
+E2E_COLLECTION_COUNT                            = 90
+E2E_PASSED                                      = 90
+E2E_FAILED                                      = 0
+E2E_ERRORS                                      = 0
+E2E_SKIPPED                                     = 0
+E2E_EXIT_CODE                                   = 0
+E2E_REPOSITORY_DELTA_COUNT                      = 0
+REPOSITORY_COVERAGE_DATA_CREATED               = False
+POST_E2E_REPOSITORY_STORAGE_PATH_COUNT          = 0
+```
+
+Prior session local E2E exit code 1 was caused by `core_engine/.coverage` being present in the
+repository at the time of the E2E run (created by the preceding CI-safe requirements step, not
+yet cleaned). With Coverage redirected to external paths, the isolation plugin detects zero
+deltas and the E2E session exits code 0.
+
+---
+
+### Regression Gates
+
+| Suite | Passed | Failed | Exit |
+|-------|--------|--------|------|
+| ML AVM (isolation_forest, test_ml_avm.py + TestOODBackendSelection) | 58 | 0 | 0 |
+| Root Mass-Appraisal Integration | 3 | 0 | 0 |
+| Focused Wave 4B1 Security | 149 | 0 | 0 |
+
+---
+
+### Workflow Syntax Validation
+
+```
+CI_WORKFLOW_YAML_VALID                          = True
+E2E_WORKFLOW_YAML_VALID                         = True
+TEST_FILE_LIST_CHANGE_COUNT                     = 0
+COVERAGE_SCOPE_CHANGE_COUNT                     = 0
+ISOLATION_IGNORE_CHANGE_COUNT                   = 0
+```
+
+---
+
+### Corrective Scope
+
+```
+COVERAGE_ARTIFACT_CORRECTIVE_FILES_MODIFIED     = 4
+COVERAGE_ARTIFACT_CORRECTIVE_FILES_CREATED      = 0
+COVERAGE_ARTIFACT_CORRECTIVE_FILES_DELETED      = 0
+PUSH_PERFORMED                                  = False
+PR_OPENED                                       = False
+MERGE_PERFORMED                                 = False
+AMEND_PERFORMED                                 = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_EXTERNAL_COVERAGE_ARTIFACT_CORRECTION_AWAITING_REVIEW

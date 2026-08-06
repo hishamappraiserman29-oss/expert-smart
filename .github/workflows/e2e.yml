@@ -60,6 +60,9 @@ jobs:
           echo "EXPERT_SMART_MARKET_RADAR_DB_PATH=$RUNTIME_ROOT/market_radar.db" >> $GITHUB_ENV
           echo "EXPERT_SMART_MODEL_REGISTRY_DIR=$RUNTIME_ROOT/models/registry" >> $GITHUB_ENV
           echo "EXPERT_SMART_UPLOAD_DIR=$RUNTIME_ROOT/uploads"                 >> $GITHUB_ENV
+          COVERAGE_ROOT="/tmp/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/e2e"
+          mkdir -p "$COVERAGE_ROOT"
+          echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> $GITHUB_ENV
 
       - name: Allocate fresh server port (never 5000)
         run: |
@@ -145,6 +148,27 @@ jobs:
                 ;;
               *)
                 echo "WARNING: EXPERT_SMART_RUNTIME_ROOT=$EXPERT_SMART_RUNTIME_ROOT does not match safety prefix — skipping deletion"
+                ;;
+            esac
+          fi
+
+      - name: Remove E2E coverage root
+        if: always()
+        run: |
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "WARNING: COVERAGE_FILE not set — skipping coverage cleanup"
+          else
+            COV_ROOT=$(dirname "$COVERAGE_FILE")
+            case "$COV_ROOT" in
+              '' | /)
+                echo "WARNING: resolved coverage root is empty or / — skipping coverage cleanup"
+                ;;
+              /tmp/expert_smart_coverage_*/e2e)
+                rm -rf "$COV_ROOT"
+                echo "Removed E2E coverage root: $COV_ROOT"
+                ;;
+              *)
+                echo "WARNING: $COV_ROOT does not match expected coverage prefix — skipping coverage cleanup"
                 ;;
             esac
           fi

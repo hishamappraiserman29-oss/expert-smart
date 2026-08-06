@@ -1843,3 +1843,177 @@ SELF_HASH_NOT_EMBEDDED
 ```
 
 SENTINEL_CODE = A6_WAVE_4B1_RUNTIME_STORAGE_TEST_CONTRACT_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 CI Workflow YAML Syntax Correction
+
+**Date:** 2026-08-06<br>
+**Branch:** `migration/wave4b1-avm-security-ci-hardening`<br>
+**Authorization:** `A6_WAVE_4B1_CI_WORKFLOW_SYNTAX_CORRECTION_AUTHORIZED`<br>
+**Starting commit:** `9e3af1a7abcfe40cdab3e2fc68244b744b635b43`
+
+---
+
+### Context — Remote Revalidation Results
+
+The two corrective commits (`50558ce` and `9e3af1a`) were pushed to `origin/migration/wave4b1-avm-security-ci-hardening` under authorization `A6_WAVE_4B1_FINAL_REMOTE_REVALIDATION_AUTHORIZED`.
+
+**E2E run `31085603280`** (`workflow_dispatch`, ref `9e3af1a`):
+
+| Field | Value |
+|-------|-------|
+| Conclusion | `success` |
+| Duration | 199.67 s (3 m 19 s) |
+| Collection | 90 tests |
+| Passed | 90 |
+| Failed | 0 |
+| Skipped | 0 |
+| MAT02 | PASSED (`test_MAT02_mode_selector_exists[chromium]`) |
+| MAT43 | PASSED (`test_MAT43_invalid_json_shows_error_without_clearing[chromium]`) |
+| MAT67 | PASSED (`test_MAT67_price_index_widget_sends_auth_header[chromium]`) |
+| E2E server port | 15900 (≠ 5000) |
+| Runtime root | `/tmp/expert_smart_runtime_31085603280_1` (removed under `always()`) |
+| Playwright | 1.61.0 |
+| pytest-playwright | 0.8.0 |
+
+**CI/CD run `31085536579`** (`push`, ref `9e3af1a`):
+
+| Field | Value |
+|-------|-------|
+| Conclusion | `failure` |
+| Duration | 0 s |
+| Jobs started | 0 |
+| GitHub message | "This run likely failed because of a workflow file issue" |
+| Dispatch attempts | All rejected HTTP 422 (`workflow_dispatch` trigger unresolvable) |
+
+---
+
+### YAML Defect — Root Cause
+
+The `wave4b1-infrastructure-validation` job in `.github/workflows/ci-cd.yml`, introduced by
+commit `50558cef25fa462cd4f977447ddc32f14b447adb`, contained two steps where inline Python was
+embedded as a multi-line `shell -c '...'` argument spanning multiple lines starting at **column 0**
+inside a YAML `run: |` block. The YAML scanner interpreted each column-0 line as a new mapping key,
+producing:
+
+```
+yaml.scanner.ScannerError: while scanning a simple key
+  in "<unicode string>", line 333, column 1:
+    from importlib.metadata import version
+could not find expected ':'
+  in "<unicode string>", line 335, column 1:
+    assert version("Flask") == "3.1.3" ...
+```
+
+Python `yaml.safe_load()` confirmed: `YAML_OK` on `10bf411` (prior commit), `YAML_ERROR` on
+`50558ce` (defect-introducing commit), `YAML_ERROR` on `9e3af1a` (corrective test commit).
+
+Commit `9e3af1a` did not introduce the YAML error. It changed only the OOD assertion step
+(`--workdir /app` added, `sys.path.insert` removed) — the version-check step malformation was
+already present in `50558ce`.
+
+---
+
+### Malformed Steps (Before)
+
+**Step 1:** `Assert exact production package versions inside deploy image`
+
+```yaml
+            -c '
+from importlib.metadata import version
+
+assert version("Flask") == "3.1.3", f"Flask=={version(\"Flask\")}"
+assert version("Werkzeug") == "3.1.8", ...
+...
+'
+```
+
+Lines `from importlib.metadata import version`, the blank line, and each `assert` line all start
+at column 0. The YAML parser exits the block scalar and tries to parse them as mapping keys.
+
+**Step 2:** `Assert scikit-learn present and default OOD backend in production image`
+
+```yaml
+            -c '
+from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND
+assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", ...
+'
+```
+
+Same defect — column-0 Python lines inside a `run: |` block.
+
+---
+
+### Correction Applied
+
+Both multi-line blocks were collapsed to single-line `python -c '...'` arguments within the
+existing `run: |` block. All docker flags, timeout wrappers, entrypoint overrides, and the
+`--workdir /app` from `9e3af1a` are preserved unchanged.
+
+**Step 1 (after):**
+
+```yaml
+            -c 'from importlib.metadata import version; expected={"Flask":"3.1.3","Werkzeug":"3.1.8","waitress":"3.0.2","sentence-transformers":"5.6.1","scikit-learn":"1.9.0"}; actual={name:version(name) for name in expected}; assert actual == expected, f"Unexpected package versions: {actual!r}"'
+```
+
+**Step 2 (after):**
+
+```yaml
+            -c 'from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND; assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"'
+```
+
+---
+
+### Semantic Audit
+
+| Item | Result |
+|------|--------|
+| Workflow triggers | UNCHANGED |
+| Job list | UNCHANGED (test-governed, test-ml-avm, test-root-integration, lint, wave4b1-infrastructure-validation, build, deploy) |
+| Governed test file list | UNCHANGED |
+| ML test command | UNCHANGED |
+| Root-integration command | UNCHANGED |
+| Docker build command | UNCHANGED |
+| pip-check command | UNCHANGED |
+| Nginx installation + TLS + hosts + nginx -t | UNCHANGED |
+| Package version requirements | UNCHANGED (Flask 3.1.3, Werkzeug 3.1.8, waitress 3.0.2, sentence-transformers 5.6.1, scikit-learn 1.9.0) |
+| `--workdir /app` on OOD step | PRESERVED (from 9e3af1a) |
+| `sys.path.insert` in OOD step | ABSENT (removed by 9e3af1a; not re-introduced) |
+| `DEFAULT_AVM_OOD_BACKEND == "isolation_forest"` | PRESERVED |
+| `EXACT_VERSION_ASSERTION_COUNT` | 5 |
+| `WORKFLOW_SEMANTIC_CHANGE_COUNT` | 0 |
+
+---
+
+### Validation
+
+```
+CURRENT_WORKFLOW_YAML_VALID_BEFORE  = False
+CORRECTED_WORKFLOW_YAML_VALID       = True  (yaml.safe_load() → YAML_OK)
+REQUIRED_BLOCKING_JOBS_PRESERVED    = True  (4/4 required jobs present)
+COMPILEALL_PASSED                   = True  (exit 0)
+GIT_DIFF_CHECK_PASSED               = True  (exit 0)
+LOCAL_DOCKER_VERSION_CHECK          = NOT_RUN_IMAGE_UNAVAILABLE
+```
+
+---
+
+### Corrective Scope
+
+```
+CI_YAML_CORRECTIVE_FILES_MODIFIED   = 3
+CI_YAML_CORRECTIVE_FILES_CREATED    = 0
+CI_YAML_CORRECTIVE_FILES_DELETED    = 0
+WORKFLOW_SYNTAX_FORMATTING_FIX_ONLY = True
+WORKFLOW_SEMANTIC_CHANGE_COUNT      = 0
+EXACT_VERSION_ASSERTION_COUNT       = 5
+CI_DOCKER_OOD_CHECK_MANUAL_SYS_PATH_INSERTIONS = 0
+CI_DOCKER_OOD_CHECK_USES_PACKAGE_IMPORT        = True
+PUSH_PERFORMED                      = False
+PR_OPENED                           = False
+MERGE_PERFORMED                     = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_CI_WORKFLOW_SYNTAX_CORRECTION_AWAITING_REVIEW

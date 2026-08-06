@@ -331,34 +331,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── Docker: build and validate the hardened production image ────────────
-      - name: Build hardened deploy image (deploy/Dockerfile.flask)
-        run: docker build -f deploy/Dockerfile.flask -t expert-smart-deploy-test .
+      # ── Docker: build and validate the actual build/deploy artifact ─────────
+      # H2 correction: this job previously built deploy/Dockerfile.flask, which
+      # is not the image the build/deploy jobs below push to ghcr.io or roll
+      # out via kubectl. It now builds docker/Dockerfile — the file those jobs
+      # actually use — so a green result here reflects the real deploy image.
+      - name: Build canonical production image (docker/Dockerfile)
+        run: docker build -f docker/Dockerfile -t expert-smart-canonical-test .
 
-      - name: Validate pip dependency integrity inside deploy image
+      - name: Validate pip dependency integrity inside canonical image
         run: |
           timeout --signal=TERM --kill-after=10s 120s \
             docker run --rm \
             --entrypoint python \
-            expert-smart-deploy-test \
+            expert-smart-canonical-test \
             -m pip check
 
-      - name: Assert exact production package versions inside deploy image
+      - name: Assert exact production package versions inside canonical image
         run: |
           timeout --signal=TERM --kill-after=10s 120s \
             docker run --rm \
             --entrypoint python \
-            expert-smart-deploy-test \
+            expert-smart-canonical-test \
             -c 'from importlib.metadata import version; expected={"Flask":"3.1.3","Werkzeug":"3.1.8","waitress":"3.0.2","sentence-transformers":"5.6.1","scikit-learn":"1.9.0"}; actual={name:version(name) for name in expected}; assert actual == expected, f"Unexpected package versions: {actual!r}"'
 
-      - name: Assert scikit-learn present and default OOD backend in production image
+      - name: Assert scikit-learn present and default OOD backend in canonical image
         run: |
           timeout --signal=TERM --kill-after=10s 120s \
             docker run --rm \
             --workdir /app \
             --entrypoint python \
-            expert-smart-deploy-test \
-            -c 'from core_engine.mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND; assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"'
+            expert-smart-canonical-test \
+            -c 'from mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND; assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"'
 
       # ── Nginx: validate the committed configuration against a real binary ───
       - name: Install Nginx

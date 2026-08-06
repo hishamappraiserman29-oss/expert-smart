@@ -3,6 +3,13 @@ pv_standards_compliance_endpoint.py — Wave 3B Standards Compliance Endpoint
 
 Admin-only. Static synthetic diagnostic. No certification claims.
 Public export: register_standards_compliance(app, require_auth, _is_admin, OUTPUTS)
+
+This module is the sole owner of the Flask/HTTP exposure for
+standards_compliance_visual_qa_generator.py: it imports
+run_standards_compliance_visual_qa() as a library function (see
+"Verify generator import" below) and is the only caller authorized to
+expose it via the /api/standards-compliance/* blueprint registered by
+register_standards_compliance().
 """
 from __future__ import annotations
 
@@ -645,6 +652,9 @@ def register_standards_compliance(app, require_auth, _is_admin, OUTPUTS) -> None
     )
 
     # ── 6. Verify generator import ────────────────────────────────────────────
+    # standards_compliance_visual_qa_generator.py defines no Flask routes of
+    # its own; this endpoint module is its sole authorized Flask caller and
+    # owns its entire HTTP exposure (see module docstring above).
     try:
         from standards_compliance_visual_qa_generator import (  # noqa: PLC0415
             run_standards_compliance_visual_qa,

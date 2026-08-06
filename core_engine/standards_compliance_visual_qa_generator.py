@@ -4,10 +4,13 @@ Case: QA-COMPLIANCE-VISUAL-001  |  Saudi Arabia / Riyadh / SAR
 Standards: IVS 2022 (IVSC) + RICS 2022 (Red Book)
 Role separation: user → HTML + PDF | admin → HTML + PDF + Excel
 
-Developer-only visual QA tool.
-
-This module is NOT an HTTP endpoint and is NOT registered with Flask.
-It MUST NOT be imported or called from bridge_api.py.
+Visual QA report generator. Callable from the CLI (see __main__ below) and,
+as of Wave 3B, from core_engine/pv_standards_compliance_endpoint.py, which
+imports run_standards_compliance_visual_qa() as a library function and is
+the sole owner of whatever Flask exposure it chooses to give it. This
+module itself defines no Flask routes, exports no route-registration
+function, and has no HTTP surface of its own — see pv_standards_compliance_
+endpoint.py for the admin-only blueprint that calls into it.
 
 It generates persistent local QA artifacts (HTML, PDF, XLSX, JSON, PNG)
 inside an explicitly caller-supplied output directory.  Each call is
@@ -15,7 +18,7 @@ isolated in a unique run sub-directory to prevent concurrent overwrites.
 
 It is NOT a standards certification engine.  All findings are advisory.
 
-Runtime status               : CLI_ONLY_UNWIRED
+Runtime status               : WIRED_VIA_PV_STANDARDS_COMPLIANCE_ENDPOINT (Wave 3B)
 Advisory only                : True
 Certification ready          : False
 Official compliance decision : False

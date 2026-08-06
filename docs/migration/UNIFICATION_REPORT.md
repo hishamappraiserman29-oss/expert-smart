@@ -2017,3 +2017,225 @@ SELF_HASH_NOT_EMBEDDED
 ```
 
 SENTINEL_CODE = A6_WAVE_4B1_CI_WORKFLOW_SYNTAX_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 pytest-cov Dependency Correction
+
+**Date:** 2026-08-06<br>
+**Branch:** `migration/wave4b1-avm-security-ci-hardening`<br>
+**Authorization:** `A6_WAVE_4B1_PYTEST_COV_DEPENDENCY_CORRECTION_AUTHORIZED`<br>
+**Starting commit:** `d75a7de0453b271055ec97f9b8e1272c70e6ca3b`
+
+---
+
+### Context — Final-Head Remote Revalidation Results
+
+The YAML syntax correction commit (`d75a7de`) was pushed to `origin/migration/wave4b1-avm-security-ci-hardening` under authorization `A6_WAVE_4B1_FINAL_HEAD_REMOTE_REVALIDATION_AUTHORIZED`.
+
+**E2E run `31087847508`** (`workflow_dispatch`, ref `d75a7de`):
+
+| Field | Value |
+|-------|-------|
+| Conclusion | `success` |
+| Duration | 5m32s |
+| Collection | 90 tests |
+| Passed | 90 |
+| Failed | 0 |
+| Skipped | 0 |
+| MAT02 | PASSED |
+| MAT43 | PASSED |
+| MAT67 | PASSED |
+| Runtime storage root | removed under `always()` |
+
+**CI/CD run `31087833938`** (`workflow_dispatch`, ref `d75a7de`):
+
+| Job | Result |
+|-----|--------|
+| Governed MV + Wave 4B1 Security | **FAILURE** |
+| ML AVM (scikit-learn) | SUCCESS |
+| Root Mass-Appraisal Integration | SUCCESS |
+| Lint & Type Check | SUCCESS |
+| Wave 4B1 Infrastructure Validation | SUCCESS |
+
+---
+
+### Root Cause — Missing pytest-cov
+
+The `Run CI-safe requirements tests` step in the `test-governed` job failed with:
+
+```
+EXIT_CODE = 4
+ERROR: usage: python -m pytest [options] [file_or_dir] [file_or_dir] [...]
+python -m pytest: error: unrecognized arguments:
+  --cov=. --cov-report=xml --cov-report=term-missing
+```
+
+The governed lane installs only `core_engine/requirements.txt` + `requirements-dev.txt`. The step uses `--cov=./--cov-report=` flags which require `pytest-cov`. Neither install set contained `pytest-cov`.
+
+This defect was masked while the workflow YAML was unparseable (the YAML defect was introduced by commit `50558ce` and repaired by commit `d75a7de`). The dependency defect surfaced only after the YAML was valid and the governed lane could actually execute.
+
+---
+
+### pytest-cov Version Resolution
+
+No existing pin found in any tracked file. Version resolved via disposable Python 3.11 virtual environment:
+
+```
+Install governed base set → pip install pytest-cov → version: 7.1.0
+pytest version: 9.1.1
+--cov / --cov-report options registered: True
+```
+
+```
+SELECTED_PYTEST_COV_VERSION        = 7.1.0
+SELECTED_VERSION_SOURCE            = disposable Python 3.11 resolution
+PYTEST_COV_IMPORTABLE              = True
+PYTEST_COV_OPTIONS_REGISTERED      = True
+```
+
+---
+
+### Correction Applied
+
+`requirements-dev.txt` — appended exactly one line:
+
+```
+pytest-cov==7.1.0
+```
+
+No other files modified. No range specifier. No duplicate.
+
+---
+
+### Secondary Defect Identified (Outside Authorization Scope)
+
+During local validation, a second pre-existing defect was discovered:
+
+The `avm_isolation_plugin` is auto-registered via `conftest.py` line 12:
+```python
+pytest_plugins = ["core_engine.tests.avm_isolation_plugin"]
+```
+
+When `pytest-cov` runs, it creates `.coverage` (coverage data file) in the working directory
+(`core_engine/`). The isolation plugin's `pytest_sessionfinish` hook detects `.coverage` as a new
+repository file and exits with code 1:
+
+```
+[avm_isolation_plugin] FAIL — 1 repository delta(s):
+  ADDED file: core_engine\.coverage
+```
+
+**Consequence:** After installing `pytest-cov`, the CI step exits with code 1 (isolation plugin)
+instead of code 4 (missing dependency).
+
+**Fix path:** Adding `.coverage` to `_IGNORE_NAMES` in `avm_isolation_plugin.py`, configuring
+`coverage` `data_file` in `.coveragerc` to write outside the repository, or adding
+`-p no:avm_isolation_plugin` to the CI step — all outside current authorization scope.
+
+```
+SECONDARY_DEFECT_TYPE              = isolation_plugin_detects_coverage_data_file
+SECONDARY_DEFECT_FIX_SCOPE         = OUTSIDE_CURRENT_AUTHORIZATION
+SECONDARY_DEFECT_AFFECTS_STEP      = Run CI-safe requirements tests (test-governed job)
+SECONDARY_DEFECT_EXIT_CODE         = 1 (was 4 before pytest-cov declared)
+```
+
+---
+
+### Clean-Environment Installation Verification
+
+```
+CLEAN_VENV_PIP_CHECK_PASSED        = True (No broken requirements found)
+CLEAN_VENV_PYTEST_COV_VERSION      = 7.1.0
+CLEAN_VENV_COVERAGE_OPTIONS_REGISTERED = True
+```
+
+---
+
+### CI-safe Requirements Step
+
+Running the exact step from `ci-cd.yml` (6 test files, with `--cov=. --cov-report=xml --cov-report=term-missing`):
+
+```
+CI_SAFE_REQUIREMENTS_COLLECTION_COUNT  = 275
+CI_SAFE_REQUIREMENTS_PASSED            = 275
+CI_SAFE_REQUIREMENTS_FAILED            = 0
+CI_SAFE_REQUIREMENTS_WARNINGS          = 40 (InsecureKeyLengthWarning — pre-existing)
+COVERAGE_XML_CREATED                   = True
+CI_SAFE_REQUIREMENTS_EXIT_CODE         = 1 (isolation plugin detects .coverage — secondary defect)
+```
+
+275/275 individual tests pass. Exit code 1 is from the isolation plugin secondary defect, not from test failures.
+
+---
+
+### Governed Lane Results
+
+| Suite | Collected | Passed | Failed | Skipped | Exit |
+|-------|-----------|--------|--------|---------|------|
+| Governed MV + Wave 4B1 security | 532 | 531 | 0 | 1 | 0 |
+| CI-safe requirements (coverage) | 275 | 275 | 0 | 0 | 1 (isolation plugin) |
+
+```
+GOVERNED_COLLECTION_COUNT          = 532
+GOVERNED_SECURITY_PASSED           = 531
+GOVERNED_SECURITY_FAILED           = 0
+GOVERNED_SECURITY_SKIPPED          = 1 (Windows symlink lifecycle)
+GOVERNED_REPOSITORY_DELTA_COUNT    = 0
+LOCAL_COMPLETE_GOVERNED_LANE_PASSED = False (CI-safe requirements exit 1 — secondary defect)
+```
+
+---
+
+### Regression Validation
+
+| Suite | Collected | Passed | Failed | Exit |
+|-------|-----------|--------|--------|------|
+| ML AVM (isolation_forest) | 58 | 58 | 0 | 0 |
+| Root Mass-Appraisal Integration | 3 | 3 | 0 | 0 |
+| Focused Wave 4B1 Security | 149 | 149 | 0 | 0 |
+| E2E Playwright (local, port 15900) | 90 | 90 | 0 | 1 (isolation plugin) |
+
+```
+ML_GATE_PASSED                     = True
+ROOT_INTEGRATION_PASSED            = True
+FOCUSED_SECURITY_PASSED            = 149
+E2E_COLLECTION_COUNT               = 90
+E2E_PASSED                         = 90
+E2E_FAILED                         = 0
+E2E_EXIT_CODE_LOCAL                = 1 (isolation plugin — Windows-specific secondary defect)
+REMOTE_E2E_CONFIRMED               = True (run 31087847508, 90/90, exit 0)
+```
+
+---
+
+### Workflow Immutability
+
+```
+CI_WORKFLOW_YAML_VALID             = True
+E2E_WORKFLOW_YAML_VALID            = True
+WORKFLOW_FILE_MODIFICATION_COUNT   = 0
+```
+
+---
+
+### Corrective Scope
+
+```
+PYTEST_COV_DECLARED_BEFORE         = False
+SELECTED_PYTEST_COV_VERSION        = 7.1.0
+PYTEST_COV_EXACT_PIN_PRESENT       = True
+PYTEST_COV_DECLARATION_COUNT       = 1
+UNRELATED_DEPENDENCY_CHANGE_COUNT  = 0
+PYTEST_COV_CORRECTIVE_FILES_MODIFIED = 3
+PYTEST_COV_CORRECTIVE_FILES_CREATED  = 0
+PYTEST_COV_CORRECTIVE_FILES_DELETED  = 0
+REMOTE_FAILURE_RUN_ID              = 31087833938
+REMOTE_E2E_RUN_ID                  = 31087847508
+PUSH_PERFORMED                     = False
+PR_OPENED                          = False
+MERGE_PERFORMED                    = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_PYTEST_COV_DEPENDENCY_CORRECTION_AWAITING_REVIEW

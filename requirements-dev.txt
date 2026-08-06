@@ -17,3 +17,7 @@ fastmcp>=3.0.0,<4.0
 # test_pdf_cost_income_reconciliation, test_pdf_engine, test_pdf_sales_comparison
 # that use pytest.importorskip("pdfplumber") to validate PDF content.
 pdfplumber>=0.11.10,<0.12
+
+# Coverage reporting — required by --cov=./--cov-report= flags in the
+# CI-safe requirements step (.github/workflows/ci-cd.yml).
+pytest-cov==7.1.0

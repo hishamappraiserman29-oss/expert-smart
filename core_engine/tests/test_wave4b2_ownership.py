@@ -70,10 +70,20 @@ def _auth_header(user: str) -> dict:
 # ---------------------------------------------------------------------------
 
 class _FakeSession:
-    """Stands in for a SQLAlchemy Session so get_db()'s own close() call is safe."""
+    """
+    Stands in for a SQLAlchemy Session so get_db()'s own close() call is safe.
+    execute() succeeds unconditionally, simulating a reachable database for
+    the route-level `_mv_probe_db_reachable()` liveness check — every
+    `_mv_db.*` call in these tests is separately monkeypatched onto the fake
+    store, so this session object's execute() is only ever exercised by that
+    probe, never by a real query.
+    """
 
     def close(self):
         pass
+
+    def execute(self, *args, **kwargs):
+        return None
 
 
 class _FakeStore:
@@ -515,3 +525,105 @@ def test_w2_32_run_level_method_field_matches_constructor_for_all_three_methods(
     for method in ("avm", "comparable", "both"):
         result = MassValuationRunner(method=method).run([_MIN_VALID_RECORD])
         assert result["method"] == method
+
+
+# ---------------------------------------------------------------------------
+# DB-availability exception taxonomy (remote-blocker follow-up, B1b)
+#
+# Before this fix, a genuine database-unavailability error (SQLAlchemyError)
+# during the ownership pre-checks in mv_get_predictions/mv_review_prediction/
+# mv_export_run was silently absorbed by db_writer.py's own internal
+# `except Exception: return None` — indistinguishable, at the route layer,
+# from "the resource genuinely does not exist". A caller received a
+# non-disclosing 404 in both cases, which is correct for authorization
+# ambiguity but wrong for infrastructure-availability ambiguity: a real
+# reviewer/admin has no way to tell "you don't own this" from "the database
+# is down" from the response alone.
+#
+# bridge_api.py now runs an explicit `SELECT 1` probe via
+# `_mv_probe_db_reachable()` immediately after entering `with get_db() as db:`,
+# before any ownership lookup. A SQLAlchemyError from that probe returns 503;
+# only once the probe succeeds are the (still fully preserved) 404 ownership
+# semantics evaluated.
+# ---------------------------------------------------------------------------
+
+class _FakeSessionDBDown:
+    """execute() always raises a real SQLAlchemyError subclass — simulates a
+    genuinely unreachable database, as opposed to a resource that legitimately
+    doesn't exist."""
+
+    def close(self):
+        pass
+
+    def execute(self, *args, **kwargs):
+        from sqlalchemy.exc import OperationalError
+        raise OperationalError("SELECT 1", {}, Exception("connection refused"))
+
+
+@pytest.fixture()
+def mv_client_db_down(monkeypatch):
+    """Same admin/JWT setup as mv_client, but the DB session is unreachable."""
+    monkeypatch.setenv("JWT_SECRET", _TEST_SECRET)
+    monkeypatch.setenv("ADMIN_USER_IDS", f"{_ADMIN_A},{_ADMIN_B}")
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "false")
+    monkeypatch.setenv("AUDIT_ENABLED", "false")
+    monkeypatch.setattr(
+        _db_connection, "get_session_factory", lambda: (lambda: _FakeSessionDBDown())
+    )
+    _app.config["TESTING"] = True
+    with _app.test_client() as c:
+        yield c
+
+
+def test_w2_33_predictions_returns_503_when_db_genuinely_unavailable(mv_client_db_down):
+    rv = mv_client_db_down.get(
+        "/api/mass-valuation/predictions/run-a", headers=_auth_header(_ADMIN_A)
+    )
+    assert rv.status_code == 503, (
+        f"A genuine DB-availability failure must be 503, not {rv.status_code} "
+        "(404 would misreport infrastructure failure as 'resource does not exist')"
+    )
+
+
+def test_w2_34_review_returns_503_when_db_genuinely_unavailable(mv_client_db_down):
+    rv = mv_client_db_down.post(
+        "/api/mass-valuation/review/pred-a1",
+        json={"run_id": "run-a", "decision": "accepted", "reason": "Verified"},
+        headers=_auth_header(_ADMIN_A),
+    )
+    assert rv.status_code == 503
+
+
+def test_w2_35_export_returns_503_when_db_genuinely_unavailable(mv_client_db_down):
+    rv = mv_client_db_down.get(
+        "/api/mass-valuation/runs/run-a/export", headers=_auth_header(_ADMIN_A)
+    )
+    assert rv.status_code == 503
+
+
+def test_w2_36_review_normal_request_is_not_413_even_when_db_down(mv_client_db_down):
+    """The originally-reported regression: a well-formed request must never be 413,
+    regardless of DB availability. 503 (not 413, not an unhandled crash) satisfies this."""
+    rv = mv_client_db_down.post(
+        "/api/mass-valuation/review/any-id",
+        json={"run_id": "r1", "decision": "approved", "reason": "ok"},
+        headers=_auth_header(_ADMIN_A),
+    )
+    assert rv.status_code != 413
+    assert rv.status_code == 503
+
+
+def test_w2_37_probe_does_not_swallow_unrelated_programming_exceptions():
+    """
+    _mv_probe_db_reachable() must only catch SQLAlchemyError. A non-SQLAlchemy
+    exception raised by execute() (e.g. a genuine programming defect) must
+    propagate unchanged, not be silently converted to a 503 or swallowed.
+    """
+    from bridge_api import _mv_probe_db_reachable
+
+    class _BrokenSession:
+        def execute(self, *args, **kwargs):
+            raise RuntimeError("not a database problem at all")
+
+    with pytest.raises(RuntimeError, match="not a database problem at all"):
+        _mv_probe_db_reachable(_BrokenSession())

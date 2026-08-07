@@ -174,3 +174,61 @@ def test_conn_11_get_db_can_be_used_multiple_times_sequentially(monkeypatch):
         assert db2 is sessions[1]
     assert sessions[0].closed is True
     assert sessions[1].closed is True
+
+
+# ---------------------------------------------------------------------------
+# Remote-blocker follow-up (B1a): the PostgreSQL DBAPI driver required by
+# connection.py's configured `postgresql://` URL must actually be installed
+# and importable — psycopg2 was never declared as a project dependency
+# anywhere (not core_engine/requirements.txt, not either Dockerfile), so
+# SQLAlchemy's create_engine() raised ModuleNotFoundError the moment get_db()
+# began reaching it for real (after the context-manager protocol fix).
+# These tests require no network access and connect to no server — engine
+# construction with NullPool/QueuePool is lazy and never dials out.
+# ---------------------------------------------------------------------------
+
+def test_conn_12_configured_url_uses_postgresql_scheme():
+    """Sanity check: the dialect assertions below are only meaningful for postgresql://."""
+    assert db_connection.DATABASE_URL.startswith("postgresql://"), (
+        f"DATABASE_URL={db_connection.DATABASE_URL!r} — the psycopg2-binary "
+        "dependency below is only required for the plain postgresql:// dialect"
+    )
+
+
+def test_conn_13_psycopg2_dbapi_is_importable():
+    """
+    The DBAPI driver SQLAlchemy's default postgresql:// dialect resolves to
+    must be importable. This is what previously failed with
+    ModuleNotFoundError: No module named 'psycopg2'.
+    """
+    import psycopg2  # noqa: F401 — import success is the assertion
+
+
+def test_conn_14_create_engine_does_not_raise_module_not_found():
+    """
+    Constructing the real SQLAlchemy engine from the project's configured
+    DATABASE_URL must not raise ModuleNotFoundError for the DBAPI driver.
+    engine creation does not connect — no network access occurs.
+    """
+    from sqlalchemy import create_engine
+    from sqlalchemy.pool import NullPool
+
+    try:
+        create_engine(db_connection.DATABASE_URL, poolclass=NullPool)
+    except ModuleNotFoundError as e:
+        pytest.fail(f"PostgreSQL DBAPI driver not installed: {e}")
+
+
+def test_conn_15_get_engine_does_not_raise_module_not_found(monkeypatch):
+    """
+    The project's own get_engine() (not a hand-built engine) must also
+    succeed — proves the fix is effective through the actual code path
+    get_db() uses, not just a synthetic construction.
+    """
+    monkeypatch.setattr(db_connection, "_engine", None)
+    try:
+        db_connection.get_engine()
+    except ModuleNotFoundError as e:
+        pytest.fail(f"PostgreSQL DBAPI driver not installed: {e}")
+    finally:
+        monkeypatch.setattr(db_connection, "_engine", None)

@@ -12856,6 +12856,32 @@ except Exception as _mv_import_err:
     print(f"[WARN] mass_valuation P1/P2 not loaded: {_mv_import_err}")
     _MV_AVAILABLE = False
 
+# Wave 4B2 runtime-blocker follow-up: distinguish "database temporarily
+# unavailable" (SQLAlchemyError) from "resource genuinely not found" in the
+# Mass Valuation ownership-check routes below. db_writer.py's read helpers
+# (get_run_owner/get_prediction_run_id) intentionally swallow DB errors and
+# return None so a caller cannot use them to distinguish an error from a
+# real absence — a probe query is used at the route layer instead, before
+# any ownership lookup, so a genuine connectivity failure surfaces as 503
+# rather than being misreported as 404.
+try:
+    from sqlalchemy.exc import SQLAlchemyError as _MVSQLAlchemyError
+    from sqlalchemy import text as _mv_probe_text
+except ImportError:
+    class _MVSQLAlchemyError(Exception):  # type: ignore[no-redef]
+        """Fallback when SQLAlchemy is unavailable — never actually raised."""
+    _mv_probe_text = None  # type: ignore[assignment]
+
+
+def _mv_probe_db_reachable(db) -> None:
+    """
+    Raise _MVSQLAlchemyError if the DB session cannot execute a trivial
+    query. Call once, immediately after entering `with get_db() as db:`,
+    before any ownership lookup.
+    """
+    if _mv_probe_text is not None:
+        db.execute(_mv_probe_text("SELECT 1"))
+
 # P12 — column mapping + quality check pipeline (independent of runner)
 try:
     from mass_valuation.pipeline import run_pipeline as _mv_run_pipeline
@@ -12989,6 +13015,10 @@ def mv_get_predictions(run_id: str):
         try:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
+                try:
+                    _mv_probe_db_reachable(_db)
+                except _MVSQLAlchemyError:
+                    return jsonify({"error": "database temporarily unavailable"}), 503
                 owner = _mv_db.get_run_owner(run_id, _db)
                 if owner is None or owner != g.user_id:
                     return jsonify({
@@ -13055,6 +13085,7 @@ def mv_review_prediction(prediction_id: str):
         if _DB_AVAILABLE:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
+                _mv_probe_db_reachable(_db)
                 actual_run_id = _mv_db.get_prediction_run_id(prediction_id, _db)
                 if actual_run_id is None or actual_run_id != run_id:
                     return jsonify({
@@ -13100,7 +13131,7 @@ def mv_review_prediction(prediction_id: str):
 
     except ValueError as _ve:
         return jsonify({"error": str(_ve)}), 400
-    except (TypeError, AttributeError):
+    except (_MVSQLAlchemyError, TypeError, AttributeError):
         return jsonify({"error": "database connection unavailable"}), 503
 
 
@@ -13132,6 +13163,10 @@ def mv_export_run(run_id: str):
         try:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
+                try:
+                    _mv_probe_db_reachable(_db)
+                except _MVSQLAlchemyError:
+                    return jsonify({"error": "database temporarily unavailable"}), 503
                 owner = _mv_db.get_run_owner(run_id, _db)
             if owner is None or owner != g.user_id:
                 return jsonify({

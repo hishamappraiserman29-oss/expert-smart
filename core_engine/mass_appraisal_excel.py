@@ -45,6 +45,21 @@ _BORDER     = Border(left=_THIN_SIDE, right=_THIN_SIDE,
 _EGP_FMT    = '#,##0 "EGP"'
 _PCT_FMT    = '0.00%'
 
+# Formula-injection prefixes that must be neutralized in user-controlled strings
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _escape_formula(value: Any) -> Any:
+    """Neutralize spreadsheet formula injection in user-controlled string values.
+
+    Prefixes strings starting with =, +, -, @, TAB, or CR with a single
+    apostrophe so spreadsheet processors treat them as literal text.
+    Non-string values are returned unchanged.
+    """
+    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -378,7 +393,7 @@ def _sheet_portfolio(wb: Workbook, rows_data: List[dict]) -> None:
                   else _FILL_SKIP)
 
         for c_idx, val in enumerate(values, 1):
-            cell = ws.cell(row=r_idx, column=c_idx, value=val)
+            cell = ws.cell(row=r_idx, column=c_idx, value=_escape_formula(val))
             cell.fill   = fill
             cell.border = _BORDER
             if c_idx in (28, N_COLS):   # warnings and data_quality_flags

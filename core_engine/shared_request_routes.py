@@ -30,6 +30,10 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 
+from request_limits import accepted_uploaded_files
+
+_MAX_FILE_COUNT = 5
+
 # ── Storage directories ───────────────────────────────────────────────────────
 
 _BASE      = Path(__file__).parent / "instance" / "requests"
@@ -419,15 +423,23 @@ def register(app, require_auth, limiter=None) -> None:
             "client_visible_message": "",
         }
 
-        # Process document uploads
+        # Process document uploads — enforce 5-file limit and 10 MiB per-file limit (Wave 4B1)
+        _accepted_docs = accepted_uploaded_files(files, prefix="doc_")
+        if len(_accepted_docs) > _MAX_FILE_COUNT:
+            return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+        for _fo in _accepted_docs:
+            try:
+                _fo.stream.seek(0, 2)
+                _fsize = _fo.stream.tell()
+                _fo.stream.seek(0)
+            except (AttributeError, OSError):
+                _fsize = 0
+            if _fsize > _MAX_BYTES:
+                return jsonify({"error": "file_too_large", "maximum_bytes": _MAX_BYTES}), 413
+
         doc_errors: list[str] = []
         docs_saved: list[dict] = []
-        for key in sorted(files.keys()):
-            if not key.startswith("doc_"):
-                continue
-            f = files[key]
-            if not f or not f.filename:
-                continue
+        for f in _accepted_docs:
             try:
                 meta = _save_document(request_id, f)
                 docs_saved.append(meta)
@@ -503,15 +515,27 @@ def register(app, require_auth, limiter=None) -> None:
             return jsonify({"status": "error", "message": "الطلب غير موجود"}), 404
 
         files      = request.files
+
+        # Enforce 5-file limit and 10 MiB per-file limit on all file keys (Wave 4B1)
+        _accepted_uploads = accepted_uploaded_files(files)
+        if len(_accepted_uploads) > _MAX_FILE_COUNT:
+            return jsonify({"error": "too_many_files", "maximum": _MAX_FILE_COUNT}), 413
+        for _fo in _accepted_uploads:
+            try:
+                _fo.stream.seek(0, 2)
+                _fsize = _fo.stream.tell()
+                _fo.stream.seek(0)
+            except (AttributeError, OSError):
+                _fsize = 0
+            if _fsize > _MAX_BYTES:
+                return jsonify({"error": "file_too_large", "maximum_bytes": _MAX_BYTES}), 413
+
         doc_errors: list[str] = []
         docs_saved: list[dict] = []
 
-        for key in sorted(files.keys()):
-            f = files[key]
-            if not f or not f.filename:
-                continue
+        for f in _accepted_uploads:
             try:
-                role = request.form.get(f"role_{key}", "supporting_documents")
+                role = request.form.get(f"role_{f.name}", "supporting_documents")
                 meta = _save_document(request_id, f, document_role=role)
                 docs_saved.append(meta)
             except ValueError as exc:

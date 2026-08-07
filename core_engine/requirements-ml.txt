@@ -1,0 +1,4 @@
+# ML / AVM optional extras — installed only in the ML CI lane and ML-enabled environments.
+# Production Docker does NOT install this file (Wave 4B1).
+# Install after core requirements.txt: pip install -r core_engine/requirements-ml.txt
+scikit-learn==1.9.0

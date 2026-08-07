@@ -9,13 +9,15 @@ on:
 
 jobs:
   e2e:
-    name: Playwright Smoke Tests
+    name: Playwright AVM + Mass Appraisal E2E
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      # Dummy secret so bridge_api.py auth middleware initialises cleanly.
-      # E2E tests only exercise the UI (health check + DOM); no JWT is issued.
       JWT_SECRET: ci-test-secret-for-e2e-workflow
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
+      PYTHONPATH: ${{ github.workspace }}
+      ADMIN_USER_IDS: ""
+      RATE_LIMIT_ENABLED: "false"
 
     steps:
       - uses: actions/checkout@v4
@@ -31,14 +33,142 @@ jobs:
           pip install --no-cache-dir -r core_engine/requirements.txt
           pip install -r requirements-dev.txt
 
+      - name: Assert pytest-playwright installed
+        shell: python
+        run: |
+          import importlib.util, sys
+          spec = importlib.util.find_spec("pytest_playwright")
+          if spec is None:
+              print("FAIL: pytest_playwright not installed — check requirements-dev.txt pin")
+              sys.exit(1)
+          print(f"pytest_playwright found: {spec.origin}")
+
       - name: Install Playwright browsers
         run: python -m playwright install --with-deps chromium
 
+      - name: Create AVM artifact root outside repository
+        run: mkdir -p /tmp/expert_smart_avm_ci
+
+      - name: Allocate E2E runtime storage root outside repository
+        run: |
+          RUNTIME_ROOT="/tmp/expert_smart_runtime_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          mkdir -p "$RUNTIME_ROOT"
+          echo "EXPERT_SMART_RUNTIME_ROOT=$RUNTIME_ROOT"           >> $GITHUB_ENV
+          echo "EXPERT_SMART_VECTOR_DB_PATH=$RUNTIME_ROOT/vector_db"           >> $GITHUB_ENV
+          echo "EXPERT_SMART_LIBRARY_DIR=$RUNTIME_ROOT/library"                >> $GITHUB_ENV
+          echo "EXPERT_SMART_STYLE_PROFILES_DIR=$RUNTIME_ROOT/style_profiles"  >> $GITHUB_ENV
+          echo "EXPERT_SMART_MARKET_RADAR_DB_PATH=$RUNTIME_ROOT/market_radar.db" >> $GITHUB_ENV
+          echo "EXPERT_SMART_MODEL_REGISTRY_DIR=$RUNTIME_ROOT/models/registry" >> $GITHUB_ENV
+          echo "EXPERT_SMART_UPLOAD_DIR=$RUNTIME_ROOT/uploads"                 >> $GITHUB_ENV
+          COVERAGE_ROOT="/tmp/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/e2e"
+          mkdir -p "$COVERAGE_ROOT"
+          echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> $GITHUB_ENV
+
+      - name: Allocate fresh server port (never 5000)
+        run: |
+          python - <<'EOF'
+          import socket, os
+          for port in range(15900, 16100):
+              if port == 5000:
+                  continue
+              try:
+                  with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                      s.bind(("127.0.0.1", port))
+                      print(f"E2E_SERVER_PORT={port}")
+                      with open(os.environ["GITHUB_ENV"], "a") as f:
+                          f.write(f"E2E_SERVER_PORT={port}\n")
+                      break
+              except OSError:
+                  continue
+          EOF
+
+      - name: Start bridge_api server on fresh port
+        run: |
+          PORT=$E2E_SERVER_PORT \
+          python core_engine/bridge_api.py > /tmp/bridge_api_server.log 2>&1 &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
+
+      - name: Poll health endpoint until ready (max 30 s)
+        run: |
+          for i in $(seq 1 60); do
+            if curl -sf "http://127.0.0.1:${E2E_SERVER_PORT}/api/advisor/health" > /dev/null 2>&1; then
+              echo "Server ready after $((i * 500))ms on port ${E2E_SERVER_PORT}"
+              echo "E2E_BASE_URL=http://127.0.0.1:${E2E_SERVER_PORT}" >> $GITHUB_ENV
+              exit 0
+            fi
+            sleep 0.5
+          done
+          echo "ERROR: server did not become healthy within 30 seconds"
+          cat /tmp/bridge_api_server.log || true
+          exit 1
+
+      - name: Collect E2E tests
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mass_appraisal_tab.py \
+            --collect-only -q
+
       - name: Run E2E smoke tests
         run: |
-          python -m pytest core_engine/tests/e2e/test_requirements_checklist_smoke.py \
-            -m smoke \
-            --strict-markers \
-            -v \
-            --tb=short \
-            --maxfail=1
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mass_appraisal_tab.py \
+            -v --tb=short --maxfail=3
+
+      - name: Upload server log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-api-server-log
+          path: /tmp/bridge_api_server.log
+
+      - name: Terminate server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill "$SERVER_PID" 2>/dev/null || true
+            sleep 1
+            kill -9 "$SERVER_PID" 2>/dev/null || true
+          fi
+
+      - name: Remove E2E runtime storage root
+        if: always()
+        run: |
+          if [ -n "$EXPERT_SMART_RUNTIME_ROOT" ]; then
+            case "$EXPERT_SMART_RUNTIME_ROOT" in
+              /tmp/expert_smart_runtime_*)
+                if [ -n "$EXPERT_SMART_RUNTIME_ROOT" ] && \
+                   [ "$EXPERT_SMART_RUNTIME_ROOT" != "/" ]; then
+                  rm -rf "$EXPERT_SMART_RUNTIME_ROOT"
+                  echo "Removed runtime storage root: $EXPERT_SMART_RUNTIME_ROOT"
+                fi
+                ;;
+              *)
+                echo "WARNING: EXPERT_SMART_RUNTIME_ROOT=$EXPERT_SMART_RUNTIME_ROOT does not match safety prefix — skipping deletion"
+                ;;
+            esac
+          fi
+
+      - name: Remove E2E coverage root
+        if: always()
+        run: |
+          if [ -z "$COVERAGE_FILE" ]; then
+            echo "WARNING: COVERAGE_FILE not set — skipping coverage cleanup"
+          else
+            COV_ROOT=$(dirname "$COVERAGE_FILE")
+            case "$COV_ROOT" in
+              '' | /)
+                echo "WARNING: resolved coverage root is empty or / — skipping coverage cleanup"
+                ;;
+              /tmp/expert_smart_coverage_*/e2e)
+                rm -rf "$COV_ROOT"
+                echo "Removed E2E coverage root: $COV_ROOT"
+                ;;
+              *)
+                echo "WARNING: $COV_ROOT does not match expected coverage prefix — skipping coverage cleanup"
+                ;;
+            esac
+          fi

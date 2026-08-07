@@ -14,6 +14,16 @@ from __future__ import annotations
 import json
 import pytest
 
+# ── Auth helpers (mirrors test_mv_import_ui.py) ──────────────────────────────
+
+_ADMIN = json.dumps({"token": "mock-token", "user_id": "u1", "is_admin": True})
+
+
+def _as_admin(page):
+    """Set admin session in localStorage before page navigation."""
+    page.add_init_script(f"localStorage.setItem('es_auth', '{_ADMIN}')")
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 VALID_SAMPLE = json.dumps([
@@ -836,3 +846,129 @@ def test_MAT64_no_claim_of_qdrant_active(page, live_server):
     text = panel.inner_text()
     # Should NOT claim active Qdrant; should only mention it as planned/future
     assert "Qdrant مفعّل" not in text and "Qdrant نشط" not in text
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Wave 4B1 regression: price-index authenticated browser regression
+# Proves /api/price-index became authenticated in Wave 4B1 and the UI sends
+# the Authorization header, receiving a non-401 response.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+import os as _os
+
+_PRICE_INDEX_JWT = _os.environ.get("E2E_TEST_JWT", "")
+
+
+def test_MAT65_price_index_requires_auth_unauthenticated(page, live_server):
+    """Wave 4B1 regression: unauthenticated /api/price-index GET returns 401."""
+    resp = page.request.get(f"{live_server}/api/price-index")
+    assert resp.status == 401, (
+        f"Wave 4B1: /api/price-index must require auth; expected 401, got {resp.status}"
+    )
+
+
+def test_MAT66_price_index_authenticated_returns_non_401(page, live_server):
+    """Wave 4B1 regression: authenticated /api/price-index GET does not return 401.
+
+    If E2E_TEST_JWT is not set, generates a test token from JWT_SECRET.
+    """
+    import time as _time
+    jwt_token = _PRICE_INDEX_JWT
+    if not jwt_token:
+        secret = _os.environ.get("JWT_SECRET", "ci-test-secret-for-e2e-workflow")
+        try:
+            import jwt as _jwt
+            now = int(_time.time())
+            jwt_token = _jwt.encode(
+                {"sub": "e2e-test-user", "iat": now, "exp": now + 3600},
+                secret,
+                algorithm="HS256",
+            )
+        except Exception:
+            pytest.skip("PyJWT not available — skipping price-index auth regression")
+
+    resp = page.request.get(
+        f"{live_server}/api/price-index",
+        headers={"Authorization": f"Bearer {jwt_token}"},
+    )
+    assert resp.status != 401, (
+        f"Wave 4B1: authenticated /api/price-index must not return 401, got {resp.status}"
+    )
+
+
+def test_MAT67_price_index_widget_sends_auth_header(page, live_server):
+    """Wave 4B1 regression: frontend price-index widget sends Authorization header.
+
+    Full browser test:
+    0. Admin auth is set in localStorage BEFORE navigation so window.esFetch
+       sends the Authorization header on the price-index request.
+    1. page.goto() navigates to the live server.
+    2. loadGrowth() is executed in the browser via page.evaluate().
+    3. Intercepts the /api/price-index request and asserts Authorization: Bearer.
+    4. Asserts the rendered price-index growth-pulse widget is visible in the DOM.
+
+    page.request.get() alone is NOT used — this test exercises the real browser
+    fetch path to confirm the UI sends the header through the same code path
+    that end-users trigger.
+    """
+    captured_requests: list[dict] = []
+
+    def handle_request(req):
+        if "/api/price-index" in req.url:
+            captured_requests.append({
+                "url": req.url,
+                "auth": req.headers.get("authorization", ""),
+            })
+
+    page.on("request", handle_request)
+
+    # Step 0: configure admin auth BEFORE navigation — window.esFetch gates on es_auth
+    _as_admin(page)
+
+    # Step 1: navigate using page.goto() (not page.request)
+    _goto(page, live_server)
+
+    # Step 2: switch to mass appraisal mode to ensure widget scaffold is loaded
+    _switch_mass_mode(page)
+
+    # Step 3: execute loadGrowth() in the browser JS context to trigger the
+    # price-index fetch.  The function MUST be defined on window; absence is a failure.
+    load_growth_exists = page.evaluate(
+        "typeof window.loadGrowth === 'function'"
+    )
+    if not load_growth_exists:
+        pytest.fail(
+            "window.loadGrowth() is not defined — widget not present on this page version"
+        )
+
+    page.evaluate("window.loadGrowth()")
+    page.wait_for_timeout(800)
+
+    # Step 4: Assert Authorization: Bearer is present in the intercepted request.
+    # Absence after auth setup means _maApiUrl() or esFetch is broken — that is a
+    # test failure, not a skip.
+    if not captured_requests:
+        pytest.fail(
+            "loadGrowth() did not produce a /api/price-index request after auth setup — "
+            "check _maApiUrl() layered fallback and window.esFetch authentication gate"
+        )
+
+    for req in captured_requests:
+        assert req["auth"].startswith("Bearer "), (
+            f"Price-index request must carry Authorization: Bearer header; "
+            f"got auth={req['auth']!r} for url={req['url']!r}"
+        )
+
+    # Step 5: Assert the price-index growth-pulse widget is rendered and visible.
+    # The widget lives in #growth-pulse (global header) and is always present.
+    pulse_el = page.query_selector("#growth-pulse")
+    assert pulse_el is not None, (
+        "Price-index #growth-pulse widget container must be present in the DOM"
+    )
+    cma_el = page.query_selector("#gp-cma")
+    assert cma_el is not None, (
+        "#gp-cma pulse item (loadGrowth target) must be present in the DOM"
+    )
+    assert cma_el.is_visible(), (
+        "Price-index widget #gp-cma must be visible after loadGrowth() executes"
+    )

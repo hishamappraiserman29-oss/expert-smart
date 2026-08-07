@@ -12,13 +12,18 @@ env:
   IMAGE_NAME: expert-smart/api
 
 jobs:
-  # ── Test ─────────────────────────────────────────────────────────────────────
-  test:
-    name: Test Suite
+  # ── Lane 1: Governed MV + Wave 4B1 security (AVM_OOD_BACKEND=zscore) ─────────
+  test-governed:
+    name: Governed MV + Wave 4B1 Security
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: core_engine
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      ADMIN_USER_IDS: admin-test-id
+      RATE_LIMIT_ENABLED: "false"
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci
+      AVM_OOD_BACKEND: "zscore"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,10 +33,22 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
 
-      - name: Install dependencies
+      - name: Install base dependencies (no scikit-learn)
+        working-directory: ${{ github.workspace }}
         run: |
-          pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-timeout pytest-xdist anyio
-          pip install -r ../requirements-dev.txt
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Assert AVM_OOD_BACKEND is zscore in governed environment
+        working-directory: ${{ github.workspace }}
+        shell: python
+        run: |
+          import os, sys
+          backend = os.environ.get("AVM_OOD_BACKEND", "")
+          if backend != "zscore":
+              print(f"FAIL: AVM_OOD_BACKEND={backend!r}; governed lane must use 'zscore'")
+              sys.exit(1)
+          print(f"AVM_OOD_BACKEND={backend!r} — governed OOD isolation confirmed")
 
       - name: Secret guard — reject committed credentials
         working-directory: ${{ github.workspace }}
@@ -40,15 +57,10 @@ jobs:
           import sys, pathlib, re, subprocess
 
           FAIL = False
-          # File names that must never be tracked
           FORBIDDEN_NAMES = {"service_account.json", "credentials.json"}
-          # PEM private key: header MUST be followed by a newline (real keys have this;
-          # regex pattern strings stored in .py files do not — avoids false positives
-          # from secrets_scanner.py which stores detection regexes as source code).
           PEM_RE = re.compile(
               r"-----BEGIN (RSA |EC |OPENSSH |DSA |ENCRYPTED )?PRIVATE KEY-----[\r\n]"
           )
-          # service_account type field — scan .json files only
           SA_TYPE_RE = re.compile(r'"type"\s*:\s*"service_account"')
           TEXT_EXTS = {".py", ".txt", ".md", ".yml", ".yaml", ".toml", ".cfg", ".sh"}
 
@@ -87,7 +99,70 @@ jobs:
               sys.exit(1)
           print("Secret guard passed — no credentials detected in tracked files.")
 
+      - name: Allocate governed coverage storage outside repository
+        shell: bash
+        run: |
+          COVERAGE_ROOT="${RUNNER_TEMP}/expert_smart_coverage_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}/governed"
+          mkdir -p "$COVERAGE_ROOT"
+          echo "COVERAGE_FILE=$COVERAGE_ROOT/.coverage" >> "$GITHUB_ENV"
+          echo "COVERAGE_XML=$COVERAGE_ROOT/coverage.xml" >> "$GITHUB_ENV"
+
+      - name: Collect governed MV + Wave 4B1 tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_mv_api.py \
+            core_engine/tests/test_mv_audit_trail.py \
+            core_engine/tests/test_mv_column_mapper.py \
+            core_engine/tests/test_mv_data_splits.py \
+            core_engine/tests/test_mv_db.py \
+            core_engine/tests/test_mv_governance.py \
+            core_engine/tests/test_mv_iaao_metrics.py \
+            core_engine/tests/test_mv_import_endpoint.py \
+            core_engine/tests/test_mv_interpretability.py \
+            core_engine/tests/test_mv_model_quality.py \
+            core_engine/tests/test_mv_outputs.py \
+            core_engine/tests/test_mv_pipeline.py \
+            core_engine/tests/test_mv_quality_checker.py \
+            core_engine/tests/test_mv_reproducibility.py \
+            core_engine/tests/test_mv_runner.py \
+            core_engine/tests/test_mv_security.py \
+            core_engine/tests/test_schema_validator.py \
+            core_engine/tests/test_wave4b1_security.py \
+            core_engine/tests/test_avm_artifact_lifecycle.py \
+            core_engine/tests/test_wave4b1_waitress_transport.py \
+            --collect-only -q
+
+      - name: Run governed MV + Wave 4B1 security tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_mv_api.py \
+            core_engine/tests/test_mv_audit_trail.py \
+            core_engine/tests/test_mv_column_mapper.py \
+            core_engine/tests/test_mv_data_splits.py \
+            core_engine/tests/test_mv_db.py \
+            core_engine/tests/test_mv_governance.py \
+            core_engine/tests/test_mv_iaao_metrics.py \
+            core_engine/tests/test_mv_import_endpoint.py \
+            core_engine/tests/test_mv_interpretability.py \
+            core_engine/tests/test_mv_model_quality.py \
+            core_engine/tests/test_mv_outputs.py \
+            core_engine/tests/test_mv_pipeline.py \
+            core_engine/tests/test_mv_quality_checker.py \
+            core_engine/tests/test_mv_reproducibility.py \
+            core_engine/tests/test_mv_runner.py \
+            core_engine/tests/test_mv_security.py \
+            core_engine/tests/test_schema_validator.py \
+            core_engine/tests/test_wave4b1_security.py \
+            core_engine/tests/test_avm_artifact_lifecycle.py \
+            core_engine/tests/test_wave4b1_waitress_transport.py \
+            -q --tb=short
+
       - name: Run CI-safe requirements tests
+        working-directory: ${{ github.workspace }}/core_engine
         run: |
           python -m pytest \
             tests/test_requirements_endpoint.py \
@@ -96,17 +171,132 @@ jobs:
             tests/test_purpose_integration_matrix.py \
             tests/test_purpose_routes.py \
             tests/test_approval_rules.py \
-            -q \
-            --tb=short \
-            --cov=. \
-            --cov-report=xml \
-            --cov-report=term-missing
+            -q --tb=short --cov=. "--cov-report=xml:${COVERAGE_XML}" --cov-report=term-missing
+
+      - name: Verify governed coverage outputs
+        shell: bash
+        run: |
+          test -f "$COVERAGE_FILE"
+          test -f "$COVERAGE_XML"
+          case "$COVERAGE_FILE" in
+            "$GITHUB_WORKSPACE"/*) exit 1 ;;
+          esac
+          case "$COVERAGE_XML" in
+            "$GITHUB_WORKSPACE"/*) exit 1 ;;
+          esac
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          file: core_engine/coverage.xml
+          file: ${{ env.COVERAGE_XML }}
         continue-on-error: true
+
+  # ── Lane 2: ML AVM (WITH scikit-learn, AVM_OOD_BACKEND=isolation_forest) ─────
+  test-ml-avm:
+    name: ML AVM (scikit-learn)
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      ADMIN_USER_IDS: admin-test-id
+      RATE_LIMIT_ENABLED: "false"
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci_ml
+      AVM_OOD_BACKEND: "isolation_forest"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install base + ML dependencies
+        working-directory: ${{ github.workspace }}
+        run: |
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
+          pip install -r core_engine/requirements-ml.txt
+
+      - name: Assert scikit-learn version and OOD backend in ML environment
+        working-directory: ${{ github.workspace }}
+        shell: python
+        run: |
+          import importlib.util, importlib.metadata, os, sys
+          spec = importlib.util.find_spec("sklearn")
+          if spec is None:
+              print("FAIL: scikit-learn not importable in ML environment")
+              sys.exit(1)
+          version = importlib.metadata.version("scikit-learn")
+          if version != "1.9.0":
+              print(f"FAIL: expected scikit-learn==1.9.0, got {version}")
+              sys.exit(1)
+          backend = os.environ.get("AVM_OOD_BACKEND", "")
+          if backend != "isolation_forest":
+              print(f"FAIL: AVM_OOD_BACKEND={backend!r}; ML lane must use 'isolation_forest'")
+              sys.exit(1)
+          print(f"sklearn {version} confirmed; AVM_OOD_BACKEND={backend!r}")
+
+      - name: Collect ML AVM tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_ml_avm.py \
+            "core_engine/tests/test_mv_model_quality.py::TestOODBackendSelection" \
+            --collect-only -q
+
+      - name: Run ML AVM tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            core_engine/tests/test_ml_avm.py \
+            "core_engine/tests/test_mv_model_quality.py::TestOODBackendSelection" \
+            -q --tb=short
+
+  # ── Lane 3: Root mass-appraisal integration ────────────────────────────────────
+  test-root-integration:
+    name: Root Mass-Appraisal Integration
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      JWT_SECRET: ci-test-secret
+      AVM_ARTIFACT_ROOT: /tmp/expert_smart_avm_ci_root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install base dependencies (no scikit-learn)
+        working-directory: ${{ github.workspace }}
+        run: |
+          pip install --no-cache-dir -r core_engine/requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Collect root integration tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            tests/test_mass_appraisal_export_integration.py \
+            tests/test_mass_appraisal_template_render.py \
+            --collect-only -q
+
+      - name: Run root mass-appraisal integration tests
+        working-directory: ${{ github.workspace }}
+        run: |
+          python -m pytest \
+            -p core_engine.tests.avm_isolation_plugin \
+            tests/test_mass_appraisal_export_integration.py \
+            tests/test_mass_appraisal_template_render.py \
+            -q --tb=short
 
   # ── Lint ─────────────────────────────────────────────────────────────────────
   lint:
@@ -133,14 +323,71 @@ jobs:
       - name: Syntax check bridge_api
         run: python -c "import ast, pathlib; ast.parse(pathlib.Path('bridge_api.py').read_text(encoding='utf-8'))"
 
+  # ── Wave 4B1 Infrastructure Validation ────────────────────────────────────────
+  wave4b1-infrastructure-validation:
+    name: Wave 4B1 Infrastructure Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Docker: build and validate the actual build/deploy artifact ─────────
+      # H2 correction: this job previously built deploy/Dockerfile.flask, which
+      # is not the image the build/deploy jobs below push to ghcr.io or roll
+      # out via kubectl. It now builds docker/Dockerfile — the file those jobs
+      # actually use — so a green result here reflects the real deploy image.
+      - name: Build canonical production image (docker/Dockerfile)
+        run: docker build -f docker/Dockerfile -t expert-smart-canonical-test .
+
+      - name: Validate pip dependency integrity inside canonical image
+        run: |
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --entrypoint python \
+            expert-smart-canonical-test \
+            -m pip check
+
+      - name: Assert exact production package versions inside canonical image
+        run: |
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --entrypoint python \
+            expert-smart-canonical-test \
+            -c 'from importlib.metadata import version; expected={"Flask":"3.1.3","Werkzeug":"3.1.8","waitress":"3.0.2","sentence-transformers":"5.6.1","scikit-learn":"1.9.0"}; actual={name:version(name) for name in expected}; assert actual == expected, f"Unexpected package versions: {actual!r}"'
+
+      - name: Assert scikit-learn present and default OOD backend in canonical image
+        run: |
+          timeout --signal=TERM --kill-after=10s 120s \
+            docker run --rm \
+            --workdir /app \
+            --entrypoint python \
+            expert-smart-canonical-test \
+            -c 'from mass_valuation.ood_detector import DEFAULT_AVM_OOD_BACKEND; assert DEFAULT_AVM_OOD_BACKEND == "isolation_forest", f"DEFAULT_AVM_OOD_BACKEND={DEFAULT_AVM_OOD_BACKEND!r}"'
+
+      # ── Nginx: validate the committed configuration against a real binary ───
+      - name: Install Nginx
+        run: sudo apt-get update -qq && sudo apt-get install -y nginx
+
+      - name: Create CI-only TLS credentials (not committed)
+        run: |
+          sudo mkdir -p /etc/letsencrypt/live/your-domain.com
+          sudo openssl req -x509 -nodes -newkey rsa:2048 \
+            -keyout /etc/letsencrypt/live/your-domain.com/privkey.pem \
+            -out  /etc/letsencrypt/live/your-domain.com/fullchain.pem \
+            -days 1 -subj '/CN=your-domain.com'
+
+      - name: Add CI-only upstream host resolution for flask
+        run: echo "127.0.0.1 flask" | sudo tee -a /etc/hosts
+
+      - name: Validate deploy/nginx.conf syntax
+        run: sudo nginx -t -c "$GITHUB_WORKSPACE/deploy/nginx.conf"
+
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:
     name: Build Docker Image
-    needs: [test, lint]
+    needs: [test-governed, test-ml-avm, test-root-integration, lint]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    # packages:write is only exercised on workflow_dispatch (push: conditional below).
-    # On normal push the image is built but not pushed; login step is skipped.
     permissions:
       contents: read
       packages: write

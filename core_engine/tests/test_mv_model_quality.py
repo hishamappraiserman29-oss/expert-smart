@@ -7,6 +7,8 @@ import pytest
 from core_engine.mass_valuation.ood_detector import (
     detect_ood,
     _robust_zscore_fallback,
+    OODBackendConfigurationError,
+    OODBackendUnavailableError,
 )
 from core_engine.mass_valuation.runner import (
     MassValuationRunner,
@@ -228,3 +230,73 @@ def test_mod_12_ood_score_hidden_from_user_role():
 
     analyst_view = OutputBuilder().filter_prediction(pred_with_ood, "analyst")
     assert "ood_score" in analyst_view, "ood_score must be visible to analyst role"
+
+
+# ---------------------------------------------------------------------------
+# OOD backend-selection tests  (OOD_BACKEND_SELECTION_TEST_COUNT = 6)
+# ---------------------------------------------------------------------------
+
+class TestOODBackendSelection:
+    """Six tests proving explicit backend governance.
+
+    All six use monkeypatch so they are independent of the environment-level
+    AVM_OOD_BACKEND value and of whether sklearn is actually installed.
+    """
+
+    def test_zscore_forces_fallback_even_with_sklearn(self, monkeypatch):
+        """AVM_OOD_BACKEND=zscore uses Z-score even when sklearn is installed."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "zscore")
+        import core_engine.mass_valuation.ood_detector as _mod
+        assert _mod._SKLEARN_AVAILABLE, "sklearn must be installed for this test to be non-trivial"
+        results = _mod.detect_ood(_NORMAL_BATCH)
+        assert len(results) == len(_NORMAL_BATCH)
+        for _, label in results:
+            assert label == "in_distribution"
+
+    def test_isolation_forest_uses_sklearn(self, monkeypatch):
+        """AVM_OOD_BACKEND=isolation_forest uses IsolationForest when sklearn installed."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "isolation_forest")
+        import core_engine.mass_valuation.ood_detector as _mod
+        assert _mod._SKLEARN_AVAILABLE, "sklearn must be installed"
+        results = _mod.detect_ood(_NORMAL_BATCH)
+        assert len(results) == len(_NORMAL_BATCH)
+        for score, label in results:
+            assert isinstance(score, float)
+            assert label in {"in_distribution", "out_of_distribution"}
+
+    def test_dependency_presence_does_not_select_backend(self, monkeypatch):
+        """With AVM_OOD_BACKEND=zscore, Z-score is used even when sklearn is present."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "zscore")
+        import core_engine.mass_valuation.ood_detector as _mod
+        assert _mod._SKLEARN_AVAILABLE, "sklearn must be installed for this assertion to be meaningful"
+        # Outlier batch — outlier must be OOD under Z-score too
+        batch_with_outlier = _NORMAL_BATCH + [_OUTLIER_UNIT]
+        results = _mod.detect_ood(batch_with_outlier)
+        _, outlier_label = results[-1]
+        assert outlier_label == "out_of_distribution"
+        for _, label in results[:8]:
+            assert label == "in_distribution"
+
+    def test_unsupported_backend_raises_configuration_error(self, monkeypatch):
+        """Unsupported AVM_OOD_BACKEND value raises OODBackendConfigurationError."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "random_forest")
+        with pytest.raises(OODBackendConfigurationError):
+            detect_ood(_NORMAL_BATCH)
+
+    def test_isolation_forest_without_sklearn_raises_unavailable_error(self, monkeypatch):
+        """isolation_forest backend raises OODBackendUnavailableError when sklearn absent."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "isolation_forest")
+        import core_engine.mass_valuation.ood_detector as _mod
+        monkeypatch.setattr(_mod, "_SKLEARN_AVAILABLE", False)
+        with pytest.raises(OODBackendUnavailableError):
+            _mod.detect_ood(_NORMAL_BATCH)
+
+    def test_zscore_works_when_sklearn_unavailable(self, monkeypatch):
+        """Z-score backend works even when sklearn is patched as unavailable."""
+        monkeypatch.setenv("AVM_OOD_BACKEND", "zscore")
+        import core_engine.mass_valuation.ood_detector as _mod
+        monkeypatch.setattr(_mod, "_SKLEARN_AVAILABLE", False)
+        results = _mod.detect_ood(_NORMAL_BATCH)
+        assert len(results) == len(_NORMAL_BATCH)
+        for _, label in results:
+            assert label == "in_distribution"

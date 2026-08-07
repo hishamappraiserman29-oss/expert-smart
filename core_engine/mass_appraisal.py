@@ -20,7 +20,31 @@ import math
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
+try:
+    from avm_lifecycle import (
+        create_run_dir,
+        update_run_metadata_status,
+        LifecycleConfigError,
+        LifecycleCapacityError,
+        LifecycleStorageUnsafeError,
+    )
+except ImportError:
+    create_run_dir = None  # type: ignore[assignment]
+    update_run_metadata_status = None  # type: ignore[assignment]
+    LifecycleConfigError = RuntimeError  # type: ignore[assignment, misc]
+    LifecycleCapacityError = RuntimeError  # type: ignore[assignment, misc]
+    LifecycleStorageUnsafeError = RuntimeError  # type: ignore[assignment, misc]
+
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _esc(value: Any) -> Any:
+    """Neutralize spreadsheet formula injection in user-supplied strings."""
+    if isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
+        return "'" + value
+    return value
 
 # ─── AVM Model coefficients (pre-trained on _SPATIAL_COMPS) ──────────────────
 # Hedonic model: price_pm2 = β0 + β1·floor + β2·area + β3·year_built
@@ -262,20 +286,30 @@ def _ratio_study(sold_units: List[Dict], thresholds: Optional[Dict] = None) -> D
 
 def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
                  location, purpose, output_dir) -> str:
-    """Export portfolio to Excel with formatting."""
+    """Export portfolio to Excel via lifecycle-managed artifact directory."""
     try:
         import xlsxwriter
     except ImportError:
         return ""
 
-    if not output_dir:
-        output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                  "outputs", "reports")
-    os.makedirs(output_dir, exist_ok=True)
-    ts   = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = os.path.join(output_dir, f"mass_appraisal_{ts}.xlsx")
+    # Persistent write — always redirect to lifecycle-managed directory (Wave 4B1)
+    run_dir_obj = None
+    if create_run_dir is not None:
+        run_dir_obj = create_run_dir()
+        path = str(run_dir_obj / "mass_appraisal.xlsx")
+    else:
+        # Fallback: use provided output_dir or OS tmp (never writes into repository)
+        import tempfile
+        base = output_dir if output_dir else tempfile.mkdtemp(prefix="ma_export_")
+        os.makedirs(base, exist_ok=True)
+        ts   = datetime.now().strftime("%Y%m%d_%H%M%S")
+        path = os.path.join(base, f"mass_appraisal_{ts}.xlsx")
 
-    wb = xlsxwriter.Workbook(path, {"nan_inf_to_errors": True})
+    wb = xlsxwriter.Workbook(path, {
+        "nan_inf_to_errors":   True,
+        "strings_to_formulas": False,
+        "strings_to_urls": False,
+    })
 
     def F(**kw):
         defaults = {"font_name": "Calibri", "font_size": 10, "border": 1, "valign": "vcenter"}
@@ -302,11 +336,11 @@ def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
     ws.set_row(1, 20)
 
     for r, u in enumerate(units, 2):
-        ws.write(r, 0, u["id"], fT)
+        ws.write(r, 0, _esc(u["id"]), fT)
         ws.write(r, 1, u["floor"], fP)
         ws.write(r, 2, u["area"], fN)
         ws.write(r, 3, int(u["year_built"]), F(align="center"))
-        ws.write(r, 4, u["condition"], fT)
+        ws.write(r, 4, _esc(u["condition"]), fT)
         ws.write(r, 5, u["avm_ppm"], fN)
         ws.write(r, 6, u["final_ppm"], fN)
         ws.write(r, 7, u["unit_value"], fN)
@@ -342,6 +376,14 @@ def _export_xlsx(units, total, avg_ppm, ratio_study, summary,
     ws2.set_column("B:B", 20)
 
     wb.close()
+
+    # Update lifecycle metadata: mark run complete
+    if run_dir_obj is not None and update_run_metadata_status is not None:
+        try:
+            update_run_metadata_status(run_dir_obj, "complete")
+        except Exception:
+            pass
+
     return path
 
 

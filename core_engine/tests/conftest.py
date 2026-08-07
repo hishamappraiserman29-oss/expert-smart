@@ -7,10 +7,17 @@ import shutil
 
 import pytest
 
+# Register the AVM isolation plugin as defense in depth.
+# The plugin is also loaded explicitly via -p flag in every AVM CI lane.
+pytest_plugins = ["core_engine.tests.avm_isolation_plugin"]
+
 # Allow asyncio.run() to be called even when Playwright's sync API leaves
 # a running event loop in the thread (nest_asyncio patches the stdlib loop).
-import nest_asyncio
-nest_asyncio.apply()
+try:
+    import nest_asyncio
+    nest_asyncio.apply()
+except ImportError:
+    pass
 
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
 _HTML_PATH = _ROOT / "frontend" / "index.html"
@@ -347,12 +354,6 @@ def _run_artifact_generator() -> None:
         _mod.generate_all_artifacts()
     except Exception as _e:
         pass
-
-
-_run_artifact_generator()
-_generate_legacy_qa_artifacts()
-_generate_3weeks_restore_artifacts()
-_generate_formula_guard_fixtures()
 
 
 # ── Minimal valid 1x1 PNG (used for placeholder preview images) ───────────────
@@ -717,13 +718,6 @@ def _generate_all_tax_appeal_qa_dirs() -> None:
     )
 
 
-_generate_phase_g_h_artifacts()
-_generate_canary_artifacts()
-_generate_tax_appeal_polish_artifacts()
-_generate_tax_appeal_archetypes_artifacts()
-_generate_all_tax_appeal_qa_dirs()
-
-
 def _clear_dir_contents(d: pathlib.Path) -> None:
     """Delete all items inside *d*, keeping *d* itself.
 
@@ -786,6 +780,19 @@ def _clean_per_req_dirs_at_session_start():
         _clear_dir_contents(_pvr_base / _sub)
     for _d in _TAX_PER_REQ_DIRS:
         _clear_dir_contents(_d)
+
+    # Invoke artifact generators here (after external path configuration by
+    # avm_isolation_plugin.pytest_configure) rather than at module import time.
+    _run_artifact_generator()
+    _generate_legacy_qa_artifacts()
+    _generate_3weeks_restore_artifacts()
+    _generate_formula_guard_fixtures()
+    _generate_phase_g_h_artifacts()
+    _generate_canary_artifacts()
+    _generate_tax_appeal_polish_artifacts()
+    _generate_tax_appeal_archetypes_artifacts()
+    _generate_all_tax_appeal_qa_dirs()
+
     yield
 
 

@@ -15,7 +15,10 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 _BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-_LIB_DIR     = os.path.join(_BASE_DIR, "data", "library")
+_LIB_DIR     = (
+    os.environ.get("EXPERT_SMART_LIBRARY_DIR")
+    or os.path.join(_BASE_DIR, "data", "library")
+)
 _INDEX_FILE  = os.path.join(_LIB_DIR, "library_index.json")
 os.makedirs(_LIB_DIR, exist_ok=True)
 

@@ -2,9 +2,9 @@
 ood_detector.py — P4 Out-of-Distribution detection for mass valuation units.
 M-06: every prediction receives a real ood_score and distribution_status.
 
-Primary: IsolationForest (scikit-learn) when available.
-Fallback: MAD-based robust Z-score (pure Python) — resistant to masking by
-          extreme outliers unlike mean/std Z-score.
+Backend selection (explicit — dependency presence never selects the algorithm):
+    AVM_OOD_BACKEND=isolation_forest (default): uses scikit-learn IsolationForest.
+    AVM_OOD_BACKEND=zscore:                    uses MAD-based robust Z-score (pure Python).
 
 Score convention (mirrors IsolationForest.decision_function):
     ood_score > 0  → within expected distribution
@@ -13,6 +13,7 @@ distribution_status ∈ {"in_distribution", "out_of_distribution"}
 """
 from __future__ import annotations
 
+import os as _os
 from typing import Any, Dict, List, Tuple
 
 try:
@@ -23,8 +24,21 @@ except ImportError:
     _SKLEARN_AVAILABLE = False
 
 
+# Public constant — importable by CI assertions and tests
+DEFAULT_AVM_OOD_BACKEND: str = "isolation_forest"
+
 _ZSCORE_THRESHOLD = 2.5   # max robust Z across features triggers OOD
 _IF_THRESHOLD     = 0.0   # IsolationForest.decision_function sign boundary
+
+_SUPPORTED_BACKENDS = frozenset({"zscore", "isolation_forest"})
+
+
+class OODBackendConfigurationError(ValueError):
+    """Raised when AVM_OOD_BACKEND is set to an unsupported value."""
+
+
+class OODBackendUnavailableError(RuntimeError):
+    """Raised when the requested backend requires a dependency that is not installed."""
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +53,22 @@ def _features(unit: Dict[str, Any]) -> List[float]:
         float(unit.get("year_built", 2010.0)),
         float(unit.get("final_ppm",  0.0)),
     ]
+
+
+# ---------------------------------------------------------------------------
+# Backend resolution
+# ---------------------------------------------------------------------------
+
+def _get_backend() -> str:
+    """Return the configured OOD backend, validated against supported values."""
+    raw = _os.environ.get("AVM_OOD_BACKEND", DEFAULT_AVM_OOD_BACKEND).strip().lower()
+    if raw not in _SUPPORTED_BACKENDS:
+        raise OODBackendConfigurationError(
+            f"Unsupported AVM_OOD_BACKEND={raw!r}. "
+            f"Supported values: {sorted(_SUPPORTED_BACKENDS)!r}. "
+            "Set AVM_OOD_BACKEND=zscore or AVM_OOD_BACKEND=isolation_forest."
+        )
+    return raw
 
 
 # ---------------------------------------------------------------------------
@@ -97,10 +127,18 @@ def detect_ood(
     """
     Compute (ood_score, distribution_status) for each unit in the batch.
 
+    Backend is selected by AVM_OOD_BACKEND environment variable:
+        "isolation_forest" (default): uses scikit-learn IsolationForest.
+        "zscore": uses MAD-based robust Z-score (pure Python, no dependencies).
+
+    Raises OODBackendConfigurationError for unsupported AVM_OOD_BACKEND values.
+    Raises OODBackendUnavailableError if isolation_forest is requested but sklearn absent.
+
+    Dependency presence never selects the backend.
+
     Parameters
     ----------
-    units       : list of appraisal-result unit dicts (must contain area, floor,
-                  year_built, final_ppm at minimum).
+    units       : list of appraisal-result unit dicts (area, floor, year_built, final_ppm).
     random_seed : passed to IsolationForest for reproducibility.
 
     Returns
@@ -112,27 +150,34 @@ def detect_ood(
         return []
 
     if len(units) < 4:
-        # IsolationForest requires ≥ 1 sample per tree; Z-score handles tiny batches
+        # Both backends use Z-score for tiny batches (IsolationForest needs ≥4 samples)
         return _robust_zscore_fallback(units)
 
-    if _SKLEARN_AVAILABLE:
-        try:
-            X = _np.array([_features(u) for u in units], dtype=float)
-            clf = _IsolationForest(
-                n_estimators=100,
-                contamination="auto",
-                random_state=random_seed,
-            )
-            clf.fit(X)
-            scores = clf.decision_function(X)
-            return [
-                (
-                    round(float(s), 4),
-                    "in_distribution" if s >= _IF_THRESHOLD else "out_of_distribution",
-                )
-                for s in scores
-            ]
-        except Exception:
-            pass  # fall through to robust fallback
+    backend = _get_backend()
 
-    return _robust_zscore_fallback(units)
+    if backend == "zscore":
+        return _robust_zscore_fallback(units)
+
+    # backend == "isolation_forest"
+    if not _SKLEARN_AVAILABLE:
+        raise OODBackendUnavailableError(
+            "AVM_OOD_BACKEND=isolation_forest requires scikit-learn, which is not installed. "
+            "Install scikit-learn (see core_engine/requirements-ml.txt) or "
+            "set AVM_OOD_BACKEND=zscore."
+        )
+
+    X = _np.array([_features(u) for u in units], dtype=float)
+    clf = _IsolationForest(
+        n_estimators=100,
+        contamination="auto",
+        random_state=random_seed,
+    )
+    clf.fit(X)
+    scores = clf.decision_function(X)
+    return [
+        (
+            round(float(s), 4),
+            "in_distribution" if s >= _IF_THRESHOLD else "out_of_distribution",
+        )
+        for s in scores
+    ]

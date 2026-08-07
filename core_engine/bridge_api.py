@@ -399,6 +399,53 @@ _CORS_ORIGINS = [
 ] or ["http://localhost:5000", "http://127.0.0.1:5000", "http://localhost:3000"]
 CORS(app, resources={r"/api/*": {"origins": _CORS_ORIGINS}})
 
+# ── Wave 4B1: global transport limit ─────────────────────────────────────────
+_GLOBAL_TRANSPORT_LIMIT = 67_108_864   # 64 MiB
+app.config["MAX_CONTENT_LENGTH"] = _GLOBAL_TRANSPORT_LIMIT
+
+# ── Wave 4B1: request-size helpers and lifecycle ──────────────────────────────
+try:
+    from request_limits import read_bounded_json as _read_bounded_json
+    from request_limits import check_array_field as _check_array_field
+    from request_limits import (
+        LIMIT_VALUATION, LIMIT_PRICE_INDEX_POST,
+        LIMIT_MA_PREVIEW, LIMIT_MA_RUN, LIMIT_MA_EXPORT_XLSX,
+        LIMIT_MA_SALES_VERIFY, LIMIT_MA_SALES_TIMEADJ, LIMIT_MA_SALES_ADJUST,
+        LIMIT_MA_RATIO_STUDY, LIMIT_MA_CALIB_PREVIEW, LIMIT_MA_CALIB_SANDBOX,
+        LIMIT_AVM_SINGLE, LIMIT_AVM_BATCH,
+        LIMIT_MV_RUN, LIMIT_MV_REVIEW, LIMIT_MV_IMPORT,
+    )
+    _REQUEST_LIMITS_AVAILABLE = True
+except ImportError as _rl_err:
+    print(f"[WARN] request_limits unavailable: {_rl_err}")
+    _REQUEST_LIMITS_AVAILABLE = False
+    _read_bounded_json = None  # type: ignore[assignment]
+    _check_array_field = None  # type: ignore[assignment]
+    LIMIT_VALUATION = LIMIT_PRICE_INDEX_POST = LIMIT_MA_PREVIEW = LIMIT_MA_RUN =     LIMIT_MA_EXPORT_XLSX = LIMIT_MA_SALES_VERIFY = LIMIT_MA_SALES_TIMEADJ =     LIMIT_MA_SALES_ADJUST = LIMIT_MA_RATIO_STUDY = LIMIT_MA_CALIB_PREVIEW =     LIMIT_MA_CALIB_SANDBOX = LIMIT_AVM_SINGLE = LIMIT_AVM_BATCH =     LIMIT_MV_RUN = LIMIT_MV_REVIEW = LIMIT_MV_IMPORT = _GLOBAL_TRANSPORT_LIMIT
+
+try:
+    from avm_lifecycle import (
+        LifecycleConfigError as _LifecycleConfigError,
+        LifecycleCapacityError as _LifecycleCapacityError,
+        LifecycleStorageUnsafeError as _LifecycleStorageUnsafeError,
+    )
+except ImportError:
+    _LifecycleConfigError = RuntimeError  # type: ignore[assignment,misc]
+    _LifecycleCapacityError = RuntimeError  # type: ignore[assignment,misc]
+    _LifecycleStorageUnsafeError = RuntimeError  # type: ignore[assignment,misc]
+
+_LIFECYCLE_ERRORS = (
+    _LifecycleConfigError,
+    _LifecycleCapacityError,
+    _LifecycleStorageUnsafeError,
+)
+
+
+@app.errorhandler(413)
+def _handle_413(exc):
+    return jsonify({"error": "payload_too_large"}), 413
+
+
 # ── Rate Limiting (Wave S4) ───────────────────────────────────────────────────
 
 def _rate_limit_key() -> str:
@@ -5393,7 +5440,10 @@ def _augment_payload_for_uncertainty(payload: dict) -> None:
 @require_auth
 def handle_valuation():
     try:
-        payload = request.get_json(silent=True) or {}
+        payload, _json_err = _read_bounded_json(LIMIT_VALUATION)
+        if _json_err:
+            return _json_err
+        payload = payload or {}
 
         # ── تفويض تلقائي للأغراض المتخصصة (Wave 2) ──────────────────────────
         # عند اختيار غرض يستوجب موديولاً متخصصاً، نُحوِّل الطلب إليه ونرجع
@@ -7064,7 +7114,10 @@ def price_cache_clear():
 # ═══════════════════════════════════════════════════════════════════════════
 import uuid as _uuid
 
-_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+_UPLOAD_DIR = (
+    os.environ.get("EXPERT_SMART_UPLOAD_DIR")
+    or os.path.join(os.path.dirname(__file__), "uploads")
+)
 os.makedirs(_UPLOAD_DIR, exist_ok=True)
 
 _ALLOWED_DOC_EXT  = {".xlsx", ".xls", ".csv", ".pdf", ".docx", ".doc", ".txt", ".xlsm"}
@@ -7820,10 +7873,9 @@ def handle_reit_nav():
 # Endpoint: Price Index — مؤشر معدلات الزيادة في أسعار العقارات
 # 4 methodologies: CMA / AVM / RPPI / Stratification — composite output.
 # ═══════════════════════════════════════════════════════════════════════════
-@app.route("/api/price-index", methods=["GET", "POST", "OPTIONS"])
+@app.route("/api/price-index", methods=["GET", "POST"])
+@require_auth
 def handle_price_index():
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
     try:
         from price_index_engine import compute_price_index
     except Exception:
@@ -7835,7 +7887,10 @@ def handle_price_index():
     try:
         # Accept filters from query string OR JSON body
         if request.method == "POST":
-            payload = request.get_json(silent=True) or {}
+            payload, _json_err = _read_bounded_json(LIMIT_PRICE_INDEX_POST)
+            if _json_err:
+                return _json_err
+            payload = payload or {}
         else:
             payload = {}
         region_filter = (request.args.get("region") or payload.get("region") or "").strip() or None
@@ -7892,7 +7947,13 @@ def handle_mass_appraisal_preview():
             return jsonify({"status": "error",
                             "message": f"mass_appraisal not available: {imp_err}"}), 500
     try:
-        body  = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_PREVIEW)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "rows", 5000) or _check_array_field(body, "units", 5000)
+        if _arr_err:
+            return _arr_err
         units = _ma_units(body)
         if not units:
             return jsonify({"status": "error", "error_code": "MISSING_ROWS",
@@ -7910,6 +7971,8 @@ def handle_mass_appraisal_preview():
         preview["preview"] = True
         return jsonify(preview)
     except Exception as e:
+        if isinstance(e, _LIFECYCLE_ERRORS):
+            return jsonify({"error": "artifact_storage_unavailable"}), 503
         print(traceback.format_exc())
         return _safe_err(e)
 
@@ -7926,7 +7989,13 @@ def handle_mass_appraisal_run():
             return jsonify({"status": "error",
                             "message": f"mass_appraisal not available: {imp_err}"}), 500
     try:
-        body  = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_RUN)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "rows", 5000) or _check_array_field(body, "units", 5000)
+        if _arr_err:
+            return _arr_err
         units = _ma_units(body)
         if not units:
             return jsonify({"status": "error", "error_code": "MISSING_ROWS",
@@ -7941,6 +8010,8 @@ def handle_mass_appraisal_run():
         )
         return jsonify(result)
     except Exception as e:
+        if isinstance(e, _LIFECYCLE_ERRORS):
+            return jsonify({"error": "artifact_storage_unavailable"}), 503
         print(traceback.format_exc())
         return _safe_err(e)
 
@@ -7958,7 +8029,10 @@ def handle_mass_appraisal_export_xlsx():
                             "message": f"mass_appraisal_excel not available: {imp_err}"}), 500
     try:
         from flask import Response
-        body                = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_EXPORT_XLSX)
+        if _json_err:
+            return _json_err
+        body                = body or {}
         run_result          = body.get("result") or body
         ratio_study         = body.get("ratio_study")
         calibration_preview = body.get("calibration_preview")
@@ -8069,7 +8143,13 @@ def handle_mass_sales_verify():
             return jsonify({"status": "error",
                             "message": f"sales_verification not available: {imp_err}"}), 500
     try:
-        body    = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_VERIFY)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "records", 10000)
+        if _arr_err:
+            return _arr_err
         records = body.get("records") or []
         options = body.get("options")
         return jsonify(verify_sales_records(records, options))
@@ -8090,7 +8170,13 @@ def handle_mass_sales_time_adjust():
             return jsonify({"status": "error",
                             "message": f"sales_time_adjustment not available: {imp_err}"}), 500
     try:
-        body           = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_TIMEADJ)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "records", 10000)
+        if _arr_err:
+            return _arr_err
         records        = body.get("records") or []
         valuation_date = body.get("valuation_date", "")
         options        = body.get("options")
@@ -8112,7 +8198,16 @@ def handle_mass_sales_adjust():
             return jsonify({"status": "error",
                             "message": f"sales_adjustments not available: {imp_err}"}), 500
     try:
-        body               = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_SALES_ADJUST)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = (
+            _check_array_field(body, "sale_records", 10000)
+            or _check_array_field(body, "records", 10000)
+        )
+        if _arr_err:
+            return _arr_err
         records            = body.get("sale_records") or body.get("records") or []
         adjustment_profile = body.get("adjustment_profile")
         options            = body.get("options")
@@ -8134,7 +8229,16 @@ def handle_mass_ratio_study():
             return jsonify({"status": "error",
                             "message": f"ratio_studies not available: {imp_err}"}), 500
     try:
-        body         = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_RATIO_STUDY)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = (
+            _check_array_field(body, "subject_rows", 5000)
+            or _check_array_field(body, "sale_records", 10000)
+        )
+        if _arr_err:
+            return _arr_err
         subject_rows = body.get("subject_rows") or []
         sale_records = body.get("sale_records") or []
         options      = body.get("options")
@@ -8156,7 +8260,16 @@ def handle_mass_calibration_preview():
             return jsonify({"status": "error",
                             "message": f"model_calibration not available: {imp_err}"}), 500
     try:
-        body         = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_CALIB_PREVIEW)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = (
+            _check_array_field(body, "subject_rows", 5000)
+            or _check_array_field(body, "sale_records", 10000)
+        )
+        if _arr_err:
+            return _arr_err
         subject_rows = body.get("subject_rows") or []
         sale_records = body.get("sale_records") or []
         ratio_study  = body.get("ratio_study")
@@ -8179,7 +8292,13 @@ def handle_mass_calibration_sandbox():
             return jsonify({"status": "error",
                             "message": f"calibration_sandbox not available: {imp_err}"}), 500
     try:
-        body                = request.get_json(silent=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_MA_CALIB_SANDBOX)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "subject_rows", 5000)
+        if _arr_err:
+            return _arr_err
         subject_rows        = body.get("subject_rows") or []
         calibration_preview = body.get("calibration_preview") or {}
         options             = body.get("options")
@@ -8190,11 +8309,9 @@ def handle_mass_calibration_sandbox():
 
 
 # ── Phase 3.12 — Mass Appraisal Excel Template Download ──────────────────────
-@app.route("/api/mass-appraisal/template-xlsx", methods=["GET", "OPTIONS"])
+@app.route("/api/mass-appraisal/template-xlsx", methods=["GET"])
 def handle_mass_appraisal_template_xlsx():
-    """Return a blank Mass Appraisal Excel template for download."""
-    if request.method == "OPTIONS":
-        return jsonify({}), 200
+    """Return a blank Mass Appraisal Excel template for download. Intentionally public."""
     try:
         try:
             from mass_appraisal_template import build_mass_appraisal_template_workbook
@@ -10435,12 +10552,15 @@ except Exception as _ml_err:
 @app.route("/api/valuation/avm", methods=["POST"])
 @require_auth
 def api_avm_valuation():
-    if not _ML_OK:
-        return jsonify({"error": "AVM model not available"}), 503
-    if _avm_predictor_instance is None:
-        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
     try:
-        body = request.get_json(force=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_AVM_SINGLE)
+        if _json_err:
+            return _json_err
+        if not _ML_OK:
+            return jsonify({"error": "AVM model not available"}), 503
+        if _avm_predictor_instance is None:
+            return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
+        body = body or {}
         area_sqm = float(body.get("area_sqm", 0))
         location = str(body.get("location", "")).strip()
         property_type = str(body.get("property_type", "")).strip()
@@ -10463,17 +10583,21 @@ def api_avm_valuation():
 @app.route("/api/valuation/avm/batch", methods=["POST"])
 @require_auth
 def api_avm_batch_valuation():
-    if not _ML_OK:
-        return jsonify({"error": "AVM model not available"}), 503
-    if _avm_predictor_instance is None:
-        return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
     try:
-        body = request.get_json(force=True) or {}
+        body, _json_err = _read_bounded_json(LIMIT_AVM_BATCH)
+        if _json_err:
+            return _json_err
+        body = body or {}
+        _arr_err = _check_array_field(body, "properties", 500)
+        if _arr_err:
+            return _arr_err
+        if not _ML_OK:
+            return jsonify({"error": "AVM model not available"}), 503
+        if _avm_predictor_instance is None:
+            return jsonify({"error": "No trained AVM model loaded. Train a model first."}), 503
         properties = body.get("properties", [])
         if not isinstance(properties, list) or not properties:
             return jsonify({"error": "properties must be a non-empty list"}), 400
-        if len(properties) > 500:
-            return jsonify({"error": "Batch size cannot exceed 500 properties"}), 400
         result = _avm_predictor_instance.predict_batch(properties)
         return jsonify(result), 200
     except Exception as exc:
@@ -10481,6 +10605,7 @@ def api_avm_batch_valuation():
 
 
 @app.route("/api/avm/info", methods=["GET"])
+@require_auth
 def api_avm_info():
     if not _ML_OK:
         return jsonify({"status": "unavailable", "reason": "ML module not loaded"}), 503
@@ -12744,12 +12869,18 @@ except Exception as _mvp_import_err:
 @require_auth
 def mv_run():
     """POST /api/mass-valuation/run — Execute a mass valuation run. Admin only."""
-    if not _is_admin():
+    if not _is_admin(getattr(g, "user_id", None)):
         return jsonify({"error": "admin role required"}), 403
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body            = request.get_json(silent=True) or {}
+    body, _json_err = _read_bounded_json(LIMIT_MV_RUN)
+    if _json_err:
+        return _json_err
+    body = body or {}
+    _arr_err = _check_array_field(body, "records", 10000)
+    if _arr_err:
+        return _arr_err
     records         = body.get("records", [])
     run_name        = body.get("run_name", "P1 Run")
     property_type   = body.get("property_type", "residential")
@@ -12762,13 +12893,18 @@ def mv_run():
     if not isinstance(records, list) or not records:
         return jsonify({"error": "records must be a non-empty list"}), 400
 
-    runner     = _MVRunner(
-        run_name=run_name, property_type=property_type,
-        jurisdiction=jurisdiction, method=method,
-        iaao_thresholds=iaao_thresholds,
-    )
-    run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
-    audit_record = _mv_build_audit(run_result, code_commit="HEAD")
+    try:
+        runner     = _MVRunner(
+            run_name=run_name, property_type=property_type,
+            jurisdiction=jurisdiction, method=method,
+            iaao_thresholds=iaao_thresholds,
+        )
+        run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
+        audit_record = _mv_build_audit(run_result, code_commit="HEAD")
+    except Exception as _mv_run_err:
+        if isinstance(_mv_run_err, _LIFECYCLE_ERRORS):
+            return jsonify({"error": "artifact_storage_unavailable"}), 503
+        raise
 
     # P2 — persist to DB (graceful: run still succeeds if DB unavailable)
     db_saved_run_id = None
@@ -12803,8 +12939,10 @@ def mv_run():
 @app.route("/api/mass-valuation/runs", methods=["GET"])
 @require_auth
 def mv_list_runs():
-    """GET /api/mass-valuation/runs — Recent runs (analyst/admin), RBAC-filtered."""
-    role  = "admin" if _is_admin(g.user_id) else "analyst"
+    """GET /api/mass-valuation/runs — OAF-003: Admin-only (Wave 4B1 containment)."""
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+    role  = "admin"
     limit = min(int(request.args.get("limit", 50)), 200)
 
     if _DB_AVAILABLE and _MV_AVAILABLE:
@@ -12826,19 +12964,14 @@ def mv_list_runs():
 @app.route("/api/mass-valuation/predictions/<run_id>", methods=["GET"])
 @require_auth
 def mv_get_predictions(run_id: str):
-    """
-    GET /api/mass-valuation/predictions/<run_id>
-    Returns predictions for a run, filtered to the caller's role.
-    P2: reads from property_predictions table.
-    """
+    """GET /api/mass-valuation/predictions/<run_id> — OAF-001/002: Admin-only (Wave 4B1)."""
+    if not _is_admin(g.user_id):
+        return jsonify({"error": "admin role required"}), 403
+
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    role = "admin" if _is_admin(g.user_id) else request.args.get("role", "user")
-    if role not in {"user", "analyst", "admin"}:
-        role = "user"
-    if role == "admin" and not _is_admin(g.user_id):
-        return jsonify({"error": "admin role required for admin-level output"}), 403
+    role = "admin"
 
     if _DB_AVAILABLE:
         try:
@@ -12878,7 +13011,10 @@ def mv_review_prediction(prediction_id: str):
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
 
-    body        = request.get_json(silent=True) or {}
+    body, _json_err = _read_bounded_json(LIMIT_MV_REVIEW)
+    if _json_err:
+        return _json_err
+    body        = body or {}
     run_id      = body.get("run_id", "")
     decision    = body.get("decision", "")
     reason      = body.get("reason", "")
@@ -12928,6 +13064,8 @@ def mv_review_prediction(prediction_id: str):
 
     except ValueError as _ve:
         return jsonify({"error": str(_ve)}), 400
+    except (TypeError, AttributeError):
+        return jsonify({"error": "database connection unavailable"}), 503
 
 
 @app.route("/api/mass-valuation/runs/<run_id>/export", methods=["GET"])
@@ -12972,7 +13110,13 @@ def mv_import():
     if not _MV_PIPELINE_AVAILABLE:
         return jsonify({"error": "mass_valuation pipeline unavailable"}), 503
 
-    body            = request.get_json(silent=True) or {}
+    body, _json_err = _read_bounded_json(LIMIT_MV_IMPORT)
+    if _json_err:
+        return _json_err
+    body = body or {}
+    _arr_err = _check_array_field(body, "records", 10000)
+    if _arr_err:
+        return _arr_err
     raw_records     = body.get("records", [])
     source          = body.get("source", "csv")
     lookback_months = int(body.get("lookback_months", 36))
@@ -13010,6 +13154,8 @@ def mv_import():
                     "iaao_summary":    run_out["iaao_summary"],
                 }
             except Exception as _run_err:
+                if isinstance(_run_err, _LIFECYCLE_ERRORS):
+                    return jsonify({"error": "artifact_storage_unavailable"}), 503
                 run_result_summary = {"error": str(_run_err)}
 
     return jsonify({
@@ -13036,10 +13182,18 @@ if __name__ == "__main__":
             print("  [RAG] starting model preload in background...")
         except Exception as _ri_err:
             print(f"  [RAG] pre-init failed: {_ri_err}")
+    PORT = int(os.environ.get("PORT", "5000"))
     try:
         from waitress import serve
-        print("  [WSGI] using waitress on http://0.0.0.0:5000")
-        serve(app, host="0.0.0.0", port=5000, threads=8, channel_timeout=180)
+        print(f"  [WSGI] using waitress on http://0.0.0.0:{PORT}")
+        serve(
+            app,
+            host="0.0.0.0",
+            port=PORT,
+            threads=8,
+            channel_timeout=180,
+            max_request_body_size=67_108_864,   # Wave 4B1: 64 MiB
+        )
     except Exception as _wsgi_err:
         print(f"  [WSGI] waitress unavailable ({_wsgi_err}); falling back to Flask dev server")
-        app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
+        app.run(host="0.0.0.0", port=PORT, debug=False, threaded=True)

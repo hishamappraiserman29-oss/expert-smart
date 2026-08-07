@@ -2463,3 +2463,178 @@ SELF_HASH_NOT_EMBEDDED
 ```
 
 SENTINEL_CODE = A6_WAVE_4B1_EXTERNAL_COVERAGE_ARTIFACT_CORRECTION_AWAITING_REVIEW
+
+---
+
+## Wave 4B1 Independent-Review Correction (H1/H2) and Final Remote Validation
+
+This section is appended after the sections above (which remain an accurate
+historical record of the state as of commit `61bd0f8740dc51f522fe6312dd07d13a28393206`)
+and documents the independent-review corrective commit and its remote
+validation. It does not retroactively claim that earlier sections' local or
+remote results were obtained against the head documented in this section.
+
+### Corrective commit
+
+```
+COMMIT_SHA      = 5d814577e9ffb8b94fe00a95e558fac83c9fc3b2
+PARENT_SHA      = 61bd0f8740dc51f522fe6312dd07d13a28393206
+COMMIT_MESSAGE  = fix(avm): activate standards route and align deploy validation
+FILES_MODIFIED  = 3
+  .github/workflows/ci-cd.yml
+  core_engine/pv_standards_compliance_endpoint.py
+  core_engine/standards_compliance_visual_qa_generator.py
+FILES_CREATED   = 0
+FILES_DELETED   = 0
+```
+
+### H1 — standards-compliance route contract
+
+`core_engine/standards_compliance_visual_qa_generator.py`'s docstring stated
+it "MUST NOT be imported or called from bridge_api.py" while
+`core_engine/pv_standards_compliance_endpoint.py` already imported and
+exposed it via a live, admin-only Flask blueprint
+(`register_standards_compliance()`, an explicit, idempotent, already-guarded
+function call — not an accidental import side effect). The route
+registration itself was correct; only the module's own contract text
+contradicted the actual, intentional wiring. Corrected by updating the
+docstrings in both files to accurately describe the wiring; no route,
+authentication, HTTP-method, or response-contract behaviour changed.
+
+```
+H1_ROUTE_PRESENT_IN_PRODUCTION_APP_URL_MAP = True (verified locally via an isolated
+  app.url_map inspection with all 6 EXPERT_SMART_* storage variables redirected
+  to a disposable temp root; zero repository writes occurred)
+H1_ROUTE_REGISTRATION_COUNT                = 1
+H1_DUPLICATE_ROUTE_COUNT                   = 0
+H1_ENDPOINT_TESTS_PASSED                   = True (112/112, local and remote)
+H1_VISUAL_QA_UNIT_TESTS_PASSED             = True
+```
+The remote CI workflow does not itself execute a standalone `app.url_map`
+assertion step; remote H1 evidence is the endpoint/generator test suites
+(exercising the real registered route via `app.test_client()`) passing with
+zero failures inside the governed collection. The `app.url_map` inspection
+itself was performed locally, not as a remote-workflow-defined step.
+
+### H2 — Dockerfile validation/deployment alignment
+
+The `wave4b1-infrastructure-validation` CI job previously built and validated
+`deploy/Dockerfile.flask`, which is not the file the `build`/`deploy` jobs
+actually push to `ghcr.io` and roll out via `kubectl set image
+deployment/expert-smart-api -n expert-smart` (that file is
+`docker/Dockerfile`, untouched by any commit in this PR prior to `5d81457`).
+Corrected by retargeting the infrastructure-validation job to build and
+validate `docker/Dockerfile` instead. The OOD-backend-check import was
+adjusted from `core_engine.mass_valuation.ood_detector` to
+`mass_valuation.ood_detector` to match `docker/Dockerfile`'s flat-copy layout
+(`COPY core_engine/ ./` into `/app`, vs. `deploy/Dockerfile.flask`'s
+`PYTHONPATH=/app:/app/core_engine` layout) — no `sys.path` insertion, no
+change to either Dockerfile's own content.
+
+```
+CANONICAL_PRODUCTION_DOCKERFILE      = docker/Dockerfile
+INFRASTRUCTURE_VALIDATION_DOCKERFILE = docker/Dockerfile (was deploy/Dockerfile.flask)
+BUILD_JOB_DOCKERFILE                 = docker/Dockerfile (unchanged)
+DOCKERFILE_PATHS_ALIGNED             = True
+```
+
+### Final remote validation (corrective head)
+
+```
+VALIDATED_HEAD_SHA = 5d814577e9ffb8b94fe00a95e558fac83c9fc3b2
+CI_RUN_ID           = 31115141528
+E2E_RUN_ID           = 31115141003
+FINAL_ML_JOB_ID      = 92834433735
+```
+
+```
+H1                    = PASS
+H2                    = PASS
+Focused security      = 149 passed / 149 collected
+Governed              = 528 passed / 4 skipped / 0 failed (532 collected)
+CI-safe requirements  = 275 passed
+Root integration      = 3 passed
+ML                    = 58 passed / 0 failed / 0 skipped (58 collected)
+E2E                   = 90 passed / 0 failed / 0 skipped (90 collected)
+
+New code failures            = 0
+Remote validation blockers   = 0
+Final remote validation      = PASS
+```
+
+Remote H2 evidence (`Wave 4B1 Infrastructure Validation` job, run `31115141528`):
+```
+REMOTE_VALIDATED_DOCKERFILE          = docker/Dockerfile
+REMOTE_CANONICAL_DOCKER_BUILD_PASSED = True
+REMOTE_DOCKER_PIP_CHECK_PASSED       = True
+REMOTE_DOCKER_VERSION_CHECKS_PASSED  = True  (Flask 3.1.3, Werkzeug 3.1.8, waitress 3.0.2,
+                                               sentence-transformers 5.6.1, scikit-learn 1.9.0)
+REMOTE_DOCKER_OOD_CHECK_PASSED       = True
+REMOTE_NGINX_CONFIG_TEST_PASSED      = True
+```
+
+### GitHub Actions incident affecting the ML job
+
+The `ML AVM (scikit-learn)` job on run `31115141528` failed twice (original
+attempt and one subsequent rerun) with an identical signature —
+`Failed to resolve action download info. Error: Service Unavailable` —
+inside GitHub's own action-provisioning step ("Set up job"), before
+`actions/checkout@v4` or any workflow-defined step executed on either
+attempt.
+
+```
+EARLIER_FAILED_ML_JOB                           = action-download failure before checkout
+PROJECT_CODE_EXECUTED_DURING_FAILED_ML_ATTEMPTS = False
+ML_JOB_DEFINITION_MODIFIED_BY_5D81457           = False
+WORKFLOW_DEFINITION_DEFECT_CONFIRMED            = False
+```
+
+The official GitHub Status page (`githubstatus.com`) subsequently confirmed
+the Actions component at `major_outage` with an unresolved, `critical`-impact
+incident ("Incident with Actions") created within seconds of the first
+observed failure. After the Actions component returned to `operational` with
+0 unresolved incidents, the same failed-job rerun (`gh run rerun 31115141528
+--failed`) succeeded: job `92834433735` executed checkout, Python setup,
+dependency installation, test collection, and test execution, reporting
+"58 passed" with 0 failures. This is a GitHub Actions platform incident, not
+a Wave 4B1 code or workflow defect.
+
+GitHub's run-attempt-number metadata for this run showed internal
+inconsistency across different API endpoints during this sequence (an
+eventual-consistency artifact of GitHub's own attempts bookkeeping). That
+attempt-number metadata is not used as validation evidence anywhere in this
+section — only job `92834433735`'s own timestamps, step list, and log
+content are.
+
+### Codecov — two distinct, separately-tracked observations
+
+```
+Pre-corrective-head run (31096676868):
+  message            = "No coverage data found to transform"
+  root cause proven  = False
+
+Corrective-head run (31115141528):
+  message            = "Token required - not valid tokenless upload"
+  step status        = continued_failure
+  pipeline blocking  = False
+  root cause proven  = True (for this run only)
+```
+The second observation does not retroactively explain the first; they are
+recorded separately because their root causes are not proven to be the same.
+No `CODECOV_TOKEN` is configured in either workflow. Neither observation
+invalidated the governed tests or the successful CI conclusion
+(`continue-on-error: true` on both runs).
+
+### Governance
+
+```
+PUSH_PERFORMED       = True   (corrective commit 5d814577e9ffb8b94fe00a95e558fac83c9fc3b2)
+PR_OPENED            = True   (PR #7, already open prior to this commit)
+MERGE_PERFORMED      = False
+AMEND_PERFORMED      = False
+AUTO_MERGE_ENABLED   = False
+MERGE_AUTHORIZED     = False
+SELF_HASH_NOT_EMBEDDED
+```
+
+SENTINEL_CODE = A6_WAVE_4B1_FINAL_REMOTE_VALIDATION_PASSED_AWAITING_DOCUMENTATION_REVIEW

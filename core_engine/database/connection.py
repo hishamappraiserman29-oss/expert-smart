@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 from typing import Optional
 
 from sqlalchemy import create_engine, text
@@ -79,6 +80,7 @@ def drop_db() -> None:
     Base.metadata.drop_all(bind=get_engine())
 
 
+@contextmanager
 def get_db():
     """
     Yield a database session and guarantee it is closed on exit.

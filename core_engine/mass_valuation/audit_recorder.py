@@ -55,7 +55,12 @@ def build_audit_record(
         "dataset_hash": dataset_hash,
         "random_seed": run_result.get("random_seed", 0),
     })
-    model_hash = "0" * 64  # placeholder until ML model artifact is persisted
+    # Wave 4B2: use the real, already-computed model hash from the run result
+    # (runner.py::_compute_model_hash — a deterministic SHA-256 over
+    # training_data_hash/random_seed/method). Only falls back to the
+    # all-zero placeholder if a caller ever passes a run_result that
+    # genuinely lacks one (e.g. an older/malformed record).
+    model_hash = run_result.get("model_hash") or "0" * 64
 
     iaao = run_result.get("iaao_summary", {})
 

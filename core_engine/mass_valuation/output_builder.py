@@ -42,12 +42,15 @@ _PRED_USER_FIELDS = frozenset({
 _PRED_ANALYST_EXTRA = frozenset({
     "shap_values", "quality_flags", "comparable_ids",
     "model_version", "review_status",
-    "ood_score",   # P4 M-06: analyst/admin may see raw OOD score
+    "ood_score",       # P4 M-06: analyst/admin may see raw OOD score
+    "source_method",   # Wave 4B2: which method actually produced this prediction
 })
 
 _RUN_USER_FIELDS = frozenset({
     "run_id", "run_name", "property_type", "jurisdiction",
     "status", "method", "n_predicted_properties",
+    "currency",   # Wave 4B2: explicit currency contract, visible to all roles
+                  # like jurisdiction (which it's derived from) already is
     "advisory_only", "certification_ready",
 })
 
@@ -60,6 +63,9 @@ _RUN_ANALYST_EXTRA = frozenset({
 _RUN_ADMIN_EXTRA = frozenset({
     "dataset_hash", "random_seed", "validation_report",
     "started_at", "completed_at",
+    # Wave 4B2: technical/audit provenance — admin-only, same tier as
+    # dataset_hash/random_seed above.
+    "model_hash", "ood_backend", "created_by",
 })
 
 

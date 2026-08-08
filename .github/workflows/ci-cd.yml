@@ -132,6 +132,9 @@ jobs:
             core_engine/tests/test_wave4b1_security.py \
             core_engine/tests/test_avm_artifact_lifecycle.py \
             core_engine/tests/test_wave4b1_waitress_transport.py \
+            core_engine/tests/test_database_connection.py \
+            core_engine/tests/test_db_schema.py \
+            core_engine/tests/test_wave4b2_ownership.py \
             --collect-only -q
 
       - name: Run governed MV + Wave 4B1 security tests
@@ -159,6 +162,9 @@ jobs:
             core_engine/tests/test_wave4b1_security.py \
             core_engine/tests/test_avm_artifact_lifecycle.py \
             core_engine/tests/test_wave4b1_waitress_transport.py \
+            core_engine/tests/test_database_connection.py \
+            core_engine/tests/test_db_schema.py \
+            core_engine/tests/test_wave4b2_ownership.py \
             -q --tb=short
 
       - name: Run CI-safe requirements tests

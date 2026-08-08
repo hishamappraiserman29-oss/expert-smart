@@ -12856,6 +12856,32 @@ except Exception as _mv_import_err:
     print(f"[WARN] mass_valuation P1/P2 not loaded: {_mv_import_err}")
     _MV_AVAILABLE = False
 
+# Wave 4B2 runtime-blocker follow-up: distinguish "database temporarily
+# unavailable" (SQLAlchemyError) from "resource genuinely not found" in the
+# Mass Valuation ownership-check routes below. db_writer.py's read helpers
+# (get_run_owner/get_prediction_run_id) intentionally swallow DB errors and
+# return None so a caller cannot use them to distinguish an error from a
+# real absence — a probe query is used at the route layer instead, before
+# any ownership lookup, so a genuine connectivity failure surfaces as 503
+# rather than being misreported as 404.
+try:
+    from sqlalchemy.exc import SQLAlchemyError as _MVSQLAlchemyError
+    from sqlalchemy import text as _mv_probe_text
+except ImportError:
+    class _MVSQLAlchemyError(Exception):  # type: ignore[no-redef]
+        """Fallback when SQLAlchemy is unavailable — never actually raised."""
+    _mv_probe_text = None  # type: ignore[assignment]
+
+
+def _mv_probe_db_reachable(db) -> None:
+    """
+    Raise _MVSQLAlchemyError if the DB session cannot execute a trivial
+    query. Call once, immediately after entering `with get_db() as db:`,
+    before any ownership lookup.
+    """
+    if _mv_probe_text is not None:
+        db.execute(_mv_probe_text("SELECT 1"))
+
 # P12 — column mapping + quality check pipeline (independent of runner)
 try:
     from mass_valuation.pipeline import run_pipeline as _mv_run_pipeline
@@ -12898,6 +12924,7 @@ def mv_run():
             run_name=run_name, property_type=property_type,
             jurisdiction=jurisdiction, method=method,
             iaao_thresholds=iaao_thresholds,
+            created_by=g.user_id,  # Wave 4B2: resource-owner identity
         )
         run_result   = runner.run(records, base_market_ppm=base_market_ppm, location=location)
         audit_record = _mv_build_audit(run_result, code_commit="HEAD")
@@ -12939,7 +12966,11 @@ def mv_run():
 @app.route("/api/mass-valuation/runs", methods=["GET"])
 @require_auth
 def mv_list_runs():
-    """GET /api/mass-valuation/runs — OAF-003: Admin-only (Wave 4B1 containment)."""
+    """
+    GET /api/mass-valuation/runs — OAF-003: Admin-only (Wave 4B1 containment).
+    Wave 4B2: owner-scoped on top of the admin gate — an admin sees only runs
+    they created (created_by == g.user_id). No admin ownership bypass.
+    """
     if not _is_admin(g.user_id):
         return jsonify({"error": "admin role required"}), 403
     role  = "admin"
@@ -12949,7 +12980,7 @@ def mv_list_runs():
         try:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
-                runs = _mv_db.list_runs(_db, role=role, limit=limit)
+                runs = _mv_db.list_runs(_db, role=role, limit=limit, owner_user_id=g.user_id)
             return jsonify({"runs": runs, "count": len(runs), "advisory_only": True}), 200
         except Exception as _e:
             print(f"[WARN] mv_list_runs DB error: {_e}")
@@ -12964,7 +12995,14 @@ def mv_list_runs():
 @app.route("/api/mass-valuation/predictions/<run_id>", methods=["GET"])
 @require_auth
 def mv_get_predictions(run_id: str):
-    """GET /api/mass-valuation/predictions/<run_id> — OAF-001/002: Admin-only (Wave 4B1)."""
+    """
+    GET /api/mass-valuation/predictions/<run_id> — OAF-001/002: Admin-only (Wave 4B1).
+    Wave 4B2: owner-scoped on top of the admin gate. run_id is treated as an
+    identifier, not a bearer/capability token — a run that does not exist and
+    a run that exists but belongs to a different admin both return the same
+    non-disclosing 404, so a caller cannot distinguish "wrong owner" from
+    "never existed." No admin ownership bypass.
+    """
     if not _is_admin(g.user_id):
         return jsonify({"error": "admin role required"}), 403
 
@@ -12977,15 +13015,24 @@ def mv_get_predictions(run_id: str):
         try:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
+                try:
+                    _mv_probe_db_reachable(_db)
+                except _MVSQLAlchemyError:
+                    return jsonify({"error": "database temporarily unavailable"}), 503
+                owner = _mv_db.get_run_owner(run_id, _db)
+                if owner is None or owner != g.user_id:
+                    return jsonify({
+                        "error": "run not found",
+                        "run_id": run_id,
+                    }), 404
                 preds = _mv_db.get_predictions_for_run(run_id, _db)
-            if preds:
-                filtered = _MVOutputBuilder().filter_predictions_list(preds, role)
-                return jsonify({
-                    "run_id":      run_id,
-                    "predictions": filtered,
-                    "count":       len(filtered),
-                    "advisory_only": True,
-                }), 200
+            filtered = _MVOutputBuilder().filter_predictions_list(preds, role)
+            return jsonify({
+                "run_id":      run_id,
+                "predictions": filtered,
+                "count":       len(filtered),
+                "advisory_only": True,
+            }), 200
         except Exception as _e:
             print(f"[WARN] mv_get_predictions DB error: {_e}")
 
@@ -13005,6 +13052,13 @@ def mv_review_prediction(prediction_id: str):
     POST /api/mass-valuation/review/<prediction_id>
     Body: {run_id, decision, reason, property_id?, model_value?, reviewed_value?}
     Admin only. reviewed_by is set to g.user_id (never 'system').
+
+    Wave 4B2: before persistence, establishes all three relationships —
+    (1) prediction_id exists, (2) it actually belongs to the supplied run_id
+    (not just independent per-column FK existence), (3) that run's owner is
+    the caller. A prediction from a run the caller doesn't own — including
+    one belonging to another admin — is rejected with a non-disclosing 404,
+    the same response used for a genuinely unknown prediction_id/run_id.
     """
     if not _is_admin(g.user_id):
         return jsonify({"error": "admin role required"}), 403
@@ -13031,6 +13085,19 @@ def mv_review_prediction(prediction_id: str):
         if _DB_AVAILABLE:
             from database.connection import get_db as _get_db
             with _get_db() as _db:
+                _mv_probe_db_reachable(_db)
+                actual_run_id = _mv_db.get_prediction_run_id(prediction_id, _db)
+                if actual_run_id is None or actual_run_id != run_id:
+                    return jsonify({
+                        "error": "prediction not found",
+                        "prediction_id": prediction_id,
+                    }), 404
+                owner = _mv_db.get_run_owner(run_id, _db)
+                if owner is None or owner != g.user_id:
+                    return jsonify({
+                        "error": "prediction not found",
+                        "prediction_id": prediction_id,
+                    }), 404
                 decision_id = _mv_db.save_review_decision(
                     prediction_id=prediction_id,
                     run_id=run_id,
@@ -13064,7 +13131,7 @@ def mv_review_prediction(prediction_id: str):
 
     except ValueError as _ve:
         return jsonify({"error": str(_ve)}), 400
-    except (TypeError, AttributeError):
+    except (_MVSQLAlchemyError, TypeError, AttributeError):
         return jsonify({"error": "database connection unavailable"}), 503
 
 
@@ -13075,6 +13142,12 @@ def mv_export_run(run_id: str):
     GET /api/mass-valuation/runs/<run_id>/export
     Admin only — returns 403 for any non-admin role (O-01).
     Returns a stub JSON payload; Excel generation wired in P5.
+
+    Wave 4B2: owner-scoped on top of the admin gate, using the same
+    non-disclosing-404 pattern as the predictions/review routes, so that
+    whichever future implementation wires real Excel generation into this
+    stub inherits the ownership boundary rather than the current IDOR gap.
+    Still admin-only (O-01); full export generation remains out of scope.
     """
     if not _is_admin(g.user_id):
         return jsonify({
@@ -13085,6 +13158,23 @@ def mv_export_run(run_id: str):
 
     if not _MV_AVAILABLE:
         return jsonify({"error": "mass_valuation module unavailable"}), 503
+
+    if _DB_AVAILABLE:
+        try:
+            from database.connection import get_db as _get_db
+            with _get_db() as _db:
+                try:
+                    _mv_probe_db_reachable(_db)
+                except _MVSQLAlchemyError:
+                    return jsonify({"error": "database temporarily unavailable"}), 503
+                owner = _mv_db.get_run_owner(run_id, _db)
+            if owner is None or owner != g.user_id:
+                return jsonify({
+                    "error": "run not found",
+                    "run_id": run_id,
+                }), 404
+        except Exception as _e:
+            print(f"[WARN] mv_export_run ownership check DB error: {_e}")
 
     return jsonify({
         "run_id":        run_id,
@@ -13140,6 +13230,7 @@ def mv_import():
                     property_type=body.get("property_type", "residential"),
                     jurisdiction=body.get("jurisdiction", "SA"),
                     method=body.get("method", "avm"),
+                    created_by=g.user_id,  # Wave 4B2: resource-owner identity
                 )
                 run_out = runner.run(
                     pipeline.eligible_records,

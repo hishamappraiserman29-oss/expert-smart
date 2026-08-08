@@ -156,3 +156,88 @@ def test_op_09_xlsx_output_starts_with_pk_magic():
     assert OutputBuilder.check_file_signature(data, "xlsx"), (
         "check_file_signature must accept the XLSX output"
     )
+
+
+# ---------------------------------------------------------------------------
+# OP-10  Wave 4B2 — audit record no longer emits the placeholder model_hash
+# ---------------------------------------------------------------------------
+
+def test_op_10_audit_record_uses_real_model_hash_from_run_result():
+    """
+    Wave 4B2: build_audit_record must persist the run's actual computed
+    model_hash, not the historical '0' * 64 placeholder.
+    """
+    record = build_audit_record(_RUN)
+    assert record["model_hash"] == _RUN["model_hash"]
+    assert record["model_hash"] != "0" * 64
+
+
+def test_op_11_audit_record_falls_back_to_placeholder_only_when_absent():
+    """
+    When a run_result genuinely has no model_hash (e.g. malformed input),
+    build_audit_record must still degrade to the documented all-zero
+    placeholder rather than raising or persisting None.
+    """
+    run_without_hash = {k: v for k, v in _RUN.items() if k != "model_hash"}
+    record = build_audit_record(run_without_hash)
+    assert record["model_hash"] == "0" * 64
+
+
+# ---------------------------------------------------------------------------
+# OP-12 -> OP-16  Wave 4B2 R3 closure (2/3): OutputBuilder.filter_run RBAC
+# visibility of the six new provenance/ownership fields, exercised directly
+# rather than only inferred from the output_builder.py frozenset diff.
+# ---------------------------------------------------------------------------
+
+_RUN_WAVE4B2 = {
+    **_RUN,
+    "ood_backend": "isolation_forest",
+    "created_by":  "admin-a-wave4b2",
+    "currency":    "SAR",
+    "predictions": [
+        {
+            **_RUN["predictions"][0],
+            "source_method": "avm",
+            "ood_score":     0.42,
+        }
+    ],
+}
+
+
+def test_op_12_admin_sees_all_six_wave4b2_provenance_fields():
+    view = _OB.filter_run(_RUN_WAVE4B2, role="admin")
+    assert view["model_hash"]   == _RUN_WAVE4B2["model_hash"]
+    assert view["ood_backend"]  == _RUN_WAVE4B2["ood_backend"]
+    assert view["created_by"]   == _RUN_WAVE4B2["created_by"]
+    assert view["currency"]     == _RUN_WAVE4B2["currency"]
+    pred = view["predictions"][0]
+    assert pred["source_method"] == "avm"
+    assert pred["ood_score"]     == 0.42
+
+
+def test_op_13_user_hides_admin_only_run_provenance():
+    view = _OB.filter_run(_RUN_WAVE4B2, role="user")
+    assert "model_hash"  not in view
+    assert "ood_backend" not in view
+    assert "created_by"  not in view
+
+
+def test_op_14_user_still_sees_currency():
+    """currency is in _RUN_USER_FIELDS — visible to every role, unlike the admin-only trio."""
+    view = _OB.filter_run(_RUN_WAVE4B2, role="user")
+    assert view["currency"] == "SAR"
+
+
+def test_op_15_user_hides_prediction_source_method():
+    view = _OB.filter_run(_RUN_WAVE4B2, role="user")
+    pred = view["predictions"][0]
+    assert "source_method" not in pred
+
+
+def test_op_16_analyst_sees_prediction_source_method_but_not_run_admin_fields():
+    view = _OB.filter_run(_RUN_WAVE4B2, role="analyst")
+    pred = view["predictions"][0]
+    assert pred["source_method"] == "avm"
+    assert "model_hash" not in view
+    assert "created_by" not in view
+    assert view["currency"] == "SAR"

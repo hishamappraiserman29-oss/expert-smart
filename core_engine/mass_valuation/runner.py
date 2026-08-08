@@ -21,12 +21,17 @@ from core_engine.mass_valuation.contract.schema_validator import (
 from core_engine.mass_appraisal import run_mass_appraisal
 
 try:
-    from core_engine.mass_valuation.ood_detector import detect_ood as _detect_ood
+    from core_engine.mass_valuation.ood_detector import (
+        detect_ood as _detect_ood,
+        resolve_backend as _resolve_ood_backend,
+    )
     _OOD_AVAILABLE = True
 except ImportError:
     _OOD_AVAILABLE = False
     def _detect_ood(units, random_seed=42):  # type: ignore[misc]
         return []
+    def _resolve_ood_backend():  # type: ignore[misc]
+        return "unavailable"
 
 try:
     from core_engine.mass_valuation.data_splitter import (
@@ -290,16 +295,43 @@ def _compute_shap_proxy(
 # Prediction builder
 # ---------------------------------------------------------------------------
 
+# Wave 4B2: model_version per execution method. Uses the run's existing
+# `method` vocabulary ("avm", "comparable", any other value = blended —
+# see mass_appraisal.run_mass_appraisal()'s method dispatch) rather than
+# inventing new labels or new valuation math. "avm" keeps the pre-existing
+# "hedonic-v1" identifier (unchanged, no reproducibility break for callers
+# already depending on that literal string); the other two methods get an
+# honest identifier instead of silently reusing "hedonic-v1" for output
+# they did not actually produce.
+_MODEL_VERSION_BY_METHOD: Dict[str, str] = {
+    "avm":        "hedonic-v1",
+    "comparable": "comparable-v1",
+}
+_MODEL_VERSION_BLENDED = "hedonic-comparable-blend-v1"
+
+
+def _model_version_for_method(method: str) -> str:
+    return _MODEL_VERSION_BY_METHOD.get(method, _MODEL_VERSION_BLENDED)
+
+
 def _build_predictions(
     units: List[Dict],
     run_id: str,
     ood_results: Optional[List[Tuple[float, str]]] = None,
     batch_stats: Optional[Dict[str, Any]] = None,
+    *,
+    method: str = "avm",
 ) -> List[Dict]:
     """Convert mass_appraisal per-unit results to PropertyPrediction records.
     ood_results : (ood_score, distribution_status) parallel to units.
     batch_stats : median statistics for SHAP proxy (I-01).
+    method      : the run's execution method ("avm"/"comparable"/blended) —
+                  stamped onto every prediction as source_method/model_version
+                  so per-prediction provenance is honest (Wave 4B2). Keyword-
+                  only and defaulted so existing positional call sites
+                  (ood_results, batch_stats) are unaffected.
     """
+    model_version = _model_version_for_method(method)
     predictions: List[Dict] = []
     for i, u in enumerate(units):
         unit_value  = float(u.get("unit_value", 0) or 0)
@@ -342,7 +374,8 @@ def _build_predictions(
             "quality_flags":            [],
             "comparable_ids":           [],
             "shap_values":              _compute_shap_proxy(u, batch_stats or {}, unit_value),
-            "model_version":            "hedonic-v1",
+            "model_version":            model_version,
+            "source_method":            method,
             "limitations":              limitations,
             "advisory_only":            True,
             "property_lifecycle": {
@@ -412,6 +445,12 @@ class MassValuationRunner:
     advisory_only:       bool = True
     certification_ready: bool = False
 
+    # Wave 4B2: SAR is the platform's explicit, and only, currency contract.
+    # Previously implicit (enforced only as an input-plausibility heuristic
+    # in quality_checker.py's QR-014); now an explicit invariant on every
+    # run record. General multi-currency conversion is out of scope.
+    currency: str = "SAR"
+
     def __init__(
         self,
         run_name: str = "MVP Run",
@@ -420,6 +459,7 @@ class MassValuationRunner:
         method: str = "avm",
         iaao_thresholds: Optional[Dict] = None,
         random_seed: int = 42,
+        created_by: Optional[str] = None,
     ) -> None:
         self.run_name        = run_name
         self.property_type   = property_type
@@ -427,6 +467,12 @@ class MassValuationRunner:
         self.method          = method
         self.iaao_thresholds = iaao_thresholds
         self.random_seed     = random_seed
+        # Wave 4B2: resource-owner identity (g.user_id at the API layer).
+        # None is preserved for any caller that predates ownership scoping —
+        # such a run is persisted with created_by=NULL and, per the Wave 4B2
+        # ownership model, becomes unreadable through the owner-scoped read
+        # paths (no admin bypass), which is the intended fail-closed behavior.
+        self.created_by      = created_by
         self._validator      = SchemaValidator()
 
     def run(
@@ -501,6 +547,15 @@ class MassValuationRunner:
         # ── 4. OOD detection (M-06) ──────────────────────────────────────
         appraisal_units = appraisal.get("units", [])
         ood_results     = _detect_ood(appraisal_units, random_seed=self.random_seed)
+        # Wave 4B2: capture which backend actually produced ood_results so it
+        # can be persisted — detect_ood() itself never returns this identity.
+        try:
+            ood_backend = _resolve_ood_backend()
+        except Exception:
+            # detect_ood() above would already have raised on a genuine
+            # configuration error; this is only a defensive fallback so
+            # provenance capture itself never becomes a new failure mode.
+            ood_backend = "unknown"
 
         # ── 4b. Batch statistics for SHAP proxy (I-01) ────────────────────
         batch_stats = _compute_batch_stats(appraisal_units)
@@ -513,7 +568,9 @@ class MassValuationRunner:
         code_commit = _get_code_commit()
 
         # ── 5. Build predictions ──────────────────────────────────────────
-        predictions = _build_predictions(appraisal_units, run_id, ood_results, batch_stats)
+        predictions = _build_predictions(
+            appraisal_units, run_id, ood_results, batch_stats, method=self.method,
+        )
 
         # ── 6. PI coverage validation (M-05) ─────────────────────────────
         pi_coverage  = _compute_pi_coverage(appraisal_units, predictions)
@@ -546,6 +603,9 @@ class MassValuationRunner:
             "manual_review_required_count": batch.flagged,
             "dataset_hash":                 dataset_hash,
             "model_hash":                   model_hash,
+            "ood_backend":                  ood_backend,
+            "currency":                     self.currency,
+            "created_by":                   self.created_by,
             "code_commit":                  code_commit,
             "split_cutoff_date":            cutoff_date,
             "holdout_cities":               holdout_cities or [],

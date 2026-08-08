@@ -81,16 +81,20 @@ def save_run(run_result: Dict[str, Any], db) -> Optional[str]:
                 run_id, run_name, property_type, jurisdiction, status, method,
                 n_input_records, n_rejected, n_flagged, n_training_records,
                 n_predicted_properties, ood_property_count,
-                manual_review_required_count, dataset_hash, random_seed,
+                manual_review_required_count, dataset_hash,
+                model_hash, ood_backend, currency,
+                random_seed,
                 iaao_summary, advisory_only, certification_ready,
-                started_at, completed_at
+                started_at, completed_at, created_by
             ) VALUES (
                 :run_id, :run_name, :property_type, :jurisdiction, :status, :method,
                 :n_input, :n_rejected, :n_flagged, :n_training,
                 :n_predicted, :ood_count, :manual_review_count,
-                :dataset_hash, :random_seed,
+                :dataset_hash,
+                :model_hash, :ood_backend, :currency,
+                :random_seed,
                 cast(:iaao_summary AS jsonb), TRUE, FALSE,
-                :started_at, :completed_at
+                :started_at, :completed_at, :created_by
             )
             ON CONFLICT (run_id) DO NOTHING
         """), {
@@ -108,10 +112,14 @@ def save_run(run_result: Dict[str, Any], db) -> Optional[str]:
             "ood_count":          int(run_result.get("ood_property_count", 0)),
             "manual_review_count": int(run_result.get("manual_review_required_count", 0)),
             "dataset_hash":       run_result.get("dataset_hash"),
+            "model_hash":         run_result.get("model_hash"),
+            "ood_backend":        run_result.get("ood_backend"),
+            "currency":           run_result.get("currency") or "SAR",
             "random_seed":        int(run_result.get("random_seed", 42)),
             "iaao_summary":       _json(run_result.get("iaao_summary") or {}),
             "started_at":         run_result.get("started_at") or _utcnow(),
             "completed_at":       run_result.get("completed_at") or _utcnow(),
+            "created_by":         run_result.get("created_by"),
         })
         db.commit()
         return run_id
@@ -146,14 +154,15 @@ def save_predictions(
                     estimated_value, unit_value,
                     prediction_interval_low, prediction_interval_high,
                     confidence, distribution_status, review_status,
-                    model_version, shap_values, quality_flags,
+                    model_version, source_method, ood_score,
+                    shap_values, quality_flags,
                     comparable_ids, limitations, advisory_only
                 ) VALUES (
                     :pred_id, :run_id, :property_id,
                     :estimated_value, :unit_value,
                     :pi_low, :pi_high,
                     :confidence, :dist_status, :review_status,
-                    :model_version,
+                    :model_version, :source_method, :ood_score,
                     cast(:shap_values   AS jsonb),
                     cast(:quality_flags AS jsonb),
                     cast(:comparable_ids AS jsonb),
@@ -173,6 +182,8 @@ def save_predictions(
                 "dist_status":    pred.get("distribution_status", "unknown"),
                 "review_status":  pred.get("review_status", "manual_review_required"),
                 "model_version":  pred.get("model_version", "hedonic-v1"),
+                "source_method":  pred.get("source_method"),
+                "ood_score":      pred.get("ood_score"),
                 "shap_values":    _json(pred.get("shap_values") or {}),
                 "quality_flags":  _json(pred.get("quality_flags") or []),
                 "comparable_ids": _json(pred.get("comparable_ids") or []),
@@ -197,18 +208,26 @@ def list_runs(
     db,
     role: str = "analyst",
     limit: int = 50,
+    owner_user_id: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
     Return recent runs from mass_valuation_runs, RBAC-filtered by role.
     Returns [] on DB error.
+
+    Wave 4B2 ownership scoping: when `owner_user_id` is provided, only runs
+    with created_by == owner_user_id are returned — this applies even to
+    admin callers (no admin ownership bypass). `owner_user_id=None` preserves
+    the pre-Wave-4B2 unfiltered behavior for any caller that does not yet
+    pass an identity (kept only for backward compatibility with existing
+    call sites/tests, not used by the live API routes as of Wave 4B2).
     """
     base_cols = (
         "run_id, run_name, property_type, jurisdiction, status, method, "
-        "n_input_records, n_rejected, n_predicted_properties, "
+        "n_input_records, n_rejected, n_predicted_properties, currency, "
         "advisory_only, certification_ready, started_at"
     )
     analyst_cols = ", n_flagged, ood_property_count, manual_review_required_count, iaao_summary"
-    admin_cols   = ", dataset_hash, random_seed, completed_at"
+    admin_cols   = ", dataset_hash, model_hash, ood_backend, created_by, random_seed, completed_at"
 
     if role == "admin":
         cols = base_cols + analyst_cols + admin_cols
@@ -217,11 +236,20 @@ def list_runs(
     else:
         cols = base_cols
 
+    where_clause = ""
+    params: Dict[str, Any] = {"limit": max(1, int(limit))}
+    if owner_user_id is not None:
+        where_clause = "WHERE created_by = :owner_user_id "
+        params["owner_user_id"] = owner_user_id
+
     try:
         rows = db.execute(
-            _sa_text(f"SELECT {cols} FROM mass_valuation_runs "
-                 "ORDER BY started_at DESC NULLS LAST LIMIT :limit"),
-            {"limit": max(1, int(limit))},
+            _sa_text(
+                f"SELECT {cols} FROM mass_valuation_runs "
+                f"{where_clause}"
+                "ORDER BY started_at DESC NULLS LAST LIMIT :limit"
+            ),
+            params,
         ).mappings().all()
 
         result = []
@@ -235,6 +263,43 @@ def list_runs(
         return result
     except Exception:
         return []
+
+
+# ---------------------------------------------------------------------------
+# Read — ownership lookups (Wave 4B2)
+# ---------------------------------------------------------------------------
+
+def get_run_owner(run_id: str, db) -> Optional[str]:
+    """
+    Return the created_by value for run_id, or None if the run does not
+    exist (or on DB error — both cases are treated identically by callers,
+    which must return a non-disclosing 404 either way).
+    """
+    try:
+        row = db.execute(
+            _sa_text("SELECT created_by FROM mass_valuation_runs WHERE run_id = :run_id"),
+            {"run_id": run_id},
+        ).mappings().first()
+        return row["created_by"] if row else None
+    except Exception:
+        return None
+
+
+def get_prediction_run_id(prediction_id: str, db) -> Optional[str]:
+    """
+    Return the run_id a prediction actually belongs to, or None if the
+    prediction does not exist (or on DB error).
+    """
+    try:
+        row = db.execute(
+            _sa_text(
+                "SELECT run_id FROM property_predictions WHERE prediction_id = :prediction_id"
+            ),
+            {"prediction_id": prediction_id},
+        ).mappings().first()
+        return row["run_id"] if row else None
+    except Exception:
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -255,7 +320,8 @@ def get_predictions_for_run(
                    estimated_value, unit_value,
                    prediction_interval_low, prediction_interval_high,
                    confidence, distribution_status, review_status,
-                   model_version, shap_values, quality_flags,
+                   model_version, source_method, ood_score,
+                   shap_values, quality_flags,
                    comparable_ids, limitations, advisory_only
             FROM property_predictions
             WHERE run_id = :run_id

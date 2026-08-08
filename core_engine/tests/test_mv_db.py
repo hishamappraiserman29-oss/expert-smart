@@ -13,6 +13,8 @@ from core_engine.mass_valuation.db_writer import (
     save_predictions,
     list_runs,
     get_predictions_for_run,
+    get_run_owner,
+    get_prediction_run_id,
     save_review_decision,
     _validate_reviewed_by,
     _validate_decision,
@@ -312,3 +314,144 @@ def test_db_27_save_review_commits():
         "analyst-kim", db, reviewed_value=2_800_000,
     )
     db.commit.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Wave 4B2 — provenance round-trip (model_hash, ood_backend, currency,
+# created_by, source_method, ood_score)
+# ---------------------------------------------------------------------------
+
+def test_db_28_save_run_persists_model_hash():
+    db = _make_db()
+    run = {**SAMPLE_RUN, "model_hash": "f" * 64}
+    save_run(run, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["model_hash"] == "f" * 64
+
+
+def test_db_29_save_run_persists_ood_backend():
+    db = _make_db()
+    run = {**SAMPLE_RUN, "ood_backend": "isolation_forest"}
+    save_run(run, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["ood_backend"] == "isolation_forest"
+
+
+def test_db_30_save_run_persists_created_by():
+    db = _make_db()
+    run = {**SAMPLE_RUN, "created_by": "admin-a-wave4b2"}
+    save_run(run, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["created_by"] == "admin-a-wave4b2"
+
+
+def test_db_31_save_run_created_by_defaults_to_none():
+    db = _make_db()
+    save_run(SAMPLE_RUN, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["created_by"] is None
+
+
+def test_db_32_save_run_currency_defaults_to_sar():
+    db = _make_db()
+    save_run(SAMPLE_RUN, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["currency"] == "SAR"
+
+
+def test_db_33_save_run_persists_explicit_currency():
+    db = _make_db()
+    run = {**SAMPLE_RUN, "currency": "SAR"}
+    save_run(run, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["currency"] == "SAR"
+
+
+def test_db_34_save_predictions_persists_source_method():
+    db = _make_db()
+    pred = {**SAMPLE_PRED, "source_method": "avm"}
+    save_predictions([pred], RUN_ID, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["source_method"] == "avm"
+
+
+def test_db_35_save_predictions_persists_ood_score():
+    db = _make_db()
+    pred = {**SAMPLE_PRED, "ood_score": 0.87}
+    save_predictions([pred], RUN_ID, db)
+    call_kwargs = db.execute.call_args[0][1]
+    assert call_kwargs["ood_score"] == 0.87
+
+
+def test_db_36_list_runs_owner_scoping_adds_where_clause():
+    db = _make_db(rows=[])
+    list_runs(db, role="admin", owner_user_id="admin-a-wave4b2")
+    sql_text = str(db.execute.call_args[0][0])
+    call_params = db.execute.call_args[0][1]
+    assert "created_by = :owner_user_id" in sql_text
+    assert call_params["owner_user_id"] == "admin-a-wave4b2"
+
+
+def test_db_37_list_runs_no_owner_scoping_when_unset():
+    db = _make_db(rows=[])
+    list_runs(db, role="admin")
+    sql_text = str(db.execute.call_args[0][0])
+    call_params = db.execute.call_args[0][1]
+    assert "created_by = :owner_user_id" not in sql_text
+    assert "owner_user_id" not in call_params
+
+
+def test_db_38_list_runs_admin_role_includes_provenance_columns():
+    db = _make_db(rows=[])
+    list_runs(db, role="admin", owner_user_id="admin-a-wave4b2")
+    sql_text = str(db.execute.call_args[0][0])
+    for col in ("model_hash", "ood_backend", "created_by"):
+        assert col in sql_text
+
+
+def test_db_39_get_predictions_for_run_selects_provenance_columns():
+    db = _make_db(rows=[])
+    get_predictions_for_run(RUN_ID, db)
+    sql_text = str(db.execute.call_args[0][0])
+    assert "source_method" in sql_text
+    assert "ood_score" in sql_text
+
+
+# ---------------------------------------------------------------------------
+# Wave 4B2 — ownership lookups (get_run_owner, get_prediction_run_id)
+# ---------------------------------------------------------------------------
+
+def test_db_40_get_run_owner_returns_created_by():
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.first.return_value = {
+        "created_by": "admin-a-wave4b2"
+    }
+    assert get_run_owner(RUN_ID, db) == "admin-a-wave4b2"
+
+
+def test_db_41_get_run_owner_returns_none_for_unknown_run():
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.first.return_value = None
+    assert get_run_owner("unknown-run", db) is None
+
+
+def test_db_42_get_run_owner_returns_none_on_db_error():
+    db = _make_db(raise_on_execute=True)
+    assert get_run_owner(RUN_ID, db) is None
+
+
+def test_db_43_get_prediction_run_id_returns_run_id():
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.first.return_value = {"run_id": RUN_ID}
+    assert get_prediction_run_id("pred-1", db) == RUN_ID
+
+
+def test_db_44_get_prediction_run_id_returns_none_for_unknown_prediction():
+    db = MagicMock()
+    db.execute.return_value.mappings.return_value.first.return_value = None
+    assert get_prediction_run_id("unknown-pred", db) is None
+
+
+def test_db_45_get_prediction_run_id_returns_none_on_db_error():
+    db = _make_db(raise_on_execute=True)
+    assert get_prediction_run_id("pred-1", db) is None

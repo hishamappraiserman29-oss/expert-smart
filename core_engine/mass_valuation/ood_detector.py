@@ -71,6 +71,20 @@ def _get_backend() -> str:
     return raw
 
 
+def resolve_backend() -> str:
+    """
+    Wave 4B2: public accessor for the resolved OOD backend identity.
+
+    detect_ood() itself never returns which backend produced its results
+    (score/status only), so callers that need to persist provenance call
+    this separately. Uses the same env-var resolution and validation as
+    detect_ood() — raises OODBackendConfigurationError under the same
+    conditions, so a caller resolving this before detect_ood() will see
+    the same error detect_ood() would have raised.
+    """
+    return _get_backend()
+
+
 # ---------------------------------------------------------------------------
 # Robust Z-score helpers (MAD-based)
 # ---------------------------------------------------------------------------

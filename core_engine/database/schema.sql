@@ -214,6 +214,9 @@ CREATE TABLE IF NOT EXISTS mass_valuation_runs (
     ood_property_count          INT             NOT NULL DEFAULT 0,
     manual_review_required_count INT            NOT NULL DEFAULT 0,
     dataset_hash                CHAR(64),
+    model_hash                  CHAR(64),
+    ood_backend                 VARCHAR(20),
+    currency                    VARCHAR(3)      NOT NULL DEFAULT 'SAR',
     random_seed                 INT,
     iaao_summary                JSONB,
     advisory_only               BOOLEAN         NOT NULL DEFAULT TRUE,
@@ -228,10 +231,20 @@ CREATE TABLE IF NOT EXISTS mass_valuation_runs (
     created_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Wave 4B2: idempotent upgrade path for already-provisioned databases where
+-- this table was created before model_hash/ood_backend/currency existed.
+-- No-ops on a fresh database (columns already present via CREATE TABLE above).
+ALTER TABLE mass_valuation_runs ADD COLUMN IF NOT EXISTS model_hash  CHAR(64);
+ALTER TABLE mass_valuation_runs ADD COLUMN IF NOT EXISTS ood_backend VARCHAR(20);
+ALTER TABLE mass_valuation_runs ADD COLUMN IF NOT EXISTS currency    VARCHAR(3) NOT NULL DEFAULT 'SAR';
+
 CREATE INDEX IF NOT EXISTS idx_mvr_status         ON mass_valuation_runs (status);
 CREATE INDEX IF NOT EXISTS idx_mvr_property_type  ON mass_valuation_runs (property_type);
 CREATE INDEX IF NOT EXISTS idx_mvr_jurisdiction   ON mass_valuation_runs (jurisdiction);
 CREATE INDEX IF NOT EXISTS idx_mvr_created_at     ON mass_valuation_runs (created_at DESC);
+-- Wave 4B2: ownership boundary — cross-owner denial must be an index lookup,
+-- not a full table scan.
+CREATE INDEX IF NOT EXISTS idx_mvr_created_by     ON mass_valuation_runs (created_by);
 
 -- Table 6: Property Predictions
 CREATE TABLE IF NOT EXISTS property_predictions (
@@ -247,6 +260,8 @@ CREATE TABLE IF NOT EXISTS property_predictions (
     distribution_status         VARCHAR(50)     NOT NULL DEFAULT 'in_distribution',
     review_status               VARCHAR(50)     NOT NULL DEFAULT 'manual_review_required',
     model_version               VARCHAR(50),
+    source_method                VARCHAR(20),
+    ood_score                    DOUBLE PRECISION,
     quality_flags               JSONB,
     comparable_ids              JSONB,
     shap_values                 JSONB,
@@ -254,6 +269,10 @@ CREATE TABLE IF NOT EXISTS property_predictions (
     advisory_only               BOOLEAN         NOT NULL DEFAULT TRUE,
     created_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Wave 4B2: idempotent upgrade path for already-provisioned databases.
+ALTER TABLE property_predictions ADD COLUMN IF NOT EXISTS source_method VARCHAR(20);
+ALTER TABLE property_predictions ADD COLUMN IF NOT EXISTS ood_score     DOUBLE PRECISION;
 
 CREATE INDEX IF NOT EXISTS idx_pp_run_id              ON property_predictions (run_id);
 CREATE INDEX IF NOT EXISTS idx_pp_property_id         ON property_predictions (property_id);

@@ -12843,7 +12843,44 @@
     .mv-run-kv { display: flex; gap: 0.55rem; margin-bottom: 0.35rem; align-items: baseline; }
     .mv-run-key { color: rgba(249,250,251,0.52); font-size: 0.82rem; flex-shrink: 0; }
     .mv-run-val { color: var(--text); font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    /* ══ End Phase 13 styles ════════════════════════════════════════════ */
+    /* ── Phase 14: Mass Valuation workspace shell (product header + sub-nav) ── */
+    .mv-suite-header {
+        display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+        margin-bottom: 1.1rem;
+    }
+    .mv-suite-product-btn {
+        padding: 0.45rem 1.1rem; border: 1px solid var(--border); border-radius: 8px;
+        background: transparent; color: var(--text); cursor: pointer;
+        font-family: 'Tajawal', sans-serif; font-size: 0.88rem; font-weight: 600;
+        transition: background 0.14s, border-color 0.14s;
+    }
+    .mv-suite-product-btn:hover { border-color: var(--gold); }
+    .mv-suite-product-btn.mv-suite-product-active {
+        border-color: var(--gold); background: rgba(212,175,55,0.11); color: var(--gold);
+        cursor: default;
+    }
+    .mv-subnav {
+        display: flex; gap: 0.45rem; flex-wrap: wrap;
+        border-bottom: 1px solid var(--border); padding-bottom: 0.9rem; margin-bottom: 1.3rem;
+    }
+    .mv-subnav-btn {
+        padding: 0.4rem 0.95rem; border: 1px solid transparent; border-radius: 7px;
+        background: transparent; color: rgba(249,250,251,0.62); cursor: pointer;
+        font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+        transition: background 0.14s, color 0.14s;
+    }
+    .mv-subnav-btn:hover { color: var(--text); }
+    .mv-subnav-btn.mv-subnav-active {
+        background: rgba(212,175,55,0.11); color: var(--gold); font-weight: 700;
+    }
+    .mv-screen { display: none; }
+    .mv-screen.mv-screen-active { display: block; }
+    .mv-placeholder-box {
+        border: 1px dashed var(--border); border-radius: 10px;
+        padding: 2.2rem 1.2rem; text-align: center;
+        color: rgba(249,250,251,0.45); font-size: 0.88rem;
+    }
+    /* ══ End Phase 13/14 styles ═════════════════════════════════════════ */
     </style>
 
     <div id="ws-mass-valuation" class="es-workspace" role="tabpanel" aria-labelledby="es-tab-mass-valuation">
@@ -12851,6 +12888,38 @@
             🔒 صلاحيات المشرف مطلوبة للوصول إلى هذه الخاصية
         </div>
         <div id="mv-main-content">
+            <!-- ── Phase 14: product/suite header — Mass Valuation vs Mass Appraisal ── -->
+            <div class="mv-suite-header" data-testid="mv-suite-header">
+                <button type="button" class="mv-suite-product-btn mv-suite-product-active"
+                        data-testid="mv-suite-product-mass-valuation" aria-current="true" disabled>
+                    🏘 التقييم الجماعي
+                </button>
+                <button type="button" class="mv-suite-product-btn"
+                        data-testid="mv-suite-product-mass-appraisal"
+                        onclick="esShowTab('composite'); setCompositeMode('mass');">
+                    ⬡ التثمين الجماعي
+                </button>
+            </div>
+
+            <!-- ── Phase 14: Mass Valuation sub-navigation (Dashboard / New Run / Runs History / Run Detail) ── -->
+            <div class="mv-subnav" data-testid="mv-subnav" role="tablist">
+                <button type="button" class="mv-subnav-btn" data-screen="dashboard"
+                        data-testid="mv-nav-dashboard" onclick="mvNavigate('dashboard')">📊 لوحة القيادة</button>
+                <button type="button" class="mv-subnav-btn mv-subnav-active" data-screen="import"
+                        data-testid="mv-nav-import" onclick="mvNavigate('import')">➕ تشغيل جديد</button>
+                <button type="button" class="mv-subnav-btn" data-screen="runs"
+                        data-testid="mv-nav-runs" onclick="mvNavigate('runs')">🗂 سجل التشغيلات</button>
+                <button type="button" class="mv-subnav-btn" data-screen="detail" style="display:none;"
+                        data-testid="mv-nav-detail" onclick="mvNavigate('detail')">🔎 تفاصيل التشغيل</button>
+            </div>
+
+            <!-- ── Phase 14: Dashboard screen — structural placeholder only (no data fetching) ── -->
+            <div class="mv-screen" id="mv-screen-dashboard" data-testid="mv-screen-dashboard">
+                <div class="mv-placeholder-box">لوحة القيادة قيد الإنشاء — لا تُعرض أي بيانات بعد.</div>
+            </div>
+
+            <!-- ── Phase 14: New Run screen — existing Mass Valuation import UI, unchanged ── -->
+            <div class="mv-screen mv-screen-active" id="mv-screen-import" data-testid="mv-screen-import">
             <div class="mv-advisory-banner">
                 <span class="mv-adv-badge">تقديري فقط</span>
                 <span class="mv-adv-badge mv-badge-red">غير معتمد رسمياً</span>
@@ -12942,6 +13011,17 @@
             <div class="mv-run-box" id="mv-run-result" data-testid="mv-run-result">
                 <p class="mv-run-title">✅ نتيجة التنفيذ</p>
                 <div id="mv-run-result-content"></div>
+            </div>
+            </div><!-- /#mv-screen-import -->
+
+            <!-- ── Phase 14: Runs History screen — structural placeholder only (no data fetching) ── -->
+            <div class="mv-screen" id="mv-screen-runs" data-testid="mv-screen-runs">
+                <div class="mv-placeholder-box">سجل التشغيلات قيد الإنشاء — لا تُعرض أي بيانات بعد.</div>
+            </div>
+
+            <!-- ── Phase 14: Run Detail screen — structural placeholder only, dynamic/contextual ── -->
+            <div class="mv-screen" id="mv-screen-detail" data-testid="mv-screen-detail">
+                <div class="mv-placeholder-box">تفاصيل التشغيل قيد الإنشاء — لا تُعرض أي بيانات بعد.</div>
             </div>
         </div>
     </div>
@@ -13237,6 +13317,40 @@
         }
 
         document.addEventListener('DOMContentLoaded', mvInitAdminGate);
+    }());
+    </script>
+
+    <script>
+    /* ── Phase 14: Mass Valuation workspace shell — screen navigation ─────
+       BACKEND_AUTHORIZATION_IS_SECURITY_BOUNDARY = True
+       FRONTEND_ADMIN_GATE_IS_SECURITY_BOUNDARY   = False
+       The #mv-admin-guard / #mv-main-content toggle (mvInitAdminGate, Phase 13)
+       is UX-only defense-in-depth. It is not re-implemented or bypassed here;
+       every screen below still lives inside #mv-main-content and is therefore
+       hidden for non-admins exactly as before. Real authorization is enforced
+       server-side on every /api/mass-valuation/* and /api/mass-appraisal/*
+       request. This script performs no data fetching — it only toggles which
+       screen container is visible. ─────────────────────────────────────── */
+    (function () {
+        var _mvState = { activeScreen: 'import' };
+        var _MV_SCREENS = ['dashboard', 'import', 'runs', 'detail'];
+
+        window.mvNavigate = function (screenName) {
+            if (_MV_SCREENS.indexOf(screenName) === -1) return;
+            _mvState.activeScreen = screenName;
+            mvRenderCurrentScreen();
+        };
+
+        function mvRenderCurrentScreen() {
+            _MV_SCREENS.forEach(function (name) {
+                var screen = document.getElementById('mv-screen-' + name);
+                if (screen) screen.classList.toggle('mv-screen-active', name === _mvState.activeScreen);
+                var navBtn = document.querySelector('.mv-subnav-btn[data-screen="' + name + '"]');
+                if (navBtn) navBtn.classList.toggle('mv-subnav-active', name === _mvState.activeScreen);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', mvRenderCurrentScreen);
     }());
     </script>
     <!-- ── End Phase 13: Mass Valuation Import Tab ──────────────────── -->

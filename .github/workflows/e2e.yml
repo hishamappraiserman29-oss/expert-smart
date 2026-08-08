@@ -107,6 +107,7 @@ jobs:
           python -m pytest \
             -p core_engine.tests.avm_isolation_plugin \
             core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mv_workspace_shell.py \
             core_engine/tests/e2e/test_mass_appraisal_tab.py \
             --collect-only -q
 
@@ -115,6 +116,7 @@ jobs:
           python -m pytest \
             -p core_engine.tests.avm_isolation_plugin \
             core_engine/tests/e2e/test_mv_import_ui.py \
+            core_engine/tests/e2e/test_mv_workspace_shell.py \
             core_engine/tests/e2e/test_mass_appraisal_tab.py \
             -v --tb=short --maxfail=3
 

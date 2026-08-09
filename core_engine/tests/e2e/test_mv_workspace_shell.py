@@ -155,9 +155,15 @@ def test_mv_workspace_11_existing_import_controls_reachable_without_extra_nav(pa
     expect(page.locator('[data-testid="mv-lookback"]')).to_be_visible()
 
 
-# ── No MV API calls introduced merely by switching screens (MVW-12) ────────
+# ── No MV API calls from passive, non-Runs shell navigation (MVW-12) ───────
+# Wave 4C-2 note: navigating explicitly to Runs is now authorized to trigger
+# GET /api/mass-valuation/runs (see test_mv_runs_history.py for that
+# contract). This test's invariant is narrowed accordingly: switching among
+# the still-passive shell screens (Dashboard, Import) must not fetch MV
+# data. It deliberately does NOT navigate to Runs, so it stays a pure shell
+# test and does not duplicate the Runs History contract.
 
-def test_mv_workspace_12_no_mv_api_requests_from_screen_navigation(page, live_server):
+def test_mv_workspace_12_passive_non_runs_shell_navigation_does_not_fetch_mv_data(page, live_server):
     mv_requests: list[str] = []
     page.on(
         "request",
@@ -166,10 +172,9 @@ def test_mv_workspace_12_no_mv_api_requests_from_screen_navigation(page, live_se
     _as_admin(page)
     _open_tab(page, live_server)
     page.locator(_NAV_DASHBOARD).click()
-    page.locator(_NAV_RUNS).click()
     page.locator(_NAV_IMPORT).click()
     page.wait_for_timeout(400)
-    assert mv_requests == [], f"Unexpected MV API requests from passive navigation: {mv_requests}"
+    assert mv_requests == [], f"Unexpected MV API requests from passive non-Runs navigation: {mv_requests}"
 
 
 # ── No console errors from the new shell (MVW-13) ───────────────────────────

@@ -12727,7 +12727,7 @@
     <style>
     /* ══ Phase 13: Mass Valuation Import ══════════════════════════════════ */
     #ws-mass-valuation { padding: 1.5rem 0; }
-    .mv-advisory-banner {
+    .mv-advisory-banner, .mv-adv-banner-shared {
         display: flex; gap: 0.75rem; align-items: flex-start; flex-wrap: wrap;
         background: rgba(212,175,55,0.07); border: 1px solid rgba(212,175,55,0.28);
         border-radius: 10px; padding: 0.85rem 1.2rem; margin-bottom: 1.5rem;
@@ -12880,7 +12880,40 @@
         padding: 2.2rem 1.2rem; text-align: center;
         color: rgba(249,250,251,0.45); font-size: 0.88rem;
     }
-    /* ══ End Phase 13/14 styles ═════════════════════════════════════════ */
+    /* ── Phase 15: MV frontend foundation + Runs History ──────────────────── */
+    .mv-workspace-banner {
+        display: none; background: rgba(239,68,68,0.09); border: 1px solid rgba(239,68,68,0.28);
+        border-radius: 10px; padding: 0.75rem 1.1rem; margin-bottom: 1.1rem;
+        font-size: 0.85rem; color: #fca5a5; line-height: 1.5;
+    }
+    .mv-screen-loading {
+        display: none; text-align: center; padding: 2rem 1rem;
+        color: rgba(249,250,251,0.5); font-size: 0.86rem;
+    }
+    .mv-screen-empty {
+        display: none; text-align: center; padding: 2rem 1rem;
+        color: rgba(249,250,251,0.45); font-size: 0.86rem;
+        border: 1px dashed var(--border); border-radius: 10px;
+    }
+    .mv-screen-error {
+        display: none; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+        border-radius: 8px; padding: 0.65rem 1rem; margin-bottom: 1rem;
+        font-size: 0.84rem; color: #fca5a5;
+    }
+    .mv-runs-table-wrapper { display: none; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+    .mv-runs-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 620px; }
+    .mv-runs-table th {
+        background: rgba(212,175,55,0.09); color: var(--gold);
+        padding: 0.55rem 0.85rem; text-align: right; font-weight: 700;
+        border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    .mv-runs-table td {
+        padding: 0.42rem 0.85rem; border-bottom: 1px solid rgba(212,175,55,0.08);
+        color: var(--text); vertical-align: top; white-space: nowrap;
+    }
+    .mv-runs-table tr:last-child td { border-bottom: none; }
+    .mv-runs-table tr:hover td { background: rgba(212,175,55,0.04); }
+    /* ══ End Phase 13/14/15 styles ══════════════════════════════════════ */
     </style>
 
     <div id="ws-mass-valuation" class="es-workspace" role="tabpanel" aria-labelledby="es-tab-mass-valuation">
@@ -12900,6 +12933,9 @@
                     ⬡ التثمين الجماعي
                 </button>
             </div>
+
+            <!-- ── Phase 15: persistent workspace-level service-unavailable banner (503 only) ── -->
+            <div class="mv-workspace-banner" id="mv-workspace-banner" data-testid="mv-workspace-banner" role="alert"></div>
 
             <!-- ── Phase 14: Mass Valuation sub-navigation (Dashboard / New Run / Runs History / Run Detail) ── -->
             <div class="mv-subnav" data-testid="mv-subnav" role="tablist">
@@ -13014,9 +13050,33 @@
             </div>
             </div><!-- /#mv-screen-import -->
 
-            <!-- ── Phase 14: Runs History screen — structural placeholder only (no data fetching) ── -->
+            <!-- ── Phase 15: Runs History screen — read-only, GET /api/mass-valuation/runs ── -->
             <div class="mv-screen" id="mv-screen-runs" data-testid="mv-screen-runs">
-                <div class="mv-placeholder-box">سجل التشغيلات قيد الإنشاء — لا تُعرض أي بيانات بعد.</div>
+                <div id="mv-runs-advisory" data-testid="mv-runs-advisory"></div>
+
+                <div class="mv-screen-error" id="mv-runs-error" data-testid="mv-runs-error" role="alert"></div>
+
+                <div class="mv-screen-loading" id="mv-runs-loading" data-testid="mv-runs-loading"></div>
+
+                <div class="mv-screen-empty" id="mv-runs-empty" data-testid="mv-runs-empty"></div>
+
+                <div class="mv-runs-table-wrapper" id="mv-runs-table-wrapper" data-testid="mv-runs-table-wrapper">
+                    <table class="mv-runs-table" id="mv-runs-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th data-i18n-th="run_name"></th>
+                                <th data-i18n-th="status"></th>
+                                <th data-i18n-th="started_at"></th>
+                                <th data-i18n-th="n_input_records"></th>
+                                <th data-i18n-th="n_predicted_properties"></th>
+                                <th data-i18n-th="ood_property_count"></th>
+                                <th data-i18n-th="method"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="mv-runs-tbody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- ── Phase 14: Run Detail screen — structural placeholder only, dynamic/contextual ── -->
@@ -13339,6 +13399,11 @@
             if (_MV_SCREENS.indexOf(screenName) === -1) return;
             _mvState.activeScreen = screenName;
             mvRenderCurrentScreen();
+            // Phase 15: explicit-navigation-only data load — never fired by tab open,
+            // only by an actual mvNavigate('runs') call (nav-button click or programmatic).
+            if (screenName === 'runs' && typeof window.mvLoadRunsHistory === 'function') {
+                window.mvLoadRunsHistory();
+            }
         };
 
         function mvRenderCurrentScreen() {
@@ -13351,6 +13416,235 @@
         }
 
         document.addEventListener('DOMContentLoaded', mvRenderCurrentScreen);
+    }());
+    </script>
+
+    <script>
+    /* ── Phase 15: MV frontend foundation (API wrapper, error normalization,
+       loading state, context-aware errors, workspace 503 banner, advisory
+       helper, local labels) + Runs History (read-only) ────────────────────
+       BACKEND_AUTHORIZATION_IS_SECURITY_BOUNDARY = True
+       FRONTEND_ADMIN_GATE_IS_SECURITY_BOUNDARY   = False
+       All requests below go through the existing esFetch() — no second auth
+       mechanism, no manually-added tokens. 404 responses are rendered with
+       one fixed, non-disclosing message regardless of whether the resource
+       never existed or belongs to another user — the frontend cannot tell
+       the difference and must not imply otherwise. Raw backend
+       exception/error strings are never shown to the user. ──────────────── */
+    (function () {
+
+        // ── Local label abstraction (covers every new string this slice adds) ──
+        var _MV_LABELS = {
+            th_run_name:                  'اسم الجولة',
+            th_status:                    'الحالة',
+            th_started_at:                'تاريخ البدء',
+            th_n_input_records:           'السجلات المُدخلة',
+            th_n_predicted_properties:    'التقديرات',
+            th_ood_property_count:        'خارج التوزيع',
+            th_method:                    'الطريقة',
+            runs_loading:                 'جارٍ تحميل سجل التشغيلات…',
+            runs_empty:                   'لا توجد تشغيلات بعد.',
+            err_401:                      'الجلسة منتهية — يرجى تسجيل الدخول مرة أخرى.',
+            err_403:                      'صلاحيات المشرف مطلوبة لهذه العملية.',
+            err_404:                      'تعذّر العثور على العنصر المطلوب.',
+            err_503:                      'الخدمة غير متاحة مؤقتاً — يرجى المحاولة لاحقاً.',
+            err_network:                  'تعذّر الاتصال بالخادم — تحقق من اتصالك.',
+            err_generic:                  'حدث خطأ غير متوقع — يرجى المحاولة مرة أخرى.',
+            workspace_banner_503:         'خدمة التقييم الجماعي غير متاحة مؤقتاً — بعض الشاشات قد لا تعمل حتى تُستعاد الخدمة.',
+            advisory_badge:               'تقديري فقط',
+            advisory_badge_not_certified: 'غير معتمد رسمياً',
+            advisory_full_text:           'advisory_only: true — certification_ready: false — النتائج استرشادية. لا يُستخدم هذا النظام كسند قانوني أو ضريبي أو ائتماني.'
+        };
+
+        window.mvLabel = function (key) {
+            return Object.prototype.hasOwnProperty.call(_MV_LABELS, key) ? _MV_LABELS[key] : key;
+        };
+
+        function _mvEscHtml(s) {
+            return String(s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // ── Shared API request wrapper — always via esFetch, never a second
+        // auth mechanism. Distinguishes valid HTTP responses (any status)
+        // from genuine transport/network failure. ──────────────────────────
+        window.mvApiRequest = async function (url, opts) {
+            try {
+                var resp = await esFetch(url, opts || {});
+                var data = null;
+                try { data = await resp.json(); } catch (_parseErr) { data = null; }
+                return { ok: resp.ok, status: resp.status, data: data, networkError: false };
+            } catch (err) {
+                if (err && err.message === 'ES_AUTH_401') {
+                    return { ok: false, status: 401, data: null, networkError: false };
+                }
+                if (err && err.message === 'ES_AUTH_403') {
+                    return { ok: false, status: 403, data: null, networkError: false };
+                }
+                // fetch() itself rejected — real network/transport failure, not an HTTP error
+                return { ok: false, status: null, data: null, networkError: true };
+            }
+        };
+
+        // ── Error normalization — one safe, non-disclosing message per case.
+        // Never echoes raw backend/exception text. ─────────────────────────
+        window.mvNormalizeError = function (result) {
+            if (!result) return window.mvLabel('err_generic');
+            if (result.networkError) return window.mvLabel('err_network');
+            if (result.status === 401) return window.mvLabel('err_401');
+            if (result.status === 403) return window.mvLabel('err_403');
+            if (result.status === 404) return window.mvLabel('err_404');
+            if (result.status === 503) return window.mvLabel('err_503');
+            return window.mvLabel('err_generic');
+        };
+
+        // ── Generalized loading state — keyed by screen name, not hardcoded
+        // to any specific button pair. ──────────────────────────────────────
+        window.mvSetScreenLoading = function (screenName, isLoading) {
+            var el = document.getElementById('mv-' + screenName + '-loading');
+            if (!el) return;
+            el.textContent = isLoading ? window.mvLabel('runs_loading') : '';
+            el.style.display = isLoading ? 'block' : 'none';
+        };
+
+        // ── Context-aware (per-screen) error rendering — does not touch the
+        // existing Import screen's #mv-error, which keeps its own behavior. ──
+        window.mvShowScreenError = function (screenName, message) {
+            var el = document.getElementById('mv-' + screenName + '-error');
+            if (el) { el.textContent = message; el.style.display = 'block'; }
+        };
+        window.mvClearScreenError = function (screenName) {
+            var el = document.getElementById('mv-' + screenName + '-error');
+            if (el) { el.textContent = ''; el.style.display = 'none'; }
+        };
+
+        // ── Persistent workspace-level 503 banner — distinct from a normal
+        // one-action error; never used for 401/403 (those are authorization
+        // states, not service-availability states). ───────────────────────
+        window.mvShowWorkspaceBanner = function (message) {
+            var el = document.getElementById('mv-workspace-banner');
+            if (el) { el.textContent = message; el.style.display = 'block'; }
+        };
+        window.mvHideWorkspaceBanner = function () {
+            var el = document.getElementById('mv-workspace-banner');
+            if (el) el.style.display = 'none';
+        };
+
+        // ── Reusable advisory disclosure — injects the same
+        // advisory_only/certification_ready notice used by Import, without
+        // duplicating static markup for every future MV screen. ────────────
+        window.mvRenderAdvisoryBanner = function (targetId) {
+            var el = document.getElementById(targetId);
+            if (!el) return;
+            // A distinct class (mv-adv-banner-shared), not mv-advisory-banner: the
+            // Import screen's own static banner already owns that exact class name,
+            // and existing regression tests select it with a bare ".mv-advisory-banner"
+            // locator that must keep resolving to exactly one element.
+            el.className = 'mv-adv-banner-shared';
+            el.innerHTML =
+                '<span class="mv-adv-badge">' + _mvEscHtml(window.mvLabel('advisory_badge')) + '</span>' +
+                '<span class="mv-adv-badge mv-badge-red">' + _mvEscHtml(window.mvLabel('advisory_badge_not_certified')) + '</span>' +
+                '<span>' + _mvEscHtml(window.mvLabel('advisory_full_text')) + '</span>';
+        };
+
+        function _mvInitRunsTableHeaders() {
+            var labelKeyByField = {
+                run_name: 'th_run_name', status: 'th_status', started_at: 'th_started_at',
+                n_input_records: 'th_n_input_records', n_predicted_properties: 'th_n_predicted_properties',
+                ood_property_count: 'th_ood_property_count', method: 'th_method'
+            };
+            document.querySelectorAll('#mv-runs-table th[data-i18n-th]').forEach(function (th) {
+                var labelKey = labelKeyByField[th.getAttribute('data-i18n-th')];
+                if (labelKey) th.textContent = window.mvLabel(labelKey);
+            });
+        }
+
+        // ── Runs History — the ONLY new live endpoint in this slice.
+        // Fired exclusively by an explicit mvNavigate('runs') call (see the
+        // hook in the Phase 14 script above) — never by opening the MV tab,
+        // never by visiting Dashboard/Import/Detail, never on a timer. ─────
+        // Single-flight guard: a Mass-Valuation-Runs-specific pending flag
+        // (deliberately not shared with Import's own _mvPendingRequest, to
+        // avoid coupling the two features) prevents a second GET from
+        // starting while one is already in flight, and therefore prevents
+        // an out-of-order response from overwriting the table with stale
+        // data. try/finally guarantees it clears on every path — success,
+        // any HTTP error status, or a genuine network/transport failure.
+        var _mvRunsPendingRequest = false;
+
+        window.mvLoadRunsHistory = async function () {
+            if (_mvRunsPendingRequest) return;
+            _mvRunsPendingRequest = true;
+            try {
+                var wrapper = document.getElementById('mv-runs-table-wrapper');
+                var empty   = document.getElementById('mv-runs-empty');
+                var tbody   = document.getElementById('mv-runs-tbody');
+
+                window.mvClearScreenError('runs');
+                window.mvHideWorkspaceBanner();
+                if (wrapper) wrapper.style.display = 'none';
+                if (empty)   empty.style.display   = 'none';
+                window.mvSetScreenLoading('runs', true);
+
+                // suppressAuthModal: a screen-scoped background load must not hijack the
+                // whole page with the global login modal — 401 is instead normalized
+                // into this screen's own error region, same as every other MV error.
+                var result = await window.mvApiRequest('/api/mass-valuation/runs', { suppressAuthModal: true });
+
+                window.mvSetScreenLoading('runs', false);
+
+                if (!result.ok) {
+                    if (result.status === 503) {
+                        window.mvShowWorkspaceBanner(window.mvLabel('workspace_banner_503'));
+                    } else {
+                        window.mvShowScreenError('runs', window.mvNormalizeError(result));
+                    }
+                    return;
+                }
+
+                var runs = (result.data && Array.isArray(result.data.runs)) ? result.data.runs : [];
+
+                if (!runs.length) {
+                    if (empty) {
+                        // Surfaces the backend's own explanatory message (e.g. "DB
+                        // unavailable — runs not persisted yet.") when present,
+                        // rather than always implying a genuinely empty history.
+                        empty.textContent = (result.data && result.data.message)
+                            ? String(result.data.message) : window.mvLabel('runs_empty');
+                        empty.style.display = 'block';
+                    }
+                    return;
+                }
+
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    // Server-provided order only (started_at DESC NULLS LAST) — this
+                    // is the currently returned result set, not a full/paginated list.
+                    runs.forEach(function (run, idx) {
+                        var tr = document.createElement('tr');
+                        tr.innerHTML =
+                            '<td>' + _mvEscHtml(String(idx + 1)) + '</td>' +
+                            '<td>' + _mvEscHtml(run.run_name != null ? String(run.run_name) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.status != null ? String(run.status) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.started_at != null ? String(run.started_at) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.n_input_records != null ? String(run.n_input_records) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.n_predicted_properties != null ? String(run.n_predicted_properties) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.ood_property_count != null ? String(run.ood_property_count) : '—') + '</td>' +
+                            '<td>' + _mvEscHtml(run.method != null ? String(run.method) : '—') + '</td>';
+                        tbody.appendChild(tr);
+                    });
+                }
+                if (wrapper) wrapper.style.display = 'block';
+            } finally {
+                _mvRunsPendingRequest = false;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            _mvInitRunsTableHeaders();
+            window.mvRenderAdvisoryBanner('mv-runs-advisory');
+        });
     }());
     </script>
     <!-- ── End Phase 13: Mass Valuation Import Tab ──────────────────── -->

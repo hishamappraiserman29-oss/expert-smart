@@ -6,6 +6,20 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact 40-character commit SHA authorized for this run
+        required: true
+        type: string
+      deploy_to_production:
+        description: Deploy the published SHA image to production
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'expert-smart-production-dispatch' || format('expert-smart-ci-{0}', github.run_id) }}
+  cancel-in-progress: false
 
 env:
   PYTHON_VERSION: "3.11"
@@ -391,7 +405,7 @@ jobs:
   # ── Build ─────────────────────────────────────────────────────────────────────
   build:
     name: Build Docker Image
-    needs: [test-governed, test-ml-avm, test-root-integration, lint]
+    needs: [test-governed, test-ml-avm, test-root-integration, lint, wave4b1-infrastructure-validation]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     permissions:
@@ -399,6 +413,23 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate authorized dispatch SHA
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+          ACTUAL_SHA: ${{ github.sha }}
+        run: |
+          if [[ ! "$EXPECTED_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "expected_sha must be a full 40-character Git commit SHA"
+            exit 1
+          fi
+
+          if [[ "${EXPECTED_SHA,,}" != "${ACTUAL_SHA,,}" ]]; then
+            echo "Authorized SHA does not match workflow SHA"
+            exit 1
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -411,15 +442,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute image tags
+        id: image-tags
+        shell: bash
+        env:
+          DEPLOY_TO_PRODUCTION: ${{ inputs.deploy_to_production }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "ghcr.io/${GITHUB_REPOSITORY}:${GITHUB_SHA}"
+
+            if [[ "$DEPLOY_TO_PRODUCTION" == "true" ]]; then
+              echo "ghcr.io/${GITHUB_REPOSITORY}:latest"
+            fi
+
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/Dockerfile
           push: ${{ github.event_name == 'workflow_dispatch' }}
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ${{ steps.image-tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -428,7 +474,7 @@ jobs:
     name: Deploy to Production
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy_to_production == true
     environment: production
     steps:
       - uses: actions/checkout@v4

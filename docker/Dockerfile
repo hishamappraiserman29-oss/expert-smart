@@ -21,6 +21,7 @@ WORKDIR /app
 
 COPY --from=builder /install /usr/local
 COPY core_engine/ ./
+COPY frontend/ /frontend/
 
 RUN chown -R appuser:appgroup /app
 

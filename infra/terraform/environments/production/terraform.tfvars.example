@@ -1,0 +1,19 @@
+# ==============================================================================
+# Example values ONLY — placeholders, not real production configuration.
+# ==============================================================================
+#
+# Copy this file to terraform.tfvars and replace every placeholder with a
+# real value before running `terraform plan`/`apply`. The real
+# terraform.tfvars file (with actual account-specific values) must NEVER be
+# committed to Git — it is expected to be gitignored.
+#
+# None of these values are required to review or validate the module
+# scaffold itself; they are apply-time inputs only.
+
+aws_account_id      = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
+domain_name         = "example.com"
+production_hostname = "app.example.com"
+
+database_instance_class        = "db.t3.medium"
+database_allocated_storage_gb  = 100
+database_backup_retention_days = 7
